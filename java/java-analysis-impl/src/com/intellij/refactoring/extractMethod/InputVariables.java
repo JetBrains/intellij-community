@@ -44,7 +44,7 @@ public class InputVariables {
   private ParametersFolder myFolding;
   private boolean myFoldingAvailable;
 
-  private Set<PsiField> myUsedInstanceFields;
+  private Set<? extends PsiField> myUsedInstanceFields;
   private boolean       myPassFields;
 
   public InputVariables(final List<? extends PsiVariable> inputVariables,
@@ -62,9 +62,9 @@ public class InputVariables {
   /**
    * copy use only
    */
-  private InputVariables(List<VariableData> inputVariables,
-                        Project project,
-                        LocalSearchScope scope) {
+  private InputVariables(List<? extends VariableData> inputVariables,
+                         Project project,
+                         LocalSearchScope scope) {
     myProject = project;
     myScope = scope;
     myInputVariables = new ArrayList<>(inputVariables);
@@ -74,7 +74,7 @@ public class InputVariables {
     return myFolding.isFoldable();
   }
 
-  public void setUsedInstanceFields(Set<PsiField> usedInstanceFields) {
+  public void setUsedInstanceFields(Set<? extends PsiField> usedInstanceFields) {
     myUsedInstanceFields = usedInstanceFields;
   }
 
@@ -249,7 +249,7 @@ public class InputVariables {
   }
 
   public void removeParametersUsedInExitsOnly(PsiElement codeFragment,
-                                              Collection<PsiStatement> exitStatements,
+                                              Collection<? extends PsiStatement> exitStatements,
                                               ControlFlow controlFlow,
                                               int startOffset,
                                               int endOffset) {
@@ -268,7 +268,7 @@ public class InputVariables {
     }
   }
 
-  private static boolean isInExitStatements(PsiElement element, Collection<PsiStatement> exitStatements) {
+  private static boolean isInExitStatements(PsiElement element, Collection<? extends PsiStatement> exitStatements) {
     for (PsiStatement exitStatement : exitStatements) {
       if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
     }

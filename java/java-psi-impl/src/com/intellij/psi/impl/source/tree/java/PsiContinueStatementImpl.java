@@ -113,6 +113,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     }
   }
 
+  @Override
   public String toString() {
     return "PsiContinueStatement";
   }
@@ -120,8 +121,9 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
   @Override
   public PsiReference getReference() {
     final PsiReference[] references = getReferences();
-    if (references != null && references.length > 0)
+    if (references.length > 0) {
       return references[0];
+    }
     return null;
   }
 

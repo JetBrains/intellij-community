@@ -47,7 +47,7 @@ class ClassPatternsPanel extends JPanel {
   private final List<EntryPointsManagerBase.ClassPattern> myModifiedPatterns;
   private final JBTable myTable;
 
-  public ClassPatternsPanel(List<EntryPointsManagerBase.ClassPattern> patterns) {
+  ClassPatternsPanel(List<EntryPointsManagerBase.ClassPattern> patterns) {
     super(new BorderLayout());
     myModifiedPatterns = patterns;
     myTable = createTableForPatterns();
@@ -162,7 +162,7 @@ class ClassPatternsPanel extends JPanel {
     public static final String ERROR_MESSAGE = "Pattern must be a valid java qualified name, only '*' are accepted as placeholders";
     private final PsiNameHelper myNameHelper;
 
-    public ClassPatternValidator(PsiNameHelper nameHelper) {
+    ClassPatternValidator(PsiNameHelper nameHelper) {
       myNameHelper = nameHelper;
     }
 
@@ -188,7 +188,7 @@ class ClassPatternsPanel extends JPanel {
   private class MyTableModel extends AbstractTableModel implements ItemRemovable {
     private final String[] myNames;
 
-    public MyTableModel() {
+    MyTableModel() {
       myNames = new String[] {"With Subclasses",  "Class", "Method"};
     }
 

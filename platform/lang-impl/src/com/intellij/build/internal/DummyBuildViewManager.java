@@ -8,6 +8,7 @@ import com.intellij.build.BuildViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -18,7 +19,7 @@ public class DummyBuildViewManager extends BuildViewManager {
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     if(event instanceof FinishBuildEvent) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(event.getMessage());

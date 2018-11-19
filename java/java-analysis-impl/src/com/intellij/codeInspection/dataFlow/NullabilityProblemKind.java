@@ -126,7 +126,7 @@ public class NullabilityProblemKind<T extends PsiElement> {
    * @param problem a problem to check
    * @param consumer a consumer to execute. A problem anchor is supplied as the consumer argument.
    */
-  public void ifMyProblem(NullabilityProblem<?> problem, Consumer<T> consumer) {
+  public void ifMyProblem(NullabilityProblem<?> problem, Consumer<? super T> consumer) {
     NullabilityProblem<T> myProblem = asMyProblem(problem);
     if (myProblem != null) {
       consumer.accept(myProblem.getAnchor());
@@ -143,10 +143,10 @@ public class NullabilityProblemKind<T extends PsiElement> {
    * @param <T> a type of anchor element
    */
   public static final class NullabilityProblem<T extends PsiElement> {
-    private final @NotNull NullabilityProblemKind<T> myKind;
+    private final @NotNull NullabilityProblemKind<? super T> myKind;
     private final @NotNull T myAnchor;
 
-    NullabilityProblem(@NotNull NullabilityProblemKind<T> kind, @NotNull T anchor) {
+    NullabilityProblem(@NotNull NullabilityProblemKind<? super T> kind, @NotNull T anchor) {
       myKind = kind;
       myAnchor = anchor;
     }

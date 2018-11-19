@@ -49,7 +49,7 @@ public class FrameworkDetectionUtil {
     return null;
   }
 
-  public static List<? extends DetectedFrameworkDescription> removeDisabled(List<DetectedFrameworkDescription> descriptions) {
+  public static List<? extends DetectedFrameworkDescription> removeDisabled(List<? extends DetectedFrameworkDescription> descriptions) {
     return removeDisabled(descriptions, Collections.emptyList());
   }
 

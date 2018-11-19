@@ -6,6 +6,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class VisibleEditorsTracker implements CommandListener {
   public long getLastCommandFinish() { return myLastCommandFinish; }
 
   @Override
-  public void commandStarted(CommandEvent event) {
+  public void commandStarted(@NotNull CommandEvent event) {
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getComponent().isShowing()) {
         myEditorsVisibleOnCommandStart.add(editor);
@@ -44,7 +45,7 @@ public class VisibleEditorsTracker implements CommandListener {
   }
 
   @Override
-  public void commandFinished(CommandEvent event) {
+  public void commandFinished(@NotNull CommandEvent event) {
     myEditorsVisibleOnCommandStart.clear();
     myLastCommandFinish = System.currentTimeMillis();
   }

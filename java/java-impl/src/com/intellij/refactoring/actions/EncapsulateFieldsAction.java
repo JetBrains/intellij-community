@@ -52,8 +52,8 @@ public class EncapsulateFieldsAction extends BaseRefactoringAction {
       return elements[0] instanceof PsiClass && elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE) || isAcceptedField(elements[0]);
     }
     else if (elements.length > 1) {
-      for (int idx = 0; idx < elements.length; idx++) {
-        if (!isAcceptedField(elements[idx])) {
+      for (PsiElement element : elements) {
+        if (!isAcceptedField(element)) {
           return false;
         }
       }

@@ -3,8 +3,8 @@ f'{42!r}'
 f'{42!r:03}'
 f'{42:03}'
 f'{42!r:{y}.{z}}'
-f'<error descr="'}' is expected">{</error>'
-f'<error descr="'}' is expected">{42:{</error>'
-f'<error descr="'}' is expected">{42!r:{</error>'
+f'{<error descr="expression expected"><error descr="} expected">'</error></error>
+f'{42:{<error descr="expression expected"><error descr="} expected">'</error></error>
+f'{42!r:{<error descr="expression expected"><error descr="} expected">'</error></error>
 f'{{'
-f'{{<error descr="'}' is expected">{</error>'
+f'{{{<error descr="expression expected"><error descr="} expected">'</error></error>

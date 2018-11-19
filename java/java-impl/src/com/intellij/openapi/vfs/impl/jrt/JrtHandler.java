@@ -26,7 +26,7 @@ class JrtHandler extends ArchiveHandler {
 
   private SoftReference<FileSystem> myFileSystem;
 
-  public JrtHandler(@NotNull String path) {
+  JrtHandler(@NotNull String path) {
     super(path);
   }
 

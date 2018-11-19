@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiFile;
@@ -18,33 +16,25 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class LayoutCodeDialog extends DialogWrapper {
-  @NotNull  private final Project myProject;
-  @NotNull private final PsiFile myFile;
-
+  private final Project myProject;
+  private final PsiFile myFile;
   private final boolean myTextSelected;
-
   private final String myHelpId;
   private final LastRunReformatCodeOptionsProvider myLastRunOptions;
+  private final LayoutCodeOptions myRunOptions;
 
   private JPanel myButtonsPanel;
-
   private JCheckBox myOptimizeImportsCb;
   private JCheckBox myRearrangeCodeCb;
-
+  private JCheckBox myApplyCodeCleanup;
   private JRadioButton myOnlyVCSChangedTextRb;
   private JRadioButton mySelectedTextRadioButton;
   private JRadioButton myWholeFileRadioButton;
-
   private JPanel myActionsPanel;
   private JPanel myScopePanel;
   private JLabel myOptionalLabel;
 
-  private final LayoutCodeOptions myRunOptions;
-
-  public LayoutCodeDialog(@NotNull Project project,
-                          @NotNull PsiFile file,
-                          boolean textSelected,
-                          final String helpId) {
+  public LayoutCodeDialog(@NotNull Project project, @NotNull PsiFile file, boolean textSelected, String helpId) {
     super(project, true);
     myFile = file;
     myProject = project;
@@ -116,6 +106,8 @@ public class LayoutCodeDialog extends DialogWrapper {
       myRearrangeCodeCb.setSelected(myLastRunOptions.isRearrangeCode(myFile.getLanguage()));
     }
 
+    myApplyCodeCleanup.setSelected(myLastRunOptions.getLastCodeCleanup());
+
     myOptionalLabel.setVisible(canOptimizeImports || canRearrangeCode);
   }
 
@@ -137,13 +129,15 @@ public class LayoutCodeDialog extends DialogWrapper {
     if (myRearrangeCodeCb.isEnabled()) {
       myLastRunOptions.saveRearrangeState(myFile.getLanguage(), myRunOptions.isRearrangeCode());
     }
+    if (myApplyCodeCleanup.isEnabled()) {
+      myLastRunOptions.saveCodeCleanupState(myApplyCodeCleanup.isSelected());
+    }
 
     if (!mySelectedTextRadioButton.isSelected() && myOnlyVCSChangedTextRb.isEnabled()) {
       myLastRunOptions.saveProcessVcsChangedTextState(myOnlyVCSChangedTextRb.isSelected());
     }
   }
 
-  @NotNull
   private LayoutCodeOptions createOptionsBundledOnDialog() {
     return new LayoutCodeOptions() {
       @Override
@@ -166,6 +160,11 @@ public class LayoutCodeDialog extends DialogWrapper {
       public boolean isOptimizeImports() {
         return myOptimizeImportsCb.isEnabled() && myOptimizeImportsCb.isSelected();
       }
+
+      @Override
+      public boolean isCodeCleanup() {
+        return myApplyCodeCleanup.isEnabled() && myApplyCodeCleanup.isSelected();
+      }
     };
   }
 
@@ -175,15 +174,10 @@ public class LayoutCodeDialog extends DialogWrapper {
     return myButtonsPanel;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpId);
+  protected String getHelpId() {
+    return myHelpId;
   }
 
   @Override
@@ -195,5 +189,4 @@ public class LayoutCodeDialog extends DialogWrapper {
   public LayoutCodeOptions getRunOptions() {
     return myRunOptions;
   }
-
 }

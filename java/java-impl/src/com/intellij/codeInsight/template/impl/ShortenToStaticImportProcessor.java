@@ -8,7 +8,6 @@ import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.JavaCommentContextType;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -33,7 +32,6 @@ import static java.util.Arrays.asList;
 
 /**
  * @author Denis Zhdanov
- * @since 4/27/11 3:07 PM
  */
 public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor, DumbAware {
 
@@ -46,8 +44,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
     }
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile file = editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile()
-                                                  : PsiUtilBase.getPsiFileInEditor(editor, project);
+    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (file == null) {
        return;
     }

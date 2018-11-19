@@ -48,6 +48,8 @@ class NewRootBunch(private val myProject: Project, private val myBranchesLoader:
     }
   }
 
+  fun getConfigOrNull(root: VirtualFile) = synchronized(myLock) { myMap[root]?.value }
+
   fun getConfig(root: VirtualFile): SvnBranchConfigurationNew = synchronized(myLock) {
     val value = myMap[root]
     val result: SvnBranchConfigurationNew

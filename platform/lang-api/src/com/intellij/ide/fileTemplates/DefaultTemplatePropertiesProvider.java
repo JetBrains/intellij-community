@@ -18,6 +18,7 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Properties;
 
@@ -36,5 +37,5 @@ public interface DefaultTemplatePropertiesProvider {
    * @param directory the directory in which the file is created.
    * @param props the map in which the defined properties should be stored.
    */
-  void fillProperties(PsiDirectory directory, Properties props);
+  void fillProperties(@NotNull PsiDirectory directory, @NotNull Properties props);
 }

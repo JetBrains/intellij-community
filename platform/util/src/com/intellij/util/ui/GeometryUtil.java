@@ -42,9 +42,9 @@ public class GeometryUtil implements SwingConstants {
     bounds[2] = getBottomOf(aRectangle);
     bounds[3] = getLeftOf(aRectangle);
 
-    for (int i = 0; i < bounds.length; i++) {
-      if (bounds[i].intersectsLine(aSegment)) {
-        return getIntersectionPoint(aSegment, bounds[i]);
+    for (Line2D bound : bounds) {
+      if (bound.intersectsLine(aSegment)) {
+        return getIntersectionPoint(aSegment, bound);
       }
     }
 
@@ -98,8 +98,8 @@ public class GeometryUtil implements SwingConstants {
     double bSecond = aSecond.getY1() - kSecond * aSecond.getX1();
 
 
-    double xIntersection = -100000000;
-    double yIntersection = -100000000;
+    double xIntersection;
+    double yIntersection;
 
 
     double deltaK = (kFirst - kSecond);
@@ -232,7 +232,7 @@ public class GeometryUtil implements SwingConstants {
   private static class OrientedPoint extends Point {
     private final int myOrientation;
 
-    public OrientedPoint(double x, double y, int aOrientation) {
+    OrientedPoint(double x, double y, int aOrientation) {
       super((int) x, (int) y);
       myOrientation = aOrientation;
     }

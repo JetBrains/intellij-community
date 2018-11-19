@@ -92,9 +92,12 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           return null  // a target is not on the mandatory module path
         }
 
-        val root = PsiJavaModuleReference.resolve(place, "java.se", false)
-        if (!(root == null || JavaModuleGraphUtil.reads(root, targetModule) || inAddedModules(module, targetName) ||
-              hasUpgrade(module, targetName, packageName, place))) {
+        var isRoot = !targetName.startsWith("java.") || inAddedModules(module, targetName) || hasUpgrade(module, targetName, packageName, place)
+        if (!isRoot) {
+          val root = PsiJavaModuleReference.resolve(place, "java.se", false)
+          isRoot = root == null || JavaModuleGraphUtil.reads(root, targetModule)
+        }
+        if (!isRoot) {
           return if (quick) ERR else ErrorWithFixes(
             JavaErrorMessages.message("module.access.not.in.graph", packageName, targetName),
             listOf(AddModulesOptionFix(module, targetName)))
@@ -166,7 +169,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     return optionValues(options, "--add-modules")
       .flatMap { it.splitToSequence(",") }
-      .any { it == moduleName || it == "ALL-SYSTEM" }
+      .any { it == moduleName || it == "ALL-SYSTEM" || it == "ALL-MODULE-PATH" }
   }
 
   private fun optionValues(options: List<String>, name: String) =

@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.impl
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
 import com.intellij.icons.AllIcons
-import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -47,7 +46,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -57,6 +55,7 @@ import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.TestOnly
 import java.nio.charset.Charset
 import java.util.*
+import java.util.concurrent.Future
 
 class LineStatusTrackerManager(
   private val project: Project,
@@ -78,7 +77,7 @@ class LineStatusTrackerManager(
 
   private var partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
   private val documentsInDefaultChangeList = HashSet<Document>()
-  private var batchChangeTaskCounter: Int = 0
+  private var clmFreezeCounter: Int = 0
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
   private val fileStatesAwaitingRefresh = HashMap<VirtualFile, PartialLocalLineStatusTracker.State>()
@@ -107,7 +106,7 @@ class LineStatusTrackerManager(
 
       val busConnection = project.messageBus.connect(this)
       busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
-      busConnection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
+      busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
 
       val fsManager = FileStatusManager.getInstance(project)
       fsManager.addFileStatusListener(MyFileStatusListener(), this)
@@ -223,10 +222,9 @@ class LineStatusTrackerManager(
       if (forcedDocuments.containsKey(document)) return
 
       if (data.tracker is PartialLocalLineStatusTracker) {
-        val hasPartialChanges = data.tracker.affectedChangeListsIds.size > 1
-        val hasBlocksExcludedFromCommit = data.tracker.hasBlocksExcludedFromCommit()
+        val hasPartialChanges = data.tracker.hasPartialState()
         val isLoading = loader.hasRequest(RefreshRequest(document))
-        if (hasPartialChanges || hasBlocksExcludedFromCommit || isLoading) return
+        if (hasPartialChanges || isLoading) return
       }
 
       releaseTracker(document)
@@ -406,7 +404,7 @@ class LineStatusTrackerManager(
       refreshTracker(tracker)
       eventDispatcher.multicaster.onTrackerAdded(tracker)
 
-      if (batchChangeTaskCounter > 0) {
+      if (clmFreezeCounter > 0) {
         tracker.freeze()
       }
 
@@ -641,19 +639,34 @@ class LineStatusTrackerManager(
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
-        if (file.isDirectory) {
-          for (data in trackers.values) {
-            if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
-              reregisterTrackerInCLM(data)
-            }
-          }
-        }
-        else {
-          val document = fileDocumentManager.getCachedDocument(file) ?: return
-          val data = trackers[document] ?: return
-
+        forEachTrackerUnder(file) { data ->
           reregisterTrackerInCLM(data)
         }
+      }
+    }
+
+    override fun fileDeleted(event: VirtualFileEvent) {
+      if (!partialChangeListsEnabled) return
+
+      synchronized(LOCK) {
+        forEachTrackerUnder(event.file) { data ->
+          releaseTracker(data.tracker.document)
+        }
+      }
+    }
+
+    private fun forEachTrackerUnder(file: VirtualFile, action: (TrackerData) -> Unit) {
+      if (file.isDirectory) {
+        val affected = trackers.values.filter { VfsUtil.isAncestor(file, it.tracker.virtualFile, false) }
+        for (data in affected) {
+          action(data)
+        }
+      }
+      else {
+        val document = fileDocumentManager.getCachedDocument(file) ?: return
+        val data = trackers[document] ?: return
+
+        action(data)
       }
     }
   }
@@ -722,7 +735,7 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyCommandListener : CommandListener {
-    override fun commandFinished(event: CommandEvent?) {
+    override fun commandFinished(event: CommandEvent) {
       if (!partialChangeListsEnabled) return
 
       if (CommandProcessor.getInstance().currentCommand == null &&
@@ -750,12 +763,11 @@ class LineStatusTrackerManager(
     }
   }
 
-  private inner class MyBatchFileChangeListener : BatchFileChangeListener {
-    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
-      if (eventProject != project) return
+  private inner class MyFreezeListener : VcsFreezingProcess.Listener {
+    override fun onFreeze() {
       runReadAction {
         synchronized(LOCK) {
-          if (batchChangeTaskCounter == 0) {
+          if (clmFreezeCounter == 0) {
             for (data in trackers.values) {
               try {
                 data.tracker.freeze()
@@ -765,17 +777,16 @@ class LineStatusTrackerManager(
               }
             }
           }
-          batchChangeTaskCounter++
+          clmFreezeCounter++
         }
       }
     }
 
-    override fun batchChangeCompleted(eventProject: Project) {
-      if (eventProject != project) return
+    override fun onUnfreeze() {
       runInEdt(ModalityState.any()) {
         synchronized(LOCK) {
-          batchChangeTaskCounter--
-          if (batchChangeTaskCounter == 0) {
+          clmFreezeCounter--
+          if (clmFreezeCounter == 0) {
             for (data in trackers.values) {
               try {
                 data.tracker.unfreeze()
@@ -1054,8 +1065,6 @@ private abstract class SingleThreadLoader<Request, T> {
   private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
   private val LOCK: Any = Any()
 
-  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("LineStatusTrackerManager Pool", 1)
-
   private val taskQueue = ArrayDeque<Request>()
   private val waitingForRefresh = HashSet<Request>()
 
@@ -1063,7 +1072,7 @@ private abstract class SingleThreadLoader<Request, T> {
 
   private var isScheduled: Boolean = false
   private var isDisposed: Boolean = false
-
+  private var lastFuture: Future<*>? = null
 
   @CalledInBackground
   protected abstract fun loadRequest(request: Request): Result<T>
@@ -1091,6 +1100,7 @@ private abstract class SingleThreadLoader<Request, T> {
       isDisposed = true
       taskQueue.clear()
       waitingForRefresh.clear()
+      lastFuture?.cancel(true)
 
       callbacks += callbacksWaitingUpdateCompletion
       callbacksWaitingUpdateCompletion.clear()
@@ -1141,7 +1151,7 @@ private abstract class SingleThreadLoader<Request, T> {
       if (taskQueue.isEmpty()) return
 
       isScheduled = true
-      executor.execute {
+      lastFuture = ApplicationManager.getApplication().executeOnPooledThread {
         handleRequests()
       }
     }

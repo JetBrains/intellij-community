@@ -262,7 +262,7 @@ public class GrabDependencies implements IntentionAction {
     private final StringBuilder myStdErr = new StringBuilder();
     private final Module myModule;
 
-    public GrapeProcessHandler(GeneralCommandLine commandLine, Module module) throws ExecutionException {
+    GrapeProcessHandler(GeneralCommandLine commandLine, Module module) throws ExecutionException {
       super(commandLine);
       myModule = module;
     }

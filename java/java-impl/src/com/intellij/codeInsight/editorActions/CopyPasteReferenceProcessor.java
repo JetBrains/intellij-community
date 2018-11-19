@@ -125,7 +125,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
   }
 
   protected static void addReferenceData(final PsiElement element,
-                                final ArrayList<ReferenceData> array,
+                                final ArrayList<? super ReferenceData> array,
                                 final int startOffset,
                                 final String qClassName, @Nullable final String staticMemberName) {
     final TextRange range = element.getTextRange();

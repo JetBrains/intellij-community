@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,7 +56,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
   @NotNull
   private static GrLightMethodBuilder generateMapConstructor(@NotNull GrTypeDefinition typeDefinition) {
     final GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName());
-    mapConstructor.addParameter("args", CommonClassNames.JAVA_UTIL_HASH_MAP, false);
+    mapConstructor.addParameter("args", CommonClassNames.JAVA_UTIL_HASH_MAP);
     mapConstructor.setConstructor(true);
     mapConstructor.setContainingClass(typeDefinition);
     return mapConstructor;
@@ -112,7 +111,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
   private static void addParametersForSuper(@NotNull PsiClass typeDefinition,
                                             GrLightMethodBuilder fieldsConstructor,
                                             boolean superFields,
-                                            boolean superProperties, Set<PsiClass> visited, Set<String> excludes) {
+                                            boolean superProperties, Set<? super PsiClass> visited, Set<String> excludes) {
     PsiClass parent = typeDefinition.getSuperClass();
     if (parent != null && visited.add(parent) && !GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(parent.getQualifiedName())) {
       addParametersForSuper(parent, fieldsConstructor, superFields, superProperties, visited, excludes);

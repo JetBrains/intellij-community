@@ -505,6 +505,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder catchAll() {
+    myAnalyzer.popTrap(Trap.TryCatchAll.class);
     GotoInstruction gotoInstruction = new GotoInstruction(null);
     add(gotoInstruction).end();
     myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));
@@ -619,7 +620,9 @@ public class CFGBuilder {
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length == argCount && lambda.getBody() != null) {
         StreamEx.ofReversed(parameters).forEach(p -> assignTo(p).pop());
-        return inlineLambda(lambda, resultNullability);
+        inlineLambda(lambda, resultNullability);
+        StreamEx.of(parameters).forEach(p -> add(new FlushVariableInstruction(getFactory().getVarFactory().createVariableValue(p))));
+        return this;
       }
     }
     if (stripped instanceof PsiMethodReferenceExpression) {
@@ -746,12 +749,12 @@ public class CFGBuilder {
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
       condGoto.setOffset(myAnalyzer.getInstructionCount());
       myBranches.add(() -> pushUnknown().add(condGoto));
-      assign(targetVariable, factory.createCommonValue(expressions, targetVariable.getVariableType()));
+      assign(targetVariable, factory.createCommonValue(expressions, targetVariable.getType()));
     } else {
       push(factory.getConstFactory().getSentinel());
       for (PsiExpression expression : expressions) {
         pushExpression(expression);
-        boxUnbox(expression, targetVariable.getVariableType());
+        boxUnbox(expression, targetVariable.getType());
       }
       // Revert order
       add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));

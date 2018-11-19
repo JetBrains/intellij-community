@@ -64,7 +64,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
   }
 
   @Nullable
-  private static HgRepository chooseRepository(@NotNull List<HgRepository> repositories) {
+  private static HgRepository chooseRepository(@NotNull List<? extends HgRepository> repositories) {
     assert !repositories.isEmpty();
     return repositories.size() > 1 ? null : repositories.get(0);
   }
@@ -87,7 +87,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
 
   private static class MergeAction extends HgBranchAbstractAction {
 
-    public MergeAction(@NotNull Project project,
+    MergeAction(@NotNull Project project,
                        @NotNull List<HgRepository> repositories,
                        @NotNull String branchName) {
       super(project, "Merge", repositories, branchName);
@@ -105,7 +105,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
 
   private static class UpdateAction extends HgBranchAbstractAction {
 
-    public UpdateAction(@NotNull Project project,
+    UpdateAction(@NotNull Project project,
                         @NotNull List<HgRepository> repositories,
                         @NotNull String branchName) {
       super(project, "Update", repositories, branchName);
@@ -118,7 +118,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
   }
 
   private static class CompareAction extends HgBranchAbstractAction {
-    public CompareAction(@NotNull Project project,
+    CompareAction(@NotNull Project project,
                          @NotNull List<HgRepository> repositories,
                          @NotNull String branchName) {
       super(project, "Compare", repositories, branchName);

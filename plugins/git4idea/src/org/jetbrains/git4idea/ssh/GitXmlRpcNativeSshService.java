@@ -31,8 +31,8 @@ public class GitXmlRpcNativeSshService extends GitXmlRpcHandlerService<GitNative
   public class InternalRequestHandler implements GitNativeSshAskPassXmlRpcHandler {
     @Nullable
     @Override
-    public String askPassphrase(String handler, @NotNull String description) {
-      return adjustNull(getHandler(UUID.fromString(handler)).askPassphrase(description));
+    public String handleInput(String handler, @NotNull String description) {
+      return adjustNull(getHandler(UUID.fromString(handler)).handleInput(description));
     }
 
     /**

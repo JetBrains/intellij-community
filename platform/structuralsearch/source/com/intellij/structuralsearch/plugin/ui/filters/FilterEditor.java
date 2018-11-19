@@ -13,14 +13,17 @@ import javax.swing.*;
 public abstract class FilterEditor extends JBTableRowEditor {
 
   protected final MatchVariableConstraint myConstraint;
+  private final Runnable myConstraintChangedCallback;
 
-  public FilterEditor(MatchVariableConstraint constraint) {
+  public FilterEditor(MatchVariableConstraint constraint, Runnable constraintChangedCallback) {
     myConstraint = constraint;
+    myConstraintChangedCallback = constraintChangedCallback;
   }
 
   @Override
   public final JBTableRow getValue() {
     saveValues();
+    myConstraintChangedCallback.run();
     return __ -> this;
   }
 

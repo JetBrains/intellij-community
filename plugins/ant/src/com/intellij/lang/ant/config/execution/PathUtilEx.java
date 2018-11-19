@@ -65,7 +65,7 @@ public class PathUtilEx {
     return chooseJdk(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
-  public static Sdk chooseJdk(Project project, Collection<Module> modules) {
+  public static Sdk chooseJdk(Project project, Collection<? extends Module> modules) {
     Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectSdk != null) {
       return projectSdk;
@@ -73,7 +73,7 @@ public class PathUtilEx {
     return chooseJdk(modules);
   }
 
-  public static Sdk chooseJdk(Collection<Module> modules) {
+  public static Sdk chooseJdk(Collection<? extends Module> modules) {
     List<Sdk> sdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
     if (sdks.isEmpty()) {
       return null;

@@ -119,16 +119,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
       borderW -= myIcon.getIconWidth();
     }
 
-    Color bgColor;
-    Color fgColor;
-    if (mySelected && myHasFocus){
-      bgColor = UIUtil.getTreeSelectionBackground();
-      fgColor = UIUtil.getTreeSelectionForeground();
-    }
-    else{
-      bgColor = UIUtil.getTreeTextBackground();
-      fgColor = getForeground();
-    }
+    Color bgColor = UIUtil.getTreeBackground(mySelected, myHasFocus);
+    Color fgColor = UIUtil.getTreeForeground(mySelected, myHasFocus);
 
     // fill background
     if (!WideSelectionTreeUI.isWideSelection(myTree)) {
@@ -170,8 +162,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   public void setText(String[] lines, String prefix) {
     myLines = lines;
     myTextLength = 0;
-    for (int i = 0; i < lines.length; i++) {
-      myTextLength += lines[i].length();
+    for (String line : lines) {
+      myTextLength += line.length();
     }
     myPrefix = prefix;
 
@@ -249,13 +241,12 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     int result = 0;
     myWraps = new ArrayList();
 
-    for (int i = 0; i < myLines.length; i++) {
-      String aLine = myLines[i];
+    for (String aLine : myLines) {
       int lineFirstChar = 0;
       int lineLastChar = aLine.length() - 1;
       int currFirst = lineFirstChar;
       int printableWidth = width - myTextInsets.left - myTextInsets.right;
-      if (aLine.length() == 0) {
+      if (aLine.isEmpty()) {
         myWraps.add(aLine);
         result++;
       }

@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/13 12:50 PM
  */
 public class ExternalSystemTestUtil {
 

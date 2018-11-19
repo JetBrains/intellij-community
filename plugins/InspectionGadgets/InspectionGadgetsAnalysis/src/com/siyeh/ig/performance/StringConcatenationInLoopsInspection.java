@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -176,20 +175,20 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     private static boolean isUsedCompletely(PsiVariable variable, PsiLoopStatement loop) {
-      return !ReferencesSearch.search(variable, new LocalSearchScope(loop)).forEach(ref -> {
+      return ReferencesSearch.search(variable, new LocalSearchScope(loop)).anyMatch(ref -> {
         PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
-        if (expression == null) return true;
+        if (expression == null) return false;
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         while (parent instanceof PsiTypeCastExpression || parent instanceof PsiConditionalExpression) {
           parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
         }
         if (parent instanceof PsiExpressionList ||
             parent instanceof PsiAssignmentExpression &&
-             PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false)) {
+            PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false)) {
           PsiStatement statement = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
-          return ControlFlowUtils.isExecutedOnceInLoop(statement, loop) || ControlFlowUtils.isVariableReassigned(statement, variable);
+          return !ControlFlowUtils.isExecutedOnceInLoop(statement, loop) && !ControlFlowUtils.isVariableReassigned(statement, variable);
         }
-        return true;
+        return false;
       });
     }
 
@@ -330,16 +329,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     if (initializer != null && NullabilityUtil.getExpressionNullability(initializer, true) != Nullability.NOT_NULL) {
       return true;
     }
-    Processor<PsiReference> isNotNullableWrite = (PsiReference ref) -> {
-      if (!(ref instanceof PsiExpression)) return true;
+    Predicate<PsiReference> isPossiblyNullableWrite = ref -> {
+      if (!(ref instanceof PsiExpression)) return false;
       PsiExpression expression = (PsiExpression)ref;
-      if (!PsiUtil.isOnAssignmentLeftHand(expression)) return true;
+      if (!PsiUtil.isOnAssignmentLeftHand(expression)) return false;
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class);
-      if (assignment == null || assignment.getOperationTokenType() != JavaTokenType.EQ) return true;
+      if (assignment == null || assignment.getOperationTokenType() != JavaTokenType.EQ) return false;
       PsiExpression rExpression = assignment.getRExpression();
-      return rExpression == null || NullabilityUtil.getExpressionNullability(rExpression, true) == Nullability.NOT_NULL;
+      return rExpression != null && NullabilityUtil.getExpressionNullability(rExpression, true) != Nullability.NOT_NULL;
     };
-    return !ReferencesSearch.search(var).forEach(isNotNullableWrite);
+    return ReferencesSearch.search(var).anyMatch(isPossiblyNullableWrite);
   }
 
   abstract static class AbstractStringBuilderFix extends InspectionGadgetsFix {

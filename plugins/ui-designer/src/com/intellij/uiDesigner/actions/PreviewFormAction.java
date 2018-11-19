@@ -241,7 +241,7 @@ public final class PreviewFormAction extends AnAction{
 
         CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
           @Override
-          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+          public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
             if (!aborted && errors == 0) {
               runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
             }
@@ -271,7 +271,6 @@ public final class PreviewFormAction extends AnAction{
       }
     );
     if (rootContainer.getComponentCount() == 1) {
-      //noinspection HardCodedStringLiteral
       ((LwComponent)rootContainer.getComponent(0)).setBinding(PREVIEW_BINDING_FIELD);
     }
   }
@@ -323,7 +322,7 @@ public final class PreviewFormAction extends AnAction{
     private final String myTempPath;
     private final String myStatusbarMessage;
 
-    public MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
+    MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
       myModule = module;
       myParams = params;
       myTempPath = tempPath;
@@ -364,6 +363,7 @@ public final class PreviewFormAction extends AnAction{
       };
     }
 
+    @NotNull
     @Override
     public String getName() {
       return UIDesignerBundle.message("title.form.preview");

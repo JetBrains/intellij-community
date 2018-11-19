@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,15 +110,10 @@ public class GrHighlightUtil {
     return false;
   }
 
-  public static TextRange getMethodHeaderTextRange(PsiMethod method) {
-    final PsiModifierList modifierList = method.getModifierList();
-    final PsiParameterList parameterList = method.getParameterList();
-
-    final TextRange textRange = modifierList.getTextRange();
-    LOG.assertTrue(textRange != null, method.getClass() + ":" + method.getText());
-    int startOffset = textRange.getStartOffset();
-    int endOffset = parameterList.getTextRange().getEndOffset() + 1;
-
+  @NotNull
+  public static TextRange getMethodHeaderTextRange(@NotNull PsiMethod method) {
+    int startOffset = method.getTextRange().getStartOffset();
+    int endOffset = method.getParameterList().getTextRange().getEndOffset();
     return new TextRange(startOffset, endOffset);
   }
 

@@ -24,6 +24,11 @@ public class GetDescriptionCommand extends AbstractFrameCommand {
   }
 
   @Override
+  protected long getResponseTimeout() {
+    return RemoteDebugger.SHORT_TIMEOUT;
+  }
+
+  @Override
   protected void processResponse(@NotNull ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     try {

@@ -31,6 +31,7 @@ import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -342,7 +343,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     private final PyIdeCommonOptionsForm myForm;
     private final PyConfigurableInterpreterList myInterpreterList;
 
-    public MyListener(PyIdeCommonOptionsForm form, PyConfigurableInterpreterList interpreterList) {
+    MyListener(PyIdeCommonOptionsForm form, PyConfigurableInterpreterList interpreterList) {
       myForm = form;
       myInterpreterList = interpreterList;
     }
@@ -353,17 +354,17 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     }
 
     @Override
-    public void sdkAdded(Sdk sdk) {
+    public void sdkAdded(@NotNull Sdk sdk) {
       update();
     }
 
     @Override
-    public void beforeSdkRemove(Sdk sdk) {
+    public void beforeSdkRemove(@NotNull Sdk sdk) {
       update();
     }
 
     @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       update();
     }
   }

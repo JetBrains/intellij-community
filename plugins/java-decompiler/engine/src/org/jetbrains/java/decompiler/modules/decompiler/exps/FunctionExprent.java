@@ -566,12 +566,12 @@ public class FunctionExprent extends Exprent {
   }
 
   private static VarType getMaxVarType(VarType[] arr) {
-    int[] types = new int[]{CodeConstants.TYPE_DOUBLE, CodeConstants.TYPE_FLOAT, CodeConstants.TYPE_LONG};
-    VarType[] vartypes = new VarType[]{VarType.VARTYPE_DOUBLE, VarType.VARTYPE_FLOAT, VarType.VARTYPE_LONG};
+    int[] types = {CodeConstants.TYPE_DOUBLE, CodeConstants.TYPE_FLOAT, CodeConstants.TYPE_LONG};
+    VarType[] vartypes = {VarType.VARTYPE_DOUBLE, VarType.VARTYPE_FLOAT, VarType.VARTYPE_LONG};
 
     for (int i = 0; i < types.length; i++) {
-      for (int j = 0; j < arr.length; j++) {
-        if (arr[j].type == types[i]) {
+      for (VarType anArr : arr) {
+        if (anArr.type == types[i]) {
           return vartypes[i];
         }
       }

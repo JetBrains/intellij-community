@@ -6,13 +6,14 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class ProjectFileDirectoryRule implements GetDataRule {
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     VirtualFile dir = PlatformDataKeys.PROJECT_FILE_DIRECTORY.getData(dataProvider);
     if (dir == null) {
       final Project project = CommonDataKeys.PROJECT.getData(dataProvider);

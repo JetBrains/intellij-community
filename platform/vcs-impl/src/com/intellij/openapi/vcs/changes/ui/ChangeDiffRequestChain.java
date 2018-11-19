@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChainBase;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,6 +12,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -42,13 +44,25 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
   @NotNull
   @Override
   public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
-    return new ChangeGoToChangePopupAction<ChangeDiffRequestChain>(this, getIndex()) {
+    return createGoToChangeAction(this, onSelected);
+  }
+
+  /**
+   * NB: {@code chain.getRequests()} MUST return instances of {@link Producer}
+   */
+  @NotNull
+  public static AnAction createGoToChangeAction(@NotNull DiffRequestChain chain,
+                                                @NotNull Consumer<? super Integer> onSelected) {
+    return new ChangeGoToChangePopupAction<DiffRequestChain>(chain, chain.getIndex()) {
       @NotNull
       @Override
       protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
         MultiMap<Object, TreeModelBuilder.GenericNodeData> groups = new MultiMap<>();
-        for (int i = 0; i < myProducers.size(); i++) {
-          Producer producer = myProducers.get(i);
+        List<? extends DiffRequestProducer> producers = chain.getRequests();
+        for (int i = 0; i < producers.size(); i++) {
+          Producer producer = ObjectUtils.tryCast(producers.get(i), Producer.class);
+          if (producer == null) continue;
+
           FilePath filePath = producer.getFilePath();
           FileStatus fileStatus = producer.getFileStatus();
           Object tag = producer.getPopupTag();
@@ -67,7 +81,6 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
         onSelected.consume((Integer)object);
       }
     };
-
   }
 
   public interface Producer extends DiffRequestProducer {

@@ -181,7 +181,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   }
 
   @NotNull
-  public static String getTheseFilesMessage(Collection<VirtualFile> files) {
+  public static String getTheseFilesMessage(Collection<? extends VirtualFile> files) {
     boolean dirsOnly = true;
     for (VirtualFile each : files) {
       if (!each.isDirectory()) {

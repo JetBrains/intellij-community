@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.promoter;
 
+import com.intellij.application.Topics;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
@@ -39,11 +39,11 @@ public class ShortcutPromoterManager implements AnActionListener, PersistentStat
       myExtensions.put(ep.actionId, ep);
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, this);
+    Topics.subscribe(AnActionListener.TOPIC, null, this);
   }
 
   @Override
-  public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
     final InputEvent input = event.getInputEvent();
     if (input instanceof MouseEvent) {
       final String id = ActionManager.getInstance().getId(action);

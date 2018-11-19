@@ -174,7 +174,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return StringUtil.notNullize(scope == null ? null : resolver.getShortClassTypeName(scope));
   }
 
-  private static int getArgIndex(List<LighterASTNode> args, LighterASTNode expr) {
+  private static int getArgIndex(List<? extends LighterASTNode> args, LighterASTNode expr) {
     for (int i = 0; i < args.size(); i++) {
       if (args.get(i).getEndOffset() >= expr.getEndOffset()) {
         return i;

@@ -26,7 +26,6 @@ import java.util.ResourceBundle;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/13/13
  */
 public class GradleInspectionBundle {
 

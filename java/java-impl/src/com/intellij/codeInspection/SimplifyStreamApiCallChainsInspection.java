@@ -7,6 +7,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -436,7 +437,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private final String myReplacementMethod;
     private final boolean myChangeSemantics;
 
-    public ReplaceForEachMethodFix(String streamMethod, String replacementMethod, boolean changeSemantics) {
+    ReplaceForEachMethodFix(String streamMethod, String replacementMethod, boolean changeSemantics) {
       myStreamMethod = streamMethod;
       myReplacementMethod = replacementMethod;
       myChangeSemantics = changeSemantics;
@@ -507,7 +508,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private final String myStreamSequenceStripped;
     private final boolean myChangeSemantics;
 
-    public ReplaceCollectorFix(String collector, String streamSequence, boolean changeSemantics) {
+    ReplaceCollectorFix(String collector, String streamSequence, boolean changeSemantics) {
       myCollector = collector;
       myStreamSequence = streamSequence;
       myStreamSequenceStripped = streamSequence.replaceAll("\\([^)]+\\)", "()");
@@ -560,7 +561,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
               factory.createExpressionFromText("(" + boxedType.getCanonicalText() + ") " + expression.getText(), expression);
             PsiElement cast = expression.replace(castExpression);
             if (cast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)cast)) {
-              RedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
+              RemoveRedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
             }
           }
         }
@@ -723,7 +724,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     private final String myReplacement;
 
-    public SimplifyCollectionCreationFix(String replacement) {
+    SimplifyCollectionCreationFix(String replacement) {
       myReplacement = replacement;
     }
 
@@ -758,7 +759,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       LOG.assertTrue(classReference != null);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(classReference);
       if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, null)) {
-        PsiDiamondTypeUtil.replaceExplicitWithDiamond(classReference.getParameterList());
+        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(classReference.getParameterList());
       }
       CodeStyleManager.getInstance(project).reformat(newExpression);
     }
@@ -837,18 +838,16 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return false;
     }
 
-    public SimpleStreamOfFix(ReplacementMode mode) {
+    SimpleStreamOfFix(ReplacementMode mode) {
       myMode = mode;
     }
 
     @Override
     public String getName() {
-      switch (myMode) {
-        case OPTIONAL:
-          return "Replace with 'Optional.of'";
-        default:
-          return "Use Stream element explicitly";
+      if (myMode == ReplacementMode.OPTIONAL) {
+        return "Replace with 'Optional.of'";
       }
+      return "Use Stream element explicitly";
     }
 
     @Override
@@ -1083,7 +1082,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     private final String myName;
 
-    public ReplaceWithElementIterationFix(IndexedContainer container, String name) {
+    ReplaceWithElementIterationFix(IndexedContainer container, String name) {
       PsiExpression qualifier = container.getQualifier();
       String qualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       PsiType type = qualifier.getType();
@@ -1237,7 +1236,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   private static class RemoveBooleanIdentityFix implements CallChainSimplification {
     private final boolean myInvert;
 
-    public RemoveBooleanIdentityFix(boolean invert) {
+    RemoveBooleanIdentityFix(boolean invert) {
       myInvert = invert;
     }
 
@@ -1401,7 +1400,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private final String myQualifierText;
     private final boolean myParallel;
 
-    public ReplaceStreamSupportWithCollectionStreamFix(PsiExpression qualifier, boolean parallel) {
+    ReplaceStreamSupportWithCollectionStreamFix(PsiExpression qualifier, boolean parallel) {
       myQualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       myParallel = parallel;
     }
@@ -1627,7 +1626,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   static class AnyMatchContainsFix implements CallChainSimplification {
     final SmartPsiElementPointer<PsiExpression> myValuePointer;
 
-    public AnyMatchContainsFix(@NotNull PsiExpression value) {
+    AnyMatchContainsFix(@NotNull PsiExpression value) {
       myValuePointer = SmartPointerManager.createPointer(value);
     }
 

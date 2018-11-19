@@ -67,7 +67,7 @@ public class DomElementsToggleAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return getHiders().get(myClass);
   }
 
@@ -76,7 +76,7 @@ public class DomElementsToggleAction extends ToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     getHiders().put(myClass, state);
     myTreeView.getBuilder().updateFromRoot();
   }

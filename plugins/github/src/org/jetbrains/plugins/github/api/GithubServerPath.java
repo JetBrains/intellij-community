@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 @Tag("server")
 public class GithubServerPath {
   public static final String DEFAULT_HOST = "github.com";
+  public static final GithubServerPath DEFAULT_SERVER = new GithubServerPath(DEFAULT_HOST);
   private static final String API_PREFIX = "api.";
   private static final String ENTERPRISE_API_SUFFIX = "/api/v3";
 

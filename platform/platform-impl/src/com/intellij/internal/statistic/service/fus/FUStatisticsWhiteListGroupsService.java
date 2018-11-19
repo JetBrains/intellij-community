@@ -73,7 +73,7 @@ public class FUStatisticsWhiteListGroupsService {
     @NotNull
     public final ArrayList<WLBuild> builds = new ArrayList<>();
 
-    public WLGroup(@NotNull String id) {
+    WLGroup(@NotNull String id) {
       this.id = id;
     }
   }

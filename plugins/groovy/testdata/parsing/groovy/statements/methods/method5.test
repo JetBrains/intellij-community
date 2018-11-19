@@ -9,13 +9,13 @@ Groovy script
       PsiElement(protected)('protected')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('testFalse')
-    PsiElement(()('(')
     Parameter list
+      PsiElement(()('(')
       Parameter
         Modifiers
           <empty list>
         PsiElement(identifier)('someObj')
-    PsiElement())(')')
+      PsiElement())(')')
     PsiElement(new line)('\n')
     Throw clause
       <empty list>

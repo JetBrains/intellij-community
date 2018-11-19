@@ -31,7 +31,7 @@ final class ProxyShortcutSet implements ShortcutSet {
   private final String myActionId;
   private final KeymapManager myKeymapManager;
 
-  public ProxyShortcutSet(@NotNull String actionId, @NotNull KeymapManager keymapManager) {
+  ProxyShortcutSet(@NotNull String actionId, @NotNull KeymapManager keymapManager) {
     myActionId = actionId;
     myKeymapManager = keymapManager;
   }

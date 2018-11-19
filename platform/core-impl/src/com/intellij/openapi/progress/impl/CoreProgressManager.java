@@ -226,7 +226,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }, null);
 
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable t = exception.get();
     if (t != null) {
       ExceptionUtil.rethrowUnchecked(t);
@@ -743,7 +742,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @FunctionalInterface
-  protected interface CheckCanceledHook {
+  interface CheckCanceledHook {
     /**
      * @param indicator the indicator whose {@link ProgressIndicator#checkCanceled()} was called, or null if a non-progressive thread performed {@link ProgressManager#checkCanceled()}
      * @return true if the hook has done anything that might take some time.

@@ -105,7 +105,7 @@ public class ApplyChangesState extends State {
     cleanupBlocks(blocksToModify);
   }
 
-  private static void cleanupBlocks(List<LeafBlockWrapper> blocks) {
+  private static void cleanupBlocks(List<? extends LeafBlockWrapper> blocks) {
     for (LeafBlockWrapper block : blocks) {
       block.getParent().dispose();
       block.dispose();

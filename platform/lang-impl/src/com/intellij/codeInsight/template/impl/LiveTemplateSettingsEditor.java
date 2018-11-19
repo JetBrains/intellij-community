@@ -341,16 +341,19 @@ public class LiveTemplateSettingsEditor extends JPanel {
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (disposeContextPopup()) return false;
 
-        final JPanel content = createPopupContextPanel(updateLabel, myContext);
+        Pair<JPanel, CheckboxTree> pair = createPopupContextPanel(updateLabel, myContext);
+        final JPanel content = pair.first;
         Dimension prefSize = content.getPreferredSize();
         if (myLastSize != null && (myLastSize.width > prefSize.width || myLastSize.height > prefSize.height)) {
           content.setPreferredSize(new Dimension(Math.max(prefSize.width, myLastSize.width), Math.max(prefSize.height, myLastSize.height)));
         }
-        myContextPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null).setResizable(true).createPopup();
+        myContextPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, pair.second)
+          .setRequestFocus(true)
+          .setResizable(true).createPopup();
         myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
         myContextPopup.addListener(new JBPopupAdapter() {
           @Override
-          public void onClosed(LightweightWindowEvent event) {
+          public void onClosed(@NotNull LightweightWindowEvent event) {
             myLastSize = content.getSize();
           }
         });
@@ -377,7 +380,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return false;
   }
 
-  static JPanel createPopupContextPanel(final Runnable onChange, final TemplateContext context) {
+  static Pair<JPanel, CheckboxTree> createPopupContextPanel(final Runnable onChange, final TemplateContext context) {
     JPanel panel = new JPanel(new BorderLayout());
 
     MultiMap<TemplateContextType, TemplateContextType> hierarchy = MultiMap.createLinked();
@@ -433,7 +436,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     final Dimension size = checkboxTree.getPreferredSize();
     panel.setPreferredSize(new Dimension(size.width + 30, Math.min(size.height + 10, 500)));
 
-    return panel;
+    return Pair.create(panel, checkboxTree);
   }
 
   @NotNull
@@ -499,7 +502,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       myExpandByCombo.setSelectedItem(SPACE);
     }
     else {
-      myExpandByCombo.setSelectedItem(TemplateSettings.NONE_CHAR);
+      myExpandByCombo.setSelectedItem(NONE);
     }
 
     CommandProcessor.getInstance().executeCommand(

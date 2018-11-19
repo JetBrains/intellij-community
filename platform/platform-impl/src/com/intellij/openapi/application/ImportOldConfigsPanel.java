@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
@@ -42,12 +43,12 @@ class ImportOldConfigsPanel extends JDialog {
   private JButton myOkButton;
 
   private final File myGuessedOldConfig;
-  private final Function<File, Pair<File, File>> myValidator;
+  private final Function<? super File, ? extends Pair<File, File>> myValidator;
   private final String myProductName;
   private VirtualFile myLastSelection = null;
   private Pair<File, File> myResult;
 
-  ImportOldConfigsPanel(@Nullable File guessedOldConfig, Function<File, Pair<File, File>> validator) {
+  ImportOldConfigsPanel(@Nullable File guessedOldConfig, Function<? super File, ? extends Pair<File, File>> validator) {
     super((Dialog)null, true);
     myGuessedOldConfig = guessedOldConfig;
     myValidator = validator;
@@ -145,6 +146,8 @@ class ImportOldConfigsPanel extends JDialog {
   }
 
   private void close() {
+    ImportOldConfigsState.getInstance().saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport);
+
     if (myRbImport.isSelected()) {
       String text = myPrevInstallation.getText();
       if (StringUtil.isEmptyOrSpaces(text)) {

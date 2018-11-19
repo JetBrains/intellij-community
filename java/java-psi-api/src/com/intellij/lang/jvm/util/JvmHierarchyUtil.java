@@ -19,7 +19,7 @@ public class JvmHierarchyUtil {
 
   private JvmHierarchyUtil() {}
 
-  public static boolean testSupers(@NotNull JvmClass start, boolean skipStart, @NotNull Predicate<JvmClass> predicate) {
+  public static boolean testSupers(@NotNull JvmClass start, boolean skipStart, @NotNull Predicate<? super JvmClass> predicate) {
     Boolean result = traverseSupers(start, skipStart, it -> predicate.test(it) ? Boolean.TRUE : null);
     return result != null && result;
   }
@@ -70,7 +70,7 @@ public class JvmHierarchyUtil {
     return null;
   }
 
-  private static void queueSupers(@NotNull Queue<JvmClass> queue, @NotNull JvmClass current) {
+  private static void queueSupers(@NotNull Queue<? super JvmClass> queue, @NotNull JvmClass current) {
     JvmClass superClass = resolveClass(current.getSuperClassType());
     if (superClass != null) {
       queue.offer(superClass);

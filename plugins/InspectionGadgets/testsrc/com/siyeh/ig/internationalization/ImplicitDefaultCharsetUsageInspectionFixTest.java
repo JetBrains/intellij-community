@@ -27,8 +27,6 @@ public class ImplicitDefaultCharsetUsageInspectionFixTest extends LightQuickFixP
     return LanguageLevel.JDK_1_9;
   }
 
-  public void test() { doAllTests(); }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

@@ -248,7 +248,7 @@ public class RequestHint {
           }
         }
 
-        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
+        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensionList()) {
           try {
             if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
           }
@@ -256,8 +256,11 @@ public class RequestHint {
         }
       }
       // smart step feature
-      if (myMethodFilter != null && !mySteppedOut) {
-        return StepRequest.STEP_OUT;
+      if (myMethodFilter != null) {
+        isTheSameFrame(context); // to set mySteppedOut if needed
+        if (!mySteppedOut) {
+          return StepRequest.STEP_OUT;
+        }
       }
     }
     catch (VMDisconnectedException ignored) {

@@ -100,7 +100,7 @@ public final class DragSelectionProcessor extends EventProcessor {
   }
 
   private static class MyDragGestureRecognizer extends DragGestureRecognizer {
-    public MyDragGestureRecognizer(DragSource ds, Component c, int sa) {
+    MyDragGestureRecognizer(DragSource ds, Component c, int sa) {
       super(ds, c, sa);
     }
 

@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.Set;
 
 class RegistrationCheckerUtil {
-
   enum RegistrationType {
     ALL,
     ALL_COMPONENTS,
@@ -41,7 +41,7 @@ class RegistrationCheckerUtil {
   }
 
   @Nullable
-  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, RegistrationType registrationType) {
+  static Set<PsiClass> getRegistrationTypes(@NotNull PsiClass psiClass, @NotNull RegistrationType registrationType) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 

@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/27/13
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {

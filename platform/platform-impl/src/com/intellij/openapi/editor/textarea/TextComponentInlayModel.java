@@ -16,13 +16,37 @@ import java.util.List;
 public class TextComponentInlayModel implements InlayModel {
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           @NotNull T renderer) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                          boolean relatesToPrecedingText,
+                                                                          boolean showAbove,
+                                                                          int priority,
+                                                                          @NotNull T renderer) {
     return null;
   }
 
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsInRange(int startOffset, int endOffset) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above) {
     return Collections.emptyList();
   }
 

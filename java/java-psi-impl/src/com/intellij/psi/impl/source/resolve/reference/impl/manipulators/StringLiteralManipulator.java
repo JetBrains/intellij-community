@@ -41,7 +41,7 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
     }
 
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
-    final PsiExpression newExpr = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(newText, null);
+    final PsiExpression newExpr = JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText(newText, null);
     return (PsiLiteralExpression)expr.replace(newExpr);
   }
 

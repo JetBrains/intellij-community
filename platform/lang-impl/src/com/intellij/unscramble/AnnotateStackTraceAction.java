@@ -214,7 +214,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
     @NotNull private final Date myDate;
     @NotNull private final String myMessage;
 
-    public LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
+    LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
       myNumber = number;
       myAuthor = author;
       myDate = date;
@@ -260,7 +260,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
     private Date myNewestDate = null;
     private int myMaxDateLength = 0;
 
-    public MyActiveAnnotationGutter(@NotNull Project project,
+    MyActiveAnnotationGutter(@NotNull Project project,
                                     @NotNull EditorHyperlinkSupport hyperlinks,
                                     @NotNull ProgressIndicator indicator) {
       myProject = project;

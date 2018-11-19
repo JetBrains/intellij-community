@@ -13,7 +13,7 @@ public class CoverageListRootNode extends CoverageListNode {
   private List<AbstractTreeNode> myTopLevelPackages;
   private final Project myProject;
 
-  public CoverageListRootNode(Project project, PsiNamedElement classOrPackage,
+  public CoverageListRootNode(Project project, @NotNull PsiNamedElement classOrPackage,
                               CoverageSuitesBundle bundle,
                               CoverageViewManager.StateBean stateBean) {
     super(project, classOrPackage, bundle, stateBean);

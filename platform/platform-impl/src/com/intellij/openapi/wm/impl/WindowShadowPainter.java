@@ -60,7 +60,7 @@ final class WindowShadowPainter extends AbstractPainter {
   private List<Rectangle> myShadows;
   private Component myComponent;
 
-  public WindowShadowPainter() {
+  WindowShadowPainter() {
     AWTEventListener listener = WINDOW_LISTENER.getAndSet(null); // add only one window listener
     if (listener != null) Toolkit.getDefaultToolkit().addAWTEventListener(listener, MASK);
   }

@@ -28,7 +28,7 @@ import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.AstLoadingFilter;
@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Class for node descriptors based on PsiElements. Subclasses should define
@@ -50,7 +51,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
 
   protected AbstractPsiBasedNode(final Project project,
-                                final Value value,
+                                 @NotNull Value value,
                                 final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -59,12 +60,12 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   protected abstract PsiElement extractPsiFromValue();
   @Nullable
   protected abstract Collection<AbstractTreeNode> getChildrenImpl();
-  protected abstract void updateImpl(final PresentationData data);
+  protected abstract void updateImpl(@NotNull PresentationData data);
 
   @Override
   @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
-    return AstLoadingFilter.disableTreeLoading(this::doGetChildren);
+    return AstLoadingFilter.disallowTreeLoading(this::doGetChildren);
   }
 
   @NotNull
@@ -107,13 +108,14 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public FileStatus getFileStatus() {
-    VirtualFile file = getVirtualFileForValue();
-    if (file == null) {
+    return computeFileStatus(getVirtualFileForValue(), Objects.requireNonNull(getProject()));
+  }
+
+  protected static FileStatus computeFileStatus(@Nullable VirtualFile virtualFile, @NotNull Project project) {
+    if (virtualFile == null) {
       return FileStatus.NOT_CHANGED;
     }
-    else {
-      return FileStatusManager.getInstance(getProject()).getStatus(file);
-    }
+    return FileStatusManager.getInstance(project).getStatus(virtualFile);
   }
 
   @Nullable
@@ -122,17 +124,17 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     if (psiElement == null) {
       return null;
     }
-    return PsiUtilBase.getVirtualFile(psiElement);
+    return PsiUtilCore.getVirtualFile(psiElement);
   }
 
   // Should be called in atomic action
 
   @Override
-  public void update(final PresentationData data) {
-    AstLoadingFilter.disableTreeLoading(() -> doUpdate(data));
+  public void update(@NotNull final PresentationData data) {
+    AstLoadingFilter.disallowTreeLoading(() -> doUpdate(data));
   }
 
-  private void doUpdate(PresentationData data) {
+  private void doUpdate(@NotNull PresentationData data) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (!validate()) {
         return;
@@ -214,13 +216,13 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       return false;
     }
     final VirtualFile valueFile = containingFile.getVirtualFile();
-    return valueFile != null && file.equals(valueFile);
+    return file.equals(valueFile);
   }
 
   @Nullable
   public NavigationItem getNavigationItem() {
     final PsiElement psiElement = extractPsiFromValue();
-    return (psiElement instanceof NavigationItem) ? (NavigationItem) psiElement : null;
+    return psiElement instanceof NavigationItem ? (NavigationItem) psiElement : null;
   }
 
   @Override

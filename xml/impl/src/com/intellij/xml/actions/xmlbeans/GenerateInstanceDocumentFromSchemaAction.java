@@ -100,7 +100,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     if (!dialog.enableUniquenessCheck()) {
       parameters.add("-noupa");
     }
-
+    parameters.add("-dl");
 
     String pathToUse;
 

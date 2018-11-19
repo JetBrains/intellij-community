@@ -113,12 +113,11 @@ public class CodeDocumentationUtil {
   @NotNull
   public static CommentContext tryParseCommentContext(@NotNull PsiFile file, @NotNull CharSequence chars, int offset, int lineStartOffset) {
     Commenter langCommenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilCore.getLanguageAtOffset(file, offset));
-    return tryParseCommentContext(langCommenter, chars, offset, lineStartOffset);
+    return tryParseCommentContext(langCommenter, chars, lineStartOffset);
   }
 
   static CommentContext tryParseCommentContext(@Nullable Commenter langCommenter,
                                                @NotNull CharSequence chars,
-                                               int offset,
                                                int lineStartOffset) {
     final boolean isInsideCommentLikeCode = langCommenter instanceof CodeDocumentationAwareCommenter;
     if (!isInsideCommentLikeCode) {
@@ -133,11 +132,7 @@ public class CodeDocumentationUtil {
                           && CharArrayUtil.regionMatches(chars, commentStartOffset, commenter.getBlockCommentPrefix());
     boolean docAsterisk = commenter.getDocumentationCommentLinePrefix() != null
                           && CharArrayUtil.regionMatches(chars, commentStartOffset, commenter.getDocumentationCommentLinePrefix());
-    final int firstNonSpaceInLine = CharArrayUtil.shiftForward(chars, offset, " \t");
-    boolean slashSlash = commenter.getLineCommentPrefix() != null
-                         && CharArrayUtil.regionMatches(chars, commentStartOffset, commenter.getLineCommentPrefix())
-                         && firstNonSpaceInLine < chars.length() && chars.charAt(firstNonSpaceInLine) != '\n';
-    return new CommentContext(commenter, docStart, cStyleStart, docAsterisk, slashSlash, commentStartOffset);
+    return new CommentContext(commenter, docStart, cStyleStart, docAsterisk, commentStartOffset);
   }
   
   /**
@@ -157,21 +152,19 @@ public class CodeDocumentationUtil {
     /** Indicates position at the line that starts from {@code '*'} (non-first and non-last javadoc line in java language). */
     public boolean docAsterisk;
 
-    /** Indicates position at the line that starts from {@code '//'} (in java language). */
-    public boolean slashSlash;
-
     public CommentContext() {
       commenter = null;
       lineStart = 0;
     }
 
-    public CommentContext(CodeDocumentationAwareCommenter commenter, boolean docStart, boolean cStyleStart, boolean docAsterisk,
-                          boolean slashSlash, int lineStart) 
-    {
+    public CommentContext(CodeDocumentationAwareCommenter commenter,
+                          boolean docStart,
+                          boolean cStyleStart,
+                          boolean docAsterisk,
+                          int lineStart) {
       this.docStart = docStart;
       this.cStyleStart = cStyleStart;
       this.docAsterisk = docAsterisk;
-      this.slashSlash = slashSlash;
       this.commenter = commenter;
       this.lineStart = lineStart;
     }

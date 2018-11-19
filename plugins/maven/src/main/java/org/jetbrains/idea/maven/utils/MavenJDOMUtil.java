@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import org.jdom.Element;
 import org.jdom.IllegalNameException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -127,7 +128,7 @@ public class MavenJDOMUtil {
       }
 
       @Override
-      public void error(String message, int startOffset, int endOffset) {
+      public void error(@NotNull String message, int startOffset, int endOffset) {
         if (handler != null) handler.onSyntaxError();
       }
     };

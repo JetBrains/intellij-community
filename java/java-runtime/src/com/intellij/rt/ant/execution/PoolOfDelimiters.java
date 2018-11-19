@@ -16,7 +16,6 @@
 package com.intellij.rt.ant.execution;
 
 /**
- * @noinspection HardCodedStringLiteral
  */
 public interface PoolOfDelimiters {
   char REFERENCE_END = ':';

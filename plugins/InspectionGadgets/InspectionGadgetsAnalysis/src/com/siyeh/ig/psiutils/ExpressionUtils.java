@@ -19,13 +19,15 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -898,7 +900,13 @@ public class ExpressionUtils {
   public static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
     if (variable == null) return false;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(variable);
+    if (!(expression instanceof PsiReferenceExpression)) return false;
+    PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+    if ((variable instanceof PsiLocalVariable || variable instanceof PsiParameter) && ref.isQualified()) {
+      // Optimization: references to locals and parameters are unqualified
+      return false;
+    }
+    return ref.isReferenceTo(variable);
   }
 
   /**
@@ -1037,7 +1045,7 @@ public class ExpressionUtils {
       PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
       if (variable != null) {
         PsiExpression initializer = variable.getInitializer();
-        if (initializer != null && ReferencesSearch.search(variable).forEach(ref -> ref == reference)) {
+        if (initializer != null && ReferencesSearch.search(variable).allMatch(ref -> ref == reference)) {
           return initializer;
         }
       }
@@ -1125,7 +1133,15 @@ public class ExpressionUtils {
    */
   @Contract("null -> false")
   public static boolean isNewObject(@Nullable PsiExpression expression) {
-    return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
+    return expression != null && nonStructuralChildren(expression).allMatch(call -> {
+      if (call instanceof PsiNewExpression) return true;
+      if (call instanceof PsiMethodCallExpression) {
+        ContractReturnValue returnValue =
+          JavaMethodContractUtil.getNonFailingReturnValue(JavaMethodContractUtil.getMethodCallContracts((PsiCallExpression)call));
+        return ContractReturnValue.returnNew().equals(returnValue);
+      }
+      return false;
+    });
   }
 
   /**
@@ -1377,5 +1393,25 @@ public class ExpressionUtils {
    */
   public static boolean isArrayCreationExpression(@NotNull PsiNewExpression expression) {
     return expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0;
+  }
+
+  /**
+   * Returns ancestor expression for given subexpression which parent is not an expression anymore (except lambda)
+   * 
+   * @param expression an expression to find its ancestor
+   * @return a top-level expression for given expression (may return an expression itself)
+   */
+  @NotNull
+  public static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
+    while(true) {
+      PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpression && !(parent instanceof PsiLambdaExpression)) {
+        expression = (PsiExpression)parent;
+      } else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression) {
+        expression = (PsiExpression)parent.getParent();
+      } else {
+        return expression;
+      }
+    }
   }
 }

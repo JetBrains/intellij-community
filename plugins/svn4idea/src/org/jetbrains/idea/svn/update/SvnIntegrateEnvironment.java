@@ -57,7 +57,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
 
   private static class IntegrateCrawler extends AbstractUpdateIntegrateCrawler {
 
-    public IntegrateCrawler(SvnVcs vcs,
+    IntegrateCrawler(SvnVcs vcs,
                             UpdateEventHandler handler,
                             boolean totalUpdate,
                             Collection<VcsException> exceptions,

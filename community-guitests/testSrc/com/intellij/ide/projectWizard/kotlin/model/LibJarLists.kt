@@ -11,10 +11,10 @@ val kotlinJvmMppGradle = mapOf(
     "org.jetbrains:annotations:13.0"
   ))
 
-// JVM module from Kotlin/MP project doesn't contain jdk7/jdk8 artifacts - see KT-20997
-// TODO: remove this val after KT-20997 fixed
-val kotlinJvmMppKotlin = mapOf(
+val kotlinJvmMobileLibrary = mapOf(
   "" to listOf(
+//    "org.jetbrains.kotlin:kotlin-stdlib-jdk7:",
+//    "org.jetbrains.kotlin:kotlin-stdlib-jdk8:",
     "org.jetbrains.kotlin:kotlin-stdlib:",
     "org.jetbrains.kotlin:kotlin-test-junit:",
     "org.jetbrains.kotlin:kotlin-test:",
@@ -27,6 +27,8 @@ val kotlinCommonMpp = mapOf(
     "org.jetbrains.kotlin:kotlin-test-annotations-common:",
     "org.jetbrains.kotlin:kotlin-test-common:"
   ))
+
+val kotlinNativeMpp = mapOf( "" to listOf<String>())
 
 val kotlinJvmJavaKotlinJars = mapOf(
 // 1.1.2 specific values and earlier
@@ -114,8 +116,8 @@ val kotlinJsGradleLibs = mapOf(
     "org.jetbrains.kotlin:kotlin-test-js:"
   ),
   "1.2.30" to listOf(
-    "org.jetbrains.kotlin:kotlin-stdlib-js:"
-//    "org.jetbrains.kotlin:kotlin-test-js:"
+    "org.jetbrains.kotlin:kotlin-stdlib-js:",
+    "org.jetbrains.kotlin:kotlin-test-js:"
   )
 )
 

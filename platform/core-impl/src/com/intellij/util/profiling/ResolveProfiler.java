@@ -79,6 +79,8 @@ public class ResolveProfiler {
   }
 
   public static void write(String prefix, @NotNull PsiElement expression, long time) {
+    if (DISABLED) return;
+
     write(getInfo(prefix, expression, time));
   }
 

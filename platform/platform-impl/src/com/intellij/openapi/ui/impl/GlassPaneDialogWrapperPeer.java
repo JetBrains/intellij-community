@@ -511,8 +511,9 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
         myTransparentPane.repaint();
 
         if (myPreviouslyFocusedComponent != null) {
+          Component component = myPreviouslyFocusedComponent;
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myPreviouslyFocusedComponent, true);
+            IdeFocusManager.getGlobalInstance().requestFocus(component, true);
           });
           myPreviouslyFocusedComponent = null;
         }

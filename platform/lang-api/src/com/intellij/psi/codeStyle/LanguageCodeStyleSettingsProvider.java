@@ -2,14 +2,14 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyleBean;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyMapper;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class and extension point for common code style settings for a specific language.
@@ -83,10 +84,26 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *
    * @return Created instance of {@code CommonCodeStyleSettings} or null if associated language doesn't
    *         use its own language-specific common settings (the settings are shared with other languages).
+   * @deprecated Override {@link #customizeDefaults(CommonCodeStyleSettings, IndentOptions)} method instead.
    */
-  @Nullable
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @NotNull
+  @Deprecated
   public CommonCodeStyleSettings getDefaultCommonSettings() {
-    return new CommonCodeStyleSettings(getLanguage());
+    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(getLanguage());
+    defaultSettings.initIndentOptions();
+    //noinspection ConstantConditions
+    customizeDefaults(defaultSettings, defaultSettings.getIndentOptions());
+    return defaultSettings;
+  }
+
+  /**
+   * Customize default settings: set values which are different from the ones after {@code CommonCodeStyleSettings} initialization.
+   *
+   * @param commonSettings Customizable instance of  common settings for the language.
+   * @param indentOptions  Customizable instance of indent options for the language.
+   */
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings, @NotNull IndentOptions indentOptions) {
   }
 
   /**
@@ -106,7 +123,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @NotNull
   public static Language[] getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<>();
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       languages.add(provider.getLanguage());
     }
     return languages.toArray(new Language[0]);
@@ -129,7 +146,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @Nullable
   public static Language getLanguage(String langName) {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       String name = provider.getLanguageName();
       if (name == null) name = provider.getLanguage().getDisplayName();
       if (langName.equals(name)) {
@@ -142,6 +159,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @Nullable
   public static CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    //noinspection deprecation
     return provider != null ? provider.getDefaultCommonSettings() : null;
   }
 
@@ -174,10 +192,25 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @Nullable
   public static LanguageCodeStyleSettingsProvider forLanguage(final Language language) {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       if (provider.getLanguage().equals(language)) {
         return provider;
       }
+    }
+    return null;
+  }
+
+  /**
+   * Searches a provider for a specific language or its base language.
+   *
+   * @param language The original language.
+   * @return Found provider or {@code null} if it doesn't exist neither for the language itself nor for any of its base languages.
+   */
+  @Nullable
+  public static LanguageCodeStyleSettingsProvider findUsingBaseLanguage(@NotNull final Language language) {
+    for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
+      LanguageCodeStyleSettingsProvider curr = forLanguage(currLang);
+      if (curr != null) return curr;
     }
     return null;
   }
@@ -291,22 +324,37 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return null;
   }
 
+  /**
+   * Create a code style configurable for the given base settings and model settings.
+   *
+   * @param baseSettings  The base (initial) settings before changes.
+   * @param modelSettings The settings to which UI changes are applied.
+   * @return The code style configurable.
+   *
+   * @see CodeStyleConfigurable
+   */
   @NotNull
   @Override
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings modelSettings) {
+  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
     throw new RuntimeException(
-      this.getClass().getCanonicalName() + " for language #" + getLanguage().getID() + " doesn't implement createSettingsPage()");
+      this.getClass().getCanonicalName() + " for language #" + getLanguage().getID() + " doesn't implement createConfigurable()");
   }
 
+  private static final AtomicReference<List<LanguageCodeStyleSettingsProvider>> ourSettingsPagesProviders = new AtomicReference<>();
 
   /**
-   * @return A list of providers implementing {@link #createSettingsPage(CodeStyleSettings, CodeStyleSettings)}
+   * @return A list of providers implementing {@link #createConfigurable(CodeStyleSettings, CodeStyleSettings)}
    */
   public static List<LanguageCodeStyleSettingsProvider> getSettingsPagesProviders() {
+    return ourSettingsPagesProviders.updateAndGet(__ -> __ != null ? __ : calcSettingPagesProviders());
+  }
+
+  @NotNull
+  protected static List<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
     List<LanguageCodeStyleSettingsProvider> settingsPagesProviders = ContainerUtil.newArrayList();
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       try {
-        provider.getClass().getDeclaredMethod("createSettingsPage", CodeStyleSettings.class, CodeStyleSettings.class);
+        provider.getClass().getDeclaredMethod("createConfigurable", CodeStyleSettings.class, CodeStyleSettings.class);
         settingsPagesProviders.add(provider);
       }
       catch (NoSuchMethodException e) {
@@ -314,5 +362,10 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
       }
     }
     return settingsPagesProviders;
+  }
+
+  @ApiStatus.Experimental
+  public CodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+    return new CodeStylePropertyMapper(settings, getLanguage());
   }
 }

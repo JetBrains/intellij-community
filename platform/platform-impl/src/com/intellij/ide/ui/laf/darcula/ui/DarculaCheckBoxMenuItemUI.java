@@ -4,7 +4,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
-import sun.swing.MenuItemLayoutHelper;
+import com.intellij.util.ui.MenuItemLayoutHelper;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;

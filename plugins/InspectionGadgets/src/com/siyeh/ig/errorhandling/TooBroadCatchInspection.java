@@ -68,7 +68,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     if (fix != null) {
       fixes.add(fix);
     }
-    return fixes.toArray(new InspectionGadgetsFix[0]);
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -241,7 +241,7 @@ public class TooBroadCatchInspection extends BaseInspection {
       }
     }
 
-    private boolean check(Set<PsiClassType> thrownTypes, PsiTypeElement caughtTypeElement, boolean runtimeExceptionSeen, Set<PsiType> caughtTypes) {
+    private boolean check(Set<? extends PsiClassType> thrownTypes, PsiTypeElement caughtTypeElement, boolean runtimeExceptionSeen, Set<? super PsiType> caughtTypes) {
       final PsiType caughtType = caughtTypeElement.getType();
       if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(caughtType.getCanonicalText())) {
         runtimeExceptionSeen = true;
@@ -260,13 +260,13 @@ public class TooBroadCatchInspection extends BaseInspection {
       return runtimeExceptionSeen;
     }
 
-    private List<PsiType> findMaskedExceptions(Set<PsiClassType> thrownTypes, PsiType caughtType, Set<PsiType> caughtTypes) {
+    private List<PsiType> findMaskedExceptions(Set<? extends PsiClassType> thrownTypes, PsiType caughtType, Set<? super PsiType> caughtTypes) {
       if (thrownTypes.contains(caughtType)) {
+        caughtTypes.add(caughtType);
+        thrownTypes.remove(caughtType);
         if (ignoreThrown) {
           return Collections.emptyList();
         }
-        caughtTypes.add(caughtType);
-        thrownTypes.remove(caughtType);
       }
       if (onlyWarnOnRootExceptions) {
         if (!ExceptionUtils.isGenericExceptionClass(caughtType)) {

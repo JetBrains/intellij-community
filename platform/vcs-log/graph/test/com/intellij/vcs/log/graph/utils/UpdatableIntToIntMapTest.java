@@ -43,7 +43,7 @@ public abstract class UpdatableIntToIntMapTest {
     private final Set<Integer> myVisibleNodes;
     private final UpdatableIntToIntMap myUpdatableIntToIntMap;
 
-    public Tester(UpdatableIntToIntMap updatableIntToIntMap, Set<Integer> visibleNodes) {
+    Tester(UpdatableIntToIntMap updatableIntToIntMap, Set<Integer> visibleNodes) {
       myVisibleNodes = visibleNodes;
       myUpdatableIntToIntMap = updatableIntToIntMap;
     }

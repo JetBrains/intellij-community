@@ -108,7 +108,7 @@ class AdvancedArrayAccess {
 
   void testMethodQualifier() {
     if(getData()[0] == null) {
-      System.out.println(getData()[0].<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>());
+      System.out.println(getData()[0].<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>());
     }
   }
 
@@ -193,5 +193,13 @@ class AdvancedArrayAccess {
     if(<warning descr="Condition 'x[2] == 2' is always 'true'">x[2] == 2</warning>) {
       System.out.println("Always");
     }
+  }
+
+  int[] getArray() {
+    return new int[0];
+  }
+
+  void testInitializerWrong() {
+    getArray() = <error descr="Array initializer is not allowed here">{1,2,3}</error>;
   }
 }

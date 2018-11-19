@@ -21,7 +21,7 @@ class ArrayIterable<T> implements Iterable<T>
 {
     private final T[] contents;
 
-    public ArrayIterable(T[] contents){
+    ArrayIterable(T[] contents){
         this.contents = contents;
     }
 

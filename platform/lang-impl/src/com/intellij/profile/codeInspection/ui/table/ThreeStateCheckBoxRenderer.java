@@ -16,7 +16,7 @@
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
@@ -38,7 +37,7 @@ import java.util.List;
  */
 public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements TableCellRenderer, TableCellEditor {
 
-  private final List<CellEditorListener> myListeners = new SmartList<>();
+  private final List<CellEditorListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ThreeStateCheckBoxRenderer() {
     setThirdStateEnabled(false);
@@ -102,7 +101,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
   @Override
   public boolean stopCellEditing() {
     final ChangeEvent e = new ChangeEvent(this);
-    for (final CellEditorListener listener : new ArrayList<>(myListeners)) {
+    for (final CellEditorListener listener : myListeners) {
       listener.editingStopped(e);
     }
     return true;
@@ -111,7 +110,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
   @Override
   public void cancelCellEditing() {
     final ChangeEvent e = new ChangeEvent(this);
-    for (final CellEditorListener listener : new ArrayList<>(myListeners)) {
+    for (final CellEditorListener listener : myListeners) {
       listener.editingCanceled(e);
     }
   }

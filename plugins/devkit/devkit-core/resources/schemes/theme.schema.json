@@ -1,5 +1,14 @@
 {
   "version": "0.1",
+  "definitions": {
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
+      "title": "Color",
+      "description": "Color in #RRGGBB format",
+      "examples": ["#123abc"]
+    }
+  },
   "type": "object",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "required": ["name", "dark", "author", "ui"],
@@ -40,11 +49,9 @@
         "/editorScheme.xml"
       ]
     },
-
     "ui": {
       "type": "object"
     },
-
     "background": {
       "type": "object",
       "required": ["image"],
@@ -93,7 +100,6 @@
         }
       }
     },
-
     "icons": {
       "type": "object",
       "patternProperties": {
@@ -108,6 +114,29 @@
               "type": "string",
               "pattern": "^/"
             }
+          }
+        }
+      },
+      "properties": {
+        "ColorPalette": {
+          "type": "object",
+          "properties": {
+            "Actions.Red": {"$ref": "#/definitions/color"},
+            "Actions.Yellow": {"$ref": "#/definitions/color"},
+            "Actions.Green": {"$ref": "#/definitions/color"},
+            "Actions.Blue": {"$ref": "#/definitions/color"},
+            "Actions.Grey": {"$ref": "#/definitions/color"},
+            "Objects.Grey": {"$ref": "#/definitions/color"},
+            "Objects.Blue": {"$ref": "#/definitions/color"},
+            "Objects.Green": {"$ref": "#/definitions/color"},
+            "Objects.Yellow": {"$ref": "#/definitions/color"},
+            "Objects.YellowDark": {"$ref": "#/definitions/color"},
+            "Objects.Purple": {"$ref": "#/definitions/color"},
+            "Objects.Pink": {"$ref": "#/definitions/color"},
+            "Objects.Red": {"$ref": "#/definitions/color"},
+            "Objects.RedStatus": {"$ref": "#/definitions/color"},
+            "Objects.GreenAndroid": {"$ref": "#/definitions/color"},
+            "Objects.BlackText": {"$ref": "#/definitions/color"}
           }
         }
       }

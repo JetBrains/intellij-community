@@ -8,28 +8,29 @@ import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
+import com.intellij.ui.treeStructure.SimpleTree
+import com.intellij.ui.treeStructure.treetable.TreeTable
+import com.intellij.util.ui.tree.TreeUtil
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.driver.ComponentPreconditions
 import org.fest.swing.driver.JTreeDriver
-import org.fest.swing.driver.JTreeLocation
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Timeout
-import org.fest.swing.util.Pair
-import org.fest.swing.util.Triple
 import java.awt.Point
 import java.awt.Rectangle
-import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.plaf.basic.BasicTreeUI
 import javax.swing.tree.TreePath
 
 open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDriver(robot) {
   private val DEFAULT_FIND_PATH_ATTEMPTS: Int = 3
+
+  protected data class PathInfo(val expandPoint: Point, val clickPoint: Point, val toggleClickCount: Int, val bounds: Rectangle)
 
   init {
     val resultReader = when (javaClass.name) {
@@ -45,8 +46,8 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
                 button: MouseButton = MouseButton.LEFT_BUTTON,
                 times: Int = 1,
                 attempts: Int = DEFAULT_FIND_PATH_ATTEMPTS) {
-    val point = tree.scrollToPath(treePath)
-    robot.click(tree, point, button, times)
+    val pathInfo = tree.scrollToPath(treePath)
+    robot.click(tree, pathInfo.clickPoint, button, times)
     //check that path is selected or click it again
     if (!tree.checkPathIsSelected(treePath)) {
       if (attempts == 0)
@@ -56,29 +57,73 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     }
   }
 
-  fun JTree.scrollToPath(path: TreePath): Point {
-    robot.waitForIdle()
-    return this.scrollToMatchingPath(path).second
-  }
-
-  private fun JTree.scrollToMatchingPath(path: TreePath): Pair<Boolean, Point> {
-    this.makeVisible(path, false)
-    return this.scrollToPathToSelectExt(path)
-  }
-
-  private fun JTree.scrollToPathToSelectExt(path: TreePath): Pair<Boolean, Point> {
-    val result =  GuiTestUtilKt.computeOnEdt {
-      val isSelected = this.selectionCount == 1 && this.isPathSelected(path)
-      Pair.of(isSelected, this.scrollToTreePathExt(path))
-    }!!
-    robot.waitForIdle()
+  protected fun JTree.scrollToPath(path: TreePath) : PathInfo {
+      robot.waitForIdle()
+      val result = GuiTestUtilKt.computeOnEdt {
+        ComponentPreconditions.checkEnabledAndShowing(this)
+        val pathInfo = this.getPathInfo(path)
+        scrollRectToVisible(pathInfo.bounds)
+        pathInfo
+      }!!
+      robot.waitForIdle()
     return result
   }
 
-  private fun JTree.scrollToTreePathExt(path: TreePath): Point {
-    val boundsAndCoordinates = JTreeLocation().pathBoundsAndCoordinates(this, path)
-    this.scrollRectToVisible(boundsAndCoordinates.first as Rectangle)
-    return boundsAndCoordinates.second!!
+  private fun JTree.isInnerExpandControl(): Boolean = this is SimpleTree || this is TreeTable
+
+  private fun JTree.getExpandCoord(path: TreePath): Int {
+    val bounds = this.getPathBounds(path)
+
+    return if (isInnerExpandControl()) {
+      // expand/collapse symbol is located inside path bounds
+      bounds.x + 1
+    }
+    else {
+      // in other trees the expand/collapse symbol is located out of the path bounds
+      // so we have to expand the bounds to the left
+      val expandControlRange = TreeUtil.getExpandControlRange(this, path)
+      when {
+        expandControlRange != null -> expandControlRange.from + (expandControlRange.to - expandControlRange.from) / 2
+        bounds.x < bounds.height / 2 -> x + 8
+        else -> bounds.x - bounds.height / 2
+      }
+    }
+  }
+
+  private fun JTree.refineToggleClickCount(): Int = if (isInnerExpandControl()) {
+    // expand/collapse symbol is located inside path bounds
+    // so the way how to expand/collapse node is controlled by the tree
+    toggleClickCount
+  }
+  else {
+    // in other trees the expand/collapse symbol is located out of the path bounds
+    // we manually expand/collapse the node
+    1
+  }
+
+  // to be overridden by CheckboxTree to take into account size of the checkbox control
+  protected open fun getLabelXCoord(jTree: JTree, path: TreePath): Int = jTree.getPathBounds(path).x + 1
+
+  private fun JTree.getScrollBounds(path: TreePath): Rectangle {
+    val bounds = this.getPathBounds(path)
+    return if (isInnerExpandControl()) {
+      bounds
+    }
+    else {
+      val expandControlRange = TreeUtil.getExpandControlRange(this, path)
+      Rectangle(expandControlRange?.from ?: x, bounds.y, bounds.width, bounds.height)
+    }
+  }
+
+  private fun JTree.getPathInfo(path: TreePath): PathInfo {
+    val bounds = this.getPathBounds(path)
+    val clickY = bounds.y + bounds.height / 2
+    return PathInfo(
+      expandPoint = Point(getExpandCoord(path), clickY),
+      clickPoint = Point(getLabelXCoord(this, path), clickY),
+      toggleClickCount = refineToggleClickCount(),
+      bounds = getScrollBounds(path)
+    )
   }
 
   private fun JTree.makeVisible(path: TreePath, expandWhenFound: Boolean): Boolean {
@@ -111,7 +156,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
 
   private fun JTree.waitForChildrenToShowUp(path: TreePath) {
     try {
-      GuiTestUtilKt.waitUntil( "Waiting for children are shown up",
+      GuiTestUtilKt.waitUntil("Waiting for children are shown up",
         Timeout.timeout(robot.settings().timeoutToBeVisible().toLong())) { this.childCount(path) != 0 }
     }
     catch (waitTimedOutError: WaitTimedOutError) {
@@ -147,28 +192,25 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
 
   fun expandPath(tree: JTree, treePath: TreePath) {
     // do not try to expand leaf
-    if(tree.model.isLeaf(treePath.lastPathComponent)) return
-    val info = tree.scrollToMatchingPathAndGetToggleInfo(treePath)
-    if (!info.first) tree.toggleCell(info.second!!, info.third)
+    if (GuiTestUtilKt.computeOnEdt { tree.model.isLeaf(treePath.lastPathComponent) } != false) return
+    val info = tree.scrollToPath(treePath)
+    if (tree.isExpanded(treePath).not()) tree.toggleCell(info.expandPoint, info.toggleClickCount)
   }
 
   fun collapsePath(tree: JTree, treePath: TreePath) {
     // do not try to collapse leaf
-    if(tree.model.isLeaf(treePath.lastPathComponent)) return
-    val info = tree.scrollToMatchingPathAndGetToggleInfo(treePath)
-    if (info.first) tree.toggleCell(info.second!!, info.third)
+    if (GuiTestUtilKt.computeOnEdt { tree.model.isLeaf(treePath.lastPathComponent) } != false) return
+    val info = tree.scrollToPath(treePath)
+    if (tree.isExpanded(treePath)) tree.toggleCell(info.expandPoint, info.toggleClickCount)
   }
 
   fun selectPath(tree: JTree, treePath: TreePath) {
-    selectMatchingPath(tree, treePath)
-  }
-
-  private fun selectMatchingPath(tree: JTree, treePath: TreePath): Point {
-    val info = tree.scrollToMatchingPath(treePath)
+    val pathInfo = tree.scrollToPath(treePath)
+    val isSelected = GuiTestUtilKt.computeOnEdt {
+      tree.selectionCount == 1 && tree.isPathSelected(treePath)
+    } ?: false
     robot.waitForIdle()
-    val where = info.second!!
-    if (!info.first) robot.click(tree, where)
-    return where
+    if (isSelected.not()) robot.click(tree, pathInfo.clickPoint)
   }
 
   private fun JTree.toggleCell(p: Point, toggleClickCount: Int) {
@@ -197,31 +239,6 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     Reflection.method("toggleExpandState").withParameterTypes(TreePath::class.java).`in`(treeUI).invoke(path)
   }
 
-  private fun JTree.scrollToMatchingPathAndGetToggleInfo(treePath: TreePath): Triple<Boolean, Point, Int> {
-    val result = GuiTestUtilKt.computeOnEdt {
-      ComponentPreconditions.checkEnabledAndShowing(this)
-      val point = scrollToTreePathExt(treePath)
-      Triple.of(isExpanded(treePath), point, toggleClickCount)
-    }!!
-    robot.waitForIdle()
-    return result
-  }
-
-  fun showPopupMenu(tree: JTree, treePath: TreePath): JPopupMenu {
-    val info = tree.scrollToMatchingPath(treePath)
-    robot.waitForIdle()
-    return robot.showPopupMenu(tree, info.second!!)
-  }
-
-  fun drag(tree: JTree, treePath: TreePath) {
-    val p = selectMatchingPath(tree, treePath)
-    drag(tree, p)
-  }
-
-  fun drop(tree: JTree, treePath: TreePath) {
-    drop(tree, tree.scrollToMatchingPath(treePath).second!!)
-  }
-
   fun findPath(tree: JTree, stringPath: List<String>, predicate: FinderPredicate = Predicate.equality): TreePath {
     fun <T> List<T>.list2tree() = map { subList(0, indexOf(it) + 1) }
     lateinit var path: TreePath
@@ -234,25 +251,26 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     return path
   }
 
-  fun findPathToNode(tree: JTree, node: String, predicate: FinderPredicate = Predicate.equality): TreePath{
+  fun findPathToNode(tree: JTree, node: String, predicate: FinderPredicate = Predicate.equality): TreePath {
 
-    fun JTree.iterateChildren(root: Any, node: String, rootPath: TreePath, predicate: FinderPredicate): TreePath?{
-      for(index in 0 until this.model.getChildCount(root)){
-        val child = this.model.getChild(root, index)
+    fun JTree.iterateChildren(root: Any, node: String, rootPath: TreePath, predicate: FinderPredicate): TreePath? {
+      for (index in 0 until (GuiTestUtilKt.computeOnEdt { this.model.getChildCount(root) } ?: 0)) {
+        val child = GuiTestUtilKt.computeOnEdt { this.model.getChild(root, index) }!!
         val childPath = TreePath(arrayOf(*rootPath.path, child))
-        if (predicate(child.toString(), node)){
+        if (predicate(child.toString(), node)) {
           return childPath
         }
-        if(!this.model.isLeaf(child)) {
+        if (GuiTestUtilKt.computeOnEdt { this.model.isLeaf(child) } == false) {
           makeVisible(childPath, true)
           val found = this.iterateChildren(child, node, childPath, predicate)
-          if(found != null) return found
+          if (found != null) return found
         }
       }
       return null
     }
 
-    return tree.iterateChildren(tree.model.root, node, TreePath(tree.model.root), predicate)
+    val root = GuiTestUtilKt.computeOnEdt { tree.model.root } ?: throw IllegalStateException("root is null")
+    return tree.iterateChildren(root, node, TreePath(root), predicate)
            ?: throw LocationUnavailableException("Node `$node` not found")
   }
 
@@ -261,7 +279,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
       findPath(tree, pathStrings, predicate)
       true
     }
-    catch (e: LocationUnavailableException){
+    catch (e: LocationUnavailableException) {
       false
     }
   }

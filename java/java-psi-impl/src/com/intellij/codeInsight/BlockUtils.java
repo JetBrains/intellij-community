@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -196,5 +197,27 @@ public class BlockUtils {
       }
     }
     return false;
+  }
+
+  public static void inlineCodeBlock(@NotNull PsiStatement orig, PsiCodeBlock codeBlock) {
+    PsiJavaToken lBrace = codeBlock.getLBrace();
+    PsiJavaToken rBrace = codeBlock.getRBrace();
+    if (lBrace == null || rBrace == null) return;
+
+    final PsiElement[] children = codeBlock.getChildren();
+    if (children.length > 2) {
+      final PsiElement added =
+        orig.getParent().addRangeBefore(
+          children[1],
+          children[children.length - 2],
+          orig);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
+      codeStyleManager.reformat(added);
+    }
+    orig.delete();
+  }
+
+  public static PsiBlockStatement createBlockStatement(Project project) {
+    return (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", null);
   }
 }

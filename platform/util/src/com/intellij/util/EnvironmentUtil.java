@@ -1,20 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -30,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -93,8 +83,7 @@ public class EnvironmentUtil {
     }
   }
 
-  private EnvironmentUtil() {
-  }
+  private EnvironmentUtil() { }
 
   public static boolean isEnvironmentReady() {
     return ourEnvGetter.isDone();
@@ -151,6 +140,29 @@ public class EnvironmentUtil {
       array[i++] = entry.getKey() + "=" + entry.getValue();
     }
     return array;
+  }
+
+  /**
+   * Validates environment variable name in accordance to
+   * {@code ProcessEnvironment#validateVariable} ({@code ProcessEnvironment#validateName} on Windows).
+   *
+   * @see #isValidValue(String)
+   * @see <a href="http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap08.html">Environment Variables in Unix</a>
+   * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/ProcThread/environment-variables">Environment Variables in Windows</a>
+   */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isValidName(@Nullable String name) {
+    return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfo.isWindows ? 1 : 0) == -1;
+  }
+
+  /**
+   * Validates environment variable value in accordance to {@code ProcessEnvironment#validateValue}.
+   *
+   * @see #isValidName(String)
+   */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isValidValue(@Nullable String value) {
+    return value != null && value.indexOf('\0') == -1;
   }
 
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
@@ -309,13 +321,23 @@ public class EnvironmentUtil {
       return exitCode;
     }
     LOG.warn("shell env loader is timed out");
-    UnixProcessManager.sendSigIntToProcessTree(process);
-    exitCode = waitFor(process, 1000);
-    if (exitCode != null) {
-      return exitCode;
+
+    // First, try to interrupt 'softly' (we know how to do it only on *nix)
+    if (!SystemInfo.isWindows) {
+      UnixProcessManager.sendSigIntToProcessTree(process);
+      exitCode = waitFor(process, 1000);
+      if (exitCode != null) {
+        return exitCode;
+      }
+      LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
     }
-    LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
-    UnixProcessManager.sendSigKillToProcessTree(process);
+
+    if (SystemInfo.isWindows) {
+      WinProcessManager.kill(process, true);
+    }
+    else {
+      UnixProcessManager.sendSigKillToProcessTree(process);
+    }
     exitCode = waitFor(process, 1000);
     if (exitCode != null) {
       return exitCode;
@@ -435,7 +457,7 @@ public class EnvironmentUtil {
 
     private final StringBuffer myBuffer;
 
-    public StreamGobbler(@NotNull InputStream stream) {
+    StreamGobbler(@NotNull InputStream stream) {
       super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myBuffer = new StringBuffer();
       start("stdout/stderr streams of shell env loading process");

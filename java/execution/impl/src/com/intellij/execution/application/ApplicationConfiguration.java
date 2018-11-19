@@ -9,6 +9,7 @@ import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -30,45 +31,48 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
-public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
+public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
              RefactoringListenerProvider, InputRedirectAware {
-
   /* deprecated, but 3rd-party used variables */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String MAIN_CLASS_NAME;
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String PROGRAM_PARAMETERS;
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String WORKING_DIRECTORY;
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public boolean ALTERNATIVE_JRE_PATH_ENABLED;
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String ALTERNATIVE_JRE_PATH;
-  @Deprecated public boolean ENABLE_SWING_INSPECTOR;
   /* */
 
-  private ShortenCommandLine myShortenCommandLine = null;
-  private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
-
-  public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
-    this(name, project, applicationConfigurationType.getConfigurationFactories()[0]);
+  public ApplicationConfiguration(String name, @NotNull Project project, @NotNull ApplicationConfigurationType configurationType) {
+    this(name, project, configurationType.getConfigurationFactories()[0]);
   }
 
-  public ApplicationConfiguration(final String name, final Project project) {
+  public ApplicationConfiguration(final String name, @NotNull Project project) {
     this(name, project, ApplicationConfigurationType.getInstance().getConfigurationFactories()[0]);
   }
 
-  protected ApplicationConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
+  protected ApplicationConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(name, new JavaRunConfigurationModule(project, true), factory);
+  }
+
+  // backward compatibility (if 3rd-party plugin extends ApplicationConfigurationType but uses own factory without options class)
+  @Override
+  @NotNull
+  protected final Class<? extends JvmMainMethodRunConfigurationOptions> getDefaultOptionsClass() {
+    return JvmMainMethodRunConfigurationOptions.class;
   }
 
   /**
    * Because we have to keep backward compatibility, never use `getOptions()` to get or set values - use only designated getters/setters.
    */
+  @NotNull
   @Override
-  protected ApplicationConfigurationOptions getOptions() {
-    return (ApplicationConfigurationOptions)super.getOptions();
-  }
-
-  @Override
-  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
-    return ApplicationConfigurationOptions.class;
+  protected JvmMainMethodRunConfigurationOptions getOptions() {
+    return (JvmMainMethodRunConfigurationOptions)super.getOptions();
   }
 
   @Override
@@ -262,7 +266,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   public boolean isProvidedScopeIncluded() {
-    return getOptions().getIncludeProvidedScope();
+    return getOptions().isIncludeProvidedScope();
   }
 
   public void setIncludeProvidedScope(boolean value) {
@@ -274,12 +278,18 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getMainClassName());
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void readExternal(@NotNull final Element element) {
     super.readExternal(element);
 
-    ApplicationConfigurationOptions options = getOptions();
+    syncOldStateFields();
+
+    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
+  }
+
+  @SuppressWarnings("deprecation")
+  private void syncOldStateFields() {
+    JvmMainMethodRunConfigurationOptions options = getOptions();
 
     String workingDirectory = options.getWorkingDirectory();
     if (workingDirectory == null) {
@@ -294,11 +304,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     WORKING_DIRECTORY = workingDirectory;
     ALTERNATIVE_JRE_PATH = options.getAlternativeJrePath();
     ALTERNATIVE_JRE_PATH_ENABLED = options.isAlternativeJrePathEnabled();
-    ENABLE_SWING_INSPECTOR = options.isSwingInspectorEnabled();
+  }
 
-    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
-    myInputRedirectOptions.readExternal(element);
+  @Override
+  public void setOptionsFromConfigurationFile(@NotNull BaseState state) {
+    super.setOptionsFromConfigurationFile(state);
+    syncOldStateFields();
   }
 
   @Override
@@ -306,35 +317,30 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super.writeExternal(element);
 
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
-    myInputRedirectOptions.writeExternal(element);
   }
 
   @Nullable
   @Override
   public ShortenCommandLine getShortenCommandLine() {
-    return myShortenCommandLine;
+    return getOptions().getShortenClasspath();
   }
 
   @Override
-  public void setShortenCommandLine(ShortenCommandLine mode) {
-    myShortenCommandLine = mode;
+  public void setShortenCommandLine(@Nullable ShortenCommandLine mode) {
+    getOptions().setShortenClasspath(mode);
   }
 
   @NotNull
   @Override
   public InputRedirectOptions getInputRedirectOptions() {
-    return myInputRedirectOptions;
+    return getOptions().getRedirectOptions();
   }
 
   public boolean isSwingInspectorEnabled() {
-    //noinspection deprecation
-    return ENABLE_SWING_INSPECTOR;
+    return getOptions().isSwingInspectorEnabled();
   }
 
   public void setSwingInspectorEnabled(boolean value) {
-    //noinspection deprecation
-    ENABLE_SWING_INSPECTOR = value;
     getOptions().setSwingInspectorEnabled(value);
   }
 

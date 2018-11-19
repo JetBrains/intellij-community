@@ -55,7 +55,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
 
     final PsiReferenceExpression operandReference = (PsiReferenceExpression)operand;
     final PsiElement resolved = operandReference.resolve();
-    if (resolved == null || (!(resolved instanceof PsiParameter) && !(resolved instanceof PsiLocalVariable))) {
+    if (!(resolved instanceof PsiParameter) && !(resolved instanceof PsiLocalVariable)) {
       return false;
     }
 
@@ -94,6 +94,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
                      .filter(PsiTypeCastExpression.class)
                      .filter(cast -> EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(cast.getOperand(), operand))
                      .toList();
+    PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(method.getProject());
     for (PsiTypeCastExpression occurrence : found) {
       ProgressIndicatorProvider.checkCanceled();
       final TextRange occurrenceTextRange = occurrence.getTextRange();
@@ -105,7 +106,9 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
 
       final PsiCodeBlock methodBody = method.getBody();
       if (variable != null && methodBody != null &&
-          !isChangedBetween(castedVar, methodBody, occurrence, expression) && !isChangedBetween(variable, methodBody, occurrence, expression)) {
+          variable.getName() != null && resolveHelper.resolveReferencedVariable(variable.getName(), expression) == variable &&
+          !isChangedBetween(castedVar, methodBody, occurrence, expression) &&
+          !isChangedBetween(variable, methodBody, occurrence, expression)) {
         return variable;
       }
     }

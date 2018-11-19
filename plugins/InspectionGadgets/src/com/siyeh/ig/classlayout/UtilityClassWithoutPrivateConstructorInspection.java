@@ -81,7 +81,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       }
     }
     AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
-    return fixes.toArray(new InspectionGadgetsFix[0]);
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override

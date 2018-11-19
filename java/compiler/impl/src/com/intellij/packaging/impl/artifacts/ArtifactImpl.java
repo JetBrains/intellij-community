@@ -41,7 +41,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   private String myName;
   private boolean myBuildOnMake;
   private String myOutputPath;
-  private final EventDispatcher<ArtifactListener> myDispatcher;
+  private final EventDispatcher<? extends ArtifactListener> myDispatcher;
   private ArtifactType myArtifactType;
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
   private final ProjectModelExternalSource myExternalSource;
@@ -54,7 +54,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
 
   public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake,
                       @NotNull CompositePackagingElement<?> rootElement, String outputPath,
-                      @Nullable ProjectModelExternalSource externalSource, EventDispatcher<ArtifactListener> dispatcher) {
+                      @Nullable ProjectModelExternalSource externalSource, EventDispatcher<? extends ArtifactListener> dispatcher) {
     myName = name;
     myArtifactType = artifactType;
     myBuildOnMake = buildOnMake;
@@ -113,7 +113,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return myExternalSource;
   }
 
-  public ArtifactImpl createCopy(EventDispatcher<ArtifactListener> dispatcher) {
+  public ArtifactImpl createCopy(EventDispatcher<? extends ArtifactListener> dispatcher) {
     final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath, myExternalSource,
                                                    dispatcher);
     for (Map.Entry<ArtifactPropertiesProvider, ArtifactProperties<?>> entry : myProperties.entrySet()) {

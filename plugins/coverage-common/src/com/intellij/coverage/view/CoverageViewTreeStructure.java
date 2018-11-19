@@ -28,13 +28,15 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   }
 
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootNode;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(final Object element) {
+  public Object[] getChildElements(@NotNull final Object element) {
     return getChildren(element, myData, myStateBean);
   }
 
@@ -43,7 +45,7 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
                               CoverageViewManager.StateBean stateBean) {
     if (element instanceof CoverageListRootNode && stateBean.myFlattenPackages) {
       final Collection<? extends AbstractTreeNode> children = ((CoverageListRootNode)element).getChildren();
-      return children.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY);
+      return ArrayUtil.toObjectArray(children);
     }
     if (element instanceof CoverageListNode) {
       List<AbstractTreeNode> children = bundle.getCoverageEngine().createCoverageViewExtension(((CoverageListNode)element).getProject(),
@@ -56,14 +58,14 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
 
 
   @Override
-  public Object getParentElement(final Object element) {
+  public Object getParentElement(@NotNull final Object element) {
     final PsiElement psiElement = (PsiElement)element;
     return myCoverageViewExtension.getParentElement(psiElement);
   }
 
   @Override
   @NotNull
-  public CoverageViewDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
+  public CoverageViewDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
     return new CoverageViewDescriptor(myProject, parentDescriptor, element);
   }
 

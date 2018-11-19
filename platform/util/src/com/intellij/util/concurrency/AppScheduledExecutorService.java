@@ -38,7 +38,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
-  private Consumer<Thread> newThreadListener;
+  private Consumer<? super Thread> newThreadListener;
   private final AtomicInteger counter = new AtomicInteger();
 
   private static class Holder {
@@ -61,7 +61,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
 
         thread.setPriority(Thread.NORM_PRIORITY - 1);
 
-        Consumer<Thread> listener = newThreadListener;
+        Consumer<? super Thread> listener = newThreadListener;
         if (listener != null) {
           listener.consume(thread);
         }
@@ -71,7 +71,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
   }
 
-  public void setNewThreadListener(@NotNull Consumer<Thread> threadListener) {
+  public void setNewThreadListener(@NotNull Consumer<? super Thread> threadListener) {
     if (newThreadListener != null) throw new IllegalStateException("Listener was already set: "+newThreadListener);
     newThreadListener = threadListener;
   }

@@ -109,7 +109,6 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
 
     final List<ProblemDescriptor> problems = ContainerUtil.newSmartList();
     DependenciesBuilder.analyzeFileDependencies(file, new DependenciesBuilder.DependencyProcessor() {
-      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
       private final Map<PsiFile, DependencyRule[]> violations =
         FactoryMap.create(dependencyFile -> validationManager.getViolatorDependencyRules(file, dependencyFile));
 
@@ -131,7 +130,7 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static class EditDependencyRulesAction implements LocalQuickFix {
     private final DependencyRule myRule;
-    public EditDependencyRulesAction(DependencyRule rule) {
+    EditDependencyRulesAction(DependencyRule rule) {
       myRule = rule;
     }
 

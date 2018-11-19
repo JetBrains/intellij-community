@@ -7,8 +7,7 @@ public class X {
       if (a > c) if (a < b) if (!bar1(a//comment in bar1
       )) if (!bar2(//comment in bar2
               a)) return true;/*inside nested*///comment after first condition
-//after end
-      return false;
+      return false;//after end
   }
 
   private static boolean bar1(double a)

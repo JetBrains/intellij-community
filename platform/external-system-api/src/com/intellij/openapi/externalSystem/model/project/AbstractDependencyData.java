@@ -9,7 +9,6 @@ import java.io.ObjectInputStream;
 
 /**
  * @author Denis Zhdanov
- * @since 8/10/11 6:41 PM
  */
 public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
   implements DependencyData, Named, OrderAware
@@ -17,8 +16,8 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final ModuleData myOwnerModule;
-  @NotNull private final T          myTarget;
+  @NotNull private ModuleData myOwnerModule;
+  @NotNull private T          myTarget;
 
   private DependencyScope myScope = DependencyScope.COMPILE;
 
@@ -37,10 +36,18 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     return myOwnerModule;
   }
 
+  public void setOwnerModule(@NotNull ModuleData ownerModule) {
+    myOwnerModule = ownerModule;
+  }
+
   @Override
   @NotNull
   public T getTarget() {
     return myTarget;
+  }
+
+  public void setTarget(@NotNull T target) {
+    myTarget = target;
   }
 
   @Override
@@ -113,7 +120,6 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     myOrder = order;
   }
 
-  @SuppressWarnings("MethodOverridesPrivateMethodOfSuperclass")
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
   }

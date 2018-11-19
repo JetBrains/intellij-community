@@ -38,11 +38,11 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
     this(COLOR_TO_STRING_CONVERTER);
   }
 
-  public UserColorLookup(final Function<Color, String> colorToStringConverter) {
+  public UserColorLookup(final Function<? super Color, String> colorToStringConverter) {
     this(colorToStringConverter, LookupValueWithPriority.HIGH);
   }
 
-  public UserColorLookup(final Function<Color, String> colorToStringConverter, int priority) {
+  public UserColorLookup(final Function<? super Color, String> colorToStringConverter, int priority) {
     super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(COLOR_STRING).withInsertHandler(
       new InsertHandler<LookupElement>() {
         @Override
@@ -52,7 +52,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
       }), priority));
   }
 
-  private static void handleUserSelection(InsertionContext context, @NotNull Function<Color, String> colorToStringConverter) {
+  private static void handleUserSelection(InsertionContext context, @NotNull Function<? super Color, String> colorToStringConverter) {
     Project project = context.getProject();
     Editor editor = context.getEditor();
     int startOffset = context.getStartOffset();
@@ -64,7 +64,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
     context.setLaterRunnable(() -> {
       if (editor.isDisposed() || project.isDisposed()) return;
       List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(element);
-      Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(project),
+      Color color = ColorChooser.chooseColor(project, WindowManager.getInstance().suggestParentWindow(project),
                                              XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
       if (color != null) {
         WriteCommandAction.runWriteCommandAction(project, () -> {

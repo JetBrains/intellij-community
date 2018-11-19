@@ -38,8 +38,4 @@ public class ConvertToLongAdderIntentionTest extends LightQuickFixParameterizedT
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
   }
-
-  public void test() {
-    doAllTests();
-  }
 }

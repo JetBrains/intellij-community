@@ -162,11 +162,13 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return myDescriptor.getFramework().getIcon();
@@ -188,6 +190,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     throw new UnsupportedOperationException();
@@ -195,7 +198,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
   @NotNull
   @Override
-  protected BaseProjectTreeBuilder createBuilder(final DefaultTreeModel treeModel) {
+  protected BaseProjectTreeBuilder createBuilder(@NotNull final DefaultTreeModel treeModel) {
     return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
       @Override
       protected AbstractTreeUpdater createUpdater() {
@@ -204,11 +207,11 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     };
   }
 
+  @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
-    final Project project = myProject;
     final String id = getId();
-    return new ProjectTreeStructure(project, id) {
+    return new ProjectTreeStructure(myProject, id) {
 
       @Override
       public boolean isHideEmptyMiddlePackages() {
@@ -216,14 +219,15 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
       }
 
       @Override
-      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
         return new MvcProjectNode(project, this, myDescriptor);
       }
     };
   }
 
+  @NotNull
   @Override
-  protected ProjectViewTree createTree(final DefaultTreeModel treeModel) {
+  protected ProjectViewTree createTree(@NotNull final DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
       public String toString() {
         return myDescriptor.getFramework().getDisplayName() + " " + super.toString();
@@ -231,9 +235,12 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     };
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeUpdater createTreeUpdater(final AbstractTreeBuilder treeBuilder) {
-    return new AbstractTreeUpdater(treeBuilder);
+  protected AbstractTreeUpdater createTreeUpdater(@NotNull final AbstractTreeBuilder treeBuilder) {
+    return new AbstractTreeUpdater(treeBuilder) {
+      // unique class to simplify search through the logs
+    };
   }
 
   @Override
@@ -495,12 +502,12 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myViewState.hideEmptyMiddlePackages;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       myViewState.hideEmptyMiddlePackages = flag;
       TreeUtil.collapseAll(myTree, 1);
     }

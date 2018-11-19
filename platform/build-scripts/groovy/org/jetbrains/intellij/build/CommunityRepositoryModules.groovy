@@ -143,6 +143,7 @@ class CommunityRepositoryModules {
       withModule("intellij.maven.server.m3.common")
       withModule("intellij.maven.server.m30.impl")
       withModule("intellij.maven.server.m3.impl")
+      withModule("intellij.maven.errorProne.compiler")
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
@@ -159,8 +160,7 @@ class CommunityRepositoryModules {
         "commons-beanutils.jar",
         "maven-dependency-tree-1.2.jar",
         "mercury-artifact-1.0-alpha-6.jar",
-        "nexus-indexer-1.2.3.jar",
-        "plexus-utils-1.5.5.jar"
+        "nexus-indexer-1.2.3.jar"
       ].each {withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib")}
       doNotCopyModuleLibrariesAutomatically([
         "intellij.maven.server.m2.impl", "intellij.maven.server.m3.common", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
@@ -175,6 +175,12 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension.impl")
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
+    },
+    plugin("intellij.platform.testGuiFramework") {
+      mainJarName = "testGuiFramework"
+      withModule("intellij.platform.testGuiFramework")
+      withProjectLibrary("fest")
+      withProjectLibrary("fest-swing")
     },
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"
@@ -235,7 +241,12 @@ class CommunityRepositoryModules {
     plugin("intellij.statsCollector") {
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
+      withModule("intellij.statsCollector.completionRanker")
       withResource("features/resources", "lib")
+    },
+    plugin("intellij.griffon") {
+      withModule("intellij.griffon.jps", "griffon-jps-plugin.jar")
+      withModule("intellij.griffon.rt", "griffon-rt.jar")
     }
   ]
 

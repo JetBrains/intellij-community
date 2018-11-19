@@ -37,8 +37,18 @@ import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTranspor
 
 
 public class RemoteDebugger implements ProcessDebugger {
-  private static final int RESPONSE_TIMEOUT = 60000;
-  private static final int SHORT_TIMEOUT = 2000;
+  static final int RESPONSE_TIMEOUT = 60000;
+  static final int SHORT_TIMEOUT = 2000;
+
+  /**
+   * The specific timeout for {@link VersionCommand} when IDE Python debugger
+   * runs in <em>client mode</em>, which is used when debugging Python
+   * applications run using Docker and Docker Compose.
+   *
+   * @see #handshake()
+   * @see ClientModeDebuggerTransport
+   */
+  private static final long CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS = 5000;
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");
 
@@ -62,19 +72,32 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @NotNull private final DebuggerTransport myDebuggerTransport;
 
+  /**
+   * The timeout for {@link VersionCommand}, which is used for handshaking with
+   * the Python debugger script.
+   *
+   * @see #handshake()
+   * @see #CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS
+   * @see #RESPONSE_TIMEOUT
+   */
+  private final long myHandshakeTimeout;
+
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = new ClientModeDebuggerTransport(this, host, port);
+    myHandshakeTimeout = CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS;
   }
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull ServerSocket socket, int timeout) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = new ServerModeDebuggerTransport(this, socket, timeout);
+    myHandshakeTimeout = RESPONSE_TIMEOUT;
   }
 
   protected RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull DebuggerTransport debuggerTransport) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = debuggerTransport;
+    myHandshakeTimeout = RESPONSE_TIMEOUT;
   }
 
   public IPyDebugProcess getDebugProcess() {
@@ -104,7 +127,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public String handshake() throws PyDebuggerException {
-    final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
+    final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN", myHandshakeTimeout);
     command.execute();
     String version = command.getRemoteVersion();
     if (version != null) {
@@ -314,9 +337,9 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Nullable
-  ProtocolFrame waitForResponse(final int sequence) {
+  ProtocolFrame waitForResponse(final int sequence, long timeout) {
     ProtocolFrame response;
-    long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
+    long until = System.currentTimeMillis() + timeout;
 
     synchronized (myResponseQueue) {
       boolean interrupted = false;
@@ -343,7 +366,8 @@ public class RemoteDebugger implements ProcessDebugger {
     return myDebuggerTransport.isConnecting() || myDebuggerTransport.isConnected();
   }
 
-  public void execute(@NotNull final AbstractCommand command, int responseTimeout) {
+  @Override
+  public void execute(@NotNull final AbstractCommand command) {
     CountDownLatch myLatch = new CountDownLatch(1);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (command instanceof ResumeOrStepCommand) {
@@ -364,7 +388,7 @@ public class RemoteDebugger implements ProcessDebugger {
     if (command.isResponseExpected()) {
       // Note: do not wait for result from UI thread
       try {
-        myLatch.await(responseTimeout, TimeUnit.MILLISECONDS);
+        myLatch.await(command.getResponseTimeout(), TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException e) {
         // restore interrupted flag
@@ -373,11 +397,6 @@ public class RemoteDebugger implements ProcessDebugger {
         LOG.error(e);
       }
     }
-  }
-
-  @Override
-  public void execute(@NotNull final AbstractCommand command) {
-    execute(command, RESPONSE_TIMEOUT);
   }
 
   boolean sendFrame(final ProtocolFrame frame) {
@@ -683,14 +702,14 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix) {
     final GetCompletionsCommand command = new GetCompletionsCommand(this, threadId, frameId, prefix);
-    execute(command, SHORT_TIMEOUT);
+    execute(command);
     return command.getCompletions();
   }
 
   @Override
   public String getDescription(String threadId, String frameId, String cmd) {
     final GetDescriptionCommand command = new GetDescriptionCommand(this, threadId, frameId, cmd);
-    execute(command, SHORT_TIMEOUT);
+    execute(command);
     return command.getResult();
   }
 

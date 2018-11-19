@@ -25,7 +25,7 @@ class PreviewTreeModel extends DefaultTreeModel {
   private final PatternNode myPatternNode;
   private boolean myValid;
 
-  public PreviewTreeModel(@NotNull ExtractMethodProcessor processor) {
+  PreviewTreeModel(@NotNull ExtractMethodProcessor processor) {
     super(new DefaultMutableTreeNode(""));
     setValidImpl(true);
     DefaultMutableTreeNode root = getRoot();

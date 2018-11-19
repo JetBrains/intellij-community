@@ -22,7 +22,6 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
    */
 
   /**
-   * @noinspection MismatchedQueryAndUpdateOfCollection
    */
   private final static Map<String, DefaultConsoleHistoryModel> ourModels =
     ConcurrentFactoryMap.createMap(key -> new DefaultConsoleHistoryModel(null),

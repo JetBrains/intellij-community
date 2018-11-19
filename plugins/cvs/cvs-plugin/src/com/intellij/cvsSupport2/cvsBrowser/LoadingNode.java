@@ -40,7 +40,7 @@ class LoadingNode extends DefaultMutableTreeNode {
   private Runnable myPeriodRequest;
   private final DefaultTreeModel myModel;
 
-  public LoadingNode(DefaultTreeModel model) {
+  LoadingNode(DefaultTreeModel model) {
     myModel = model;
   }
 

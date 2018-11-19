@@ -84,17 +84,21 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   public UiInspectorAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> setSelected(null, true));
+      ApplicationManager.getApplication().invokeLater(() -> setSelected(true));
     }
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myInspector != null;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    setSelected(state);
+  }
+
+  void setSelected(boolean state) {
     if (state) {
       if (myInspector == null) {
         myInspector = new UiInspector();
@@ -360,8 +364,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
-      Color background = selected ? UIUtil.getTreeSelectionBackground() : null;
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+      Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
         Component component = componentNode.getComponent();
@@ -401,7 +405,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         componentNode.setText(toString());
-        setIcon(createColorIcon(component.getForeground(), component.getBackground()));
+        setIcon(createColorIcon(component.getBackground(), component.getForeground()));
       }
       if (value instanceof HierarchyTree.ClickInfoNode) {
         append(value.toString());
@@ -469,7 +473,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       setCellRenderer(new ComponentTreeCellRenderer(c));
       getSelectionModel().addTreeSelectionListener(this);
       new TreeSpeedSearch(this);
-      if (((JComponent)c).getClientProperty(CLICK_INFO) != null) {
+      if (c instanceof JComponent && ((JComponent)c).getClientProperty(CLICK_INFO) != null) {
         SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
       }
     }
@@ -581,7 +585,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private static class ClickInfoNode extends DefaultMutableTreeNode {
       private final List<PropertyBean> myInfo;
 
-      public ClickInfoNode(List<PropertyBean> info) {
+      ClickInfoNode(List<PropertyBean> info) {
         myInfo = info;
       }
 
@@ -677,7 +681,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             if (renderer instanceof JLabel) {
               //noinspection UseOfSystemOutOrSystemErr
               System.out.println((component != null ? getComponentName(component)+ " " : "" )
-                                 + ((JLabel)renderer).getText().replace("\tat", "\n\tat"));
+                                 + ((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"));
               return true;
             }
           }
@@ -715,7 +719,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           changed = ((InspectorTableModel)model).myProperties.get(row).changed;
         }
 
-        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBColor.link() : table.getForeground();
+        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBUI.CurrentTheme.Link.linkColor() : table.getForeground();
         final JBFont font = JBUI.Fonts.label();
         setFont(changed ? font.asBold() : font);
         setForeground(fg);
@@ -916,7 +920,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
     @Override
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(String.valueOf(value.width) + "x" + value.height);
+      setText(value.width + "x" + value.height);
       return this;
     }
   }
@@ -1002,7 +1006,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         Color insideColor = getBorderColor(((CompoundBorder)value).getInsideBorder());
         Color outsideColor = getBorderColor(((CompoundBorder)value).getOutsideBorder());
         if (insideColor != null && outsideColor != null) {
-          setIcon(createColorIcon(outsideColor, insideColor));
+          setIcon(createColorIcon(insideColor, outsideColor));
         }
         else if (insideColor != null) {
           setIcon(createColorIcon(insideColor));
@@ -1104,7 +1108,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static Icon createColorIcon(Color color1, Color color2) {
-    return JBUI.scale(new TwoColorsIcon(11, color1, color2));
+    return JBUI.scale(new ColorsIcon(11, color1, color2));
   }
 
 
@@ -1158,7 +1162,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     final Component myComponent;
     final List<PropertyBean> myProperties = ContainerUtil.newArrayList();
 
-    InspectorTableModel(@NotNull List<PropertyBean> clickInfo) {
+    InspectorTableModel(@NotNull List<? extends PropertyBean> clickInfo) {
       myComponent = null;
       myProperties.addAll(clickInfo);
     }
@@ -1356,12 +1360,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     public Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
-        switch (column) {
-          case 0:
-            return bean.propertyName;
-          default:
-            return bean.propertyValue;
-        }
+        return column == 0 ? bean.propertyName : bean.propertyValue;
       }
 
       return null;
@@ -1464,7 +1463,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class UiInspector implements AWTEventListener, Disposable {
 
-    public UiInspector() {
+    UiInspector() {
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     }
 

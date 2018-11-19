@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/17/2017
  */
 public class CompositeBuildData implements Serializable {
 

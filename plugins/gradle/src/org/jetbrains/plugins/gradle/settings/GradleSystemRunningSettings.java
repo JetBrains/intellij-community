@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 14/8/2014
  */
 @State(name = "GradleSystemRunningSettings", storages = @Storage("gradle.run.settings.xml"))
 public class GradleSystemRunningSettings implements PersistentStateComponent<GradleSystemRunningSettings.MyState> {
@@ -23,7 +22,6 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
     return ServiceManager.getService(GradleSystemRunningSettings.class);
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public GradleSystemRunningSettings.MyState getState() {

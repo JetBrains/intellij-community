@@ -72,7 +72,7 @@ internal fun show(panel: JPanel, stepContent: Component) {
   (panel.layout as CardLayout).show(panel, stepContentName)
 }
 
-internal fun showProcessExecutionErrorDialog(project: Project?, e: PyExecutionException) {
+fun showProcessExecutionErrorDialog(project: Project?, e: PyExecutionException) {
   val errorMessageText = "${e.command} could not complete successfully. " +
                          "Please see the command's output for information about resolving this problem."
   // HTML format for text in `JBLabel` enables text wrapping

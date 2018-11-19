@@ -160,7 +160,7 @@ public class JavaModuleGraphUtil {
         DFSTBuilder<PsiJavaModule> builder = new DFSTBuilder<>(graph);
         Collection<Collection<PsiJavaModule>> components = builder.getComponents();
         if (!components.isEmpty()) {
-          return components.stream().map(ContainerUtil::newLinkedHashSet).collect(Collectors.toList());
+          return ContainerUtil.map(components, ContainerUtil::newLinkedHashSet);
         }
       }
     }
@@ -204,7 +204,7 @@ public class JavaModuleGraphUtil {
     return new RequiresGraph(graph, transitiveEdges);
   }
 
-  private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<String> transitiveEdges) {
+  private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<? super String> transitiveEdges) {
     if (!(module instanceof LightJavaModule) && !relations.containsKey(module)) {
       relations.putValues(module, Collections.emptyList());
       boolean explicitJavaBase = false;
@@ -259,15 +259,15 @@ public class JavaModuleGraphUtil {
       return processExports(module, (pkg, m) -> packageName.equals(pkg) ? m : null);
     }
 
-    private <T> T processExports(PsiJavaModule start, BiFunction<String, PsiJavaModule, T> processor) {
+    private <T> T processExports(PsiJavaModule start, BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
       return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, 0, ContainerUtil.newHashSet(), processor) : null;
     }
 
     private <T> T processExports(String name,
                                  PsiJavaModule module,
                                  int layer,
-                                 Set<PsiJavaModule> visited,
-                                 BiFunction<String, PsiJavaModule, T> processor) {
+                                 Set<? super PsiJavaModule> visited,
+                                 BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
       if (visited.add(module)) {
         if (layer == 1) {
           for (PsiPackageAccessibilityStatement statement : module.getExports()) {

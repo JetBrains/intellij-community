@@ -19,12 +19,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.FilePsiMutation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 class DeleteForeachInitializers extends FilePsiMutation {
 
-  DeleteForeachInitializers(PsiFile file) {
+  DeleteForeachInitializers(@NotNull PsiFile file) {
     super(file);
   }
 

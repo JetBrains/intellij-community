@@ -17,7 +17,7 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
 
   override val storageManager = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  override final fun getPathMacroManagerForDefaults() = pathMacroManager
+  final override fun getPathMacroManagerForDefaults() = pathMacroManager
 
   // todo what about Upsource? For now this implemented not in the ModuleStoreBase because `project` and `module` are available only in this class (ModuleStoreImpl)
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
@@ -49,7 +49,7 @@ private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager
 
 // used in upsource
 abstract class ModuleStoreBase : ComponentStoreImpl(), ModuleStore {
-  override abstract val storageManager: StateStorageManagerImpl
+  abstract override val storageManager: StateStorageManagerImpl
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
@@ -61,7 +61,7 @@ abstract class ModuleStoreBase : ComponentStoreImpl(), ModuleStore {
     }
   }
 
-  override final fun setPath(path: String) {
+  final override fun setPath(path: String) {
     setPath(path, false)
   }
 

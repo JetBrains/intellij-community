@@ -82,7 +82,15 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testLambdaParameterDeterminesNeighbourLambdaType() { 
+    doTestParametersSideEffects(); 
+  }
+
   public void testLambdaParameterTypeSideEffects() {
+    doTestParametersSideEffects();
+  }
+
+  private void doTestParametersSideEffects() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     Collection<PsiParameter> parameters = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
     for (PsiParameter parameter : parameters) {

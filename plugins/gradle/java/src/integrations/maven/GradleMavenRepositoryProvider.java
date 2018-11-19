@@ -24,7 +24,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/25/13
  */
 public class GradleMavenRepositoryProvider implements MavenRepositoryProvider {
 

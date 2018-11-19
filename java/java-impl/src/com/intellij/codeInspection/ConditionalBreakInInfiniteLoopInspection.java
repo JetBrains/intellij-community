@@ -87,7 +87,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     final @NotNull PsiStatement myConditionStatement;
     final boolean myConditionInTheBeginning;
 
-    public Context(@NotNull PsiLoopStatement loopStatement,
+    Context(@NotNull PsiLoopStatement loopStatement,
                    @NotNull PsiStatement loopBody,
                    @NotNull PsiExpression condition,
                    @NotNull PsiStatement statement,

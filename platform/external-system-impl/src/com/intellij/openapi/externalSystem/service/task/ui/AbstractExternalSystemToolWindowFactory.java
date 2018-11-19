@@ -20,7 +20,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 5/13/13 4:15 PM
  */
 public abstract class AbstractExternalSystemToolWindowFactory implements ToolWindowFactory, DumbAware {
 

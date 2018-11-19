@@ -42,7 +42,7 @@ public class GitLogUtil {
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
-  public static final List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
+  public static final List<String> LOG_ALL = Arrays.asList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
   public static final String STDIN = "--stdin";
 
   @NotNull
@@ -86,17 +86,26 @@ public class GitLogUtil {
   public static void readTimedCommits(@NotNull Project project,
                                       @NotNull VirtualFile root,
                                       @NotNull List<String> parameters,
-                                      @NotNull Consumer<VcsUser> userConsumer,
-                                      @NotNull Consumer<VcsRef> refConsumer,
-                                      @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+                                      @Nullable Consumer<? super VcsUser> userConsumer,
+                                      @Nullable Consumer<? super VcsRef> refConsumer,
+                                      @NotNull Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
     }
 
     GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
-                                           AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
+    List<GitLogParser.GitLogOption> options = ContainerUtil.newArrayList(HASH, PARENTS, COMMIT_TIME);
+    if (userConsumer != null) {
+      options.add(AUTHOR_NAME);
+      options.add(AUTHOR_EMAIL);
+    }
+    if (refConsumer != null) {
+      options.add(REF_NAMES);
+    }
+
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE,
+                                           ArrayUtil.toObjectArray(options, GitLogParser.GitLogOption.class));
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
     handler.addParameters("--decorate=full");
@@ -108,11 +117,13 @@ public class GitLogUtil {
       List<Hash> parents = getParentHashes(factory, record);
       commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
 
-      for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
-        refConsumer.consume(ref);
+      if (refConsumer != null) {
+        for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
+          refConsumer.consume(ref);
+        }
       }
 
-      userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
+      if (userConsumer != null) userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
     Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();

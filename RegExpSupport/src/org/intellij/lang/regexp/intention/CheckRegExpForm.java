@@ -123,23 +123,10 @@ public class CheckRegExpForm {
 
         IdeFocusManager.getGlobalInstance().requestFocus(mySampleText, true);
 
-        final AnAction sampleTextFocusAction = new AnAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            IdeFocusManager.findInstance().requestFocus(myRegExp.getFocusTarget(), true);
-          }
-        };
-        sampleTextFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
-        sampleTextFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), mySampleText);
-
-        final AnAction regExpFocusAction = new AnAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            IdeFocusManager.findInstance().requestFocus(mySampleText.getFocusTarget(), true);
-          }
-        };
-        regExpFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), myRegExp);
-        regExpFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), myRegExp);
+        registerFocusShortcut(myRegExp, "shift TAB", mySampleText);
+        registerFocusShortcut(myRegExp, "TAB", mySampleText);
+        registerFocusShortcut(mySampleText, "shift TAB", myRegExp);
+        registerFocusShortcut(mySampleText, "TAB", myRegExp);
 
         updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
         DocumentListener documentListener = new DocumentListener() {
@@ -153,6 +140,16 @@ public class CheckRegExpForm {
 
         update();
         mySampleText.selectAll();
+      }
+
+      private void registerFocusShortcut(JComponent source, String shortcut, EditorTextField target) {
+        AnAction action = new AnAction() {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            IdeFocusManager.findInstance().requestFocus(target.getFocusTarget(), true);
+          }
+        };
+        action.registerCustomShortcutSet(CustomShortcutSet.fromString(shortcut), source);
       }
 
       public void update() {
@@ -209,8 +206,7 @@ public class CheckRegExpForm {
 
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    final RegExpMatchResult result = isMatchingText(regexpFile, sampleText);
-    return result != null && result == RegExpMatchResult.MATCHES;
+    return isMatchingText(regexpFile, sampleText) == RegExpMatchResult.MATCHES;
   }
   static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
     final String regExp = regexpFile.getText();

@@ -30,8 +30,6 @@ public class InvalidComparatorMethodReferenceInspectionTest extends LightQuickFi
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/invalidComparatorMethodReference";

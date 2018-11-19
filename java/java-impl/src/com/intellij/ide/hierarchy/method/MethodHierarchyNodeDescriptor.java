@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,12 +26,11 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
   private Icon myStateIcon;
   private MethodHierarchyTreeStructure myTreeStructure;
 
-  public MethodHierarchyNodeDescriptor(final Project project,
-                                       final HierarchyNodeDescriptor parentDescriptor,
-                                       final PsiElement aClass,
-                                       final boolean isBase,
-                                       final MethodHierarchyTreeStructure treeStructure
-  ) {
+  MethodHierarchyNodeDescriptor(@NotNull Project project,
+                                final HierarchyNodeDescriptor parentDescriptor,
+                                @NotNull PsiElement aClass,
+                                final boolean isBase,
+                                @NotNull MethodHierarchyTreeStructure treeStructure) {
     super(project, parentDescriptor, aClass, isBase);
     myTreeStructure = treeStructure;
   }

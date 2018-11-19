@@ -66,4 +66,7 @@ class S {
     @SuppressWarnings({"EmptyMethod"})
     void foo1() {String f;}
 
+    @SuppressWarnings("unknown")
+    void fooUnknownSuppression() {}
+
 }

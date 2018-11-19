@@ -67,13 +67,13 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
     return true;
   }
 
-  public abstract boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull T task);
+  public abstract boolean executeTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull T task);
 
   /**
-   *
    * @return {@code true} if at most one task may be configured
    */
   public boolean isSingleton() {
+    // by default false because user can configure chain (java compile, generate something, java compile again)
     return false;
   }
 

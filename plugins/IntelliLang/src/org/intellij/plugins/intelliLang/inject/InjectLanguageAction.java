@@ -64,7 +64,7 @@ import java.util.List;
 public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
   @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject language or reference";
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
-  public static final Key<Processor<PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
+  public static final Key<Processor<? super PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 
   private static final FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -169,8 +169,8 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
         }
       }
       if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
-        Processor<PsiLanguageInjectionHost> fixer = host.getUserData(FIX_KEY);
-        String text = StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected.";
+        Processor<? super PsiLanguageInjectionHost> fixer = host.getUserData(FIX_KEY);
+        String text = StringUtil.escapeXmlEntities(language.getDisplayName()) + " was temporarily injected.";
         if (fixer != null) {
           SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
             SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
@@ -218,7 +218,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(id), true);
   }
 
-  public static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
+  public static boolean doChooseLanguageToInject(Editor editor, final Processor<? super Injectable> onChosen) {
     ColoredListCellRenderer<Injectable> renderer = new ColoredListCellRenderer<Injectable>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends Injectable> list,

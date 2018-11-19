@@ -2,12 +2,12 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -43,7 +43,6 @@ import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.suggestJavaSdk
 
 /**
  * @author Eugene Zhuravlev
- * @since Sep 17, 2004
  */
 public class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
@@ -75,7 +74,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
 
       private void updateCache(VirtualFileEvent event) {
-        if (FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
+        if (ArchiveFileType.INSTANCE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
           String filePath = event.getFile().getPath();
           if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
             myCachedVersionStringToJdkVersion.clear();
@@ -116,8 +115,11 @@ public class JavaSdkImpl extends JavaSdk {
       if (version == JavaSdkVersion.JDK_1_5) {
         return "https://docs.oracle.com/javase/1.5.0/docs/api/";
       }
-      if (version == JavaSdkVersion.JDK_11) {
-        return "https://download.java.net/java/early_access/jdk11/docs/api/";
+      if (version == JavaSdkVersion.JDK_12) {
+        return "https://download.java.net/java/early_access/jdk12/docs/api/";
+      }
+      if (version.compareTo(JavaSdkVersion.JDK_11) >= 0) {
+        return "https://docs.oracle.com/en/java/javase/" + version.ordinal() + "/docs/api/";
       }
       if (version.compareTo(JavaSdkVersion.JDK_1_6) >= 0) {
         return "https://docs.oracle.com/javase/" + version.ordinal() + "/docs/api/";
@@ -215,6 +217,7 @@ public class JavaSdkImpl extends JavaSdk {
     return JdkUtil.checkForJdk(path);
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return suggestJavaSdkName(this, currentSdkName, sdkHome);
@@ -264,15 +267,9 @@ public class JavaSdkImpl extends JavaSdk {
     List<String> pathsChecked = new ArrayList<>();
 
     // community idea under idea
-    String path = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/java/jdkAnnotations";
+    String path = FileUtil.toSystemIndependentName(PathManager.getCommunityHomePath()) + "/java/jdkAnnotations";
     VirtualFile root = lfs.findFileByPath(path);
     pathsChecked.add(path);
-
-    if (root == null) {  // idea under idea
-      path = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/community/java/jdkAnnotations";
-      root = lfs.findFileByPath(path);
-      pathsChecked.add(path);
-    }
 
     if (root == null) { // build
       String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
@@ -413,13 +410,12 @@ public class JavaSdkImpl extends JavaSdk {
   @NotNull
   private static List<String> findClasses(@NotNull File file, boolean isJre) {
     List<String> result = ContainerUtil.newArrayList();
-    VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
     if (JdkUtil.isExplodedModularRuntime(file.getPath())) {
-      VirtualFile exploded = fileManager.findFileByUrl(StandardFileSystems.FILE_PROTOCOL_PREFIX + getPath(new File(file, "modules")));
+      File[] exploded = new File(file, "modules").listFiles();
       if (exploded != null) {
-        for (VirtualFile virtualFile : exploded.getChildren()) {
-          result.add(virtualFile.getUrl());
+        for (File root : exploded) {
+          result.add(VfsUtil.getUrlForLibraryRoot(root));
         }
       }
     }
@@ -432,7 +428,7 @@ public class JavaSdkImpl extends JavaSdk {
         }
       }
       else {
-        VirtualFile jrt = fileManager.findFileByUrl(jrtBaseUrl);
+        VirtualFile jrt = VirtualFileManager.getInstance().findFileByUrl(jrtBaseUrl);
         if (jrt != null) {
           for (VirtualFile virtualFile : jrt.getChildren()) {
             result.add(virtualFile.getUrl());
@@ -442,8 +438,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
     else {
       for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
-        String url = VfsUtil.getUrlForLibraryRoot(root);
-        result.add(url);
+        result.add(VfsUtil.getUrlForLibraryRoot(root));
       }
     }
 

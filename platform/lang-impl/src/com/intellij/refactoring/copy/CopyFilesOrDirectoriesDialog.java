@@ -14,7 +14,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -181,12 +180,6 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
   public JComponent getPreferredFocusedComponent() {
     return myShowNewNameField ? myNewNameField : getTargetDirectoryComponent();
   }
@@ -342,7 +335,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("refactoring.copyClass");
+  protected String getHelpId() {
+    return "refactoring.copyClass";
   }
 }

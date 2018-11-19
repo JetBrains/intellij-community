@@ -376,14 +376,13 @@ public class MergeHelper {
       return stat;
     }
 
-    switch (stat.type) {
-      case Statement.TYPE_SEQUENCE:
-        for (int i = stat.getStats().size() - 1; i >= 0; i--) {
-          Statement tmp = getLastDirectData(stat.getStats().get(i));
-          if (tmp == null || !tmp.getExprents().isEmpty()) {
-            return tmp;
-          }
+    if (stat.type == Statement.TYPE_SEQUENCE) {
+      for (int i = stat.getStats().size() - 1; i >= 0; i--) {
+        Statement tmp = getLastDirectData(stat.getStats().get(i));
+        if (tmp == null || !tmp.getExprents().isEmpty()) {
+          return tmp;
         }
+      }
     }
     return null;
   }

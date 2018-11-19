@@ -64,7 +64,7 @@ public class SliceHandler implements CodeInsightActionHandler {
     PsiElement atCaret = file.findElementAt(offset);
 
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(file);
-    if(provider == null){
+    if(provider == null || atCaret == null) {
       return null;
     }
     return provider.getExpressionAtCaret(atCaret, myDataFlowToThis);

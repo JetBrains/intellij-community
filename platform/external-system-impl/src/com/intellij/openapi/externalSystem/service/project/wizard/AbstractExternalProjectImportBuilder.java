@@ -50,7 +50,6 @@ import java.util.*;
  * GoF builder for external system backed projects.
  * 
  * @author Denis Zhdanov
- * @since 8/1/11 1:29 PM
  */
 public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
   extends ProjectImportBuilder<DataNode<ProjectData>>
@@ -87,7 +86,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
-                                              @NotNull NotNullFactory<C> controlFactory,
+                                              @NotNull NotNullFactory<? extends C> controlFactory,
                                               @NotNull ProjectSystemId externalSystemId) {
     myProjectDataManager = projectDataManager;
     myControlValue = NotNullLazyValue.createValue(controlFactory);
@@ -292,7 +291,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @param wizardContext             current wizard context
    * @throws ConfigurationException   if external project is not defined and can't be constructed
    */
-  @SuppressWarnings("unchecked")
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
     final String externalSystemName = myExternalSystemId.getReadableName();
     File projectFile = getProjectFile();

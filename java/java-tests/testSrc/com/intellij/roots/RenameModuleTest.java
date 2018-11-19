@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/26/2016
  */
 public class RenameModuleTest extends ModuleTestCase {
 

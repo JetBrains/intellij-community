@@ -34,7 +34,6 @@ import java.awt.*;
 
 /**
  * @author zajac
- * @since 6.05.2012
  */
 public class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem>{
   private final Bookmark myBookmark;

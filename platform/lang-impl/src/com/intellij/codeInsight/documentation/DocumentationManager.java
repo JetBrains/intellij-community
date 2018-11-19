@@ -30,7 +30,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -208,7 +207,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myActionManager = manager;
     AnActionListener actionListener = new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null) {
           if (action instanceof ShowQuickDocInfoAction) {
@@ -223,13 +222,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
           if (action == ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
           if (ActionPlaces.JAVADOC_INPLACE_SETTINGS.equals(event.getPlace())) return;
+          if (ActionPlaces.JAVADOC_TOOLBAR.equals(event.getPlace())) return;
           if (action instanceof BaseNavigateToSourceAction) return;
           closeDocHint();
         }
       }
 
       @Override
-      public void beforeEditorTyping(char c, DataContext dataContext) {
+      public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
         JBPopup hint = getDocInfoHint();
         if (hint != null && LookupManager.getActiveLookup(myEditor) == null) {
           hint.cancel();
@@ -678,7 +678,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         DocumentationProvider documentationProvider = getProviderFromElement(file);
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        PsiElement fromProvider = documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        PsiElement fromProvider = targetElement == null ? null :
+                                  documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
         return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
       }
     }
@@ -694,6 +695,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
     if (hint == null || !hint.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (hint != null) {
+        // hint's window might've been hidden by AWT without notifying us
+        // dispose to remove the popup from IDE hierarchy and avoid leaking components
+        hint.cancel();
+      }
       myDocInfoHintRef = null;
       return null;
     }
@@ -916,7 +922,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       DocumentationProvider provider = getProviderFromElement(psiElement);
       PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
       if (targetElement == null) {
-        for (DocumentationProvider documentationProvider : Extensions.getExtensions(DocumentationProvider.EP_NAME)) {
+        for (DocumentationProvider documentationProvider : DocumentationProvider.EP_NAME.getExtensionList()) {
           targetElement = documentationProvider.getDocumentationElementForLink(manager, refText, psiElement);
           if (targetElement != null) {
             break;

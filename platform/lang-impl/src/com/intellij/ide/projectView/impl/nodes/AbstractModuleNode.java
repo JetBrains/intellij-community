@@ -36,12 +36,12 @@ import java.util.Collection;
 import java.util.Collections;
 
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> implements NavigatableWithText {
-  protected AbstractModuleNode(Project project, Module module, ViewSettings viewSettings) {
+  protected AbstractModuleNode(Project project, @NotNull Module module, ViewSettings viewSettings) {
     super(project, module, viewSettings);
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     Module module = getValue();
     if (module == null || module.isDisposed()) {
       setValue(null);

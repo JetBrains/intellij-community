@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMemberFix;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -57,7 +58,7 @@ public abstract class StaticMemberProcessor {
     ContainerUtil.addIfNotNull(myStaticImportedClasses, psiClass);
   }
 
-  public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
+  public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
     for (final String memberName : CompletionUtil.sortMatching(matcher, memberNames)) {
@@ -101,7 +102,7 @@ public abstract class StaticMemberProcessor {
 
   private void showHint(boolean shouldImport) {
     if (!myHintShown && !shouldImport) {
-      final String shortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+      final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
       if (StringUtil.isNotEmpty(shortcut)) {
         CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
       }
@@ -109,7 +110,7 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<PsiMember, PsiClass> consumer) {
+  public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<? super PsiMember, ? super PsiClass> consumer) {
     final ArrayList<PsiMember> result = ContainerUtil.newArrayList();
     for (final PsiClass psiClass : myStaticImportedClasses) {
       for (final PsiMethod method : psiClass.getAllMethods()) {

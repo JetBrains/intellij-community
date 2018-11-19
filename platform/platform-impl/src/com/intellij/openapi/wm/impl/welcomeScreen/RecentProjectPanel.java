@@ -198,7 +198,8 @@ public class RecentProjectPanel extends JPanel {
 
     myList.setSelectedIndex(0);
 
-    JBScrollPane scroll = new JBScrollPane(myList);
+    JBScrollPane scroll
+      = new JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.setBorder(null);
 
     JComponent list = recentProjectActions.length == 0
@@ -360,6 +361,7 @@ public class RecentProjectPanel extends JPanel {
     private MyList(Dimension size, @NotNull AnAction[] listData) {
       super(listData);
       mySize = size;
+      setExpandableItemsEnabled(false);
       setEmptyText("  No Project Open Yet  ");
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL);
@@ -507,7 +509,7 @@ public class RecentProjectPanel extends JPanel {
 
       try {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
-        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset;
+        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset - (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth() - JBUI.scale(10);
         if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
           int left = 1; int right = 1;
           int center = fullText.length() / 2;
@@ -570,17 +572,17 @@ public class RecentProjectPanel extends JPanel {
     }
 
     @Override
-    public void applicationActivated(IdeFrame ideFrame) {
+    public void applicationActivated(@NotNull IdeFrame ideFrame) {
       onAppStateChanged();
     }
 
     @Override
-    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+    public void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
       onAppStateChanged();
     }
 
     @Override
-    public void applicationDeactivated(IdeFrame ideFrame) {
+    public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
     }
 
     @Override

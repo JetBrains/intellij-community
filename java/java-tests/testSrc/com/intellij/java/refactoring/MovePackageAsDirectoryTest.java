@@ -184,7 +184,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     private final String myPackageName;
     private final String myTargetPackageName;
 
-    public MyPerformAction(String packageName, String targetPackageName) {
+    MyPerformAction(String packageName, String targetPackageName) {
       myPackageName = packageName;
       myTargetPackageName = targetPackageName;
     }

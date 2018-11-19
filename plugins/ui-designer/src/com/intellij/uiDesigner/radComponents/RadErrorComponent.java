@@ -79,7 +79,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
   }
 
   private static final class MyComponent extends JComponent {
-    public MyComponent() {
+    MyComponent() {
       setMinimumSize(new Dimension(20, 20));
     }
 

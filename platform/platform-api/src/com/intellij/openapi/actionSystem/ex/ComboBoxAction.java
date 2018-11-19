@@ -46,9 +46,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
       return myWin10ComboDropTriangleIcon;
     }
-    Icon icon = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
-    if (myIcon != icon) {
-      myIcon = icon;
+    if (myIcon != AllIcons.General.ArrowDown) {
+      myIcon = AllIcons.General.ArrowDown;
       myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
     }
     return enabled ? myIcon : myDisabledIcon;
@@ -149,7 +148,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
 
-      //noinspection HardCodedStringLiteral
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {

@@ -2,24 +2,27 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerConfigurableNew.CellPluginComponent
-import com.intellij.ide.plugins.PluginManagerConfigurableNew.TabHeaderComponent
+import com.intellij.ide.plugins.newui.CellPluginComponent
+import com.intellij.ide.plugins.newui.TabHeaderComponent
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickCancelButton
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.util.waitFor
 import com.intellij.ui.components.BasicOptionButtonUI.ArrowButton
 import com.intellij.ui.components.JBOptionButton
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.fixture.ContainerFixture
+import org.fest.swing.fixture.JTextComponentFixture
 import javax.swing.*
 import javax.swing.text.Position
 
-class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(robot, pluginDialog), ContainerFixture<JDialog> {
+class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(robot, pluginDialog), ContainerFixture<JDialog> {
   fun isPluginInstalled(pluginName: String): Boolean = findPluginsAppearedOnTheScreen().find { it.name == pluginName } != null
 
   fun isPluginEnabled(pluginName: String): Boolean = findCheckBox(pluginName).isSelected
@@ -59,7 +62,8 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
   fun cancel() = findAndClickCancelButton(this)
 
   fun findPluginsAppearedOnTheScreen(): Iterable<IdeaPluginDescriptor> =
-    waitUntilFoundList(findPluginCardsPanel(), CellPluginComponent::class.java, Timeouts.defaultTimeout) { it.isShowing }.map { it.pluginDescriptor }
+    waitUntilFoundList(findPluginCardsPanel(), CellPluginComponent::class.java,
+                       Timeouts.defaultTimeout) { it.isShowing }.map { it.pluginDescriptor }
 
   private fun findCheckBox(pluginName: String) =
     waitUntilFound(findCellPluginComponent(pluginName), JCheckBox::class.java, Timeouts.defaultTimeout) { true }
@@ -71,12 +75,13 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
     waitUntilFound(target(), ConfigurableCardPanel::class.java, Timeouts.defaultTimeout) { true }
 
   private fun findCellPluginComponent(pluginName: String): CellPluginComponent =
-    waitUntilFound(findPluginCardsPanel(), CellPluginComponent::class.java, Timeouts.defaultTimeout) { it.isShowing && it.pluginDescriptor.name == pluginName }
+    waitUntilFound(findPluginCardsPanel(), CellPluginComponent::class.java,
+                   Timeouts.defaultTimeout) { it.isShowing && it.pluginDescriptor.name == pluginName }
 
   private fun findPluginDetailsLink(pluginName: String): JLabel =
     waitUntilFound(findCellPluginComponent(pluginName), JLabel::class.java, Timeouts.defaultTimeout) { it.text == pluginName }
 
-  class PluginDetailsFixture(robot: Robot, dialog: JDialog): JDialogFixture(robot, dialog) {
+  class PluginDetailsFixture(robot: Robot, dialog: JDialog) : JDialogFixture(robot, dialog) {
 
     fun pluginVersion(): String =
       waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.text.startsWith("v") || it.text == "bundled" }.text
@@ -108,7 +113,7 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
       val arrowButton: ArrowButton = waitUntilFound(target(), ArrowButton::class.java, Timeouts.defaultTimeout) { true }
       robot().click(arrowButton)
 
-      val list : JList<*> = waitUntilFound(target(), JList::class.java, Timeouts.defaultTimeout) {
+      val list: JList<*> = waitUntilFound(target(), JList::class.java, Timeouts.defaultTimeout) {
         it.isShowing && it.isVisible && getUninstallItemIndex(it) != -1
       }
       robot().click(list, list.indexToLocation(getUninstallItemIndex(list)))
@@ -120,18 +125,26 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
     }
 
     private fun findEnableDisableButton(): JButton =
-      waitUntilFound(target(), JButton::class.java, Timeouts.defaultTimeout) { it !is JBOptionButton && (it.text == "Enable" || it.text == "Disable") }
+      waitUntilFound(target(), JButton::class.java,
+                     Timeouts.defaultTimeout) { it !is JBOptionButton && (it.text == "Enable" || it.text == "Disable") }
 
     private fun getUninstallItemIndex(list: JList<*>): Int = list.getNextMatch("Uninstall", 0, Position.Bias.Forward)
   }
 
-  class InstallPluginFromDiskFixture(robot: Robot, installPluginFromDiskDialog: JDialog): JDialogFixture(robot, installPluginFromDiskDialog),
-                                                                                          ContainerFixture<JDialog> {
+  class InstallPluginFromDiskFixture(robot: Robot, installPluginFromDiskDialog: JDialog) : JDialogFixture(robot,
+                                                                                                          installPluginFromDiskDialog),
+                                                                                           ContainerFixture<JDialog> {
     fun setPath(pluginPath: String) {
-      val pluginPathTextField: JTextField =
-        waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { true }
-      pluginPathTextField.text = pluginPath
+      waitFor {
+        val pluginPathTextField: JTextField =
+          waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.isEnabled && it.isShowing }
+        clickRefresh()
+        JTextComponentFixture(robot(), pluginPathTextField).deleteText().enterText(pluginPath)
+        pluginPathTextField.text == pluginPath
+      }
     }
+
+    fun clickRefresh() = actionButtonByClass(RefreshFileChooserAction::class.java.simpleName).click()
 
     fun clickOk() = findAndClickButtonWhenEnabled(this, "OK")
 

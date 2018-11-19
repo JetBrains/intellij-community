@@ -20,6 +20,7 @@ import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.IpnbFileType;
 
 public class IpnbCreateFileAction extends CreateFileFromTemplateAction implements DumbAware {
@@ -35,7 +36,7 @@ public class IpnbCreateFileAction extends CreateFileFromTemplateAction implement
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
+  protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
     return "Create Jupyter Notebook " + newName;
   }
 }

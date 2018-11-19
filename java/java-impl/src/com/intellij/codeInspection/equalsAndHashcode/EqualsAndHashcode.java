@@ -44,7 +44,7 @@ public class EqualsAndHashcode extends EqualsAndHashcodeBase {
 
     private final boolean myHasEquals;
 
-    public GenerateEqualsHashcodeFix(boolean hasEquals) {
+    GenerateEqualsHashcodeFix(boolean hasEquals) {
       myHasEquals = hasEquals;
     }
 

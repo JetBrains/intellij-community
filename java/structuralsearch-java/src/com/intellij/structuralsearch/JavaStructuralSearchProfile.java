@@ -32,7 +32,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -114,13 +113,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public String getMeaningfulText(PsiElement element) {
-    if (element instanceof PsiReferenceExpression &&
-        ((PsiReferenceExpression)element).getQualifierExpression() != null) {
+    if (element instanceof PsiReferenceExpression && ((PsiReferenceExpression)element).getQualifierExpression() != null) {
       final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
       if (resolve instanceof PsiClass) return element.getText();
 
       final PsiElement referencedElement = ((PsiReferenceExpression)element).getReferenceNameElement();
-      String text = referencedElement != null ? referencedElement.getText() : "";
+      final String text = referencedElement != null ? referencedElement.getText() : "";
 
       if (resolve == null && text.length() > 0 && Character.isUpperCase(text.charAt(0))) {
         return element.getText();
@@ -128,6 +126,31 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       return text;
     }
     return super.getMeaningfulText(element);
+  }
+
+  @Override
+  @Nullable
+  public String getAlternativeText(PsiElement node, String previousText) {
+    // Short class name is matched with fully qualified name
+    if(node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
+      final PsiElement element = (node instanceof PsiJavaCodeReferenceElement)
+                                 ? ((PsiJavaCodeReferenceElement)node).resolve()
+                                 : node;
+
+      if (element instanceof PsiClass) {
+        String text = ((PsiClass)element).getQualifiedName();
+        if (text != null && text.equals(previousText)) {
+          text = ((PsiClass)element).getName();
+        }
+
+        if (text != null) {
+          return text;
+        }
+      }
+    } else if (node instanceof PsiLiteralExpression || node instanceof PsiComment) {
+      return node.getText();
+    }
+    return null;
   }
 
   @Override
@@ -253,8 +276,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new JavaReplaceHandler(context);
+  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
+    return new JavaReplaceHandler(project, replaceOptions);
   }
 
   @NotNull
@@ -269,7 +292,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (physical) {
       throw new UnsupportedOperationException(getClass() + " cannot create physical PSI");
     }
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if (context == PatternTreeContext.Block) {
       final PsiCodeBlock codeBlock = elementFactory.createCodeBlockFromText("{\n" + text + "\n}", null);
       PsiElement element = codeBlock.getFirstBodyElement();
@@ -362,6 +385,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
              secondElement instanceof PsiExpressionStatement &&
              PsiTreeUtil.lastChild(secondElement) instanceof PsiErrorElement) {
       // might be generic method
+      return true;
+    }
+    else if (firstElement instanceof PsiSwitchLabelStatement && ((PsiSwitchLabelStatement)firstElement).isDefaultCase() &&
+             PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement && secondElement instanceof PsiDeclarationStatement) {
+      // possible default method
       return true;
     }
     else if (firstElement instanceof PsiExpressionStatement && firstElement.getFirstChild() instanceof PsiMethodCallExpression &&
@@ -826,7 +854,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (completePattern || variableNode == null) return false;
         if (variableNode instanceof PsiLiteralExpression && ((PsiLiteralExpression)variableNode).getValue() instanceof String) return true;
         final PsiElement parent = variableNode.getParent();
-        return parent instanceof PsiReferenceExpression || parent instanceof PsiJavaCodeReferenceElement;
+        return parent instanceof PsiJavaCodeReferenceElement;
       default: return super.isApplicableConstraint(constraintName, variableNode, completePattern, target);
     }
   }
@@ -847,8 +875,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (grandParent instanceof PsiAssertStatement) return ((PsiAssertStatement)grandParent).getAssertDescription() == parent;
       if (grandParent instanceof PsiNameValuePair) return ((PsiNameValuePair)grandParent).getValue() == parent;
     }
-    if (grandParent instanceof PsiSwitchLabelStatement) {
-      return ((PsiSwitchLabelStatement)grandParent).getEnclosingSwitchStatement() != null;
+    if (grandParent instanceof PsiExpressionList) {
+      PsiElement label = grandParent.getParent();
+      if (label instanceof PsiSwitchLabelStatementBase) {
+        return ((PsiSwitchLabelStatementBase)label).getEnclosingSwitchStatement() != null;
+      }
     }
     if (grandParent instanceof PsiVariable) {
       return ((PsiVariable)grandParent).getInitializer() == parent;
@@ -884,7 +915,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiPolyadicExpression) return true;
-    if (grandParent instanceof PsiSwitchLabelStatement)  return true;
+    if (grandParent instanceof PsiExpressionList && grandParent.getParent() instanceof PsiSwitchLabelStatementBase)  return true;
     if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) return true;
     if (grandParent instanceof PsiReferenceList) {
       final PsiElement greatGrandParent = grandParent.getParent();
@@ -901,10 +932,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiCatchSection && parent instanceof PsiParameter) return true;
     if (grandParent instanceof PsiAnnotation && !(grandParent.getParent().getNextSibling() instanceof PsiErrorElement)) return true;
-    if (grandParent instanceof PsiParameterList || grandParent instanceof PsiExpressionList ||
+    if (grandParent instanceof PsiParameterList || grandParent instanceof PsiArrayInitializerMemberValue ||
+        (grandParent instanceof PsiExpressionList && !(grandParent.getParent() instanceof PsiSwitchLabelStatementBase)) ||
         grandParent instanceof PsiTypeParameterList || grandParent instanceof PsiResourceList ||
-        grandParent instanceof PsiResourceExpression || grandParent instanceof PsiArrayInitializerExpression ||
-        grandParent instanceof PsiArrayInitializerMemberValue) {
+        grandParent instanceof PsiResourceExpression || grandParent instanceof PsiArrayInitializerExpression) {
       return true;
     }
     if (grandParent instanceof PsiTypeElement) {

@@ -20,10 +20,6 @@ public class CharsetObjectCanBeUsedInspectionTest extends LightQuickFixParameter
     return IdeaTestUtil.getMockJdk9();
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/charsetObjectCanBeUsed/";

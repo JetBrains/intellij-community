@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -63,7 +64,7 @@ public abstract class ClosureCompleter {
                                             int offset,
                                             PsiSubstitutor substitutor,
                                             PsiMethod method,
-                                            final List<ClosureParameterInfo> parameters) {
+                                            final List<? extends ClosureParameterInfo> parameters) {
     document.insertString(offset, "{\n}");
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     final GrClosableBlock closure =
@@ -74,7 +75,7 @@ public abstract class ClosureCompleter {
     return true;
   }
 
-  public static void runTemplate(List<ClosureParameterInfo> parameters,
+  public static void runTemplate(List<? extends ClosureParameterInfo> parameters,
                                  GrClosableBlock block,
                                  PsiSubstitutor substitutor,
                                  PsiMethod method, final Project project,
@@ -140,7 +141,7 @@ public abstract class ClosureCompleter {
 
     TemplateEditingListener templateListener = new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           PsiDocumentManager.getInstance(project).commitDocument(document);
           final CaretModel caretModel = editor.getCaretModel();

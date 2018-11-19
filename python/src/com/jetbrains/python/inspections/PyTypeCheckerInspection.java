@@ -142,7 +142,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       private final PyFunction myFunction;
       private boolean myHasReturns = false;
 
-      public ReturnVisitor(PyFunction function) {
+      ReturnVisitor(PyFunction function) {
         myFunction = function;
       }
 
@@ -300,7 +300,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     @NotNull
     private final List<AnalyzeArgumentResult> myResults;
 
-    public AnalyzeCalleeResults(@NotNull PyCallableType callableType,
+    AnalyzeCalleeResults(@NotNull PyCallableType callableType,
                                 @Nullable PyCallable callable,
                                 @NotNull List<AnalyzeArgumentResult> results) {
       myCallableType = callableType;
@@ -340,7 +340,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private final boolean myIsMatched;
 
-    public AnalyzeArgumentResult(@NotNull PyExpression argument,
+    AnalyzeArgumentResult(@NotNull PyExpression argument,
                                  @Nullable PyType expectedType,
                                  @Nullable PyType expectedTypeAfterSubstitution,
                                  @Nullable PyType actualType,

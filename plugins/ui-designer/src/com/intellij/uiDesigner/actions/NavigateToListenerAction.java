@@ -16,11 +16,11 @@ import java.util.List;
  */
 public class NavigateToListenerAction extends AbstractGuiEditorAction {
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     ListenerNavigateButton.showNavigatePopup(selection.get(0), true);
   }
 
-  @Override protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  @Override protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     e.getPresentation().setEnabled(selection.size() > 0);
   }
 }

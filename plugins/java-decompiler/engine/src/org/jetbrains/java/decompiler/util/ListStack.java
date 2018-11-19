@@ -10,7 +10,7 @@ public class ListStack<T> extends ArrayList<T> {
     super();
   }
 
-  public ListStack(ArrayList<T> list) {
+  public ListStack(ArrayList<? extends T> list) {
     super(list);
   }
 

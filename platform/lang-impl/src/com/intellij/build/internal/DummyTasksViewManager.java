@@ -37,7 +37,7 @@ public class DummyTasksViewManager extends TasksViewManager {
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     if(event instanceof FinishBuildEvent) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(event.getMessage());

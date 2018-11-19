@@ -33,7 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Processes elements in batches, no longer than 200ms (or maxUnitOfWorkThresholdMs constructor parameter) per batch,
  * and reschedules processing later for longer batches.
  * Usage: {@link TransferToEDTQueue#offer(Object)} } : schedules element for processing in EDT (via invokeLater)
+ * @deprecated use {@link com.intellij.util.concurrency.EdtExecutorService} instead
  */
+@Deprecated
 public class TransferToEDTQueue<T> {
   /**
    * This is a default threshold used to join units of work.
@@ -44,10 +46,9 @@ public class TransferToEDTQueue<T> {
    * @see #TransferToEDTQueue(String, Processor, Condition, int)
    * @see #createRunnableMerger(String, int)
    */
-  public static final int DEFAULT_THRESHOLD = 30;
-  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private static final int DEFAULT_THRESHOLD = 30;
   private final String myName;
-  private final Processor<T> myProcessor;
+  private final Processor<? super T> myProcessor;
   private volatile boolean stopped;
   private final Condition<?> myShutUpCondition;
   private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
@@ -79,12 +80,12 @@ public class TransferToEDTQueue<T> {
     }
   };
 
-  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<T> processor, @NotNull Condition<?> shutUpCondition) {
+  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<? super T> processor, @NotNull Condition<?> shutUpCondition) {
     this(name, processor, shutUpCondition, DEFAULT_THRESHOLD);
   }
 
   public TransferToEDTQueue(@NotNull @NonNls String name,
-                            @NotNull Processor<T> processor,
+                            @NotNull Processor<? super T> processor,
                             @NotNull Condition<?> shutUpCondition,
                             int maxUnitOfWorkThresholdMs) {
     myName = name;
@@ -124,7 +125,7 @@ public class TransferToEDTQueue<T> {
     return true;
   }
 
-  protected T pullFirst() {
+  private T pullFirst() {
     synchronized (myQueue) {
       return myQueue.isEmpty() ? null : myQueue.pullFirst();
     }
@@ -142,7 +143,7 @@ public class TransferToEDTQueue<T> {
     return offerIfAbsent(thing, ContainerUtil.<T>canonicalStrategy());
   }
 
-  public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<T> equality) {
+  public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<? super T> equality) {
     synchronized (myQueue) {
       boolean absent = myQueue.process(new Processor<T>() {
         @Override

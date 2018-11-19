@@ -12,10 +12,11 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
-import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -27,10 +28,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extends DialogWrapper {
@@ -130,35 +129,29 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     tree.repaint();
   }
 
+  @NotNull
   private DefaultMutableTreeNode buildNodes() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(new Descriptor());
-    RunManager runManager = RunManager.getInstance(myProject);
-    for (final ConfigurationType type : runManager.getConfigurationFactories()) {
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+    for (Map.Entry<ConfigurationType, Map<String, List<RunnerAndConfigurationSettings>>> entry : runManager.getConfigurationsGroupedByTypeAndFolder(false).entrySet()) {
+      ConfigurationType type = entry.getKey();
       final Icon icon = type.getIcon();
       DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
       root.add(typeNode);
-      final Set<String> addedNames = StringSetSpinAllocator.alloc();
-      try {
-        List<RunConfiguration> configurations = runManager.getConfigurationsList(type);
-        for (final RunConfiguration configuration : configurations) {
+      final Set<String> addedNames = new THashSet<>();
+      for (List<RunnerAndConfigurationSettings> list : entry.getValue().values()) {
+        for (RunnerAndConfigurationSettings configuration : list) {
           final String configurationName = configuration.getName();
-          if (addedNames.contains(configurationName)) {
+          if (!addedNames.add(configurationName)) {
             // add only the first configuration if more than one has the same name
             continue;
           }
-          addedNames.add(configurationName);
-          typeNode.add(new DefaultMutableTreeNode(
-            new ConfigurationDescriptor(configuration, isConfigurationAssigned(configuration))));
+          typeNode.add(new DefaultMutableTreeNode(new ConfigurationDescriptor(configuration.getConfiguration(), isConfigurationAssigned(configuration.getConfiguration()))));
         }
       }
-      finally {
-        StringSetSpinAllocator.dispose(addedNames);
-      }
     }
-
     return root;
   }
-
 
   private boolean isConfigurationAssigned(ConfigurationType type) {
     final RunManager runManager = RunManager.getInstance(myProject);
@@ -209,7 +202,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   protected abstract boolean isRunning(T task);
 
   private void update(RunConfiguration config, boolean enabled, RunManagerImpl runManager) {
-    List<BeforeRunTask<?>> tasks = runManager.getBeforeRunTasks(config);
+    List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(config);
     BeforeRunTaskProvider<T> provider = BeforeRunTaskProvider.getProvider(myProject, getTaskID());
     if (provider == null) {
       return;
@@ -253,7 +246,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     private final ConfigurationType myConfigurationType;
     private final Icon myIcon;
 
-    public ConfigurationTypeDescriptor(ConfigurationType type, Icon icon, boolean isChecked) {
+    ConfigurationTypeDescriptor(ConfigurationType type, Icon icon, boolean isChecked) {
       myConfigurationType = type;
       myIcon = icon;
       setChecked(isChecked);
@@ -271,7 +264,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   private static final class ConfigurationDescriptor extends Descriptor {
     private final RunConfiguration myConfiguration;
 
-    public ConfigurationDescriptor(RunConfiguration configuration, boolean isChecked) {
+    ConfigurationDescriptor(RunConfiguration configuration, boolean isChecked) {
       myConfiguration = configuration;
       setChecked(isChecked);
     }
@@ -294,7 +287,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     private final JLabel myLabel;
     public final JCheckBox myCheckbox;
 
-    public MyTreeCellRenderer() {
+    MyTreeCellRenderer() {
       super(new BorderLayout());
       myCheckbox = new JCheckBox();
       myLabel = new JLabel();
@@ -315,9 +308,9 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
       myCheckbox.setSelected(descriptor.isChecked());
 
-      myCheckbox.setBackground(UIUtil.getTreeTextBackground());
-      setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground());
-      final Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
+      myCheckbox.setBackground(UIUtil.getTreeBackground());
+      setBackground(UIUtil.getTreeBackground(selected, true));
+      Color foreground = UIUtil.getTreeForeground(selected, true);
       setForeground(foreground);
       myCheckbox.setForeground(foreground);
       myLabel.setForeground(foreground);

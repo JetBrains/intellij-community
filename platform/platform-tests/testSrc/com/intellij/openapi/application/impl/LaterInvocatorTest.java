@@ -446,7 +446,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   private static class Lock implements Runnable {
     private final Object myLock;
 
-    public Lock(Object lock) {
+    Lock(Object lock) {
       myLock = lock;
     }
 

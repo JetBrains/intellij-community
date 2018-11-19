@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
@@ -217,11 +216,14 @@ class DocumentTracker : Disposable {
 
       // We use already filtered blocks here, because conditions might have been changed from other thread.
       // The documents/blocks themselves did not change though.
-      LineTracker.processAppliedRanges(appliedBlocks, { true }, side) { block, shift, _ ->
+      var shift = 0
+      for (block in appliedBlocks) {
         DiffUtil.applyModification(document, block.range.start(side) + shift, block.range.end(side) + shift,
                                    otherDocument, block.range.start(otherSide), block.range.end(otherSide))
 
         consumer(block, shift)
+
+        shift += getRangeDelta(block.range, side)
       }
 
       LOCK.write {
@@ -368,7 +370,7 @@ class DocumentTracker : Disposable {
 
     private fun getAffectedRange(line1: Int, oldLine2: Int, newLine2: Int, e: DocumentEvent): Triple<Int, Int, Int> {
       val afterLength = newLine2 - line1
-      val beforeLength = line2 - line1
+      val beforeLength = oldLine2 - line1
 
       // Whole line insertion / deletion
       if (e.oldLength == 0 && e.newLength != 0) {
@@ -490,12 +492,8 @@ class DocumentTracker : Disposable {
 
     fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean = true
 
-    fun onRangeRemoved(block: Block) {}
-    fun onRangeAdded(block: Block) {}
-
-    fun afterRefresh() {}
     fun afterRangeChange() {}
-    fun afterExplicitChange() {}
+    fun afterBulkRangeChange() {}
 
     fun onFreeze(side: Side) {}
     fun onUnfreeze(side: Side) {}
@@ -523,8 +521,14 @@ private class LineTracker(private val handler: Handler,
   private var isDirty: Boolean = false
 
 
+  fun setRanges(ranges: List<Range>, dirty: Boolean) {
+    blocks = ranges.map { Block(it, dirty, false) }
+    isDirty = dirty
+
+    handler.afterBulkRangeChange()
+  }
+
   fun destroy() {
-    handler.onRangesRemoved(blocks)
     blocks = emptyList()
   }
 
@@ -535,18 +539,190 @@ private class LineTracker(private val handler: Handler,
                    fastRefresh: Boolean) {
     if (!isDirty) return
 
-    val removedBlocks = ArrayList<Block>()
-    val addedBlocks = ArrayList<Block>()
+    val result = BlocksRefresher(handler, text1, text2, lineOffsets1, lineOffsets2).refresh(blocks, fastRefresh)
 
+    blocks = result.newBlocks
+    isDirty = false
+
+    handler.afterBulkRangeChange()
+  }
+
+  fun rangeChanged(side: Side, startLine: Int, beforeLength: Int, afterLength: Int) {
+    val data = RangeChangeHandler().run(blocks, side, startLine, beforeLength, afterLength)
+
+    handler.onRangesChanged(data.affectedBlocks, data.newAffectedBlock)
+    for (i in data.afterBlocks.indices) {
+      handler.onRangeShifted(data.afterBlocks[i], data.newAfterBlocks[i])
+    }
+
+    blocks = data.newBlocks
+    isDirty = true
+
+    handler.afterRangeChange()
+  }
+
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
+    val newBlocks = mutableListOf<Block>()
+    val appliedBlocks = mutableListOf<Block>()
+
+    var shift = 0
+    for (block in blocks) {
+      if (condition(block)) {
+        appliedBlocks.add(block)
+
+        shift += getRangeDelta(block.range, side)
+      }
+      else {
+        val newBlock = block.shift(side, shift)
+        handler.onRangeShifted(block, newBlock)
+
+        newBlocks.add(newBlock)
+      }
+    }
+
+    blocks = newBlocks
+
+    handler.afterBulkRangeChange()
+
+    return appliedBlocks
+  }
+}
+
+private class RangeChangeHandler {
+  fun run(blocks: List<Block>,
+          side: Side,
+          startLine: Int,
+          beforeLength: Int,
+          afterLength: Int): Result {
+    val endLine = startLine + beforeLength
+    val rangeSizeDelta = afterLength - beforeLength
+
+    val (beforeBlocks, affectedBlocks, afterBlocks) = sortRanges(blocks, side, startLine, endLine)
+
+    val ourToOtherShift: Int = getOurToOtherShift(side, beforeBlocks)
+
+    val newAffectedBlock = getNewAffectedBlock(side, startLine, endLine, rangeSizeDelta, ourToOtherShift,
+                                               affectedBlocks)
+    val newAfterBlocks = afterBlocks.map { it.shift(side, rangeSizeDelta) }
+
+    val newBlocks = ArrayList<Block>(beforeBlocks.size + newAfterBlocks.size + 1)
+    newBlocks.addAll(beforeBlocks)
+    newBlocks.add(newAffectedBlock)
+    newBlocks.addAll(newAfterBlocks)
+
+    return Result(beforeBlocks, newBlocks,
+                  affectedBlocks, afterBlocks,
+                  newAffectedBlock, newAfterBlocks)
+  }
+
+  private fun sortRanges(blocks: List<Block>,
+                         side: Side,
+                         line1: Int,
+                         line2: Int): Triple<List<Block>, List<Block>, List<Block>> {
+    val beforeChange = ArrayList<Block>()
+    val affected = ArrayList<Block>()
+    val afterChange = ArrayList<Block>()
+
+    for (block in blocks) {
+      if (block.range.end(side) < line1) {
+        beforeChange.add(block)
+      }
+      else if (block.range.start(side) > line2) {
+        afterChange.add(block)
+      }
+      else {
+        affected.add(block)
+      }
+    }
+
+    return Triple(beforeChange, affected, afterChange)
+  }
+
+  private fun getOurToOtherShift(side: Side, beforeBlocks: List<Block>): Int {
+    val lastBefore = beforeBlocks.lastOrNull()?.range
+    val otherShift: Int
+    if (lastBefore == null) {
+      otherShift = 0
+    }
+    else {
+      otherShift = lastBefore.end(side.other()) - lastBefore.end(side)
+    }
+    return otherShift
+  }
+
+  private fun getNewAffectedBlock(side: Side,
+                                  startLine: Int,
+                                  endLine: Int,
+                                  rangeSizeDelta: Int,
+                                  ourToOtherShift: Int,
+                                  affectedBlocks: List<Block>): Block {
+    val rangeStart: Int
+    val rangeEnd: Int
+    val rangeStartOther: Int
+    val rangeEndOther: Int
+
+    if (affectedBlocks.isEmpty()) {
+      rangeStart = startLine
+      rangeEnd = endLine + rangeSizeDelta
+      rangeStartOther = startLine + ourToOtherShift
+      rangeEndOther = endLine + ourToOtherShift
+    }
+    else {
+      val firstAffected = affectedBlocks.first().range
+      val lastAffected = affectedBlocks.last().range
+
+      val affectedStart = firstAffected.start(side)
+      val affectedStartOther = firstAffected.start(side.other())
+      val affectedEnd = lastAffected.end(side)
+      val affectedEndOther = lastAffected.end(side.other())
+
+      if (affectedStart <= startLine) {
+        rangeStart = affectedStart
+        rangeStartOther = affectedStartOther
+      }
+      else {
+        rangeStart = startLine
+        rangeStartOther = startLine + (affectedStartOther - affectedStart)
+      }
+
+      if (affectedEnd >= endLine) {
+        rangeEnd = affectedEnd + rangeSizeDelta
+        rangeEndOther = affectedEndOther
+      }
+      else {
+        rangeEnd = endLine + rangeSizeDelta
+        rangeEndOther = endLine + (affectedEndOther - affectedEnd)
+      }
+    }
+
+    val isTooBig = affectedBlocks.any { it.isTooBig }
+    val range = createRange(side, rangeStart, rangeEnd, rangeStartOther, rangeEndOther)
+    return Block(range, true, isTooBig)
+  }
+
+  private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range {
+    return Range(side[start, otherStart], side[end, otherEnd],
+                 side[otherStart, start], side[otherEnd, end])
+  }
+
+  data class Result(val beforeBlocks: List<Block>, val newBlocks: List<Block>,
+                    val affectedBlocks: List<Block>, val afterBlocks: List<Block>,
+                    val newAffectedBlock: Block, val newAfterBlocks: List<Block>)
+}
+
+private class BlocksRefresher(val handler: Handler,
+                              val text1: CharSequence,
+                              val text2: CharSequence,
+                              val lineOffsets1: LineOffsets,
+                              val lineOffsets2: LineOffsets) {
+  fun refresh(blocks: List<Block>, fastRefresh: Boolean): Result {
     val newBlocks = ArrayList<Block>()
 
-    BlockGroupsProcessor(text1, lineOffsets1).processMergeableGroups(blocks) { group ->
+    processMergeableGroups(blocks) { group ->
       if (group.any { it.isDirty }) {
-        MergingBlockProcessor(handler).processMergedBlocks(group) { original, mergedBlock ->
-          val freshBlocks = refreshBlock(mergedBlock, text1, text2, lineOffsets1, lineOffsets2, fastRefresh)
+        processMergedBlocks(group) { mergedBlock ->
+          val freshBlocks = refreshBlock(mergedBlock, fastRefresh)
 
-          removedBlocks.addAll(original)
-          addedBlocks.addAll(freshBlocks)
           handler.onRangeRefreshed(mergedBlock, freshBlocks)
 
           newBlocks.addAll(freshBlocks)
@@ -556,42 +732,72 @@ private class LineTracker(private val handler: Handler,
         newBlocks.addAll(group)
       }
     }
-
-    handler.onRangesRemoved(removedBlocks)
-    handler.onRangesAdded(addedBlocks)
-
-    blocks = newBlocks
-    isDirty = false
-
-    handler.afterRefresh()
+    return Result(newBlocks)
   }
 
-  fun rangeChanged(side: Side, startLine: Int, beforeLength: Int, afterLength: Int) {
-    val data = handleRangeChange(blocks, side, startLine, beforeLength, afterLength)
+  private fun processMergeableGroups(blocks: List<Block>,
+                                     processGroup: (group: List<Block>) -> Unit) {
+    if (blocks.isEmpty()) return
 
-    handler.onRangesChanged(data.affectedBlocks, data.newAffectedBlock)
-    for (i in data.afterBlocks.indices) {
-      handler.onRangeShifted(data.afterBlocks[i], data.newAfterBlocks[i])
+    var i = 0
+    var blockStart = 0
+    while (i < blocks.size - 1) {
+      if (!isWhitespaceOnlySeparated(blocks[i], blocks[i + 1])) {
+        processGroup(blocks.subList(blockStart, i + 1))
+        blockStart = i + 1
+      }
+      i += 1
+    }
+    processGroup(blocks.subList(blockStart, i + 1))
+  }
+
+  private fun isWhitespaceOnlySeparated(block1: Block, block2: Block): Boolean {
+    val range1 = DiffUtil.getLinesRange(lineOffsets1, block1.range.start1, block1.range.end1, false)
+    val range2 = DiffUtil.getLinesRange(lineOffsets1, block2.range.start1, block2.range.end1, false)
+    val start = range1.endOffset
+    val end = range2.startOffset
+    return trimStart(text1, start, end) == end
+  }
+
+  private fun processMergedBlocks(group: List<Block>,
+                                  processBlock: (merged: Block) -> Unit) {
+    assert(!group.isEmpty())
+
+    var merged: Block? = null
+
+    for (block in group) {
+      if (merged == null) {
+        merged = block
+      }
+      else {
+        val newMerged = mergeBlocks(merged, block)
+        if (newMerged != null) {
+          merged = newMerged
+        }
+        else {
+          processBlock(merged)
+          merged = block
+        }
+      }
     }
 
-    handler.onRangesRemoved(data.affectedBlocks)
-    handler.onRangesRemoved(data.afterBlocks)
-
-    handler.onRangeAdded(data.newAffectedBlock)
-    handler.onRangesAdded(data.newAfterBlocks)
-
-    blocks = ContainerUtil.concat(data.beforeBlocks, listOf(data.newAffectedBlock), data.newAfterBlocks)
-    isDirty = true
-
-    handler.afterRangeChange()
+    processBlock(merged!!)
   }
 
-  private fun refreshBlock(block: Block,
-                           text1: CharSequence,
-                           text2: CharSequence,
-                           lineOffsets1: LineOffsets,
-                           lineOffsets2: LineOffsets,
-                           fastRefresh: Boolean): List<Block> {
+  private fun mergeBlocks(block1: Block, block2: Block): Block? {
+    val isDirty = block1.isDirty || block2.isDirty
+    val isTooBig = block1.isTooBig || block2.isTooBig
+    val range = Range(block1.range.start1, block2.range.end1,
+                      block1.range.start2, block2.range.end2)
+    val merged = Block(range, isDirty, isTooBig)
+
+    if (!handler.onRangesMerged(block1, block2, merged)) {
+      return null // merging vetoed
+    }
+    return merged
+  }
+
+  private fun refreshBlock(block: Block, fastRefresh: Boolean): List<Block> {
     if (block.range.isEmpty) return emptyList()
 
     val iterable: FairDiffIterable
@@ -617,271 +823,22 @@ private class LineTracker(private val handler: Handler,
     }
   }
 
-
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
-    val oldBlocks = blocks
-    val newBlocks = mutableListOf<Block>()
-    val appliedBlocks = mutableListOf<Block>()
-
-    processAppliedRanges(blocks, condition, side) { block, shift, isApplied ->
-      if (isApplied) {
-        appliedBlocks += block
-      }
-      else {
-        val newBlock = block.shift(side, shift)
-        handler.onRangeShifted(block, newBlock)
-
-        newBlocks.add(newBlock)
-      }
-    }
-
-    handler.onRangesRemoved(oldBlocks)
-    handler.onRangesAdded(newBlocks)
-
-    blocks = newBlocks
-
-    handler.afterExplicitChange()
-
-    return appliedBlocks
-  }
-
-  fun setRanges(ranges: List<Range>, dirty: Boolean) {
-    val oldBlocks = blocks
-    val newBlocks = ranges.map { Block(it, dirty, false) }
-
-    handler.onRangesRemoved(oldBlocks)
-    handler.onRangesAdded(newBlocks)
-
-    blocks = newBlocks
-    if (dirty) isDirty = true
-
-    handler.afterExplicitChange()
-  }
-
-  companion object {
-    private fun handleRangeChange(blocks: List<Block>,
-                                  side: Side,
-                                  startLine: Int,
-                                  beforeLength: Int,
-                                  afterLength: Int): BlockChangeData {
-      val endLine = startLine + beforeLength
-      val rangeSizeDelta = afterLength - beforeLength
-
-      val (beforeBlocks, affectedBlocks, afterBlocks) = sortRanges(blocks, side, startLine, endLine)
-
-      val ourToOtherShift: Int = getOurToOtherShift(side, beforeBlocks)
-
-      val newAffectedBlock = getNewAffectedBlock(side, startLine, endLine, rangeSizeDelta, ourToOtherShift,
-                                                 affectedBlocks)
-      val newAfterBlocks = afterBlocks.map { it.shift(side, rangeSizeDelta) }
-
-      return BlockChangeData(beforeBlocks,
-                             affectedBlocks, afterBlocks,
-                             newAffectedBlock, newAfterBlocks)
-    }
-
-    private fun sortRanges(blocks: List<Block>,
-                           side: Side,
-                           line1: Int,
-                           line2: Int): Triple<List<Block>, List<Block>, List<Block>> {
-      val beforeChange = ArrayList<Block>()
-      val affected = ArrayList<Block>()
-      val afterChange = ArrayList<Block>()
-
-      for (block in blocks) {
-        if (block.range.end(side) < line1) {
-          beforeChange.add(block)
-        }
-        else if (block.range.start(side) > line2) {
-          afterChange.add(block)
-        }
-        else {
-          affected.add(block)
-        }
-      }
-
-      return Triple(beforeChange, affected, afterChange)
-    }
-
-    private fun getOurToOtherShift(side: Side, beforeBlocks: List<Block>): Int {
-      val lastBefore = beforeBlocks.lastOrNull()?.range
-      val otherShift: Int
-      if (lastBefore == null) {
-        otherShift = 0
-      }
-      else {
-        otherShift = lastBefore.end(side.other()) - lastBefore.end(side)
-      }
-      return otherShift
-    }
-
-    private fun getNewAffectedBlock(side: Side,
-                                    startLine: Int,
-                                    endLine: Int,
-                                    rangeSizeDelta: Int,
-                                    ourToOtherShift: Int,
-                                    affectedBlocks: List<Block>): Block {
-      val rangeStart: Int
-      val rangeEnd: Int
-      val rangeStartOther: Int
-      val rangeEndOther: Int
-
-      if (affectedBlocks.isEmpty()) {
-        rangeStart = startLine
-        rangeEnd = endLine + rangeSizeDelta
-        rangeStartOther = startLine + ourToOtherShift
-        rangeEndOther = endLine + ourToOtherShift
-      }
-      else {
-        val firstAffected = affectedBlocks.first().range
-        val lastAffected = affectedBlocks.last().range
-
-        val affectedStart = firstAffected.start(side)
-        val affectedStartOther = firstAffected.start(side.other())
-        val affectedEnd = lastAffected.end(side)
-        val affectedEndOther = lastAffected.end(side.other())
-
-        if (affectedStart <= startLine) {
-          rangeStart = affectedStart
-          rangeStartOther = affectedStartOther
-        }
-        else {
-          rangeStart = startLine
-          rangeStartOther = startLine + (affectedStartOther - affectedStart)
-        }
-
-        if (affectedEnd >= endLine) {
-          rangeEnd = affectedEnd + rangeSizeDelta
-          rangeEndOther = affectedEndOther
-        }
-        else {
-          rangeEnd = endLine + rangeSizeDelta
-          rangeEndOther = endLine + (affectedEndOther - affectedEnd)
-        }
-      }
-
-      val isTooBig = affectedBlocks.any { it.isTooBig }
-      val range = createRange(side, rangeStart, rangeEnd, rangeStartOther, rangeEndOther)
-      return Block(range, true, isTooBig)
-    }
-
-    fun processAppliedRanges(blocks: List<Block>, condition: (Block) -> Boolean, side: Side,
-                             handler: (block: Block, shift: Int, isApplied: Boolean) -> Unit) {
-      val otherSide = side.other()
-
-      var shift = 0
-      for (block in blocks) {
-        if (condition(block)) {
-          handler(block, shift, true)
-
-          val deleted = block.range.end(side) - block.range.start(side)
-          val inserted = block.range.end(otherSide) - block.range.start(otherSide)
-          shift += inserted - deleted
-        }
-        else {
-          handler(block, shift, false)
-        }
-      }
-    }
-
-    private fun Block.shift(side: Side, delta: Int) = Block(
-      shiftRange(this.range, side, delta), this.isDirty, this.isTooBig)
-
-    private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range {
-      return Range(side[start, otherStart], side[end, otherEnd],
-                   side[otherStart, start], side[otherEnd, end])
-    }
-
-    private fun shiftRange(range: Range, side: Side, shift: Int) = shiftRange(
-      range, side[shift, 0], side[0, shift])
-
-    private fun shiftRange(range: Range, shift1: Int, shift2: Int) = Range(range.start1 + shift1,
-                                                                           range.end1 + shift1,
-                                                                           range.start2 + shift2,
-                                                                           range.end2 + shift2)
-  }
-
-  private data class BlockChangeData(val beforeBlocks: List<Block>,
-                                     val affectedBlocks: List<Block>, val afterBlocks: List<Block>,
-                                     val newAffectedBlock: Block, val newAfterBlocks: List<Block>)
-
-  private fun Handler.onRangesRemoved(blocks: List<Block>) {
-    blocks.forEach(this::onRangeRemoved)
-  }
-
-  private fun Handler.onRangesAdded(blocks: List<Block>) {
-    blocks.forEach(this::onRangeAdded)
-  }
+  data class Result(val newBlocks: List<Block>)
 }
 
-private class BlockGroupsProcessor(private val text1: CharSequence,
-                                   private val lineOffsets1: LineOffsets) {
-  fun processMergeableGroups(blocks: List<Block>,
-                             processGroup: (group: List<Block>) -> Unit) {
-    if (blocks.isEmpty()) return
-
-    var i = 0
-    var blockStart = 0
-    while (i < blocks.size - 1) {
-      if (!isWhitespaceOnlySeparated(blocks[i], blocks[i + 1])) {
-        processGroup(blocks.subList(blockStart, i + 1))
-        blockStart = i + 1
-      }
-      i += 1
-    }
-    processGroup(blocks.subList(blockStart, i + 1))
-  }
-
-  private fun isWhitespaceOnlySeparated(block1: Block, block2: Block): Boolean {
-    val range1 = DiffUtil.getLinesRange(lineOffsets1, block1.range.start1, block1.range.end1, false)
-    val range2 = DiffUtil.getLinesRange(lineOffsets1, block2.range.start1, block2.range.end1, false)
-    val start = range1.endOffset
-    val end = range2.startOffset
-    return trimStart(text1, start, end) == end
-  }
+private fun getRangeDelta(range: Range, side: Side): Int {
+  val otherSide = side.other()
+  val deleted = range.end(side) - range.start(side)
+  val inserted = range.end(otherSide) - range.start(otherSide)
+  return inserted - deleted
 }
 
-private class MergingBlockProcessor(private val handler: Handler) {
-  fun processMergedBlocks(group: List<Block>,
-                          processBlock: (original: List<Block>, merged: Block) -> Unit) {
-    assert(!group.isEmpty())
+private fun Block.shift(side: Side, delta: Int) = Block(
+  shiftRange(this.range, side, delta), this.isDirty, this.isTooBig)
 
-    val originalGroup = mutableListOf<Block>()
-    var merged: Block? = null
+private fun shiftRange(range: Range, side: Side, shift: Int) = shiftRange(range, side[shift, 0], side[0, shift])
 
-    for (block in group) {
-      if (merged == null) {
-        originalGroup.add(block)
-        merged = block
-      }
-      else {
-        val newMerged = mergeBlocks(merged, block)
-        if (newMerged != null) {
-          originalGroup.add(block)
-          merged = newMerged
-        }
-        else {
-          processBlock(originalGroup, merged)
-          originalGroup.clear()
-          originalGroup.add(block)
-          merged = block
-        }
-      }
-    }
-
-    processBlock(originalGroup, merged!!)
-  }
-
-  private fun mergeBlocks(block1: Block, block2: Block): Block? {
-    val isDirty = block1.isDirty || block2.isDirty
-    val isTooBig = block1.isTooBig || block2.isTooBig
-    val range = Range(block1.range.start1, block2.range.end1,
-                      block1.range.start2, block2.range.end2)
-    val merged = Block(range, isDirty, isTooBig)
-
-    if (!handler.onRangesMerged(block1, block2, merged)) {
-      return null // merging vetoed
-    }
-    return merged
-  }
-}
+private fun shiftRange(range: Range, shift1: Int, shift2: Int) = Range(range.start1 + shift1,
+                                                                       range.end1 + shift1,
+                                                                       range.start2 + shift2,
+                                                                       range.end2 + shift2)

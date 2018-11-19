@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 2/8/12 1:52 PM
  */
 public class ExternalSystemProcessingManager implements ExternalSystemTaskNotificationListener, Disposable {
 

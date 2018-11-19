@@ -1,6 +1,6 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -17,7 +17,7 @@ public class NavBarModelBuilderImpl extends NavBarModelBuilder {
   @Override
   public void traverseToRoot(@NotNull PsiElement psiElement, @NotNull Set<VirtualFile> roots, @NotNull List<Object> model) {
 
-    NavBarModelExtension[] extensions = Extensions.getExtensions(NavBarModelExtension.EP_NAME);
+    List<NavBarModelExtension> extensions = NavBarModelExtension.EP_NAME.getExtensionList();
 
     for (PsiElement e = normalize(psiElement), next = null; e != null; e = normalize(next), next = null) {
       // check if we're running circles due to getParent()->normalize/adjust()

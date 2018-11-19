@@ -31,7 +31,6 @@ import java.util.LinkedHashMap;
 
 /**
  * @author anna
- * @since 05-Jun-2006
  */
 public class ProjectSdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel");
@@ -235,7 +234,7 @@ public class ProjectSdksModel implements SdkModel {
                                @NotNull final JComponent parent,
                                @Nullable final Sdk selectedSdk,
                                @NotNull final Consumer<Sdk> updateTree,
-                               @Nullable Condition<SdkTypeId> filter) {
+                               @Nullable Condition<? super SdkTypeId> filter) {
     final SdkType[] types = SdkType.getAllTypes();
     for (final SdkType type : types) {
       if (filter != null && !filter.value(type)) continue;

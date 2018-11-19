@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
 import com.intellij.lang.SmartEnterProcessorWithFixers;
@@ -28,17 +14,16 @@ public class GrMethodParametersFixer extends SmartEnterProcessorWithFixers.Fixer
   @Override
   public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
     if (psiElement instanceof GrParameterList && psiElement.getParent() instanceof GrMethod) {
-      PsiElement rParenth = psiElement.getNextSibling();
-      if (rParenth == null) return;
-
-//      [todo] ends with comma
-      if (! ")".equals(rParenth.getText())) {
-        int offset;
-        GrParameterList list = (GrParameterList) psiElement;
+      PsiElement rParenth = ((GrParameterList)psiElement).getRParen();
+      // TODO ends with comma
+      if (rParenth == null || !")".equals(rParenth.getText())) {
+        GrParameterList list = (GrParameterList)psiElement;
         final GrParameter[] params = list.getParameters();
-        if (params == null || params.length == 0) {
+        int offset;
+        if (params.length == 0) {
           offset = list.getTextRange().getStartOffset() + 1;
-        } else {
+        }
+        else {
           offset = params[params.length - 1].getTextRange().getEndOffset();
         }
         editor.getDocument().insertString(offset, ")");

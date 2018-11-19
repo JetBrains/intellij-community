@@ -5,20 +5,20 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +30,8 @@ import java.util.function.Predicate;
  * @author Gregory.Shrago
  */
 public class DfaUtil {
+  private static final Object UNKNOWN_VALUE = ObjectUtils.sentinel("UNKNOWN_VALUE");
+
   @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
@@ -333,36 +335,75 @@ public class DfaUtil {
    */
   @Nullable
   public static Boolean evaluateCondition(@Nullable PsiExpression condition) {
-    condition = PsiUtil.skipParenthesizedExprDown(condition);
-    if (condition == null || !PsiType.BOOLEAN.equals(condition.getType())) return null;
-    Object o = ExpressionUtils.computeConstantExpression(condition);
-    if (o instanceof Boolean) return (Boolean)o;
-    if (!(condition instanceof PsiBinaryExpression)) return null;
-    PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-    PsiElement context = getDataflowContext(condition);
-    if (context == null) return null;
-    class MyVisitor extends StandardInstructionVisitor {
-      boolean myTrueReachable = false;
-      boolean myFalseReachable = false;
+    CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(condition);
+    return result == null ? null : ObjectUtils.tryCast(result.getExpressionValue(condition), Boolean.class);
+  }
 
-      @Override
-      public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-        DfaInstructionState[] states = super.visitBinop(instruction, runner, memState);
-        if (instruction.getPsiAnchor() == binOp) {
-          myTrueReachable |= instruction.isTrueReachable();
-          myFalseReachable |= instruction.isFalseReachable();
-          if (myTrueReachable && myFalseReachable) {
-            runner.cancel();
-          }
-        }
-        return states;
+  public static boolean isComparedByEquals(PsiType type) {
+    return type != null && (TypeUtils.isJavaLangString(type) || TypeConversionUtil.isPrimitiveWrapper(type));
+  }
+
+  public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
+    if (TypeConversionUtil.isPrimitiveWrapper(type)) {
+      if (value instanceof DfaConstValue ||
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(value.getType()))) {
+        DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value, type);
+        return boxed == null ? DfaUnknownValue.getInstance() : boxed;
       }
     }
-    MyVisitor visitor = new MyVisitor();
-    if (new DataFlowRunner().analyzeMethodRecursively(context, visitor) == RunnerResult.OK) {
-      if (visitor.myTrueReachable != visitor.myFalseReachable) {
-        return visitor.myTrueReachable;
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
+      if (value instanceof DfaBoxedValue ||
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
+        return value.getFactory().getBoxedFactory().createUnboxed(value, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
       }
+    }
+    return value;
+  }
+
+  /**
+   * Returns the value of given expression calculated via dataflow; or null if value is null or unknown.
+   * The expression context is not taken into account; only expression itself.
+   *
+   * @param expression expression to analyze
+   * @return expression value if known
+   */
+  public static Object computeValue(PsiExpression expression) {
+    PsiExpression expressionToAnalyze = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expressionToAnalyze == null) return null;
+    Object computed = ExpressionUtils.computeConstantExpression(expression);
+    if (computed != null) return computed;
+
+    DataFlowRunner runner = new StandardDataFlowRunner(false, expression);
+    class Visitor extends StandardInstructionVisitor {
+      Object exprValue;
+
+      @Override
+      protected void beforeExpressionPush(@NotNull DfaValue value,
+                                          @NotNull PsiExpression expr,
+                                          @Nullable TextRange range,
+                                          @NotNull DfaMemoryState state) {
+        super.beforeExpressionPush(value, expr, range, state);
+        if (expr != expressionToAnalyze) return;
+        Object newValue;
+        if (value instanceof DfaConstValue) {
+          newValue = ((DfaConstValue)value).getValue();
+        } else {
+          newValue = UNKNOWN_VALUE;
+        }
+        if (exprValue == null) {
+          exprValue = newValue;
+        } else if (exprValue != newValue) {
+          exprValue = UNKNOWN_VALUE;
+        }
+        if (exprValue == UNKNOWN_VALUE) {
+          runner.cancel();
+        }
+      }
+    }
+    Visitor visitor = new Visitor();
+    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, visitor);
+    if (result == RunnerResult.OK && visitor.exprValue != UNKNOWN_VALUE) {
+      return visitor.exprValue;
     }
     return null;
   }

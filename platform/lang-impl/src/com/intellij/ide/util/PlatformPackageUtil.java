@@ -76,7 +76,7 @@ public class PlatformPackageUtil {
   }
 
   @Nullable
-  private static PsiDirectory getWritableModuleDirectory(@NotNull Query<VirtualFile> vFiles,
+  private static PsiDirectory getWritableModuleDirectory(@NotNull Query<? extends VirtualFile> vFiles,
                                                          GlobalSearchScope scope,
                                                          PsiManager manager) {
     for (VirtualFile vFile : vFiles) {

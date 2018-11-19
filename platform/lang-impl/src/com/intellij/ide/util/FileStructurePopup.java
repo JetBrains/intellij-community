@@ -157,10 +157,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
 
       @Override
-      public boolean isToBuildChildrenInBackground(Object element) {
+      public boolean isToBuildChildrenInBackground(@NotNull Object element) {
         return getRootElement() == element;
       }
 
+      @NotNull
       @Override
       protected TreeElementWrapper createTree() {
         return StructureViewComponent.createWrapper(myProject, myModel.getRoot(), myModel);
@@ -176,9 +177,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     FileStructurePopupFilter filter = new FileStructurePopupFilter();
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
 
-    myStructureTreeModel = new StructureTreeModel(true);
-    myStructureTreeModel.setStructure(myFilteringStructure);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, false, this);
+    myStructureTreeModel = new StructureTreeModel(myFilteringStructure);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
@@ -204,7 +204,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       @Override
       protected Transferable createTransferable(JComponent component) {
         JBIterable<Pair<FilteringTreeStructure.FilteringNode, PsiElement>> pairs = JBIterable.of(myTree.getSelectionPaths())
-          .filterMap(o -> TreeUtil.getUserObject(o.getLastPathComponent()))
+          .filterMap(TreeUtil::getLastUserObject)
           .filter(FilteringTreeStructure.FilteringNode.class)
           .filterMap(o -> o.getDelegate() instanceof PsiElement ? Pair.create(o, (PsiElement)o.getDelegate()) : null)
           .collect();
@@ -392,7 +392,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
       TreeUtil.ensureSelection(myTree);
-      Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
+      Object userObject = TreeUtil.getLastUserObject(path);
       if (userObject != null && Comparing.equal(element, StructureViewComponent.unwrapValue(userObject))) {
         myInitialNodeIsLeaf = myFilteringStructure.getChildElements(userObject).length == 0;
       }
@@ -427,7 +427,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   public AsyncPromise<Void> rebuildAndUpdate() {
     AsyncPromise<Void> result = new AsyncPromise<>();
     TreeVisitor visitor = path -> {
-      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
+      AbstractTreeNode node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
       if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
@@ -627,12 +627,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
         group.add(new ToggleAction(IdeBundle.message("checkbox.narrow.down.on.typing")) {
           @Override
-          public boolean isSelected(AnActionEvent e) {
+          public boolean isSelected(@NotNull AnActionEvent e) {
             return isShouldNarrowDown();
           }
 
           @Override
-          public void setSelected(AnActionEvent e, boolean state) {
+          public void setSelected(@NotNull AnActionEvent e, boolean state) {
             PropertiesComponent.getInstance().setValue(NARROW_DOWN_PROPERTY_KEY, Boolean.toString(state));
             if (mySpeedSearch.isPopupActive() && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())) {
               rebuild(true);
@@ -645,7 +645,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           null, group, dataManager.getDataContext(label), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
         popup.addListener(new JBPopupListener() {
           @Override
-          public void onClosed(LightweightWindowEvent event) {
+          public void onClosed(@NotNull LightweightWindowEvent event) {
             myCanClose = true;
           }
         });
@@ -706,7 +706,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       boolean actionState = TreeModelWrapper.shouldRevert(myAction) != state;
       myTreeActionsOwner.setActionIncluded(myAction, actionState);
       saveState(myAction, state);
@@ -812,8 +812,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myStructureTreeModel.getInvoker().runOrInvokeLater(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
-        myStructureTreeModel.invalidate(
-          () ->
+        myStructureTreeModel.invalidate().onSuccess(
+          res ->
             (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
               .onError(ignore2 -> result.setError("rejected"))
               .onSuccess(p -> UIUtil.invokeLaterIfNeeded(
@@ -826,7 +826,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
       else {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidate(() -> rebuildAndSelect(true, selection).processed(result));
+        myStructureTreeModel.invalidate().onSuccess(res -> rebuildAndSelect(true, selection).processed(result));
       }
     });
     return result;
@@ -977,7 +977,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private class MyTreeSpeedSearch extends TreeSpeedSearch {
 
     MyTreeSpeedSearch() {
-      super(myTree, path -> getSpeedSearchText(TreeUtil.getUserObject(path.getLastPathComponent())), true);
+      super(myTree, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)), true);
     }
 
     @Override

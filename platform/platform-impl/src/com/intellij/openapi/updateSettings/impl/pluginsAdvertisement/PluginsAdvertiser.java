@@ -16,7 +16,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -91,7 +90,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   @Nullable
-  private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<IdeaPluginDescriptor> allPlugins) {
+  private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) {
     final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
@@ -194,19 +193,11 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   static void enablePlugins(Project project, final Collection<IdeaPluginDescriptor> disabledPlugins) {
-    final PluginManagerConfigurable managerConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-    final PluginManagerMain createPanel = managerConfigurable.getOrCreatePanel();
-    ShowSettingsUtil.getInstance()
-      .editConfigurable(project, managerConfigurable, () -> {
-        final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)createPanel.getPluginsModel();
-        final IdeaPluginDescriptor[] descriptors = disabledPlugins.toArray(new IdeaPluginDescriptor[0]);
-        pluginsModel.enableRows(descriptors, Boolean.TRUE);
-        createPanel.getPluginTable().select(descriptors);
-      });
+    PluginManagerConfigurableProxy.showPluginConfigurableAndEnable(project, disabledPlugins.toArray(new IdeaPluginDescriptor[0]));
   }
 
   @Nullable
-  static IdeaPluginDescriptor getDisabledPlugin(Set<Plugin> plugins) {
+  static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
     final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
     for (Plugin plugin : plugins) {
       if (disabledPlugins.contains(plugin.myPluginId)) return PluginManager.getPlugin(PluginId.getId(plugin.myPluginId));
@@ -214,7 +205,7 @@ public class PluginsAdvertiser implements StartupActivity {
     return null;
   }
 
-  static List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
+  static List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) return null;
     final List<String> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
@@ -433,7 +424,7 @@ public class PluginsAdvertiser implements StartupActivity {
     public PluginSet() {
     }
 
-    public PluginSet(Set<Plugin> plugins) {
+    public PluginSet(Set<? extends Plugin> plugins) {
       myPlugins.addAll(plugins);
     }
   }
@@ -484,17 +475,17 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   private static class ConfigurePluginsListener implements NotificationListener {
-    private final Set<UnknownFeature> myUnknownFeatures;
+    private final Set<? extends UnknownFeature> myUnknownFeatures;
     private final Project myProject;
-    private final List<IdeaPluginDescriptor> myAllPlugins;
+    private final List<? extends IdeaPluginDescriptor> myAllPlugins;
     private final Set<PluginDownloader> myPlugins;
     private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins;
 
-    public ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
-                                    Project project,
-                                    List<IdeaPluginDescriptor> allPlugins,
-                                    Set<PluginDownloader> plugins,
-                                    Map<Plugin, IdeaPluginDescriptor> disabledPlugins) {
+    ConfigurePluginsListener(Set<? extends UnknownFeature> unknownFeatures,
+                             Project project,
+                             List<? extends IdeaPluginDescriptor> allPlugins,
+                             Set<PluginDownloader> plugins,
+                             Map<Plugin, IdeaPluginDescriptor> disabledPlugins) {
       myUnknownFeatures = unknownFeatures;
       myProject = project;
       myAllPlugins = allPlugins;

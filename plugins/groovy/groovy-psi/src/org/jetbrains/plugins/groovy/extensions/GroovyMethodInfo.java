@@ -229,7 +229,7 @@ public class GroovyMethodInfo {
           values.add(st.nextToken());
         }
 
-        r = new NamedArgumentReference(values.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+        r = new NamedArgumentReference(ArrayUtil.toStringArray(values));
       }
       else {
         continue;
@@ -359,12 +359,12 @@ public class GroovyMethodInfo {
 
     private volatile Object myProvider;
 
-    public NamedArgumentReference(String providerClassName) {
+    NamedArgumentReference(String providerClassName) {
       myProviderClassName = providerClassName;
       myValues = null;
     }
 
-    public NamedArgumentReference(String[] values) {
+    NamedArgumentReference(String[] values) {
       myValues = values;
       myProviderClassName = null;
     }

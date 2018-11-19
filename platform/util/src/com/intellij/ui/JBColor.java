@@ -2,8 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +15,8 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
 import java.util.Map;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -25,7 +27,7 @@ public class JBColor extends Color {
   }
 
   private final Color darkColor;
-  private final NotNullProducer<Color> func;
+  private final NotNullProducer<? extends Color> func;
 
   public JBColor(int rgb, int darkRGB) {
     this(new Color(rgb), new Color(darkRGB));
@@ -37,7 +39,7 @@ public class JBColor extends Color {
     func = null;
   }
 
-  public JBColor(@NotNull NotNullProducer<Color> function) {
+  public JBColor(@NotNull NotNullProducer<? extends Color> function) {
     super(0);
     darkColor = null;
     func = function;
@@ -53,39 +55,70 @@ public class JBColor extends Color {
       @NotNull
       @Override
       public Color produce() {
-        return ObjectUtils.notNull(UIManager.getColor(propertyName), defaultColor);
+        Color color = notNull(UIManager.getColor(propertyName),
+                              notNull(findPatternMatch(propertyName), defaultColor));
+        if (UIManager.get(propertyName) == null) {
+          UIManager.put(propertyName, color);
+        }
+        return color;
       }
     });
   }
 
+  // Let's find if namedColor can be overridden by *.propertyName rule in ui theme and apply it
+  // We need to cache calculated results. Cache and rules will be reset after LaF change
+  private static Color findPatternMatch(String name) {
+    Object value = UIManager.get("*");
+
+    if (value instanceof Map) {
+      Color color = null;
+      Map<?,?> map = (Map<?, ?>)value;
+      Object o = UIManager.get("*cache");
+      if (! (o instanceof Map)) {
+        o = new java.util.HashMap<String, Color>();
+        UIManager.put("*cache", o);
+      }
+      Map<String,Color> cache = (Map)o;
+      if (cache.containsKey(name)) {
+        return cache.get(name);
+      }
+      for (Map.Entry<?, ?> entry : map.entrySet()) {
+        if (entry.getKey() instanceof String && name.endsWith(((String)entry.getKey()))) {
+          Object result = map.get(entry.getKey());
+          if (result instanceof Color) {
+            color = (Color)result;
+            break;
+          }
+        }
+      }
+      cache.put(name, color);
+      return color;
+    }
+    return null;
+  }
+
   @NotNull
+  @Deprecated
   public static Color link() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        Color linkColor = UIManager.getColor("link.foreground");
-        return linkColor == null ? new Color(0x589df6) : linkColor;
-      }
-    });
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
   @NotNull
+  @Deprecated
   public static Color linkHover() {
-    Color hoverColor = UIManager.getColor("link.hover.foreground");
-    return hoverColor == null ? link() : hoverColor;
+    return JBUI.CurrentTheme.Link.linkHoverColor();
   }
 
   @NotNull
+  @Deprecated
   public static Color linkPressed() {
-    Color pressedColor = UIManager.getColor("link.pressed.foreground");
-    return pressedColor == null ? new JBColor(0xf00000, 0xba6f25) : pressedColor;
+    return JBUI.CurrentTheme.Link.linkPressedColor();
   }
 
   @NotNull
+  @Deprecated
   public static Color linkVisited() {
-    Color visitedColor = UIManager.getColor("link.visited.foreground");
-    return visitedColor == null ? new JBColor(0x800080, 0x9776a9) : visitedColor;
+    return JBUI.CurrentTheme.Link.linkVisitedColor();
   }
 
   public static void setDark(boolean dark) {
@@ -308,14 +341,7 @@ public class JBColor extends Color {
 
   @NotNull
   public static Color border() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        //noinspection deprecation
-        return UIUtil.getBorderColor();
-      }
-    });
+    return namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
   }
 
   private static final Map<String, Color> defaultThemeColors = new HashMap<String, Color>();

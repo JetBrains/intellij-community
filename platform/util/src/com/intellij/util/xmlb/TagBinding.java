@@ -13,13 +13,13 @@ import java.util.List;
 class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   private final String myTextIfEmpty;
 
-  public TagBinding(@NotNull MutableAccessor accessor, @NotNull Tag tagAnnotation) {
+  TagBinding(@NotNull MutableAccessor accessor, @NotNull Tag tagAnnotation) {
     super(accessor, tagAnnotation.value(), null);
 
     myTextIfEmpty = tagAnnotation.textIfEmpty();
   }
 
-  public TagBinding(@NotNull MutableAccessor accessor, @NotNull String suggestedName) {
+  TagBinding(@NotNull MutableAccessor accessor, @NotNull String suggestedName) {
     super(accessor, suggestedName, null);
 
     myTextIfEmpty = "";
@@ -48,7 +48,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(@NotNull Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@NotNull Object context, @NotNull List<? extends Element> elements) {
     List<Element> children;
     if (elements.size() == 1) {
       children = elements.get(0).getChildren();
@@ -58,7 +58,6 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
       children = new ArrayList<Element>();
       for (Element element : elements) {
         assert element.getName().equals(name);
-        //noinspection unchecked
         children.addAll(element.getChildren());
       }
     }
@@ -84,7 +83,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     return context;
   }
 
-  private void deserialize(@NotNull Object context, @NotNull List<Element> children) {
+  private void deserialize(@NotNull Object context, @NotNull List<? extends Element> children) {
     assert myBinding != null;
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
       ((BeanBinding)myBinding).deserializeInto(context, children.get(0));

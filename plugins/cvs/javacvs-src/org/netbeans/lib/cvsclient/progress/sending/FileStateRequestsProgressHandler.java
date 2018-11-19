@@ -28,7 +28,7 @@ public class FileStateRequestsProgressHandler
 
 	// Fields =================================================================
 
-	private final Set fileObjects = new HashSet(2000);
+	private final Set<FileObject> fileObjects = new HashSet<>(2000);
 	private final IProgressViewer progressViewer;
 	private int count;
 	private final int maxCount;
@@ -74,7 +74,7 @@ public class FileStateRequestsProgressHandler
 
 	// Utils ==================================================================
 
-	private void notifyProgress(int count, int maxCount, IProgressViewer progressViewer) {
+	private static void notifyProgress(int count, int maxCount, IProgressViewer progressViewer) {
 		progressViewer.setProgress((double)count / maxCount);
 	}
 }

@@ -87,7 +87,7 @@ public abstract class BaseCompleteMacro extends Macro {
     private final ExpressionContext myContext;
     private final boolean myCheckCompletionChar;
 
-    public MyLookupListener(@NotNull final ExpressionContext context, final boolean checkCompletionChar) {
+    MyLookupListener(@NotNull final ExpressionContext context, final boolean checkCompletionChar) {
       myContext = context;
       myCheckCompletionChar = checkCompletionChar;
     }

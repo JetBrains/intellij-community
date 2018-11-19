@@ -21,8 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getCursor;
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
 
 public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull private final LinearGraphController myGraphController;
@@ -264,7 +265,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     private final int myNodeId;
     private final int myVisibleRow;
 
-    public RowInfoImpl(int nodeId, int visibleRow) {
+    RowInfoImpl(int nodeId, int visibleRow) {
       myNodeId = nodeId;
       myVisibleRow = visibleRow;
     }
@@ -300,6 +301,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
         default:
           throw new UnsupportedOperationException("Unsupported node type: " + nodeType);
       }
+    }
+
+    @NotNull
+    @Override
+    public List<Integer> getAdjacentRows(boolean parent) {
+      return parent ? getDownNodes(myGraphController.getCompiledGraph(), myVisibleRow)
+                    : getUpNodes(myGraphController.getCompiledGraph(), myVisibleRow);
     }
   }
 }

@@ -97,6 +97,20 @@ public class ActionGroupUtil {
                                                    boolean isInModalContext,
                                                    @NotNull Map<AnAction, Presentation> action2presentation) {
     Presentation presentation = getPresentation(action, action2presentation);
+    return isActionEnabledAndVisible(action, e, isInModalContext, presentation);
+  }
+
+  public static boolean isActionEnabledAndVisible(@NotNull AnAction action,
+                                                  @NotNull AnActionEvent e,
+                                                  boolean isInModalContext) {
+    Presentation presentation = action.getTemplatePresentation().clone();
+    return isActionEnabledAndVisible(action, e, isInModalContext, presentation);
+  }
+
+  private static boolean isActionEnabledAndVisible(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent e,
+                                                   boolean isInModalContext,
+                                                   @NotNull Presentation presentation) {
     AnActionEvent event = new AnActionEvent(
       e.getInputEvent(), e.getDataContext(), e.getPlace(),
       presentation, ActionManager.getInstance(), e.getModifiers());

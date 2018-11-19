@@ -34,7 +34,7 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
   protected abstract void setDescription(@NotNull T scheme, @NotNull String newDescription);
 
   @Override
-  protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {
+  protected void addAdditionalActions(@NotNull List<? super AnAction> defaultActions) {
     defaultActions.add(new AnAction("Edit description") {
 
       @Override

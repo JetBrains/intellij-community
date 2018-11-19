@@ -35,9 +35,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.GraphicsUtil;
@@ -519,7 +516,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private final ActionCallback myTypeAheadDone;
     private final ActionCallback myTypeAheadCallback;
 
-    public MyDialog(Window owner,
+    MyDialog(Window owner,
                     DialogWrapper dialogWrapper,
                     Project project,
                     @NotNull ActionCallback focused,
@@ -807,17 +804,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       @Override
       public void windowOpened(final WindowEvent e) {
-        if (SystemInfo.isMacOSLion) {
-          Window window = e.getWindow();
-          if (window instanceof Dialog) {
-            ID _native = MacUtil.findWindowForTitle(((Dialog)window).getTitle());
-            if (_native != null && _native.intValue() > 0) {
-              // see MacMainFrameDecorator
-              // NSCollectionBehaviorFullScreenAuxiliary = 1 << 8
-              Foundation.invoke(_native, "setCollectionBehavior:", 1 << 8);
-            }
-          }
-        }
         SwingUtilities.invokeLater(() -> {
           myOpened = true;
           final DialogWrapper activeWrapper = getActiveWrapper();
@@ -902,6 +888,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setGlassPane(new IdeGlassPaneImpl(this));
         myGlassPaneIsSet = true;
         putClientProperty("DIALOG_ROOT_PANE", true);
+        setBorder(UIManager.getBorder("Window.border"));
       }
 
       @NotNull

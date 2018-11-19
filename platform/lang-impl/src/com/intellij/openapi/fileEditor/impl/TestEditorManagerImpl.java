@@ -2,18 +2,19 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
@@ -59,14 +60,14 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   private VirtualFile myActiveFile;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
-  public TestEditorManagerImpl(@NotNull Project project) {
+  TestEditorManagerImpl(@NotNull Project project) {
     myProject = project;
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         if (project == myProject) {
           closeAllFiles();
         }
@@ -469,19 +470,16 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       LOG.assertTrue(document != null, psiFile);
       editor = EditorFactory.getInstance().createEditor(document, myProject);
       final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, file);
+      Language language = TextEditorImpl.getDocumentLanguage(editor);
+      editor.getSettings().setLanguage(language);
       ((EditorEx) editor).setHighlighter(highlighter);
       ((EditorEx) editor).setFile(file);
 
       myVirtualFile2Editor.put(file, editor);
     }
 
-    if (descriptor.getOffset() >= 0){
-      editor.getCaretModel().moveToOffset(descriptor.getOffset());
-    }
-    else if (descriptor.getLine() >= 0 && descriptor.getColumn() >= 0){
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(descriptor.getLine(), descriptor.getColumn()));
-    }
     editor.getSelectionModel().removeSelection();
+    descriptor.navigateIn(editor);
     myActiveFile = file;
 
     return editor;

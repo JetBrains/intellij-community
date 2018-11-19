@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -14,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -44,7 +41,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.InputEvent;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class AttachToProcessAction extends AnAction {
   private static final Key<Map<XAttachHost, LinkedHashSet<RecentItem>>> RECENT_ITEMS_KEY = Key.create("AttachToProcessAction.RECENT_ITEMS_KEY");
@@ -100,7 +96,7 @@ public class AttachToProcessAction extends AnAction {
               String debuggerName = ((AttachToProcessItem)item).getSelectedDebugger().getDebuggerDisplayName();
               debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
 
-              ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.popup.title", debuggerName));
+              popup.setCaption(XDebuggerBundle.message("xdebugger.attach.popup.title", debuggerName));
             }
 
             if (item instanceof AttachHostItem) {
@@ -108,7 +104,7 @@ public class AttachToProcessAction extends AnAction {
               String attachHostName = hostItem.getText(project);
               attachHostName = StringUtil.shortenTextWithEllipsis(attachHostName, 50, 0);
 
-              ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.host.popup.title", attachHostName));
+              popup.setCaption(XDebuggerBundle.message("xdebugger.attach.host.popup.title", attachHostName));
             }
           };
           popup.addListSelectionListener(listener);
@@ -123,7 +119,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  private static List<AttachItem> getTopLevelItems(@NotNull ProgressIndicator indicator, @NotNull Project project) {
+  protected List<AttachItem> getTopLevelItems(@NotNull ProgressIndicator indicator, @NotNull Project project) {
     List<AttachToProcessItem> localAttachToProcessItems = collectAttachProcessItems(
       project, LocalAttachHost.INSTANCE, indicator
     );
@@ -149,14 +145,14 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  public static List<AttachItem> collectAttachHostsItems(@NotNull final Project project,
-                                                         @NotNull ProgressIndicator indicator) {
+  public List<AttachItem> collectAttachHostsItems(@NotNull final Project project,
+                                                  @NotNull ProgressIndicator indicator) {
 
     List<AttachItem> currentItems = ContainerUtil.newArrayList();
 
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
-    for (XAttachHostProvider hostProvider : Extensions.getExtensions(XAttachHostProvider.EP)) {
+    for (XAttachHostProvider hostProvider : XAttachHostProvider.EP.getExtensionList()) {
       indicator.checkCanceled();
       //noinspection unchecked
       Set<XAttachHost> hosts = ContainerUtil.newHashSet(hostProvider.getAvailableHosts(project));
@@ -175,7 +171,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  private static List<AttachToProcessItem> getRecentItems(@NotNull List<AttachToProcessItem> currentItems,
+  private static List<AttachToProcessItem> getRecentItems(@NotNull List<? extends AttachToProcessItem> currentItems,
                                                           @NotNull XAttachHost host,
                                                           @NotNull Project project,
                                                           @NotNull UserDataHolder dataHolder) {
@@ -227,8 +223,7 @@ public class AttachToProcessAction extends AnAction {
 
   @NotNull
   private static List<XAttachDebuggerProvider> getProvidersApplicableForHost(@NotNull XAttachHost host) {
-    return XAttachDebuggerProvider.getAttachDebuggerProviders().stream().filter(provider -> provider.isAttachHostApplicable(host))
-                                  .collect(Collectors.toList());
+    return ContainerUtil.filter(XAttachDebuggerProvider.getAttachDebuggerProviders(), provider -> provider.isAttachHostApplicable(host));
   }
 
   @NotNull
@@ -241,9 +236,9 @@ public class AttachToProcessAction extends AnAction {
   @NotNull
   static List<AttachToProcessItem> doCollectAttachProcessItems(@NotNull final Project project,
                                                                @NotNull XAttachHost host,
-                                                               @NotNull List<ProcessInfo> processInfos,
+                                                               @NotNull List<? extends ProcessInfo> processInfos,
                                                                @NotNull ProgressIndicator indicator,
-                                                               @NotNull List<XAttachDebuggerProvider> providers) {
+                                                               @NotNull List<? extends XAttachDebuggerProvider> providers) {
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
     List<AttachToProcessItem> currentItems = ContainerUtil.newArrayList();
@@ -417,18 +412,18 @@ public class AttachToProcessAction extends AnAction {
     }
 
     @Nullable
-    Icon getIcon(@NotNull Project project) {
+    protected Icon getIcon(@NotNull Project project) {
       return myGroup.getItemIcon(project, myInfo, myDataHolder);
     }
 
-    abstract boolean hasSubStep();
+    protected abstract boolean hasSubStep();
 
-    abstract String getText(@NotNull Project project);
+    protected abstract String getText(@NotNull Project project);
 
     @Nullable
-    abstract String getTooltipText(@NotNull Project project);
+    protected abstract String getTooltipText(@NotNull Project project);
 
-    abstract List<AttachToProcessItem> getSubItems();
+    protected abstract List<AttachToProcessItem> getSubItems();
 
     @Override
     public int compareTo(AttachItem<T> compareItem) {
@@ -444,7 +439,7 @@ public class AttachToProcessAction extends AnAction {
 
   private static class AttachHostItem extends AttachItem<XAttachHost> {
 
-    public AttachHostItem(@NotNull XAttachPresentationGroup<XAttachHost> group,
+    AttachHostItem(@NotNull XAttachPresentationGroup<XAttachHost> group,
                           boolean isFirstInGroup,
                           @NotNull XAttachHost host,
                           @NotNull Project project,
@@ -552,7 +547,8 @@ public class AttachToProcessAction extends AnAction {
     @NotNull
     public String getText(@NotNull Project project) {
       String shortenedText = StringUtil.shortenTextWithEllipsis(myGroup.getItemDisplayText(project, myInfo, myDataHolder), 200, 0);
-      return myInfo.getPid() + " " + shortenedText;
+      int pid = myInfo.getPid();
+      return (pid == -1 ? "" : pid + " ") + shortenedText;
     }
 
     @NotNull
@@ -586,7 +582,7 @@ public class AttachToProcessAction extends AnAction {
   private static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
     @NotNull final Project myProject;
 
-    public MyBasePopupStep(@NotNull Project project,
+    MyBasePopupStep(@NotNull Project project,
                            @Nullable String title,
                            List<T> values) {
       super(title, values);
@@ -614,7 +610,7 @@ public class AttachToProcessAction extends AnAction {
     }
   }
 
-  private static class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
+  public static class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
     public AttachListStep(@NotNull List<AttachItem> items, @Nullable String title, @NotNull Project project) {
       super(project, title, items);
     }
@@ -687,7 +683,7 @@ public class AttachToProcessAction extends AnAction {
     }
 
     private class DebuggerListStep extends MyBasePopupStep<AttachToProcessItem> {
-      public DebuggerListStep(List<AttachToProcessItem> items, int selectedItem) {
+      DebuggerListStep(List<AttachToProcessItem> items, int selectedItem) {
         super(AttachListStep.this.myProject, XDebuggerBundle.message("xdebugger.attach.popup.selectDebugger.title"), items);
         setDefaultOptionIndex(selectedItem);
       }

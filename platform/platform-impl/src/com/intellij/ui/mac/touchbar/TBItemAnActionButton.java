@@ -142,7 +142,7 @@ class TBItemAnActionButton extends TBItemButton {
     boolean isSelected = false;
     if (myAnAction instanceof Toggleable) {
       final Object selectedProp = presentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
-      isSelected = selectedProp != null && selectedProp == Boolean.TRUE;
+      isSelected = selectedProp == Boolean.TRUE;
       if (myNativePeer != ID.NIL && myActionId != null && myActionId.startsWith("Console.Jdbc.Execute")) // permanent update of toggleable-buttons of DataGrip
         myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
     }

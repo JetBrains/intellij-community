@@ -91,7 +91,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
 
   @NotNull
   static String processReplacements(@NotNull CharSequence input,
-                                    @NotNull List<Pair<TextRange, String>> replacements) throws IndexOutOfBoundsException {
+                                    @NotNull List<? extends Pair<TextRange, String>> replacements) throws IndexOutOfBoundsException {
     StringBuilder result = new StringBuilder();
     int currentOffset = 0;
     for (Pair<TextRange, String> replacement : replacements) {
@@ -119,7 +119,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
   }
 
   private static class MyLiteralTextEscaper extends LiteralTextEscaper<YAMLScalarImpl> {
-    public MyLiteralTextEscaper(YAMLScalarImpl scalar) {
+    MyLiteralTextEscaper(YAMLScalarImpl scalar) {
       super(scalar);
     }
 

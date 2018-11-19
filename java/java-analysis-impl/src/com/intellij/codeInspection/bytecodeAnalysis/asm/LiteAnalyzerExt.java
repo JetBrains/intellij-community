@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -24,26 +10,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Extended version of {@link com.intellij.codeInspection.bytecodeAnalysis.asm.LiteAnalyzer}.
+ * Extended version of {@link LiteAnalyzer}.
  * It handles frames <b>and</b> additional data.
  *
  * @author lambdamix
  */
 public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interpreter<V> & InterpreterExt<Data>> implements Opcodes {
-
   private final MyInterpreter interpreter;
+  private final Data[] data;
   private Frame<V>[] frames;
   private boolean[] queued;
   private int[] queue;
   private int top;
 
-  public Data[] getData() {
-    return data;
-  }
-
-  private final Data[] data;
-
-  public LiteAnalyzerExt(final MyInterpreter interpreter, Data[] data, Data startData) {
+  public LiteAnalyzerExt(MyInterpreter interpreter, Data[] data, Data startData) {
     this.interpreter = interpreter;
     this.data = data;
     if (data.length > 0) {
@@ -51,18 +31,22 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
     }
   }
 
-  public Frame<V>[] analyze(final String owner, final MethodNode m) throws AnalyzerException {
+  public Data[] getData() {
+    return data;
+  }
+
+  public Frame<V>[] analyze(String owner, MethodNode m) throws AnalyzerException {
     if ((m.access & (ACC_ABSTRACT | ACC_NATIVE)) != 0) {
-      frames = (Frame<V>[]) new Frame<?>[0];
+      frames = ASMUtils.newFrameArray(0);
       return frames;
     }
 
-    final V refV = (V) BasicValue.REFERENCE_VALUE;
+    @SuppressWarnings("unchecked") V refV = (V)BasicValue.REFERENCE_VALUE;
 
     int n = m.instructions.size();
     InsnList insns = m.instructions;
-    List<TryCatchBlockNode>[] handlers = (List<TryCatchBlockNode>[]) new List<?>[n];
-    frames = (Frame<V>[]) new Frame<?>[n];
+    List<TryCatchBlockNode>[] handlers = ASMUtils.newListArray(n);
+    frames = ASMUtils.newFrameArray(n);
     queued = new boolean[n];
     queue = new int[n];
     top = 0;
@@ -85,21 +69,26 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
     // initializes the data structures for the control flow analysis
     Frame<V> current = newFrame(m.maxLocals, m.maxStack);
     Frame<V> handler = newFrame(m.maxLocals, m.maxStack);
-    current.setReturn(interpreter.newValue(Type.getReturnType(m.desc)));
+    current.setReturn(interpreter.newReturnTypeValue(Type.getReturnType(m.desc)));
     Type[] args = Type.getArgumentTypes(m.desc);
     int local = 0;
-    if ((m.access & ACC_STATIC) == 0) {
+    boolean isInstanceMethod = (m.access & ACC_STATIC) == 0;
+    if (isInstanceMethod) {
       Type ctype = Type.getObjectType(owner);
-      current.setLocal(local++, interpreter.newValue(ctype));
+      current.setLocal(local, interpreter.newParameterValue(true, local, ctype));
+      local++;
     }
-    for (int i = 0; i < args.length; ++i) {
-      current.setLocal(local++, interpreter.newValue(args[i]));
-      if (args[i].getSize() == 2) {
-        current.setLocal(local++, interpreter.newValue(null));
+    for (Type arg : args) {
+      current.setLocal(local, interpreter.newParameterValue(isInstanceMethod, local, arg));
+      local++;
+      if (arg.getSize() == 2) {
+        current.setLocal(local, interpreter.newEmptyValue(local));
+        local++;
       }
     }
     while (local < m.maxLocals) {
-      current.setLocal(local++, interpreter.newValue(null));
+      current.setLocal(local, interpreter.newEmptyValue(local));
+      local++;
     }
 
     interpreter.init(data[0]);
@@ -120,20 +109,22 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
         if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE || insnType == AbstractInsnNode.FRAME) {
           interpreter.init(data[insn]);
           merge(insn + 1, f);
-        } else {
+        }
+        else {
           // delta
           interpreter.init(data[insn]);
           current.init(f).execute(insnNode, interpreter);
 
           if (insnNode instanceof JumpInsnNode) {
-            JumpInsnNode j = (JumpInsnNode) insnNode;
+            JumpInsnNode j = (JumpInsnNode)insnNode;
             if (insnOpcode != GOTO && insnOpcode != JSR) {
               merge(insn + 1, current);
             }
             int jump = insns.indexOf(j.label);
             merge(jump, current);
-          } else if (insnNode instanceof LookupSwitchInsnNode) {
-            LookupSwitchInsnNode lsi = (LookupSwitchInsnNode) insnNode;
+          }
+          else if (insnNode instanceof LookupSwitchInsnNode) {
+            LookupSwitchInsnNode lsi = (LookupSwitchInsnNode)insnNode;
             int jump = insns.indexOf(lsi.dflt);
             merge(jump, current);
             for (int j = 0; j < lsi.labels.size(); ++j) {
@@ -141,8 +132,9 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
               jump = insns.indexOf(label);
               merge(jump, current);
             }
-          } else if (insnNode instanceof TableSwitchInsnNode) {
-            TableSwitchInsnNode tsi = (TableSwitchInsnNode) insnNode;
+          }
+          else if (insnNode instanceof TableSwitchInsnNode) {
+            TableSwitchInsnNode tsi = (TableSwitchInsnNode)insnNode;
             int jump = insns.indexOf(tsi.dflt);
             merge(jump, current);
             for (int j = 0; j < tsi.labels.size(); ++j) {
@@ -150,16 +142,16 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
               jump = insns.indexOf(label);
               merge(jump, current);
             }
-          } else if (insnOpcode != ATHROW
-                     && (insnOpcode < IRETURN || insnOpcode > RETURN)) {
+          }
+          else if (insnOpcode != ATHROW
+                   && (insnOpcode < IRETURN || insnOpcode > RETURN)) {
             merge(insn + 1, current);
           }
         }
 
         List<TryCatchBlockNode> insnHandlers = handlers[insn];
         if (insnHandlers != null) {
-          for (int i = 0; i < insnHandlers.size(); ++i) {
-            TryCatchBlockNode tcb = insnHandlers.get(i);
+          for (TryCatchBlockNode tcb : insnHandlers) {
             int jump = insns.indexOf(tcb.handler);
             handler.init(f);
             handler.clearStack();
@@ -167,9 +159,11 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
             merge(jump, handler);
           }
         }
-      } catch (AnalyzerException e) {
+      }
+      catch (AnalyzerException e) {
         throw new AnalyzerException(e.node, "Error at instruction " + insn + ": " + e.getMessage(), e);
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         throw new AnalyzerException(insnNode, "Error at instruction " + insn + ": " + e.getMessage(), e);
       }
     }
@@ -181,24 +175,25 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
     return frames;
   }
 
-  protected Frame<V> newFrame(final int nLocals, final int nStack) {
+  protected Frame<V> newFrame(int nLocals, int nStack) {
     return new Frame<>(nLocals, nStack);
   }
 
-  protected Frame<V> newFrame(final Frame<? extends V> src) {
+  protected Frame<V> newFrame(Frame<? extends V> src) {
     return new Frame<>(src);
   }
 
   // -------------------------------------------------------------------------
 
-  private void merge(final int insn, final Frame<V> frame) throws AnalyzerException {
+  private void merge(int insn, Frame<V> frame) throws AnalyzerException {
     Frame<V> oldFrame = frames[insn];
     boolean changes;
 
     if (oldFrame == null) {
       frames[insn] = newFrame(frame);
       changes = true;
-    } else {
+    }
+    else {
       changes = oldFrame.merge(frame, interpreter);
     }
 
@@ -208,7 +203,8 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
     if (oldData == null) {
       data[insn] = newData;
       changes = true;
-    } else if (newData != null) {
+    }
+    else if (newData != null) {
       Data mergedData = interpreter.merge(oldData, newData);
       data[insn] = mergedData;
       changes |= !oldData.equals(mergedData);

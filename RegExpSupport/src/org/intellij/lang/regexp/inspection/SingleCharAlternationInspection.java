@@ -38,7 +38,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public SingleCharAlternationVisitor(ProblemsHolder holder) {
+    SingleCharAlternationVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -52,7 +52,6 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         return;
       }
       final String text = buildReplacementText(pattern);
-      //noinspection DialogTitleCapitalization
       myHolder.registerProblem(pattern, "Single character alternation in RegExp", new SingleCharAlternationFix(text));
     }
 
@@ -65,7 +64,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
 
       private final String myText;
 
-      public SingleCharAlternationFix(String text) {
+      SingleCharAlternationFix(String text) {
         myText = text;
       }
 
@@ -109,6 +108,9 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
           if (value == ']') {
             text.append(ch.getUnescapedText());
           }
+          else if (value == '-' && text.length() != 1) {
+            text.append("\\-");
+          }
           else {
             text.append((char)value);
           }
@@ -146,7 +148,6 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
               text.append("\\]");
               break;
             case '-':
-            case '^':
               if (text.length() != 1) {
                 text.append("\\-");
                 break;

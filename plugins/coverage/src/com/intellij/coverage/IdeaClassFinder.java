@@ -27,7 +27,7 @@ class IdeaClassFinder extends ClassFinder {
   private final Project myProject;
   private final CoverageSuitesBundle myCurrentSuite;
 
-  public IdeaClassFinder(Project project, CoverageSuitesBundle currentSuite) {
+  IdeaClassFinder(Project project, CoverageSuitesBundle currentSuite) {
     super(obtainPatternsFromSuite(currentSuite), new ArrayList());
     myProject = project;
     myCurrentSuite = currentSuite;

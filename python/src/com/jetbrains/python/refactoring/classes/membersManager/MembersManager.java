@@ -101,7 +101,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    * @param to          destination
    */
   public static void moveAllMembers(
-    @NotNull final Collection<PyMemberInfo<PyElement>> memberInfos,
+    @NotNull final Collection<? extends PyMemberInfo<PyElement>> memberInfos,
     @NotNull final PyClass from,
     @NotNull final PyClass... to
   ) {
@@ -147,8 +147,8 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    * @return member or null if not found
    */
   @Nullable
-  public static PyMemberInfo<PyElement> findMember(@NotNull final Collection<PyMemberInfo<PyElement>> members,
-                                                   @NotNull final Predicate<PyMemberInfo<PyElement>> predicate) {
+  public static PyMemberInfo<PyElement> findMember(@NotNull final Collection<? extends PyMemberInfo<PyElement>> members,
+                                                   @NotNull final Predicate<? super PyMemberInfo<PyElement>> predicate) {
     for (final PyMemberInfo<PyElement> pyMemberInfo : members) {
       if (predicate.apply(pyMemberInfo)) {
         return pyMemberInfo;
@@ -166,7 +166,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    */
   @Nullable
   public static PyMemberInfo<PyElement> findMember(@NotNull final PyClass pyClass,
-                                                   @NotNull final Predicate<PyMemberInfo<PyElement>> predicate) {
+                                                   @NotNull final Predicate<? super PyMemberInfo<PyElement>> predicate) {
     return findMember(getAllMembersCouldBeMoved(pyClass), predicate);
   }
 
@@ -251,7 +251,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    * @return list of elements
    */
   @NotNull
-  protected static <T extends PyElement> Collection<T> fetchElements(@NotNull final Collection<PyMemberInfo<T>> memberInfos) {
+  protected static <T extends PyElement> Collection<T> fetchElements(@NotNull final Collection<? extends PyMemberInfo<T>> memberInfos) {
     return memberInfos.stream().map(o -> o.getMember()).filter(o -> o != null).collect(Collectors.toList());
   }
 

@@ -127,10 +127,10 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     @XCollection
     public Map<String, UserDefinedJsonSchemaConfiguration> myState = new TreeMap<>();
 
-    public MyState() {
+    MyState() {
     }
 
-    public MyState(Map<String, UserDefinedJsonSchemaConfiguration> state) {
+    MyState(Map<String, UserDefinedJsonSchemaConfiguration> state) {
       myState = state;
     }
   }

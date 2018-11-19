@@ -31,7 +31,7 @@ final class Banner extends SimpleBanner {
 
   Banner(Action action) {
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
-    myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
+    myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);
     myLeftPanel.add(myBreadcrumbs, 0);
@@ -78,5 +78,14 @@ final class Banner extends SimpleBanner {
   void setLeftComponent(Component component) {
     super.setLeftComponent(component);
     myBreadcrumbs.setVisible(component == null);
+  }
+
+  @Override
+  void updateProgressBorder() {
+  }
+
+  @Override
+  Component getBaselineTemplate() {
+    return myBreadcrumbs;
   }
 }

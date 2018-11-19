@@ -179,7 +179,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     private final Type myType;
     private final DomCollectionChildDescription myDescription;
 
-    public MyDefaultAddAction(final DomElement parent,
+    MyDefaultAddAction(final DomElement parent,
                               final String name,
                               final Icon icon,
                               final AnActionEvent e,

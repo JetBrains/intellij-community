@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +46,8 @@ public class CurrentRevision implements VcsFileRevision {
   }
 
   @Override
-  public byte[] loadContent() throws IOException, VcsException {
-    return getContent();
+  public byte[] getContent() {
+    return loadContent();
   }
 
   @Override
@@ -57,7 +56,7 @@ public class CurrentRevision implements VcsFileRevision {
   }
 
   @Override
-  public byte[] getContent() {
+  public byte[] loadContent() {
     try {
       Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(myFile));
       if (document != null) {

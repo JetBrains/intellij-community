@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.externalSystem.view.TaskNode;
@@ -37,7 +38,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAction {
 
@@ -59,7 +59,8 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    ExternalSystemActionsCollector.trigger(getProject(e), getSystemId(e), this, e);
     List<TaskData> tasks = getTasks(e);
     if (state) {
       addTasks(getTaskActivator(e), tasks);

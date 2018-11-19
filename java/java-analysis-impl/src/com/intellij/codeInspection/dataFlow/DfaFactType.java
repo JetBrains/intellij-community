@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -65,6 +66,12 @@ public abstract class DfaFactType<T> extends Key<T> {
              super.isSuper(superFact, subFact);
     }
 
+    @NotNull
+    @Override
+    DfaNullability uniteFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
+      return left == right ? left : DfaNullability.FLUSHED;
+    }
+
     @Nullable
     @Override
     DfaNullability intersectFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
@@ -84,7 +91,7 @@ public abstract class DfaFactType<T> extends Key<T> {
       if (value instanceof DfaConstValue) {
         return ((DfaConstValue)value).getValue() == null ? DfaNullability.NULLABLE : DfaNullability.NOT_NULL;
       }
-      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue) return DfaNullability.NOT_NULL;
+      if (value instanceof DfaBoxedValue) return DfaNullability.NOT_NULL;
       if (value instanceof DfaFactMapValue) {
         DfaFactMapValue factValue = (DfaFactMapValue)value;
         if (factValue.get(OPTIONAL_PRESENCE) != null || factValue.get(RANGE) != null) return DfaNullability.NOT_NULL;
@@ -107,8 +114,8 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @NotNull
     @Override
-    Mutability unionFacts(@NotNull Mutability left, @NotNull Mutability right) {
-      return left.union(right);
+    Mutability uniteFacts(@NotNull Mutability left, @NotNull Mutability right) {
+      return left.unite(right);
     }
 
     @NotNull
@@ -162,16 +169,20 @@ public abstract class DfaFactType<T> extends Key<T> {
     LongRangeSet calcFromVariable(@NotNull DfaVariableValue var) {
       DfaVariableSource source = var.getSource();
       if(source instanceof SpecialField) {
-        return ((SpecialField)source).getRange();
+        DfaValue defaultValue = ((SpecialField)source).getDefaultValue(var.getFactory());
+        LongRangeSet fromSpecialField = LongRangeSet.fromDfaValue(defaultValue);
+        if (fromSpecialField != null) {
+          return fromSpecialField;
+        }
       }
-      LongRangeSet fromType = LongRangeSet.fromType(var.getVariableType());
+      LongRangeSet fromType = LongRangeSet.fromType(var.getType());
       return fromType == null ? null : LongRangeSet.fromPsiElement(var.getPsiVariable()).intersect(fromType);
     }
 
     @Nullable
     @Override
-    LongRangeSet unionFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
-      return left.union(right);
+    LongRangeSet uniteFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
+      return left.unite(right);
     }
 
     @Nullable
@@ -199,6 +210,13 @@ public abstract class DfaFactType<T> extends Key<T> {
       return superFact == null || (subFact != null && superFact.isSuperStateOf(subFact));
     }
 
+    @Nullable
+    @Override
+    TypeConstraint calcFromVariable(@NotNull DfaVariableValue value) {
+      DfaPsiType type = value.getDfaType();
+      return type == null ? null : TypeConstraint.empty().withInstanceofValue(type);
+    }
+
     @Override
     boolean isUnknown(@NotNull TypeConstraint fact) {
       return fact.isEmpty();
@@ -212,8 +230,8 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
-    TypeConstraint unionFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
-      return left.union(right);
+    TypeConstraint uniteFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
+      return left.unite(right);
     }
 
     @NotNull
@@ -235,17 +253,33 @@ public abstract class DfaFactType<T> extends Key<T> {
       return fact ? "local object" : "";
     }
   };
+  
+  public static final DfaFactType<SpecialFieldValue> SPECIAL_FIELD_VALUE = new DfaFactType<SpecialFieldValue>("Special field value") {
+    @NotNull
+    @Override
+    public String getName(SpecialFieldValue fact) {
+      return fact == null ? super.getName(null) : StringUtil.wordsToBeginFromUpperCase(fact.getField().getMethodName());
+    }
 
+    @NotNull
+    @Override
+    public String getPresentationText(@NotNull SpecialFieldValue fact, @Nullable PsiType type) {
+      return String.valueOf(fact.getValue());
+    }
+  };
+
+  @NotNull
   private final String myName;
 
-  private DfaFactType(String name) {
+  private DfaFactType(@NotNull String name) {
     super("DfaFactType: " + name);
     myName = name;
     // Thread-safe as all DfaFactType instances are created only from DfaFactType class static initializer
     ourFactTypes.add(this);
   }
 
-  public String getName() {
+  @NotNull
+  public String getName(T fact) {
     return myName;
   }
 
@@ -288,7 +322,7 @@ public abstract class DfaFactType<T> extends Key<T> {
    * @return union fact (null means that the fact can have any value)
    */
   @Nullable
-  T unionFacts(@NotNull T left, @NotNull T right) {
+  T uniteFacts(@NotNull T left, @NotNull T right) {
     return left.equals(right) ? left : null;
   }
 

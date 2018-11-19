@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
@@ -38,18 +37,18 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
 
   public VisibilityModifierChooser(@NotNull Supplier<Boolean> canBeEnabled,
                                    @NotNull String modifier,
-                                   @NotNull Consumer<String> modifierChangedConsumer) {
+                                   @NotNull Consumer<? super String> modifierChangedConsumer) {
     this(canBeEnabled, modifier, modifierChangedConsumer, MODIFIERS);
   }
 
 
   public VisibilityModifierChooser(@NotNull Supplier<Boolean> canBeEnabled,
                                    @NotNull String modifier,
-                                   @NotNull Consumer<String> modifierChangedConsumer,
+                                   @NotNull Consumer<? super String> modifierChangedConsumer,
                                    @NotNull String[] modifiers) {
     myCanBeEnabled = canBeEnabled;
-    setIcon(AllIcons.General.Combo2);
-    setDisabledIcon(AllIcons.General.Combo2);
+    setIcon(AllIcons.General.ArrowDown);
+    setDisabledIcon(AllIcons.General.ArrowDown);
     setIconTextGap(0);
     setHorizontalTextPosition(SwingConstants.LEFT);
     myCurrentModifier = modifier;
@@ -104,7 +103,7 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
 
   @Override
   public void setForeground(Color fg) {
-    super.setForeground(isEnabled() ? JBColor.link() : fg);
+    super.setForeground(isEnabled() ? JBUI.CurrentTheme.Link.linkColor() : fg);
   }
 
   @Override
@@ -113,12 +112,12 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
   }
 
   @Override
-  public void addChangeListener(ChangeListener changeListener) {
+  public void addChangeListener(@NotNull ChangeListener changeListener) {
     myListeners.add(changeListener);
   }
 
   @Override
-  public void removeChangeListener(ChangeListener changeListener) {
+  public void removeChangeListener(@NotNull ChangeListener changeListener) {
     myListeners.remove(changeListener);
   }
 }

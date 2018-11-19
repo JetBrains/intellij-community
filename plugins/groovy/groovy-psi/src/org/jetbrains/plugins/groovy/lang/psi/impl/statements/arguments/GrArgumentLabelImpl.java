@@ -48,6 +48,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     visitor.visitArgumentLabel(this);
   }
 
+  @Override
   public String toString() {
     return "Argument label";
   }

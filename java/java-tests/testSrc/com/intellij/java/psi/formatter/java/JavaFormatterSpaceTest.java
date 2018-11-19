@@ -10,7 +10,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
  * Is intended to hold specific java formatting tests for 'spacing' settings.
  *
  * @author Denis Zhdanov
- * @since Apr 29, 2010
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   @Override
@@ -144,6 +143,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
   }
 
+  @SuppressWarnings("unused")
   public void _testJavadocMethodParams() {
     // Inspired by IDEA-42167
     // Disabled because the contents of the {@code tag} is not necessarily Java code and
@@ -700,5 +700,42 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getJavaSettings().SPACE_INSIDE_ONE_LINE_ENUM_BRACES = true;
     doTextTest("enum E {E1, E2}",
                "enum E { E1, E2 }");
+  }
+
+  public void testSwitchLabelSpacing() {
+    doMethodTest("switch (i) { case\n1\n:break;\ndefault\n:break; }",
+                 "switch (i) {\n" +
+                 "    case 1:\n        break;\n" +
+                 "    default:\n        break;\n" +
+                 "}");
+  }
+
+  public void testSwitchLabeledRuleSpacing() {
+    doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception(); }",
+                 "switch (i) {\n" +
+                 "    case 1 -> foo();\n" +
+                 "    case 2 -> {\n        bar()\n    };\n" +
+                 "    default -> throw new Exception();\n" +
+                 "}");
+  }
+
+  public void testMultiValueLabel() {
+    doMethodTest("switch(i) { case 1,2,  3: break; }",
+                 "switch (i) {\n" +
+                 "    case 1, 2, 3:\n" +
+                 "        break;\n" +
+                 "}");
+  }
+
+  public void testMultiValueLabeledRule() {
+    doMethodTest("switch(i) { case 1,2,  3 -> foo(); }",
+                 "switch (i) {\n" +
+                 "    case 1, 2, 3 -> foo();\n" +
+                 "}");
+  }
+
+  public void testSwitchExpression() {
+    doMethodTest("String s = switch\n(i   ){}",
+                 "String s = switch (i) {\n}");
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -75,12 +74,12 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myUiDropper != null;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (state) {
       if (myUiDropper == null) {
         myUiDropper = new UiDropper();
@@ -248,8 +247,8 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
-      Color background = selected ? UIUtil.getTreeSelectionBackground() : null;
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+      Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
         Component component = componentNode.getComponent();
@@ -286,7 +285,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
           append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         componentNode.setText(toString());
-        setIcon(JBUI.scale(new TwoColorsIcon(11, component.getForeground(), component.getBackground())));
+        setIcon(JBUI.scale(new ColorsIcon(11, component.getBackground(), component.getForeground())));
       }
 
       setForeground(foreground);
@@ -409,7 +408,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       setFont(UIUtil.getLabelFont());
     }
 
-    public MyLabel(String text, JComponent glassPane, int width) {
+    MyLabel(String text, JComponent glassPane, int width) {
       super(text);
       myText = text;
       myGlasspane = glassPane;
@@ -553,7 +552,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       g2d.fillRect(insets.left, insets.top, bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
       g2d.setColor(getForeground());
 
-      final String sizeString = String.valueOf(myWidth) + " x " + myHeight;
+      final String sizeString = myWidth + " x " + myHeight;
 
       FontMetrics fm = g2d.getFontMetrics();
       int sizeWidth = fm.stringWidth(sizeString);
@@ -704,7 +703,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
     @Override
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(String.valueOf(value.width) + "x" + value.height);
+      setText(value.width + "x" + value.height);
       return this;
     }
   }
@@ -881,12 +880,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     public Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
-        switch (column) {
-          case 0:
-            return bean.propertyName;
-          default:
-            return bean.propertyValue;
-        }
+        return column == 0 ? bean.propertyName : bean.propertyValue;
       }
 
       return null;
@@ -986,12 +980,12 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     Component lastComponent;
     MyLabel myLabel;
 
-    public UiDropper() {
+    UiDropper() {
       Toolkit.getDefaultToolkit()
         .addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
-      UiDropperActionExtension[] extensions = Extensions.getExtensions(UiDropperActionExtension.EP_NAME);
-      if (extensions.length > 0) {
-        AnAction action = extensions[0].getAnAction();
+      List<UiDropperActionExtension> extensions = UiDropperActionExtension.EP_NAME.getExtensionList();
+      if (extensions.size() > 0) {
+        AnAction action = extensions.get(0).getAnAction();
         setClickAction(action);
         return;
       }

@@ -7,7 +7,6 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -114,7 +113,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         Lexer lexer = syntaxHighlighter.getHighlightingLexer();
         TokenSet commentTokens = null;
         IndexPatternBuilder builderForFile = null;
-        for (IndexPatternBuilder builder : Extensions.getExtensions(IndexPatternBuilder.EP_NAME)) {
+        for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
           Lexer lexerFromBuilder = builder.getIndexingLexer(file);
           if (lexerFromBuilder != null) {
             lexer = lexerFromBuilder;
@@ -167,37 +166,17 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       boolean isComment = commentTokens.contains(tokenType) || CacheUtil.isInComments(tokenType);
 
       if (isComment) {
-        final int startDelta = builderForFile != null ? builderForFile.getCommentStartDelta(lexer.getTokenType()) : 0;
+        final int startDelta =
+          builderForFile != null ? builderForFile.getCommentStartDelta(lexer.getTokenType(), lexer.getTokenSequence()) : 0;
         final int endDelta = builderForFile != null ? builderForFile.getCommentEndDelta(lexer.getTokenType()) : 0;
 
         int start = lexer.getTokenStart() + startDelta;
         int end = lexer.getTokenEnd() - endDelta;
-        assert start <= end : "Invalid comment range: " +
-                              new TextRange(start, end) +
-                              "; lexer token range=" +
-                              new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()) +
-                              "; delta=" +
-                              new TextRange(startDelta, endDelta) +
-                              "; lexer=" +
-                              lexer +
-                              "; builder=" +
-                              builderForFile +
-                              "; chars length:" +
-                              chars.length();
-        assert end <= chars.length() : "Invalid comment end: " +
-                                       new TextRange(start, end) +
-                                       "; lexer token range=" +
-                                       new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()) +
-                                       "; delta=" +
-                                       new TextRange(startDelta, endDelta) +
-                                       "; lexer=" +
-                                       lexer +
-                                       "; builder=" +
-                                       builderForFile +
-                                       "; chars length:" +
-                                       chars.length();
-        commentRanges.add(new CommentRange(start, end,
-                                           builderForFile == null ? "" : builderForFile.getCharsAllowedInContinuationPrefix(tokenType)));
+
+        if (start < end && end <= chars.length()) {
+          commentRanges.add(new CommentRange(start, end,
+                                             builderForFile == null ? "" : builderForFile.getCharsAllowedInContinuationPrefix(tokenType)));
+        }
         lastEndOffset = end;
       }
     }

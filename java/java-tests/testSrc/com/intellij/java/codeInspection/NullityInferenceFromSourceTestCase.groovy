@@ -24,14 +24,21 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.Nullability.*
 /**
  * @author peter
  */
 abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtureTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8_ANNOTATED
+  }
 
   void "test return string literal"() {
     assert inferNullability(parse('String foo() { return "a"; }')) == NOT_NULL

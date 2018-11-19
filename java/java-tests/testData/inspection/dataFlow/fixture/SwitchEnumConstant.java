@@ -31,7 +31,7 @@ class InspectionTest {
   void testTernary(@Nullable String foo, X x) {
     switch (foo == null ? X.A : x) {
       case A:
-        System.out.println(foo.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+        System.out.println(foo.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
         break;
       case B:
         System.out.println(foo.trim());
@@ -39,6 +39,21 @@ class InspectionTest {
       case C:
         System.out.println(foo.trim());
         break;
+    }
+  }
+
+  void testLastUnreachable(X x) {
+    if (x == X.A) {
+      System.out.println("It's a");
+    } else {
+      switch (x) {
+        case B:
+          System.out.println("It's b");break;
+        case C:
+          System.out.println("It's c");break;
+        case <warning descr="Switch label 'A' is unreachable">A</warning>:
+          System.out.println("It's a again");break;
+      }
     }
   }
 }

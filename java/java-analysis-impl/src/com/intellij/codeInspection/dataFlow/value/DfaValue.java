@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class DfaValue {
   private final int myID;
@@ -35,15 +37,23 @@ public abstract class DfaValue {
   }
 
   /**
+   * @return PSI type of the value if known
+   */
+  @Nullable
+  public PsiType getType() {
+    return null;
+  }
+
+  /**
    * Produces a value which describes a union of this value and other value
    *
    * @param other other value to unite with
    * @return a union value. Any particular runtime value which satisfies this value or other value, satisfies also the returned value.
    */
-  public DfaValue union(DfaValue other) {
+  public DfaValue unite(DfaValue other) {
     if(this == other) return this;
     if(this == DfaUnknownValue.getInstance() || other == DfaUnknownValue.getInstance()) return DfaUnknownValue.getInstance();
-    return myFactory.getFactFactory().createValue(DfaFactMap.fromDfaValue(this).union(DfaFactMap.fromDfaValue(other)));
+    return myFactory.getFactFactory().createValue(DfaFactMap.fromDfaValue(this).unite(DfaFactMap.fromDfaValue(other)));
   }
 
   public DfaValue createNegated() {

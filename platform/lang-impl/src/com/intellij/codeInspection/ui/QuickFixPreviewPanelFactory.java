@@ -45,7 +45,7 @@ public class QuickFixPreviewPanelFactory {
     private final InspectionToolWrapper myWrapper;
     private final boolean myEmpty;
 
-    public QuickFixReadyPanel(@NotNull InspectionResultsView view) {
+    QuickFixReadyPanel(@NotNull InspectionResultsView view) {
       myView = view;
       myWrapper = view.getTree().getSelectedToolWrapper(true);
       LOG.assertTrue(myWrapper != null);

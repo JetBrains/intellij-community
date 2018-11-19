@@ -2,11 +2,11 @@
     resolution/conversion to XML.
 """
 import pickle
-from _pydevd_bundle.pydevd_constants import get_frame, get_thread_id, xrange
 
+from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle.pydevd_constants import get_frame, get_thread_id, xrange
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
-from _pydev_imps._pydev_saved_modules import thread
 
 try:
     from StringIO import StringIO
@@ -17,7 +17,7 @@ import sys  # @Reimport
 from _pydev_imps._pydev_saved_modules import threading
 import traceback
 from _pydevd_bundle import pydevd_save_locals
-from _pydev_bundle.pydev_imports import Exec, quote, execfile
+from _pydev_bundle.pydev_imports import Exec, execfile
 from _pydevd_bundle.pydevd_utils import to_string
 
 SENTINEL_VALUE = []
@@ -642,3 +642,4 @@ def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
         return "<xml>%s</xml>" % TYPE_TO_XML_CONVERTERS[type_name](array, name, roffset, coffset, rows, cols, format)
     else:
         raise VariableError("type %s not supported" % type_name)
+

@@ -61,7 +61,7 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
   }
 
   public static void collectCompletionVariants(TagNameReference tagNameReference,
-                                               Consumer<LookupElement> consumer) {
+                                               Consumer<? super LookupElement> consumer) {
     PsiElement element = tagNameReference.getElement();
     if (element instanceof XmlTag) {
       if (!tagNameReference.isStartTagFlag()) {

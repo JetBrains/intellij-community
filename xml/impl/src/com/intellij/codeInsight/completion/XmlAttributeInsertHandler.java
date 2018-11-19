@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
@@ -88,6 +89,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     }
 
     editor.getCaretModel().moveToOffset(caretOffset + (insertQuotes || hasQuotes ? 2 : 1));
+    TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(context.getEditor());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
     AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);

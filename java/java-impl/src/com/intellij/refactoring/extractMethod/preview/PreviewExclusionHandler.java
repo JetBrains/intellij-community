@@ -12,7 +12,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 class PreviewExclusionHandler implements ExclusionHandler<DefaultMutableTreeNode> {
   private final PreviewPanel myPanel;
 
-  public PreviewExclusionHandler(PreviewPanel panel) {myPanel = panel;}
+  PreviewExclusionHandler(PreviewPanel panel) {myPanel = panel;}
 
   @Override
   public boolean isNodeExclusionAvailable(@NotNull DefaultMutableTreeNode node) {

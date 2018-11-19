@@ -33,7 +33,6 @@ import java.util.Set;
  * It's assumed that there is a dedicated implementation of this interface for every {@link StdArrangementTokenUiRole}.
  * 
  * @author Denis Zhdanov
- * @since 3/11/13 10:22 AM
  */
 public interface ArrangementUiComponent {
 
@@ -126,7 +125,7 @@ public interface ArrangementUiComponent {
 
     @Nullable
     ArrangementUiComponent build(@NotNull StdArrangementTokenUiRole role,
-                                 @NotNull List<ArrangementSettingsToken> tokens,
+                                 @NotNull List<? extends ArrangementSettingsToken> tokens,
                                  @NotNull ArrangementColorsProvider colorsProvider,
                                  @NotNull ArrangementStandardSettingsManager settingsManager);
   }

@@ -161,6 +161,11 @@ public class ControlFlow {
         myOffset = offset;
       }
     }
+
+    @Override
+    public String toString() {
+      return myOffset == -1 ? "<not set>" : super.toString();
+    }
   }
 
 }

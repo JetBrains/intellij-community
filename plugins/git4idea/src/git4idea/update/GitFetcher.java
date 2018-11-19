@@ -33,6 +33,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
+import git4idea.fetch.GitFetchSupport;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -51,6 +52,10 @@ import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 
+/**
+ * @deprecated Use {@link GitFetchSupport}
+ */
+@Deprecated
 public class GitFetcher {
 
   private static final Logger LOG = Logger.getInstance(GitFetcher.class);
@@ -78,7 +83,9 @@ public class GitFetcher {
   /**
    * Invokes 'git fetch'.
    * @return true if fetch was successful, false in the case of error.
+   * @deprecated Use {@link GitFetchSupport}
    */
+  @Deprecated
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
@@ -87,6 +94,10 @@ public class GitFetcher {
     return fetchResult;
   }
 
+  /**
+   * @deprecated Use {@link GitFetchSupport}
+   */
+  @Deprecated
   @NotNull
   public GitFetchResult fetch(@NotNull VirtualFile root, @NotNull String remoteName, @Nullable String branch) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
@@ -211,7 +222,7 @@ public class GitFetcher {
   }
 
   @NotNull
-  public static String getFetchSpecForBranch(@NotNull String branch, @NotNull String remoteName) {
+  private static String getFetchSpecForBranch(@NotNull String branch, @NotNull String remoteName) {
     branch = getRidOfPrefixIfExists(branch);
     return REFS_HEADS_PREFIX + branch + ":" + REFS_REMOTES_PREFIX + remoteName + "/" + branch;
   }
@@ -254,10 +265,12 @@ public class GitFetcher {
    *                                Use this when fetch is a part of a compound process.
    * @param notifySuccess           if set to {@code true} successful notification will be displayed.
    * @return true if all fetches were successful, false if at least one fetch failed.
+   * @deprecated Use {@link GitFetchSupport}
    */
+  @Deprecated
   public boolean fetchRootsAndNotify(@NotNull Collection<GitRepository> roots,
                                      @Nullable String errorNotificationTitle, boolean notifySuccess) {
-    MultiRootMessage additionalInfo = new MultiRootMessage(myProject, GitUtil.getRootsFromRepositories(roots), true);
+    MultiRootMessage additionalInfo = new MultiRootMessage(myProject, GitUtil.getRootsFromRepositories(roots), false, true);
     for (GitRepository repository : roots) {
       LOG.info("fetching " + repository);
       GitFetchResult result = fetch(repository);

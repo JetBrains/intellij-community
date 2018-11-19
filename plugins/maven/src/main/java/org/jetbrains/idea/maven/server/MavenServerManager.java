@@ -29,13 +29,17 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.THashMap;
+import gnu.trove.TIntHashSet;
 import org.apache.lucene.search.Query;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +152,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     shutdown(false);
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Override
   @NotNull
   protected synchronized MavenServer create() throws RemoteException {
@@ -310,7 +313,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           classPath.add(PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
         }
 
-        classPath.addAll(PathManager.getUtilClassPath());
+        classPath.add(PathUtil.getJarPathForClass(StringUtilRt.class));//util-rt
+        classPath.add(PathUtil.getJarPathForClass(NotNull.class));//annotations-java5
+        classPath.add(PathUtil.getJarPathForClass(Element.class));//JDOM
+        classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
+        
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Query.class));
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
@@ -356,7 +363,13 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
         GeneralCommandLine commandLine = params.toCommandLine();
-        OSProcessHandler processHandler = new OSProcessHandler(commandLine);
+        OSProcessHandler processHandler = new OSProcessHandler(commandLine) {
+          @NotNull
+          @Override
+          protected BaseOutputReader.Options readerOptions() {
+            return BaseOutputReader.Options.forMostlySilentProcess();
+          }
+        };
         processHandler.setShouldDestroyProcessRecursively(false);
         return processHandler;
       }
@@ -722,7 +735,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerProgressIndicator extends MavenRemoteObject implements MavenServerProgressIndicator {
     private final MavenProgressIndicator myProcess;
 
-    public RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
+    RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
       myProcess = process;
     }
 
@@ -755,7 +768,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerConsole extends MavenRemoteObject implements MavenServerConsole {
     private final MavenConsole myConsole;
 
-    public RemoteMavenServerConsole(MavenConsole console) {
+    RemoteMavenServerConsole(MavenConsole console) {
       myConsole = console;
     }
 

@@ -30,7 +30,7 @@ class SelfReference implements PsiReference {
   private final PsiElement myTarget;
   private final int myStartOffset;
 
-  public SelfReference(XmlAttribute element, PsiElement target, int startOffset) {
+  SelfReference(XmlAttribute element, PsiElement target, int startOffset) {
     myTarget = target;
     myValue = element.getValueElement();
     myStartOffset = startOffset;

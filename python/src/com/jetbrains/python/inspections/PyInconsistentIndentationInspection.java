@@ -59,7 +59,7 @@ public class PyInconsistentIndentationInspection extends PyInspection {
     private int myLastTabs = 0;
     private int myLastSpaces = 0;
 
-    public IndentValidator(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+    IndentValidator(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
       myFile = file;
       myManager = manager;
       myOnTheFly = isOnTheFly;

@@ -1,5 +1,7 @@
 <idea-plugin>
   <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
 
   <extensionPoints>
     <extensionPoint name="acc" beanClass="ExtBeanWithAccessors"/>

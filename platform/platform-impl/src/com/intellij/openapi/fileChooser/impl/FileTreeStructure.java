@@ -43,7 +43,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(final Object element) {
+  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     return true;
   }
 
@@ -55,13 +55,15 @@ public class FileTreeStructure extends AbstractTreeStructure {
     myShowHidden = showHidden;
   }
 
+  @NotNull
   @Override
   public final Object getRootElement() {
     return myRootElement;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object nodeElement) {
+  public Object[] getChildElements(@NotNull Object nodeElement) {
     if (!(nodeElement instanceof FileElement)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -109,7 +111,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
   @Override
   @Nullable
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof FileElement) {
 
       final FileElement fileElement = (FileElement)element;
@@ -165,7 +167,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     LOG.assertTrue(element instanceof FileElement, element.getClass().getName());
     VirtualFile file = ((FileElement)element).getFile();
     Icon closedIcon = file == null ? null : myChooserDescriptor.getIcon(file);

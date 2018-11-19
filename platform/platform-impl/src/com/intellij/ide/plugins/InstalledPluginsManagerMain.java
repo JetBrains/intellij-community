@@ -102,7 +102,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   }
 
   public static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
-                                      @NotNull final Consumer<Pair<File, IdeaPluginDescriptor>> callback,
+                                      @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback,
                                       @Nullable final Component parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
@@ -124,7 +124,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
   private static boolean install(@NotNull InstalledPluginsTableModel model,
                                  @NotNull File file,
-                                 @NotNull Consumer<Pair<File, IdeaPluginDescriptor>> callback,
+                                 @NotNull Consumer<? super Pair<File, IdeaPluginDescriptor>> callback,
                                  @Nullable Component parent) {
     try {
       IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
@@ -466,7 +466,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     private final String myVendor;
 
-    public BrowseRepoListener(String vendor) {
+    BrowseRepoListener(String vendor) {
       myVendor = vendor;
     }
 

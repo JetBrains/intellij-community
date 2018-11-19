@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -100,7 +101,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
         if (previousSibling instanceof PsiComment) {
           final PsiComment comment = (PsiComment)previousSibling;
           final String commentText = comment.getText();
-          if (commentPattern.matcher(commentText).find()) {
+          if (commentPattern.matcher(commentText).find() && JavaSuppressionUtil.getSuppressedInspectionIdsIn(comment) == null) {
             continue;
           }
         }

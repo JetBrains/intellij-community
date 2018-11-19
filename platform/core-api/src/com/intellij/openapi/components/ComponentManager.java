@@ -63,6 +63,9 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   @NotNull
   PicoContainer getPicoContainer();
 
+  /**
+   * @see com.intellij.application.Topics#subscribe
+   */
   @NotNull
   MessageBus getMessageBus();
 

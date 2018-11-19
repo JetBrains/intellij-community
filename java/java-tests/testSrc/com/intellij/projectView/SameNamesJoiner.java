@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 class SameNamesJoiner implements TreeStructureProvider {
   @NotNull
@@ -40,8 +39,8 @@ class SameNamesJoiner implements TreeStructureProvider {
     ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
     MultiValuesMap<Object, AbstractTreeNode> executed = new MultiValuesMap<>();
-    for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
-      ProjectViewNode treeNode = (ProjectViewNode)iterator.next();
+    for (AbstractTreeNode child : children) {
+      ProjectViewNode treeNode = (ProjectViewNode)child;
       Object o = treeNode.getValue();
       if (o instanceof PsiFile) {
         String name = ((PsiFile)o).getVirtualFile().getNameWithoutExtension();
@@ -52,12 +51,10 @@ class SameNamesJoiner implements TreeStructureProvider {
       }
     }
 
-    Iterator<Object> keys = executed.keySet().iterator();
-    while (keys.hasNext()) {
-      Object each = keys.next();
+    for (Object each : executed.keySet()) {
       Collection<AbstractTreeNode> objects = executed.get(each);
       if (objects.size() > 1) {
-        result.add(new JoinedNode(objects, new Joined(findPsiFileIn(objects))));
+        result.add(new JoinedNode(objects, new Joined(findPsiFileIn(objects)), settings));
       }
       else if (objects.size() == 1) {
         result.add(objects.iterator().next());
@@ -72,8 +69,7 @@ class SameNamesJoiner implements TreeStructureProvider {
   }
 
   private PsiFile findPsiFileIn(Collection<AbstractTreeNode> objects) {
-    for (Iterator<AbstractTreeNode> iterator = objects.iterator(); iterator.hasNext();) {
-      AbstractTreeNode treeNode = iterator.next();
+    for (AbstractTreeNode treeNode : objects) {
       if (treeNode.getValue() instanceof PsiFile) return (PsiFile)treeNode.getValue();
     }
     return null;
@@ -82,10 +78,9 @@ class SameNamesJoiner implements TreeStructureProvider {
   private boolean hasElementWithTheSameName(PsiFile element) {
     PsiDirectory psiDirectory = element.getParent();
     PsiElement[] children = psiDirectory.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-
-      if (child != element && element.getVirtualFile().getNameWithoutExtension().equals(((PsiFile)child).getVirtualFile().getNameWithoutExtension())){
+    for (PsiElement child : children) {
+      if (child != element &&
+          element.getVirtualFile().getNameWithoutExtension().equals(((PsiFile)child).getVirtualFile().getNameWithoutExtension())) {
         return true;
       }
     }
@@ -97,7 +92,7 @@ class SameNamesJoiner implements TreeStructureProvider {
     private final String myName;
     private final PsiFile myFile;
 
-    public Joined(PsiFile file) {
+    Joined(PsiFile file) {
       myFile = file;
       myName = file.getName();
     }
@@ -126,8 +121,8 @@ class SameNamesJoiner implements TreeStructureProvider {
       return myChildren;
     }
 
-    public JoinedNode(Collection<AbstractTreeNode> children, Joined formFile) {
-      super(null, formFile, null);
+    JoinedNode(Collection<AbstractTreeNode> children, @NotNull Joined formFile, ViewSettings settings) {
+      super(null, formFile, settings);
       myChildren = children;
     }
 
@@ -142,7 +137,7 @@ class SameNamesJoiner implements TreeStructureProvider {
     }
 
     @Override
-    public void update(PresentationData presentation) {
+    public void update(@NotNull PresentationData presentation) {
     }
   }
 }

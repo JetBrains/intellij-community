@@ -188,7 +188,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   public void invokeNodeUpdate(Runnable runnable) {
-    myTree.getLaterInvocator().offer(runnable);
+    myTree.invokeLater(runnable);
   }
 
   @Override

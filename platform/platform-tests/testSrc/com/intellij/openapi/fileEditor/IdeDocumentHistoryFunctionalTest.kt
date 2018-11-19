@@ -6,80 +6,87 @@ import com.intellij.testFramework.EditorTestUtil
 
 internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase() {
   fun testNavigateBetweenEditLocations() {
-    myFixture.configureByText("${getTestName(false)}.txt",
-                              """<caret>line1
+    myFixture.configureByText("${getTestName(false)}.txt", """
+      <caret>line1
 
 
 
-line2
+      line2
 
 
 
-line3""")
+      line3""".trimIndent())
     myFixture.type(' ')
     moveCaret4LinesDown()
     myFixture.type(' ')
     moveCaret4LinesDown()
 
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
-    myFixture.checkResult(""" line1
+    myFixture.checkResult("""
+       line1
 
 
 
-l <caret>ine2
+      l <caret>ine2
 
 
 
-line3""")
+      line3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
-    myFixture.checkResult(""" <caret>line1
+    myFixture.checkResult("""
+       <caret>line1
 
 
 
-l ine2
+      l ine2
 
 
 
-line3""")
+      line3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_NEXT_CHANGE)
-    myFixture.checkResult(""" line1
+    myFixture.checkResult("""
+       line1
 
 
 
-l <caret>ine2
+      l <caret>ine2
 
 
 
-line3""")
+      line3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_NEXT_CHANGE)
-    myFixture.checkResult(""" line1
+    myFixture.checkResult("""
+       line1
 
 
 
-l <caret>ine2
+      l <caret>ine2
 
 
 
-line3""")
+      line3""".trimIndent())
   }
 
   fun testForwardToANearPlace() {
-    myFixture.configureByText(getTestName(false) + ".java",
-                              """class AA {}
+    myFixture.configureByText("${getTestName(false)}.java", """
+      class AA {}
 
-class BV extends A<caret>A {}""")
+      class BV extends A<caret>A {}""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_DECLARATION)
-    myFixture.checkResult("""class <caret>AA {}
+    myFixture.checkResult("""
+      class <caret>AA {}
 
-class BV extends AA {}""")
+      class BV extends AA {}""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_BACK)
-    myFixture.checkResult("""class AA {}
+    myFixture.checkResult("""
+      class AA {}
 
-class BV extends A<caret>A {}""")
+      class BV extends A<caret>A {}""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_FORWARD)
-    myFixture.checkResult("""class <caret>AA {}
+    myFixture.checkResult("""
+      class <caret>AA {}
 
-class BV extends AA {}""")
+      class BV extends AA {}""".trimIndent())
   }
 
   private fun moveCaret4LinesDown() {

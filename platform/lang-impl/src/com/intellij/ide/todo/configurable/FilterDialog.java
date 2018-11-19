@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo.configurable;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoFilter;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.search.TodoPattern;
@@ -37,7 +21,7 @@ import java.util.List;
 class FilterDialog extends DialogWrapper {
   private final TodoFilter myFilter;
   private final int myFilterIndex;
-  private final List<TodoFilter> myFilters;
+  private final List<? extends TodoFilter> myFilters;
 
   private final JTextField myNameField;
   private final JScrollPane myPatternsScrollPane;
@@ -50,7 +34,7 @@ class FilterDialog extends DialogWrapper {
    * @param filters     all already configured filters. This parameter is used to
    * @param patterns    all patterns available in this filter.
    */
-  public FilterDialog(Component parent, TodoFilter filter, int filterIndex, List<TodoFilter> filters, List<TodoPattern> patterns) {
+  FilterDialog(Component parent, TodoFilter filter, int filterIndex, List<? extends TodoFilter> filters, List<TodoPattern> patterns) {
     super(parent, true);
     setTitle(IdeBundle.message("title.add.todo.filter"));
     myFilter = filter;
@@ -112,14 +96,8 @@ class FilterDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.idesettings.todo.editfilter");
+  protected String getHelpId() {
+    return "reference.idesettings.todo.editfilter";
   }
 
   @Override

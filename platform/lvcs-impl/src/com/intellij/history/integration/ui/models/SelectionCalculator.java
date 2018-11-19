@@ -31,12 +31,12 @@ public class SelectionCalculator {
   private static final Block EMPTY_BLOCK = new Block("", 0, 0);
   
   private final IdeaGateway myGateway;
-  private final List<Revision> myRevisions;
+  private final List<? extends Revision> myRevisions;
   private final int myFromLine;
   private final int myToLine;
   private final Map<Integer, Block> myCache = new HashMap<>();
 
-  public SelectionCalculator(IdeaGateway gw, List<Revision> rr, int fromLine, int toLine) {
+  public SelectionCalculator(IdeaGateway gw, List<? extends Revision> rr, int fromLine, int toLine) {
     myGateway = gw;
     myRevisions = rr;
     myFromLine = fromLine;

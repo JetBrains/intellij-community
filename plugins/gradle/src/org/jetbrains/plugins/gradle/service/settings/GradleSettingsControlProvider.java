@@ -25,7 +25,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/24/2015
  */
 public abstract class GradleSettingsControlProvider {
 

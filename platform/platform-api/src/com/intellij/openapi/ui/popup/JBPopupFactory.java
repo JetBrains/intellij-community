@@ -355,7 +355,12 @@ public abstract class JBPopupFactory {
   public abstract BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, String title);
 
   @NotNull
-  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, Color fillColor, @Nullable HyperlinkListener listener);
+  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, Color fillColor, @Nullable HyperlinkListener listener) {
+    return createHtmlTextBalloonBuilder(htmlContent, icon, null, fillColor, listener);
+  }
+
+  @NotNull
+  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, Color textColor, Color fillColor, @Nullable HyperlinkListener listener);
 
   @NotNull
   public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, MessageType messageType, @Nullable HyperlinkListener listener);

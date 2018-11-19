@@ -21,10 +21,7 @@ import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
-import com.intellij.psi.stubs.SerializationManagerEx;
-import com.intellij.psi.stubs.SerializerNotFoundException;
-import com.intellij.psi.stubs.Stub;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.*;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.DataExternalizer;
@@ -111,6 +108,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     try {
       PsiJavaFileStub root = new PsiJavaFileStubImpl("", true);
       new ClassReader(content).accept(new GrTraitMethodVisitor(file, root), EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);
+      new StubTree(root); // to ensure stubs are stored in DFS order
       return root;
     }
     catch (OutOfOrderInnerClassException e) {
@@ -124,7 +122,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   }
 
   private static class GrTraitMethodVisitor extends StubBuildingVisitor<VirtualFile> {
-    public GrTraitMethodVisitor(VirtualFile file, StubElement root) {
+    GrTraitMethodVisitor(VirtualFile file, StubElement root) {
       super(file, null, root, 0, null);
     }
 
@@ -178,7 +176,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
     if (helperFile == null) return Collections.emptyList();
 
-    int key = FileBasedIndex.getFileId(helperFile);
+    int key = getFileKey(helperFile);
 
     List<ByteArraySequence> byteSequences = FileBasedIndex.getInstance().getValues(INDEX_ID, key, trait.getResolveScope());
     if (byteSequences.isEmpty()) return Collections.emptyList();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.find.impl;
 
 import com.intellij.JavaTestUtil;
@@ -21,6 +7,7 @@ import com.intellij.find.*;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
+import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -58,7 +45,10 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -67,9 +57,9 @@ import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -82,8 +72,8 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * @author MYakovlev
- * @since Oct 17, 2002
  */
+@ExcludeFromTestDiscovery
 public class FindManagerTest extends DaemonAnalyzerTestCase {
   private FindManager myFindManager;
   private VirtualFile[] mySourceDirs;
@@ -102,7 +92,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindString() throws InterruptedException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-
+    @Language("JAVA")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
     FindResult findResult = myFindManager.findString(text, 0, findModel);
     assertTrue(findResult.isStringFound());
@@ -568,17 +558,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(2, findInProject(findModel));
   }
 
-  public void testLocalScopeSearchPerformance() throws Exception {
-    final int fileCount = 3000;
-    final int lineCount = 5000;
+  public void testLocalScopeSearchDoesNotLoadUnrelatedFiles() throws Exception {
+    int lineCount = 500;
     TempDirTestFixture fixture = new LightTempDirTestFixtureImpl();
     fixture.setUp();
 
     try {
       String sampleText = StringUtil.repeat("zoo TargetWord foo bar goo\n", lineCount);
-      for (int i = 0; i < fileCount; i++) {
-        fixture.createFile("a" + i + ".txt", sampleText);
-      }
+      VirtualFile unrelated = fixture.createFile("another.txt", sampleText);
       PsiTestUtil.addSourceContentToRoots(myModule, fixture.getFile(""));
 
       VirtualFile file = fixture.createFile("target.txt", sampleText);
@@ -592,41 +579,21 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       findModel.setMultipleFiles(true);
       findModel.setCustomScope(true);
 
-      ThrowableRunnable test = () -> assertSize(lineCount, findInProject(findModel));
+      assertNull(FileDocumentManager.getInstance().getCachedDocument(unrelated));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      int timeout = 600;
-      PlatformTestUtil.startPerformanceTest("find usages in global", timeout, test).attempts(2).assertTiming();
+      assertSize(lineCount, findInProject(findModel));
+      assertNull(FileDocumentManager.getInstance().getCachedDocument(unrelated));
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in local", timeout, test).attempts(2).assertTiming();
+      assertSize(lineCount, findInProject(findModel));
+      assertNull(FileDocumentManager.getInstance().getCachedDocument(unrelated));
     }
     finally {
       fixture.tearDown();
     }
   }
-  
-  public void testFindInCommentsInJsInsideHtml() {
-    FindModel findModel = FindManagerTestUtils.configureFindModel("@param t done");
 
-    String text = "<script>\n" +
-                  "/**\n" +
-                  " * @param t done\n" +
-                  " * @param t done\n" +
-                  " * @param t done\n" +
-                  "*/</script>";
-    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
-    FindManager findManager = FindManager.getInstance(myProject);
-    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "html");
-
-    findModel.setRegularExpressions(true);
-    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "html");
-
-    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "php");
-    findModel.setRegularExpressions(false);
-    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "php");
-  }
-  
   public void testFindInCommentsAndLiterals() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
@@ -1016,6 +983,17 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(1, usages);
 
     assertTrue(usages.get(0).isValid());
+  }
+
+  public void testFindMultilineWithLeadingSpaces() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("System.currentTimeMillis();\n   System.currentTimeMillis();");
+    findModel.setMultiline(true);
+    String fileContent = "System.currentTimeMillis();\n   System.currentTimeMillis();\n\n" +
+                  "        System.currentTimeMillis();\n       System.currentTimeMillis();";
+    FindResult findResult = myFindManager.findString(fileContent, 0, findModel, null);
+    assertTrue(findResult.isStringFound());
+    findResult = myFindManager.findString(fileContent, findResult.getEndOffset(), findModel, null);
+    assertTrue(findResult.isStringFound());
   }
 
   public void testRegExpMatchReplacement() throws FindManager.MalformedReplacementStringException {

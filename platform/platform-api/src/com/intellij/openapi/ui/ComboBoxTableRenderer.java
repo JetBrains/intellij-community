@@ -32,6 +32,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   private WeakReference<ListPopup> myPopupRef;
   private ChangeEvent myChangeEvent = null;
   private T myValue;
+  private int myClickCount = 2;
 
   protected EventListenerList myListenerList = new EventListenerList();
 
@@ -41,6 +42,11 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     myValues = values;
     setFont(UIUtil.getButtonFont());
     setBorder(JBUI.Borders.empty(0, 5));
+  }
+
+  public ComboBoxTableRenderer withClickCount(int clickCount) {
+    myClickCount = clickCount;
+    return this;
   }
 
   @Override
@@ -171,11 +177,11 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   @Override
-  public void beforeShown(LightweightWindowEvent event) {
+  public void beforeShown(@NotNull LightweightWindowEvent event) {
   }
 
   @Override
-  public void onClosed(LightweightWindowEvent event) {
+  public void onClosed(@NotNull LightweightWindowEvent event) {
     event.asPopup().removeListener(this);
     fireEditingCanceled();
   }
@@ -196,7 +202,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   @Override
   public boolean isCellEditable(EventObject event) {
     if (event instanceof MouseEvent) {
-      return ((MouseEvent)event).getClickCount() >= 2;
+      return ((MouseEvent)event).getClickCount() >= myClickCount;
     }
 
     return true;
@@ -341,11 +347,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     @Override
     public SpeedSearchFilter<T> getSpeedSearchFilter() {
       return this;
-    }
-
-    @Override
-    public boolean canBeHidden(T value) {
-      return true;
     }
 
     @Override

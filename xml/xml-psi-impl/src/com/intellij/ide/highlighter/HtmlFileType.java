@@ -42,7 +42,7 @@ public class HtmlFileType extends XmlLikeFileType {
     super(HTMLLanguage.INSTANCE);
   }
 
-  HtmlFileType(Language language) {
+  protected HtmlFileType(Language language) {
     super(language);
   }
 

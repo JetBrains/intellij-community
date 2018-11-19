@@ -16,6 +16,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -41,7 +42,7 @@ public abstract class DomUIControl<T extends DomElement> implements CommittableP
   public void addDependency(final DomUIControl control) {
     control.addCommitListener(new CommitAdapter() {
       @Override
-      public void afterCommit(final DomUIControl control) {
+      public void afterCommit(@NotNull final DomUIControl control) {
         reset();
       }
     });

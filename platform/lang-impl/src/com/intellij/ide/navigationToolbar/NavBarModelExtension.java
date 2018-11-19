@@ -32,7 +32,6 @@ import java.util.Collection;
  * method, for which the order is reverse.
  *
  * @author anna
- * @since 04-Feb-2008
  */
 public interface NavBarModelExtension {
   ExtensionPointName<NavBarModelExtension> EP_NAME = ExtensionPointName.create("com.intellij.navbar");
@@ -53,7 +52,7 @@ public interface NavBarModelExtension {
   Collection<VirtualFile> additionalRoots(Project project);
 
   @Nullable
-  default Object getData(String dataId, @NotNull DataProvider provider) { return null; }
+  default Object getData(@NotNull String dataId, @NotNull DataProvider provider) { return null; }
 
   @Nullable
   default String getPopupMenuGroup(@NotNull DataProvider provider) { return null; }

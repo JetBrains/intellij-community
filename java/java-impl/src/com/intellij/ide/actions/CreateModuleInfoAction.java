@@ -39,18 +39,17 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean available = false;
-
     DataContext ctx = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(ctx);
-    if (view != null) {
-      PsiDirectory target = getTargetDirectory(ctx, view);
-      if (target != null && PsiUtil.isLanguageLevel9OrHigher(target) && JavaModuleGraphUtil.findDescriptorByElement(target) == null) {
-        available = true;
-      }
+    if (view == null || e.getProject() == null) {
+      e.getPresentation().setEnabledAndVisible(false);
     }
-
-    e.getPresentation().setEnabledAndVisible(available);
+    else {
+      e.getPresentation().setVisible(true);
+      PsiDirectory target = getTargetDirectory(ctx, view);
+      e.getPresentation().setEnabled(
+        target != null && PsiUtil.isLanguageLevel9OrHigher(target) && JavaModuleGraphUtil.findDescriptorByElement(target) == null);
+    }
   }
 
   @Nullable
@@ -61,9 +60,11 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
       PsiDirectory psiDir = directories[0];
       VirtualFile vDir = psiDir.getVirtualFile();
       ProjectFileIndex index = ProjectRootManager.getInstance(psiDir.getProject()).getFileIndex();
-      if (vDir.equals(index.getSourceRootForFile(vDir)) &&
-          index.isUnderSourceRootOfType(vDir, ContainerUtil.set(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE))) {
-        return psiDir;
+      if (index.isUnderSourceRootOfType(vDir, ContainerUtil.set(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE))) {
+        VirtualFile root = index.getSourceRootForFile(vDir);
+        if (root != null) {
+          return psiDir.getManager().findDirectory(root);
+        }
       }
     }
 

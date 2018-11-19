@@ -1,14 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
@@ -32,8 +30,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
   private final String myLabel;
   private final String myHelpID;
 
-  public SelectFilesDialog(final Project project, String label, String title, String actionName, String[] paths,
-                           @NonNls String helpID) {
+  public SelectFilesDialog(final Project project, String label, String title, String actionName, String[] paths, String helpID) {
     super(project, true);
     myHelpID = helpID;
     setOKButtonText(actionName);
@@ -47,17 +44,10 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     init();
   }
 
+  @Nullable
   @Override
-  protected void doHelpAction() {
-    if (myHelpID != null) {
-      HelpManager.getInstance().invokeHelp(myHelpID);
-    }
-  }
-
-  @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  protected String getHelpId() {
+    return myHelpID;
   }
 
   @Override

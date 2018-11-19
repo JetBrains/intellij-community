@@ -209,11 +209,11 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   }
 
   private static class SubList<E> extends ImmutableList<E> {
-    private final List<E> l;
+    private final List<? extends E> l;
     private final int offset;
     private final int size;
 
-    SubList(List<E> list, int fromIndex, int toIndex) {
+    SubList(List<? extends E> list, int fromIndex, int toIndex) {
       if (fromIndex < 0) {
         throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
       }
@@ -249,7 +249,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   private static class Singleton<E> extends ImmutableList<E> {
     private final E element;
 
-    public Singleton(E e) {
+    Singleton(E e) {
       element = e;
     }
 

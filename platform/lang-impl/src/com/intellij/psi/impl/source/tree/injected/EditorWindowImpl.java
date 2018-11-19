@@ -546,12 +546,12 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
     checkValid();
     EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         listener.mouseMoved(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
-      public void mouseDragged(EditorMouseEvent e) {
+      public void mouseDragged(@NotNull EditorMouseEvent e) {
         listener.mouseDragged(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
     };
@@ -889,5 +889,10 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
   @Override
   public String getContextMenuGroupId() {
     return myDelegate.getContextMenuGroupId();
+  }
+
+  @Override
+  public void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor) {
+    myDelegate.setCustomCursor(requestor, cursor);
   }
 }

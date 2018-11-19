@@ -117,7 +117,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
       return swingUndoManager != null ? new SwingUndoManagerWrapper(swingUndoManager) : null;
     }
 
-    public SwingUndoManagerWrapper(javax.swing.undo.UndoManager swingUndoManager) {
+    SwingUndoManagerWrapper(javax.swing.undo.UndoManager swingUndoManager) {
       mySwingUndoManager = swingUndoManager;
     }
 

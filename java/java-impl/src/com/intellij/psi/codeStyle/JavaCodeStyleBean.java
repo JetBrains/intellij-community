@@ -1229,12 +1229,6 @@ public class JavaCodeStyleBean extends CodeStyleBean {
 
   public void setReplaceInstanceOf(boolean value) {getCustomSettings(JavaCodeStyleSettings.class).REPLACE_INSTANCEOF = value;}
 
-  public boolean isReplaceCast() {
-    return getCustomSettings(JavaCodeStyleSettings.class).REPLACE_CAST;
-  }
-
-  public void setReplaceCast(boolean value) {getCustomSettings(JavaCodeStyleSettings.class).REPLACE_CAST = value;}
-
   public boolean isReplaceNullCheck() {
     return getCustomSettings(JavaCodeStyleSettings.class).REPLACE_NULL_CHECK;
   }

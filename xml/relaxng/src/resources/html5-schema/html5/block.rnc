@@ -186,10 +186,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element dl { dl.inner & dl.attrs }
 	dl.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.implicit.list
-			|	common.attrs.aria.role.list
+		&	(	common.attrs.aria.role.list
+			|	common.attrs.aria.role.group
 			|	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.doc-glossary
 			)?
 		)
 	dl.inner =
@@ -216,7 +215,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element dt { dt.inner & dt.attrs }
 	dt.attrs =
 		(	common.attrs
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.term
+			|	common.attrs.aria.role.term
+			|	common.attrs.aria.role.listitem
+			)
 		)
 	dt.inner =
 		( common.inner.flow )
@@ -229,7 +231,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element dd { dd.inner.phrasing & dd.attrs }
 	dd.attrs =
 		(	common.attrs
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.definition
+			|	common.attrs.aria.role.definition
+			)
 		)
 	dd.inner =
 		( common.inner.flow )

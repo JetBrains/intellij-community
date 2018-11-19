@@ -95,9 +95,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
     @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
-      for (int i = 0; i < selectedFiles.length; i++) {
-        VirtualFile selectedFile = selectedFiles[i];
+      for (VirtualFile selectedFile : selectedFiles) {
         if (CvsStatusProvider.getStatus(selectedFile) == FileStatus.NOT_CHANGED) {
           return documentIsModified(selectedFile);
         }
@@ -110,7 +108,6 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
     @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
       final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
       for (VirtualFile selectedFile : selectedFiles) {
         if (entriesManager.fileIsIgnored(selectedFile)) return false;
@@ -123,7 +120,6 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
     @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
       for (VirtualFile selectedFile : selectedFiles) {
         if (!CvsUtil.fileIsLocallyAdded(selectedFile)) return false;
       }
@@ -133,7 +129,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
 
   private static boolean documentIsModified(final VirtualFile file) {
-    final boolean[] result = new boolean[]{false};
+    final boolean[] result = {false};
     ApplicationManager.getApplication().runReadAction(() -> {
       result[0] = FileDocumentManager.getInstance().isFileModified(file);
     });

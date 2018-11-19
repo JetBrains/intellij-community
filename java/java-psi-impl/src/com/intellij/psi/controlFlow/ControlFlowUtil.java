@@ -354,7 +354,7 @@ public class ControlFlowUtil {
   @NotNull
   public static Collection<PsiStatement> findExitPointsAndStatements(@NotNull ControlFlow flow, final int start, final int end,
                                                                      @NotNull IntArrayList exitPoints,
-                                                                     @NotNull Class... classesFilter) {
+                                                                     @NotNull Class<? extends PsiStatement>... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
       return Collections.emptyList();
@@ -461,7 +461,9 @@ public class ControlFlowUtil {
     return offset;
   }
 
-  public static final Class[] DEFAULT_EXIT_STATEMENTS_CLASSES = {PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends PsiStatement>[] DEFAULT_EXIT_STATEMENTS_CLASSES =
+    new Class[]{PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
 
   private static PsiStatement findStatement(@NotNull ControlFlow flow, int offset) {
     PsiElement element = flow.getElement(offset);
@@ -577,7 +579,7 @@ public class ControlFlowUtil {
       }
 
       @NotNull
-      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<PsiTryStatement> tryStatements, @NotNull List<PsiClassType> thrownExceptions) {
+      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<? extends PsiTryStatement> tryStatements, @NotNull List<? extends PsiClassType> thrownExceptions) {
         final IntArrayList catchOrFinallyOffsets = new IntArrayList();
         for (PsiTryStatement tryStatement : tryStatements) {
           final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -922,7 +924,7 @@ public class ControlFlowUtil {
       // false if control flow at this offset terminates either by return called or exception thrown
       private final boolean[] isNormalCompletion = new boolean[flow.getSize() + 1];
 
-      public MyVisitor() {
+      MyVisitor() {
         int i;
         final int length = flow.getSize();
         for (i = 0; i < startOffset; i++) {
@@ -1506,7 +1508,7 @@ public class ControlFlowUtil {
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
-  private static void internalDepthFirstSearch(@NotNull List<Instruction> instructions,
+  private static void internalDepthFirstSearch(@NotNull List<? extends Instruction> instructions,
                                                @NotNull InstructionClientVisitor clientVisitor,
                                                int startOffset,
                                                int endOffset) {
@@ -1720,7 +1722,7 @@ public class ControlFlowUtil {
       this(Arrays.asList(infos));
     }
 
-    CopyOnWriteList(@NotNull Collection<VariableInfo> infos) {
+    CopyOnWriteList(@NotNull Collection<? extends VariableInfo> infos) {
       list = new SmartList<>(infos);
     }
 
@@ -2214,5 +2216,38 @@ public class ControlFlowUtil {
       return false;
     }
     return throwType.isAssignableFrom(catchType);
+  }
+
+  /**
+   * Check that in the <code>flow</code> between <code>startOffset</code> and <code>endOffset</code> there are no writes
+   * to the <code>variables</code> or these writes aren't observable at the <code>locations</code>.
+   */
+  public static boolean areVariablesUnmodifiedAtLocations(@NotNull ControlFlow flow,
+                                                          int startOffset,
+                                                          int endOffset,
+                                                          @NotNull Set<? extends PsiVariable> variables,
+                                                          @NotNull Iterable<? extends PsiElement> locations) {
+    List<Instruction> instructions = flow.getInstructions();
+    startOffset = Math.max(startOffset, 0);
+    endOffset = Math.min(endOffset, instructions.size());
+
+    IntArrayList locationOffsetList = new IntArrayList();
+    for (PsiElement location : locations) {
+      int offset = flow.getStartOffset(location);
+      if (offset >= startOffset && offset < endOffset) {
+        locationOffsetList.add(offset);
+      }
+    }
+    int[] locationOffsets = locationOffsetList.toArray();
+
+    for (int offset = startOffset; offset < endOffset; offset++) {
+      Instruction instruction = instructions.get(offset);
+      if (instruction instanceof WriteVariableInstruction && variables.contains(((WriteVariableInstruction)instruction).variable)) {
+        if (areInstructionsReachable(flow, locationOffsets, offset)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

@@ -52,7 +52,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
             ApplicationManager.getApplication().invokeLater(() -> {
               XDebugSession xSession = session.getXDebugSession();
               if (xSession != null) {
-                DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session);
+                DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session.getSearchScope());
               }
             }, ModalityState.NON_MODAL);
           }
@@ -157,14 +157,17 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
         hasEmptyStack = frames.size() == 0;
 
         final TIntObjectHashMap<List<ObjectReference>> lockedAt = new TIntObjectHashMap<>();
-        if (vmProxy.canGetMonitorFrameInfo() && vmProxy.canBeModified()) {
-          for (MonitorInfo info : threadReference.ownedMonitorsAndFrames()) {
-            final int stackDepth = info.stackDepth();
-            List<ObjectReference> monitors;
-            if ((monitors = lockedAt.get(stackDepth)) == null) {
-              lockedAt.put(stackDepth, monitors = new SmartList<>());
+        if (vmProxy.canGetMonitorFrameInfo()) {
+          for (Object m : threadReference.ownedMonitorsAndFrames()) {
+            if (m instanceof MonitorInfo) { // see JRE-937
+              MonitorInfo info = (MonitorInfo)m;
+              final int stackDepth = info.stackDepth();
+              List<ObjectReference> monitors;
+              if ((monitors = lockedAt.get(stackDepth)) == null) {
+                lockedAt.put(stackDepth, monitors = new SmartList<>());
+              }
+              monitors.add(info.monitor());
             }
-            monitors.add(info.monitor());
           }
         }
 

@@ -49,22 +49,22 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private final ProjectSdksModel myJdksModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
-    public void sdkAdded(Sdk sdk) {
+    public void sdkAdded(@NotNull Sdk sdk) {
       reloadModel();
     }
 
     @Override
-    public void beforeSdkRemove(Sdk sdk) {
+    public void beforeSdkRemove(@NotNull Sdk sdk) {
       reloadModel();
     }
 
     @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       reloadModel();
     }
 
     @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+    public void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {
       reloadModel();
     }
   };

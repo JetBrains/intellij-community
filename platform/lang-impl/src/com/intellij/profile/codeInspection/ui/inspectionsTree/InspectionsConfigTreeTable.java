@@ -232,7 +232,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     private final Alarm myUpdateAlarm;
 
-    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
+    InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
       myUpdateRunnable = () -> {
@@ -371,8 +371,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
     }
 
     private static void collectInspectionFromNodes(final InspectionConfigTreeNode node,
-                                                   final Set<HighlightDisplayKey> tools,
-                                                   final List<InspectionConfigTreeNode> nodes) {
+                                                   final Set<? super HighlightDisplayKey> tools,
+                                                   final List<? super InspectionConfigTreeNode> nodes) {
       if (node == null) {
         return;
       }
@@ -506,7 +506,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       return result;
     }
 
-    public void put(@NotNull final ScopeToolState defaultState, @NotNull final List<ScopeToolState> nonDefault) {
+    public void put(@NotNull final ScopeToolState defaultState, @NotNull final List<? extends ScopeToolState> nonDefault) {
       putOne(defaultState);
       if (myDefaultScopeName == null) {
         myDefaultScopeName = defaultState.getScopeName();

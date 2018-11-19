@@ -62,7 +62,7 @@ public class ArtifactUtil {
   }
 
   @NotNull
-  public static <S> PackagingElement<S> copyWithChildren(@NotNull PackagingElement<S> element, @NotNull Project project) {
+  public static <S> PackagingElement<S> copyWithChildren(@NotNull PackagingElement<? extends S> element, @NotNull Project project) {
     final PackagingElement<S> copy = copyElement(element, project);
     if (element instanceof CompositePackagingElement<?>) {
       copyChildren((CompositePackagingElement<?>)element, (CompositePackagingElement<?>)copy, project);
@@ -71,7 +71,7 @@ public class ArtifactUtil {
   }
 
   @NotNull
-  private static <S> PackagingElement<S> copyElement(@NotNull PackagingElement<S> element, @NotNull Project project) {
+  private static <S> PackagingElement<S> copyElement(@NotNull PackagingElement<? extends S> element, @NotNull Project project) {
     //noinspection unchecked
     final PackagingElement<S> copy = (PackagingElement<S>)element.getType().createEmpty(project);
     S state = element.getState();
@@ -128,7 +128,7 @@ public class ArtifactUtil {
   }
 
   public static void processRecursivelySkippingIncludedArtifacts(Artifact artifact,
-                                                                 final Processor<PackagingElement<?>> processor,
+                                                                 final Processor<? super PackagingElement<?>> processor,
                                                                  PackagingElementResolvingContext context) {
     processPackagingElements(artifact.getRootElement(), null, new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
@@ -239,7 +239,7 @@ public class ArtifactUtil {
                                                                                          @NotNull ArtifactType artifactType,
                                                                                          @NotNull PackagingElementPath parentPath,
                                                                                          @NotNull PackagingElementProcessor<E> processor,
-                                                                                         final Set<PackagingElement<?>> processed) {
+                                                                                         final Set<? super PackagingElement<?>> processed) {
     for (PackagingElement<?> element : elements) {
       if (!processed.add(element)) {
         continue;
@@ -276,7 +276,7 @@ public class ArtifactUtil {
   public static boolean processElementsByRelativePath(@NotNull final CompositePackagingElement<?> parent, @NotNull String relativePath,
                                                        @NotNull final PackagingElementResolvingContext context, @NotNull final ArtifactType artifactType,
                                                        @NotNull PackagingElementPath parentPath,
-                                                       @NotNull final PackagingElementProcessor<PackagingElement<?>> processor) {
+                                                       @NotNull final PackagingElementProcessor<? super PackagingElement<?>> processor) {
     relativePath = StringUtil.trimStart(relativePath, "/");
     if (relativePath.isEmpty()) {
       return true;
@@ -334,9 +334,9 @@ public class ArtifactUtil {
   }
 
   public static void processFileOrDirectoryCopyElements(Artifact artifact,
-                                                         PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>> processor,
-                                                         PackagingElementResolvingContext context,
-                                                         boolean processSubstitutions) {
+                                                        PackagingElementProcessor<? super FileOrDirectoryCopyPackagingElement<?>> processor,
+                                                        PackagingElementResolvingContext context,
+                                                        boolean processSubstitutions) {
     processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, processor, context, processSubstitutions);
     processPackagingElements(artifact, PackagingElementFactoryImpl.DIRECTORY_COPY_ELEMENT_TYPE, processor, context, processSubstitutions);
     processPackagingElements(artifact, PackagingElementFactoryImpl.EXTRACTED_DIRECTORY_ELEMENT_TYPE, processor, context, processSubstitutions);
@@ -464,7 +464,7 @@ public class ArtifactUtil {
 
   private static boolean processParents(@NotNull final Artifact artifact, @NotNull final PackagingElementResolvingContext context,
                                         @NotNull final ParentElementProcessor processor, FList<Pair<Artifact, CompositePackagingElement<?>>> pathToElement,
-                                        final int maxLevel, final Set<Artifact> processed) {
+                                        final int maxLevel, final Set<? super Artifact> processed) {
     if (!processed.add(artifact)) return true;
 
     final FList<Pair<Artifact, CompositePackagingElement<?>>> pathFromRoot;
@@ -524,7 +524,7 @@ public class ArtifactUtil {
     return true;
   }
 
-  public static void removeChildrenRecursively(@NotNull CompositePackagingElement<?> element, @NotNull Condition<PackagingElement<?>> condition) {
+  public static void removeChildrenRecursively(@NotNull CompositePackagingElement<?> element, @NotNull Condition<? super PackagingElement<?>> condition) {
     List<PackagingElement<?>> toRemove = new ArrayList<>();
     for (PackagingElement<?> child : element.getChildren()) {
       if (child instanceof CompositePackagingElement<?>) {

@@ -48,7 +48,7 @@ class CompareBranchesLogPanel extends JPanel {
   private CommitListPanel myHeadToBranchListPanel;
   private CommitListPanel myBranchToHeadListPanel;
 
-  public CompareBranchesLogPanel(@NotNull CompareBranchesHelper helper, @NotNull String branchName, @NotNull String currentBranchName,
+  CompareBranchesLogPanel(@NotNull CompareBranchesHelper helper, @NotNull String branchName, @NotNull String currentBranchName,
                                  @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     myHelper = helper;

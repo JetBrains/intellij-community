@@ -3,7 +3,7 @@ package com.siyeh.igtest.serialization.serializable_with_unconstructable_ancesto
 
 import java.io.*;
 
-public class SerializableWithUnconstructableAncestor extends SerializableParent implements Serializable
+public class <warning descr="'SerializableWithUnconstructableAncestor' has a non-serializable ancestor 'NonserializableGrandParent' without no-arg constructor">SerializableWithUnconstructableAncestor</warning> extends SerializableParent implements Serializable
 {
     public SerializableWithUnconstructableAncestor(int arg, int foo)
     {
@@ -11,7 +11,7 @@ public class SerializableWithUnconstructableAncestor extends SerializableParent 
     }
 
 }
-class SerializableParent extends NonserializableGrandParent implements Serializable
+class <warning descr="'SerializableParent' has a non-serializable ancestor 'NonserializableGrandParent' without no-arg constructor">SerializableParent</warning> extends NonserializableGrandParent implements Serializable
 {
   private int m_foo;
 

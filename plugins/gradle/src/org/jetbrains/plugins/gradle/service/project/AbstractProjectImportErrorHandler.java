@@ -25,7 +25,6 @@ import java.util.regex.Matcher;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/16/13
  */
 public abstract class AbstractProjectImportErrorHandler {
   public static final String OPEN_GRADLE_SETTINGS = "Please fix the project's Gradle settings.";

@@ -29,7 +29,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/20/13
  */
 public class BuildScriptClasspathData extends AbstractExternalEntityData {
   private static final long serialVersionUID = 1L;

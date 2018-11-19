@@ -39,17 +39,20 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/18/13
  */
 public class ExternalSystemActionUtil {
 
   public static void executeAction(final String actionId, final InputEvent e) {
+    executeAction(actionId, "", e);
+  }
+
+  public static void executeAction(final String actionId, @NotNull final String place, final InputEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(actionId);
     if (action != null) {
       final Presentation presentation = new Presentation();
       final AnActionEvent event =
-        new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), "", presentation, actionManager, 0);
+        new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), place, presentation, actionManager, 0);
       action.update(event);
       if (presentation.isEnabled()) {
         action.actionPerformed(event);
@@ -63,7 +66,7 @@ public class ExternalSystemActionUtil {
     return module != null ? module : LangDataKeys.MODULE_CONTEXT.getData(context);
   }
 
-  public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator) {
+  public static <E> void setElements(ElementsChooser<E> chooser, Collection<? extends E> all, Collection<E> selected, Comparator<? super E> comparator) {
     List<E> selection = chooser.getSelectedElements();
     chooser.clear();
     Collection<E> sorted = new TreeSet<>(comparator);
@@ -97,9 +100,8 @@ public class ExternalSystemActionUtil {
           return baseComponent;
         }
 
-        final Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
-
-        Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
+        Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+        Color background = UIUtil.getTreeBackground(selected, hasFocus);
 
         panel.add(baseComponent, BorderLayout.CENTER);
         panel.setBackground(background);

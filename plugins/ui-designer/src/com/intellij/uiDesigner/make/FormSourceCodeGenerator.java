@@ -374,7 +374,7 @@ public final class FormSourceCodeGenerator {
   private static boolean hasCustomComponentAffectingReferences(final PsiElement element,
                                                                final PsiClass classToBind,
                                                                final LwRootContainer rootContainer,
-                                                               @Nullable final Ref<Boolean> callsThisConstructor) {
+                                                               @Nullable final Ref<? super Boolean> callsThisConstructor) {
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
@@ -600,7 +600,6 @@ public final class FormSourceCodeGenerator {
 
       Object value = component.getPropertyValue(property);
 
-      //noinspection HardCodedStringLiteral
       final boolean isTextWithMnemonicProperty =
         "text".equals(property.getName()) &&
         (isAssignableFrom(AbstractButton.class.getName(), componentClass, globalSearchScope) ||

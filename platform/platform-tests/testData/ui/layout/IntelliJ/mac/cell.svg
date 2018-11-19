@@ -36,7 +36,7 @@
     <g fill="white" font-family="sans-serif" transform="translate(0,50)" stroke="white">
       <rect x="0" width="480" height="260" y="0" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g fill="silver" font-family="sans-serif" transform="translate(0,50)" stroke="silver">
+    <g fill="rgb(50,50,50)" font-family="sans-serif" transform="translate(0,50)" stroke="rgb(50,50,50)">
       <rect x="0" width="1" height="260" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="480" height="1" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="479" width="1" height="260" y="0" clip-path="url(#1)" stroke="none"/>
@@ -56,7 +56,7 @@
     <g fill="white" text-rendering="optimizeLegibility" font-weight="bold" font-family="sans-serif" transform="translate(73,-3)" stroke="white">
       <path d="M6 3 C4.3431 3 3 4.3431 3 6 L3 21 C3 22.6569 4.3431 24 6 24 L86 24 C87.6569 24 89 22.6569 89 21 L89 6 C89 4.3431 87.6569 3 86 3 Z" stroke="none" clip-path="url(#4)"/>
     </g>
-    <g fill="rgb(252,252,252)" font-weight="bold" font-family="sans-serif" transform="translate(81,1)" stroke="rgb(252,252,252)">
+    <g fill="white" font-weight="bold" font-family="sans-serif" transform="translate(81,1)" stroke="white">
       <rect x="0" width="81" height="19" y="0" clip-path="url(#5)" stroke="none"/>
     </g>
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-weight="bold" font-family="sans-serif" transform="translate(73,-3)" stroke="rgb(188,188,188)">

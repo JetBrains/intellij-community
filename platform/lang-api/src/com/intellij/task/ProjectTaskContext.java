@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/15/2016
  */
 public class ProjectTaskContext {
   @Nullable

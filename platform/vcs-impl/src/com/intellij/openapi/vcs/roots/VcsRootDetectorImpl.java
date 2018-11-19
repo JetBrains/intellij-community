@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
@@ -27,13 +13,13 @@ import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.CONTINUE;
+import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_CHILDREN;
 
 public class VcsRootDetectorImpl implements VcsRootDetector {
   private static final Logger LOG = Logger.getInstance(VcsRootDetectorImpl.class);
@@ -41,7 +27,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull private final Project myProject;
   @NotNull private final ProjectRootManager myProjectManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final VcsRootChecker[] myCheckers;
+  @NotNull private final List<VcsRootChecker> myCheckers;
 
   @Nullable private Collection<VcsRoot> myDetectedRoots;
   @NotNull private final Object LOCK = new Object();
@@ -52,7 +38,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     myProject = project;
     myProjectManager = projectRootManager;
     myVcsManager = projectLevelVcsManager;
-    myCheckers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
+    myCheckers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
   }
 
   @Override
@@ -72,7 +58,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private Collection<VcsRoot> doDetect(@Nullable VirtualFile startDir) {
-    if (startDir == null || myCheckers.length == 0) {
+    if (startDir == null || myCheckers.size() == 0) {
       return Collections.emptyList();
     }
 
@@ -119,6 +105,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull VirtualFile root) {
     Set<VcsRoot> roots = new HashSet<>();
     VcsRootScanner.visitDirsRecursivelyWithoutExcluded(myProject, myProjectManager, root, dir -> {
+      if (Registry.is("vcs.root.detector.skip.vendor") && dir.getName().equalsIgnoreCase("vendor")) return SKIP_CHILDREN;
       AbstractVcs vcs = getVcsFor(dir);
       if (vcs != null) {
         LOG.debug("Found VCS " + vcs + " in " + dir);
@@ -156,16 +143,11 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @Nullable
   private AbstractVcs getVcsFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
-    List<AbstractVcs> vcss = StreamEx.of(myCheckers).
-      filter(it -> it.isRoot(maybeRoot.getPath()) && (dirToCheckForIgnore == null || !it.isIgnored(maybeRoot, dirToCheckForIgnore))).
-      map(it -> myVcsManager.findVcsByName(it.getSupportedVcs().getName())).
-      toList();
-
-    if (vcss.size() == 1) {
-      return vcss.get(0);
-    }
-    else if (vcss.size() > 1) {
-      LOG.info("Dir " + maybeRoot + " is under several VCSs: " + vcss);
+    String path = maybeRoot.getPath();
+    for (VcsRootChecker checker : myCheckers) {
+      if (checker.isRoot(path) && (dirToCheckForIgnore == null || !checker.isIgnored(maybeRoot, dirToCheckForIgnore))) {
+        return myVcsManager.findVcsByName(checker.getSupportedVcs().getName());
+      }
     }
     return null;
   }

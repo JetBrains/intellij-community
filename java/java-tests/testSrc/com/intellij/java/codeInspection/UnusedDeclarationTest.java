@@ -207,7 +207,39 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testStaticMethodReferenceFromGroovy() {
+    doTest();
+  }
+
+  public void testStaticFieldReferenceFromExternalGroovy() {
+    doTest();
+  }
+
+  public void testFieldReferenceFromExternalGroovy() {
+    doTest();
+  }
+
   public void testStaticImport() {
+    doTest();
+  }
+
+  public void testInstanceOf() {
+    doTest();
+  }
+
+  public void testReferenceParameterList() {
+    doTest();
+  }
+
+  public void testEnumConstructor() {
+    doTest();
+  }
+
+  public void testTypeParameterUsed() {
+    doTest();
+  }
+
+  public void testMethodCallQualifiedWithSuper() {
     doTest();
   }
 }

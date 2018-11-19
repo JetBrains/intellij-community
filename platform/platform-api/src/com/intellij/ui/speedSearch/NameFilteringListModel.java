@@ -33,26 +33,26 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class NameFilteringListModel<T> extends FilteringListModel<T> {
-  private final Function<T, String> myNamer;
+  private final Function<? super T, String> myNamer;
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
   private final Computable<String> myPattern;
 
   public NameFilteringListModel(JList<T> list,
-                                final Function<T, String> namer,
-                                final Condition<String> filter,
+                                final Function<? super T, String> namer,
+                                final Condition<? super String> filter,
                                 final SpeedSearch speedSearch) {
     this(list, namer, filter, () -> speedSearch.getFilter());
   }
 
-  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, final SpeedSearchSupply speedSearch) {
+  public NameFilteringListModel(JList list, final Function<? super T, String> namer, final Condition<? super String> filter, final SpeedSearchSupply speedSearch) {
     this(list, namer, filter, () -> {
       final String prefix = speedSearch.getEnteredPrefix();
       return prefix == null ? "" : prefix;
     });
   }
 
-  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, Computable<String> pattern) {
+  public NameFilteringListModel(JList list, final Function<? super T, String> namer, final Condition<? super String> filter, Computable<String> pattern) {
     super(list);
     myPattern = pattern;
     myNamer = namer;

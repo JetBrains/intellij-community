@@ -36,7 +36,7 @@ public abstract class ProjectFileNodeUpdater {
     MessageBusConnection connection = project.getMessageBus().connect(invoker);
     connection.subscribe(PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateFromRoot();
       }
     });
@@ -109,7 +109,7 @@ public abstract class ProjectFileNodeUpdater {
 
   /**
    * Notifies that project roots are changed.
-   * The {@link #update} method will be executed with a small delay
+   * The {@link #onInvokerThread} method will be executed with a small delay
    * after calling of this method.
    *
    * @see #getUpdatingDelay
@@ -120,7 +120,7 @@ public abstract class ProjectFileNodeUpdater {
 
   /**
    * Notifies that the specified file (or folder) is changed.
-   * The {@link #update} method will be executed with a small delay
+   * The {@link #onInvokerThread} method will be executed with a small delay
    * after last calling of this method,
    * i.e. a bunch of modified files will be reported together.
    *
@@ -152,7 +152,7 @@ public abstract class ProjectFileNodeUpdater {
   }
 
   /**
-   * @return a delay between an event and the {@link #update} method calling,
+   * @return a delay between an event and the {@link #onInvokerThread} method calling,
    * that is used to collect a bunch of changes
    */
   protected int getUpdatingDelay() {
@@ -224,5 +224,5 @@ public abstract class ProjectFileNodeUpdater {
    * @param fromRoot     {@code true} if roots are changed
    * @param updatedFiles a set of modified files
    */
-  protected abstract void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles);
+  protected abstract void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles);
 }

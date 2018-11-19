@@ -258,8 +258,8 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  public static LineMarkerInfo createMethodSeparatorLineMarker(@NotNull PsiElement startFrom, @NotNull EditorColorsManager colorsManager) {
-    LineMarkerInfo info = new LineMarkerInfo<>(
+  public static LineMarkerInfo<PsiElement> createMethodSeparatorLineMarker(@NotNull PsiElement startFrom, @NotNull EditorColorsManager colorsManager) {
+    LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(
       startFrom,
       startFrom.getTextRange(),
       null,

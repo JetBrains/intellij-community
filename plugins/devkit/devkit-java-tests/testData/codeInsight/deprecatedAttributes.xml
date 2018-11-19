@@ -1,7 +1,7 @@
 <idea-plugin <error descr="Attribute 'version' not used anymore">version="666"</error>
     <error descr="Deprecated">use-idea-classloader="true"</error>
     >
-  <id>com.intellij.myPlugin</id>
+  <id>com.intellij</id>
 
   <vendor <error descr="Attribute 'logo' not used anymore">logo="deprecated"</error>/>
 

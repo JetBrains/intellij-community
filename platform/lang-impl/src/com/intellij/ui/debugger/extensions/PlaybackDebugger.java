@@ -182,7 +182,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private static class ScriptFileChooserDescriptor extends FileChooserDescriptor {
-    public ScriptFileChooserDescriptor() {
+    ScriptFileChooserDescriptor() {
       super(true, false, false, false, false, false);
       putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
       putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
@@ -303,7 +303,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private class RunOnFameActivationAction extends AnAction {
 
     private RunOnFameActivationAction() {
-      super("Run On Frame Activation", "", AllIcons.General.Run);
+      super("Run On Frame Activation", "", AllIcons.RunConfigurations.TestState.Run);
     }
 
     @Override

@@ -19,6 +19,10 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -30,6 +34,8 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class ImplicitArrayToStringInspection extends BaseInspection {
 
@@ -164,6 +170,9 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
   private static class ImplicitArrayToStringVisitor
     extends BaseInspectionVisitor {
 
+    private static final Set<String> INTERESTING_METHOD_NAMES =
+      ContainerUtil.immutableSet("append", "format", "print", "printf", "println", "valueOf");
+
     @Override
     public void visitReferenceExpression(
       PsiReferenceExpression expression) {
@@ -177,6 +186,15 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
+      if (!isImplicitArrayToStringCall(expression)) {
+        return;
+      }
+      registerError(expression, expression, Boolean.FALSE);
+    }
+
+    @Override
+    public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+      super.visitArrayAccessExpression(expression);
       if (!isImplicitArrayToStringCall(expression)) {
         return;
       }
@@ -215,104 +233,70 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       return type instanceof PsiArrayType;
     }
 
-    private static boolean isImplicitArrayToStringCall(
-      PsiExpression expression) {
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiArrayType)) {
-        return false;
+    private static boolean isImplicitArrayToStringCall(PsiExpression expression) {
+      return isImplicitToStringCall(expression) && expression.getType() instanceof PsiArrayType;
+    }
+
+    private static boolean isImplicitToStringCall(PsiExpression expression) {
+      if (ExpressionUtils.isStringConcatenationOperand(expression)) return true;
+
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+      while (parent instanceof PsiConditionalExpression &&
+             !PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false)) {
+        parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
       }
-      if (ExpressionUtils.isStringConcatenationOperand(expression)) {
-        return true;
-      }
-      final PsiElement parent = expression.getParent();
+      
       if (parent instanceof PsiExpressionList) {
-        final PsiExpressionList expressionList =
-          (PsiExpressionList)parent;
-        final PsiArrayType arrayType = (PsiArrayType)type;
-        final PsiType componentType = arrayType.getComponentType();
-        if (componentType.equals(PsiType.CHAR)) {
-          return false;
-        }
+        final PsiExpressionList expressionList = (PsiExpressionList)parent;
         final PsiElement grandParent = expressionList.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) {
-          return false;
-        }
-        final PsiExpression[] arguments =
-          expressionList.getExpressions();
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)grandParent;
-        final PsiReferenceExpression methodExpression =
-          methodCallExpression.getMethodExpression();
-        @NonNls final String methodName =
-          methodExpression.getReferenceName();
-        final PsiMethod method =
-          methodCallExpression.resolveMethod();
-        if (method == null) {
-          return false;
-        }
+        if (!(grandParent instanceof PsiMethodCallExpression)) return false;
+        final PsiMethodCallExpression call = (PsiMethodCallExpression)grandParent;
+        if (!INTERESTING_METHOD_NAMES.contains(call.getMethodExpression().getReferenceName())) return false;
+        final PsiExpression[] arguments = expressionList.getExpressions();
+        final PsiMethod method = call.resolveMethod();
+        if (method == null) return false;
+        @NonNls final String methodName = method.getName();
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) {
-          return false;
-        }
-        if ("append".equals(methodName)) {
-          if (arguments.length != 1) {
-            return false;
-          }
-          return InheritanceUtil.isInheritor(containingClass,
-                                             CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER);
-        }
-        else if ("valueOf".equals(methodName)) {
-          if (arguments.length != 1) {
-            return false;
-          }
-          final String qualifiedName =
-            containingClass.getQualifiedName();
-          return CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName);
-        }
-        if (!"print".equals(methodName) &&
-            !"println".equals(methodName)) {
-          if (!"printf".equals(methodName) &&
-              !"format".equals(methodName)) {
-            return false;
-          }
-          else {
-            if (arguments.length < 1) {
+        if (containingClass == null) return false;
+        String className = containingClass.getQualifiedName();
+        if (className == null) return false;
+        switch (methodName) {
+          case "append":
+            if (arguments.length != 1) return false;
+            if (!className.equals(CommonClassNames.JAVA_LANG_STRING_BUILDER) &&
+                !className.equals(CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
               return false;
             }
-            final PsiParameterList parameterList =
-              method.getParameterList();
-            final PsiParameter[] parameters =
-              parameterList.getParameters();
+            return !hasCharArrayParameter(method);
+          case "valueOf":
+            if (arguments.length != 1 || !CommonClassNames.JAVA_LANG_STRING.equals(className)) return false;
+            return !hasCharArrayParameter(method);
+          case "print":
+          case "println":
+            if (arguments.length != 1 || hasCharArrayParameter(method)) return false;
+            return "java.util.Formatter".equals(className) ||
+                   InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
+                   InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
+          case "printf":
+          case "format":
+            if (arguments.length < 1) return false;
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiParameter parameter = parameters[0];
             final PsiType firstParameterType = parameter.getType();
-            if (firstParameterType.equalsToText(
-              "java.util.Locale")) {
-              if (arguments.length < 4) {
-                return false;
-              }
-            }
-            else {
-              if (arguments.length < 3) {
-                return false;
-              }
-            }
-          }
-        }
-        final String qualifiedName = containingClass.getQualifiedName();
-        if ("java.util.Formatter".equals(qualifiedName) ||
-            CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
-          return true;
-        }
-        if (InheritanceUtil.isInheritor(containingClass,
-                                        "java.io.PrintStream")) {
-          return true;
-        }
-        else if (InheritanceUtil.isInheritor(containingClass,
-                                             "java.io.PrintWriter")) {
-          return true;
+            int minArguments = firstParameterType.equalsToText("java.util.Locale") ? 4 : 3;
+            if (arguments.length < minArguments) return false;
+            return CommonClassNames.JAVA_LANG_STRING.equals(className) || "java.util.Formatter".equals(className) ||
+                   InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
+                   InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
         }
       }
       return false;
+    }
+
+    private static boolean hasCharArrayParameter(PsiMethod method) {
+      PsiParameter parameter = ArrayUtil.getFirstElement(method.getParameterList().getParameters());
+      return parameter == null || parameter.getType().equalsToText("char[]");
     }
   }
 }

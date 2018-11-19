@@ -104,7 +104,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
   private static class VisibilityVisitor extends JavaElementVisitor {
     private final VisibilityChecker[] myCheckers;
 
-    public VisibilityVisitor(VisibilityChecker[] checkers) {
+    VisibilityVisitor(VisibilityChecker[] checkers) {
       myCheckers = checkers;
     }
 
@@ -158,7 +158,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
   }
 
   private class ClassEscapesItsScopeVisitor extends VisibilityChecker {
-    public ClassEscapesItsScopeVisitor(ProblemsHolder holder) {
+    ClassEscapesItsScopeVisitor(ProblemsHolder holder) {
       super(holder);
     }
 
@@ -209,7 +209,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     private final Set<String> myExportedPackageNames;
     private final String myModuleName;
 
-    public Java9NonAccessibleTypeExposedVisitor(@NotNull ProblemsHolder holder,
+    Java9NonAccessibleTypeExposedVisitor(@NotNull ProblemsHolder holder,
                                                 @NotNull Module module,
                                                 @NotNull String moduleName,
                                                 @NotNull Set<String> exportedPackageNames) {

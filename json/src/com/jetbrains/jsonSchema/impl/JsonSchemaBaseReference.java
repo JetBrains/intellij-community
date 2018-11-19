@@ -34,9 +34,11 @@ public abstract class JsonSchemaBaseReference<T extends PsiElement> extends PsiR
 
     JsonSchemaBaseReference that = (JsonSchemaBaseReference)o;
 
-    if (!myElement.equals(that.myElement)) return false;
+    return isIdenticalTo(that);
+  }
 
-    return true;
+  protected boolean isIdenticalTo(JsonSchemaBaseReference that) {
+    return myElement.equals(that.myElement);
   }
 
   @Override

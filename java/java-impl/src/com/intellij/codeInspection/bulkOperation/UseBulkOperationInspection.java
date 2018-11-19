@@ -228,7 +228,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   private static class UseBulkOperationFix implements LocalQuickFix {
     private final BulkMethodInfo myInfo;
 
-    public UseBulkOperationFix(BulkMethodInfo info) {
+    UseBulkOperationFix(BulkMethodInfo info) {
       myInfo = info;
     }
 

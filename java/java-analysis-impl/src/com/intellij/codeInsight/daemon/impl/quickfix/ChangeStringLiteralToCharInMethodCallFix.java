@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -62,14 +63,14 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myCall.isValid() && myLiteral.isValid() && myCall.getManager().isInProject(myCall);
+    return myCall.isValid() && myLiteral.isValid() && BaseIntentionAction.canModify(myCall);
   }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final Object value = myLiteral.getValue();
     if (value != null && value.toString().length() == 1) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
       final PsiExpression newExpression = factory.createExpressionFromText(quote(convertedValue(), ! isString(myLiteral.getType())),
                                                                            myLiteral.getParent());
@@ -126,7 +127,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
   }
 
-  private static void processLiterals(@NotNull final Set<PsiLiteralExpression> literals,
+  private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
                                       @NotNull final PsiCall call,
                                       @NotNull final HighlightInfo info) {
     for (PsiLiteralExpression literal : literals) {
@@ -139,7 +140,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
    * @return {@code true} if exact TYPEs match
    */
   private static boolean findMatchingExpressions(final PsiExpression[] arguments, final PsiMethod existingMethod,
-                                                 final Set<PsiLiteralExpression>result) {
+                                                 final Set<? super PsiLiteralExpression> result) {
     final PsiParameterList parameterList = existingMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 

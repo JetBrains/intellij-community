@@ -257,8 +257,9 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testSaveNoInheritanceAndDefaults() {
-    TextAttributes declarationAttrs = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME)
-      .getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).clone();
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    TextAttributes declarationAttrs = defaultScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).clone();
+    assertEquals(DefaultLanguageHighlighterColors.IDENTIFIER, DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     Assertions.assertThat(result.second).isEqualTo(fallbackAttrs);
@@ -269,7 +270,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey());
     TextAttributes directlyDefined =
       ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
-    assertTrue(directlyDefined != null && directlyDefined == AbstractColorsScheme.INHERITED_ATTRS_MARKER);
+    assertTrue(directlyDefined == AbstractColorsScheme.INHERITED_ATTRS_MARKER);
     assertSame(fallbackAttrs, result.second);
   }
 
@@ -340,7 +341,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
       fail("Must fail");
     }
-    catch (IllegalStateException e) {
+    catch (IllegalStateException | AssertionError e) {
       assertTrue(e.getMessage().contains("already registered"));
     }
     finally {
@@ -370,7 +371,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
         }
       }
       TextAttributes targetAttributes = targetScheme.getDirectlyDefinedAttributes(testKey);
-      assertTrue(targetAttributes != null && targetAttributes == AbstractColorsScheme.INHERITED_ATTRS_MARKER);
+      assertTrue(targetAttributes == AbstractColorsScheme.INHERITED_ATTRS_MARKER);
     }
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());

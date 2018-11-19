@@ -403,17 +403,17 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private class MyGroupByPackagesAction extends ToggleAction implements DumbAware {
-    public MyGroupByPackagesAction() {
+    MyGroupByPackagesAction() {
       super(VcsBundle.message("action.name.group.by.packages"), null, PlatformIcons.GROUP_BY_PACKAGES);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES = state;
       updateTreeModel();
     }
@@ -426,17 +426,17 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private class GroupByChangeListAction extends ToggleAction implements DumbAware {
-    public GroupByChangeListAction() {
+    GroupByChangeListAction() {
       super(VcsBundle.message("update.info.group.by.changelist"), null, AllIcons.Actions.ShowAsTree);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myGroupByChangeList;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myGroupByChangeList = state;
       myVcsConfiguration.UPDATE_GROUP_BY_CHANGELIST = myGroupByChangeList;
       final CardLayout cardLayout = (CardLayout)myCenterPanel.getLayout();
@@ -492,17 +492,17 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
-    public FilterAction() {
+    FilterAction() {
       super("Scope Filter", VcsBundle.getString("settings.filter.update.project.info.by.scope"), AllIcons.General.Filter);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.UPDATE_FILTER_BY_SCOPE;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myVcsConfiguration.UPDATE_FILTER_BY_SCOPE = state;
       updateTreeModel();
     }

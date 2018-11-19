@@ -7,6 +7,8 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +17,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -43,7 +44,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.xmlb.XmlSerializer;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.Nls;
@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -97,6 +98,19 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
+
+    JTextField stringCellEditor = new JTextField();
+    stringCellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
+    table.setDefaultEditor(String.class, new DefaultCellEditor(stringCellEditor));
+    table.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        Dimension editorSize = stringCellEditor.getPreferredSize();
+        size.height = Math.max(size.height, editorSize.height);
+        return size;
+      }
+    });
 
     TableColumnModel columnModel = table.getColumnModel();
     TableUtil.setupCheckboxColumn(columnModel.getColumn(MyTableModel.ENABLED_COLUMN));
@@ -192,7 +206,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
             return super.isFileVisible(file, showHiddenFiles) &&
-                   (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == FileTypes.ARCHIVE);
+                   (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == ArchiveFileType.INSTANCE);
           }
 
           @Override
@@ -210,12 +224,10 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
         for (VirtualFile file : files) {
           try {
-            Document document = JDOMUtil.loadDocument(file.getInputStream());
-            List<Element> children = document.getRootElement().getChildren();
-            children.forEach(element -> {
+            for (Element element : JDOMUtil.load(file.getInputStream()).getChildren()) {
               int idx = myTableModel.addIfNeeded(XmlSerializer.deserialize(element, CapturePoint.class));
               table.getSelectionModel().addSelectionInterval(idx, idx);
-            });
+            }
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
@@ -432,11 +444,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     @Override
     public Class getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case ENABLED_COLUMN:
-          return Boolean.class;
-      }
-      return String.class;
+      return columnIndex == ENABLED_COLUMN ? Boolean.class : String.class;
     }
 
     CapturePoint get(int idx) {
@@ -595,6 +603,12 @@ public class CaptureConfigurable implements SearchableConfigurable {
         .filter(e -> !e.equals(getAnnotationName(false)))
         .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
       super.doOKAction();
+    }
+
+    @Nullable
+    @Override
+    protected String getHelpId() {
+      return "reference.idesettings.debugger.customAsyncAnnotations";
     }
   }
 }

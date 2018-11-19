@@ -8,23 +8,23 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupPositionManager;
-import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class RunAnythingUtil {
   public static final Logger LOG = Logger.getInstance(RunAnythingUtil.class);
@@ -76,7 +75,7 @@ public class RunAnythingUtil {
     if (hit == null) {
       hit = value.getOption();
     }
-    hit = StringUtil.unescapeXml(hit);
+    hit = StringUtil.unescapeXmlEntities(hit);
     if (hit.length() > 60) {
       hit = hit.substring(0, 60) + "...";
     }
@@ -88,10 +87,6 @@ public class RunAnythingUtil {
 
   static int getPopupMaxWidth() {
     return PropertiesComponent.getInstance().getInt("run.anything.max.popup.width", JBUI.scale(600));
-  }
-
-  static void initTooltip(JComponent label) {
-    label.setToolTipText("<html><body>Press <b>" + getShortcut() + "</b> to execute any command</body></html>");
   }
 
   @Nullable
@@ -141,7 +136,7 @@ public class RunAnythingUtil {
 
   static void jumpNextGroup(boolean forward, JBList list) {
     final int index = list.getSelectedIndex();
-    final RunAnythingSearchListModel model = RunAnythingAction.getSearchingModel(list);
+    final RunAnythingSearchListModel model = getSearchingModel(list);
     if (model != null && index >= 0) {
       final int newIndex = forward ? model.next(index) : model.prev(index);
       list.setSelectedIndex(newIndex);
@@ -154,14 +149,6 @@ public class RunAnythingUtil {
     }
   }
 
-
-  private static String getShortcut() {
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(RunAnythingAction.RUN_ANYTHING_ACTION_ID).getShortcuts();
-    if (shortcuts.length == 0) {
-      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl");
-    }
-    return KeymapUtil.getShortcutsText(shortcuts);
-  }
 
   static void triggerShiftStatistics(@NotNull DataContext dataContext) {
     Project project = Objects.requireNonNull(CommonDataKeys.PROJECT.getData(dataContext));
@@ -205,5 +192,11 @@ public class RunAnythingUtil {
         break;
       }
     }
+  }
+
+  @Nullable
+  public static RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
+    ListModel model = list.getModel();
+    return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
   }
 }

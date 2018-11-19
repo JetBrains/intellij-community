@@ -31,7 +31,7 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private String myProcessedElementsHeader;
   private final String myCodeReferencesText;
 
-  public MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove, PsiDirectory newParent) {
+  MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove, PsiDirectory newParent) {
     myElementsToMove = elementsToMove;
     if (elementsToMove.length == 1) {
       myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("move.single.element.elements.header",
@@ -64,6 +64,7 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
     return myProcessedElementsHeader;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);

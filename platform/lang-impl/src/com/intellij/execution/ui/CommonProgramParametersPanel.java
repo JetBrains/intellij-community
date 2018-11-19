@@ -99,7 +99,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   @Deprecated // use MacroComboBoxWithBrowseButton instead
   protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
     final FixedSizeButton button = new FixedSizeButton(textAccessor);
-    button.setIcon(AllIcons.RunConfigurations.Variables);
+    button.setIcon(AllIcons.Actions.ListFiles);
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -149,7 +149,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     return myWorkingDirectoryComboBox;
   }
 
-  public void addWorkingDirectoryListener(Consumer<String> onTextChange) {
+  public void addWorkingDirectoryListener(Consumer<? super String> onTextChange) {
     myWorkingDirectoryComboBox.getChildComponent().addActionListener(event -> onTextChange.accept(myWorkingDirectoryComboBox.getText()));
   }
 

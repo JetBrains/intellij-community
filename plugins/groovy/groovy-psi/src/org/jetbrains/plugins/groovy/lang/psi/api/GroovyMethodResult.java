@@ -14,7 +14,12 @@ public interface GroovyMethodResult extends GroovyResolveResult {
   PsiMethod getElement();
 
   @NotNull
-  PsiSubstitutor getSubstitutor(boolean infer);
+  default PsiSubstitutor getContextSubstitutor() {
+    return getPartialSubstitutor();
+  }
+
+  @NotNull
+  PsiSubstitutor getPartialSubstitutor();
 
   @Nullable
   MethodCandidate getCandidate();

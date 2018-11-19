@@ -68,6 +68,7 @@
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor" language="XML" />
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ThemeJsonCompletionContributor" language="JSON" />
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
@@ -183,6 +184,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
+    <localInspection language="UAST" shortName="UnregisteredNamedColor" displayName="Unregistered named color"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" isInternal="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.devkit.codeStyle.bean.CodeStyleBeanIntention</className>
@@ -233,6 +238,7 @@
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
+    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
 
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
@@ -315,7 +321,7 @@
     </group>
     <action id="TestData.Navigate"
             class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
-            text="Navigate to testdata" use-shortcut-of="GotoRelated">
+            text="Navigate to Test Data" use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">

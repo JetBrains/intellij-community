@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.impl.PyStringLiteralDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -539,7 +539,7 @@ public class PyStringFormatParser {
   }
 
   @NotNull
-  public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<FormatStringChunk> chunks) {
+  public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<? extends FormatStringChunk> chunks) {
     final List<SubstitutionChunk> results = new ArrayList<>();
     for (FormatStringChunk chunk : chunks) {
       if (chunk instanceof SubstitutionChunk) {
@@ -551,7 +551,7 @@ public class PyStringFormatParser {
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
+  public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final ArrayList<SubstitutionChunk> result = new ArrayList<>();
     for (SubstitutionChunk s : substitutions) {
       if (s.getMappingKey() == null) {
@@ -563,7 +563,7 @@ public class PyStringFormatParser {
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
+  public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final Map<String, SubstitutionChunk> result = new HashMap<>();
     for (SubstitutionChunk s : substitutions) {
       final String key = s.getMappingKey();
@@ -575,7 +575,7 @@ public class PyStringFormatParser {
   }
 
   @NotNull
-  public static List<TextRange> substitutionsToRanges(@NotNull List<SubstitutionChunk> substitutions) {
+  public static List<TextRange> substitutionsToRanges(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final List<TextRange> ranges = new ArrayList<>();
     for (SubstitutionChunk substitution : substitutions) {
       ranges.add(TextRange.create(substitution.getStartIndex(), substitution.getEndIndex()));
@@ -625,7 +625,7 @@ public class PyStringFormatParser {
   @NotNull
   public static List<TextRange> getEscapeRanges(@NotNull String s) {
     final List<TextRange> ranges = new ArrayList<>();
-    Matcher matcher = PyStringLiteralExpressionImpl.PATTERN_ESCAPE.matcher(s);
+    Matcher matcher = PyStringLiteralDecoder.PATTERN_ESCAPE.matcher(s);
     while (matcher.find()) {
       ranges.add(TextRange.create(matcher.start(), matcher.end()));
     }

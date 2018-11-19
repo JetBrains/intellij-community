@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class ManuallySetupExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/quickFix/manuallySetupExternalResources";

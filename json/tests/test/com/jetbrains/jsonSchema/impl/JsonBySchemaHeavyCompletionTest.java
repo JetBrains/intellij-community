@@ -93,6 +93,10 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
     baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueComma");
   }
 
+  public void testWhitespaceAfterColon() throws Exception {
+    baseInsertTest("addWhitespaceAfterColon", "colon");
+  }
+
   public void testArrayLiteral() throws Exception {
     baseInsertTest("insertArrayOrObjectLiteral", "arrayLiteral");
     complete();
@@ -149,5 +153,11 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
     });
   }
 
+  public void testGuessType() throws Exception {
+    baseInsertTest("guessType", "test");
+  }
 
+  public void testDontGuessType() throws Exception {
+    baseInsertTest("dontGuessType", "test");
+  }
 }

@@ -92,11 +92,15 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           process.destroy();
         }
 
-        if (!reader.myLines.isEmpty()) {
-          JavaVersion base = JavaVersion.parse(reader.myLines.get(0));
-          JavaVersion rt = JavaVersion.tryParse(reader.myLines.size() > 2 ? reader.myLines.get(1) : null);
+        List<String> lines = reader.myLines;
+        while (!lines.isEmpty() && lines.get(0).startsWith("Picked up ")) {
+          lines.remove(0);
+        }
+        if (!lines.isEmpty()) {
+          JavaVersion base = JavaVersion.parse(lines.get(0));
+          JavaVersion rt = JavaVersion.tryParse(lines.size() > 2 ? lines.get(1) : null);
           JavaVersion version = rt != null && rt.feature == base.feature && rt.minor == base.minor ? rt : base;
-          boolean x64 = reader.myLines.stream().anyMatch(s -> s.contains("64-Bit") || s.contains("x86_64") || s.contains("amd64"));
+          boolean x64 = lines.stream().anyMatch(s -> s.contains("64-Bit") || s.contains("x86_64") || s.contains("amd64"));
           return new JdkVersionInfo(version, x64 ? Bitness.x64 : Bitness.x32);
         }
       }
@@ -119,7 +123,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     private final ActionRunner myRunner;
     private final List<String> myLines;
 
-    public VersionOutputReader(@NotNull InputStream stream, @NotNull ActionRunner runner) {
+    VersionOutputReader(@NotNull InputStream stream, @NotNull ActionRunner runner) {
       super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myRunner = runner;
       myLines = new CopyOnWriteArrayList<>();

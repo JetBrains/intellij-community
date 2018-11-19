@@ -256,7 +256,7 @@ public class FormsInstrumenter extends FormsBuilder {
      * @param sourceRoots all source roots for current module chunk and all dependent recursively
      * @param outputRoots output roots for this module chunk and all dependent recursively
      */
-    public MyNestedFormLoader(Map<File, String> sourceRoots, Collection<File> outputRoots, InstrumentationClassFinder classFinder) {
+    MyNestedFormLoader(Map<File, String> sourceRoots, Collection<File> outputRoots, InstrumentationClassFinder classFinder) {
       mySourceRoots = sourceRoots;
       myOutputRoots = outputRoots;
       myClassFinder = classFinder;

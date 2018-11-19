@@ -31,12 +31,12 @@ public class UpdateData<Key, Value> {
   private final Map<Key, Value> myNewData;
   private final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
   private final IndexId<Key, Value> myIndexId;
-  private final ThrowableRunnable<IOException> myForwardIndexUpdate;
+  private final ThrowableRunnable<? extends IOException> myForwardIndexUpdate;
 
   public UpdateData(@NotNull Map<Key, Value> newData,
                     @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> currentDataEvaluator,
                     @NotNull IndexId<Key, Value> indexId,
-                    @Nullable ThrowableRunnable<IOException> forwardIndexUpdate) {
+                    @Nullable ThrowableRunnable<? extends IOException> forwardIndexUpdate) {
     myNewData = newData;
     myCurrentDataEvaluator = currentDataEvaluator;
     myIndexId = indexId;

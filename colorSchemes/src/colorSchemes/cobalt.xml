@@ -439,7 +439,7 @@
     </option>
     <option name="Clojure Literal">
       <value>
-        <option name="FOREGROUND" value="FF80E1" />
+        <option name="FOREGROUND" value="CCCCCC" />
       </value>
     </option>
     <option name="Clojure Numbers">
@@ -518,7 +518,7 @@
     </option>
     <option name="DEFAULT_FUNCTION_CALL">
       <value>
-        <option name="FOREGROUND" value="CCCCCC" />
+        <option name="FOREGROUND" value="FFB054" />
       </value>
     </option>
     <option name="DEFAULT_FUNCTION_DECLARATION">
@@ -528,7 +528,7 @@
     </option>
     <option name="DEFAULT_GLOBAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="FF80E1" />
+        <option name="FOREGROUND" value="CCCCCC" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -539,7 +539,7 @@
     </option>
     <option name="DEFAULT_INSTANCE_FIELD">
       <value>
-        <option name="FOREGROUND" value="FF80E1" />
+        <option name="FOREGROUND" value="CCCCCC" />
       </value>
     </option>
     <option name="DEFAULT_INSTANCE_METHOD">
@@ -576,7 +576,7 @@
     </option>
     <option name="DEFAULT_LOCAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="FF80E1" />
+        <option name="FOREGROUND" value="CCCCCC" />
       </value>
     </option>
     <option name="DEFAULT_METADATA">
@@ -616,7 +616,7 @@
     </option>
     <option name="DEFAULT_STATIC_FIELD">
       <value>
-        <option name="FOREGROUND" value="FF80E1" />
+        <option name="FOREGROUND" value="CCCCCC" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -680,7 +680,7 @@
     </option>
     <option name="DJANGO_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="9EFFFF" />
+        <option name="FOREGROUND" value="FFDD00" />
       </value>
     </option>
     <option name="DJANGO_TAG_START_END">
@@ -877,7 +877,7 @@
     </option>
     <option name="HTML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="9EFFFF" />
+        <option name="FOREGROUND" value="FFDD00" />
       </value>
     </option>
     <option name="HYPERLINK_ATTRIBUTES">
@@ -1035,7 +1035,7 @@
     </option>
     <option name="JS.GLOBAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="FF80E1" />
+        <option name="FOREGROUND" value="CCCCCC" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -1046,7 +1046,7 @@
     </option>
     <option name="JS.LOCAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="FF80E1" />
+        <option name="FOREGROUND" value="CCCCCC" />
       </value>
     </option>
     <option name="JS.PARAMETER">
@@ -1205,7 +1205,7 @@
     </option>
     <option name="PHP_VAR">
       <value>
-        <option name="FOREGROUND" value="FF80E1" />
+        <option name="FOREGROUND" value="CCCCCC" />
       </value>
     </option>
     <option name="PROTOCOL_REFERENCE">
@@ -1624,7 +1624,8 @@
     </option>
     <option name="RUBY_PARAMETER_ID">
       <value>
-        <option name="FOREGROUND" value="CCCCCC" />
+        <option name="FONT_TYPE" value="2" />
+        <option name="FOREGROUND" value="E4FF00" />
       </value>
     </option>
     <option name="RUBY_REGEXP">
@@ -1939,7 +1940,7 @@
     </option>
     <option name="XML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="9EFFFF" />
+        <option name="FOREGROUND" value="FFDD00" />
       </value>
     </option>
     <option name="YAML_COMMENT">

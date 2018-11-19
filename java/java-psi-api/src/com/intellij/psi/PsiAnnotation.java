@@ -127,4 +127,12 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
   default List<JvmAnnotationAttribute> getAttributes() {
     return Arrays.asList(getParameterList().getAttributes());
   }
+
+  /**
+   * @return whether the annotation has the given qualified name. Specific languages may provide efficient implementation
+   * that doesn't always create/resolve annotation reference.
+   */
+  default boolean hasQualifiedName(@NotNull String qualifiedName) {
+    return qualifiedName.equals(getQualifiedName());
+  }
 }

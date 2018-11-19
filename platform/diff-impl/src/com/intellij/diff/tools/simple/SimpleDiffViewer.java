@@ -406,6 +406,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   // Misc
   //
 
+  boolean isDiffForLocalChanges() {
+    boolean isLastWithLocal = DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL.get(myContext, false);
+    return isLastWithLocal && !isEditable(Side.LEFT) && isEditable(Side.RIGHT);
+  }
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     return TwosideTextDiffViewer.canShowRequest(context, request);
@@ -482,7 +487,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class MyReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
-    public MyReadOnlyLockAction() {
+    MyReadOnlyLockAction() {
       super(getContext(), getEditableEditors());
     }
 
@@ -553,7 +558,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private abstract class ApplySelectedChangesActionBase extends SelectedChangesActionBase {
     @NotNull protected final Side myModifiedSide;
 
-    public ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
+    ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
       super(shortcut);
       myModifiedSide = modifiedSide;
     }
@@ -583,7 +588,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
+    ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
       super(focusedSide.other(), shortcut);
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
     }
@@ -591,6 +596,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected String getText(@NotNull Side side) {
+      if (myModifiedSide == Side.RIGHT && isDiffForLocalChanges()) return "Revert";
       return "Accept";
     }
 
@@ -609,7 +615,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
+    AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
       super(focusedSide.other(), shortcut);
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
     }
@@ -660,7 +666,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
-    public MyToggleExpandByDefaultAction() {
+    MyToggleExpandByDefaultAction() {
       super(getTextSettings());
     }
 
@@ -832,7 +838,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private static class MyFoldingModel extends FoldingModelSupport {
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
-    public MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
+    MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
       super(toObjectArray(editors, EditorEx.class), disposable);
     }
 

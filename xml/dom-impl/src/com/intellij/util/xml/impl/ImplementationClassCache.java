@@ -45,7 +45,7 @@ class ImplementationClassCache {
     return implementation == null ? concreteInterface : implementation.value();
   }
 
-  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class> results) {
+  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<? super Class> results) {
     final Collection<DomImplementationClassEP> values = myImplementationClasses.get(concreteInterface.getName());
     for (DomImplementationClassEP value : values) {
       if (value.getInterfaceClass() == concreteInterface) {

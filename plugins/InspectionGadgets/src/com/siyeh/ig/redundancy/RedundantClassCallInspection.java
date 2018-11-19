@@ -61,7 +61,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.with", myReplacement);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
   }
 
   private static class ReplaceWithInstanceOfFix extends ReplaceRedundantClassCallFix {
-    public ReplaceWithInstanceOfFix(@NotNull PsiTypeElement typeElement) {
+    ReplaceWithInstanceOfFix(@NotNull PsiTypeElement typeElement) {
       super("instanceof "+typeElement.getType().getPresentableText());
     }
 
@@ -102,7 +102,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
   }
 
   private static class ReplaceWithCastFix extends ReplaceRedundantClassCallFix {
-    public ReplaceWithCastFix(@NotNull PsiTypeElement typeElement) {
+    ReplaceWithCastFix(@NotNull PsiTypeElement typeElement) {
       super("("+typeElement.getType().getPresentableText()+")");
     }
 

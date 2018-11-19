@@ -79,6 +79,12 @@ public class Modifier {
     return command.getOldComment();
   }
 
+  public boolean editData(@NotNull String fromName, @Nullable ChangeListData newData) {
+    EditData command = new EditData(fromName, newData);
+    impl(command);
+    return command.isResult();
+  }
+
 
   private void impl(@NotNull ChangeListCommand command) {
     if (myInsideUpdate) {

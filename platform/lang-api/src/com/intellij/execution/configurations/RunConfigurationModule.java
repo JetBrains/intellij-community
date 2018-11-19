@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -30,7 +28,8 @@ public class RunConfigurationModule implements JDOMExternalizable {
   @NonNls private static final String ELEMENT = "module";
   @NonNls private static final String ATTRIBUTE = "name";
 
-  private @Nullable ModulePointer myModulePointer;
+  @Nullable
+  private ModulePointer myModulePointer;
 
   private final Project myProject;
 
@@ -63,7 +62,15 @@ public class RunConfigurationModule implements JDOMExternalizable {
     prev.setAttribute(ATTRIBUTE, getModuleName());
   }
 
+  /**
+   * @deprecated It is not init. It sets module to any first module if no module yet configured. Use {@link #setModuleToAnyFirstIfNotSpecified} if need.
+   */
+  @Deprecated
   public void init() {
+    setModuleToAnyFirstIfNotSpecified();
+  }
+
+  public void setModuleToAnyFirstIfNotSpecified() {
     if (StringUtil.isEmptyOrSpaces(getModuleName())) {
       Module[] modules = getModuleManager().getModules();
       if (modules.length > 0) {

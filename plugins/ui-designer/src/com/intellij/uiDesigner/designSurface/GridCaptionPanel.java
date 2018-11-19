@@ -236,7 +236,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   @Override
-  public void selectedComponentChanged(GuiEditor source) {
+  public void selectedComponentChanged(@NotNull GuiEditor source) {
     checkSelectionChanged();
     repaint();
   }
@@ -609,7 +609,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public boolean isRow;
     public int[] cells;
 
-    public MyDragBean(final boolean row, final int[] cells) {
+    MyDragBean(final boolean row, final int[] cells) {
       isRow = row;
       this.cells = cells;
     }

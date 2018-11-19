@@ -88,6 +88,6 @@ public class HgReferenceValidator implements InputValidatorEx {
   @NotNull
   public String cleanUpBranchName(@NotNull String branchName) {
     if (onlyDigits(branchName)) return branchName + "_";
-    return branchName.replaceAll(ILLEGAL.pattern(), "_");
+    return branchName.replaceAll(ILLEGAL.pattern(), "_").replaceAll("\"", "");
   }
 }

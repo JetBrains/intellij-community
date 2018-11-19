@@ -30,11 +30,6 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   @Override
-  protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return LafIconLookup.getIcon(clickable ? "searchWithHistory" : "search");
-  }
-
-  @Override
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
     return !clickable ? null : LafIconLookup.getIcon("clear");
   }
@@ -88,8 +83,8 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected Insets getDefaultMargins() {
-    return isCompact(getComponent()) ? JBUI.insets(0, 5) :
-           isTableCellEditor(getComponent()) ? JBUI.insets(0, 3) : JBUI.insets(2, 5);
+    Component c = getComponent();
+    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(2, 5);
   }
 
   protected float bw() {

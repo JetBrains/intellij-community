@@ -19,12 +19,10 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +50,6 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
    */
   @Deprecated
-  @SuppressWarnings("UnusedParameters")
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
                               final ExecutionEnvironment environment,
                               @Nullable final String splitterProperty) {
@@ -93,12 +90,12 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
       public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
                              @NotNull final TestResultsViewer viewer,
                              @NotNull final TestFrameworkRunningModel model) {
-        if (selectedTestProxy == null) {
+        if (selectedTestProxy == null || myResultsViewer.getTreeBuilder().isDisposed()) {
           return;
         }
 
         // print selected content
-        SMRunnerUtil.runInEventDispatchThread(() -> getPrinter().updateOnTestSelected(selectedTestProxy), ModalityState.NON_MODAL);
+        getPrinter().updateOnTestSelected(selectedTestProxy);
       }
     });
   }

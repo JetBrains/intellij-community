@@ -4,8 +4,12 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
+import com.intellij.util.ObjectUtils
+import com.intellij.util.containers.IntArrayList
+import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -82,7 +86,8 @@ fun <T> Element.deserialize(clazz: Class<T>): T {
 
 fun <T> deserialize(url: URL, aClass: Class<T>): T {
   try {
-    var document = JDOMUtil.loadDocument(url)
+    @Suppress("DEPRECATION")
+    var document = JDOMUtil.loadDocument(URLUtil.openStream(url))
     document = JDOMXIncluder.resolve(document, url.toExternalForm())
     return document.rootElement.deserialize(aClass)
   }
@@ -106,15 +111,17 @@ fun Element.deserializeInto(bean: Any) {
   }
 }
 
-fun PersistentStateComponent<*>.deserializeAndLoadState(element: Element) {
-  val state = element.deserialize(ComponentSerializationUtil.getStateClass<Any>(javaClass))
+@JvmOverloads
+fun <T> deserializeAndLoadState(component: PersistentStateComponent<T>, element: Element, clazz: Class<T> = ComponentSerializationUtil.getStateClass<T>(component::class.java)) {
+  val state = element.deserialize(clazz)
   (state as? BaseState)?.resetModificationCount()
-  @Suppress("UNCHECKED_CAST")
-  (this as PersistentStateComponent<Any>).loadState(state)
+  component.loadState(state)
 }
 
-fun PersistentStateComponent<*>.serializeStateInto(element: Element) {
-  state?.let { serializeObjectInto(it, element) }
+fun serializeStateInto(component: PersistentStateComponent<*>, element: Element) {
+  component.state?.let {
+    serializeObjectInto(it, element)
+  }
 }
 
 @JvmOverloads
@@ -134,30 +141,31 @@ fun serializeObjectInto(o: Any, target: Element, filter: SerializationFilter? = 
     return
   }
 
-  val binding = serializer.getClassBinding(o.javaClass)
-  (binding as BeanBinding).serializeInto(o, target, if (o is BaseState) null else (filter ?: getDefaultSerializationFilter()))
+  val beanBinding = serializer.getClassBinding(o.javaClass) as KotlinAwareBeanBinding
+  beanBinding.serializeInto(o, target, filter ?: getDefaultSerializationFilter())
 }
 
 private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
-  @Suppress("ObjectPropertyName")
-  private var _bindingCache: SoftReference<MutableMap<BindingCacheKey, Binding>>? = null
+  private var bindingCache: SoftReference<MutableMap<BindingCacheKey, Binding>>? = null
 
-  private val bindingCache: MutableMap<BindingCacheKey, Binding>
-    get() {
-      var map = _bindingCache?.get()
-      if (map == null) {
-        map = THashMap()
-        _bindingCache = SoftReference(map)
-      }
-      return map
+  private fun getOrCreateBindingCache(): MutableMap<BindingCacheKey, Binding> {
+    var map = bindingCache?.get()
+    if (map == null) {
+      map = THashMap()
+      bindingCache = SoftReference(map)
     }
+    return map
+  }
 
   private val cacheLock = ReentrantReadWriteLock()
 
   override fun getClassBinding(aClass: Class<*>, originalType: Type, accessor: MutableAccessor?): Binding {
     val key = BindingCacheKey(originalType, accessor)
-    val map = bindingCache
-    return cacheLock.read { map.get(key) } ?: cacheLock.write {
+    return cacheLock.read {
+      // create _bindingCache only under write lock
+      bindingCache?.get()?.get(key)
+    } ?: cacheLock.write {
+      val map = getOrCreateBindingCache()
       map.get(key)?.let {
         return it
       }
@@ -179,9 +187,10 @@ private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
     }
   }
 
+  @Suppress("unused")
   fun clearBindingCache() {
     cacheLock.write {
-      _bindingCache?.clear()
+      bindingCache?.clear()
     }
   }
 }
@@ -202,6 +211,61 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
     return instance
   }
 
+  // only for accessor, not field
+  private fun findBindingIndex(name: String): Int {
+    // accessors sorted by name
+    val index = ObjectUtils.binarySearch(0, myBindings.size) { index -> myBindings[index].accessor.name.compareTo(name) }
+    if (index >= 0) {
+      return index
+    }
+
+    for ((i, binding) in myBindings.withIndex()) {
+      val accessor = binding.accessor
+      if (accessor is PropertyAccessor && accessor.getterName == name) {
+        return i
+      }
+    }
+
+    return -1
+  }
+
+  override fun serializeInto(o: Any, element: Element?, filter: SerializationFilter?): Element? {
+    return when (o) {
+      is BaseState -> serializeBaseStateInto(o, element, filter)
+      else -> super.serializeInto(o, element, filter)
+    }
+  }
+
+  private fun serializeBaseStateInto(o: BaseState, _element: Element?, filter: SerializationFilter?): Element? {
+    var element = _element
+    // order of bindings must be used, not order of properties
+    var bindingIndices: IntArrayList? = null
+    for (property in o.__getProperties()) {
+      if (property.isEqualToDefault()) {
+        continue
+      }
+
+      val propertyBindingIndex = findBindingIndex(property.name!!)
+      if (propertyBindingIndex < 0) {
+        logger<BaseState>().debug("cannot find binding for property ${property.name}")
+        continue
+      }
+
+      if (bindingIndices == null) {
+        bindingIndices = IntArrayList()
+      }
+      bindingIndices.add(propertyBindingIndex)
+    }
+
+    if (bindingIndices != null) {
+      bindingIndices.sort()
+      for (i in 0 until bindingIndices.size()) {
+        element = serializePropertyInto(myBindings[bindingIndices.getQuick(i)], o, element, filter, false)
+      }
+    }
+    return element
+  }
+
   private fun newInstance(): Any {
     val clazz = myBeanClass
     try {
@@ -209,7 +273,7 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
       try {
         constructor.isAccessible = true
       }
-      catch (e: SecurityException) {
+      catch (ignored: SecurityException) {
         return clazz.newInstance()
       }
       return constructor.newInstance()
@@ -229,7 +293,7 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
     try {
       kFunction.isAccessible = true
     }
-    catch (e: SecurityException) {
+    catch (ignored: SecurityException) {
     }
     return kFunction.callBy(emptyMap())
   }

@@ -222,6 +222,16 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "    pass");
   }
 
+  // PY-31147
+  public void testGenericCompletenessPartiallySpecialized() {
+    doTestByText("from typing import TypeVar, Generic, Dict\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "class C(Generic[T], Dict[int, T]):\n" +
+                 "    pass");
+  }
+
   // PY-28249
   public void testInstanceAndClassChecksOnAny() {
     doTestByText("from typing import Any\n" +
@@ -458,6 +468,29 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "assert issubclass(A, B[int])\n" +
                  "C = B[int]\n" +
                  "assert issubclass(A, C)");
+  }
+
+  // PY-31788
+  public void testInstanceAndClassChecksOnGenericParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import List, Type, TypeVar\n" +
+                         "\n" +
+                         "T = TypeVar(\"T\")\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def foo(p1: T, p2: Type[T], p3: List[T]):\n" +
+                         "    assert isinstance(A(), <error descr=\"Type variables cannot be used with instance and class checks\">p1</error>)\n" +
+                         "    assert issubclass(A, <error descr=\"Type variables cannot be used with instance and class checks\">p1</error>)\n" +
+                         "\n" +
+                         "    assert isinstance(A(), p2)\n" +
+                         "    assert issubclass(A, p2)\n" +
+                         "\n" +
+                         "    assert isinstance(A(), <error descr=\"Type variables cannot be used with instance and class checks\">p3</error>)\n" +
+                         "    assert issubclass(A, <error descr=\"Type variables cannot be used with instance and class checks\">p3</error>)")
+    );
   }
 
   // PY-16853

@@ -21,9 +21,17 @@ class PluginPublishingSpec {
    */
   boolean includeInCustomPluginRepository
 
+  /**
+   * If {@code true} the plugin distribution will be added to "auto-uploading" subdirectory in "&lt;product-code&gt;-plugins" directory in
+   * the artifacts directory. All plugins from that directory are supposed to be automatically uploaded to plugins.jetbrains.com.
+   */
+  boolean includeIntoDirectoryForAutomaticUploading
+
   PluginPublishingSpec(CompatibleBuildRange compatibleBuildRangeOrNullForDefault = null,
-                       boolean includeInCustomPluginRepository = true) {
+                       boolean includeInCustomPluginRepository = true,
+                       boolean includeIntoDirectoryForAutomaticUploading = false) {
     this.compatibleBuildRange = compatibleBuildRangeOrNullForDefault
     this.includeInCustomPluginRepository = includeInCustomPluginRepository
+    this.includeIntoDirectoryForAutomaticUploading = includeIntoDirectoryForAutomaticUploading
   }
 }

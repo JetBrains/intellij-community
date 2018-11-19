@@ -35,7 +35,7 @@ public class HgActionUtil {
 
   @NotNull
   public static List<HgRepository> collectRepositoriesFromFiles(@NotNull final HgRepositoryManager repositoryManager,
-                                                                @NotNull Collection<VirtualFile> files) {
+                                                                @NotNull Collection<? extends VirtualFile> files) {
     return ContainerUtil.mapNotNull(files, file -> repositoryManager.getRepositoryForFile(file));
   }
 

@@ -19,7 +19,7 @@ public interface UsageViewEx extends UsageView {
   void waitForUpdateRequestsCompletion();
 
   @NotNull
-  CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<Usage> usages);
+  CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages);
 
   void setSearchInProgress(boolean searchInProgress);
 

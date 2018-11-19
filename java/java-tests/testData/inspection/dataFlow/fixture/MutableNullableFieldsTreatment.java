@@ -20,17 +20,17 @@ class Foo {
     if (data != null) {
       return;
     }
-    System.out.println(data.<warning descr="Method invocation 'hashCode' will produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(data.<warning descr="Method invocation 'hashCode' will produce 'NullPointerException'">hashCode</warning>());
     System.out.println(data.hashCode());
   }
 
   void warnWhenNotCheckedOnce(Foo f) {
-    System.out.println(f.data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(f.data.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     System.out.println(f.data.hashCode());
   }
   
   void warnWhenNotCheckedThisOnce() {
-    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     System.out.println(data.hashCode());
   }
   

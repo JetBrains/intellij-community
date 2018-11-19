@@ -22,7 +22,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author anna
- * @since 13.11.2010
  */
 public class RedundantArray4VarargsCallInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override

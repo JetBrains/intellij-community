@@ -3,7 +3,6 @@ package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -32,7 +31,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-@SuppressWarnings({"OverridableMethodCallInConstructor"})
 class WrapReturnValueDialog extends RefactoringDialog {
 
   private final PsiMethod sourceMethod;
@@ -45,7 +43,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
   private ReferenceEditorComboWithBrowseButton existingClassField;
   private JRadioButton useExistingClassButton;
-  private JComboBox myFieldsCombo;
+  private JComboBox<PsiField> myFieldsCombo;
   private JPanel myExistingClassPanel;
 
   private JPanel myWholePanel;
@@ -125,6 +123,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     }
   }
 
+  @NotNull
   private String getInnerClassName() {
     return myInnerClassNameTextField.getText().trim();
   }
@@ -188,13 +187,12 @@ class WrapReturnValueDialog extends RefactoringDialog {
     myCreateInnerClassButton.addActionListener(enableListener);
     toggleRadioEnablement();
 
-    final DefaultComboBoxModel model = new DefaultComboBoxModel();
+    final DefaultComboBoxModel<PsiField> model = new DefaultComboBoxModel<>();
     myFieldsCombo.setModel(model);
-    myFieldsCombo.setRenderer(new ListCellRendererWrapper() {
+    myFieldsCombo.setRenderer(new ListCellRendererWrapper<PsiField>() {
       @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof PsiField) {
-          final PsiField field = (PsiField)value;
+      public void customize(JList list, PsiField field, int index, boolean selected, boolean hasFocus) {
+        if (field != null) {
           setText(field.getName());
           setIcon(field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
         }
@@ -250,8 +248,8 @@ class WrapReturnValueDialog extends RefactoringDialog {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.WrapReturnValue);
+  protected String getHelpId() {
+    return HelpID.WrapReturnValue;
   }
 
   private void createUIComponents() {

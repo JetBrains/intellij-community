@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -39,17 +40,23 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      EditorTestUtil.waitForLoading(editor);
       EditorTestUtil.addFoldRegion(editor, 15, 16, ".", true);
       FileEditorManager.getInstance(project).closeFile(virtualFile);
     });
 
-    GCUtil.tryForceGC();
-    assertNull(FileDocumentManager.getInstance().getCachedDocument(virtualFile));
+    GCUtil.tryGcSoftlyReachableObjects();
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    if (document != null) {
+      fail("Document wasn't collected, see heap dump at " + publishHeapDump(EditorHistoryManagerTest.class.getName()));
+      System.out.println("Keeping a reference to the document: " + document);
+    }
 
     openProjectPerformTaskCloseProject(dir, project -> {});
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor newEditor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      EditorTestUtil.waitForLoading(newEditor);
       assertEquals("[FoldRegion +(15:16), placeholder='.']", Arrays.toString(newEditor.getFoldingModel().getAllFoldRegions()));
     });
   }

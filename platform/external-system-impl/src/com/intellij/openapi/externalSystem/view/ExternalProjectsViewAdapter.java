@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   @NotNull
@@ -85,6 +84,11 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   @Override
   public boolean getGroupTasks() {
     return delegate.getGroupTasks();
+  }
+
+  @Override
+  public boolean getGroupModules() {
+    return delegate.getGroupModules();
   }
 
   @Override

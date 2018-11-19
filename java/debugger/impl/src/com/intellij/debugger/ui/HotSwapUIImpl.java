@@ -325,7 +325,7 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void fileGenerated(String outputRoot, String relativePath) {
+    public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
       if (StringUtil.endsWith(relativePath, ".class") && JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) {
         // collect only classes
         myGeneratedPaths.get().computeIfAbsent(outputRoot, k -> new ArrayList<>()).add(relativePath);
@@ -333,7 +333,7 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+    public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
       final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
       if (myProject.isDisposed()) {
         return;

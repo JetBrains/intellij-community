@@ -66,22 +66,22 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   protected val realProcessHandler: ProcessHandler?
     get() = executionResult?.processHandler
 
-  override final fun getSmartStepIntoHandler(): XSmartStepIntoHandler<*>? = smartStepIntoHandler
+  final override fun getSmartStepIntoHandler(): XSmartStepIntoHandler<*>? = smartStepIntoHandler
 
-  override final fun getBreakpointHandlers(): Array<out XBreakpointHandler<*>> = when (connection.state.status) {
+  final override fun getBreakpointHandlers(): Array<out XBreakpointHandler<*>> = when (connection.state.status) {
     ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED, ConnectionStatus.CONNECTION_FAILED -> XBreakpointHandler.EMPTY_ARRAY
     else -> _breakpointHandlers
   }
 
-  override final fun getEditorsProvider(): XDebuggerEditorsProvider = editorsProvider
+  final override fun getEditorsProvider(): XDebuggerEditorsProvider = editorsProvider
 
   val vm: Vm?
     get() = connection.vm
 
-  override final val mainVm: Vm?
+  final override val mainVm: Vm?
     get() = connection.vm
 
-  override final val activeOrMainVm: Vm?
+  final override val activeOrMainVm: Vm?
     get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
 
   init {
@@ -116,11 +116,11 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
     lastCallFrame = vm.suspendContextManager.context?.topFrame
   }
 
-  override final fun checkCanPerformCommands(): Boolean = activeOrMainVm != null
+  final override fun checkCanPerformCommands(): Boolean = activeOrMainVm != null
 
-  override final fun isValuesCustomSorted(): Boolean = true
+  final override fun isValuesCustomSorted(): Boolean = true
 
-  override final fun startStepOver(context: XSuspendContext?) {
+  final override fun startStepOver(context: XSuspendContext?) {
     val vm = context.vm
     updateLastCallFrame(vm)
     continueVm(vm, StepAction.OVER)
@@ -129,18 +129,18 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   val XSuspendContext?.vm: Vm
     get() = (this as? SuspendContextView)?.activeVm ?: mainVm!!
 
-  override final fun startForceStepInto(context: XSuspendContext?) {
+  final override fun startForceStepInto(context: XSuspendContext?) {
     isForceStep = true
     startStepInto(context)
   }
 
-  override final fun startStepInto(context: XSuspendContext?) {
+  final override fun startStepInto(context: XSuspendContext?) {
     val vm = context.vm
     updateLastCallFrame(vm)
     continueVm(vm, StepAction.IN)
   }
 
-  override final fun startStepOut(context: XSuspendContext?) {
+  final override fun startStepOut(context: XSuspendContext?) {
     val vm = context.vm
     if (isVmStepOutCorrect()) {
       lastCallFrame = null
@@ -195,14 +195,14 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
     }
   }
 
-  override final fun startPausing() {
+  final override fun startPausing() {
     activeOrMainVm!!.suspendContextManager.suspend()
       .onError(RejectErrorReporter(session, "Cannot pause"))
   }
 
-  override final fun getCurrentStateMessage(): String = connection.state.message
+  final override fun getCurrentStateMessage(): String = connection.state.message
 
-  override final fun getCurrentStateHyperlinkListener(): HyperlinkListener? = connection.state.messageLinkListener
+  final override fun getCurrentStateHyperlinkListener(): HyperlinkListener? = connection.state.messageLinkListener
 
   override fun doGetProcessHandler(): ProcessHandler = executionResult?.processHandler ?: object : DefaultDebugProcessHandler() { override fun isSilentlyDestroyOnClose() = true }
 

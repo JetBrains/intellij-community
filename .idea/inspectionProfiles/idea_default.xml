@@ -504,6 +504,7 @@
     <inspection_tool class="MinMaxValuesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MinitestFrameworkSupportInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MisorderedAssertEqualsParameters" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MissingDeprecatedAnnotation" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MissingOverrideAnnotation" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreObjectMethods" value="true" />
       <option name="ignoreAnonymousClassMethods" value="false" />
@@ -577,6 +578,7 @@
       <option name="namePattern" value="([A-Z_][A-Z_\d]*)|(_?[a-z][A-Za-z\d]*)" />
     </inspection_tool>
     <inspection_tool class="ProtectedMemberInFinalClass" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PublicConstructorInNonPublicClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PublicFieldAccessedInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Query_bound_parameters" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Query_index_required" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -797,6 +799,41 @@
       <replaceConfiguration name="findAnnotation(name) == null -&gt; !hasAnnotation(name)" created="1523461974706" text="$Instance$.findAnnotation($Parameter$) == null&#10;" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$Instance$.hasAnnotation($Parameter$)">
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.exists" text="Files.exists($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().exists()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.notExists" text="Files.notExists($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$path$.toFile().exists()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.isDirectory" text="Files.isDirectory($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().isDirectory()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.isRegularFile" text="Files.isRegularFile($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().isFile()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplify to ContainerUtil.filter()" text="$l$.stream().filter($f$).collect(Collectors.toList())" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;&quot;)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplify to ContainerUtil.map()" text="$f$.stream().map($m$).collect(Collectors.toList())" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="ContainerUtil.map($f$, $m$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplify to ContainerUtil.map(a)" text="Arrays.stream($f$).map($m$).collect(Collectors.toList())" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="m" within="" contains="" />
       </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />

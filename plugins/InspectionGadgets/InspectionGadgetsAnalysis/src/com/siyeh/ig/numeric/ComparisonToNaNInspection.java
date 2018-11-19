@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -67,7 +68,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("comparison.to.nan.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "isNaN()");
     }
 
     @Override

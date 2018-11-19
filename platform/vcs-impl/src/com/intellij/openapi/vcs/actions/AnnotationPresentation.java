@@ -49,6 +49,16 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     myDisposable = disposable;
   }
 
+  @NotNull
+  FileAnnotation getFileAnnotation() {
+    return myFileAnnotation;
+  }
+
+  @Override
+  public int getAnnotationLine(int editorLine) {
+    return myUpToDateLineNumberProvider.getLineNumber(editorLine);
+  }
+
   @Override
   public EditorFontType getFontType(final int line) {
     VcsRevisionNumber revision = myFileAnnotation.originalRevision(line);
@@ -64,7 +74,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
 
   @Override
   public List<AnAction> getActions(int line) {
-    int correctedNumber = myUpToDateLineNumberProvider.getLineNumber(line);
+    int correctedNumber = getAnnotationLine(line);
     for (AnAction action : myActions) {
       UpToDateLineNumberListener upToDateListener = ObjectUtils.tryCast(action, UpToDateLineNumberListener.class);
       if (upToDateListener != null) upToDateListener.consume(correctedNumber);
@@ -81,11 +91,11 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     return myActions;
   }
 
-  public void addAction(AnAction action) {
+  public void addAction(@NotNull AnAction action) {
     myActions.add(action);
   }
 
-  public void addAction(AnAction action, int index) {
+  public void addAction(@NotNull AnAction action, int index) {
     myActions.add(index, action);
   }
 

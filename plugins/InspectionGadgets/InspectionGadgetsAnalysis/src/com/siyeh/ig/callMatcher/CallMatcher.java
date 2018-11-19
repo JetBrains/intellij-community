@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -134,7 +135,35 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.STATIC);
   }
 
+  static Simple enumValues() {
+    return Simple.ENUM_VALUES;
+  }
+
+  static Simple enumValueOf() {
+    return Simple.ENUM_VALUE_OF;
+  }
+
+  /**
+   * Matches given expression if its a call or a method reference returning a corresponding PsiReferenceExpression if match is successful.
+   *
+   * @param expression expression to match
+   * @return PsiReferenceExpression if match is successful, null otherwise
+   */
+  @Nullable
+  default PsiReferenceExpression getReferenceIfMatched(PsiExpression expression) {
+    if (expression instanceof PsiMethodReferenceExpression && methodReferenceMatches((PsiMethodReferenceExpression)expression)) {
+      return (PsiReferenceExpression)expression;
+    }
+    if (expression instanceof PsiMethodCallExpression && test((PsiMethodCallExpression)expression)) {
+      return ((PsiMethodCallExpression)expression).getMethodExpression();
+    }
+    return null;
+  }
+
   class Simple implements CallMatcher {
+    static final Simple ENUM_VALUES = new Simple("", Collections.singleton("values"), ArrayUtil.EMPTY_STRING_ARRAY, CallType.ENUM_STATIC);
+    static final Simple ENUM_VALUE_OF =
+      new Simple("", Collections.singleton("valueOf"), new String[]{CommonClassNames.JAVA_LANG_STRING}, CallType.ENUM_STATIC);
     private final @NotNull String myClassName;
     private final @NotNull Set<String> myNames;
     private final @Nullable String[] myParameters;
@@ -206,13 +235,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (!myNames.contains(name)) return false;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (myParameters != null && myParameters.length > 0) {
-        if (args.length < myParameters.length) return false;
+        if (args.length < myParameters.length - 1) return false;
       }
       PsiMethod method = call.resolveMethod();
       if (method == null) return false;
       PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() > args.length ||
-          (!MethodCallUtils.isVarArgCall(call) && parameterList.getParametersCount() < args.length)) {
+      int count = parameterList.getParametersCount();
+      if (count > args.length + 1 || (!MethodCallUtils.isVarArgCall(call) && count != args.length)) {
         return false;
       }
       return methodMatches(method);
@@ -247,6 +276,12 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       @Override
       boolean matches(PsiClass aClass, String className, boolean isStatic) {
         return isStatic && className.equals(aClass.getQualifiedName());
+      }
+    },
+    ENUM_STATIC {
+      @Override
+      boolean matches(PsiClass aClass, String className, boolean isStatic) {
+        return isStatic && aClass.isEnum();
       }
     },
     INSTANCE {

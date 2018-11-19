@@ -44,7 +44,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
   @NotNull private final StatusText myStatusText;
   @Nullable private List<TreeNodeOnVcsRevision> mySelection;
 
-  public DetailsPanel(@NotNull Project project) {
+  DetailsPanel(@NotNull Project project) {
     myProject = project;
     myStatusText = new StatusText() {
       @Override

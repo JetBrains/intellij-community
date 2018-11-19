@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
@@ -51,7 +52,7 @@ public class TestsUIUtil {
   }
 
   @Nullable
-  public static Object getData(final AbstractTestProxy testProxy, final String dataId, final TestFrameworkRunningModel model) {
+  public static Object getData(final AbstractTestProxy testProxy, @NotNull String dataId, final TestFrameworkRunningModel model) {
     final TestConsoleProperties properties = model.getProperties();
     final Project project = properties.getProject();
     if (testProxy == null) return null;
@@ -81,8 +82,14 @@ public class TestsUIUtil {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTree) {
       final TreePath[] selectionPaths = ((JTree)component).getSelectionPaths();
-      if (selectionPaths == null || selectionPaths.length <= 1) {
+      if (selectionPaths == null || selectionPaths.length == 0) {
         return true;
+      }
+      if (selectionPaths.length == 1) {
+        Object lastPathComponent = selectionPaths[0].getLastPathComponent();
+        if (lastPathComponent instanceof TreeNode && ((TreeNode)lastPathComponent).isLeaf()) {
+          return true;
+        }
       }
     }
     return false;

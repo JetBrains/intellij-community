@@ -19,7 +19,6 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
-import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -36,10 +35,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
   @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
@@ -336,7 +333,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     private AnAction[] myChildren;
     private final boolean myFromPopup;
 
-    public MyAddAction(boolean fromPopup) {
+    MyAddAction(boolean fromPopup) {
       super(IdeBundle.message("add.scope.popup.title"), true);
       myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
@@ -439,7 +436,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private class MyCopyAction extends AnAction {
-    public MyCopyAction() {
+    MyCopyAction() {
       super(ExecutionBundle.message("copy.configuration.action.name"), ExecutionBundle.message("copy.configuration.action.name"),
             COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
@@ -464,7 +461,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private class MySaveAsAction extends AnAction {
-    public MySaveAsAction() {
+    MySaveAsAction() {
       super(ExecutionBundle.message("action.name.save.as.configuration"), ExecutionBundle.message("action.name.save.as.configuration"),
             AllIcons.Actions.Menu_saveall);
     }
@@ -480,10 +477,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
           PackageSet set = scopeConfigurable.getEditableObject().getValue();
           if (set != null) {
             if (scopeConfigurable.getHolder() == mySharedScopesManager) {
-              createScope(false, IdeBundle.message("scopes.save.dialog.title.shared"), set.createCopy());
+              createScope(true, IdeBundle.message("scopes.save.dialog.title.local"), set.createCopy());
             }
             else {
-              createScope(true, IdeBundle.message("scopes.save.dialog.title.local"), set.createCopy());
+              createScope(false, IdeBundle.message("scopes.save.dialog.title.shared"), set.createCopy());
             }
           }
         }

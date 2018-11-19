@@ -57,9 +57,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
@@ -91,7 +90,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
-  private final List<RunDashboardGrouper> myGroupers;
+  private final List<? extends RunDashboardGrouper> myGroupers;
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
   @NotNull private final ContentManager myContentManager;
@@ -103,7 +102,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final DefaultActionGroup myDashboardContentActions = new DefaultActionGroup();
   private final Map<Content, List<AnAction>> myContentActions = new WeakHashMap<>();
 
-  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<RunDashboardGrouper> groupers) {
+  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<? extends RunDashboardGrouper> groupers) {
     super(new BorderLayout());
     myProject = project;
     myGroupers = groupers;
@@ -142,19 +141,19 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myContentManager = contentManager;
     myContentManagerListener = new ContentManagerAdapter() {
       @Override
-      public void contentAdded(ContentManagerEvent event) {
+      public void contentAdded(@NotNull ContentManagerEvent event) {
         onContentAdded(event.getContent());
       }
 
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
         myContentActions.remove(content);
         updateContentToolbar(myContentManager.getSelectedContent());
       }
 
       @Override
-      public void selectionChanged(final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         if (ContentManagerEvent.ContentOperation.add != event.getOperation()) {
           return;
         }
@@ -270,9 +269,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myContentActionGroup.addSeparator();
 
     if (actions != null) {
-      myContentActionGroup.addAll(actions.stream()
-                                    .filter(action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction))
-                                    .collect(Collectors.toList()));
+      myContentActionGroup.addAll(
+        ContainerUtil.filter(actions, action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction)));
     }
   }
 
@@ -303,6 +301,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
           // Invoke content selection change later after currently selected content lost a focus.
           SwingUtilities.invokeLater(() -> {
             if (myContentManager.isDisposed() || myContentManager.getIndexOfContent(toSelect) == -1) return;
+
+            // Selected node may changed, we do not need to select content if it doesn't correspond currently selected node.
+            if (myLastSelection instanceof RunDashboardNode) {
+              if (toSelect != ((RunDashboardNode)myLastSelection).getContent()) return;
+            }
 
             myContentManager.removeContentManagerListener(myContentManagerListener);
             myContentManager.setSelectedContent(toSelect);
@@ -381,6 +384,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private void setupBuilder() {
     RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers, ContainerUtil.newSmartList(myStatusFilter));
     myBuilder = new AbstractTreeBuilder(myTree, myTreeModel, structure, IndexComparator.INSTANCE) {
+      // unique class to simplify search through the logs
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
         return super.isAutoExpandNode(nodeDescriptor) ||
@@ -430,7 +434,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     treeGroup.addSeparator();
     List<RunDashboardGrouper> groupers =
-      myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).collect(Collectors.toList());
+      ContainerUtil.filter(myGroupers, grouper -> !grouper.getRule().isAlwaysEnabled());
     if (!groupers.isEmpty()) {
       treeGroup.add(new GroupByActionGroup(groupers));
     }
@@ -536,7 +540,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
-    GroupByActionGroup(List<RunDashboardGrouper> groupers) {
+    GroupByActionGroup(List<? extends RunDashboardGrouper> groupers) {
       super(ExecutionBundle.message("run.dashboard.group.by.action.name"), true);
       getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
 
@@ -568,12 +572,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myGrouper.isEnabled();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
       updateContent(true);
     }
@@ -587,12 +591,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       for (final RunDashboardRunConfigurationStatus status : new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED}) {
         add(new ToggleAction(status.getName()) {
           @Override
-          public boolean isSelected(AnActionEvent e) {
+          public boolean isSelected(@NotNull AnActionEvent e) {
             return myStatusFilter.isVisible(status);
           }
 
           @Override
-          public void setSelected(AnActionEvent e, boolean state) {
+          public void setSelected(@NotNull AnActionEvent e, boolean state) {
             if (state) {
               myStatusFilter.show(status);
             }

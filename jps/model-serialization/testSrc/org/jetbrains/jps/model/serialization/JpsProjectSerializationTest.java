@@ -241,6 +241,12 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEmpty(myProject.getModules());
   }
 
+  public void testMissingContentUrlAttribute() {
+    loadProject("/jps/model-serialization/testData/missingContentUrlAttribute/missingContentUrlAttribute.ipr");
+    JpsModule module = assertOneElement(myProject.getModules());
+    assertEquals("missingContentUrlAttribute", module.getName());
+  }
+
   private void doTestSaveLibrary(@NotNull Path libFile, String libName, JpsLibrary library) {
     Element actual = new Element("library");
     JpsLibraryTableSerializer.saveLibrary(library, actual, libName);

@@ -211,7 +211,7 @@ public class PsiTypesUtil {
           parent = parent.getContext();
         }
         if (parent != null) {
-          qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent);
+          qualifierType = JavaPsiFacade.getElementFactory(project).createType((PsiClass)parent);
         }
       }
       return createJavaLangClassType(methodExpression, qualifierType, true);

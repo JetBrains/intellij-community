@@ -19,20 +19,16 @@ import com.intellij.java.codeInsight.daemon.quickFix.ChangeNewOperatorTypeTest;
 import com.intellij.java.codeInsight.daemon.quickFix.Simplify2DiamondInspectionsTest;
 import com.intellij.java.refactoring.IntroduceParameterTest;
 import com.intellij.java.refactoring.IntroduceVariableTest;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+  LightAdvHighlightingJdk7Test.class,
+  Simplify2DiamondInspectionsTest.class,
+  IntroduceParameterTest.class,
+  IntroduceVariableTest.class,
+  ChangeNewOperatorTypeTest.class,
+})
 public class DiamondSuite {
-  private DiamondSuite() {
-  }
-
-  public static Test suite() {
-    final TestSuite testSuite = new TestSuite("Diamond Suite");
-    testSuite.addTestSuite(LightAdvHighlightingJdk7Test.class);
-    testSuite.addTestSuite(Simplify2DiamondInspectionsTest.class);
-    testSuite.addTestSuite(IntroduceParameterTest.class);
-    testSuite.addTestSuite(IntroduceVariableTest.class);
-    testSuite.addTestSuite(ChangeNewOperatorTypeTest.class);
-    return testSuite;
-  }
 }

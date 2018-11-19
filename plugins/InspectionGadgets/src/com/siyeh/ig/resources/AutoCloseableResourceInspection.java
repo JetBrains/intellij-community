@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -20,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -47,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -79,8 +65,8 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   }
 
   /**
-   * Warning! This class have to manually save settings to xml using {@code readSettings()} and {@code writeSettings()} of its parent class
-   **/
+   * Warning! This class has to manually save settings to xml using its {@code readSettings()} and {@code writeSettings()} methods
+   */
   @NotNull
   @Override
   public JComponent createOptionsPanel() {
@@ -93,14 +79,8 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     final ListTable table2 = new ListTable(
       new ListWrappingTableModel(Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
                                  InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
-                                 InspectionGadgetsBundle.message("method.name.regex"))) {
-      @Override
-      public void setEnabled(boolean enabled) {
-        // hack to display correctly on initial opening of
-        // inspection settings (otherwise it is always enabled)
-        super.setEnabled(enabled && !ignoreFromMethodCall);
-      }
-    };
+                                 InspectionGadgetsBundle.message("method.name.regex")));
+    table2.setEnabled(!ignoreFromMethodCall);
     final JPanel tablePanel2 = UiUtils.createAddRemoveTreeClassChooserPanel(table2, "Choose class");
     final JPanel wrapperPanel = new JPanel(new BorderLayout());
     wrapperPanel.setBorder(IdeBorderFactory.createTitledBorder("Ignore AutoCloseable instances returned from these methods", false));
@@ -109,7 +89,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     panel.add(wrapperPanel);
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"), this, "ignoreFromMethodCall");
-    checkBox.addChangeListener(e -> table2.setEnabled(!ignoreFromMethodCall));
+    checkBox.addItemListener(e -> table2.setEnabled(e.getStateChange() == ItemEvent.DESELECTED));
     panel.add(checkBox);
     panel.add(new CheckBox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), this, "anyMethodMayClose"));
     return panel;
@@ -195,6 +175,10 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   }
 
   private class AutoCloseableResourceFix extends InspectionGadgetsFix {
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
 
     @Nls
     @NotNull
@@ -269,7 +253,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       final PsiVariable variable = ResourceInspection.getVariable(expression);
       if (variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return true;
       if (variable == null) return false;
-      return StreamEx.of(Extensions.getExtensions(ImplicitResourceCloser.EP_NAME))
+      return StreamEx.of(ImplicitResourceCloser.EP_NAME.getExtensionList())
                      .anyMatch(closer -> closer.isSafelyClosed(variable));
     }
   }

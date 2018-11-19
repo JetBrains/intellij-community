@@ -9,7 +9,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -25,6 +24,7 @@ import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -71,7 +71,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return findCompiledElement(module, scope -> JavaFileManager.getInstance(myProject).findModules(module.getName(), scope));
   }
 
-  private <T extends PsiElement> T findCompiledElement(T original, Function<GlobalSearchScope, Collection<T>> candidateFinder) {
+  private <T extends PsiElement> T findCompiledElement(T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
     PsiCompiledElement cls = original.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) {
       @SuppressWarnings("unchecked") T t = (T)cls;
@@ -143,7 +143,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
       .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
 
-    Stream<VirtualFile> synthRoots = Stream.of(Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME))
+    Stream<VirtualFile> synthRoots = AdditionalLibraryRootsProvider.EP_NAME.getExtensionList().stream()
       .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())
       .filter(library -> library.contains(file, false, true))
       .flatMap(library -> library.getSourceRoots().stream());
@@ -292,7 +292,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
     FileTemplate template = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    if (template == null) throw new IncorrectOperationException("Missing template: " + JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    FileTemplate declarationTemplate = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_DECLARATION);
 
     Properties props = FileTemplateManager.getInstance(myProject).getDefaultProperties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
@@ -305,6 +305,24 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
 
     try {
+      PsiTryStatement tryStmt = (PsiTryStatement)PsiElementFactory.SERVICE.getInstance(myProject)
+        .createStatementFromText("try {} catch (" + declarationTemplate.getText(props) + ") {\n}", null);
+      PsiParameter parameter = tryStmt.getCatchSections()[0].getParameter();
+
+      String parameterName = parameter == null ? null : parameter.getName();
+      if (parameterName != null) {
+        if (!exceptionName.equals(parameterName)) {
+          parameterName = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(parameterName, context, false);
+          props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
+          parameter.setName(parameterName);
+        }
+
+        PsiParameter sectionParameter = catchSection.getParameter();
+        if (sectionParameter != null) {
+          sectionParameter.replace(parameter);
+        }
+      }
+
       PsiCodeBlock block =
         PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
       Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);

@@ -21,14 +21,14 @@ abstract class ProjectViewToggleAction extends ToggleAction implements DumbAware
   abstract void setSelected(@NotNull ProjectViewImpl view, @NotNull String id, boolean flag);
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     ProjectViewImpl view = getProjectView(event);
     String id = view == null ? null : view.getCurrentViewId();
     return id != null && isSelected(view, id);
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean flag) {
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     ProjectViewImpl view = getProjectView(event);
     String id = view == null ? null : view.getCurrentViewId();
     if (id != null) setSelected(view, id, flag);

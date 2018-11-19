@@ -43,7 +43,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jetCheck.DataStructure;
+import org.jetbrains.jetCheck.GenerationEnvironment;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
 
@@ -58,6 +58,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -96,7 +98,7 @@ public class MadTestingUtil {
     });
   }
 
-  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, Consumer<DocumentEvent> eventHandler) throws E {
+  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, Consumer<? super DocumentEvent> eventHandler) throws E {
     Disposable disposable = Disposer.newDisposable();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
@@ -217,7 +219,7 @@ public class MadTestingUtil {
              child.length() < 500_000;
     };
     File root = new File(rootPath);
-    Function<DataStructure, File> generator =
+    Function<GenerationEnvironment, File> generator =
       useRouletteWheel ? new RouletteWheelFileGenerator(root, interestingIdeaFiles) : new FileGenerator(root, interestingIdeaFiles);
     return Generator.from(generator)
       .suchThat(new Predicate<File>() {
@@ -242,8 +244,8 @@ public class MadTestingUtil {
    */
   @NotNull
   public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
-                                                                  FileFilter fileFilter,
-                                                                  Function<PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
+                                                                 FileFilter fileFilter,
+                                                                 Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> env -> new RunAll()
       .append(() -> {
@@ -288,6 +290,12 @@ public class MadTestingUtil {
     try {
       String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
+
+      Matcher rootPackageMatcher = Pattern.compile("/com/|/org/").matcher(path);
+      if (rootPackageMatcher.find()) {
+        path = path.substring(rootPackageMatcher.start() + 1);
+      }
+
       VirtualFile existing = fixture.getTempDirFixture().getFile(path);
       if (existing != null) {
         WriteAction.run(() -> existing.delete(fixture));
@@ -305,10 +313,13 @@ public class MadTestingUtil {
    * in languages employing {@link com.intellij.psi.tree.ILazyParseableElementTypeBase}.
    */
   @NotNull
-  public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
-    return Generator.sampledFrom(new DeleteRange(file),
-                                 new CheckPsiTextConsistency(file),
-                                 new InsertString(file));
+  public static Generator<MadTestingAction> randomEditsWithReparseChecks(@NotNull PsiFile file) {
+    return Generator.sampledFrom(
+      new InsertString(file),
+      new DeleteRange(file),
+      new CommitDocumentAction(file),
+      new CheckPsiTextConsistency(file)
+    );
   }
 
   /**
@@ -317,10 +328,11 @@ public class MadTestingUtil {
    * read accessors on all PSI elements in the file don't throw exceptions when invoked.
    */
   @NotNull
-  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(Condition<? super Method> skipCondition) {
+  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(@NotNull Condition<? super Method> skipCondition) {
     return file -> Generator.sampledFrom(
       new InsertString(file),
       new DeleteRange(file),
+      new CommitDocumentAction(file),
       new CheckPsiReadAccessors(file, skipCondition)
     );
   }
@@ -434,7 +446,7 @@ public class MadTestingUtil {
                          Arrays.stream(histogram).sum(), report.toString().replaceFirst("[\\s|]+$", ""));
   }
 
-  private static class FileGenerator implements Function<DataStructure, File> {
+  private static class FileGenerator implements Function<GenerationEnvironment, File> {
     private static final com.intellij.util.Function<File, JBIterable<File>> FS_TRAVERSAL =
       TreeTraversal.PRE_ORDER_DFS.traversal((File f) -> f.isDirectory() ? Arrays.asList(Objects.requireNonNull(f.listFiles())) : Collections.emptyList());
     private final File myRoot;
@@ -446,12 +458,12 @@ public class MadTestingUtil {
     }
 
     @Override
-    public File apply(DataStructure data) {
+    public File apply(GenerationEnvironment data) {
       return generateRandomFile(data, myRoot, new HashSet<>());
     }
 
     @Nullable
-    private File generateRandomFile(DataStructure data, File file, Set<File> exhausted) {
+    private File generateRandomFile(GenerationEnvironment data, File file, Set<? super File> exhausted) {
       while (true) {
         File[] children = file.listFiles(f -> !exhausted.contains(f) && containsAtLeastOneFileDeep(f) && myFilter.accept(f));
         if (children == null) {
@@ -476,7 +488,7 @@ public class MadTestingUtil {
       return FS_TRAVERSAL.fun(root).find(f -> f.isFile()) != null;
     }
 
-    private static List<File> preferDirs(DataStructure data, File[] children) {
+    private static List<File> preferDirs(GenerationEnvironment data, File[] children) {
       List<File> files = new ArrayList<>();
       List<File> dirs = new ArrayList<>();
       for (File child : children) {
@@ -492,7 +504,7 @@ public class MadTestingUtil {
     }
   }
 
-  private static class RouletteWheelFileGenerator implements Function<DataStructure, File> {
+  private static class RouletteWheelFileGenerator implements Function<GenerationEnvironment, File> {
     private final File myRoot;
     private final FileFilter myFilter;
     private static final File[] EMPTY_DIRECTORY = new File[0];
@@ -510,12 +522,12 @@ public class MadTestingUtil {
     }
 
     @Override
-    public File apply(DataStructure data) {
+    public File apply(GenerationEnvironment data) {
       return generateRandomFile(data, myRoot, new HashSet<>());
     }
 
     @Nullable
-    private File generateRandomFile(DataStructure data, File file, Set<File> exhausted) {
+    private File generateRandomFile(GenerationEnvironment data, File file, Set<File> exhausted) {
       File[] children = myChildrenCache.get(file);
       if (children == null) {
         return file;
@@ -537,7 +549,7 @@ public class MadTestingUtil {
       }
     }
 
-    private static int spin(@NotNull DataStructure data, @NotNull int[] weights) {
+    private static int spin(@NotNull GenerationEnvironment data, @NotNull int[] weights) {
       int totalWeight = Arrays.stream(weights).sum();
       if (totalWeight == 0) return -1;
       int value = data.generate(Generator.integers(0, totalWeight));

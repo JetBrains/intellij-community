@@ -24,8 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
 /**
@@ -36,7 +35,7 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(isTableCellEditor(c) ? 0 : 1).asUIResource();
+    return JBUI.insets(isTableCellEditor(c) || isCompact(c) ? 0 : 1).asUIResource();
   }
 
   @Override
@@ -52,7 +51,7 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
       boolean isCellRenderer = isTableCellEditor(c);
       int bw = 1;
       Object op = jc.getClientProperty("JComponent.outline");
-      if (op != null) {
+      if (c.isEnabled() && op != null) {
         Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
         bw = isCellRenderer ? 1 : 2;
       } else {
@@ -63,10 +62,10 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
           g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
         }
         else {
-          g2.setColor(UIManager.getColor(jc.isEnabled() ? "TextField.borderColor" : "Button.intellij.native.borderColor"));
+          g2.setColor(UIManager.getColor(c.isEnabled() ? "TextField.borderColor" : "Button.intellij.native.borderColor"));
         }
 
-        if (!jc.isEnabled()) {
+        if (!c.isEnabled()) {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
         }
 

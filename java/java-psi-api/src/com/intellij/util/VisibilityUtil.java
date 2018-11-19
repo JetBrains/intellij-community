@@ -135,7 +135,7 @@ public class VisibilityUtil  {
     }
   }
 
-  public static void setVisibility(PsiModifierList modifierList, @PsiModifier.ModifierConstant String newVisibility) throws IncorrectOperationException {
+  public static void setVisibility(@NotNull PsiModifierList modifierList, @PsiModifier.ModifierConstant @NotNull String newVisibility) throws IncorrectOperationException {
     modifierList.setModifierProperty(newVisibility, true);
   }
 

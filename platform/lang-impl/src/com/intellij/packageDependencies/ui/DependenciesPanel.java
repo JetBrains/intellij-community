@@ -16,7 +16,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -226,7 +225,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private void processDependencies(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor, Processor<List<PsiFile>> processor) {
+  private void processDependencies(final Set<? extends PsiFile> searchIn, final Set<? extends PsiFile> searchFor, Processor<? super List<PsiFile>> processor) {
     if (myTransitiveBorder == 0) return;
     Set<PsiFile> initialSearchFor = new HashSet<>(searchFor);
     for (DependenciesBuilder builder : myBuilders) {
@@ -246,7 +245,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private void exclude(final Set<PsiFile> excluded) {
+  private void exclude(final Set<? extends PsiFile> excluded) {
     for (PsiFile psiFile : excluded) {
       myDependencies.remove(psiFile);
       myIllegalDependencies.remove(psiFile);
@@ -486,7 +485,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private final class CloseAction extends AnAction implements DumbAware {
-    public CloseAction() {
+    CloseAction() {
       super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"),
             AllIcons.Actions.Cancel);
     }
@@ -507,12 +506,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_FLATTEN_PACKAGES;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES = flag;
       mySettings.UI_FLATTEN_PACKAGES = flag;
       rebuild();
@@ -526,12 +525,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_FILES;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_FILES = flag;
       mySettings.UI_SHOW_FILES = flag;
       if (!flag && myLeftTree.getSelectionPath() != null && myLeftTree.getSelectionPath().getLastPathComponent() instanceof FileNode){
@@ -565,12 +564,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_MODULES;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
       mySettings.UI_SHOW_MODULES = flag;
       rebuild();
@@ -583,12 +582,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_MODULE_GROUPS;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = flag;
       mySettings.UI_SHOW_MODULE_GROUPS = flag;
       rebuild();
@@ -609,12 +608,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_GROUP_BY_SCOPE_TYPE;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
       mySettings.UI_GROUP_BY_SCOPE_TYPE = flag;
       rebuild();
@@ -629,12 +628,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_FILTER_LEGALS;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       mySettings.UI_FILTER_LEGALS = flag;
       setEmptyText(flag);
@@ -649,7 +648,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private final class EditDependencyRulesAction extends AnAction {
-    public EditDependencyRulesAction() {
+    EditDependencyRulesAction() {
       super(AnalysisScopeBundle.message("action.edit.rules"), AnalysisScopeBundle.message("action.edit.rules.description"),
             AllIcons.General.Settings);
     }
@@ -712,7 +711,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
 
   private class RerunAction extends AnAction {
-    public RerunAction(JComponent comp) {
+    RerunAction(JComponent comp) {
       super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
@@ -885,7 +884,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private class SelectInLeftTreeAction extends AnAction {
-    public SelectInLeftTreeAction() {
+    SelectInLeftTreeAction() {
       super(AnalysisScopeBundle.message("action.select.in.left.tree"), AnalysisScopeBundle.message("action.select.in.left.tree.description"), null);
     }
 
@@ -925,7 +924,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private class MarkAsIllegalAction extends AnAction {
-    public MarkAsIllegalAction() {
+    MarkAsIllegalAction() {
       super(AnalysisScopeBundle.message("mark.dependency.illegal.text"), AnalysisScopeBundle.message("mark.dependency.illegal.text"),
             AllIcons.Actions.Lightning);
     }
@@ -1000,7 +999,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @NotNull
     protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
-      for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
+      for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
           public void actionPerformed(@NotNull final AnActionEvent e) {

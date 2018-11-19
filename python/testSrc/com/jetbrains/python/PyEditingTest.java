@@ -91,11 +91,33 @@ public class PyEditingTest extends PyTestCase {
   }
 
   // PY-18972
-  public void testFString() {
+  public void testFStringQuotes() {
     assertEquals("f''", doTestTyping("f", 1, '\''));
     assertEquals("rf''", doTestTyping("rf", 2, '\''));
     assertEquals("fr''", doTestTyping("fr", 2, '\''));
     assertEquals("fr''''''", doTestTyping("fr''", 4, '\''));
+    assertEquals("fr''''''", doTestTyping("fr''", 3, "''"));
+  }
+
+  public void testFStringFragmentBraces() {
+    assertEquals("f'{}'", doTestTyping("f''", 2, '{'));
+  }
+
+  public void testEnterInMultilineFStringFragment() {
+    doTestEnter("f'''{1 +<caret> 2}'''",
+                "f'''{1 +\n" +
+                "     2}'''");
+  }
+
+  public void testEnterInSingleLineFStringFragment() {
+    doTestEnter("f'foo{1 +<caret> 2}bar'",
+                "f'foo{1 +\n" +
+                "2}bar'");
+  }
+
+  public void testEnterInFStringTextPart() {
+    doTestEnter("f'foo<caret>bar'", "f'foo' \\\n" +
+                                    "    f'bar'");
   }
 
   public void testOvertypeFromInside() {
@@ -286,7 +308,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterNoDocstringStubWhenCodeExampleInDocstring() {
     doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
   }
-  
+
   // PY-15332
   public void testEnterDocstringStubNoReturnTagForInit() {
     doDocStringTypingTest("\n", DocStringFormat.REST);
@@ -472,6 +494,33 @@ public class PyEditingTest extends PyTestCase {
                 ")");
   }
 
+  // PY-20909
+  public void testContinuationIndentInEmptyListLiteral() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTestEnter("[<caret>]",
+                "[\n" +
+                "        <caret>\n" +
+                "]");
+  }
+
+  // PY-20909
+  public void testContinuationIndentInEmptyDictLiteral() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTestEnter("{<caret>}",
+                "{\n" +
+                "        <caret>\n" +
+                "}");
+  }
+
+  // PY-20909
+  public void testContinuationIndentInEmptyTupleLiteral() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTestEnter("(<caret>)",
+                "(\n" +
+                "        <caret>\n" +
+                ")");
+  }
+
   // PY-21840
   public void testEditInjectedRegexpFragmentWithLongUnicodeEscape() {
     myFixture.configureByText(PythonFileType.INSTANCE,
@@ -492,6 +541,13 @@ public class PyEditingTest extends PyTestCase {
     final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.getEditor().getCaretModel().moveToOffset(offset);
     myFixture.type(character);
+    return myFixture.getDocument(file).getText();
+  }
+
+  private String doTestTyping(final String text, final int offset, final String characters) {
+    final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.getEditor().getCaretModel().moveToOffset(offset);
+    myFixture.type(characters);
     return myFixture.getDocument(file).getText();
   }
 

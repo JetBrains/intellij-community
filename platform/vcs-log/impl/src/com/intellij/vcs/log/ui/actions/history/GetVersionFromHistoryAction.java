@@ -20,18 +20,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.openapi.vcs.history.actions.GetVersionAction;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GetVersionFromHistoryAction extends FileHistorySingleCommitAction {
+public class GetVersionFromHistoryAction extends FileHistoryMetadataAction {
 
   @Override
-  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsCommitMetadata detail, @NotNull AnActionEvent e) {
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     if (filePath == null || filePath.isDirectory()) return false;
 
@@ -46,7 +46,7 @@ public class GetVersionFromHistoryAction extends FileHistorySingleCommitAction {
   @Override
   protected void performAction(@NotNull Project project,
                                @NotNull FileHistoryUi ui,
-                               @NotNull VcsFullCommitDetails detail,
+                               @NotNull VcsCommitMetadata detail,
                                @NotNull AnActionEvent e) {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 

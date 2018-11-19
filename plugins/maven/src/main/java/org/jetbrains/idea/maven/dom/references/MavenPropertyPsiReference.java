@@ -500,7 +500,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     collectPropertiesFileVariants(file, prefix, result, variants);
   }
 
-  protected static void collectPropertiesFileVariants(@Nullable PropertiesFile file, @Nullable String prefix, List<Object> result, Set<String> variants) {
+  protected static void collectPropertiesFileVariants(@Nullable PropertiesFile file, @Nullable String prefix, List<Object> result, Set<? super String> variants) {
     if (file == null) return;
 
     for (IProperty each : file.getProperties()) {

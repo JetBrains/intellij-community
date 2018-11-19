@@ -156,7 +156,7 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
             __umd__.run(verbose=verbose)
 
     if global_vars is None:
-        m = save_main_module(filename, 'pydevconsole')
+        m = save_main_module(filename, 'pydev_umd')
         global_vars = m.__dict__
         try:
             global_vars['__builtins__'] = __builtins__
@@ -193,24 +193,25 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
             pass
         os.chdir(wdir)
 
-    if not is_module:
-        pydev_imports.execfile(filename, global_vars, local_vars)  # execute the script
-    else:
-        # treat ':' as a seperator between module and entry point function
-        # if there is no entry point we run we same as with -m switch. Otherwise we perform
-        # an import and execute the entry point
-        if entry_point_fn:
-            mod = __import__(module_name, level=0, fromlist=[entry_point_fn], globals=global_vars, locals=local_vars)
-            func = getattr(mod, entry_point_fn)
-            func()
+    try:
+        if not is_module:
+            pydev_imports.execfile(filename, global_vars, local_vars)  # execute the script
         else:
-            # Run with the -m switch
-            import runpy
-            if hasattr(runpy, '_run_module_as_main'):
-                runpy._run_module_as_main(module_name)
+            # treat ':' as a seperator between module and entry point function
+            # if there is no entry point we run we same as with -m switch. Otherwise we perform
+            # an import and execute the entry point
+            if entry_point_fn:
+                mod = __import__(module_name, level=0, fromlist=[entry_point_fn], globals=global_vars, locals=local_vars)
+                func = getattr(mod, entry_point_fn)
+                func()
             else:
-                runpy.run_module(module_name)
-
-    sys.argv = ['']
-    interpreter_globals = _get_interpreter_globals()
-    interpreter_globals.update(global_vars)
+                # Run with the -m switch
+                import runpy
+                if hasattr(runpy, '_run_module_as_main'):
+                    runpy._run_module_as_main(module_name)
+                else:
+                    runpy.run_module(module_name)
+    finally:
+        sys.argv = ['']
+        interpreter_globals = _get_interpreter_globals()
+        interpreter_globals.update(global_vars)

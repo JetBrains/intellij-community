@@ -185,7 +185,7 @@ public class GuessManagerImpl extends GuessManager {
     return lastScope;
   }
 
-  private void addExprTypesByDerivedClasses(LinkedHashSet<PsiType> set, PsiExpression expr) {
+  private void addExprTypesByDerivedClasses(LinkedHashSet<? super PsiType> set, PsiExpression expr) {
     PsiType type = expr.getType();
     if (!(type instanceof PsiClassType)) return;
     PsiClass refClass = PsiUtil.resolveClassInType(type);
@@ -198,12 +198,12 @@ public class GuessManagerImpl extends GuessManager {
 
     for (PsiClass derivedClass : processor.getCollection()) {
       if (derivedClass instanceof PsiAnonymousClass) continue;
-      PsiType derivedType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(derivedClass);
+      PsiType derivedType = JavaPsiFacade.getElementFactory(manager.getProject()).createType(derivedClass);
       set.add(derivedType);
     }
   }
 
-  private void addExprTypesWhenContainerElement(LinkedHashSet<PsiType> set, PsiExpression expr) {
+  private void addExprTypesWhenContainerElement(LinkedHashSet<? super PsiType> set, PsiExpression expr) {
     if (expr instanceof PsiMethodCallExpression){
       PsiMethodCallExpression callExpr = (PsiMethodCallExpression)expr;
       PsiReferenceExpression methodExpr = callExpr.getMethodExpression();
@@ -228,10 +228,10 @@ public class GuessManagerImpl extends GuessManager {
   private static final int CHECK_UP = 0x02;
   private static final int CHECK_DOWN = 0x04;
 
-  private void addTypesByVariable(HashSet<PsiType> typesSet,
+  private void addTypesByVariable(HashSet<? super PsiType> typesSet,
                                   PsiVariable var,
                                   PsiFile scopeFile,
-                                  HashSet<PsiVariable> checkedVariables,
+                                  HashSet<? super PsiVariable> checkedVariables,
                                   int flags,
                                   TextRange rangeToIgnore) {
     if (!checkedVariables.add(var)) return;
@@ -583,7 +583,7 @@ public class GuessManagerImpl extends GuessManager {
           constraint = myInitial;
         }
         if (constraint != null) {
-          myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
+          myConstraint = myConstraint == null ? constraint : myConstraint.unite(constraint);
           if (myConstraint == null) {
             myConstraint = TypeConstraint.empty();
             return;

@@ -47,7 +47,7 @@ public class ApplyPatchMergeTool implements MergeTool {
     @NotNull private final MergeContext myMergeContext;
     @NotNull private final ApplyPatchMergeRequest myMergeRequest;
 
-    public MyApplyPatchViewer(@NotNull MergeContext context, @NotNull ApplyPatchMergeRequest request) {
+    MyApplyPatchViewer(@NotNull MergeContext context, @NotNull ApplyPatchMergeRequest request) {
       super(createWrapperDiffContext(context), request);
       myMergeContext = context;
       myMergeRequest = request;

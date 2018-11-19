@@ -186,7 +186,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
 
   @Nullable
-  public static PsiMethod matchMethod(@NotNull PsiMethod[] methods, @NotNull List<ReflectiveType> argumentTypes) {
+  public static PsiMethod matchMethod(@NotNull PsiMethod[] methods, @NotNull List<? extends ReflectiveType> argumentTypes) {
     int mismatchCount = Integer.MAX_VALUE;
     PsiMethod bestGuess = null;
     for (PsiMethod method : methods) {
@@ -205,7 +205,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return bestGuess;
   }
 
-  private static int matchMethodArguments(PsiMethod method, List<ReflectiveType> argumentTypes) {
+  private static int matchMethodArguments(PsiMethod method, List<? extends ReflectiveType> argumentTypes) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != argumentTypes.size()) {
       return -1;

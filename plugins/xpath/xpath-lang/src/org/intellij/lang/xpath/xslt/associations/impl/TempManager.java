@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiFile;
@@ -65,7 +66,7 @@ class TempManager extends TransactionalManager {
 
     @Override
     public void dispose() {
-        myTmp.disposeComponent();
+        Disposer.dispose(myTmp);
     }
 
     @Override

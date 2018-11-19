@@ -29,7 +29,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 14, 2003
  */
 public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;
@@ -44,7 +43,7 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   }
 
   @Override
-  public boolean isSelected(final AnActionEvent e) {
+  public boolean isSelected(@NotNull final AnActionEvent e) {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     if (selectedFiles.length == 0) return false;
 
@@ -52,7 +51,7 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   }
 
   @Override
-  public void setSelected(final AnActionEvent e, final boolean isSelected) {
+  public void setSelected(@NotNull final AnActionEvent e, final boolean isSelected) {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     assert selectedFiles.length != 0;
 

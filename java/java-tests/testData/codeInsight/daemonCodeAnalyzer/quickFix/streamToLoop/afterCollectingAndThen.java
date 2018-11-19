@@ -56,4 +56,10 @@ public class Main {
       }
       Map<Integer, List<String>> map = Collections.unmodifiableMap(result);
   }
+
+  void incomplete(List<String> people) {
+    List<String> list1 = people.stream().collect( // comment
+                                                         Collectors.collectingAndThen(Collectors.toList()));
+  }
+
 }

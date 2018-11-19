@@ -165,9 +165,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
 
     private void appendLocationText(boolean selected, Color bgColor, boolean isProblemFile, String containerText) {
-      SimpleTextAttributes locationAttrs = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY);
+      SimpleTextAttributes locationAttrs = SimpleTextAttributes.GRAYED_ATTRIBUTES;
       if (isProblemFile) {
-        SimpleTextAttributes wavedAttributes = SimpleTextAttributes.merge(new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, JBColor.GRAY, JBColor.RED), locationAttrs);
+        SimpleTextAttributes wavedAttributes = SimpleTextAttributes.merge(new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, UIUtil.getInactiveTextColor(), JBColor.RED), locationAttrs);
         java.util.regex.Matcher matcher = CONTAINER_PATTERN.matcher(containerText);
         if (matcher.matches()) {
           String prefix = matcher.group(1);

@@ -34,7 +34,7 @@ import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider;
+import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 
 import javax.swing.*;
@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GradleIntellijPluginFrameworkSupportProvider extends GradleFrameworkSupportProvider {
+public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
   private static final String ID = "gradle-intellij-plugin";
   private static final Logger LOG = Logger.getInstance(GradleIntellijPluginFrameworkSupportProvider.class);
 
@@ -98,6 +98,19 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
     else {
       ideVersion = applicationInfo.getFullVersion();
     }
+    configureBuildScript(buildScriptData, pluginVersion, ideVersion);
+    VirtualFile contentRoot = ArrayUtil.getFirstElement(rootModel.getContentRoots());
+    if (contentRoot == null) return;
+    if (!createPluginXml(projectId, module, contentRoot.getPath())) return;
+    StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(() -> {
+      FileEditorManager.getInstance(module.getProject()).openFile(buildScriptData.getBuildScriptFile(), true);
+      createRunConfiguration(module, contentRoot.getPath());
+    });
+  }
+
+  protected void configureBuildScript(@NotNull BuildScriptDataBuilder buildScriptData,
+                                      String pluginVersion,
+                                      String ideVersion) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
       .addOther("intellij {\n    version '" + ideVersion + "'\n}\n")
@@ -106,13 +119,6 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
                 "      Add change notes here.<br>\n" +
                 "      <em>most HTML tags may be used</em>\"\"\"\n" +
                 "}");
-    VirtualFile contentRoot = ArrayUtil.getFirstElement(rootModel.getContentRoots());
-    if (contentRoot == null) return;
-    if (!createPluginXml(projectId, module, contentRoot.getPath())) return;
-    StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(() -> {
-      FileEditorManager.getInstance(module.getProject()).openFile(buildScriptData.getBuildScriptFile(), true);
-      createRunConfiguration(module, contentRoot.getPath());
-    });
   }
 
   @Override
@@ -184,14 +190,13 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
     RunManager runManager = RunManager.getInstance(module.getProject());
     ConfigurationFactory configurationFactory = new GradleExternalTaskConfigurationType().getConfigurationFactories()[0];
     String configurationName = DevKitBundle.message("run.configuration.title");
-    RunnerAndConfigurationSettings configuration = runManager.createRunConfiguration(configurationName, configurationFactory);
+    RunnerAndConfigurationSettings configuration = runManager.createConfiguration(configurationName, configurationFactory);
     RunConfiguration runConfiguration = configuration.getConfiguration();
     if (runConfiguration instanceof ExternalSystemRunConfiguration) {
       ExternalSystemTaskExecutionSettings settings = ((ExternalSystemRunConfiguration)runConfiguration).getSettings();
       settings.setTaskNames(Collections.singletonList(":runIde"));
       settings.setExternalProjectPath(contentRootPath);
     }
-    configuration.setSingleton(true);
     runManager.addConfiguration(configuration);
     runManager.setSelectedConfiguration(configuration);
   }

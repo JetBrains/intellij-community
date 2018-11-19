@@ -363,7 +363,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
     builder.addListener(new JBPopupListener() {
       @Override
-      public void beforeShown(LightweightWindowEvent event) {
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
         myPathTextField
           .registerKeyboardAction(myCancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
         for (Action each : myDisabledTextActions) {
@@ -372,7 +372,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       }
 
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myPathTextField.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
         for (Action each : myDisabledTextActions) {
           each.setEnabled(true);
@@ -428,7 +428,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
   }
 
-  public static Point getLocationForCaret(JTextComponent pathTextField) {
+  private static Point getLocationForCaret(JTextComponent pathTextField) {
     Point point;
 
     int position = pathTextField.getCaretPosition();

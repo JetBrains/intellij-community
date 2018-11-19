@@ -55,7 +55,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
   }
 
   @Override
-  public void mouseDragged(EditorMouseEvent e) {
+  public void mouseDragged(@NotNull EditorMouseEvent e) {
   }
 
   @Override
@@ -64,7 +64,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
   }
 
   @Override
-  public void mouseMoved(EditorMouseEvent e) {
+  public void mouseMoved(@NotNull EditorMouseEvent e) {
     if (e.isConsumed()) {
       return;
     }

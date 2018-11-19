@@ -15,11 +15,10 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.execution.ParametersListUtil;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -47,9 +46,7 @@ import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -58,13 +55,12 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/20/2015
  */
 public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements MavenServerEmbedder {
 
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
-  private static final Pattern PROPERTY_PATTERN = Pattern.compile("-D(\\S+?)(?:=(.+))?");
+  private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
   protected final MavenServerSettings myServerSettings;
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
@@ -209,7 +205,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     private final List<ModelProblem> myProblems;
     private final DependencyResolutionResult myDependencyResolutionResult;
 
-    public MyProjectBuildingResult(String projectId,
+    MyProjectBuildingResult(String projectId,
                                    File pomFile,
                                    MavenProject mavenProject,
                                    List<ModelProblem> problems,
@@ -283,27 +279,29 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     File baseDir = MavenServerUtil.findMavenBasedir(workingDir);
 
     Map<String, String> result = new HashMap<String, String>();
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result);
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result);
+    readConfigFiles(baseDir, result);
     return result.isEmpty() ? Collections.<String, String>emptyMap() : result;
   }
 
-  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result) {
+  static void readConfigFiles(File baseDir, Map<String, String> result) {
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");
+  }
+
+  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
     File configFile = new File(baseDir, relativePath);
 
     if (configFile.exists() && configFile.isFile()) {
       try {
-        InputStream in = new FileInputStream(configFile);
-        try {
-          for (String parameter : ParametersListUtil.parse(StreamUtil.readText(in, "UTF-8"))) {
-            Matcher matcher = PROPERTY_PATTERN.matcher(parameter);
-            if (matcher.matches()) {
-              result.put(matcher.group(1), StringUtilRt.notNullize(matcher.group(2), ""));
-            }
+        String text = FileUtilRt.loadFile(configFile, "UTF-8");
+        Matcher matcher = PROPERTY_PATTERN.matcher(text);
+        while (matcher.find()) {
+          if (matcher.group(1) != null) {
+            result.put(matcher.group(1), StringUtilRt.notNullize(matcher.group(2), valueIfMissing));
           }
-        }
-        finally {
-          in.close();
+          else {
+            result.put(matcher.group(3), StringUtilRt.notNullize(matcher.group(4), valueIfMissing));
+          }
         }
       }
       catch (IOException ignore) {
@@ -319,10 +317,8 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     return MAVEN_VERSION;
   }
 
-  @SuppressWarnings({"unchecked"})
   public abstract <T> T getComponent(Class<T> clazz, String roleHint);
 
-  @SuppressWarnings({"unchecked"})
   public abstract <T> T getComponent(Class<T> clazz);
 
   public abstract void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable);

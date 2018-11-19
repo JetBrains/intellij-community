@@ -98,6 +98,7 @@ public class VcsProjectLog implements Disposable {
   @CalledInAny
   private void recreateLog() {
     UIUtil.invokeLaterIfNeeded(() -> myLogManager.drop(() -> {
+      if (myProject.isDisposed()) return;
       if (hasDvcsRoots()) {
         createLog(false);
       }

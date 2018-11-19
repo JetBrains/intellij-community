@@ -39,7 +39,7 @@ public class JavaReferringObjectsValue extends JavaValue {
   }
 
   public JavaReferringObjectsValue(@NotNull JavaValue javaValue, boolean isField) {
-    super(null, javaValue.getDescriptor(), javaValue.getEvaluationContext(), javaValue.getNodeManager(), false);
+    super(null, javaValue.getName(), javaValue.getDescriptor(), javaValue.getEvaluationContext(), javaValue.getNodeManager(), false);
     myIsField = isField;
   }
 

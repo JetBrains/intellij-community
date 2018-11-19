@@ -91,7 +91,7 @@ public abstract class PyPsiPath {
     private final String myName;
     private PyClass myResult;
 
-    public ClassFinder(String name) {
+    ClassFinder(String name) {
       myName = name;
     }
 
@@ -140,7 +140,7 @@ public abstract class PyPsiPath {
     private final String myName;
     private PyFunction myResult;
 
-    public FunctionFinder(String name) {
+    FunctionFinder(String name) {
       myName = name;
     }
 
@@ -221,7 +221,7 @@ public abstract class PyPsiPath {
     private final String myCallName;
     private final String[] myArgs;
 
-    public CallFinder(String callName, String[] args) {
+    CallFinder(String callName, String[] args) {
       myCallName = callName;
       myArgs = args;
     }
@@ -282,7 +282,7 @@ public abstract class PyPsiPath {
     private final String myAssignee;
     private PsiElement myResult;
 
-    public AssignmentFinder(String assignee) {
+    AssignmentFinder(String assignee) {
       myAssignee = assignee;
     }
 

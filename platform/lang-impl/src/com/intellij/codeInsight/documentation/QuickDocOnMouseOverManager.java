@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -40,7 +40,6 @@ import java.util.Map;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 7/2/12 9:09 AM
  */
 public class QuickDocOnMouseOverManager {
   private static final Logger LOG = Logger.getInstance(QuickDocOnMouseOverManager.class);
@@ -75,12 +74,12 @@ public class QuickDocOnMouseOverManager {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(
       ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
-        public void applicationActivated(IdeFrame ideFrame) {
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
           myApplicationActive = true;
         }
 
         @Override
-        public void applicationDeactivated(IdeFrame ideFrame) {
+        public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
           myApplicationActive = false;
           closeQuickDocIfPossible();
         }
@@ -156,7 +155,7 @@ public class QuickDocOnMouseOverManager {
     }
 
     Editor editor = e.getEditor();
-    if (editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null) {
+    if (EditorMouseHoverPopupControl.arePopupsDisabled(editor)) {
       return;
     }
 
@@ -375,14 +374,14 @@ public class QuickDocOnMouseOverManager {
     }
 
     @Override
-    public void mouseMoved(EditorMouseEvent e) {
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
       processMouseMove(e);
     }
   }
 
   private class MyVisibleAreaListener implements VisibleAreaListener {
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       Editor editor = getEditor();
       if (editor == null || editor == e.getEditor()) {
         closeQuickDocIfPossible();

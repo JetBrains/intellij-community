@@ -15,13 +15,13 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -48,6 +48,11 @@ class JavaIntentionPolicy extends IntentionPolicy {
     return mayBreakCompilation(action.getText()) || requiresRealJdk(action, file);
   }
 
+  @Override
+  public boolean shouldTolerateIntroducedError(@NotNull HighlightInfo info) {
+    return info.getText().contains("is public, should be declared in a file named"); // https://youtrack.jetbrains.com/issue/IDEA-196018
+  }
+
   private static boolean requiresRealJdk(@NotNull IntentionAction action, @NotNull PsiFile file) {
     return action.getText().contains("java.text.MessageFormat") && 
            JavaPsiFacade.getInstance(file.getProject()).findClass("java.text.MessageFormat", file.getResolveScope()) == null;
@@ -65,8 +70,11 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
+           actionText.startsWith("Surround with try-with-resources block") || // if 'close' throws, we don't add a new 'catch' for that, see IDEA-196544
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
-           actionText.equals("Replace with 'while'"); // TODO: remove when IDEA-195157 is fixed
+           //may break catches with explicit exceptions
+           actionText.matches("Replace with throws .*") ||
+           actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'"); // Suspicious toArray may introduce compilation error
   }
 
 }
@@ -76,13 +84,14 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Fix doc comment") || //change formatting settings
            actionText.startsWith("Add Javadoc") ||
+           actionText.equals("Collapse 'catch' blocks") || // IDEA-195991
            super.shouldSkipIntention(actionText);
   }
 
   @Override
   public boolean checkComments(IntentionAction intention) {
     String intentionText = intention.getText();
-    boolean commentChangingActions = intentionText.startsWith("Replace with end-of-line comment") ||
+    boolean isCommentChangingAction = intentionText.startsWith("Replace with end-of-line comment") ||
                                      intentionText.startsWith("Replace with block comment") ||
                                      intentionText.startsWith("Remove //noinspection") ||
                                      intentionText.startsWith("Unwrap 'if' statement") || //remove ifs content
@@ -104,13 +113,14 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.startsWith("Remove 'try-finally' block") ||
                                      intentionText.startsWith("Fix doc comment") ||
                                      intentionText.startsWith("Add Javadoc") ||
+                                     intentionText.startsWith("Replace qualified name with import") || //may change references in javadoc, making refs always qualified in javadoc makes them expand on "reformat"
                                      intentionText.startsWith("Qualify with outer class") || // may change links in javadoc
                                      intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
                                      intentionText.matches("Simplify '.*' to .*") ||
                                      intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
-                                     intentionText.matches("Remove '.*' from '.*' throws list")
-      ;
-    return !commentChangingActions;
+                                     intentionText.matches("Remove '.*' from '.*' throws list") ||
+                                     intentionText.matches("Remove .+ suppression");
+    return !isCommentChangingAction;
   }
 
   @Override
@@ -121,6 +131,13 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   @Override
   public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
     return true;
+  }
+
+  @Override
+  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return 
+      //changes javadoc explicitly
+      familyName.equals("Move to Javadoc '@throws'");
   }
 }
 
@@ -138,8 +155,8 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.equals("Add clarifying parentheses") ||
            actionText.equals("Remove unnecessary parentheses") ||
-           // TODO: fix and remove exception after merging dfa_refactoring branch
-           actionText.matches("Replace with '(true|false|null)'") ||
+           actionText.equals("See other similar duplicates") ||
+           actionText.equals("Replace character literal with string") ||
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
            // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
            actionText.matches("Compute constant value of '.+'") ||
@@ -153,7 +170,8 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
   protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
     return // if((a && b)) -- extract "a" doesn't work, seems legit, remove parentheses first
       familyName.equals("Extract If Condition") ||
-      // TODO: sometimes DFA warning issued for parenthesized expression: fix and remove exception after merging dfa_refactoring branch
+      // Cutting the message at different points is possible like
+      // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
       familyName.equals("Simplify boolean expression");
   }
 
@@ -164,6 +182,9 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     while (true) {
       PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
       if (expression == null) break;
+      if (PsiTreeUtil.getParentOfType(expression, PsiAnnotationMethod.class, true, PsiStatement.class) != null) {
+        break;
+      }
       while (shouldParenthesizeParent(expression)) {
         expression = (PsiExpression)expression.getParent();
       }
@@ -175,7 +196,6 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
         break;
       }
       if (parent instanceof PsiVariable && expression instanceof PsiArrayInitializerExpression) break;
-      if (ErrorUtil.containsDeepError(parent)) break;
       result.add(expression);
       element = expression.getParent();
     }

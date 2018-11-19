@@ -48,11 +48,11 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
   }
 
   @Override
-  public void setExtensions(Collection<Extension> extensions) {
+  public void setExtensions(Collection<? extends Extension> extensions) {
     setExtensions(new ArrayList<>(extensions));
   }
 
-  private void setExtensions(List<Extension> extensions) {
+  private void setExtensions(List<? extends Extension> extensions) {
     putClientProperty("JTextField.variant", null);
     this.extensions = unmodifiableList(extensions);
     putClientProperty("JTextField.variant", ExtendableTextComponent.VARIANT);
@@ -60,7 +60,7 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
 
   @Override
   public void addExtension(@NotNull Extension extension) {
-    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    List<Extension> extensions = new ArrayList<>(getExtensions());
     if (extensions.add(extension)) setExtensions(extensions);
   }
 

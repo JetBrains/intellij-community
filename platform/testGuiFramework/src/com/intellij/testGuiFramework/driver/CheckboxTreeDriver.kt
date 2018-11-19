@@ -8,7 +8,9 @@ import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import java.awt.Container
 import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.JCheckBox
+import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
@@ -24,16 +26,29 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
     return GuiTestUtilKt.findAllWithBFS(rendererComponent as Container, JCheckBox::class.java).firstOrNull()
   }
 
-  fun clickCheckbox(tree: CheckboxTree, path: TreePath) {
-    val checkBox = getCheckboxComponent(tree, path) ?: throw ComponentLookupException("Unable to find checkBox for a ExtCheckboxTree with path $path")
-    val pathBounds = tree.getPathBounds(path)
-    val checkBoxCenterPoint = Point(pathBounds.x + checkBox.location.x + checkBox.width / 2,
-                                    pathBounds.y + checkBox.location.y + checkBox.height / 2)
-    tree.scrollToPath(path)
-    tree.makeVisible(path)
-    robot.click(tree, checkBoxCenterPoint)
+  private fun CheckboxTree.clickRow(path: TreePath, calculatePoint: (Rectangle, Rectangle) -> Point){
+    val checkbox = getCheckboxComponent(this, path) ?: throw ComponentLookupException("Unable to find checkBox for a ExtCheckboxTree with path ${path.path.joinToString()}")
+    val pathBounds = this.getPathBounds(path)
+    val point = calculatePoint(checkbox.bounds, pathBounds)
+    this.scrollToPath(path)
+    this.makeVisible(path)
+    robot.click(this, point)
     robot.waitForIdle()
+
   }
 
+  fun clickCheckbox(tree: CheckboxTree, path: TreePath) {
+    tree.clickRow(path){
+      checkboxBounds: Rectangle, pathBounds:Rectangle ->
+      Point(pathBounds.x + checkboxBounds.x + checkboxBounds.width / 2,
+            pathBounds.y + checkboxBounds.y + checkboxBounds.height / 2)
+    }
+  }
 
+  override fun getLabelXCoord(jTree: JTree, path: TreePath): Int {
+    val checkBox = getCheckboxComponent(jTree as CheckboxTree, path) ?: throw ComponentLookupException("Unable to find checkBox for a ExtCheckboxTree with path $path")
+    val pathBounds = jTree.getPathBounds(path)
+
+    return pathBounds.x + checkBox.bounds.width + 2
+  }
 }

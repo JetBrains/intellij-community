@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,10 +42,13 @@ public class XmlStringUtil {
 
   @Contract("null,_,_->null; !null,_,_->!null")
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace, final boolean convertNoBreakSpace) {
-    if (str == null) return null;
+    if (str == null) {
+      return null;
+    }
+
     StringBuilder buffer = null;
     for (int i = 0; i < str.length(); i++) {
-      @NonNls String entity;
+      String entity;
       char ch = str.charAt(i);
       switch (ch) {
         case '\n':
@@ -91,31 +79,35 @@ public class XmlStringUtil {
           entity = null;
           break;
       }
-      if (buffer == null) {
-        if (entity != null) {
-          // An entity occurred, so we'll have to use StringBuffer
-          // (allocate room for it plus a few more entities).
-          buffer = new StringBuilder(str.length() + 20);
-          // Copy previous skipped characters and fall through
-          // to pickup current character
-          buffer.append(str, 0, i);
-          buffer.append(entity);
-        }
-      }
-      else {
-        if (entity == null) {
-          buffer.append(ch);
-        }
-        else {
-          buffer.append(entity);
-        }
-      }
+      buffer = appendEscapedSymbol(str, buffer, i, entity, ch);
     }
 
     // If there were any entities, return the escaped characters
     // that we put in the StringBuffer. Otherwise, just return
     // the unmodified input string.
     return buffer == null ? str : buffer.toString();
+  }
+
+  @Nullable
+  public static StringBuilder appendEscapedSymbol(@NotNull String str, StringBuilder buffer, int i, String entity, char ch) {
+    if (buffer == null) {
+      if (entity != null) {
+        // An entity occurred, so we'll have to use StringBuffer
+        // (allocate room for it plus a few more entities).
+        buffer = new StringBuilder(str.length() + 20);
+        // Copy previous skipped characters and fall through
+        // to pickup current character
+        buffer.append(str, 0, i);
+        buffer.append(entity);
+      }
+    }
+    else if (entity == null) {
+      buffer.append(ch);
+    }
+    else {
+      buffer.append(entity);
+    }
+    return buffer;
   }
 
   @NotNull

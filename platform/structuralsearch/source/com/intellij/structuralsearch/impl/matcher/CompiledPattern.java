@@ -16,8 +16,8 @@ import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -70,6 +70,7 @@ public abstract class CompiledPattern {
     this.nodeCount = elements.size();
   }
 
+  @Contract("null -> false")
   public boolean isTypedVar(final PsiElement element) {
     return element != null && isTypedVar(element.getText());
   }
@@ -157,11 +158,6 @@ public abstract class CompiledPattern {
 
   public boolean isToResetHandler(PsiElement element) {
     return true;
-  }
-
-  @Nullable
-  public String getAlternativeTextToMatch(PsiElement node, String previousText) {
-    return null;
   }
 
   @NotNull

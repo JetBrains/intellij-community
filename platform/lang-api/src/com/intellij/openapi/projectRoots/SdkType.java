@@ -1,21 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
@@ -87,6 +74,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
+  @NotNull
   public abstract String suggestSdkName(String currentSdkName, String sdkHome);
 
   /**
@@ -211,13 +199,13 @@ public abstract class SdkType implements SdkTypeId {
     List<SdkType> allTypes = new ArrayList<>();
     //noinspection deprecation
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
-    Collections.addAll(allTypes, Extensions.getExtensions(EP_NAME));
+    allTypes.addAll(EP_NAME.getExtensionList());
     return allTypes.toArray(new SdkType[0]);
   }
 
   @NotNull
   public static <T extends SdkType> T findInstance(@NotNull Class<T> sdkTypeClass) {
-    for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
+    for (SdkType sdkType : EP_NAME.getExtensionList()) {
       if (sdkTypeClass.equals(sdkType.getClass())) {
         return sdkTypeClass.cast(sdkType);
       }
@@ -226,7 +214,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   /**
-   * @return for sdk build over another sdk, returns type of the nested sdk, 
+   * @return for sdk build over another sdk, returns type of the nested sdk,
    *         e.g. plugins or android sdks are build over java sdk and for them the method returns {@link JavaSdkType},
    *         null otherwise
    */

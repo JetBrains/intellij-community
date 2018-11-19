@@ -142,13 +142,15 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
   }
 
   class MyTreeStructure extends AbstractTreeStructure {
+    @NotNull
     @Override
     public Object getRootElement() {
       return RootDescriptor.ROOT;
     }
 
+    @NotNull
     @Override
-    public Object[] getChildElements(Object element) {
+    public Object[] getChildElements(@NotNull Object element) {
       if (element == RootDescriptor.ROOT) {
         return ArrayUtil.toStringArray(myCertificates.keySet());
       }
@@ -160,7 +162,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
 
     @Nullable
     @Override
-    public Object getParentElement(Object element) {
+    public Object getParentElement(@NotNull Object element) {
       if (element == RootDescriptor.ROOT) {
         return null;
       }
@@ -172,7 +174,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
 
     @NotNull
     @Override
-    public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+    public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
       if (element == RootDescriptor.ROOT) {
         return ROOT_DESCRIPTOR;
       }
@@ -218,7 +220,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.addText("<root>", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
@@ -229,7 +231,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.addText(getElement(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
@@ -240,7 +242,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       CertificateWrapper wrapper = getElement();
       SimpleTextAttributes attr = wrapper.isValid() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : STRIKEOUT_ATTRIBUTES;
       presentation.addText(wrapper.getSubjectField(COMMON_NAME), attr);

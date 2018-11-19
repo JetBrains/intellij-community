@@ -148,7 +148,8 @@ class DistributionJARsBuilder {
   }
 
   private Set<String> getEnabledPluginModules() {
-    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.keySet().collect { it.mainModule } as Set<String>
+    buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.keySet().
+      collect { it.mainModule } as Set<String>
   }
 
   List<String> getPlatformModules() {
@@ -190,6 +191,7 @@ class DistributionJARsBuilder {
   void buildJARs() {
     buildLib()
     buildBundledPlugins()
+    buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
     buildThirdPartyLibrariesList()
 
@@ -311,6 +313,19 @@ class DistributionJARsBuilder {
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
+  private void buildOsSpecificBundledPlugins() {
+    def productLayout = buildContext.productProperties.productLayout
+    for (osFamily in OsFamily.values()) {
+      def osSpecificPluginModules = productLayout.bundledOsPluginModules[osFamily]
+      if (osSpecificPluginModules) {
+        def layoutBuilder = createLayoutBuilder()
+        buildPlugins(layoutBuilder, getPluginsByModules(buildContext, osSpecificPluginModules),
+                     "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        usedModules.addAll(layoutBuilder.usedModules)
+      }
+    }
+  }
+
   void buildNonBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     def ant = buildContext.ant
@@ -355,8 +370,8 @@ class DistributionJARsBuilder {
         }
       }
 
-      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.productProperties.productCode}-plugins-to-publish"
-      def pluginsDirectoryName = "${buildContext.productProperties.productCode}-plugins"
+      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
+      def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
       buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish.keySet()), pluginsToPublishDir)
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
 
@@ -370,7 +385,8 @@ class DistributionJARsBuilder {
 
         def directory = getActualPluginDirectoryName(plugin, buildContext)
         String suffix = includeInCustomRepository ? "" : "-${getPluginVersion(plugin)}"
-        def destFile = "$nonBundledPluginsArtifacts/$directory${suffix}.zip"
+        def targetDirectory = publishingSpec.includeIntoDirectoryForAutomaticUploading ? "$nonBundledPluginsArtifacts/auto-uploading" : nonBundledPluginsArtifacts
+        def destFile = "$targetDirectory/$directory${suffix}.zip"
 
         if (includeInCustomRepository) {
           pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(),

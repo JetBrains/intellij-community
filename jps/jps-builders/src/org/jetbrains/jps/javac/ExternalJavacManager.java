@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
- * @since 2.01.2012
  */
 public class ExternalJavacManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.javac.ExternalJavacServer");
@@ -442,7 +441,7 @@ public class ExternalJavacManager {
     private volatile Channel channel;
     private final Semaphore myDone = new Semaphore();
 
-    public JavacProcessDescriptor(@NotNull UUID sessionId,
+    JavacProcessDescriptor(@NotNull UUID sessionId,
                                   @NotNull ExternalJavacMessageHandler handler,
                                   @NotNull JavacRemoteProto.Message.Request request) {
       this.sessionId = sessionId;

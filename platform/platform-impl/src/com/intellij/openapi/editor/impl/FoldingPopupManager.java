@@ -33,7 +33,7 @@ class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListe
   }
 
   @Override
-  public void mouseMoved(EditorMouseEvent e) {
+  public void mouseMoved(@NotNull EditorMouseEvent e) {
     myAlarm.cancelAllRequests();
     Editor editor = e.getEditor();
     if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
@@ -78,7 +78,7 @@ class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListe
   }
 
   @Override
-  public void mouseDragged(EditorMouseEvent e) {}
+  public void mouseDragged(@NotNull EditorMouseEvent e) {}
 
   @Override
   public void mousePressed(@NotNull EditorMouseEvent e) {}

@@ -37,14 +37,14 @@ public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProv
 
   @NotNull
   @Override
-  protected String getReplacementText(@NotNull List<PsiProvidesStatement> statementsToMerge) {
+  protected String getReplacementText(@NotNull List<? extends PsiProvidesStatement> statementsToMerge) {
     final List<String> implementationNames = getImplementationNames(statementsToMerge);
     LOG.assertTrue(!implementationNames.isEmpty());
     return PsiKeyword.PROVIDES + ' ' + myInterfaceName + ' ' + PsiKeyword.WITH + ' ' + joinUniqueNames(implementationNames);
   }
 
   @NotNull
-  private static List<String> getImplementationNames(@NotNull List<PsiProvidesStatement> statements) {
+  private static List<String> getImplementationNames(@NotNull List<? extends PsiProvidesStatement> statements) {
     return StreamEx.of(statements)
       .map(PsiProvidesStatement::getImplementationList)
       .nonNull()

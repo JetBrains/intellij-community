@@ -167,7 +167,7 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
   private static class ElementsMarkStateListenerAdapter<T> implements ElementsMarkStateListener<T, Boolean> {
     private final ElementsMarkListener<T> myListener;
 
-    public ElementsMarkStateListenerAdapter(ElementsMarkListener<T> listener) {
+    ElementsMarkStateListenerAdapter(ElementsMarkListener<T> listener) {
       myListener = listener;
     }
 

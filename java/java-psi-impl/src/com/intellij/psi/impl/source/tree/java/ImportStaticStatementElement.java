@@ -31,19 +31,16 @@ public class ImportStaticStatementElement extends ImportStatementBaseElement {
   public ASTNode findChildByRole(int role) {
     final ASTNode result = super.findChildByRole(role);
     if (result != null) return result;
-    switch (role) {
-      default:
-        return null;
-
-      case ChildRole.IMPORT_REFERENCE:
-        final ASTNode importStaticReference = findChildByType(JavaElementType.IMPORT_STATIC_REFERENCE);
-        if (importStaticReference != null) {
-          return importStaticReference;
-        }
-        else {
-          return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
-        }
+    if (role == ChildRole.IMPORT_REFERENCE) {
+      final ASTNode importStaticReference = findChildByType(JavaElementType.IMPORT_STATIC_REFERENCE);
+      if (importStaticReference != null) {
+        return importStaticReference;
+      }
+      else {
+        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
+      }
     }
+    return null;
   }
 
   @Override

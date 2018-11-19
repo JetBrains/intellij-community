@@ -149,7 +149,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     if (updater != null && root != null) updater.addSubtreeToUpdate(root);
   }
 
-  protected boolean addSubtreeToUpdateByElement(PsiElement element) {
+  protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element) {
     AbstractTreeUpdater updater = getUpdater();
     return updater != null && updater.addSubtreeToUpdateByElement(element);
   }

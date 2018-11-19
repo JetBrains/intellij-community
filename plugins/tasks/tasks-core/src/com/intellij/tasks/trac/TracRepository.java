@@ -253,7 +253,7 @@ public class TracRepository extends BaseRepositoryImpl {
   }
 
   private class Transport extends CommonsXmlRpcTransport {
-    public Transport() throws MalformedURLException {
+    Transport() throws MalformedURLException {
       super(new URL(getUrl()), getHttpClient());
     }
 
@@ -262,7 +262,6 @@ public class TracRepository extends BaseRepositoryImpl {
     }
   }
 
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   @Override
   public boolean equals(Object o) {
     return super.equals(o) && Comparing.equal(((TracRepository)o).getDefaultSearch(), getDefaultSearch());

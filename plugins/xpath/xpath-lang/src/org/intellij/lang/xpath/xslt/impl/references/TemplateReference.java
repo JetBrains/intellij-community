@@ -40,7 +40,7 @@ import java.util.List;
 class TemplateReference extends AttributeReference implements EmptyResolveMessageProvider, LocalQuickFixProvider, PsiPolyVariantReference {
   private final String myName;
 
-  public TemplateReference(XmlAttribute attribute) {
+  TemplateReference(XmlAttribute attribute) {
     super(attribute, createMatcher(attribute), false);
     myName = attribute.getValue();
   }

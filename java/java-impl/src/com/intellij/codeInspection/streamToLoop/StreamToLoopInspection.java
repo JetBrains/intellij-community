@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -15,7 +13,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -241,7 +238,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
   @Contract("null -> null")
   @Nullable
-  static TerminalOperation getTerminal(List<OperationRecord> operations) {
+  static TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
     if (operations == null || operations.isEmpty()) return null;
     OperationRecord record = operations.get(operations.size()-1);
     if(record.myOperation instanceof TerminalOperation) {
@@ -253,7 +250,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   static class ReplaceStreamWithLoopFix implements LocalQuickFix {
     private final String myMessage;
 
-    public ReplaceStreamWithLoopFix(String message) {
+    ReplaceStreamWithLoopFix(String message) {
       myMessage = message;
     }
 
@@ -333,8 +330,8 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
     private static PsiElement normalize(@NotNull Project project, PsiElement element) {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
-      RedundantCastUtil.getRedundantCastsInside(element).forEach(RedundantCastUtil::removeCast);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(element);
+      RedundantCastUtil.getRedundantCastsInside(element).forEach(RemoveRedundantCastUtil::removeCast);
       return element;
     }
 
@@ -554,7 +551,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     private static boolean canUseAsNonFinal(PsiVariable var) {
       if (!(var instanceof PsiLocalVariable)) return false;
       PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-      return block != null && ReferencesSearch.search(var).forEach(ref -> {
+      return block != null && ReferencesSearch.search(var).allMatch(ref -> {
         PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
         return context == null || PsiTreeUtil.isAncestor(context, block, false);
       });

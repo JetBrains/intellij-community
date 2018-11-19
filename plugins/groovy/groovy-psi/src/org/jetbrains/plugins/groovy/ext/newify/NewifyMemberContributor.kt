@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.newify
 
 import com.intellij.psi.*
@@ -25,9 +11,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.getClassArray
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 
-internal val newifyAnnotationFqn = "groovy.lang.Newify"
-internal val newifyOriginInfo = "by @Newify"
+internal const val newifyAnnotationFqn = "groovy.lang.Newify"
+internal const val newifyOriginInfo = "by @Newify"
 
 class NewifyMemberContributor : NonCodeMembersContributor() {
   override fun processDynamicElements(qualifierType: PsiType,
@@ -35,7 +22,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
                                       processor: PsiScopeProcessor,
                                       place: PsiElement,
                                       state: ResolveState) {
-
+    if (!processor.shouldProcessMethods()) return
     if (place !is GrReferenceExpression) return
     val newifyAnnotations = place.listNewifyAnnotations()
     if (newifyAnnotations.isEmpty()) return
@@ -65,7 +52,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     return@flatMap seq ?: emptySequence()
   }.toList()
 
-  fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
+  private fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
     newName ?: return emptyList()
     val constructors = clazz.constructors
     if (constructors.isNotEmpty()) {

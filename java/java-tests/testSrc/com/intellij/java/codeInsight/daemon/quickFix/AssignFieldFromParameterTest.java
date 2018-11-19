@@ -28,9 +28,6 @@ public class AssignFieldFromParameterTest extends LightIntentionActionTestCase {
     JavaCodeStyleSettings.getInstance(getProject()).FIELD_NAME_PREFIX = "my";
     JavaCodeStyleSettings.getInstance(getProject()).STATIC_FIELD_NAME_PREFIX = "our";
   }
-
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/assignFieldFromParameter";

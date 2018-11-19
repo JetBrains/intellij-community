@@ -75,7 +75,7 @@ public class LightFillLayout implements LayoutManager2 {
     return layoutSize(parent, myVertical, component -> component.getMinimumSize());
   }
 
-  private static Dimension layoutSize(Container parent, boolean vertical, Function<Component, Dimension> getSize) {
+  private static Dimension layoutSize(Container parent, boolean vertical, Function<? super Component, ? extends Dimension> getSize) {
     int[] extraSize = new int[2];
     JComponent jParent = (JComponent)parent;
     getSize(jParent, LightToolWindow.LEFT_MIN_KEY, vertical, extraSize);

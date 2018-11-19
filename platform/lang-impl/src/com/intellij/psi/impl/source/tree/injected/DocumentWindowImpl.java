@@ -858,19 +858,22 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
   @Override
   public boolean isValid() {
-    PsiLanguageInjectionHost.Shred[] shreds;
+    Place shreds;
     synchronized (myLock) {
-      shreds = myShreds.toArray(new PsiLanguageInjectionHost.Shred[0]);
+      shreds = myShreds; // assumption: myShreds list is immutable
     }
     // can grab PsiLock in SmartPsiPointer.restore()
-    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+    // will check the 0th element manually (to avoid getting .getHost() twice)
+    for (int i = 1; i < shreds.size(); i++) {
+      PsiLanguageInjectionHost.Shred shred = shreds.get(i);
       if (!shred.isValid()) return false;
     }
 
-    PsiLanguageInjectionHost host = shreds[0].getHost();
-    if (host == null) return false;
+    PsiLanguageInjectionHost.Shred firstShred = shreds.get(0);
+    PsiLanguageInjectionHost host = firstShred.getHost();
+    if (host == null || firstShred.getHostRangeMarker() == null) return false;
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(this);
-    return virtualFile != null && PsiManagerEx.getInstanceEx(host.getProject()).getFileManager().findCachedViewProvider(virtualFile) != null;
+    return virtualFile != null && ((PsiManagerEx)host.getManager()).getFileManager().findCachedViewProvider(virtualFile) != null;
   }
 
   @Override

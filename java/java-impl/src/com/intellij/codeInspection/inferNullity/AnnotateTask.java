@@ -30,7 +30,7 @@ class AnnotateTask implements SequentialTask {
   private final int myTotal;
   private final NullableNotNullManager myNotNullManager;
 
-  public AnnotateTask(Project project, SequentialModalProgressTask progressTask, UsageInfo[] infos) {
+  AnnotateTask(Project project, SequentialModalProgressTask progressTask, UsageInfo[] infos) {
     myProject = project;
     myInfos = infos;
     myNotNullManager = NullableNotNullManager.getInstance(myProject);

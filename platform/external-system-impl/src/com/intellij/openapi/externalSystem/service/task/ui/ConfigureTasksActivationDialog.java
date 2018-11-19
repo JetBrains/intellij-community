@@ -77,7 +77,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 2/16/2015
  */
 public class ConfigureTasksActivationDialog extends DialogWrapper {
 
@@ -142,7 +141,9 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     tree.setModel(treeModel);
     tree.setRootVisible(false);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    final AbstractTreeBuilder treeBuilder = new AbstractTreeBuilder(tree, treeModel, new SimpleTreeStructure.Impl(root), null);
+    final AbstractTreeBuilder treeBuilder = new AbstractTreeBuilder(tree, treeModel, new SimpleTreeStructure.Impl(root), null) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(project, treeBuilder);
     return treeBuilder;
   }
@@ -263,7 +264,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       }
 
       private int compare(int x, int y) {
-        return (x < y) ? -1 : ((x == y) ? 0 : 1);
+        return Integer.compare(x, y);
       }
     });
 
@@ -339,7 +340,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     @NotNull String projectName;
     @NotNull ExternalProjectSettings myProjectSettings;
 
-    public ProjectItem(@NotNull String projectName, @NotNull ExternalProjectSettings projectPath) {
+    ProjectItem(@NotNull String projectName, @NotNull ExternalProjectSettings projectPath) {
       this.projectName = projectName;
       this.myProjectSettings = projectPath;
     }
@@ -415,7 +416,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     ModuleData myModuleData;
     List<String> myTasks;
 
-    public ProjectPopupItem(ModuleData moduleData, List<String> tasks) {
+    ProjectPopupItem(ModuleData moduleData, List<String> tasks) {
       myModuleData = moduleData;
       myTasks = tasks;
     }
@@ -427,7 +428,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   }
 
   private class ChooseProjectStep extends BaseListPopupStep<ProjectPopupItem> {
-    protected ChooseProjectStep(List<ProjectPopupItem> values) {
+    protected ChooseProjectStep(List<? extends ProjectPopupItem> values) {
       super("Choose project", values);
     }
 
@@ -472,7 +473,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       super(aParent);
     }
 
-    public MyNode(Project aProject, @Nullable NodeDescriptor aParentDescriptor) {
+    MyNode(Project aProject, @Nullable NodeDescriptor aParentDescriptor) {
       super(aProject, aParentDescriptor);
     }
   }
@@ -480,7 +481,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   private class RootNode extends MyNode {
     private final ExternalProjectsStateProvider myStateProvider;
 
-    public RootNode() {
+    RootNode() {
       super(ConfigureTasksActivationDialog.this.myProject, null);
       myStateProvider = getInstance(ConfigureTasksActivationDialog.this.myProject).getStateProvider();
     }
@@ -511,7 +512,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     private final String myProjectPath;
     private final String myProjectName;
 
-    public ProjectNode(RootNode parent,
+    ProjectNode(RootNode parent,
                        ExternalProjectsStateProvider stateProvider,
                        String rootProjectPath,
                        String projectPath) {
@@ -523,7 +524,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(ExternalSystemIcons.TaskGroup);
     }
@@ -545,7 +546,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     private final TaskActivationState myTaskActivationState;
     private final String myProjectPath;
 
-    public PhaseNode(final String projectPath, Phase phase, TaskActivationState taskActivationState, SimpleNode parent) {
+    PhaseNode(final String projectPath, Phase phase, TaskActivationState taskActivationState, SimpleNode parent) {
       super(parent);
       myPhase = phase;
       myTaskActivationState = taskActivationState;
@@ -553,7 +554,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(ExternalSystemIcons.TaskGroup);
     }
@@ -578,13 +579,13 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   private class TaskNode extends MyNode {
     private final String myTaskName;
 
-    public TaskNode(String taskName, PhaseNode parent) {
+    TaskNode(String taskName, PhaseNode parent) {
       super(parent);
       myTaskName = taskName;
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(uiAware.getTaskIcon());
     }

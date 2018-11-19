@@ -29,7 +29,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
 
   private int currentLine;
 
-  public AnnotateRevisionAction(@Nullable String text, @Nullable String description, @Nullable Icon icon,
+  AnnotateRevisionAction(@Nullable String text, @Nullable String description, @Nullable Icon icon,
                                 @NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
     super(text, description, icon);
     myAnnotation = annotation;
@@ -99,7 +99,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   private static class MyVcsVirtualFile extends VcsVirtualFile {
     @NotNull private final FileType myCurrentFileType;
 
-    public MyVcsVirtualFile(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull FileType currentFileType) {
+    MyVcsVirtualFile(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull FileType currentFileType) {
       super(filePath.getPath(), revision, VcsFileSystem.getInstance());
       myCurrentFileType = currentFileType;
     }

@@ -98,7 +98,7 @@ public class OverheadTimings {
     final long myHits;
     final Long myTime;
 
-    public Timings(long hits, Long time) {
+    Timings(long hits, Long time) {
       myHits = hits;
       myTime = time;
     }

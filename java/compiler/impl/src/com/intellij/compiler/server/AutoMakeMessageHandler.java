@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 
@@ -34,7 +35,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   private volatile boolean myUnprocessedFSChangesDetected = false;
   private final AutomakeCompileContext myContext;
 
-  public AutoMakeMessageHandler(Project project) {
+  AutoMakeMessageHandler(Project project) {
     super(project);
     myProject = project;
     myBuildStatus = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.SUCCESS;
@@ -131,7 +132,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+  public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
     if (myProject.isDisposed()) {
       return;
     }
@@ -145,7 +146,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  public void sessionTerminated(UUID sessionId) {
+  public void sessionTerminated(@NotNull UUID sessionId) {
     String statusMessage = null/*"Auto make completed"*/;
     switch (myBuildStatus) {
       case SUCCESS:

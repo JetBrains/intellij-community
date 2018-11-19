@@ -20,9 +20,13 @@ import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.BranchActionGroup;
+import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -119,7 +123,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @Override
-  protected void fillWithCommonRepositoryActions(@NotNull DefaultActionGroup popupGroup,
+  protected void fillWithCommonRepositoryActions(@NotNull LightActionGroup popupGroup,
                                                  @NotNull AbstractRepositoryManager<GitRepository> repositoryManager) {
     List<GitRepository> allRepositories = repositoryManager.getRepositories();
     GitRebaseSpec rebaseSpec = getRepositoryManager(myProject).getOngoingRebaseSpec();
@@ -168,8 +172,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
   @NotNull
   @Override
-  protected DefaultActionGroup createRepositoriesActions() {
-    DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
+  protected LightActionGroup createRepositoriesActions() {
+    LightActionGroup popupGroup = new LightActionGroup(false);
     popupGroup.addSeparator("Repositories");
     List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
       .map(
@@ -181,7 +185,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @Override
-  protected void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
+  protected void fillPopupWithCurrentRepositoryActions(@NotNull LightActionGroup popupGroup, @Nullable LightActionGroup actions) {
     popupGroup.addAll(
       new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions, myRepoTitleInfo, true));
   }

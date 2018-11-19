@@ -30,6 +30,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.xml.util.XmlStringUtil;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -75,8 +77,18 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  private JPanel createMainPanel(@NotNull final HintHint hintHint, @NotNull JComponent pane) {
-    JPanel grid = new JPanel(new GridBagLayout());
+  private static JPanel createMainPanel(@NotNull final HintHint hintHint, @NotNull JComponent pane, @NotNull JEditorPane editorPane) {
+    JPanel grid = new JPanel(new GridBagLayout()) {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        return new AccessibleContextDelegate(editorPane.getAccessibleContext()) {
+          @Override
+          protected Container getDelegateParent() {
+            return getParent();
+          }
+        };
+      }
+    };
     GridBag bag = new GridBag()
       .anchor(GridBagConstraints.CENTER)
       //weight is required for correct working scrollpane inside gridbaglayout
@@ -120,8 +132,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       correctLocation(editor, editorPane, p, alignToRight, expanded, myCurrentWidth);
     }
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(editorPane);
-    scrollPane.setBorder(null);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(editorPane, true);
 
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -133,12 +144,26 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     scrollPane.getViewport().setBackground(hintHint.getTextBackground());
     scrollPane.setViewportBorder(null);
 
+    editorPane.setBorder(JBUI.Borders.emptyBottom(2));
     if (hintHint.isRequestFocus()) {
       editorPane.setFocusable(true);
     }
 
     ArrayList<AnAction> actions = ContainerUtil.newArrayList();
-    JPanel grid = createMainPanel(hintHint, scrollPane);
+    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane);
+    if (ScreenReader.isActive()) {
+      grid.setFocusTraversalPolicyProvider(true);
+      grid.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+          return editorPane;
+        }
+        @Override
+        public boolean getImplicitDownCycleTraversal() {
+          return true;
+        }
+      });
+    }
     final LightweightHint hint = new LightweightHint(grid) {
 
       @Override

@@ -51,16 +51,16 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.*;
 import java.util.List;
 import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
-  public int getMinMarkHeight() {
+  private int getMinMarkHeight() {
     return JBUI.scale(myMinMarkHeight);
   }
 
@@ -111,7 +111,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     super(editor.getDocument());
     myEditor = editor;
     myEditorFragmentRenderer = new EditorFragmentRenderer();
-    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
   }
 
   private int offsetToLine(int offset, @NotNull Document document) {
@@ -239,7 +239,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.logicalPositionToOffset(pos);
   }
 
-  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<RangeHighlighterEx> highlighters) {
+  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<? super RangeHighlighterEx> highlighters) {
     final int startOffset = getOffset(fitLineToEditor(visualLine - myPreviewLines), true);
     final int endOffset = getOffset(fitLineToEditor(visualLine + myPreviewLines), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
@@ -272,7 +272,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private void getNearestHighlighters(@NotNull MarkupModelEx markupModel,
                                       final int scrollBarY,
-                                      @NotNull final Collection<RangeHighlighter> nearest) {
+                                      @NotNull final Collection<? super RangeHighlighter> nearest) {
     int startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true);
     int endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
@@ -465,7 +465,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
              : super.getPreferredSize();
     }
   }
-  
+
   private boolean transparent() {
     return !myEditor.shouldScrollBarBeOpaque();
   }
@@ -530,7 +530,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (!uiSettings.getShowEditorToolTip()) {
         hideMyEditorPreviewHint();
       }
-      setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+      setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
       repaintTrafficTooltip();
       repaintTrafficLightIcon();
       repaintVerticalScrollBar();
@@ -584,7 +584,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
       int b2 =  bounds.width / 2;
       bounds.x = getThinGap() + getMinMarkHeight() + getErrorIconWidth() / 2 - b2;
-      
+
       return bounds;
     }
 
@@ -592,7 +592,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     protected int getThickness() {
       return getErrorIconWidth() + getThinGap() + getMinMarkHeight();
     }
-    
+
     @Override
     protected void paintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle trackBounds) {
       if (myEditor.isDisposed()) return;
@@ -754,7 +754,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private int drawStripesEndingBefore(int ys,
-                                        @NotNull Queue<PositionedStripe> ends,
+                                        @NotNull Queue<? extends PositionedStripe> ends,
                                         @NotNull List<PositionedStripe> stripes,
                                         @NotNull Graphics g, int yStart) {
       while (!ends.isEmpty()) {
@@ -778,7 +778,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int paintWidth;
       int x;
       if (thinErrorStripeMark) {
-        //noinspection SuspiciousNameCombination
         paintWidth = getMinMarkHeight();
         x = isMirrored() ? getThickness() - paintWidth : 0;
         if (yEnd - yStart < 6) {
@@ -975,7 +974,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
-    public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
+    public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<? extends RangeHighlighter> highlighters) {
       LineTooltipRenderer bigRenderer = null;
       //do not show same tooltip twice
       Set<String> tooltips = null;
@@ -1129,7 +1128,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       update(-1, Collections.emptyList(), false);
     }
 
-    void update(int visualLine, @NotNull Collection<RangeHighlighterEx> rangeHighlighters, boolean showInstantly) {
+    void update(int visualLine, @NotNull Collection<? extends RangeHighlighterEx> rangeHighlighters, boolean showInstantly) {
       myVisualLine = visualLine;
       myShowInstantly = showInstantly;
       myHighlighters.clear();
@@ -1169,13 +1168,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
                         - myEditor.getVerticalScrollBar().getWidth();
             width -= JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) * 2 + contentInsets;
-            return new Dimension(width - BalloonImpl.POINTER_LENGTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
+            return new Dimension(width - BalloonImpl.POINTER_LENGTH.get(), myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }
 
           @Override
           protected void paintComponent(@NotNull Graphics g) {
             if (myVisualLine ==-1 || myEditor.isDisposed()) return;
             Dimension size = getPreferredSize();
+            if (size.width <= 0 || size.height <= 0) return;
+
             EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
             EditorComponentImpl content = myEditor.getContentComponent();
 
@@ -1239,7 +1240,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 String s = tooltip instanceof HighlightInfo ? ((HighlightInfo)tooltip).getDescription() : String.valueOf(tooltip);
                 if (StringUtil.isEmpty(s)) continue;
                 s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
-                s = StringUtil.unescapeXml(s);
+                s = StringUtil.unescapeXmlEntities(s);
 
                 LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
                 int endOfLineOffset = myEditor.getDocument().getLineEndOffset(logicalPosition.line);

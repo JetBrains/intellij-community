@@ -38,7 +38,7 @@ final class HyperlinkUtil {
     private final int myLinkStartIndex;
     private final int myLinkEndIndex;
 
-    public PlaceInfo(VirtualFile file, int line, int column, int linkStartIndex, int linkEndIndex) {
+    PlaceInfo(VirtualFile file, int line, int column, int linkStartIndex, int linkEndIndex) {
       myFile = file;
       myLine = line;
       myColumn = column;

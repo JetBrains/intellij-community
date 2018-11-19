@@ -17,7 +17,6 @@ package org.netbeans.lib.cvsclient.command.status;
 import org.netbeans.lib.cvsclient.file.FileStatus;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -43,7 +42,7 @@ public final class StatusInformation {
 	/**
 	 * Hold key pairs of existing tags.
 	 */
-	private List tags;
+	private List<SymName> tags;
 
 	private StringBuffer symNamesBuffer;
 
@@ -154,7 +153,7 @@ public final class StatusInformation {
 	}
 
 	private void createSymNames() {
-		tags = new LinkedList();
+		tags = new LinkedList<>();
 
 		if (symNamesBuffer == null) {
 			return;
@@ -183,28 +182,27 @@ public final class StatusInformation {
 		symNamesBuffer = null;
 	}
 
-	public List getAllExistingTags() {
+	public List<SymName> getAllExistingTags() {
 		if (tags == null) {
 			createSymNames();
 		}
 		return tags;
 	}
 
-	private void setAllExistingTags(List tags) {
+	private void setAllExistingTags(List<SymName> tags) {
 		this.tags = tags;
 	}
 
 	/** Search the symbolic names by number of revision. If not found, return null.
 	 */
-	public List getSymNamesForRevision(String revNumber) {
+	public List<SymName> getSymNamesForRevision(String revNumber) {
 		if (tags == null) {
 			createSymNames();
 		}
 
-		final List list = new LinkedList();
+		final List<SymName> list = new LinkedList<>();
 
-		for (Iterator it = tags.iterator(); it.hasNext();) {
-			final StatusInformation.SymName item = (StatusInformation.SymName)it.next();
+		for (final SymName item : tags) {
 			if (item.getRevision().equals(revNumber)) {
 				list.add(item);
 			}
@@ -221,8 +219,7 @@ public final class StatusInformation {
 			createSymNames();
 		}
 
-		for (Iterator it = tags.iterator(); it.hasNext();) {
-			final StatusInformation.SymName item = (StatusInformation.SymName)it.next();
+		for (final SymName item : tags) {
 			if (item.getTag().equals(tagName)) {
 				return item;
 			}
@@ -235,7 +232,7 @@ public final class StatusInformation {
 	 */
 	@SuppressWarnings({"HardCodedStringLiteral"})
         public String toString() {
-		final StringBuffer buf = new StringBuffer();
+		final StringBuilder buf = new StringBuilder();
 		buf.append("\nFile: ");
 		buf.append((file != null) ? file.getAbsolutePath()
 		           : "null");
@@ -250,12 +247,12 @@ public final class StatusInformation {
 		buf.append(stickyOptions);
 		buf.append("\nSticky tag: ");
 		buf.append(stickyTag);
-		if (tags != null && tags.size() > 0) {
+		if (tags != null && !tags.isEmpty()) {
 			// we are having some tags to print
 			buf.append("\nExisting Tags:");
-			for (Iterator it = tags.iterator(); it.hasNext();) {
+			for (SymName tag : tags) {
 				buf.append("\n  ");
-				buf.append(it.next().toString());
+				buf.append(tag.toString());
 			}
 		}
 		return buf.toString();

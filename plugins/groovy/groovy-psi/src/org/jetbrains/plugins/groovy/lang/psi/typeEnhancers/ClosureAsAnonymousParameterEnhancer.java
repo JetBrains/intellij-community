@@ -16,8 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Argument;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 import org.jetbrains.plugins.groovy.lang.sam.SamConversionKt;
@@ -25,6 +24,8 @@ import org.jetbrains.plugins.groovy.lang.sam.SamConversionKt;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall;
 
 /**
  * @author Max Medvedev
@@ -93,12 +94,15 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
     if (variant instanceof GroovyMethodResult) {
       MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
-        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new Argument(null, closure));
+        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new ExpressionArgument(closure));
         if (pair != null) {
           GrReferenceExpression invokedExpression = (GrReferenceExpression)call.getInvokedExpression();
-          GroovyInferenceSession session =
-            new GroovyInferenceSessionBuilder(invokedExpression, candidate).startFromTop(true).resolveMode(true).build();
-          PsiSubstitutor substitutor = session.inferSubst(invokedExpression);
+          PsiSubstitutor substitutor =
+            new GroovyInferenceSessionBuilder(invokedExpression, candidate)
+              .skipClosureIn(call)
+              .resolveMode(false)
+              .build()
+              .inferSubst();
 
           return Collections.singletonList(substitutor.substitute(pair.getSecond()));
         }

@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ref.GCUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -47,7 +47,7 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.configureByFile("deprecation/functionStub.py");
     PyFile file = (PyFile)myFixture.getFile();
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertNotParsed(file);
     
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
@@ -93,7 +93,7 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.configureByFile("deprecation/deprecatedModule.py");
     PyFile file = (PyFile)myFixture.getFile();
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertNotParsed(file);
 
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());

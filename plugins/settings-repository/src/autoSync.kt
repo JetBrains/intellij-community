@@ -19,7 +19,8 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import java.util.concurrent.Future
 
 internal class AutoSyncManager(private val icsManager: IcsManager) {
-  private @Volatile var autoSyncFuture: Future<*>? = null
+  @Volatile
+  private var autoSyncFuture: Future<*>? = null
 
   @Volatile var enabled = true
 
@@ -157,7 +158,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 }
 
-inline internal fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit) {
+internal inline fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit) {
   try {
     runnable()
   }

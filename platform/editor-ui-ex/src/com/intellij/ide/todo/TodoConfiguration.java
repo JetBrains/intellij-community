@@ -54,7 +54,6 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     return ServiceManager.getService(TodoConfiguration.class);
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   public void resetToDefaultTodoPatterns() {
     myTodoPatterns = getDefaultPatterns();
     myTodoFilters = new TodoFilter[]{};

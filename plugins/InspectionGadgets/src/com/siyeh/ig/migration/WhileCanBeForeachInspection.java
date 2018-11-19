@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,8 +130,10 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (contentType == null) {
         return;
       }
-      final PsiType iteratorType = iterator.getType();
-      final PsiType iteratorContentType = ForCanBeForeachInspection.getContentType(iteratorType, "java.util.Iterator");
+      PsiType iteratorContentType = ForCanBeForeachInspection.getContentType(iterator.getType(), CommonClassNames.JAVA_UTIL_ITERATOR);
+      if (TypeUtils.isJavaLangObject(iteratorContentType)) {
+        iteratorContentType = ForCanBeForeachInspection.getContentType(initializer.getType(), CommonClassNames.JAVA_UTIL_ITERATOR);
+      }
       if (iteratorContentType == null) {
         return;
       }
@@ -144,6 +146,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
         final PsiLocalVariable localVariable = (PsiLocalVariable)declaredElements[0];
         contentVariableName = localVariable.getName();
+        iteratorContentType = localVariable.getType();
         statementToSkip = declarationStatement;
       }
       else {
@@ -162,12 +165,12 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (JavaCodeStyleSettings.getInstance(whileStatement.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
         out.append("final ");
       }
-      out.append(iteratorContentType.getCanonicalText()).append(' ').append(contentVariableName).append(": ");
+      final String canonicalText = iteratorContentType.getCanonicalText();
+      out.append(canonicalText).append(' ').append(contentVariableName).append(": ");
       if (!TypeConversionUtil.isAssignable(iteratorContentType, contentType)) {
-        out.append("(java.lang.Iterable<").append(iteratorContentType.getCanonicalText()).append(">)");
+        out.append("(java.lang.Iterable<").append(canonicalText).append(">)");
       }
-      out.append(collection.getText());
-      out.append(')');
+      out.append(collection.getText()).append(')');
 
       ForCanBeForeachInspection.replaceIteratorNext(body, contentVariableName, iterator, contentType, statementToSkip, out);
       final Query<PsiReference> query = ReferencesSearch.search(iterator);
@@ -185,7 +188,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
           break;
         }
         final PsiExpression expression = assignment.getRExpression();
-        PsiTypeElement typeElement = iterator.getTypeElement();
+        final PsiTypeElement typeElement = iterator.getTypeElement();
         if (typeElement.isInferredType() &&
             (expression == null || 
              PsiType.NULL.equals(expression.getType()) || 
@@ -282,7 +285,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (ForCanBeForeachInspection.isIteratorMethodCalled(variable, body)) {
         return false;
       }
-      //noinspection SimplifiableIfStatement
       if (isIteratorHasNextCalled(variable, body)) {
         return false;
       }

@@ -24,8 +24,8 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.ExpressionUtil;
+import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -253,7 +253,7 @@ public class CreateFromUsageUtils {
   }
 
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
-                                    final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
+                                    final PsiSubstitutor substitutor, final List<? extends Pair<PsiExpression, PsiType>> arguments)
     throws IncorrectOperationException {
 
     final PsiManager psiManager = method.getManager();
@@ -393,7 +393,7 @@ public class CreateFromUsageUtils {
                                                  String name,
                                                  PsiJavaCodeReferenceElement referenceElement) {
     PsiManager manager = psiClass.getManager();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
     PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
                       classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
                       classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
@@ -518,7 +518,8 @@ public class CreateFromUsageUtils {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName())) {
+          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName()) && 
+              methodExpression.resolve() == ((PsiMethodCallExpression)expression).resolveMethod()) {
             result.add(expr.getMethodExpression());
           }
         }
@@ -592,11 +593,11 @@ public class CreateFromUsageUtils {
 
   private static void getExpectedInformation(final PsiExpression expression,
                                              List<ExpectedTypeInfo[]> types,
-                                             List<String> expectedMethodNames,
-                                             List<String> expectedFieldNames) {
+                                             List<? super String> expectedMethodNames,
+                                             List<? super String> expectedFieldNames) {
     Comparator<ExpectedTypeInfo> expectedTypesComparator = (o1, o2) -> compareExpectedTypes(o1, o2, expression);
     for (PsiExpression expr : collectExpressions(expression, PsiMember.class, PsiFile.class)) {
-      PsiElement parent = expr.getParent();
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
 
       if (!(parent instanceof PsiReferenceExpression)) {
         boolean isAssignmentToFunctionalExpression = PsiUtil.isOnAssignmentLeftHand(expr) &&
@@ -625,7 +626,7 @@ public class CreateFromUsageUtils {
         continue;
       }
 
-      PsiElement pparent = parent.getParent();
+      PsiElement pparent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
       if (pparent instanceof PsiMethodCallExpression) {
         expectedMethodNames.add(refName);
         if (refName.equals("equals")) {
@@ -638,8 +639,7 @@ public class CreateFromUsageUtils {
         continue;
       }
 
-      if (pparent instanceof PsiReferenceExpression ||
-          pparent instanceof PsiVariable ||
+      if (pparent instanceof PsiVariable ||
           pparent instanceof PsiExpression) {
         expectedFieldNames.add(refName);
       }
@@ -896,12 +896,12 @@ public class CreateFromUsageUtils {
     return isInNamedElement || element.getTextRange().contains(offset-1);
   }
 
-  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<? super String> possibleClassNames, final boolean method,
                                           final boolean staticAccess) {
     addClassesWithMember(memberName, file, possibleClassNames, method, staticAccess, true);
   }
 
-  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<? super String> possibleClassNames, final boolean method,
                                           final boolean staticAccess,
                                           final boolean addObjectInheritors) {
     final Project project = file.getProject();
@@ -941,7 +941,7 @@ public class CreateFromUsageUtils {
     }
   }
 
-  private static boolean handleObjectMethod(Set<String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
+  private static boolean handleObjectMethod(Set<? super String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(facade.getProject());
     final boolean[] allClasses = {false};
     ReadAction.run(() -> {

@@ -25,7 +25,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
   private ComponentItem myLastCreatedComponent = null;
 
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     Processor<ComponentItem> processor = selectedValue -> {
       if (selectedValue != null) {
         myLastCreatedComponent = selectedValue;
@@ -46,7 +46,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
     }
   }
 
-  private static ComponentDropLocation getCreateLocation(final GuiEditor editor, final List<RadComponent> selection) {
+  private static ComponentDropLocation getCreateLocation(final GuiEditor editor, final List<? extends RadComponent> selection) {
     ComponentDropLocation dropLocation = null;
     if (selection.size() > 0) {
       RadComponent component = selection.get(0);

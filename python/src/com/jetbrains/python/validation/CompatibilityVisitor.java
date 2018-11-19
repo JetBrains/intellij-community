@@ -21,7 +21,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,19 +216,30 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     super.visitPyStringLiteralExpression(node);
 
-    for (ASTNode stringNode : node.getStringNodes()) {
-      final String text = stringNode.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(text);
-      final String prefix = text.substring(0, prefixLength).toUpperCase();
+    boolean seenBytes = false;
+    boolean seenNonBytes = false;
+    for (PyStringElement element : node.getStringElements()) {
+      final String prefix = element.getPrefix().toUpperCase();
       if (prefix.isEmpty()) continue;
 
-      final TextRange range = TextRange.create(stringNode.getStartOffset(), stringNode.getStartOffset() + prefixLength);
+      final boolean bytes = element.isBytes();
+      seenBytes |= bytes;
+      seenNonBytes |= !bytes;
+
+      final int elementStart = element.getTextOffset();
       registerForAllMatchingVersions(level -> !getSupportedStringPrefixes(level).contains(prefix),
                                      " not support a '" + prefix + "' prefix",
                                      node,
-                                     range,
+                                     TextRange.create(elementStart, elementStart + element.getPrefixLength()),
                                      new RemovePrefixQuickFix(prefix),
                                      true);
+    }
+
+    if (seenBytes && seenNonBytes) {
+      registerForAllMatchingVersions(LanguageLevel::isPy3K,
+                                     " not allow to mix bytes and non-bytes literals",
+                                     node,
+                                     null);
     }
   }
 
@@ -265,8 +275,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasNoArgsUnderFinally(node, level),
                                    " not support this syntax. Raise with no arguments can only be used in an except block",
                                    node,
-                                   null,
-                                   false);
+                                   null);
 
     // raise 1, 2, 3
     registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasMoreThenOneArg(node, level),

@@ -413,7 +413,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
    * Called from EDT, on external coverage suite choosing
    */
   public void addRootsToWatch(List<CoverageSuite> suites) {
-    myCurrentSuiteRoots = suites.stream().map(suite -> suite.getCoverageDataFileName()).collect(Collectors.toList());
+    myCurrentSuiteRoots = ContainerUtil.map(suites, suite -> suite.getCoverageDataFileName());
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     myCurrentSuiteRoots.forEach(path -> fileSystem.refreshAndFindFileByPath(path));
     myWatchRequests = fileSystem.addRootsToWatch(myCurrentSuiteRoots, true);
@@ -425,7 +425,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     if (project.isDisposed()) return;
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
-    //noinspection ConstantConditions
     final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
     if (coverageSuite != null) {
       ((BaseCoverageSuite)coverageSuite).setConfiguration(configuration);
@@ -494,7 +493,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), myProject);
     myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         if (project != myProject) {
           return;
         }

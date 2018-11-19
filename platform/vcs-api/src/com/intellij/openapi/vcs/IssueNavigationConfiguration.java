@@ -40,7 +40,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     return myLinks;
   }
 
-  public void setLinks(final List<IssueNavigationLink> links) {
+  public void setLinks(final List<? extends IssueNavigationLink> links) {
     myLinks = new ArrayList<>(links);
     incModificationCount();
   }

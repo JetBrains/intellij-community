@@ -309,7 +309,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     private final int myIndex;
     private final LabelPropertyRenderer myRenderer = new LabelPropertyRenderer("");
 
-    public MyTabGroupProperty(final int index) {
+    MyTabGroupProperty(final int index) {
       super(null, "Tab");
       myIndex = index;
     }
@@ -338,7 +338,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     private final StringEditor myEditor = new StringEditor(getProject());
     private final StringRenderer myRenderer = new StringRenderer();
 
-    public MyTitleProperty(final Property parent, final int index) {
+    MyTitleProperty(final Property parent, final int index) {
       super(parent, TAB_TITLE_PROPERTY);
       myIndex = index;
     }
@@ -451,7 +451,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     private final IconRenderer myRenderer = new IconRenderer();
     private final IconEditor myEditor = new IconEditor();
 
-    public MyIconProperty(final Property parent, final int index, final boolean disabledIcon) {
+    MyIconProperty(final Property parent, final int index, final boolean disabledIcon) {
       super(parent, disabledIcon ? "Tab Disabled Icon" : "Tab Icon");
       myIndex = index;
       myDisabledIcon = disabledIcon;
@@ -501,7 +501,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private class MyEnabledProperty extends AbstractBooleanProperty<RadComponent> {
     private final int myIndex;
 
-    public MyEnabledProperty(final Property parent, final int index) {
+    MyEnabledProperty(final Property parent, final int index) {
       super(parent, "Tab Enabled", true);
       myIndex = index;
     }
@@ -674,7 +674,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     private String myInsertBeforeId;
     private final Rectangle myFeedbackRect;
 
-    public InsertTabDropLocation(final int insertIndex, final Rectangle feedbackRect) {
+    InsertTabDropLocation(final int insertIndex, final Rectangle feedbackRect) {
       myInsertIndex = insertIndex;
       if (myInsertIndex < getTabbedPane().getTabCount()) {
         myInsertBeforeId = getRadComponent(myInsertIndex).getId();

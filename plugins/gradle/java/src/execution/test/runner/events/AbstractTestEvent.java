@@ -33,7 +33,6 @@ import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public abstract class AbstractTestEvent implements TestEvent {
   private final GradleTestsExecutionConsole myExecutionConsole;

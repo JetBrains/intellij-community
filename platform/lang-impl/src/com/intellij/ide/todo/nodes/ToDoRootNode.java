@@ -30,12 +30,12 @@ import java.util.Collections;
 public class ToDoRootNode extends BaseToDoNode{
   private final SummaryNode mySummaryNode;
 
-  public ToDoRootNode(Project project, Object value, TodoTreeBuilder builder, ToDoSummary summary) {
+  public ToDoRootNode(Project project, Object value, TodoTreeBuilder builder, @NotNull ToDoSummary summary) {
     super(project, value, builder);
     mySummaryNode = createSummaryNode(summary);
   }
 
-  protected SummaryNode createSummaryNode(ToDoSummary summary) {
+  protected SummaryNode createSummaryNode(@NotNull ToDoSummary summary) {
     return new SummaryNode(getProject(), summary, myBuilder);
   }
 
@@ -46,7 +46,7 @@ public class ToDoRootNode extends BaseToDoNode{
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
   }
 
   public Object getSummaryNode() {

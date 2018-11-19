@@ -1,7 +1,5 @@
 package com.siyeh.igtest.bugs.infinite_recursion;
 
-import com.intellij.psi.PsiClass;
-
 import java.util.List;
 import java.io.IOException;
 import java.io.File;
@@ -18,7 +16,7 @@ public class InfiniteRecursion
         foo();
     }
 
-    public int baz()
+    public int <warning descr="Method 'baz()' recurses infinitely, and can only end by throwing an exception">baz</warning>()
     {
         return baz();
     }
@@ -49,7 +47,7 @@ public class InfiniteRecursion
         return 3;
     }
 
-    public int barangoo()
+    public int <warning descr="Method 'barangoo()' recurses infinitely, and can only end by throwing an exception">barangoo</warning>()
     {
         do
         {
@@ -58,7 +56,7 @@ public class InfiniteRecursion
         while(foobar());
     }
 
-    public int bazoomer()
+    public int <warning descr="Method 'bazoomer()' recurses infinitely, and can only end by throwing an exception">bazoomer</warning>()
     {
         if(foobar())
         {
@@ -75,7 +73,7 @@ public class InfiniteRecursion
         return false && foobar();
     }
 
-    public boolean foobarangus()
+    public boolean <warning descr="Method 'foobarangus()' recurses infinitely, and can only end by throwing an exception">foobarangus</warning>()
     {
         return foobarangus() && false;
     }
@@ -123,21 +121,25 @@ public class InfiniteRecursion
         }
     }
 
-    void foo1() {
+    void <warning descr="Method 'foo1()' recurses infinitely, and can only end by throwing an exception">foo1</warning>() {
         for (;true && true || false;) {
             foo1();
         }
     }
 
-    void foo2() {
+    void <warning descr="Method 'foo2()' recurses infinitely, and can only end by throwing an exception">foo2</warning>() {
         if (true || false) {
             foo2();
         }
     }
 
-    void bar1() {
+    void <warning descr="Method 'bar1()' recurses infinitely, and can only end by throwing an exception">bar1</warning>() {
         while (true || false) {
             bar1();
         }
     }
+}
+
+interface PsiClass {
+    PsiClass getSuperClass();
 }

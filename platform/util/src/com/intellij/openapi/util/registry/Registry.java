@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.util.ConcurrencyUtil;
-import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,11 +10,15 @@ import org.jetbrains.annotations.PropertyKey;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Provides a UI to configure internal settings of the IDE. Plugins can provide their own registry keys using the
+ * {@code <registryKey>} extension point (see com.intellij.openapi.util.registry.RegistryKeyBean for more details).
+ */
 public class Registry  {
   private static Reference<ResourceBundle> ourBundle;
 
@@ -38,6 +27,7 @@ public class Registry  {
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<String, String>();
   private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<String, RegistryValue>();
+  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new HashMap<String, RegistryKeyDescriptor>();
 
   private static final Registry ourInstance = new Registry();
 
@@ -47,7 +37,7 @@ public class Registry  {
 
     RegistryValue value = registry.myValues.get(key);
     if (value == null) {
-      value = ConcurrencyUtil.cacheOrGet(registry.myValues, key, new RegistryValue(registry, key));
+      value = ConcurrencyUtil.cacheOrGet(registry.myValues, key, new RegistryValue(registry, key, registry.myContributedKeys.get(key)));
     }
     return value;
   }
@@ -102,6 +92,23 @@ public class Registry  {
   }
 
 
+  public String getBundleValue(@NotNull String key, boolean mustExist) throws MissingResourceException {
+    if (myContributedKeys.containsKey(key)) {
+      return myContributedKeys.get(key).getDefaultValue();
+    }
+
+    try {
+      return getBundle().getString(key);
+    }
+    catch (MissingResourceException e) {
+      if (mustExist) {
+        throw e;
+      }
+    }
+
+    return null;
+  }
+
   @NotNull
   public static Registry getInstance() {
     return ourInstance;
@@ -146,10 +153,15 @@ public class Registry  {
 
     List<RegistryValue> result = new ArrayList<RegistryValue>();
 
+    Map<String, RegistryKeyDescriptor> contributedKeys = getInstance().myContributedKeys;
     while (keys.hasMoreElements()) {
       final String each = keys.nextElement();
-      if (each.endsWith(".description") || each.endsWith(".restartRequired")) continue;
+      if (each.endsWith(".description") || each.endsWith(".restartRequired") || contributedKeys.containsKey(each)) continue;
       result.add(get(each));
+    }
+
+    for (String key : contributedKeys.keySet()) {
+      result.add(get(key));
     }
 
     return result;
@@ -184,5 +196,17 @@ public class Registry  {
     }
 
     return false;
+  }
+
+  public static void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
+    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired));
+  }
+
+  public static void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
+    addKey(key, description, Integer.toString(defaultValue), restartRequired);
+  }
+
+  public static void addKey(@NotNull String key, @NotNull String description, boolean defaultValue, boolean restartRequired) {
+    addKey(key, description, Boolean.toString(defaultValue), restartRequired);
   }
 }

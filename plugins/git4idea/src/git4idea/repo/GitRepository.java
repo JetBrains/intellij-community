@@ -107,6 +107,9 @@ public interface GitRepository extends Repository {
   @NotNull
   Collection<GitBranchTrackInfo> getBranchTrackInfos();
 
+  @Nullable
+  GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName);
+
   boolean isRebaseInProgress();
 
   boolean isOnBranch();

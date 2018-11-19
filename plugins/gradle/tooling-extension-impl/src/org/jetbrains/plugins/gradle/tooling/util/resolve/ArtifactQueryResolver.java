@@ -36,7 +36,7 @@ class ArtifactQueryResolver {
   private final boolean myDownloadJavadoc;
   private final SourceSetCachedFinder mySourceSetFinder;
 
-  public ArtifactQueryResolver(@NotNull final Configuration configuration,
+  ArtifactQueryResolver(@NotNull final Configuration configuration,
                                @Nullable final String scope,
                                @NotNull final Project project,
                                final boolean downloadJavadoc,
@@ -139,7 +139,9 @@ class ArtifactQueryResolver {
 
     if (!fileDeps.isEmpty()) {
       for (ProjectDependency dep : projectDepsToFilter) {
-        Set<File> depFiles = DependencyResolverImpl.getTargetConfiguration(dep).getAllArtifacts().getFiles().getFiles();
+        Configuration targetConfiguration = DependencyResolverImpl.getTargetConfiguration(dep);
+        if (targetConfiguration == null) continue;
+        Set<File> depFiles = targetConfiguration.getAllArtifacts().getFiles().getFiles();
 
         final Set<File> intersection = new LinkedHashSet<File>(Sets.intersection(fileDeps, depFiles));
         if (!intersection.isEmpty()) {

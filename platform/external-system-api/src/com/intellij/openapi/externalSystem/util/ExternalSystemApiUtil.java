@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -31,7 +18,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -40,7 +26,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,7 +34,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -61,13 +49,11 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.Queue;
 
 import static com.intellij.util.PlatformUtils.*;
 
 /**
  * @author Denis Zhdanov
- * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemApiUtil {
 
@@ -103,12 +89,6 @@ public class ExternalSystemApiUtil {
   };
 
   @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
-
-  @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
-    new TransferToEDTQueue<>("External System queue", runnable -> {
-      runnable.run();
-      return true;
-    }, Conditions.alwaysFalse());
 
   private ExternalSystemApiUtil() {
   }
@@ -182,7 +162,7 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
-    if (file.getFileType() == FileTypes.ARCHIVE) {
+    if (file.getFileType() == ArchiveFileType.INSTANCE) {
       final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
       if (jar != null) {
         return jar.getPath();
@@ -201,14 +181,9 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
-  @SuppressWarnings("ManualArrayToCollectionCopy")
   @NotNull
-  public static Collection<ExternalSystemManager<?, ?, ?, ?, ?>> getAllManagers() {
-    List<ExternalSystemManager<?, ?, ?, ?, ?>> result = ContainerUtilRt.newArrayList();
-    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-      result.add(manager);
-    }
-    return result;
+  public static List<ExternalSystemManager<?, ?, ?, ?, ?>> getAllManagers() {
+    return ExternalSystemManager.EP_NAME.getExtensionList();
   }
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
@@ -226,17 +201,17 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<DataNode<?>> nodes) {
+  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<? extends DataNode<?>> nodes) {
     return ContainerUtil.groupBy(nodes, GROUPER);
   }
 
   @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, final Class<K> moduleDataClass) {
     return ContainerUtil.groupBy(nodes, node -> node.getParent(moduleDataClass));
   }
 
   @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, @NotNull final Key<K> key) {
     return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
@@ -269,7 +244,7 @@ public class ExternalSystemApiUtil {
 
   @SuppressWarnings("unchecked")
   @Nullable
-  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<DataNode<T>> predicate) {
+  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<? super DataNode<T>> predicate) {
     for (DataNode<?> child : node.getChildren()) {
       if (key.equals(child.getKey()) && predicate.fun((DataNode<T>)child)) {
         return (DataNode<T>)child;
@@ -278,7 +253,6 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   public static <T> DataNode<T> findParent(@NotNull DataNode<?> node, @NotNull Key<T> key) {
     return findParent(node, key, null);
@@ -289,20 +263,19 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static <T> DataNode<T> findParent(@NotNull DataNode<?> node,
                                            @NotNull Key<T> key,
-                                           @Nullable BooleanFunction<DataNode<T>> predicate) {
+                                           @Nullable BooleanFunction<? super DataNode<T>> predicate) {
     DataNode<?> parent = node.getParent();
     if (parent == null) return null;
     return key.equals(parent.getKey()) && (predicate == null || predicate.fun((DataNode<T>)parent))
            ? (DataNode<T>)parent : findParent(parent, key, predicate);
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     return getChildren(parent, key);
   }
 
-  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<? super DataNode<?>> consumer) {
     if (node == null) return;
 
     Stack<DataNode> toProcess = ContainerUtil.newStack(node);
@@ -326,20 +299,20 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes) {
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes) {
     return findAllRecursively(nodes, null);
   }
 
   @NotNull
   public static Collection<DataNode<?>> findAllRecursively(@Nullable DataNode<?> node,
-                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
     if (node == null) return Collections.emptyList();
     return findAllRecursively(node.getChildren(), predicate);
   }
 
   @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes,
-                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
+                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
     SmartList<DataNode<?>> result = new SmartList<>();
     for (DataNode<?> node : nodes) {
       if (predicate == null || predicate.fun(node)) {
@@ -354,27 +327,26 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
-                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     Queue<DataNode<?>> queue = new LinkedList<>();
     queue.add(parentNode);
     return findInQueue(queue, predicate);
   }
 
   @Nullable
-  public static DataNode<?> findFirstRecursively(@NotNull Collection<DataNode<?>> nodes,
-                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+  public static DataNode<?> findFirstRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
+                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     return findInQueue(new LinkedList<>(nodes), predicate);
   }
 
   @Nullable
   private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
-                                         @NotNull BooleanFunction<DataNode<?>> predicate) {
+                                         @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     while (!queue.isEmpty()) {
-      DataNode node = queue.remove();
+      DataNode<?> node = queue.remove();
       if (predicate.fun(node)) {
         return node;
       }
-      //noinspection unchecked
       queue.addAll(node.getChildren());
     }
     return null;
@@ -435,7 +407,7 @@ public class ExternalSystemApiUtil {
       runnable.run();
     }
     else {
-      TRANSFER_TO_EDT_QUEUE.offer(runnable);
+      EdtExecutorService.getInstance().execute(runnable);
     }
   }
 
@@ -460,7 +432,6 @@ public class ExternalSystemApiUtil {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Nullable
   public static String normalizePath(@Nullable String s) {
     return StringUtil.isEmpty(s) ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
@@ -571,7 +542,7 @@ public class ExternalSystemApiUtil {
    * @param e exception to process
    * @return error message for the given exception
    */
-  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   @NotNull
   public static String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
@@ -596,7 +567,6 @@ public class ExternalSystemApiUtil {
     return writer.toString();
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   public static AbstractExternalSystemSettings getSettings(@NotNull Project project, @NotNull ProjectSystemId externalSystemId)
     throws IllegalArgumentException {

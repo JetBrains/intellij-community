@@ -169,7 +169,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     private final @Nullable String url;
     private final @NotNull File indexDir;
 
-    public IndexData(String indexId, String repositoryId, File file, String url, File indexDir) {
+    IndexData(String indexId, String repositoryId, File file, String url, File indexDir) {
       this.indexId = indexId;
       this.repositoryId = repositoryId;
       this.file = file;

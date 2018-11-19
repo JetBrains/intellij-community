@@ -260,7 +260,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     @NotNull private final List<? extends State> myStates;
     private final boolean myUndo;
 
-    public MyUndoableAction(@NotNull MergeModelBase model, @NotNull List<? extends State> states, boolean undo) {
+    MyUndoableAction(@NotNull MergeModelBase model, @NotNull List<? extends State> states, boolean undo) {
       super(model.myDocument);
       myModelRef = new WeakReference<>(model);
 

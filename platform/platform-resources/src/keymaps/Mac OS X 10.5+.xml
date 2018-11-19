@@ -82,7 +82,6 @@
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
-  <action id="RunGc"/>
   <action id="RunClass"/>
 
   <action id="GotoBookmark0">
@@ -242,7 +241,6 @@
     <keyboard-shortcut first-keystroke="meta shift B"/>
     <keyboard-shortcut first-keystroke="control shift B"/>
     <mouse-shortcut keystroke="meta shift button1"/>
-    <mouse-shortcut keystroke="shift button2"/>
   </action>
 
   <action id="EditorJoinLines">
@@ -534,11 +532,11 @@
   </action>
 
   <action id="NextProjectWindow">
-    <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta alt BACK_QUOTE"/>
   </action>
 
   <action id="PreviousProjectWindow">
-    <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta shift alt BACK_QUOTE"/>
   </action>
 
   <action id="EditorCutLineEnd">
@@ -546,9 +544,11 @@
   </action>
   <action id="EditorDown">
     <keyboard-shortcut first-keystroke="DOWN"/>
+    <keyboard-shortcut first-keystroke="control N"/>
   </action>
   <action id="EditorLeft">
     <keyboard-shortcut first-keystroke="LEFT"/>
+    <keyboard-shortcut first-keystroke="control B"/>
   </action>
   <action id="EditorLineEnd">
     <keyboard-shortcut first-keystroke="END"/>
@@ -562,12 +562,14 @@
   </action>
   <action id="EditorRight">
     <keyboard-shortcut first-keystroke="RIGHT"/>
+    <keyboard-shortcut first-keystroke="control F"/>
   </action>
   <action id="EditorToggleColumnMode">
     <keyboard-shortcut first-keystroke="shift meta 8"/>
   </action>
   <action id="EditorUp">
     <keyboard-shortcut first-keystroke="UP"/>
+    <keyboard-shortcut first-keystroke="control P"/>
   </action>
 
   <action id="UsageView.Include">
@@ -630,5 +632,17 @@
 
   <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="alt shift F5"/>
+  </action>
+  <action id="ShowFilterPopup">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+
+  <action id="SearchEverywhere.NavigateToNextGroup">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="meta DOWN"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToPrevGroup">
+    <keyboard-shortcut first-keystroke="PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="meta UP"/>
   </action>
 </keymap>

@@ -61,7 +61,7 @@ public class DelegatingMemberInfoModel<T extends PsiElement, M extends MemberInf
   }
 
   @Override
-  public void memberInfoChanged(MemberInfoChange<T, M> event) {
+  public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
     myDelegatingTarget.memberInfoChanged(event);
   }
 

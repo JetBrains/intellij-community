@@ -129,7 +129,7 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
     @NotNull private final Document myDocument;
     @NotNull private final LineCol myPosition;
 
-    public MyNavigatable(@NotNull Project project, @NotNull VirtualFile targetFile, @NotNull Document document, @NotNull LineCol position) {
+    MyNavigatable(@NotNull Project project, @NotNull VirtualFile targetFile, @NotNull Document document, @NotNull LineCol position) {
       myProject = project;
       myTargetFile = targetFile;
       myDocument = document;

@@ -38,7 +38,7 @@ public class DFAMap<V> {
   public DFAMap() {
   }
 
-  public DFAMap(DFAMap<V> initialMap) {
+  public DFAMap(DFAMap<? extends V> initialMap) {
     myK = initialMap.myK;
     myV = initialMap.myV;
     myAll = initialMap.myAll == null ? null : new HashMap<>(initialMap.myAll);
@@ -49,7 +49,7 @@ public class DFAMap<V> {
     return (DFAMap<V>) ourEmptyMap;
   }
 
-  public void addKeys(HashSet<String> allNames) {
+  public void addKeys(HashSet<? super String> allNames) {
     if (myAll != null) {
       allNames.addAll(myAll.keySet());
     }

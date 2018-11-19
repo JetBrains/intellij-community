@@ -185,7 +185,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private static final int LOG_COLUMN = 2;
     private static final int READ_ALOUD_COLUMN = 3;
 
-    public NotificationsTreeTable() {
+    NotificationsTreeTable() {
       super(new NotificationsTreeTableModel());
       StripeTable.apply(this);
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -294,7 +294,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   private static class TreeColumnCellRenderer extends JLabel implements TreeCellRenderer {
     private final JTable myTable;
 
-    public TreeColumnCellRenderer(@NotNull JTable table) {
+    TreeColumnCellRenderer(@NotNull JTable table) {
       myTable = table;
       setHorizontalAlignment(SwingConstants.CENTER);
       setVerticalAlignment(SwingConstants.CENTER);
@@ -318,7 +318,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private final List<SettingsWrapper> mySettings = new ArrayList<>();
     private JTree myTree;
 
-    public NotificationsTreeTableModel() {
+    NotificationsTreeTableModel() {
       super(null);
 
       List<DefaultMutableTreeNode> rootChildren = new ArrayList<>();

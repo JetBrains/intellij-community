@@ -34,10 +34,6 @@ public class ReplaceNullCheckInspectionTest extends LightQuickFixParameterizedTe
     return new LocalInspectionTool[]{new ReplaceNullCheckInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/requireNonNull";

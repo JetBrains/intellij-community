@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
@@ -5,7 +6,6 @@ import com.intellij.coverage.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -122,7 +122,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   @Nullable
   private static CoverageRunner getCoverageRunner(VirtualFile file) {
-    for (CoverageRunner runner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
+    for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
       for (String extension : runner.getDataFileExtensions()) {
         if (Comparing.strEqual(file.getExtension(), extension)) return runner;
       }
@@ -243,7 +243,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private class NoCoverageAction extends DialogWrapperAction {
-    public NoCoverageAction() {
+    NoCoverageAction() {
       super("&No Coverage");
     }
 
@@ -255,7 +255,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private class AddExternalSuiteAction extends AnAction {
-    public AddExternalSuiteAction() {
+    AddExternalSuiteAction() {
       super("Add", "Add", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, mySuitesTree);
     }
@@ -324,7 +324,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private class DeleteSuiteAction extends AnAction {
-    public DeleteSuiteAction() {
+    DeleteSuiteAction() {
       super("Delete", "Delete", PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), mySuitesTree);
     }

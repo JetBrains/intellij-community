@@ -73,7 +73,7 @@ public class RootDetectionProcessor {
     }
   }
 
-  public static MultiMap<ProjectStructureDetector, DetectedProjectRoot> createRootsMap(List<DetectedRootData> list) {
+  public static MultiMap<ProjectStructureDetector, DetectedProjectRoot> createRootsMap(List<? extends DetectedRootData> list) {
     MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots = new MultiMap<>();
     for (final DetectedRootData rootData : list) {
       for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {

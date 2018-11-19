@@ -51,7 +51,7 @@ import java.awt.*;
  *
  * @author Ilya.Kazakevich
  */
-@SuppressWarnings({"InstanceVariableMayNotBeInitialized", "NonSerializableFieldInSerializableClass", "DeserializableClassInSecureContext",
+@SuppressWarnings({"InstanceVariableMayNotBeInitialized", "NonSerializableFieldInSerializableClass",
   "SerializableClassInSecureContext"}) // Nobody would serialize this class
 final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // Runnable to hide on console state changes
 

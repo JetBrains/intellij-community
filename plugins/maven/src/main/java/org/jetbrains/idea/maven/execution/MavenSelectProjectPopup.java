@@ -82,7 +82,7 @@ public class MavenSelectProjectPopup {
 
   public static void attachToButton(@NotNull final MavenProjectsManager projectsManager,
                                     @NotNull final JButton button,
-                                    @NotNull final Consumer<MavenProject> callback) {
+                                    @NotNull final Consumer<? super MavenProject> callback) {
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -100,7 +100,7 @@ public class MavenSelectProjectPopup {
         projectTree.setRootVisible(false);
         projectTree.setCellRenderer(new NodeRenderer() {
           @Override
-          public void customizeCellRenderer(JTree tree,
+          public void customizeCellRenderer(@NotNull JTree tree,
                                             Object value,
                                             boolean selected,
                                             boolean expanded,

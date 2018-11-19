@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/10/14
  */
 public class WarDirectory implements Serializable {
   /**

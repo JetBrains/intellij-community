@@ -5,16 +5,24 @@ package com.intellij.ui.tree;
 
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.intellij.ui.tree.TreePathUtil.convertArrayToTreePath;
 import static com.intellij.ui.tree.TreeTestUtil.node;
+import static com.intellij.util.containers.ContainerUtil.set;
 
 /**
  * @author Sergey.Malenkov
@@ -435,9 +443,465 @@ public final class TreeUtilVisitTest {
 
   private static void testMakeVisible(String expected, String... array) {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test
-      -> TreeUtil.makeVisible(test.getTree(), new TreeVisitor.ByTreePath<>(true, convertArrayToTreePath(array), Object::toString), path
+      -> TreeUtil.makeVisible(test.getTree(), convertArrayToVisitor(array), path
       -> test.addSelection(path, ()
       -> test.assertTree(expected, true, test::done))));
+  }
+
+  @Test
+  public void testSelect11() {
+    testSelect(convertArrayToVisitor("1", "11"),
+               "-Root\n" +
+               " -1\n" +
+               "  +[11]\n" +
+               "  +12\n" +
+               "  +13\n" +
+               " +2\n" +
+               " +3\n");
+  }
+
+  @Test
+  public void testSelect222() {
+    testSelect(convertArrayToVisitor("2", "22", "222"),
+               "-Root\n" +
+               " +1\n" +
+               " -2\n" +
+               "  +21\n" +
+               "  -22\n" +
+               "   +221\n" +
+               "   +[222]\n" +
+               "   +223\n" +
+               "  +23\n" +
+               " +3\n");
+  }
+
+  @Test
+  public void testSelect3333() {
+    testSelect(convertArrayToVisitor("3", "33", "333", "3333"),
+               "-Root\n" +
+               " +1\n" +
+               " +2\n" +
+               " -3\n" +
+               "  +31\n" +
+               "  +32\n" +
+               "  -33\n" +
+               "   +331\n" +
+               "   +332\n" +
+               "   -333\n" +
+               "    3331\n" +
+               "    3332\n" +
+               "    [3333]\n");
+  }
+
+  private static void testSelect(TreeVisitor visitor, String expected) {
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test
+      -> TreeUtil.select(test.getTree(), visitor, path
+      -> test.assertTree(expected, true, test::done)));
+  }
+
+  @Test
+  public void testMultiSelect3333and222and11andRoot() {
+    TreeVisitor[] array = {
+      convertArrayToVisitor("3", "33", "333", "3333"),
+      convertArrayToVisitor("2", "22", "222"),
+      convertArrayToVisitor("1", "11"),
+      path -> TreeVisitor.Action.INTERRUPT,
+    };
+    testMultiSelect(array, array.length,
+                    "-[Root]\n" +
+                    " -1\n" +
+                    "  +[11]\n" +
+                    "  +12\n" +
+                    "  +13\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  -22\n" +
+                    "   +221\n" +
+                    "   +[222]\n" +
+                    "   +223\n" +
+                    "  +23\n" +
+                    " -3\n" +
+                    "  +31\n" +
+                    "  +32\n" +
+                    "  -33\n" +
+                    "   +331\n" +
+                    "   +332\n" +
+                    "   -333\n" +
+                    "    3331\n" +
+                    "    3332\n" +
+                    "    [3333]\n");
+  }
+
+  @Test
+  public void testMultiSelectNothingExceptRoot() {
+    TreeVisitor[] array = {
+      convertArrayToVisitor("3", "33", "333", "[3333]"),
+      convertArrayToVisitor("2", "22", "[222]"),
+      convertArrayToVisitor("1", "[11]"),
+      path -> TreeVisitor.Action.INTERRUPT,
+      null,
+    };
+    testMultiSelect(array, 1,
+                    "-[Root]\n" +
+                    " -1\n" +
+                    "  +11\n" +
+                    "  +12\n" +
+                    "  +13\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  -22\n" +
+                    "   +221\n" +
+                    "   +222\n" +
+                    "   +223\n" +
+                    "  +23\n" +
+                    " -3\n" +
+                    "  +31\n" +
+                    "  +32\n" +
+                    "  -33\n" +
+                    "   +331\n" +
+                    "   +332\n" +
+                    "   -333\n" +
+                    "    3331\n" +
+                    "    3332\n" +
+                    "    3333\n");
+  }
+
+  @Test
+  public void testMultiSelectNothing() {
+    TreeVisitor[] array = {null, null, null};
+    testMultiSelect(array, 0, "+Root\n");
+  }
+
+  private static void testMultiSelect(@NotNull TreeVisitor[] array, int count, @NotNull String expected) {
+    testMultiSelect(array, count, expected, TreeTest::done);
+  }
+
+  private static void testMultiSelect(@NotNull TreeVisitor[] array, int count, @NotNull String expected, @NotNull Consumer<TreeTest> then) {
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test -> TreeUtil.promiseSelect(test.getTree(), Stream.of(array)).onProcessed(paths -> {
+      test.invokeSafely(() -> {
+        if (count == 0) {
+          Assert.assertNull(paths);
+        }
+        else {
+          Assert.assertNotNull(paths);
+          Assert.assertEquals(count, paths.size());
+        }
+        test.assertTree(expected, true, () -> then.accept(test));
+      });
+    }));
+  }
+
+  @Test
+  public void testCollectExpandedPaths() {
+    testCollectExpandedPaths(set("Root", "1", "2", "22", "3", "33", "333"), test
+      -> TreeUtil.collectExpandedPaths(test.getTree()));
+  }
+
+  @Test
+  public void testCollectExpandedPathsWithInvisibleRoot() {
+    testCollectExpandedPaths(set("1", "2", "22", "3", "33", "333"), test -> {
+      test.getTree().setRootVisible(false);
+      return TreeUtil.collectExpandedPaths(test.getTree());
+    });
+  }
+
+  @Test
+  public void testCollectExpandedPathsWithInvisibleRootUnder33() {
+    testCollectExpandedPaths(set("33", "333"), test -> {
+      test.getTree().setRootVisible(false);
+      TreePath root = test.getTree().getPathForRow(14); // 33
+      return TreeUtil.collectExpandedPaths(test.getTree(), root);
+    });
+  }
+
+  @Test
+  public void testCollectExpandedPathsWithInvisibleRootUnder333() {
+    testCollectExpandedPaths(set("333"), test -> {
+      test.getTree().setRootVisible(false);
+      TreePath root = test.getTree().getPathForRow(17); // 333
+      return TreeUtil.collectExpandedPaths(test.getTree(), root);
+    });
+  }
+
+  private static void testCollectExpandedPaths(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<TreePath>> getter) {
+    testCollectSelection(test -> {
+      List<TreePath> paths = getter.apply(test);
+      Assert.assertEquals(expected.size(), paths.size());
+      paths.forEach(path -> Assert.assertTrue(expected.contains(TreeUtil.getLastUserObject(String.class, path))));
+      test.done();
+    });
+  }
+
+  @Test
+  public void testCollectExpandedUserObjects() {
+    testCollectExpandedUserObjects(set("Root", "1", "2", "22", "3", "33", "333"), test
+      -> TreeUtil.collectExpandedUserObjects(test.getTree()));
+  }
+
+  @Test
+  public void testCollectExpandedUserObjectsWithCollapsedPath() {
+    testCollectExpandedUserObjects(set("Root", "1", "2", "22", "3"), test -> {
+      test.getTree().collapseRow(15); // 33
+      return TreeUtil.collectExpandedUserObjects(test.getTree());
+    });
+  }
+
+  @Test
+  public void testCollectExpandedUserObjectsWithCollapsedPath33Under33() {
+    testCollectExpandedUserObjects(set(), test -> {
+      test.getTree().collapseRow(15); // 33
+      TreePath root = test.getTree().getPathForRow(15); // 33
+      return TreeUtil.collectExpandedUserObjects(test.getTree(), root);
+    });
+  }
+
+  @Test
+  public void testCollectExpandedUserObjectsWithCollapsedPath333Under33() {
+    testCollectExpandedUserObjects(set("33"), test -> {
+      test.getTree().collapseRow(18); // 333
+      TreePath root = test.getTree().getPathForRow(15); // 33
+      return TreeUtil.collectExpandedUserObjects(test.getTree(), root);
+    });
+  }
+
+  private static void testCollectExpandedUserObjects(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<Object>> getter) {
+    testCollectSelection(test -> {
+      List<Object> objects = getter.apply(test);
+      Assert.assertEquals(expected.size(), objects.size());
+      objects.forEach(object -> Assert.assertTrue(expected.contains((String)object)));
+      test.done();
+    });
+  }
+
+  @Test
+  public void testCollectSelectedPaths() {
+    testCollectSelectedPaths(set("11", "222", "33", "3331", "3332", "3333", "Root"), test
+      -> TreeUtil.collectSelectedPaths(test.getTree()));
+  }
+
+  @Test
+  public void testCollectSelectedPathsWithInvisibleRoot() {
+    testCollectSelectedPaths(set("11", "222", "33", "3331", "3332", "3333"), test -> {
+      test.getTree().setRootVisible(false);
+      return TreeUtil.collectSelectedPaths(test.getTree());
+    });
+  }
+
+  @Test
+  public void testCollectSelectedPathsWithInvisibleRootUnder33() {
+    testCollectSelectedPaths(set("33", "3331", "3332", "3333"), test -> {
+      test.getTree().setRootVisible(false);
+      TreePath root = test.getTree().getPathForRow(14); // 33
+      return TreeUtil.collectSelectedPaths(test.getTree(), root);
+    });
+  }
+
+  @Test
+  public void testCollectSelectedPathsWithInvisibleRootUnder333() {
+    testCollectSelectedPaths(set("3331", "3332", "3333"), test -> {
+      test.getTree().setRootVisible(false);
+      TreePath root = test.getTree().getPathForRow(17); // 333
+      return TreeUtil.collectSelectedPaths(test.getTree(), root);
+    });
+  }
+
+  private static void testCollectSelectedPaths(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<TreePath>> getter) {
+    testCollectSelection(test -> {
+      List<TreePath> paths = getter.apply(test);
+      Assert.assertEquals(expected.size(), paths.size());
+      paths.forEach(path -> Assert.assertTrue(expected.contains(TreeUtil.getLastUserObject(String.class, path))));
+      test.done();
+    });
+  }
+
+  @Test
+  public void testCollectSelectedUserObjects() {
+    testCollectSelectedUserObjects(set("11", "222", "33", "3331", "3332", "3333", "Root"), test
+      -> TreeUtil.collectSelectedUserObjects(test.getTree()));
+  }
+
+  @Test
+  public void testCollectSelectedUserObjectsWithCollapsedPath() {
+    testCollectSelectedUserObjects(set("11", "222", "33", "Root"), test -> {
+      test.getTree().collapseRow(15); // 33
+      return TreeUtil.collectSelectedUserObjects(test.getTree());
+    });
+  }
+
+  @Test
+  public void testCollectSelectedUserObjectsWithCollapsedPathUnder33() {
+    testCollectSelectedUserObjects(set("33"), test -> {
+      test.getTree().collapseRow(15); // 33
+      TreePath root = test.getTree().getPathForRow(15); // 33
+      return TreeUtil.collectSelectedUserObjects(test.getTree(), root);
+    });
+  }
+
+  @Test
+  public void testCollectSelectedUserObjectsWithCollapsedPathUnder333() {
+    // collapsed parent node becomes selected if it contains selected children
+    testCollectSelectedUserObjects(set("333"), test -> {
+      test.getTree().collapseRow(18); // 333
+      TreePath root = test.getTree().getPathForRow(18); // 333
+      return TreeUtil.collectSelectedUserObjects(test.getTree(), root);
+    });
+  }
+
+  private static void testCollectSelectedUserObjects(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<Object>> getter) {
+    testCollectSelection(test -> {
+      List<Object> objects = getter.apply(test);
+      Assert.assertEquals(expected.size(), objects.size());
+      objects.forEach(object -> Assert.assertTrue(expected.contains((String)object)));
+      test.done();
+    });
+  }
+
+  private static void testCollectSelection(@NotNull Consumer<TreeTest> consumer) {
+    TreeVisitor[] array = {
+      convertArrayToVisitor("1", "11"),
+      convertArrayToVisitor("2", "22", "222"),
+      convertArrayToVisitor("3", "33"),
+      convertArrayToVisitor("3", "33", "333", "3331"),
+      convertArrayToVisitor("3", "33", "333", "3332"),
+      convertArrayToVisitor("3", "33", "333", "3333"),
+      path -> TreeVisitor.Action.INTERRUPT,
+    };
+    testMultiSelect(array, array.length,
+                    "-[Root]\n" +
+                    " -1\n" +
+                    "  +[11]\n" +
+                    "  +12\n" +
+                    "  +13\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  -22\n" +
+                    "   +221\n" +
+                    "   +[222]\n" +
+                    "   +223\n" +
+                    "  +23\n" +
+                    " -3\n" +
+                    "  +31\n" +
+                    "  +32\n" +
+                    "  -[33]\n" +
+                    "   +331\n" +
+                    "   +332\n" +
+                    "   -333\n" +
+                    "    [3331]\n" +
+                    "    [3332]\n" +
+                    "    [3333]\n",
+                    consumer);
+  }
+
+  @Test
+  public void testCollectSelectedObjectsOfType() {
+    TreeTest.test(() -> node(Boolean.TRUE, node(101), node(1.1f)), test
+      -> test.assertTree("+true\n", ()
+      -> TreeUtil.expandAll(test.getTree(), ()
+      -> test.assertTree("-true\n 101\n 1.1\n", ()
+      -> {
+      TreeUtil.visitVisibleRows(test.getTree(), path -> path, path -> test.getTree().addSelectionPath(path));
+      test.assertTree("-[true]\n [101]\n [1.1]\n", true, () -> {
+        Assert.assertEquals(3, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Object.class).size());
+        Assert.assertEquals(2, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Number.class).size());
+        Assert.assertEquals(1, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Boolean.class).size());
+        Assert.assertEquals(1, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Integer.class).size());
+        Assert.assertEquals(1, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Float.class).size());
+        Assert.assertEquals(0, TreeUtil.collectSelectedObjectsOfType(test.getTree(), String.class).size());
+        test.done();
+      });
+    }))));
+  }
+
+  @Test
+  public void testSelectFirstEmpty() {
+    testSelectFirst(() -> null, true, "");
+  }
+
+  @Test
+  public void testSelectFirstWithRoot() {
+    testSelectFirst(TreeUtilVisitTest::rootDeep, true, "+[Root]\n");
+  }
+
+  @Test
+  public void testSelectFirstWithoutRoot() {
+    testSelectFirst(TreeUtilVisitTest::rootDeep, false, " +[1]\n" + " +2\n" + " +3\n");
+  }
+
+  private static void testSelectFirst(@NotNull Supplier<TreeNode> root, boolean visible, @NotNull String expected) {
+    TreeTest.test(root, test -> {
+      test.getTree().setRootVisible(visible);
+      TreeUtil.promiseSelectFirst(test.getTree()).onProcessed(path -> {
+        test.invokeSafely(() -> {
+          if (expected.isEmpty()) {
+            Assert.assertNull(path);
+          }
+          else {
+            Assert.assertNotNull(path);
+            Assert.assertTrue(test.getTree().isVisible(path));
+          }
+          test.assertTree(expected, true, test::done);
+        });
+      });
+    });
+  }
+
+  @Test
+  public void testMakeVisibleNonExistent() {
+    testMakeVisibleNonExistent("-Root\n" +
+                               " +1\n" +
+                               " +2\n" +
+                               " -3\n" +
+                               "  +31\n" +
+                               "  +32\n" +
+                               "  +33\n",
+                               convertArrayToVisitor("3", "NonExistent"));
+  }
+
+  @Test
+  public void testMakeVisibleNonExistentRoot() {
+    testMakeVisibleNonExistent("+Root\n", createRootVisitor("tOOr"));
+  }
+
+  private static void testMakeVisibleNonExistent(String expected, TreeVisitor visitor) {
+    testNonExistent(expected, test -> TreeUtil.promiseMakeVisible(test.getTree(), visitor));
+  }
+
+  @Test
+  public void testExpandNonExistent() {
+    testExpandNonExistent("-Root\n" +
+                          " +1\n" +
+                          " +2\n" +
+                          " -3\n" +
+                          "  +31\n" +
+                          "  +32\n" +
+                          "  +33\n",
+                          convertArrayToVisitor("3", "NonExistent"));
+  }
+
+  @Test
+  public void testExpandNonExistentRoot() {
+    testExpandNonExistent("+Root\n", createRootVisitor("t00r"));
+  }
+
+  private static void testExpandNonExistent(String expected, TreeVisitor visitor) {
+    testNonExistent(expected, test -> TreeUtil.promiseExpand(test.getTree(), visitor));
+  }
+
+  private static void testNonExistent(String expected, Function<TreeTest, Promise<TreePath>> function) {
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test -> function.apply(test)
+      .onSuccess(path -> test.invokeSafely(() -> Assert.fail("found unexpected path: " + path)))
+      .onError(error -> test.invokeSafely(() -> {
+        Assert.assertTrue(error instanceof CancellationException);
+        test.assertTree(expected, test::done);
+      })));
+  }
+
+  private static TreeVisitor createRootVisitor(@NotNull String name) {
+    return new TreeVisitor.ByTreePath<>(new TreePath(name), Object::toString);
+  }
+
+  private static TreeVisitor convertArrayToVisitor(@NotNull String... array) {
+    return new TreeVisitor.ByTreePath<>(true, convertArrayToTreePath(array), Object::toString);
   }
 
   private static String value(TreePath path) {

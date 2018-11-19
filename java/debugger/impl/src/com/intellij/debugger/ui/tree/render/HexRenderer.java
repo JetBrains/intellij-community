@@ -37,7 +37,6 @@ public class HexRenderer extends NodeRendererImpl {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
     StringBuilder buf = new StringBuilder();

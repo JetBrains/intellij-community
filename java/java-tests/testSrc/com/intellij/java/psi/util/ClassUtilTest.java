@@ -63,7 +63,7 @@ public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
   }
 
   private PsiClass createClass(String text) throws IncorrectOperationException {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createClassFromText(text, null).getInnerClasses()[0];
+    return JavaPsiFacade.getElementFactory(getProject()).createClassFromText(text, null).getInnerClasses()[0];
   }
 
   private String signature(String method) {

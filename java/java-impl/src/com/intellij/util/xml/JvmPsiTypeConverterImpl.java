@@ -85,7 +85,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
       return null;
     }
     if (Arrays.binarySearch(CanonicalPsiTypeConverterImpl.PRIMITIVES, s) >= 0) {
-      return JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createPrimitiveType(s);
+      return JavaPsiFacade.getElementFactory(context.getProject()).createPrimitiveType(s);
     }
     final PsiClass aClass1 = DomJavaUtil.findClass(s, context.getFile(), context.getModule(), context.getSearchScope());
     return aClass1 == null ? null : createType(aClass1);
@@ -101,7 +101,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   private static PsiClassType createType(final PsiClass aClass) {
-    return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+    return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
   }
 
   private static PsiType makeArray(final int dimensions, final PsiType type) {

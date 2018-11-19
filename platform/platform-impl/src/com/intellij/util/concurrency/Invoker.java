@@ -5,13 +5,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.openapi.project.IndexNotReadyException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,12 +30,13 @@ public abstract class Invoker implements Disposable {
   private static final int THRESHOLD = Integer.MAX_VALUE;
   private static final Logger LOG = Logger.getInstance(Invoker.class);
   private static final AtomicInteger UID = new AtomicInteger();
+  private final ConcurrentHashMap<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
   private final AtomicInteger count = new AtomicInteger();
   private final String description;
   private volatile boolean disposed;
 
   private Invoker(@NotNull String prefix, @NotNull Disposable parent) {
-    description = UID.getAndIncrement() + ".Invoker." + prefix + ":" + parent.getClass().getName();
+    description = UID.getAndIncrement() + ".Invoker." + prefix + ": " + parent;
     register(parent, this);
   }
 
@@ -44,6 +48,9 @@ public abstract class Invoker implements Disposable {
   @Override
   public void dispose() {
     disposed = true;
+    while (!indicators.isEmpty()) {
+      indicators.keySet().forEach(AsyncPromise::cancel);
+    }
   }
 
   /**
@@ -130,17 +137,19 @@ public abstract class Invoker implements Disposable {
   private void invokeSafely(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
     try {
       if (canInvoke(task, promise)) {
-        if (isDispatchThread() || getApplication() == null) {
-          // do not care about ReadAction in EDT and in tests without application
-          task.run();
+        if (getApplication() == null) {
+          task.run(); // is not interruptible in tests without application
+        }
+        else if (isDispatchThread()) {
+          ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else if (getApplication().isReadAccessAllowed()) {
           if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
-          task.run();
+          ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else {
           // try to execute a task until it stops throwing ProcessCanceledException
-          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task)) {
+          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator(promise))) {
             if (!canInvoke(task, promise)) return; // stop execution of obsolete task
             ProgressIndicatorUtils.yieldToPendingWriteActions();
             if (!canRestart(task, promise, attempt)) return;
@@ -151,7 +160,7 @@ public abstract class Invoker implements Disposable {
         promise.setResult(null);
       }
     }
-    catch (ProcessCanceledException exception) {
+    catch (ProcessCanceledException | IndexNotReadyException exception) {
       if (canRestart(task, promise, attempt)) {
         count.incrementAndGet();
         int nextAttempt = attempt + 1;
@@ -159,14 +168,13 @@ public abstract class Invoker implements Disposable {
         LOG.debug("Task is restarted");
       }
     }
-    catch (Exception exception) {
-      LOG.warn(exception);
-      promise.setError(exception);
-    }
     catch (Throwable throwable) {
-      LOG.warn(throwable);
-      promise.setError(throwable);
-      throw throwable;
+      try {
+        LOG.error(throwable);
+      }
+      finally {
+        promise.setError(throwable);
+      }
     }
     finally {
       count.decrementAndGet();
@@ -218,22 +226,25 @@ public abstract class Invoker implements Disposable {
     return true;
   }
 
+  @NotNull
+  private ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
+    ProgressIndicatorBase indicator = indicators.get(promise);
+    if (indicator == null) {
+      indicator = new ProgressIndicatorBase(true);
+      ProgressIndicatorBase old = indicators.put(promise, indicator);
+      if (old != null) LOG.error("the same task is running in parallel");
+      promise.onProcessed(done -> indicators.remove(promise).cancel());
+    }
+    return indicator;
+  }
+
   /**
    * This class is the {@code Invoker} in the Event Dispatch Thread,
    * which is the only one valid thread for this invoker.
    */
   public static final class EDT extends Invoker {
-    private final TransferToEDTQueue<Runnable> queue;
-
     public EDT(@NotNull Disposable parent) {
       super("EDT", parent);
-      queue = TransferToEDTQueue.createRunnableMerger(toString());
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      queue.stop();
     }
 
     @Override
@@ -247,7 +258,7 @@ public abstract class Invoker implements Disposable {
         EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay, MILLISECONDS);
       }
       else {
-        queue.offer(runnable);
+        EdtExecutorService.getInstance().execute(runnable);
       }
     }
   }
@@ -301,10 +312,14 @@ public abstract class Invoker implements Disposable {
     @Override
     void offer(@NotNull Runnable runnable, int delay) {
       schedule(executor, () -> {
-        if (thread != null) LOG.warn("unexpected thread: " + thread);
-        thread = Thread.currentThread();
-        runnable.run();
-        thread = null;
+        if (thread != null) LOG.error("unexpected thread: " + thread);
+        try {
+          thread = Thread.currentThread();
+          runnable.run(); // may throw an assertion error
+        }
+        finally {
+          thread = null;
+        }
       }, delay);
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.CantRunException;
@@ -88,7 +74,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     PsiClass aClass = myFixture.addClass("package a; /** @noinspection ALL*/ @org.testng.annotations.Test public class MyTestClass {void testOne(){}}");
     assertFalse(new TestNGFramework().isTestMethod(aClass.getMethods()[0], false));
   }
-  
+
   public void testClassWithSingleParameterConstructor() {
     PsiClass aClass = myFixture.addClass("package a; @org.testng.annotations.Test " +
                                          "public class MyTestClass {" +
@@ -98,7 +84,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     Project project = getProject();
     TestClassFilter classFilter = new TestClassFilter(GlobalSearchScope.projectScope(project), project, false, true);
     assertTrue(classFilter.isAccepted(aClass));
-  } 
+  }
 
   public void testOneMethodWithDependencies() throws Exception {
     final PsiClass aClass =
@@ -162,7 +148,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     assertEquals(1, paramsToRerun.size());
     assertContainsElements(paramsToRerun, "a");
   }
-  
+
   public void testRerunFailedParameterized() {
     @SuppressWarnings("TestNGDataProvider") final PsiClass aClass =
       myFixture.addClass("package a; " +
@@ -192,8 +178,8 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
     final SMTestProxy testProxy = new SMTestProxy("test", false, "java:test://a.ATest.test[0]");
     testProxy.setLocator(new JavaTestLocator());
-    RerunFailedTestsAction.includeFailedTestWithDependencies(classes, projectScope, getProject(), testProxy); 
-    
+    RerunFailedTestsAction.includeFailedTestWithDependencies(classes, projectScope, getProject(), testProxy);
+
     final SMTestProxy testProxy2 = new SMTestProxy("test", false, "java:test://a.ATest.test[1]");
     testProxy2.setLocator(new JavaTestLocator());
     RerunFailedTestsAction.includeFailedTestWithDependencies(classes, projectScope, getProject(), testProxy2);
@@ -210,10 +196,9 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   private void doTestMethodConfiguration(PsiClass aClass, PsiMethod... expectedMethods) throws CantRunException {
     doTestMethodConfiguration(aClass, null, null, expectedMethods);
   }
-  
+
   private void doTestMethodConfiguration(PsiClass aClass, PsiClass secondaryClass, PsiMethod configMethod, PsiMethod... expectedMethods) throws CantRunException {
-    final TestNGConfiguration configuration =
-      new TestNGConfiguration("testOne", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+    final TestNGConfiguration configuration = new TestNGConfiguration("testOne", getProject());
     final TestData data = configuration.getPersistantData();
     data.TEST_OBJECT = TestType.METHOD.getType();
     data.METHOD_NAME = "testOne";
@@ -229,14 +214,14 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     assertContainsElements(methods.keySet(), expectedMethods);
     if (secondaryClass != null) {
       final Map<PsiMethod, List<String>> configMethods = classes.get(secondaryClass);
-      assertTrue(configMethods != null);
+      assertNotNull(configMethods);
       assertTrue(configMethods.containsKey(configMethod));
     }
   }
-  
+
   private void doTestClassConfiguration(PsiClass aClass) throws CantRunException {
     final TestNGConfiguration configuration =
-      new TestNGConfiguration("TestA", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+      new TestNGConfiguration("TestA", getProject());
     final TestData data = configuration.getPersistantData();
     data.TEST_OBJECT = TestType.CLASS.getType();
     data.setScope(TestSearchScope.SINGLE_MODULE);
@@ -251,8 +236,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTestPackageConfiguration(PsiClass... containingClasses) throws CantRunException {
-    final TestNGConfiguration configuration =
-      new TestNGConfiguration("p", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+    final TestNGConfiguration configuration = new TestNGConfiguration("p", getProject());
     final TestData data = configuration.getPersistantData();
     data.TEST_OBJECT = TestType.PACKAGE.getType();
     data.PACKAGE_NAME = "p";

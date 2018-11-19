@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.ActionShortcutProvider;
 import com.intellij.ide.util.FileStructureNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.resolve.YAMLAliasReference;
 
@@ -46,17 +48,31 @@ public class YAMLAliasResolveNodeProvider implements FileStructureNodeProvider<S
   @NotNull
   @Override
   public Collection<StructureViewTreeElement> provideNodes(@NotNull TreeElement node) {
-    if (!(node instanceof DuplicatedPsiTreeElementBase)) {
+    PsiElement psiElem;
+    String details;
+    if (node instanceof DuplicatedPsiTreeElementBase) {
+      DuplicatedPsiTreeElementBase yamlNode = (DuplicatedPsiTreeElementBase)node;
+      psiElem = yamlNode.getElement();
+      details = yamlNode.getDetails();
+    }
+    else if (node instanceof PsiTreeElementBase) {
+      PsiTreeElementBase yamlNode = (PsiTreeElementBase)node;
+      psiElem = yamlNode.getElement();
+      if (psiElem == null) {
+        // not sure it is possible
+        return Collections.emptyList();
+      }
+      details = calculateStartPath(psiElem);
+    }
+    else {
       return Collections.emptyList();
     }
-    DuplicatedPsiTreeElementBase yamlNode = (DuplicatedPsiTreeElementBase)node;
-    PsiElement psiElem = yamlNode.getElement();
     YAMLPsiElement yamlElem = psiElem instanceof YAMLPsiElement ? (YAMLPsiElement)psiElem : null;
     YAMLValue value = getContainedValue(yamlElem);
     if (!(value instanceof YAMLAlias)) {
       return Collections.emptyList();
     }
-    return YAMLStructureViewFactory.createChildrenViewTreeElements(resolveAlias((YAMLAlias)value), yamlNode.getDetails());
+    return YAMLStructureViewFactory.createChildrenViewTreeElements(resolveAlias((YAMLAlias)value), details);
   }
 
   @NotNull
@@ -99,5 +115,13 @@ public class YAMLAliasResolveNodeProvider implements FileStructureNodeProvider<S
       }
     });
     return result.get();
+  }
+
+  @NotNull
+  private static String calculateStartPath(@NotNull PsiElement psiElem) {
+    if (!(psiElem instanceof YAMLPsiElement)) {
+      return "";
+    }
+    return YAMLUtil.getConfigFullName((YAMLPsiElement)psiElem);
   }
 }

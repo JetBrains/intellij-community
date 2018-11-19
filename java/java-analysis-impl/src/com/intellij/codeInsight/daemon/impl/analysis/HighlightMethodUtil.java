@@ -69,7 +69,7 @@ public class HighlightMethodUtil {
   }
 
   static HighlightInfo checkMethodWeakerPrivileges(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                   @NotNull List<HierarchicalMethodSignature> superMethodSignatures,
+                                                   @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
                                                    boolean includeRealPositionInfo,
                                                    @NotNull PsiFile containingFile) {
     PsiMethod method = methodSignature.getMethod();
@@ -124,13 +124,13 @@ public class HighlightMethodUtil {
 
 
   static HighlightInfo checkMethodIncompatibleReturnType(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                         @NotNull List<HierarchicalMethodSignature> superMethodSignatures,
+                                                         @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
                                                          boolean includeRealPositionInfo) {
     return checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, includeRealPositionInfo, null);
   }
 
   static HighlightInfo checkMethodIncompatibleReturnType(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                         @NotNull List<HierarchicalMethodSignature> superMethodSignatures,
+                                                         @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
                                                          boolean includeRealPositionInfo,
                                                          @Nullable TextRange textRange) {
     PsiMethod method = methodSignature.getMethod();
@@ -228,7 +228,7 @@ public class HighlightMethodUtil {
 
 
   static HighlightInfo checkMethodOverridesFinal(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                 @NotNull List<HierarchicalMethodSignature> superMethodSignatures) {
+                                                 @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures) {
     PsiMethod method = methodSignature.getMethod();
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
@@ -256,7 +256,7 @@ public class HighlightMethodUtil {
   }
 
   static HighlightInfo checkMethodIncompatibleThrows(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                     @NotNull List<HierarchicalMethodSignature> superMethodSignatures,
+                                                     @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
                                                      boolean includeRealPositionInfo,
                                                      @NotNull PsiClass analyzedClass) {
     PsiMethod method = methodSignature.getMethod();
@@ -321,7 +321,7 @@ public class HighlightMethodUtil {
   // return number of exception  which was not declared in super method or -1
   private static int getExtraExceptionNum(@NotNull MethodSignature methodSignature,
                                           @NotNull MethodSignatureBackedByPsiMethod superSignature,
-                                          @NotNull List<PsiClassType> checkedExceptions,
+                                          @NotNull List<? extends PsiClassType> checkedExceptions,
                                           @NotNull PsiSubstitutor substitutorForDerivedClass) {
     PsiMethod superMethod = superSignature.getMethod();
     PsiSubstitutor substitutorForMethod = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superSignature);
@@ -617,15 +617,6 @@ public class HighlightMethodUtil {
       int idx = -1;
       for (int i = 0; i < expressions.length; i++) {
         PsiExpression expression = expressions[i];
-        if (expression instanceof PsiMethodCallExpression) {
-          final JavaResolveResult result = ((PsiCallExpression)expression).resolveMethodGenerics();
-          if (result instanceof MethodCandidateInfo &&
-              PsiUtil.isLanguageLevel8OrHigher(list) &&
-              ((MethodCandidateInfo)result).isToInferApplicability() &&
-              ((MethodCandidateInfo)result).getInferenceErrorMessage() == null) {
-            continue;
-          }
-        }
         if (!TypeConversionUtil.areTypesAssignmentCompatible(substitutor.substitute(parameters[i].getType()), expression)) {
           if (idx != -1) {
             idx = -1;
@@ -893,7 +884,9 @@ public class HighlightMethodUtil {
     PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
     if (expectedTypeByParent != null) {
       PsiType methodCallType = methodCall.getType();
-      if (methodCallType != null && TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent)) {
+      if (methodCallType != null && 
+          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) && 
+          !TypeConversionUtil.isAssignable(expectedTypeByParent, methodCallType)) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
       }
     }

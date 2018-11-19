@@ -75,7 +75,7 @@ class JUnit5NavigationTest {
     String locationHintValue = locationHintValue();
 
     Assertions.assertTrue(locationHintValue.startsWith("java:"), locationHintValue);
-    Assertions.assertTrue(locationHintValue.contains("://className.methodName"), locationHintValue);
+    Assertions.assertTrue(locationHintValue.contains("://className/methodName"), locationHintValue);
   }
 
   @Test
@@ -127,7 +127,7 @@ class JUnit5NavigationTest {
 
   private String locationHint() {
     TestIdentifier testIdentifier = TestIdentifier.from(new ConfigurableTestDescriptor(myTestSource));
-    return JUnit5TestExecutionListener.getLocationHint(testIdentifier);
+    return JUnit5TestExecutionListener.getLocationHint(testIdentifier, null);
   }
 
   private String locationHintValue() {
@@ -136,7 +136,7 @@ class JUnit5NavigationTest {
 
   private static String locationHintValue(final ConfigurableTestDescriptor descriptor) {
     TestIdentifier testIdentifier = TestIdentifier.from(descriptor);
-    return JUnit5TestExecutionListener.getLocationHintValue(testIdentifier.getSource().orElseThrow(IllegalStateException::new));
+    return JUnit5TestExecutionListener.getLocationHintValue(testIdentifier.getSource().orElseThrow(IllegalStateException::new), null);
   }
 
   private static ClassSource anySupportedSource() {
@@ -163,7 +163,7 @@ class JUnit5NavigationTest {
   private static class ConfigurableTestDescriptor extends AbstractTestDescriptor {
     private boolean myIsTest;
 
-    public ConfigurableTestDescriptor(TestSource testSource) {
+    ConfigurableTestDescriptor(TestSource testSource) {
       super(JUnit5NavigationTest.anyUniqueId(), JUnit5NavigationTest.anyDisplayName(), testSource);
     }
 

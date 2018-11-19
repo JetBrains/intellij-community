@@ -29,6 +29,7 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
     visitor.visitWildcardTypeArgument(this);
   }
 
+  @Override
   public String toString() {
     return "Type argument";
   }

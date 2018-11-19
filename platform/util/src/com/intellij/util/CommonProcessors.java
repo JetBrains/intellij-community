@@ -65,7 +65,7 @@ public class CommonProcessors {
   }
 
   @NotNull
-  public static <T> Processor<T> notNullProcessor(@NotNull final Processor<T> processor) {
+  public static <T> Processor<T> notNullProcessor(@NotNull final Processor<? super T> processor) {
     return new Processor<T>() {
       @Override
       public boolean process(@NotNull T t) {
@@ -101,13 +101,13 @@ public class CommonProcessors {
 
   public static class UniqueProcessor<T> implements Processor<T> {
     private final Set<T> processed;
-    private final Processor<T> myDelegate;
+    private final Processor<? super T> myDelegate;
 
-    public UniqueProcessor(@NotNull Processor<T> delegate) {
+    public UniqueProcessor(@NotNull Processor<? super T> delegate) {
       this(delegate, ContainerUtil.<T>canonicalStrategy());
     }
 
-    public UniqueProcessor(@NotNull Processor<T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
+    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
       myDelegate = delegate;
       processed = new THashSet<T>(strategy);
     }
@@ -185,7 +185,7 @@ public class CommonProcessors {
    * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning false value  
    */
   @NotNull
-  public static <T> Processor<T> processAll(@NotNull final Consumer<T> consumer) {
+  public static <T> Processor<T> processAll(@NotNull final Consumer<? super T> consumer) {
     return new Processor<T>() {
       @Override
       public boolean process(T t) {

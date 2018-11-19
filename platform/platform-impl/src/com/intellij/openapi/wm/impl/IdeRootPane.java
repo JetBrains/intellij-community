@@ -14,7 +14,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -112,6 +111,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     myGlassPaneInitialized = true;
     UIUtil.decorateWindowHeader(this);
     glassPane.setVisible(false);
+    setBorder(UIManager.getBorder("Window.border"));
   }
 
   @Override
@@ -295,7 +295,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   }
 
   void installNorthComponents(final Project project) {
-    ContainerUtil.addAll(myNorthComponents, Extensions.getExtensions(IdeRootPaneNorthExtension.EP_NAME, project));
+    ContainerUtil.addAll(myNorthComponents, IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       myNorthPanel.add(northComponent.getComponent());
       northComponent.uiSettingsChanged(UISettings.getInstance());

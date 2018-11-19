@@ -39,7 +39,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected void prependActions(DefaultActionGroup actionGroup) {
+  protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     super.prependActions(actionGroup);
     actionGroup.add(new ChangeScopeAction() {
       @Override

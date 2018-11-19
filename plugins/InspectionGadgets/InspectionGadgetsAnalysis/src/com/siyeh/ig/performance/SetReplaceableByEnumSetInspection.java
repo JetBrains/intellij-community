@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiLocalVariable;
@@ -59,7 +60,7 @@ public class SetReplaceableByEnumSetInspection extends BaseInspection {
     PsiClass probablyEnum = PsiUtil.resolveClassInClassTypeOnly(enumParameter);
     if (probablyEnum == null || !probablyEnum.isEnum()) return null;
     String text = "java.util.EnumSet.noneOf(" + enumParameter.getCanonicalText() + ".class)";
-    return new ReplaceExpressionWithTextFix(text, "Replace with EnumSet");
+    return new ReplaceExpressionWithTextFix(text, CommonQuickFixBundle.message("fix.replace.with.x", "EnumSet"));
   }
 
   @Override

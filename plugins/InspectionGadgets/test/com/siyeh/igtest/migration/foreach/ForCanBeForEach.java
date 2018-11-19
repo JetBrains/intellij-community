@@ -6,6 +6,7 @@ public class ForCanBeForEach {
 
     public void foo(int[] is) {
         <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; i < is.length; i++) {
+            System.out.println(is[i]);
         }
     }
 
@@ -255,8 +256,12 @@ public class ForCanBeForEach {
 
   public void food(int[] is) {
     <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; is.length > i; i++) {
+      System.out.println(is[i]);
     }
     for (int i = 0, j = 10; i < is.length; i++) {
+    }
+    for (int i = 0; i < is.length; i++) {
+      System.out.println('-');
     }
   }
 
@@ -269,7 +274,7 @@ public class ForCanBeForEach {
   class XX<T> {
     void m(T[] ts) {
       <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; i < ts.length; i++) {
-        System.out.println();
+        System.out.println(ts[i]);
       }
     }
   }

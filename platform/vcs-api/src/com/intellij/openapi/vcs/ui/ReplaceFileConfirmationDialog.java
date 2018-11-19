@@ -98,8 +98,7 @@ public class ReplaceFileConfirmationDialog {
 
     if (files == null) return result;
 
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    for (VirtualFile file : files) {
       if (myProgressIndicator != null) {
         myProgressIndicator.setText(VcsBundle.message("progress.text.searching.for.modified.files"));
         myProgressIndicator.setText2(file.getPresentableUrl());

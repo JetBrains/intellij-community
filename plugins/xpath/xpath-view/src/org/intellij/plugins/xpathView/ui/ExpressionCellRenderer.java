@@ -49,7 +49,7 @@ public class ExpressionCellRenderer extends DefaultTableCellRenderer implements 
 
     private class MyEditorTextField extends EditorTextField {
 
-        public MyEditorTextField(Document document, Project project, FileType fileType) {
+        MyEditorTextField(Document document, Project project, FileType fileType) {
             super(document, project, fileType, false);
         }
 

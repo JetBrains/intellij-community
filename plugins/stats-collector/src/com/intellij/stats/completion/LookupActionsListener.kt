@@ -46,7 +46,7 @@ class LookupActionsListener : AnActionListener {
     }
   }
 
-  override fun beforeActionPerformed(action: AnAction, dataContext: DataContext?, event: AnActionEvent?) {
+  override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
     logThrowables {
       when (action) {
         down -> listener.beforeDownPressed()

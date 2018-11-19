@@ -37,8 +37,7 @@ public class Util {
 
   static {
     char[] delimiters = DELIMITERS.toCharArray();
-    for (int i = 0; i < delimiters.length; i++) {
-      char delimiter = delimiters[i];
+    for (char delimiter : delimiters) {
       DELIMITERS_SET.add(delimiter);
     }
   }
@@ -101,8 +100,7 @@ public class Util {
   @NotNull
   public static DiffFragment[][] splitByUnchangedLines(@NotNull DiffFragment[] fragments) {
     List2D result = new List2D();
-    for (int i = 0; i < fragments.length; i++) {
-      DiffFragment fragment = fragments[i];
+    for (DiffFragment fragment : fragments) {
       if (!fragment.isEqual()) {
         result.add(fragment);
         continue;
@@ -130,8 +128,9 @@ public class Util {
         int length1 = text1.length();
         int length2 = text2.length();
         if (length1 == 0 || length2 == 0) {
-          if (length1 != 0 || length2 != 0)
+          if (length1 != 0 || length2 != 0) {
             result.add(DiffFragment.unchanged(text1, text2));
+          }
           break;
         }
       }
@@ -254,15 +253,16 @@ public class Util {
 
   @Nullable
   private static DiffString notEmptyContent(@NotNull DiffString string) {
-    return string.length() > 0 ? string : null;
+    return !string.isEmpty() ? string : null;
   }
 
   @NotNull
   public static DiffFragment[][] uniteFormattingOnly(@NotNull DiffFragment[][] lines) {
     List2D result = new List2D();
-    for (int i = 0; i < lines.length; i++) {
-      DiffFragment[] line = lines[i];
-      if (!areEqual(line) && areEqualOrFormatting(line)) result.addAll(line);
+    for (DiffFragment[] line : lines) {
+      if (!areEqual(line) && areEqualOrFormatting(line)) {
+        result.addAll(line);
+      }
       else {
         result.newRow();
         result.addAll(line);
@@ -273,10 +273,9 @@ public class Util {
   }
 
   private static boolean areEqualOrFormatting(@NotNull DiffFragment[] fragments) {
-    for (int i = 0; i < fragments.length; i++) {
-      DiffFragment fragment = fragments[i];
+    for (DiffFragment fragment : fragments) {
       if (fragment.isEqual()) continue;
-      for (int side = 0;  side < 2; side++) {
+      for (int side = 0; side < 2; side++) {
         DiffString text = FragmentSide.fromIndex(side).getText(fragment);
         if (text == null || text.isEmptyOrSpaces()) continue;
         return false;
@@ -286,8 +285,7 @@ public class Util {
   }
 
   private static boolean areEqual(@NotNull DiffFragment[] fragments) {
-    for (int i = 0; i < fragments.length; i++) {
-      DiffFragment fragment = fragments[i];
+    for (DiffFragment fragment : fragments) {
       if (!fragment.isEqual()) return false;
     }
     return true;
@@ -318,8 +316,7 @@ public class Util {
     if (nullCount == 0) return fragments;
     DiffFragment[] result = new DiffFragment[fragments.length - nullCount];
     int dstIndex = 0;
-    for (int i = 0; i < fragments.length; i++) {
-      DiffFragment fragment = fragments[i];
+    for (DiffFragment fragment : fragments) {
       if (fragment == null) continue;
       result[dstIndex] = fragment;
       dstIndex++;
@@ -357,7 +354,7 @@ public class Util {
   }
 
   private static class MyChange extends Diff.Change {
-    public MyChange(int line0, int line1, int deleted, int inserted) {
+    MyChange(int line0, int line1, int deleted, int inserted) {
       super(line0, line1, deleted, inserted, null);
     }
 

@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since 6.04.2011
  */
 public class JUnitForkedSplitter extends ForkedSplitter {
 

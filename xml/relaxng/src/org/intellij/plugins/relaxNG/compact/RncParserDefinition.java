@@ -98,7 +98,7 @@ public class RncParserDefinition implements ParserDefinition {
   }
 
   private static class MyRncElement extends RncElementImpl {
-    public MyRncElement(ASTNode node) {
+    MyRncElement(ASTNode node) {
       super(node);
     }
 

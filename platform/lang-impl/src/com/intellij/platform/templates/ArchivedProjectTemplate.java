@@ -98,7 +98,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     return null;
   }
 
-  public void handleUnzippedDirectories(File dir, List<File> filesToRefresh) throws IOException {
+  public void handleUnzippedDirectories(File dir, List<? super File> filesToRefresh) throws IOException {
     filesToRefresh.add(dir);
   }
 
@@ -119,7 +119,6 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   }
 
   private static List<WizardInputField> getFields(Element templateElement) {
-    //noinspection unchecked
     return ContainerUtil
       .mapNotNull(templateElement.getChildren(INPUT_FIELD), element -> {
         ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
@@ -127,7 +126,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
       });
   }
 
-  static <T> T consumeZipStream(@NotNull StreamProcessor<T> consumer, @NotNull ZipInputStream stream) throws IOException {
+  protected static <T> T consumeZipStream(@NotNull StreamProcessor<T> consumer, @NotNull ZipInputStream stream) throws IOException {
     try {
       return consumer.consume(stream);
     }

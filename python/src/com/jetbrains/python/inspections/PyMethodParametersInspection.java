@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -21,19 +7,15 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Ref;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.AddSelfQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,39 +84,19 @@ public class PyMethodParametersInspection extends PyInspection {
   }
 
   public class Visitor extends PyInspectionVisitor {
-    private Ref<PsiElement> myPossibleZopeRef = null;
 
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
-    @Nullable
-    private PsiElement findZopeInterface(PsiElement foothold) {
-      PsiElement ret;
-      synchronized (this) { // other threads would wait as long in resolveInRoots() anyway
-        if (myPossibleZopeRef == null) {
-          myPossibleZopeRef = new Ref<>();
-          ret = ResolveImportUtil.resolveModuleInRoots(QualifiedName.fromDottedString("zope.interface.Interface"), foothold);
-          myPossibleZopeRef.set(ret); // null is OK
-        }
-        else ret = myPossibleZopeRef.get();
-      }
-      return ret;
-    }
-
     @Override
     public void visitPyFunction(final PyFunction node) {
-      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
-        if (extension.ignoreMethodParameters(node)) {
+      for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
+        if (extension.ignoreMethodParameters(node, myTypeEvalContext)) {
           return;
         }
       }
-      // maybe it's a zope interface?
-      PsiElement zope_interface = findZopeInterface(node);
-      final PyClass cls = node.getContainingClass();
-      if (zope_interface instanceof PyClass) {
-        if (cls != null && cls.isSubclass((PyClass) zope_interface, myTypeEvalContext)) return; // it can have any params
-      }
+
       // analyze function itself
       PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(node);
       if (flags != null) {

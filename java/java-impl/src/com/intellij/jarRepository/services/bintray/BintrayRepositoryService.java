@@ -4,6 +4,7 @@ package com.intellij.jarRepository.services.bintray;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.jarRepository.services.MavenRepositoryService;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +16,6 @@ import java.util.List;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author ibessonov
@@ -60,7 +60,7 @@ public class BintrayRepositoryService extends MavenRepositoryService {
             bintrayEndpoint.getArtifacts(info.subject, info.repo, template.getGroupId(), template.getArtifactId());
           if (!isEmpty(template.getVersion())) {
             String versionTemplate = trimStart(trimEnd(template.getVersion(), "*"), "*");
-            artifacts = artifacts.stream().filter(a -> !a.getVersion().contains(versionTemplate)).collect(toList());
+            artifacts = ContainerUtil.filter(artifacts, a -> !a.getVersion().contains(versionTemplate));
           }
           return artifacts;
         }

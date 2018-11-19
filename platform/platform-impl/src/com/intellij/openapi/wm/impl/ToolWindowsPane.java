@@ -22,6 +22,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +32,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
@@ -89,11 +90,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     // Splitters
     myVerticalSplitter = new ThreeComponentsSplitter(true);
+    myVerticalSplitter.setMinSize(JBUI.scale(30));
     Disposer.register(this, myVerticalSplitter);
     myVerticalSplitter.setDividerWidth(0);
     myVerticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myVerticalSplitter.setBackground(Color.gray);
     myHorizontalSplitter = new ThreeComponentsSplitter(false);
+    myHorizontalSplitter.setMinSize(JBUI.scale(30));
     Disposer.register(this, myHorizontalSplitter);
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
@@ -766,7 +769,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
           @Override
           public String toString() {
-            return "["+String.valueOf(getFirstComponent()) + "|" + String.valueOf(getSecondComponent())+"]";
+            return "[" + getFirstComponent() + "|" + getSecondComponent() + "]";
           }
         }
         Splitter splitter = new MySplitter();
@@ -1200,7 +1203,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private static class ImageRef extends SoftReference<BufferedImage> {
     private @Nullable BufferedImage myStrongRef;
 
-    public ImageRef(@NotNull BufferedImage image) {
+    ImageRef(@NotNull BufferedImage image) {
       super(image);
       myStrongRef = image;
     }
@@ -1217,7 +1220,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static class ImageCache extends ScaleContext.Cache<ImageRef> {
-    public ImageCache(@NotNull Function<ScaleContext, ImageRef> imageProvider) {
+    ImageCache(@NotNull Function<? super ScaleContext, ? extends ImageRef> imageProvider) {
       super(imageProvider);
     }
 

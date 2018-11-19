@@ -38,8 +38,8 @@ public abstract class AbstractWatchAction extends AbstractActionFromEditGroup {
     saveWatch(configuration, watch);
     WatchOperation watchOperation = new WatchOperation(getWatchOperation(), watch);
     VirtualFile[] files = context.getSelectedFiles();
-    for (int i = 0; i < files.length; i++) {
-      watchOperation.addFile(files[i]);
+    for (VirtualFile file : files) {
+      watchOperation.addFile(file);
     }
     return new CommandCvsHandler(getTitle(context), watchOperation);
   }

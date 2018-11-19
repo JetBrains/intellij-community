@@ -189,7 +189,7 @@ public class SaxonTraceListener implements TraceListener {
     private final NamePool myNamePool;
     private final OutputEventQueueImpl myEventQueue;
 
-    public TracingOutputter(Emitter emitter, NamePool namePool) {
+    TracingOutputter(Emitter emitter, NamePool namePool) {
       super(namePool);
       this.emitter = emitter;
       myNamePool = namePool;

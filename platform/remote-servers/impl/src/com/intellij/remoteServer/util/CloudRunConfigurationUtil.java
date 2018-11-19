@@ -3,7 +3,8 @@ package com.intellij.remoteServer.util;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
@@ -16,9 +17,7 @@ import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRun
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
 import org.jetbrains.annotations.NotNull;
 
-
 public class CloudRunConfigurationUtil {
-
   public static <SC extends ServerConfiguration, DC extends DeploymentConfiguration>
   DeployToServerRunConfiguration<SC, DC> createRunConfiguration(RemoteServer<SC> account, Module module, DC deploymentConfiguration) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
@@ -35,17 +34,14 @@ public class CloudRunConfigurationUtil {
     final RunManager runManager = RunManager.getInstance(module.getProject());
     String name = generateRunConfigurationName(account, module);
 
-    final ConfigurationFactoryEx configurationFactory =
-      DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(account.getType()).getFactoryForType(deploymentSource.getType());
-
-    final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration(name, configurationFactory);
-
-    final DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
-
+    ConfigurationFactory configurationFactory = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(account.getType()).getFactoryForType(deploymentSource.getType());
+    final RunnerAndConfigurationSettings runSettings = runManager.createConfiguration(name, configurationFactory);
+    @SuppressWarnings("unchecked")
+    DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
     result.setServerName(account.getName());
     result.setDeploymentSource(deploymentSource);
     result.setDeploymentConfiguration(deploymentConfiguration);
-    configurationFactory.onNewConfigurationCreated(runSettings.getConfiguration());
+    RunManagerImplKt.callNewConfigurationCreated(configurationFactory, runSettings.getConfiguration());
 
     runManager.addConfiguration(runSettings);
     runManager.setSelectedConfiguration(runSettings);

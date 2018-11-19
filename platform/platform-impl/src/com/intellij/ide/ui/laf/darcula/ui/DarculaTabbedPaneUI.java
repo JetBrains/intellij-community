@@ -6,7 +6,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.UIUtilities;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -33,7 +33,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   private int hoverTab = -1;
 
-  public static final JBValue OFFSET = new JBValue.Float(1);
+  private static final JBValue OFFSET = new JBValue.Float(1);
+  private static final JBValue FONT_SIZE_OFFSET = new JBValue.UIInteger("TabbedPane.fontSizeOffset", -1);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -53,8 +54,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   private void modifyFontSize() {
     if (SystemInfo.isMac || SystemInfo.isLinux) {
-      Font font = tabPane.getFont();
-      tabPane.setFont(tabPane.getFont().deriveFont((float)font.getSize() - JBUI.scale(1.0f)));
+      Font font = UIManager.getFont("TabbedPane.font");
+      tabPane.setFont(tabPane.getFont().deriveFont((float)font.getSize() + FONT_SIZE_OFFSET.get()));
     }
   }
 
@@ -198,7 +199,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
       g.setFont(font);
       g.setColor(DISABLED_TEXT_COLOR);
-      SwingUtilities2.drawStringUnderlineCharAt(tabPane, g, title, mnemIndex, textRect.x, textRect.y + metrics.getAscent());
+      UIUtilities.drawStringUnderlineCharAt(tabPane, g, title, mnemIndex, textRect.x, textRect.y + metrics.getAscent());
     }
   }
 
@@ -292,7 +293,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       } else {
         // plain text
         String title = tabPane.getTitleAt(tabIndex);
-        width += SwingUtilities2.stringWidth(tabPane, metrics, title);
+        width += UIUtilities.stringWidth(tabPane, metrics, title);
       }
     }
     return width;

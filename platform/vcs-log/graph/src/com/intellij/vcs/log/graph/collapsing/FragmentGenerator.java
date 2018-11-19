@@ -56,9 +56,9 @@ public class FragmentGenerator {
   }
 
   @NotNull private final LiteLinearGraph myGraph;
-  @NotNull private final Condition<Integer> myRedNodes;
+  @NotNull private final Condition<? super Integer> myRedNodes;
 
-  public FragmentGenerator(@NotNull LiteLinearGraph graph, @NotNull Condition<Integer> redNodes) {
+  public FragmentGenerator(@NotNull LiteLinearGraph graph, @NotNull Condition<? super Integer> redNodes) {
     myGraph = graph;
     myRedNodes = redNodes;
   }

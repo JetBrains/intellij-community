@@ -49,6 +49,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     myName = PsiNameHelper.getShortClassName(myQualifiedName);
   }
 
+  @Override
   public String toString() {
     return "MigrationClass:" + myQualifiedName;
   }

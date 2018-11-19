@@ -4,7 +4,6 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -17,7 +16,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
@@ -40,22 +38,22 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
-  @Nullable private final Consumer<Throwable> myRecreateMainLogHandler;
+  @Nullable private final Consumer<? super Throwable> myRecreateMainLogHandler;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
   @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
 
-  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
+  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<? extends VcsRoot> roots) {
     this(project, uiProperties, roots, true, null);
   }
 
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogTabsProperties uiProperties,
-                       @NotNull Collection<VcsRoot> roots,
+                       @NotNull Collection<? extends VcsRoot> roots,
                        boolean scheduleRefreshImmediately,
-                       @Nullable Consumer<Throwable> recreateHandler) {
+                       @Nullable Consumer<? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
@@ -69,7 +67,6 @@ public class VcsLogManager implements Disposable {
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
     myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
-    myLogData.getUserRegistry().addRebuildListener(t -> fatalErrorsHandler.consume(myLogData.getUserRegistry(), t), this);
 
     if (scheduleRefreshImmediately) {
       scheduleInitialization();
@@ -134,17 +131,17 @@ public class VcsLogManager implements Disposable {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
     logProviders.forEach((key, value) -> providers2roots.putValue(value, key));
 
-    for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry: providers2roots.entrySet()) {
+    for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
       Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
       Disposer.register(disposableParent, disposable);
     }
   }
 
   @NotNull
-  public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots, @NotNull Project project) {
+  public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<? extends VcsRoot> roots, @NotNull Project project) {
     Map<VirtualFile, VcsLogProvider> logProviders = ContainerUtil.newHashMap();
-    VcsLogProvider[] allLogProviders = Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project);
-    for (VcsRoot root: roots) {
+    VcsLogProvider[] allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project);
+    for (VcsRoot root : roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();
       if (vcs == null || path == null) {
@@ -152,7 +149,7 @@ public class VcsLogManager implements Disposable {
         continue;
       }
 
-      for (VcsLogProvider provider: allLogProviders) {
+      for (VcsLogProvider provider : allLogProviders) {
         if (provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod())) {
           logProviders.put(path, provider);
           break;
@@ -211,7 +208,7 @@ public class VcsLogManager implements Disposable {
         LOG.error(e);
       }
 
-      if (source instanceof VcsLogStorage || source instanceof VcsUserRegistry) {
+      if (source instanceof VcsLogStorage) {
         ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
       }
     }
@@ -230,7 +227,7 @@ public class VcsLogManager implements Disposable {
   private class MainVcsLogUiFactory implements VcsLogUiFactory<VcsLogUiImpl> {
     private final String myLogId;
 
-    public MainVcsLogUiFactory(@NotNull String logId) {
+    MainVcsLogUiFactory(@NotNull String logId) {
       myLogId = logId;
     }
 

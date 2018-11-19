@@ -17,7 +17,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,8 +31,7 @@ public class EmptyPane {
   private JLabel myLabel;
 
   public EmptyPane(String text) {
-    final Color color = UIUtil.getSeparatorColor();
-    myLabel.setForeground(color);
+    myLabel.setForeground(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
     myLabel.setText(text);
     myPanel.setBackground(new Tree().getBackground());
   }

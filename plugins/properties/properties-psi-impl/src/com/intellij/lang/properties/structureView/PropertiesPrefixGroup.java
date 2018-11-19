@@ -40,12 +40,12 @@ import java.util.List;
  * @author cdr
  */
 public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewElement {
-  private final Collection<TreeElement> myProperties;
+  private final Collection<? extends TreeElement> myProperties;
   private final @NotNull String myPrefix;
   private final String myPresentableName;
   private final @NotNull String mySeparator;
 
-  public PropertiesPrefixGroup(final Collection<TreeElement> properties,
+  public PropertiesPrefixGroup(final Collection<? extends TreeElement> properties,
                                final @NotNull String prefix,
                                final String presentableName,
                                final @NotNull String separator) {
@@ -85,7 +85,7 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
 
       @Override
       public Icon getIcon(boolean open) {
-        return AllIcons.Nodes.Advice;
+        return AllIcons.Nodes.Tag;
       }
     };
   }

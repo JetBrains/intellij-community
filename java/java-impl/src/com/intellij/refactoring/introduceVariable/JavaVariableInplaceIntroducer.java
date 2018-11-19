@@ -248,7 +248,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
             if (variable != null) {
               finalListener.perform(myCanBeFinalCb.isSelected(), variable);
             }
-            ;
           });
         }
       });
@@ -423,7 +422,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   protected PsiVariable introduceVariable() {
-    PsiVariable variable = IntroduceVariableBase
+    PsiVariable variable = VariableExtractor
       .introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     if (variable instanceof PsiField) {

@@ -21,7 +21,7 @@ class OpenPartialDiffAction extends AnAction implements DumbAware {
   private final int myLeftIndex;
   private final int myRightIndex;
 
-  public OpenPartialDiffAction(int leftIndex, int rightIndex, Icon icon) {
+  OpenPartialDiffAction(int leftIndex, int rightIndex, Icon icon) {
     super("", null, icon);
     myLeftIndex = leftIndex;
     myRightIndex = rightIndex;

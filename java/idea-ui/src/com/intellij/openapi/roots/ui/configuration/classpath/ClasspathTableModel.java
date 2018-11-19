@@ -100,7 +100,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   private final ModuleConfigurationState myState;
   private final StructureConfigurableContext myContext;
 
-  public ClasspathTableModel(final ModuleConfigurationState state, StructureConfigurableContext context) {
+  ClasspathTableModel(final ModuleConfigurationState state, StructureConfigurableContext context) {
     super(EXPORT_COLUMN_INFO, new ClasspathTableItemClasspathColumnInfo(context), SCOPE_COLUMN_INFO);
     myState = state;
     myContext = context;
@@ -158,7 +158,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   private static class ClasspathTableItemClasspathColumnInfo extends ColumnInfo<ClasspathTableItem<?>, ClasspathTableItem<?>> {
     private final Comparator<ClasspathTableItem<?>> myItemComparator;
 
-    public ClasspathTableItemClasspathColumnInfo(final StructureConfigurableContext context) {
+    ClasspathTableItemClasspathColumnInfo(final StructureConfigurableContext context) {
       super("");
       myItemComparator = (o1, o2) -> {
         String text1 = ClasspathPanelImpl.getCellAppearance(o1, context, false).getText();

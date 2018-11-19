@@ -91,7 +91,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   private static class RelativePathFix implements LocalQuickFix {
     private final ConvertContext myContext;
 
-    public RelativePathFix(ConvertContext context) {
+    RelativePathFix(ConvertContext context) {
       myContext = context;
     }
 

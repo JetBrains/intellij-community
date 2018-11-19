@@ -38,6 +38,16 @@ fun <T : UElement> UElement.getParentOfType(parentClass: Class<out UElement>, st
   }
 }
 
+fun UElement.skipParentOfType(strict: Boolean, vararg parentClasses: Class<out UElement>): UElement? {
+  var element = (if (strict) uastParent else this)  ?: return null
+  while (true) {
+    if (!parentClasses.any { it.isInstance(element) }) {
+      return element
+    }
+    element = element.uastParent ?: return null
+  }
+}
+
 fun <T : UElement> UElement.getParentOfType(
   parentClass: Class<out UElement>,
   strict: Boolean = true,
@@ -75,13 +85,15 @@ fun <T : UElement> UElement.getParentOfType(
   }
 }
 
-fun UElement?.getUCallExpression(): UCallExpression? = this?.withContainingElements?.mapNotNull {
-  when (it) {
-    is UCallExpression -> it
-    is UQualifiedReferenceExpression -> it.selector as? UCallExpression
-    else -> null
-  }
-}?.firstOrNull()
+@JvmOverloads
+fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? =
+  this?.withContainingElements?.take(searchLimit)?.mapNotNull {
+    when (it) {
+      is UCallExpression -> it
+      is UQualifiedReferenceExpression -> it.selector as? UCallExpression
+      else -> null
+    }
+  }?.firstOrNull()
 
 @Deprecated(message = "This function is deprecated, use getContainingUFile", replaceWith = ReplaceWith("getContainingUFile()"))
 fun UElement.getContainingFile(): UFile? = getContainingUFile()
@@ -105,8 +117,6 @@ fun UElement.getContainingVariable(): PsiVariable? = getContainingUVariable()?.p
             replaceWith = ReplaceWith("PsiTreeUtil.getParentOfType(this, PsiClass::class.java)"))
 fun PsiElement?.getContainingClass(): PsiClass? = this?.let { PsiTreeUtil.getParentOfType(it, PsiClass::class.java) }
 
-fun PsiElement?.findContainingUClass(): UClass? = findContaining(UClass::class.java)
-
 fun <T : UElement> PsiElement?.findContaining(clazz: Class<T>): T? {
   var element = this
   while (element != null && element !is PsiFileSystemItem) {
@@ -116,7 +126,7 @@ fun <T : UElement> PsiElement?.findContaining(clazz: Class<T>): T? {
   return null
 }
 
-fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false): Boolean {
+fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): Boolean {
   tailrec fun isChildOf(current: UElement?, probablyParent: UElement): Boolean {
     return when (current) {
       null -> false
@@ -126,8 +136,11 @@ fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false): Bool
   }
 
   if (probablyParent == null) return false
-  return isChildOf(if (strict) this else uastParent, probablyParent)
+  return isChildOf(if (strict) uastParent else this, probablyParent)
 }
+
+@Deprecated("contains a bug in negation of `strict` parameter", replaceWith = ReplaceWith("isUastChildOf(probablyElement, strict)"))
+fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false) = isUastChildOf(probablyParent, !strict)
 
 /**
  * Resolves the receiver element if it implements [UResolvable].

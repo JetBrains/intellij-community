@@ -2,11 +2,10 @@
 package org.jetbrains.yaml.schema;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-@SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention"})
-public class YamlJsonSchemaTestSuite extends TestCase {
+@SuppressWarnings({"JUnitTestClassNamingConvention"})
+public class YamlJsonSchemaTestSuite {
   public static Test suite() {
     final TestSuite suite = new TestSuite(YamlJsonSchemaTestSuite.class.getSimpleName());
     suite.addTestSuite(YamlByJsonSchemaDocumentationTest.class);

@@ -165,7 +165,7 @@ public class AdvancedProxy {
     private final Class mySuperClass;
     private final Class[] myInterfaces;
 
-    public ProxyDescription(final Class superClass, final Class[] interfaces) {
+    ProxyDescription(final Class superClass, final Class[] interfaces) {
       mySuperClass = superClass;
       myInterfaces = interfaces;
     }

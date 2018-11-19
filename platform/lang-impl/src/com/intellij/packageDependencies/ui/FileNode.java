@@ -43,7 +43,7 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
   }
 
   @Override
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     final PsiFile file = getFile();
     if (file != null && file.isValid()) {

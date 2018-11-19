@@ -14,8 +14,11 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -67,6 +70,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -226,19 +231,30 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourPathToKeep = projectFile.getPath();
     ourPsiManager = null;
 
-    ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
-      @Override
-      public void moduleCreated(@NotNull Module module) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourModule = module;
-      }
+    try {
+      ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
+        @Override
+        public void moduleCreated(@NotNull Module module) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourModule = module;
+        }
 
-      @Override
-      public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourSourceRoot = sourceRoot;
+        @Override
+        public void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourSourceRoot = sourceRoot;
+        }
+      });
+    }
+    catch (Throwable e) {
+      try {
+        closeAndDeleteProject();
       }
-    });
+      catch (Throwable suppressed) {
+        e.addSuppressed(suppressed);
+      }
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -363,7 +379,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return LocalInspectionTool.EMPTY_ARRAY;
   }
 
-  @SuppressWarnings("TearDownDoesntCallSuperTearDown")
   @Override
   protected void tearDown() throws Exception {
     Project project = getProject();
@@ -429,6 +444,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
+      append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).
@@ -479,7 +495,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
     documentManager.clearUncommittedDocuments();
 
-    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     if (projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(defaultProject)).clearUncommittedDocuments();
@@ -492,6 +508,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     new RunAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {
+        // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
         RunAll runAll = new RunAll();
         for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
           runAll = runAll
@@ -556,7 +573,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       tearDown();
       //}
       //catch(Throwable th){
-      //  noinspection CallToPrintStackTrace
       //th.printStackTrace();
       //}
     }
@@ -617,18 +633,27 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return name;
   }
 
+  @NotNull
+  protected final CodeStyleSettings getCurrentCodeStyleSettings() {
+    return CodeStyle.getSettings(getProject());
+  }
+
+  @NotNull
+  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
+    return getCurrentCodeStyleSettings().getCommonSettings(language);
+  }
+
+  @NotNull
+  protected final <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
+    return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
+  }
+
   protected static void commitDocument(@NotNull Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
 
   protected static void commitAllDocuments() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-  }
-
-  @NotNull
-  @Override
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyle.getSettings(getProject());
   }
 
   protected static Document getDocument(@NotNull PsiFile file) {

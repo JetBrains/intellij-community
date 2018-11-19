@@ -21,7 +21,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Denis Zhdanov
- * @since 4/25/13 1:02 PM
  */
 public class StatisticsBundle extends AbstractBundle {
 

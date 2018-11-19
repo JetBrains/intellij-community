@@ -31,7 +31,7 @@ public class JavaCallerChooser extends AbstractJavaMemberCallerChooser<PsiMethod
                            Project project,
                            @Nls(capitalization = Nls.Capitalization.Title) String title,
                            Tree previousTree,
-                           Consumer<Set<PsiMethod>> callback) {
+                           Consumer<? super Set<PsiMethod>> callback) {
     super(method, project, title, previousTree, callback);
   }
 

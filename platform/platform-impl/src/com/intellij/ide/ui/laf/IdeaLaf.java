@@ -71,7 +71,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("Tree.ancestorInputMap", null);
     defaults.put("FileView.directoryIcon", AllIcons.Nodes.Folder);
     defaults.put("FileChooser.upFolderIcon", AllIcons.Nodes.UpFolder);
-    defaults.put("FileChooser.newFolderIcon", AllIcons.Nodes.NewFolder);
+    defaults.put("FileChooser.newFolderIcon", AllIcons.Nodes.Folder);
     defaults.put("FileChooser.homeFolderIcon", AllIcons.Nodes.HomeFolder);
     defaults.put("OptionPane.errorIcon", AllIcons.General.ErrorDialog);
     defaults.put("OptionPane.informationIcon", AllIcons.General.InformationDialog);

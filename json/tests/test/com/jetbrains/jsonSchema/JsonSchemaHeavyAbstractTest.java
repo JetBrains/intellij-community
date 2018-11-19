@@ -4,7 +4,6 @@ package com.jetbrains.jsonSchema;
 import com.intellij.codeInsight.completion.CompletionTestCase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -19,14 +18,12 @@ import java.util.Map;
  * @author Irina.Chernushina on 12/5/2016.
  */
 public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
-  private FileTypeManager myFileTypeManager;
   private Map<String, UserDefinedJsonSchemaConfiguration> mySchemas;
   protected boolean myDoCompletion = true;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFileTypeManager = FileTypeManager.getInstance();
     //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     mySchemas = new HashMap<>();
     myDoCompletion = true;
@@ -81,7 +78,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   protected interface Callback {
     void registerSchemes();
     void configureFiles() throws Exception;
-    void doCheck();
+    void doCheck() throws Exception;
   }
 
   protected void addSchema(@NotNull final UserDefinedJsonSchemaConfiguration schema) {

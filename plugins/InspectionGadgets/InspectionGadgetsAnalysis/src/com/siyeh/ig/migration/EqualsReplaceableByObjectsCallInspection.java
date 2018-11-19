@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -78,7 +64,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     private final String myName2;
     private final Boolean myEquals;
 
-    public EqualsReplaceableByObjectsCallFix(String name1, String name2, Boolean equals) {
+    EqualsReplaceableByObjectsCallFix(String name1, String name2, Boolean equals) {
       myName1 = name1;
       myName2 = name2;
       myEquals = equals;
@@ -324,7 +310,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression expression;
     final boolean isEqual;
 
-    public Negated(@NotNull PsiExpression expression, boolean isEqual) {
+    Negated(@NotNull PsiExpression expression, boolean isEqual) {
       this.expression = expression;
       this.isEqual = isEqual;
     }
@@ -348,7 +334,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression compared;
     final boolean isEqual;
 
-    public NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
+    NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
       this.compared = compared;
       this.isEqual = isEqual;
     }
@@ -373,7 +359,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression qualifier;
     final boolean isEqual;
 
-    public EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
+    EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
       this.argument = argument;
       this.qualifier = qualifier;
       this.isEqual = isEqual;
@@ -397,6 +383,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
   }
 
   private static class NoSideEffectExpressionEquivalenceChecker extends EquivalenceChecker {
+
     @Override
     protected Match newExpressionsMatch(@NotNull PsiNewExpression newExpression1,
                                         @NotNull PsiNewExpression newExpression2) {

@@ -40,14 +40,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
  * Holds miscellaneous utility methods.
  *
  * @author Denis Zhdanov
- * @since 8/25/11 1:19 PM
  */
 public class GradleUtil {
   private static final String LAST_USED_GRADLE_HOME_KEY = "last.used.gradle.home";
@@ -72,7 +75,6 @@ public class GradleUtil {
     return FileChooserDescriptorFactory.createSingleFolderDescriptor();
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static boolean isGradleDefaultWrapperFilesExist(@Nullable String gradleProjectPath) {
     return getWrapperConfiguration(gradleProjectPath) != null;
   }
@@ -226,5 +228,30 @@ public class GradleUtil {
     }
 
     return candidates[0];
+  }
+
+  @NotNull
+  public static String determineRootProject(@NotNull String subProjectPath) {
+    final Path subProject = Paths.get(subProjectPath);
+    Path candidate = subProject;
+    try {
+      while (candidate != null && candidate != candidate.getParent()) {
+        if (containsGradleSettingsFile(candidate)) {
+          return candidate.toString();
+        }
+        candidate = candidate.getParent();
+      }
+    } catch (IOException e) {
+      GradleLog.LOG.warn("Failed to determine root Gradle project directory for [" + subProjectPath + "]", e);
+    }
+    return Files.isDirectory(subProject) ? subProjectPath : subProject.getParent().toString();
+  }
+
+  private static boolean containsGradleSettingsFile(Path directory) throws IOException {
+    return Files.isDirectory(directory) && Files.walk(directory, 1)
+      .map(Path::getFileName)
+      .filter(Objects::nonNull)
+      .map(Path::toString)
+      .anyMatch(name -> name.startsWith("settings.gradle"));
   }
 }

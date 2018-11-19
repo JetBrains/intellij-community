@@ -30,7 +30,7 @@ public class IdeaTextPatchBuilder {
   }
 
   public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(@NotNull Project project,
-                                                                         @NotNull List<Change> changes) throws VcsException {
+                                                                         @NotNull List<? extends Change> changes) throws VcsException {
     final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
     Map<VcsRoot, List<Change>> byRoots =
       groupByRoots(project, changes, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
@@ -77,7 +77,7 @@ public class IdeaTextPatchBuilder {
   }
 
   @NotNull
-  public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
+  public static List<FilePatch> buildPatch(final Project project, final Collection<? extends Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes));
@@ -136,7 +136,7 @@ public class IdeaTextPatchBuilder {
     @NotNull private final StaticPathDescription myDescription;
     @Nullable private final Long myTimestamp;
 
-    public BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
+    BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
                                     @NotNull StaticPathDescription description,
                                     @Nullable Long timestamp) {
       myRevision = revision;
@@ -176,7 +176,7 @@ public class IdeaTextPatchBuilder {
     @NotNull private final StaticPathDescription myDescription;
     @Nullable private final Long myTimestamp;
 
-    public TextAirContentRevision(@NotNull ContentRevision revision,
+    TextAirContentRevision(@NotNull ContentRevision revision,
                                   @NotNull StaticPathDescription description,
                                   @Nullable Long timestamp) {
       myRevision = revision;
@@ -233,7 +233,7 @@ public class IdeaTextPatchBuilder {
   private static class PartialTextAirContentRevision extends TextAirContentRevision {
     @NotNull private final String myContent;
 
-    public PartialTextAirContentRevision(@NotNull String content,
+    PartialTextAirContentRevision(@NotNull String content,
                                          @NotNull ContentRevision delegateRevision,
                                          @NotNull StaticPathDescription description,
                                          @Nullable Long timestamp) {

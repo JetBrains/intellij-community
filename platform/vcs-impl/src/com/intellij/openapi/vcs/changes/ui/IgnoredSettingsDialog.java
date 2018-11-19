@@ -2,12 +2,9 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,15 +26,9 @@ public class IgnoredSettingsDialog extends DialogWrapper {
     return myPanel.createComponent();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("configureIgnoredFilesDialog");
+  protected String getHelpId() {
+    return "configureIgnoredFilesDialog";
   }
 
   public static void configure(final Project project) {
@@ -50,7 +41,6 @@ public class IgnoredSettingsDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
   protected String getDimensionServiceKey() {
     return "IgnoredSettingsDialog";
   }

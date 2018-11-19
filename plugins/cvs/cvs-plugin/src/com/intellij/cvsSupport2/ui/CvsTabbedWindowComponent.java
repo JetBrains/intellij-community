@@ -84,7 +84,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
   }
 
   private class CloseAction extends AnAction implements DumbAware {
-    public CloseAction() {
+    CloseAction() {
       super(com.intellij.CvsBundle.message("close.tab.action.name"), "", AllIcons.Actions.Cancel);
     }
 

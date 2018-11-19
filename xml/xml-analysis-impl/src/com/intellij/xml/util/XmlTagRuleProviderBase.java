@@ -76,7 +76,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
     return new InvalidAllExpectSome(text, ProblemHighlightType.LIKE_UNUSED_SYMBOL, attrNames);
   }
 
-  public static Rule rule(Condition<XmlTag> condition, Effect ... effect) {
+  public static Rule rule(Condition<? super XmlTag> condition, Effect ... effect) {
     return new ConditionRule(condition, effect);
   }
 
@@ -164,10 +164,10 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
   }
 
   public static class ConditionRule extends Rule {
-    private final Condition<XmlTag> myCondition;
+    private final Condition<? super XmlTag> myCondition;
     private final Effect[] myEffect;
 
-    public ConditionRule(Condition<XmlTag> condition, Effect ... effect) {
+    public ConditionRule(Condition<? super XmlTag> condition, Effect ... effect) {
       this.myCondition = condition;
       this.myEffect = effect;
     }

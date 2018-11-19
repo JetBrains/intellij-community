@@ -358,7 +358,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   private static class MyScanningListener implements ArtifactScanningListener {
     private final MavenServerProgressIndicator p;
 
-    public MyScanningListener(MavenServerProgressIndicator indicator) {
+    MyScanningListener(MavenServerProgressIndicator indicator) {
       p = indicator;
     }
 

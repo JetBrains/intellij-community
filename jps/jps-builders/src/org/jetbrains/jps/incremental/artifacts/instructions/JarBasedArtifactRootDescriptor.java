@@ -26,7 +26,7 @@ import java.util.zip.ZipFile;
  */
 public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private final String myPathInJar;
-  private final Condition<String> myPathInJarFilter;
+  private final Condition<? super String> myPathInJarFilter;
 
   public JarBasedArtifactRootDescriptor(@NotNull File jarFile,
                                         @NotNull String pathInJar,
@@ -34,7 +34,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                                         int index,
                                         @NotNull ArtifactBuildTarget target,
                                         @NotNull DestinationInfo destinationInfo,
-                                        @NotNull Condition<String> pathInJarFilter) {
+                                        @NotNull Condition<? super String> pathInJarFilter) {
     super(jarFile, filter, index, target, destinationInfo);
     myPathInJar = pathInJar;
     myPathInJarFilter = pathInJarFilter;

@@ -2,13 +2,13 @@
 
 package com.intellij.testGuiFramework.recorder
 
+import com.intellij.application.subscribe
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorPanel
@@ -24,17 +24,17 @@ object GlobalActionRecorder {
     private set
 
   private val globalActionListener = object : AnActionListener {
-    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext?, event: AnActionEvent?) {
+    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
       if (event?.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
       EventDispatcher.processActionEvent(action, event)
       LOG.info("IDEA is going to perform action ${action.templatePresentation.text}")
     }
 
-    override fun beforeEditorTyping(c: Char, dataContext: DataContext?) {
+    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
       LOG.info("IDEA typing detected: ${c}")
     }
 
-    override fun afterActionPerformed(action: AnAction?, dataContext: DataContext?, event: AnActionEvent?) {
+    override fun afterActionPerformed(action: AnAction?, dataContext: DataContext, event: AnActionEvent?) {
       if (event?.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
       if (action == null) return
       LOG.info("IDEA action performed ${action.templatePresentation.text}")
@@ -42,9 +42,14 @@ object GlobalActionRecorder {
   }
 
   private val globalAwtProcessor = IdeEventQueue.EventDispatcher { awtEvent ->
-    when (awtEvent) {
-      is MouseEvent -> EventDispatcher.processMouseEvent(awtEvent)
-      is KeyEvent -> EventDispatcher.processKeyBoardEvent(awtEvent)
+    try {
+      when (awtEvent) {
+        is MouseEvent -> EventDispatcher.processMouseEvent(awtEvent)
+        is KeyEvent -> EventDispatcher.processKeyBoardEvent(awtEvent)
+      }
+    }
+    catch (e: Exception) {
+      LOG.warn(e)
     }
     false
   }
@@ -53,7 +58,7 @@ object GlobalActionRecorder {
     if (isActive) return
     LOG.info("Global action recorder is active")
     disposable = Disposer.newDisposable()
-    ApplicationManager.getApplication().messageBus.connect(disposable!!).subscribe(AnActionListener.TOPIC, globalActionListener)
+    AnActionListener.TOPIC.subscribe(disposable!!, globalActionListener)
     IdeEventQueue.getInstance().addDispatcher(globalAwtProcessor, disposable) //todo: add disposal dependency on component
     isActive = true
   }

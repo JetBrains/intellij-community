@@ -22,7 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 class ArrayInitializerEvaluator implements Evaluator{
   private final Evaluator[] myValueEvaluators;
 
-  public ArrayInitializerEvaluator(Evaluator[] valueEvaluators) {
+  ArrayInitializerEvaluator(Evaluator[] valueEvaluators) {
     myValueEvaluators = valueEvaluators;
   }
 

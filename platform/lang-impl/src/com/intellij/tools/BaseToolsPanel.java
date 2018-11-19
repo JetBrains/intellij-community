@@ -357,7 +357,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   }
 
   @Nullable
-  private Tool getSelectedTool() {
+  public Tool getSelectedTool() {
     CheckedTreeNode node = getSelectedToolNode();
     if (node == null) return null;
     return node.getUserObject() instanceof Tool ? (Tool)node.getUserObject() : null;
@@ -529,7 +529,6 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     }
     final List<CheckedTreeNode> nodes = new ArrayList<>();
     new Object() {
-      @SuppressWarnings("unchecked")
       public void collect(CheckedTreeNode node) {
         if (node.isLeaf()) {
           Object userObject = node.getUserObject();

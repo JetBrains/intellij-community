@@ -26,7 +26,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +83,11 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     }
 
     PsiType castType = castTypeElement.getType();
+    // According to JLS 15.28 Constant Expressions, only casts to primitive types and to String type are considered constant
+    if (!(castType instanceof PsiPrimitiveType) && !castType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      myResult = null;
+      return;
+    }
     myResult = ConstantExpressionUtil.computeCastTo(opValue, castType);
   }
 
@@ -212,40 +216,12 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() || ((Boolean)rOperandValue).booleanValue());
       }
     }
-    else if (tokenType == JavaTokenType.LT) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() < ((Number)rOperandValue).doubleValue());
-      }
+    else if (tokenType == JavaTokenType.LT || tokenType == JavaTokenType.LE ||
+             tokenType == JavaTokenType.GT || tokenType == JavaTokenType.GE) {
+      value = compareNumbers(lOperandValue, rOperandValue, tokenType);
     }
-    else if (tokenType == JavaTokenType.LE) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() <= ((Number)rOperandValue).doubleValue());
-      }
-    }
-    else if (tokenType == JavaTokenType.GT) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() > ((Number)rOperandValue).doubleValue());
-      }
-    }
-    else if (tokenType == JavaTokenType.GE) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() >= ((Number)rOperandValue).doubleValue());
-      }
-    }
-    else if (tokenType == JavaTokenType.EQEQ) {
-      value = areValuesEqual(lOperandValue, rOperandValue, expression);
-    }
-    else if (tokenType == JavaTokenType.NE) {
-      Boolean eq = areValuesEqual(lOperandValue, rOperandValue, expression);
-      if (eq != null) value = !eq;
+    else if (tokenType == JavaTokenType.EQEQ || tokenType == JavaTokenType.NE) {
+      value = handleEqualityComparison(lOperandValue, rOperandValue, tokenType);
     }
     else if (tokenType == JavaTokenType.ASTERISK) {
       if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
@@ -418,22 +394,50 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
   }
 
   @Nullable
-  private static Boolean areValuesEqual(Object lOperandValue, Object rOperandValue, PsiPolyadicExpression expression) {
-    if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-    if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-    if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-      return isBoxedComparison(expression) ? lOperandValue == rOperandValue
-                                           : ((Number)lOperandValue).doubleValue() == ((Number)rOperandValue).doubleValue();
-    }
+  private static Boolean handleEqualityComparison(Object lOperandValue, Object rOperandValue, IElementType tokenType) {
     if (lOperandValue instanceof String && rOperandValue instanceof String ||
         lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-      return lOperandValue.equals(rOperandValue);
+      return lOperandValue.equals(rOperandValue) == (tokenType == JavaTokenType.EQEQ);
     }
-    return null;
+    return compareNumbers(lOperandValue, rOperandValue, tokenType);
   }
 
-  private static boolean isBoxedComparison(PsiPolyadicExpression expression) {
-    return Arrays.stream(expression.getOperands()).anyMatch(op -> op.getType() instanceof PsiClassType);
+  private static Boolean compareNumbers(Object o1, Object o2, IElementType op) {
+    // JLS 15.20.1. Numerical Comparison Operators <, <=, >, and >=
+    // JLS 15.21.1. Numerical Equality Operators == and !=
+    // JLS 5.6.2 Binary Numeric Promotion
+    if (o1 instanceof Character) o1 = (int)((Character)o1).charValue();
+    if (o2 instanceof Character) o2 = (int)((Character)o2).charValue();
+    if (!(o1 instanceof Number) || !(o2 instanceof Number)) return null;
+    Number n1 = (Number)o1;
+    Number n2 = (Number)o2;
+    int result;
+    if (n1 instanceof Double || n2 instanceof Double) {
+      double v1 = n1.doubleValue();
+      double v2 = n2.doubleValue();
+      if (Double.isNaN(v1) || Double.isNaN(v2)) return op == JavaTokenType.NE;
+      //Cannot use Double.compare as we don't need special treatment of 0.0 and -0.0 here
+      //noinspection UseCompareMethod
+      result = v1 < v2 ? -1 : v1 == v2 ? 0 : 1;
+    } else if (n1 instanceof Float || n2 instanceof Float) {
+      float v1 = n1.floatValue();
+      float v2 = n2.floatValue();
+      if (Float.isNaN(v1) || Float.isNaN(v2)) return op == JavaTokenType.NE;
+      //Cannot use Float.compare as we don't need special treatment of 0.0 and -0.0 here
+      //noinspection UseCompareMethod
+      result = v1 < v2 ? -1 : v1 == v2 ? 0 : 1;
+    } else if (n1 instanceof Long || n2 instanceof Long) {
+      result = Long.compare(n1.longValue(), n2.longValue());
+    } else {
+      result = Integer.compare(n1.intValue(), n2.intValue());
+    }
+    if (op == JavaTokenType.EQEQ) return result == 0;
+    if (op == JavaTokenType.LT) return result < 0;
+    if (op == JavaTokenType.LE) return result <= 0;
+    if (op == JavaTokenType.GT) return result > 0;
+    if (op == JavaTokenType.GE) return result >= 0;
+    if (op == JavaTokenType.NE) return result != 0;
+    throw new IllegalArgumentException("Unexpected operator: " + op);
   }
 
   @Override public void visitPrefixExpression(PsiPrefixExpression expression) {

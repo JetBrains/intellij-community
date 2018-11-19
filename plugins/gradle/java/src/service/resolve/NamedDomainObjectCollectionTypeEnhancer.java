@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhanc
 
 /**
  * @author Vladislav.Soroka
- * @since 9/25/13
  */
 public class NamedDomainObjectCollectionTypeEnhancer extends GrReferenceTypeEnhancer {
   @Override

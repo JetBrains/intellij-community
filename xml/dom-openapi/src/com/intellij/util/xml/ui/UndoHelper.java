@@ -34,7 +34,7 @@ public class UndoHelper {
       PsiDocumentManager psiDocumentManager;
 
       @Override
-      public void commandStarted(CommandEvent event) {
+      public void commandStarted(@NotNull CommandEvent event) {
         undoTransparentActionStarted();
       }
 
@@ -55,7 +55,7 @@ public class UndoHelper {
       }
 
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         undoTransparentActionFinished();
       }
     });

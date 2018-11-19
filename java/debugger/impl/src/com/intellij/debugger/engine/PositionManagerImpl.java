@@ -485,8 +485,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     PsiElement previous = null;
 
     while (element != null) {
-      if (PsiClass.class.isInstance(element) && !(previous instanceof PsiExpressionList)) {
-        //noinspection unchecked
+      if (element instanceof PsiClass && !(previous instanceof PsiExpressionList)) {
         return (PsiClass)element;
       }
       if (element instanceof PsiFile) {
@@ -588,7 +587,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     private final String myMethodSignature;
     private PsiMethod myCompiledMethod;
 
-    public MethodFinder(final String className, final String methodName, final String methodSignature) {
+    MethodFinder(final String className, final String methodName, final String methodSignature) {
       myClassName = className;
       myMethodName = methodName;
       myMethodSignature = methodSignature;

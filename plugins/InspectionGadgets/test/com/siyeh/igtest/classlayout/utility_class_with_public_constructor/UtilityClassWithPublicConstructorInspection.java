@@ -1,6 +1,6 @@
 package com.siyeh.igtest.classlayout.utility_class_with_public_constructor;
 
-public class UtilityClassWithPublicConstructorInspection
+public class <warning descr="Class 'UtilityClassWithPublicConstructorInspection' has only 'static' members, and a 'public' constructor">UtilityClassWithPublicConstructorInspection</warning>
 {
     public static final int CONSTANT = 1;
 

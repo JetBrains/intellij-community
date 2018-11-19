@@ -39,7 +39,7 @@ class UnaryExpressionEvaluator implements Evaluator {
   private final Evaluator myOperandEvaluator;
   private final String myOperationText;
 
-  public UnaryExpressionEvaluator(IElementType operationType, String expectedType, Evaluator operandEvaluator, final String operationText) {
+  UnaryExpressionEvaluator(IElementType operationType, String expectedType, Evaluator operandEvaluator, final String operationText) {
     myOperationType = operationType;
     myExpectedType = expectedType;
     myOperandEvaluator = operandEvaluator;

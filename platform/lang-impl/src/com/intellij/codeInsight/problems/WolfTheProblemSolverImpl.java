@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -19,15 +18,25 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +55,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   private final Project myProject;
   private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createLockFreeCopyOnWriteList();
-  private boolean myFiltersLoaded = false;
+  private boolean myFiltersLoaded;
 
   private void doRemove(@NotNull VirtualFile problemFile) {
     ProblemFileInfo old;
@@ -66,6 +75,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     private final Collection<Problem> problems = new THashSet<>();
     private boolean hasSyntaxErrors;
 
+    @Override
     public boolean equals(@Nullable final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -75,6 +85,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       return hasSyntaxErrors == that.hasSyntaxErrors && problems.equals(that.problems);
     }
 
+    @Override
     public int hashCode() {
       int result = problems.hashCode();
       result = 31 * result + (hasSyntaxErrors ? 1 : 0);
@@ -82,9 +93,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public WolfTheProblemSolverImpl(@NotNull Project project,
-                                  @NotNull PsiManager psiManager,
-                                  @NotNull VirtualFileManager virtualFileManager) {
+  WolfTheProblemSolverImpl(@NotNull Project project,
+                           @NotNull PsiManager psiManager,
+                           @NotNull MessageBus messageBus) {
     myProject = project;
     PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
       @Override
@@ -118,27 +129,30 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     };
     psiManager.addPsiTreeChangeListener(changeListener);
-    VirtualFileListener virtualFileListener = new VirtualFileListener() {
+    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void fileDeleted(@NotNull final VirtualFileEvent event) {
-        onDeleted(event.getFile());
-      }
-
-      @Override
-      public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
-        onDeleted(event.getFile());
-      }
-
-      private void onDeleted(@NotNull final VirtualFile file) {
-        if (file.isDirectory()) {
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        boolean dirChanged = false;
+        Set<VirtualFile> toRemove = new THashSet<>();
+        for (VFileEvent event : events) {
+          if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
+            VirtualFile file = event.getFile();
+            if (file.isDirectory()) {
+              dirChanged = true;
+            }
+            else {
+              toRemove.add(file);
+            }
+          }
+        }
+        if (dirChanged) {
           clearInvalidFiles();
         }
-        else {
+        for (VirtualFile file : toRemove) {
           doRemove(file);
         }
       }
-    };
-    virtualFileManager.addVirtualFileListener(virtualFileListener, myProject);
+    });
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) { //tests?
       fileStatusManager.addFileStatusListener(new FileStatusListener() {
@@ -324,7 +338,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     synchronized (myFilters) {
       if (!myFiltersLoaded) {
         myFiltersLoaded = true;
-        myFilters.addAll(Arrays.asList(Extensions.getExtensions(FILTER_EP_NAME, myProject)));
+        myFilters.addAll(Arrays.asList(FILTER_EP_NAME.getExtensions(myProject)));
       }
     }
     for (final Condition<VirtualFile> filter : myFilters) {

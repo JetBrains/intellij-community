@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -131,7 +132,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     boolean anyAccessibleFound = classList.stream().anyMatch(aClass -> isAccessible(aClass, myElement));
     PsiManager manager = myElement.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    classList.removeIf(aClass -> (anyAccessibleFound || !manager.isInProject(aClass) || facade.arePackagesTheSame(aClass, myElement)) && !isAccessible(aClass, myElement));
+    classList.removeIf(
+      aClass -> (anyAccessibleFound || !BaseIntentionAction.canModify(aClass) || facade.arePackagesTheSame(aClass, myElement)) && !isAccessible(aClass, myElement));
 
     if (acceptWrongNumberOfTypeParams && referenceHasTypeParameters) {
       final List<PsiClass> candidates = new ArrayList<>();
@@ -397,7 +399,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   protected abstract boolean hasUnresolvedImportWhichCanImport(PsiFile psiFile, String name);
 
-  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(PsiFile file, List<PsiClass> availableClasses) {
+  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(PsiFile file, List<? extends PsiClass> availableClasses) {
     final Project project = file.getProject();
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
     for (int i = availableClasses.size() - 1; i >= 0; i--) {

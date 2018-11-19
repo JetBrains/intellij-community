@@ -111,7 +111,7 @@ public interface MergeVersion {
     }
 
     @Nullable
-    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, @NotNull Collection<VirtualFile> files) {
+    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, @NotNull Collection<? extends VirtualFile> files) {
       final Set<VirtualFile> vfs = new THashSet<>();
       for (VirtualFile file : files) {
         if (file != null && !file.isDirectory()) {

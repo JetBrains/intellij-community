@@ -272,6 +272,11 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     return getContext().myReformatElements.containsKey(fileViewProvider);
   }
 
+  public static void assertDocumentChangeIsAllowed(@NotNull PsiFile file) {
+    PostprocessReformattingAspect reformattingAspect = getInstance(file.getProject());
+    reformattingAspect.assertDocumentChangeIsAllowed(file.getViewProvider());
+  }
+
   /**
    * Checks that view provider doesn't contain any PSI modifications which will be used in postponed formatting and may conflict with
    * changes made to the document.
@@ -517,9 +522,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     return !(currentTask instanceof ReindentTask);
   }
 
-  private static void createActionsMap(@NotNull List<ASTNode> astNodes,
+  private static void createActionsMap(@NotNull List<? extends ASTNode> astNodes,
                                        @NotNull FileViewProvider provider,
-                                       @NotNull Collection<PostprocessFormattingTask> rangesToProcess) {
+                                       @NotNull Collection<? super PostprocessFormattingTask> rangesToProcess) {
     final Set<ASTNode> nodesToProcess = new HashSet<>(astNodes);
     final Document document = provider.getDocument();
     if (document == null) {
@@ -588,7 +593,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
-  private static void handleReformatMarkers(@NotNull final FileViewProvider key, @NotNull final Set<PostprocessFormattingTask> rangesToProcess) {
+  private static void handleReformatMarkers(@NotNull final FileViewProvider key, @NotNull final Set<? super PostprocessFormattingTask> rangesToProcess) {
     final Document document = key.getDocument();
     if (document == null) {
       return;

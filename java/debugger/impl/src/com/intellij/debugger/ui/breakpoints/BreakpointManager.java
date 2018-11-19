@@ -276,7 +276,7 @@ public class BreakpointManager {
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
         if (category == null || category.equals(breakpoint.getCategory())) {
-          //noinspection CastConflictsWithInstanceof,unchecked
+          // noinspection unchecked
           return (T)breakpoint;
         }
       }
@@ -552,7 +552,7 @@ public class BreakpointManager {
     }
   }
 
-  private static <T extends EventRequest> void applyFilter(@NotNull List<T> requests, Consumer<T> setter) {
+  private static <T extends EventRequest> void applyFilter(@NotNull List<T> requests, Consumer<? super T> setter) {
     for (T request : requests) {
       try {
         boolean wasEnabled = request.isEnabled();

@@ -32,7 +32,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
   private final InspectionResultsView myView;
   private final InspectionTreeTailRenderer myTailRenderer;
 
-  public InspectionTreeCellRenderer(InspectionResultsView view) {
+  InspectionTreeCellRenderer(InspectionResultsView view) {
     myTailRenderer = new InspectionTreeTailRenderer(view.getGlobalInspectionContext()) {
       @Override
       protected void appendText(String text, SimpleTextAttributes attributes) {

@@ -30,10 +30,6 @@ public class Java8MapApiInspectionTest extends LightQuickFixParameterizedTestCas
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   public static class ImplTest {
     @Test
     public void testNameCandidate() {

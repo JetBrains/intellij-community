@@ -22,13 +22,12 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -84,32 +83,9 @@ public final class PlainTextView implements AntOutputView {
 
   @Override
   public void addJavacMessage(AntMessage message, String url) {
-    final VirtualFile file = message.getFile();
     if (message.getLine() > 0) {
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-
-        if (file != null) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            String presentableUrl = file.getPresentableUrl();
-            builder.append(presentableUrl);
-            builder.append(' ');
-          });
-        }
-        else if (url != null) {
-          builder.append(url);
-          builder.append(' ');
-        }
-        builder.append('(');
-        builder.append(message.getLine());
-        builder.append(':');
-        builder.append(message.getColumn());
-        builder.append(")");
-        print(builder.toString(), ProcessOutputTypes.STDOUT);
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
+      String msg = TreeView.printMessage(message, url);
+      print(msg, ProcessOutputTypes.STDOUT);
     }
     print(message.getText(), ProcessOutputTypes.STDOUT);
   }
@@ -167,7 +143,7 @@ public final class PlainTextView implements AntOutputView {
 
   @Override
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return null;
   }
 

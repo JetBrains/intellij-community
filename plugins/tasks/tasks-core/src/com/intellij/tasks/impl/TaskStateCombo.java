@@ -45,7 +45,7 @@ public abstract class TaskStateCombo extends JPanel {
     this(null, null);
   }
 
-  @SuppressWarnings({"GtkPreferredJComboBoxRenderer", "unchecked"})
+  @SuppressWarnings({"unchecked"})
   public TaskStateCombo(Project project, Task task) {
     myProject = project;
     myTask = task;
@@ -140,18 +140,18 @@ public abstract class TaskStateCombo extends JPanel {
   private static class CustomStateTrinityAdapter extends Trinity<String, Icon, String> {
     final CustomTaskState myState;
 
-    public CustomStateTrinityAdapter(@NotNull CustomTaskState state) {
+    CustomStateTrinityAdapter(@NotNull CustomTaskState state) {
       super(state.getPresentableName(), null, state.getId());
       myState = state;
     }
 
     @NotNull
-    static List<CustomStateTrinityAdapter> wrapList(@NotNull Collection<CustomTaskState> states) {
+    static List<CustomStateTrinityAdapter> wrapList(@NotNull Collection<? extends CustomTaskState> states) {
       return ContainerUtil.map(states, state -> new CustomStateTrinityAdapter(state));
     }
 
     @NotNull
-    static List<CustomTaskState> unwrapList(@NotNull Collection<CustomStateTrinityAdapter> wrapped) {
+    static List<CustomTaskState> unwrapList(@NotNull Collection<? extends CustomStateTrinityAdapter> wrapped) {
       return ContainerUtil.map(wrapped, adapter -> adapter.myState);
     }
   }

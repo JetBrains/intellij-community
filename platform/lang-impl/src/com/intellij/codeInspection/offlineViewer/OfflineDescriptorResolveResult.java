@@ -97,7 +97,7 @@ class OfflineDescriptorResolveResult {
     final InspectionManager inspectionManager = InspectionManager.getInstance(presentation.getContext().getProject());
     final OfflineProblemDescriptor offlineProblemDescriptor = offlineDescriptor;
     if (element instanceof RefElement) {
-      final PsiElement psiElement = ((RefElement)element).getElement();
+      final PsiElement psiElement = ((RefElement)element).getPsiElement();
       if (psiElement != null) {
         ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(
           () -> runLocalTool(psiElement,

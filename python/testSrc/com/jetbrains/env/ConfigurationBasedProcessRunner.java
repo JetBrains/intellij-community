@@ -145,7 +145,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   private ExecutionEnvironment createExecutionEnvironment(@NotNull final String sdkPath, @NotNull final Project project, @NotNull final String workingDir)
     throws ExecutionException {
     final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(project).createRunConfiguration("test", myConfigurationFactory);
+      RunManager.getInstance(project).createConfiguration("test", myConfigurationFactory);
 
     final AbstractPythonRunConfigurationParams config = (AbstractPythonRunConfigurationParams)settings.getConfiguration();
 

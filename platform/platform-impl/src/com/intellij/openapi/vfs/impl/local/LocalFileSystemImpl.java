@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -185,7 +184,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return parts;
   }
 
-  private static void visitTree(TreeNode rootNode, Consumer<TreeNode> consumer) {
+  private static void visitTree(TreeNode rootNode, Consumer<? super TreeNode> consumer) {
     for (TreeNode node : rootNode.nodes.values()) {
       consumer.consume(node);
       visitTree(node, consumer);
@@ -259,7 +258,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     }
   }
 
-  public void markSuspiciousFilesDirty(@NotNull List<VirtualFile> files) {
+  public void markSuspiciousFilesDirty(@NotNull List<? extends VirtualFile> files) {
     storeRefreshStatusToFiles();
 
     if (myWatcher.isOperational()) {
@@ -299,7 +298,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return result;
   }
 
-  private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<WatchRequest> results) {
+  private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<? super WatchRequest> results) {
     boolean update = false;
 
     for (String root : recursiveRoots) {
@@ -343,7 +342,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return new WatchRequestImpl(rootFile.getAbsolutePath(), recursively);
   }
 
-  private boolean doRemoveWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
+  private boolean doRemoveWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests) {
     boolean update = false;
 
     for (WatchRequest watchRequest : watchRequests) {
@@ -364,6 +363,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
         (request.isToWatchRecursively() ? recursiveRoots : flatRoots).add(request.myFSRootPath);
       }
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Setting up file watcher. Recursive roots: " + recursiveRoots.size() + ", flat roots: " + flatRoots.size());
+      }
+      
       myWatcher.setWatchRoots(recursiveRoots, flatRoots);
     }
   }

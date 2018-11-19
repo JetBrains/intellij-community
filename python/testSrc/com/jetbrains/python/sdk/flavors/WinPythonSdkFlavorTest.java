@@ -84,7 +84,6 @@ public final class WinPythonSdkFlavorTest {
    */
   private String caseInsensitive(@NotNull final String source) {
     // Never returns null: lame EasyMock api
-    //noinspection ConstantConditions
     return EasyMock.matches(String.format("(?i)%s", source.replace("\\", "\\\\")));
   }
 }

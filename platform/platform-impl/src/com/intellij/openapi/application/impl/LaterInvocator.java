@@ -24,8 +24,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -313,17 +313,9 @@ public class LaterInvocator {
   }
 
   @NotNull
-  private static Object[] getCurrentModalEntitiesForProject(Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (project == null || !ourModalEntities.isEmpty()) {
-      return ArrayUtil.toObjectArray(ourModalEntities);
-    }
-    return ArrayUtil.toObjectArray(projectToModalEntities.get(project));
-  }
-
-  @NotNull
   public static Object[] getCurrentModalEntities() {
-    return getCurrentModalEntitiesForProject(null);
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return ArrayUtil.toObjectArray(ourModalEntities);
   }
 
   @NotNull
@@ -337,13 +329,9 @@ public class LaterInvocator {
 
     if (ourModalEntities.isEmpty()) return false;
 
-    List<Dialog> modalEntitiesForProject = getModalEntitiesForProject(project);
+    List<Dialog> modalEntitiesForProject = projectToModalEntities.get(project);
 
     return modalEntitiesForProject == null || modalEntitiesForProject.isEmpty();
-  }
-
-  private static List<Dialog> getModalEntitiesForProject(Project project) {
-    return projectToModalEntities.get(project);
   }
 
   public static boolean isInModalContext() {
@@ -405,7 +393,7 @@ public class LaterInvocator {
   private static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
 
   private static class FlushQueue implements Runnable {
-    @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private RunnableInfo myLastInfo;
+    private RunnableInfo myLastInfo;
 
     @Override
     public void run() {
@@ -488,7 +476,7 @@ public class LaterInvocator {
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    invokeLaterWithCallback(semaphore::up, ModalityState.any(), Conditions.FALSE, null);
+    invokeLater(semaphore::up, ModalityState.any());
     while (!semaphore.isUp()) {
       UIUtil.dispatchAllInvocationEvents();
     }

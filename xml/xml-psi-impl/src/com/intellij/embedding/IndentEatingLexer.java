@@ -154,7 +154,7 @@ public class IndentEatingLexer extends MasqueradingLexer.SmartDelegate {
     private final int length;
     private int shrunkPos;
 
-    public DeletedIndentInfo(int realPos, int length) {
+    DeletedIndentInfo(int realPos, int length) {
       this.realPos = realPos;
       this.length = length;
       shrunkPos = -1;

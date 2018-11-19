@@ -118,12 +118,12 @@ public class PyEduDebugRunner extends PyDebugRunner {
         ToggleAction action = new ToggleAction(presentation.getText(), presentation.getDescription(), presentation.getIcon()) {
 
           @Override
-          public boolean isSelected(AnActionEvent e) {
+          public boolean isSelected(@NotNull AnActionEvent e) {
             return !view.isPrimaryConsoleEnabled();
           }
 
           @Override
-          public void setSelected(AnActionEvent e, boolean state) {
+          public void setSelected(@NotNull AnActionEvent e, boolean state) {
             view.enableConsole(!state);
           }
         };

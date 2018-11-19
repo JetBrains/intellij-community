@@ -35,11 +35,11 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +57,8 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -81,8 +81,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final String myWorkingDir;
   private volatile int myTimeColumnWidth;
   private final AtomicBoolean myDisposed = new AtomicBoolean();
-  private final TransferToEDTQueue<Runnable> myLaterInvocator =
-    TransferToEDTQueue.createRunnableMerger("BuildTreeConsoleView later invocator");
+  private final MergingUpdateQueue myLaterInvocator = new MergingUpdateQueue("BuildTreeConsoleView later invocator", 100, true, null, this);
 
   public BuildTreeConsoleView(Project project, BuildDescriptor buildDescriptor) {
     myProject = project;
@@ -119,7 +118,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                      int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         setHorizontalAlignment(SwingConstants.RIGHT);
-        final Color fg = isSelected ? UIUtil.getTreeSelectionForeground() : SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor();
+        Color fg = isSelected ? UIUtil.getTreeSelectionForeground(hasFocus) : SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor();
         setForeground(fg);
         return this;
       }
@@ -162,8 +161,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         final Component rendererComponent =
           treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         if (rendererComponent instanceof SimpleColoredComponent) {
-          final Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          final Color fg = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
+          Color bg = UIUtil.getTreeBackground(selected, true);
+          Color fg = UIUtil.getTreeForeground(selected, true);
           if (selected) {
             for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
               it.next();
@@ -191,7 +190,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     TreeUtil.installActions(tree);
     myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
 
-    myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null);
+    myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(this, myBuilder);
     myBuilder.initRootNode();
     myBuilder.updateFromRoot();
@@ -319,7 +320,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     ExecutionNode currentNode = nodesMap.get(event.getId());
     if (event instanceof StartEvent || event instanceof MessageEvent) {
@@ -438,7 +439,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         myBuilder.queueUpdateFrom(node, false, true);
       }
     };
-    myLaterInvocator.offerIfAbsent(update);
+    myLaterInvocator.queue(update);
   }
 
   private ExecutionNode createMessageParentNodes(MessageEvent messageEvent, ExecutionNode parentNode) {
@@ -469,7 +470,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
       String relativePath = FileUtil.getRelativePath(myWorkingDir, filePath, '/');
       if (relativePath != null) {
-        String nodeId = group.hashCode() + myWorkingDir;
+        String nodeId = groupNodeId + myWorkingDir;
         ExecutionNode workingDirNode = getOrCreateMessagesNode(messageEvent, nodeId, messagesGroupNode, myWorkingDir, null, false,
                                                                () -> AllIcons.Nodes.Module, null, nodesMap, myProject);
         parentsPath = myWorkingDir;
@@ -483,7 +484,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         relativePath = FileUtil.getRelativePath(parentsPath, sourceRootForFile.getPath(), '/');
         if (relativePath != null) {
           parentsPath += ("/" + relativePath);
-          String contentRootNodeId = group.hashCode() + sourceRootForFile.getPath();
+          String contentRootNodeId = groupNodeId + sourceRootForFile.getPath();
           fileParentNode = getOrCreateMessagesNode(messageEvent, contentRootNodeId, fileParentNode, relativePath, null, false,
                                                    () -> ProjectFileIndex.SERVICE.getInstance(myProject).isInTestSourceContent(ioFile)
                                                          ? AllIcons.Modules.TestRoot
@@ -491,7 +492,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       }
 
-      String fileNodeId = group.hashCode() + filePath;
+      String fileNodeId = groupNodeId + filePath;
       relativePath = StringUtil.isEmpty(parentsPath) ? filePath : FileUtil.getRelativePath(parentsPath, filePath, '/');
       parentNode = getOrCreateMessagesNode(messageEvent, fileNodeId, fileParentNode, relativePath, null, false,
                                            () -> {
@@ -523,7 +524,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                        String nodeName,
                                                        String nodeTitle,
                                                        boolean autoExpandNode,
-                                                       @Nullable Supplier<Icon> iconProvider,
+                                                       @Nullable Supplier<? extends Icon> iconProvider,
                                                        @Nullable Navigatable navigatable,
                                                        Map<Object, ExecutionNode> nodesMap,
                                                        Project project) {
@@ -616,7 +617,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     private final ConsoleView myConsole;
     private final JPanel myPanel;
 
-    public DetailsHandler(Project project,
+    DetailsHandler(Project project,
                           TreeTableTree tree,
                           ThreeComponentsSplitter threeComponentsSplitter) {
       myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();

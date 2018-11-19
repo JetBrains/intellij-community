@@ -1,15 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.properties
 
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.StoredProperty
-import com.intellij.openapi.components.StoredPropertyBase
+import com.intellij.openapi.components.*
+import com.intellij.openapi.util.text.StringUtil
 import kotlin.reflect.KProperty
 
-internal class LongStoredProperty(private val defaultValue: Long, private val valueNormalizer: ((value: Long) -> Long)?) : StoredPropertyBase<Long>() {
+internal class LongStoredProperty(private val defaultValue: Long, private val valueNormalizer: ((value: Long) -> Long)?) : StoredPropertyBase<Long>(), ScalarProperty {
   private var value = defaultValue
+
+  override val jsonType: JsonSchemaType
+    get() = JsonSchemaType.INTEGER
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
@@ -21,7 +21,7 @@ internal class LongStoredProperty(private val defaultValue: Long, private val va
     }
   }
 
-  override fun setValue(other: StoredProperty): Boolean {
+  override fun setValue(other: StoredProperty<Long>): Boolean {
     val newValue = (other as LongStoredProperty).value
     if (newValue == value) {
       return false
@@ -38,4 +38,66 @@ internal class LongStoredProperty(private val defaultValue: Long, private val va
   override fun toString() = "$name = $value${if (value == defaultValue) " (default)" else ""}"
 
   override fun isEqualToDefault() = value == defaultValue
+
+  override fun parseAndSetValue(rawValue: String?) {
+    if (rawValue == null) {
+      return
+    }
+
+    value = parseYamlLong(rawValue)
+  }
+}
+
+private fun parseYamlLong(_value: String): Long {
+  var value = StringUtil.replace(_value, "_", "")
+  var sign = +1
+  val first = value.get(0)
+  if (first == '-') {
+    sign = -1
+    value = value.substring(1)
+  }
+  else if (first == '+') {
+    value = value.substring(1)
+  }
+
+  if ("0" == value) {
+    return 0
+  }
+
+  return when {
+    value.startsWith("0b") -> {
+      createNumber(sign, value.substring(2), 2)
+    }
+
+    value.startsWith("0x") -> {
+      createNumber(sign, value.substring(2), 16)
+    }
+
+    value.startsWith("0") -> {
+      createNumber(sign, value.substring(1), 6)
+    }
+
+    value.indexOf(':') != -1 -> {
+      val digits = value.split(":")
+      var bes = 1
+      var v = 0L
+      var i = 0
+      val j = digits.size
+      while (i < j) {
+        v += ((digits[j - i - 1]).toLong() * bes)
+        bes *= 60
+        i++
+      }
+      createNumber(sign, v.toString(), 10)
+    }
+    else -> createNumber(sign, value, 10)
+  }
+}
+
+private fun createNumber(sign: Int, _number: String, radix: Int): Long {
+  var number = _number
+  if (sign < 0) {
+    number = "-$number"
+  }
+  return number.toLong(radix)
 }

@@ -78,7 +78,7 @@ public class ClassNameSameAsAncestorNameInspection extends BaseInspection {
 
     private static boolean hasMatchingName(PsiClass aSuper,
                                            String className,
-                                           Set<PsiClass> alreadyVisited) {
+                                           Set<? super PsiClass> alreadyVisited) {
       if (aSuper == null) {
         return false;
       }

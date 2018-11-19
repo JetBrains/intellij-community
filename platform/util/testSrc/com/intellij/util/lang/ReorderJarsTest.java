@@ -34,7 +34,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Dmitry Avdeev
- * @since 12/07/2011
  */
 public class ReorderJarsTest {
   private File myTempDirectory;

@@ -177,7 +177,8 @@ public class Messages {
   @NotNull
   public static Runnable createMessageDialogRemover(@Nullable Project project) {
     Window projectWindow = project == null ? null : WindowManager.getInstance().suggestParentWindow(project);
-    return () -> UIUtil.invokeLaterIfNeeded(() -> makeCurrentMessageDialogGoAway(
+    //noinspection SSBasedInspection
+    return () -> SwingUtilities.invokeLater(() -> makeCurrentMessageDialogGoAway(
       projectWindow != null ? projectWindow.getOwnedWindows() : Window.getWindows()));
   }
 
@@ -224,7 +225,7 @@ public class Messages {
   }
 
   public static boolean canShowMacSheetPanel() {
-    return SystemInfo.isMac && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
+    return SystemInfo.isMac && ApplicationManager.getApplication() != null && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
   }
 
   public static boolean isMacSheetEmulation() {
@@ -625,8 +626,10 @@ public class Messages {
 
   /**
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Project, String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(Project project,
                                        String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
@@ -661,8 +664,10 @@ public class Messages {
 
   /**
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Component, String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(@NotNull Component parent,
                                        String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
@@ -674,10 +679,10 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
-   * @see #showOkCancelDialog(Project, String, String, Icon)
-   * @see #showOkCancelDialog(Component, String, String, Icon)
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon) {
     return showOkCancelDialog(message, title, OK_BUTTON, CANCEL_BUTTON, icon, null);
   }
@@ -746,7 +751,7 @@ public class Messages {
                                               final int defaultOptionIndex,
                                               final int focusedOptionIndex,
                                               Icon icon,
-                                              @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
+                                              @Nullable final PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
     return MessagesService.getInstance()
       .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
                                      exitFunc);
@@ -1288,8 +1293,8 @@ public class Messages {
   public static void showTextAreaDialog(final JTextField textField,
                                         @Nls(capitalization = Nls.Capitalization.Title) final String title,
                                         @NonNls final String dimensionServiceKey,
-                                        final Function<String, List<String>> parser,
-                                        final Function<List<String>, String> lineJoiner) {
+                                        final Function<? super String, ? extends List<String>> parser,
+                                        final Function<? super List<String>, String> lineJoiner) {
     MessagesService.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
   }
 

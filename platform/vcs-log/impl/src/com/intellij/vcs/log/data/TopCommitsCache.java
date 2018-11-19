@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -27,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class TopCommitsCache {
+  private static final Logger LOG = Logger.getInstance(TopCommitsCache.class);
   @NotNull private final VcsLogStorage myStorage;
   @NotNull private final IntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
   @NotNull private List<VcsCommitMetadata> mySortedDetails = ContainerUtil.newArrayList();
@@ -61,7 +63,8 @@ public class TopCommitsCache {
         myCache.remove(index);
       }
     }
-    assert result.size() == myCache.size() || isBroken : result.size() + " details to store, yet " + myCache.size() + " indexes in cache.";
+    LOG.assertTrue(result.size() == myCache.size() || isBroken,
+                   result.size() + " details to store, yet " + myCache.size() + " indexes in cache.");
     mySortedDetails = result;
   }
 

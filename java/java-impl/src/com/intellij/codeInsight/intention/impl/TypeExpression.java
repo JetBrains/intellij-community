@@ -27,7 +27,7 @@ public class TypeExpression extends Expression {
     }
   }
 
-  public TypeExpression(@NotNull Project project, @NotNull Iterable<PsiType> types) {
+  public TypeExpression(@NotNull Project project, @NotNull Iterable<? extends PsiType> types) {
     final SmartTypePointerManager manager = SmartTypePointerManager.getInstance(project);
     for (PsiType type : types) {
       myItems.add(manager.createSmartTypePointer(type));

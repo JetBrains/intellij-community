@@ -6,39 +6,36 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.VisitorCallback;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.BaseFix;
-import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.EmptyFieldTypeFix;
-import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.EmptyReturnTypeFix;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_DYNAMIC;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC;
+import static org.jetbrains.plugins.groovy.refactoring.convertToStatic.ConvertToStatic.applyDeclarationFixes;
+import static org.jetbrains.plugins.groovy.refactoring.convertToStatic.ConvertToStatic.applyErrorFixes;
 
 public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
-  private static final int maxIterations = 5;
   private static final Logger LOG = Logger.getInstance(ConvertToStaticProcessor.class);
 
   private final GroovyFile[] myFiles;
-
-  private final BaseFix[] myFixes = {new EmptyFieldTypeFix(), new EmptyReturnTypeFix()};
 
   public ConvertToStaticProcessor(Project project, GroovyFile... files) {
     super(project);
@@ -80,7 +77,7 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
       progressIndicator.setText2(file.getName());
       progressIndicator.setFraction(counter / (double)myFiles.length);
       try {
-        applyFixes(file);
+        applyDeclarationFixes(file);
         putCompileAnnotations(file);
         applyErrorFixes(file);
         commitFile(file);
@@ -97,16 +94,6 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(document != null);
     psiDocumentManager.commitDocument(document);
     LOG.assertTrue(file.isValid());
-  }
-
-  private void applyFixes(GroovyFile file) {
-    file.accept(new PsiRecursiveElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        for (BaseFix fix : myFixes) element.accept(new GroovyPsiElementVisitor(fix));
-        super.visitElement(element);
-      }
-    });
   }
 
   private void putCompileAnnotations(@NotNull GroovyFile file) {
@@ -145,12 +132,11 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     boolean isStatic = dynamicMethods.stream().noneMatch(method::isEquivalentTo);
 
     if (isOuterStatic != isStatic) {
-       addAnnotation(method, isStatic);
+      addAnnotation(method, isStatic);
     }
   }
 
-  private void processDefinitions(GrTypeDefinition typeDef,
-                                  Set<GrTypeDefinition> dynamicClasses) {
+  private void processDefinitions(GrTypeDefinition typeDef, Set<GrTypeDefinition> dynamicClasses) {
     boolean isOuterStatic = PsiUtil.isCompileStatic(typeDef.getContainingClass());
 
     boolean isStatic = !dynamicClasses.contains(typeDef);
@@ -159,24 +145,6 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     }
     if (!isOuterStatic && isStatic) {
       addAnnotation(typeDef, true);
-    }
-  }
-
-  private static void applyErrorFixes(@NotNull GroovyFile file) {
-    for (int iteration = 0; iteration < maxIterations; iteration++) {
-      TypeChecker checker = new TypeChecker();
-      file.accept(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          if (PsiUtil.isCompileStatic(element)) {
-            element.accept(new GroovyPsiElementVisitor(checker));
-          }
-          super.visitElement(element);
-        }
-      });
-      if (checker.applyFixes() == 0) {
-        return;
-      }
     }
   }
 
@@ -192,12 +160,5 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     if (modifierList != null && !modifierList.hasAnnotation(annotation)) {
       modifierList.addAnnotation(annotation);
     }
-  }
-
-  @Nullable
-  PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner owner, @NotNull String annotation) {
-    if (owner == null) return null;
-    PsiModifierList modifierList = owner.getModifierList();
-    return modifierList != null ? modifierList.findAnnotation(annotation) : null;
   }
 }

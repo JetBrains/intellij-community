@@ -9,7 +9,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 
 /**
  * @author Denis Zhdanov
- * @since 3/13/12 3:53 PM
  */
 public abstract class GradleSettingsListenerAdapter extends ExternalSystemSettingsListenerAdapter<GradleProjectSettings>
   implements GradleSettingsListener

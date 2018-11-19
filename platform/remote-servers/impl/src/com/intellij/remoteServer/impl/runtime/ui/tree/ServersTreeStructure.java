@@ -65,7 +65,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author michael.golubev
@@ -110,6 +109,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     return myProject;
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootElement;
@@ -156,7 +156,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
     }
   }
 
@@ -188,7 +188,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       RemoteServer<?> server = getServer();
       ServerConnection connection = getConnection();
       presentation.setPresentableText(server.getName());
@@ -220,12 +220,11 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());
 
       final List<Object> runConfigsAndTypes = new LinkedList<>();
-      final List<RunnerAndConfigurationSettings> runConfigs = configurationManager.getDeploymentConfigurations(serverType).stream()
-        .filter(settings -> {
+      final List<RunnerAndConfigurationSettings> runConfigs =
+        ContainerUtil.filter(configurationManager.getDeploymentConfigurations(serverType), settings -> {
           DeployToServerRunConfiguration configuration = (DeployToServerRunConfiguration)settings.getConfiguration();
           return StringUtil.equals(server.getName(), configuration.getServerName());
-        })
-        .collect(Collectors.toList());
+        });
       runConfigsAndTypes.addAll(runConfigs);
 
       if (canCreate) {
@@ -455,7 +454,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       Deployment deployment = getDeployment();
       presentation.setIcon(deployment.getStatus().getIcon());
       presentation.setPresentableText(deployment.getPresentableName());
@@ -478,7 +477,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.setIcon(AllIcons.Debugger.Console);
       presentation.setPresentableText(getLogName());
     }

@@ -256,7 +256,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       .setRequestFocus(true)
       .setKeyboardActions(keyboardActions).addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters(highlighters);
         }
       }).createPopup();
@@ -376,7 +376,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     private PsiLocalVariable myLocalVar;
     private final Editor myEditor;
 
-    public Introducer(Project project,
+    Introducer(Project project,
                       PsiExpression expr,
                       PsiLocalVariable localVar,
                       Editor editor) {
@@ -717,7 +717,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private static class MyExtractMethodProcessor extends ExtractMethodProcessor {
     private final PsiMethod myTopEnclosingMethod;
 
-    public MyExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull PsiMethod topEnclosing) {
+    MyExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull PsiMethod topEnclosing) {
       super(project, editor, elements, null, REFACTORING_NAME, null, null);
       myTopEnclosingMethod = topEnclosing;
     }
@@ -764,6 +764,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     private class MyAbstractExtractDialog implements AbstractExtractDialog {
+      @NotNull
       @Override
       public String getChosenMethodName() {
         return "name";

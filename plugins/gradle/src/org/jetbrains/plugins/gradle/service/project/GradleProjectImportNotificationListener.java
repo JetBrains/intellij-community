@@ -38,7 +38,6 @@ import static org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/13/2014
  */
 public class GradleProjectImportNotificationListener extends ExternalSystemTaskNotificationListenerAdapter {
   @Override
@@ -93,7 +92,7 @@ public class GradleProjectImportNotificationListener extends ExternalSystemTaskN
     private final @NotNull Project myProject;
     private volatile Navigatable openFileDescriptor;
 
-    public MyNavigatable(@NotNull File file, @NotNull Project project) {
+    MyNavigatable(@NotNull File file, @NotNull Project project) {
       myFile = file;
       myProject = project;
     }

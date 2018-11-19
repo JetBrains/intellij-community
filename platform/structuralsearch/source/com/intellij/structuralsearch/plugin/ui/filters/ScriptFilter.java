@@ -5,12 +5,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ExpandableEditorSupport;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collections;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -44,14 +48,23 @@ public class ScriptFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel("script=");
-      private final ExpandableTextField myTextField = new ExpandableTextField(a -> Collections.singletonList(a), a -> a.get(0));
+      private final EditorTextField myTextField = UIUtil.createScriptComponent("", myTable.getProject());
       private ContextHelpLabel myHelpLabel;
 
       @Override
       protected void layoutComponents() {
+        new ExpandableEditorSupport(myTextField) {
+          @NotNull
+          @Override
+          protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
+            final Content popup = super.prepare(field, onShow);
+            popup.getContentComponent().setPreferredSize(new Dimension(600, 150));
+            return popup;
+          }
+        };
         final String[] variableNames = {Configuration.CONTEXT_VAR_NAME, ScriptLog.SCRIPT_LOG_VAR_NAME};
         myHelpLabel = ContextHelpLabel.create(
           "<p>Use GroovyScript IntelliJ API to filter the search results." +

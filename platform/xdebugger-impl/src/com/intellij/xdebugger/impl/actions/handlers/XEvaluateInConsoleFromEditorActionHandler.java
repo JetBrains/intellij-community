@@ -54,7 +54,7 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
 
     int selectionStart = editor.getSelectionModel().getSelectionStart();
     int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-    Promise<Pair<TextRange, String>> rangeAndText = null;
+    Promise<Pair<TextRange, String>> rangeAndText;
     if (selectionStart != selectionEnd) {
       TextRange textRange = new TextRange(selectionStart, selectionEnd);
       rangeAndText = Promise.resolve(Pair.create(textRange, editor.getDocument().getText(textRange)));

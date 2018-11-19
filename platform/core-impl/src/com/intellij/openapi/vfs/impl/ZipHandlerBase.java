@@ -94,7 +94,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
                                  long size,
                                  long time,
                                  @NotNull String entryName) {
-    CharSequence sequence = shortName instanceof ByteArrayCharSequence ? shortName : ByteArrayCharSequence.convertToBytesIfAsciiString(shortName);
+    CharSequence sequence = shortName instanceof ByteArrayCharSequence ? shortName : ByteArrayCharSequence.convertToBytesIfPossible(shortName);
     EntryInfo info = new EntryInfo(sequence, isDirectory, size, time, parentInfo);
     map.put(entryName, info);
     return info;
@@ -190,7 +190,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     private final ResourceHandle<ZipFile> myZipRef;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    public InputStreamWrapper(InputStream stream, ResourceHandle<ZipFile> zipRef) {
+    InputStreamWrapper(InputStream stream, ResourceHandle<ZipFile> zipRef) {
       myStream = stream;
       myZipRef = zipRef;
     }

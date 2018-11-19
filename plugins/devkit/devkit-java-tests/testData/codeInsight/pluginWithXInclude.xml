@@ -1,6 +1,8 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <id>foo</id>
+    <vendor>JetBrains</vendor>
+    <version>1.0</version>
 
     <extensionPoints>
         <extensionPoint name="bar" interface="java.util.List"/>

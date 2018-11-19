@@ -62,6 +62,7 @@ public class DomFileDescription<T> {
     myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : allPossibleRootTagNamespaces;
   }
 
+  @NotNull
   public String[] getAllPossibleRootTagNamespaces() {
     return myAllPossibleRootTagNamespaces;
   }
@@ -104,7 +105,6 @@ public class DomFileDescription<T> {
   /**
    * Consider using {@link DomService#getXmlFileHeader(com.intellij.psi.xml.XmlFile)} when implementing this.
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
     final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(namespaceKey);

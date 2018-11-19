@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiPredicate;
@@ -61,7 +61,7 @@ public class ServiceManagerImpl implements Disposable {
           // Allow to re-define service implementations in plugins.
           ComponentAdapter oldAdapter = picoContainer.unregisterComponent(descriptor.getInterface());
           if (oldAdapter == null) {
-            throw new RuntimeException("Service: " + descriptor.getInterface() + " doesn't override anything");
+            throw new PluginException("Service: " + descriptor.getInterface() + " doesn't override anything", pluginDescriptor != null ? pluginDescriptor.getPluginId() : null);
           }
         }
 
@@ -83,19 +83,20 @@ public class ServiceManagerImpl implements Disposable {
     extensionPoint.addExtensionPointListener(myExtensionPointListener);
   }
 
+  @NotNull
   public List<ServiceDescriptor> getAllDescriptors() {
-    ServiceDescriptor[] extensions = Extensions.getExtensions(myExtensionPointName);
-    return Arrays.asList(extensions);
+    return myExtensionPointName.getExtensionList();
   }
 
-  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<Class<?>, PluginDescriptor> processor) {
-    Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
+  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<? super Class<?>, ? super PluginDescriptor> processor) {
+    @SuppressWarnings("unchecked")
+    Collection<ComponentAdapter> adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
       return;
     }
 
-    for (Object o : adapters) {
-      Class aClass;
+    for (ComponentAdapter o : adapters) {
+      Class<?> aClass;
       if (o instanceof MyComponentAdapter) {
         MyComponentAdapter adapter = (MyComponentAdapter)o;
         PluginDescriptor pluginDescriptor = adapter.myPluginDescriptor;
@@ -125,19 +126,21 @@ public class ServiceManagerImpl implements Disposable {
           break;
         }
       }
-      else if (o instanceof ComponentAdapter && !(o instanceof ExtensionComponentAdapter)) {
-        PluginId pluginId = componentManager.getConfig((ComponentAdapter)o);
+      else if (!(o instanceof ExtensionComponentAdapter)) {
+        PluginId pluginId = componentManager.getConfig(o);
         // allow InstanceComponentAdapter without pluginId to test
         if (pluginId != null || o instanceof InstanceComponentAdapter) {
           try {
-            aClass = ((ComponentAdapter)o).getComponentImplementation();
+            aClass = o.getComponentImplementation();
           }
           catch (Throwable e) {
             LOG.error(e);
             continue;
           }
 
-          processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId));
+          if (!processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId))) {
+            break;
+          }
         }
       }
     }
@@ -156,7 +159,7 @@ public class ServiceManagerImpl implements Disposable {
     private final ComponentManagerEx myComponentManager;
     private volatile Object myInitializedComponentInstance;
 
-    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
+    MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
       myComponentManager = componentManager;
@@ -229,7 +232,7 @@ public class ServiceManagerImpl implements Disposable {
           implClass = Class.forName(myDescriptor.getImplementation(), true, classLoader);
         }
         catch (ClassNotFoundException e) {
-          throw new RuntimeException(e);
+          throw new PluginException("Failed to load class", e, myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null);
         }
 
         myDelegate = new CachingConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);

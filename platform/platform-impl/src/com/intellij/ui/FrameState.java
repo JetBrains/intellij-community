@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import org.jetbrains.annotations.NotNull;
+import sun.awt.AWTAccessor;
 
 import java.awt.*;
 import java.awt.event.ComponentEvent;
@@ -60,7 +61,7 @@ public class FrameState {
       state = ((Frame)component).getExtendedState();
       if (SystemInfo.isMacOSLion) {
         // workaround: frame.state is not updated by jdk so get it directly from peer
-        ComponentPeer peer = component.getPeer();
+        ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(component);
         if (peer instanceof FramePeer) {
           state = ((FramePeer)peer).getState();
         }

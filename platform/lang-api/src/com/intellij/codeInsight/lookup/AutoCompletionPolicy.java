@@ -58,7 +58,7 @@ public enum AutoCompletionPolicy {
     public static final ClassConditionKey<PolicyDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(PolicyDecorator.class);
     private final AutoCompletionPolicy myPolicy;
 
-    public PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {
+    PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {
       super(element);
       myPolicy = policy;
     }

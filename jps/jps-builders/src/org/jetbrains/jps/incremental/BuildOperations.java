@@ -36,11 +36,15 @@ import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since 30.10.2012
  */
 public class BuildOperations {
   private BuildOperations() { }
@@ -200,7 +204,7 @@ public class BuildOperations {
     }
   }
 
-  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<String> deletedPaths, @Nullable Set<File> parentDirs) {
+  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<String> deletedPaths, @Nullable Set<? super File> parentDirs) {
     File file = new File(path);
     boolean deleted = deleteRecursively(file, deletedPaths);
     if (deleted && parentDirs != null) {
@@ -212,17 +216,26 @@ public class BuildOperations {
     return deleted;
   }
 
-  private static boolean deleteRecursively(File file, Collection<String> deletedPaths) {
-    File[] children = file.listFiles();
-    if (children != null) {
-      for (File child : children) {
-        deleteRecursively(child, deletedPaths);
-      }
+  private static boolean deleteRecursively(final File file, final Collection<String> deletedPaths) {
+    try {
+      Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult visitFile(Path f, BasicFileAttributes attrs) throws IOException {
+          Files.delete(f);
+          deletedPaths.add(FileUtil.toSystemIndependentName(f.toString()));
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+          Files.delete(dir);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+      return true;
     }
-    boolean deleted = file.delete();
-    if (deleted && children == null) {
-      deletedPaths.add(FileUtil.toSystemIndependentName(file.getPath()));
+    catch (IOException e) {
+      return false;
     }
-    return deleted;
   }
 }

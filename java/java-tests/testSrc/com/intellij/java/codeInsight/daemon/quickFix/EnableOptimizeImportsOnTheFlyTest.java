@@ -31,8 +31,6 @@ public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixParameterize
     enableInspectionTool(new UnusedImportInspection());
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName) {
     CodeInsightWorkspaceSettings.getInstance(ourProject).setOptimizeImportsOnTheFly(false, getTestRootDisposable());

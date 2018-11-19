@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -25,5 +27,5 @@ import java.util.EventListener;
  * @author Vladimir Kondratyev
  */
 public interface LafManagerListener extends EventListener{
-  void lookAndFeelChanged(LafManager source);
+  void lookAndFeelChanged(@NotNull LafManager source);
 }

@@ -158,7 +158,7 @@ public class TreeBasedMap<T> {
     private final Stack<PathElement<T>> myCurrentNodePath = new Stack<PathElement<T>>();
     private final StringBuilder myCurrentName = new StringBuilder();
 
-    public KeysIterator() {
+    KeysIterator() {
       pushNode("", myRoot);
       findNextNode();
     }
@@ -232,7 +232,7 @@ public class TreeBasedMap<T> {
   private class PathElement<T> {
     final @NotNull Iterator<String> iterator;
     final @NotNull Node<T> node;
-    public PathElement(@NotNull final Node<T> node, Iterator<String> iterator) {
+    PathElement(@NotNull final Node<T> node, Iterator<String> iterator) {
       this.node = node;
       this.iterator = iterator;
     }

@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.groovy
 
 import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -23,7 +25,7 @@ class RepositoryProjectDescriptor extends DefaultLightProjectDescriptor {
 
   private Collection<OrderRoot> loadRoots(Project project) {
     def libraryProperties = new RepositoryLibraryProperties(myCoordinates, true)
-    def roots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null, null)
+    def roots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null, remoteRepositoryDescriptions)
     assert !roots.isEmpty()
     return roots
   }
@@ -39,5 +41,11 @@ class RepositoryProjectDescriptor extends DefaultLightProjectDescriptor {
     }
     libraryModel.commit()
     tableModel.commit()
+  }
+
+  private static List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
+    IntelliJProjectConfiguration.remoteRepositoryDescriptions.collect { repository ->
+      new RemoteRepositoryDescription(repository.id, repository.name, repository.url)
+    }
   }
 }

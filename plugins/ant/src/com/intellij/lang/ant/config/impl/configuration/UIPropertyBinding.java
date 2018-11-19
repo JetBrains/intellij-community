@@ -264,7 +264,7 @@ public abstract class UIPropertyBinding {
     private Listener myChangeListener = null;
     private final String myPropertyName;
 
-    public ChangeValueSupport(Comp component, ListenerInstaller<Comp, Listener> installer, String propertyName) {
+    ChangeValueSupport(Comp component, ListenerInstaller<Comp, Listener> installer, String propertyName) {
       myComponent = component;
       myPropertyName = propertyName;
       myChangeSupport = new PropertyChangeSupport(myPropertyName);
@@ -335,7 +335,7 @@ public abstract class UIPropertyBinding {
   }
 
   private static class IntTextBinding extends ComponentBinding<JTextComponent, AbstractProperty<Integer>> {
-    public IntTextBinding(JTextComponent textComponent, AbstractProperty<Integer> property) {
+    IntTextBinding(JTextComponent textComponent, AbstractProperty<Integer> property) {
       super(textComponent, property);
     }
 

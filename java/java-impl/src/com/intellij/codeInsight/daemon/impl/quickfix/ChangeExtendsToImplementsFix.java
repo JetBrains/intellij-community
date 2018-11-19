@@ -30,11 +30,13 @@ public class ChangeExtendsToImplementsFix extends ExtendsListFix {
 
   public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);
-    myName = myClassToExtendFrom == null ? getFamilyName() :
+    PsiClass classToExtendFromPointer = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+
+    myName = classToExtendFromPointer == null ? getFamilyName() :
              QuickFixBundle.message("exchange.extends.implements.keyword",
-                                    aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
-                                    aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
-                                    myClassToExtendFrom.getName());
+                                    aClass.isInterface() == classToExtendFromPointer.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
+                                    aClass.isInterface() == classToExtendFromPointer.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
+                                    classToExtendFromPointer.getName());
   }
 
   @Override

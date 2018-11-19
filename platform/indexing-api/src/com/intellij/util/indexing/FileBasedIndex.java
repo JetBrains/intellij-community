@@ -43,7 +43,7 @@ import java.util.Set;
 public abstract class FileBasedIndex {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
-  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, @NotNull ProgressIndicator indicator) {
     iterateIndexableFiles(processor, project, indicator);
   }
 
@@ -142,7 +142,7 @@ public abstract class FileBasedIndex {
   public static void iterateRecursively(@Nullable final VirtualFile root,
                                         @NotNull final ContentIterator processor,
                                         @Nullable final ProgressIndicator indicator,
-                                        @Nullable final Set<VirtualFile> visitedRoots,
+                                        @Nullable final Set<? super VirtualFile> visitedRoots,
                                         @Nullable final ProjectFileIndex projectFileIndex) {
     if (root == null) {
       return;
@@ -170,10 +170,7 @@ public abstract class FileBasedIndex {
         if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
           return false;
         }
-        if (projectFileIndex != null && ReadAction.compute(() -> projectFileIndex.isExcluded(file))) {
-          return false;
-        }
-        return true;
+        return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
       }
     });
   }

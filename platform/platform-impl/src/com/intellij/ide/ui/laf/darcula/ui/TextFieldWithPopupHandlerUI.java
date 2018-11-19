@@ -45,7 +45,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private static final String POPUP = "JTextField.Search.FindPopup";
   private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   private static final String ON_CLEAR = "JTextField.Search.CancelAction";
-  @SuppressWarnings("UseDPIAwareInsets")
+
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
   private boolean monospaced;
@@ -69,7 +69,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a search icon in one of the four states or {@code null} to hide it
    */
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return AllIcons.Actions.Search;
+    return clickable ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
   }
 
   /**
@@ -117,7 +117,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return (component != null) && !isEmpty(component.getText());
   }
 
-  protected void updateIconsLayout(Rectangle bounds) {
+  private void updateIconsLayout(Rectangle bounds) {
     JTextComponent c = getComponent();
     Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null || UIUtil.getParentOfType(JSpinner.class, c) != null ?
                     JBUI.emptyInsets() : getDefaultMargins();
@@ -245,6 +245,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       throw new IllegalArgumentException("The " + extensionName + " extension does not exist in this text field");
     }
     return iconHolder.bounds.getLocation();
+  }
+
+  @NotNull
+  public Rectangle getExtensionIconBounds(@NotNull Extension extension) {
+    for (IconHolder holder : icons.values()) {
+      if (holder.extension == extension) {
+        return new Rectangle(holder.bounds);
+      }
+    }
+    throw new IllegalArgumentException("The " + extension + " extension does not exist in this text field");
   }
 
   /**
@@ -432,7 +442,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Override
   public int viewToModel(JTextComponent tc, Point pt, Position.Bias[] biasReturn) {
-    return getVisibleEditorRect().contains(pt) ? super.viewToModel(tc, pt, biasReturn) : -1;
+    return icons.values().stream().anyMatch(p -> p.bounds.contains(pt)) ? -1 : super.viewToModel(tc, pt, biasReturn);
   }
 
   /**
@@ -458,19 +468,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private void handleMouse(MouseEvent event, boolean run) {
     JTextComponent component = getComponent();
     if (component != null) {
-      boolean invalid = false;
-      boolean repaint = false;
-      IconHolder result = null;
-      for (IconHolder holder : icons.values()) {
-        holder.hovered = component.isEnabled() && holder.bounds.contains(event.getX(), event.getY());
-        if (holder.hovered) result = holder;
-        Icon icon = holder.extension.getIcon(holder.hovered);
-        if (holder.icon != icon) {
-          if (holder.setIcon(icon)) invalid = true;
-          repaint = true;
-        }
-      }
-      if (repaint) repaint(invalid);
+      IconHolder result = getIconHolder(component, event.getX(), event.getY());
       Runnable action = result == null ? null : result.extension.getActionOnClick();
       if (action == null) {
         setCursor(Cursor.TEXT_CURSOR);
@@ -483,6 +481,24 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         }
       }
     }
+  }
+
+  @Nullable
+  private IconHolder getIconHolder(@NotNull JTextComponent component, int x, int y) {
+    boolean invalid = false;
+    boolean repaint = false;
+    IconHolder result = null;
+    for (IconHolder holder : icons.values()) {
+      holder.hovered = component.isEnabled() && holder.bounds.contains(x, y);
+      if (holder.hovered) result = holder;
+      Icon icon = holder.extension.getIcon(holder.hovered);
+      if (holder.icon != icon) {
+        if (holder.setIcon(icon)) invalid = true;
+        repaint = true;
+      }
+    }
+    if (repaint) repaint(invalid);
+    return result;
   }
 
   private void setCursor(int cursor) {
@@ -659,8 +675,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   public static class MarginAwareCaret extends BasicCaret {
     @Override
     protected void adjustVisibility(Rectangle r) {
-      r.x -= getComponent().getMargin().left;
-      r.width += getComponent().getMargin().left;
+      Insets m = getComponent().getMargin();
+      r.x -= m.left;
+      r.width += m.left;
       super.adjustVisibility(r);
     }
   }
@@ -671,8 +688,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (e.getID() == MouseEvent.MOUSE_DRAGGED && !getComponent().getText().contains("\n")) {
         boolean consumed = e.isConsumed();
         e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers() | e.getModifiersEx(), e.getX(),
-                           getComponent().getHeight() / 2,
-                           e.getClickCount(), e.isPopupTrigger(), e.getButton());
+                           getComponent().getHeight() / 2, e.getClickCount(), e.isPopupTrigger(), e.getButton());
         if (consumed) e.consume();
       }
       super.mouseDragged(e);

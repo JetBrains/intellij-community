@@ -55,7 +55,7 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     private final List<PyFromImportStatement> myImportStatements = new ArrayList<>();
     private PsiElement myRootElement;
 
-    public Visitor(@NotNull CodeStyleSettings settings) {
+    Visitor(@NotNull CodeStyleSettings settings) {
       myHelper = new PostFormatProcessorHelper(settings.getCommonSettings(PythonLanguage.getInstance()));
     }
 

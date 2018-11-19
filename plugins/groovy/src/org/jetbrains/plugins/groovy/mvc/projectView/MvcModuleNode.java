@@ -61,7 +61,7 @@ public class MvcModuleNode extends AbstractModuleNode {
   }
 
   @Override
-  public void update(final PresentationData presentation) {
+  public void update(@NotNull final PresentationData presentation) {
     super.update(presentation);
 
     final Module module = getValue();

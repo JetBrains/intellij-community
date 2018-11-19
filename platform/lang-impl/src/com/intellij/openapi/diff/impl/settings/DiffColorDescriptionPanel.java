@@ -34,7 +34,7 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
 
   @NotNull private final ColorAndFontOptions myOptions;
 
-  public DiffColorDescriptionPanel(@NotNull ColorAndFontOptions options) {
+  DiffColorDescriptionPanel(@NotNull ColorAndFontOptions options) {
     super(new BorderLayout());
     myOptions = options;
     add(myPanel, BorderLayout.CENTER);
@@ -68,7 +68,7 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
     return this;
   }
 
-  private void onSettingsChanged(ActionEvent e) {
+  private void onSettingsChanged(@NotNull ActionEvent e) {
     myDispatcher.getMulticaster().onSettingsChanged(e);
   }
 

@@ -17,7 +17,7 @@ public class ReflectionUtilRt {
     return result;
   }
 
-  private static void collectFields(Class clazz, List<Field> result) {
+  private static void collectFields(Class clazz, List<? super Field> result) {
     result.addAll(Arrays.asList(clazz.getDeclaredFields()));
 
     Class superClass = clazz.getSuperclass();

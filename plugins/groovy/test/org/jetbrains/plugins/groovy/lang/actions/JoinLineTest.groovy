@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.actions
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.plugins.groovy.GroovyFileType
@@ -114,9 +115,7 @@ for (;a;) <caret>print 2''')
   }
 
   void testIfWithForceBraces() {
-    def settings = getCurrentCodeStyleSettings().getCommonSettings(GroovyLanguage.INSTANCE)
-    def current = settings.IF_BRACE_FORCE
-    try {
+    def settings = CodeStyle.getSettings(getProject()).getCommonSettings(GroovyLanguage.INSTANCE)
       settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
       doTest('''\
 if (a)
@@ -124,10 +123,6 @@ if (a)
 ''', '''\
 if (a) <caret>print 2
 ''')
-    }
-    finally {
-      settings.IF_BRACE_FORCE = current
-    }
 
   }
 

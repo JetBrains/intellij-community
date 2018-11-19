@@ -30,6 +30,7 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
     visitor.visitInstanceofExpression(this);
   }
 
+  @Override
   public String toString() {
     return "Instanceof expression";
   }

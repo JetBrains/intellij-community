@@ -45,7 +45,7 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
         usages.add(StatisticsUtilKt.getCountingUsage("users.count", logData.getAllUsers().size(),
                                                      asList(0, 1, 10, 50, 100, 500, 1000, 5 * 1000, 10 * 1000, 20 * 1000, 50 * 1000)));
 
-        for (VcsKey vcs: groupedRoots.keySet()) {
+        for (VcsKey vcs : groupedRoots.keySet()) {
           String vcsKey = UsageDescriptorKeyValidator.ensureProperKey(vcs.getName().toLowerCase());
           usages.add(StatisticsUtilKt.getCountingUsage(vcsKey + ".root.count", groupedRoots.get(vcs).size(),
                                                        asList(0, 1, 2, 5, 8, 15, 30, 50, 100, 300, 500)));
@@ -59,7 +59,7 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   @NotNull
   private static MultiMap<VcsKey, VirtualFile> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     MultiMap<VcsKey, VirtualFile> result = MultiMap.create();
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry: providers.entrySet()) {
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
       VcsKey vcs = entry.getValue().getSupportedVcs();
       result.putValue(vcs, root);

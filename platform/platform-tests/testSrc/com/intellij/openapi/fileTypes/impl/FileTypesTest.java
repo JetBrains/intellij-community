@@ -120,7 +120,7 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testAddNewExtension() {
     FileTypeAssocTable<FileType> associations = new FileTypeAssocTable<>();
-    associations.addAssociation(FileTypeManager.parseFromString("*.java"), FileTypes.ARCHIVE);
+    associations.addAssociation(FileTypeManager.parseFromString("*.java"), ArchiveFileType.INSTANCE);
     associations.addAssociation(FileTypeManager.parseFromString("*.xyz"), StdFileTypes.XML);
     associations.addAssociation(FileTypeManager.parseFromString("SomeSpecial*.java"), StdFileTypes.XML); // patterns should have precedence over extensions
     assertEquals(StdFileTypes.XML, associations.findAssociatedFileType("sample.xyz"));
@@ -372,11 +372,36 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testRemovedMappingsSerialization() {
     HashSet<FileType> fileTypes = new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
-    //noinspection unchecked
     FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
 
     ArchiveFileType fileType = ArchiveFileType.INSTANCE;
     FileNameMatcher matcher = table.getAssociations(fileType).get(0);
+
+    table.removeAssociation(matcher, fileType);
+
+    WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
+    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+
+    Element state = myFileTypeManager.getState();
+
+    myFileTypeManager.getRemovedMappings().clear();
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.loadState(state);
+    myFileTypeManager.initComponent();
+
+    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    Pair<FileType, Boolean> pair = mappings.get(matcher);
+    assertNotNull(pair);
+    assertTrue(pair.second);
+  }
+
+  public void testRemovedExactNameMapping() {
+    HashSet<FileType> fileTypes = new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
+    FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
+
+    FileType fileType = ArchiveFileType.INSTANCE;
+    ExactFileNameMatcher matcher = new ExactFileNameMatcher("foo.bar");
+    table.addAssociation(matcher, fileType);
 
     table.removeAssociation(matcher, fileType);
 

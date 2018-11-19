@@ -72,7 +72,6 @@ import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Eugene Zhuravlev
- * @since 21.09.2011
  */
 public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
@@ -590,8 +589,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
       // was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    // compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
-    return Math.abs(compilerSdkVersion - chunkLanguageLevel) > 3;
+    // compiler version is 9+ here, so:
+    //  - java 5 and older are not supported for sure
+    //  - applying '5 versions back' policy deduced from the current behavior of those JDKs
+    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > 5;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
@@ -852,7 +853,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   /**
    * @return true if annotation processing is enabled and corresponding options were added, false if profile is null or disabled
    */
-  public static boolean addAnnotationProcessingOptions(List<String> options, @Nullable AnnotationProcessingConfiguration profile) {
+  public static boolean addAnnotationProcessingOptions(List<? super String> options, @Nullable AnnotationProcessingConfiguration profile) {
     if (profile == null || !profile.isEnabled()) {
       options.add("-proc:none");
       return false;
@@ -1249,6 +1250,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  @Override
+  public long getExpectedBuildTime() {
+    return 100;
+  }
 
   private static final Key<Semaphore> COUNTER_KEY = Key.create("_async_task_counter_");
 }

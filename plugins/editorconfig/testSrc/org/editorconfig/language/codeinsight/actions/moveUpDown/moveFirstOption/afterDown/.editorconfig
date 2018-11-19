@@ -1,0 +1,6 @@
+root = true
+
+[foo]
+key = value
+<caret>hello = world
+bar = bas

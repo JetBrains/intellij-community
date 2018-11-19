@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -80,21 +81,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BACKGROUND;
-import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BORDER;
-import static com.intellij.openapi.util.text.StringUtil.escapeXml;
+import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
+import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
@@ -272,6 +271,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
 
       getRepositoryManager(myProject).updateRepository(root);
+      if (isSubmodule(repository)) {
+        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(repository.getRoot().getParent());
+      }
     }
     catch (VcsException e) {
       exceptions.add(e);
@@ -392,7 +394,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     LOG.debug(String.format("Updating index for partial changes: removing: %s", pathsToDelete));
-    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+    GitFileUtils.deletePaths(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
     LOG.debug(String.format("Updating index for partial changes: changes: %s", partialChanges));
@@ -407,10 +409,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitIndexUtil.StagedFile stagedFile = getStagedFile(repository, change);
       boolean isExecutable = stagedFile != null && stagedFile.isExecutable();
 
-      Pair.NonNull<Charset, byte[]> fileContent =
-        LoadTextUtil.charsetForWriting(repository.getProject(), file, helper.getContent(), file.getCharset());
+      byte[] fileContent = convertDocumentContentToBytes(repository, helper.getContent(), file);
 
-      GitIndexUtil.write(repository, path, fileContent.second, isExecutable);
+      GitIndexUtil.write(repository, path, fileContent, isExecutable);
     }
 
 
@@ -426,6 +427,23 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     });
 
     return Pair.create(callback, partialChanges);
+  }
+
+  @NotNull
+  private static byte[] convertDocumentContentToBytes(@NotNull GitRepository repository,
+                                                      @NotNull String documentContent,
+                                                      @NotNull VirtualFile file) {
+    String text;
+
+    String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, repository.getProject());
+    if (lineSeparator.equals("\n")) {
+      text = documentContent;
+    }
+    else {
+      text = StringUtil.convertLineSeparators(documentContent, lineSeparator);
+    }
+
+    return LoadTextUtil.charsetForWriting(repository.getProject(), file, text, file.getCharset()).second;
   }
 
   @Nullable
@@ -597,7 +615,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     List<FilePath> pathsToDelete = map(explicitMoves, move -> move.getBefore());
     LOG.debug(String.format("Updating index for explicit movements: removing: %s", pathsToDelete));
-    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+    GitFileUtils.deletePaths(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
     for (Movement move : explicitMoves) {
@@ -907,7 +925,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     boolean rc = true;
     if (!added.isEmpty()) {
       try {
-        GitFileUtils.addPaths(project, root, added);
+        GitFileUtils.addPathsForce(project, root, added);
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -916,7 +934,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitFileUtils.delete(project, root, removed, "--ignore-unmatch", "--cached");
+        GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -986,7 +1004,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitFileUtils.delete(myProject, root, e.getValue());
+        GitFileUtils.deletePaths(myProject, root, e.getValue());
         markRootDirty(root);
       }
       catch (VcsException ex) {
@@ -1135,8 +1153,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAuthorNotificationBuilder = JBPopupFactory.getInstance().
         createBalloonBuilder(new JLabel(GitBundle.getString("commit.author.diffs"))).
         setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")).
-        setBorderColor(BALLOON_WARNING_BORDER).
-        setFillColor(BALLOON_WARNING_BACKGROUND).
+        setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor()).
+        setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor()).
         setHideOnClickOutside(true).
         setHideOnFrameResize(false);
       myAuthorField.addHierarchyListener(new HierarchyListener() {
@@ -1174,10 +1192,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return myAmendComponent.isAmend();
     }
 
+    @Nullable
+    public String getAuthor() {
+      String author = myAuthorField.getText();
+      if (StringUtil.isEmptyOrSpaces(author)) return null;
+      return GitCommitAuthorCorrector.correct(author);
+    }
+
     @NotNull
     private String getToolTip(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       VcsUser user = getFirstItem(mapNotNull(panel.getRoots(), it -> GitUserRegistry.getInstance(project).getUser(it)));
-      String signature = user != null ? escapeXml(VcsUserUtil.toExactString(user)) : "";
+      String signature = user != null ? escapeXmlEntities(VcsUserUtil.toExactString(user)) : "";
       return "<html>Adds the following line at the end of the commit message:<br/>" +
              "Signed-off by: " + signature + "</html>";
     }
@@ -1216,7 +1241,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      public MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+      MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
         super(project, manager, panel);
         myAmend.addActionListener(new ActionListener() {
           @Override
@@ -1281,12 +1306,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void saveState() {
-      String author = myAuthorField.getText();
-      if (StringUtil.isEmptyOrSpaces(author)) {
-        myNextCommitAuthor = null;
-      }
-      else {
-        myNextCommitAuthor = GitCommitAuthorCorrector.correct(author);
+      myNextCommitAuthor = getAuthor();
+      if (myNextCommitAuthor != null) {
         mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
       myNextCommitAmend = isAmend();
@@ -1396,7 +1417,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Nullable public final String changelistId;
     @Nullable public final VirtualFile virtualFile;
 
-    public CommitChange(@NotNull Change change) {
+    CommitChange(@NotNull Change change) {
       this.beforePath = getBeforePath(change);
       this.afterPath = getAfterPath(change);
 
@@ -1420,12 +1441,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
 
-    public CommitChange(@Nullable FilePath beforePath,
+    CommitChange(@Nullable FilePath beforePath,
                         @Nullable FilePath afterPath) {
       this(beforePath, afterPath, null, null, null, null);
     }
 
-    public CommitChange(@Nullable FilePath beforePath,
+    CommitChange(@Nullable FilePath beforePath,
                         @Nullable FilePath afterPath,
                         @Nullable VcsRevisionNumber beforeRevision,
                         @Nullable VcsRevisionNumber afterRevision,

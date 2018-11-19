@@ -51,9 +51,14 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(aClass, PsiNewExpression.class, ParenthesesUtils.class);
+    final PsiElement parent = PsiTreeUtil.skipParentsOfType(aClass, PsiNewExpression.class, PsiParenthesizedExpression.class);
     if (!(parent instanceof PsiVariable) && !(parent instanceof PsiAssignmentExpression)) {
       return null;
+    }
+    PsiElement anchor = PsiTreeUtil.getParentOfType(aClass, PsiMember.class, PsiStatement.class);
+    if (anchor instanceof PsiMember) {
+      PsiClass surroundingClass = ((PsiMember)anchor).getContainingClass();
+      if (surroundingClass == null || surroundingClass.isInterface()) return null;
     }
     return new DoubleBraceInitializationFix();
   }
@@ -78,7 +83,7 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
         return;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)parent;
-      final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(newExpression, ParenthesesUtils.class);
+      final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(newExpression, PsiParenthesizedExpression.class);
       final String qualifierText;
       if (ancestor instanceof PsiVariable) {
         qualifierText = ((PsiVariable)ancestor).getName();

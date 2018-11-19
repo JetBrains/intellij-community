@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,7 +41,6 @@ import java.util.List;
  * (e.g. imports missing libraries).
  *
  * @author Denis Zhdanov
- * @since 1/23/12 3:48 PM
  */
 public class RefreshAllExternalProjectsAction extends AnAction implements AnAction.TransparentUpdate {
 
@@ -89,6 +89,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
     FileDocumentManager.getInstance().saveAllDocuments();
 
     for (ProjectSystemId externalSystemId : systemIds) {
+      ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
       ExternalSystemUtil.refreshProjects(
         new ImportSpecBuilder(project, externalSystemId)
           .forceWhenUptodate(true)

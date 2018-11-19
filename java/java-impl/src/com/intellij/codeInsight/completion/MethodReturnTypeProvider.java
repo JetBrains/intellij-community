@@ -50,7 +50,7 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
     
   }
 
-  static void addProbableReturnTypes(@NotNull CompletionParameters parameters, final Consumer<LookupElement> consumer) {
+  static void addProbableReturnTypes(@NotNull CompletionParameters parameters, final Consumer<? super LookupElement> consumer) {
     final PsiElement position = parameters.getPosition();
     PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class);
     assert method != null;

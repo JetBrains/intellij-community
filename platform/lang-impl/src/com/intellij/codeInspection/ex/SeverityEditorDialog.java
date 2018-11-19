@@ -65,7 +65,7 @@ public class SeverityEditorDialog extends DialogWrapper {
                           @Nullable HighlightSeverity selectedSeverity,
                           @NotNull SeverityRegistrar severityRegistrar,
                           boolean closeDialogWhenSettingsShown,
-                          @Nullable Consumer<HighlightSeverity> chosenSeverityCallback) {
+                          @Nullable Consumer<? super HighlightSeverity> chosenSeverityCallback) {
     final SeverityEditorDialog dialog = new SeverityEditorDialog(project, selectedSeverity, severityRegistrar, closeDialogWhenSettingsShown);
     if (dialog.showAndGet()) {
       final HighlightInfoType type = dialog.getSelectedType();
@@ -379,7 +379,7 @@ public class SeverityEditorDialog extends DialogWrapper {
   }
 
   private static class MyTextAttributesDescription extends TextAttributesDescription {
-    public MyTextAttributesDescription(final String name,
+    MyTextAttributesDescription(final String name,
                                        final String group,
                                        final TextAttributes attributes,
                                        final TextAttributesKey type) {

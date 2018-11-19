@@ -38,7 +38,7 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
   }
 
   @Override
-  protected boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<String> urlConsumer) {
+  protected boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<? super String> urlConsumer) {
     boolean includeProduction, includeTests;
     if (dependencyElement instanceof JpsModuleDependency) {
       boolean productionOnTests = myDependenciesEnumerator.isProductionOnTests(dependencyElement);

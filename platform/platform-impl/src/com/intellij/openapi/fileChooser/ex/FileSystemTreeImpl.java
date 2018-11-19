@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class FileSystemTreeImpl implements FileSystemTree {
   private final Tree myTree;
@@ -82,9 +83,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
                             final Tree tree,
                             @Nullable TreeCellRenderer renderer,
                             @Nullable final Runnable onInitialized,
-                            @Nullable final Convertor<TreePath, String> speedSearchConverter) {
+                            @Nullable final Convertor<? super TreePath, String> speedSearchConverter) {
     myProject = project;
-    if (renderer == null && Registry.is("file.chooser.async.tree.model")) {
+    //noinspection deprecation
+    if (renderer == null && useNewAsyncModel()) {
       renderer = new FileRenderer().forTree();
       myFileTreeModel = new FileTreeModel(descriptor, new FileRefresher(false, 3, () -> ModalityState.stateForComponent(tree)));
       myAsyncTreeModel = new AsyncTreeModel(myFileTreeModel, false, this);
@@ -150,7 +152,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (renderer == null) {
       renderer = new NodeRenderer() {
         @Override
-        public void customizeCellRenderer(JTree tree,
+        public void customizeCellRenderer(@NotNull JTree tree,
                                           Object value,
                                           boolean selected,
                                           boolean expanded,
@@ -169,6 +171,12 @@ public class FileSystemTreeImpl implements FileSystemTree {
       };
     }
     myTree.setCellRenderer(renderer);
+  }
+
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  protected boolean useNewAsyncModel() {
+    return Registry.is("file.chooser.async.tree.model");
   }
 
   protected AbstractTreeBuilder createTreeBuilder(final JTree tree, DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure,
@@ -281,29 +289,17 @@ public class FileSystemTreeImpl implements FileSystemTree {
           break;
         case 1:
           myTree.clearSelection();
-          TreeUtil.promiseExpand(myTree, new FileNodeVisitor(file[0])).onSuccess(path -> {
-            if (path != null && myTree.isSelectionEmpty()) {
-              myTree.setSelectionPath(path);
-              myTree.scrollPathToVisible(path);
-              if (onDone != null) onDone.run();
-            }
+          TreeUtil.promiseSelect(myTree, new FileNodeVisitor(file[0])).onProcessed(path -> {
+            if (onDone != null) onDone.run();
           });
           break;
         default:
           myTree.clearSelection();
-          if (onDone != null) onDone.run();
-          //TODO:wait for promises map
+          TreeUtil.promiseSelect(myTree, Stream.of(file).map(FileNodeVisitor::new)).onProcessed(paths -> {
+            if (onDone != null) onDone.run();
+          });
           break;
       }
-      /*
-      List<Promise<TreePath>> promises = Arrays.stream(file)
-        .map(eachFile -> myAsyncTreeModel.getTreePath(eachFile))
-        .collect(Collectors.toList());
-
-      Promises.all(promises, null, true).done(object->{
-
-      });
-      */
     }
     else {
       Object[] elements = new Object[file.length];
@@ -432,7 +428,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   @Override
-  public <T> T getData(DataKey<T> key) {
+  public <T> T getData(@NotNull DataKey<T> key) {
     return myDescriptor.getUserData(key);
   }
 
@@ -509,7 +505,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     });
   }
 
-  private void fireSelection(List<VirtualFile> selection) {
+  private void fireSelection(@NotNull List<VirtualFile> selection) {
     for (Listener each : myListeners) {
       each.selectionChanged(selection);
     }

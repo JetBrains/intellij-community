@@ -36,7 +36,7 @@ public class ExcludedFiles {
   }
 
 
-  public void setDescriptors(@NotNull List<FileSetDescriptor> descriptors) {
+  public void setDescriptors(@NotNull List<? extends FileSetDescriptor> descriptors) {
     myDescriptors.clear();
     myDescriptors.addAll(descriptors);
   }
@@ -61,8 +61,7 @@ public class ExcludedFiles {
   public class State {
     @OptionTag("DO_NOT_FORMAT")
     public List<FileSetDescriptor.State> getDescriptors() {
-      return myDescriptors.stream()
-        .map(descriptor -> descriptor.getState()).collect(Collectors.toList());
+      return ContainerUtil.map(myDescriptors, descriptor -> descriptor.getState());
     }
 
     public void setDescriptors(@NotNull List<FileSetDescriptor.State> states) {

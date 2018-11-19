@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
  * different 'in process' modes.
  *
  * @author Denis Zhdanov
- * @since 8/9/13 3:21 PM
  */
 public interface ExternalSystemCommunicationManager {
 

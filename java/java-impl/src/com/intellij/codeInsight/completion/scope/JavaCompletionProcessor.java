@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInspection.SuppressManager;
@@ -44,11 +44,11 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
   private boolean myQualified;
   private PsiType myQualifierType;
   private PsiClass myQualifierClass;
-  private final Condition<String> myMatcher;
+  private final Condition<? super String> myMatcher;
   private final Options myOptions;
   private final boolean myAllowStaticWithInstanceQualifier;
 
-  public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<String> nameCondition) {
+  public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<? super String> nameCondition) {
     myOptions = options;
     myElement = element;
     myMatcher = nameCondition;
@@ -278,7 +278,7 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
   }
 
   @Override
-  public boolean shouldProcess(DeclarationKind kind) {
+  public boolean shouldProcess(@NotNull DeclarationKind kind) {
     switch (kind) {
       case CLASS:
         return myFilter.isClassAcceptable(PsiClass.class);

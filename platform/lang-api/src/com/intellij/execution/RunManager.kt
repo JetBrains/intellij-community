@@ -1,16 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution
 
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.configurations.*
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
 /**
@@ -51,13 +49,6 @@ abstract class RunManager {
   }
 
   /**
-   * Returns the list of all registered configuration types.
-   */
-  abstract val configurationFactories: Array<ConfigurationType>
-
-  abstract val configurationFactoriesWithoutUnknown: List<ConfigurationType>
-
-  /**
    * Returns the list of all configurations of a specified type.
    * @param type a run configuration type.
    * @return all configurations of the type, or an empty array if no configurations of the type are defined.
@@ -88,6 +79,10 @@ abstract class RunManager {
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   abstract fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings>
+
+  fun getConfigurationSettingsList(type: Class<out  ConfigurationType>): List<RunnerAndConfigurationSettings> {
+    return getConfigurationSettingsList(ConfigurationTypeUtil.findConfigurationType(type))
+  }
 
   /**
    * Returns the list of all run configurations.
@@ -131,7 +126,12 @@ abstract class RunManager {
    */
   abstract fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
-  fun createRunConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings = createConfiguration(name, factory)
+  fun createConfiguration(name: String, typeClass: Class<out ConfigurationType>): RunnerAndConfigurationSettings {
+    return createConfiguration(name, ConfigurationTypeUtil.findConfigurationType(typeClass).configurationFactories.first())
+  }
+
+  @Deprecated("", ReplaceWith("createConfiguration(name, factory)"))
+  fun createRunConfiguration(name: String, factory: ConfigurationFactory) = createConfiguration(name, factory)
 
   /**
    * Creates a configuration settings object based on a specified [RunConfiguration]. Note that you need to call
@@ -194,26 +194,33 @@ abstract class RunManager {
    */
   fun setUniqueNameIfNeed(configuration: RunConfiguration): Boolean {
     val oldName = configuration.name
-    configuration.name = suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type)
+    @Suppress("UsePropertyAccessSyntax")
+    configuration.setName(suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type))
     return oldName != configuration.name
   }
 
-  abstract fun getConfigurationType(typeName: String): ConfigurationType?
+  @Deprecated("Use ConfigurationTypeUtil", ReplaceWith("ConfigurationTypeUtil.findConfigurationType(typeName)", "com.intellij.execution.configurations.ConfigurationTypeUtil"))
+  fun getConfigurationType(typeName: String) = ConfigurationTypeUtil.findConfigurationType(typeName)
 
   abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
 
   abstract fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings?
 
-  fun findConfigurationByTypeAndName(typeId: String, name: String): RunnerAndConfigurationSettings? = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
 
-  fun findConfigurationByTypeAndName(type: ConfigurationType?, name: String): RunnerAndConfigurationSettings? = type?.let { findConfigurationByTypeAndName(it.id, name) }
+  fun findConfigurationByTypeAndName(type: ConfigurationType, name: String) = allSettings.firstOrNull { type === it.type && name == it.name }
 
   abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
 
   abstract fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?)
+
+  // due to historical reasons findSettings() searches by name in addition to instance and this behavior is bad for isTemplate,
+  // so, client cannot for now use `findSettings()?.isTemplate() ?: false`.
+  @ApiStatus.Experimental
+  abstract fun isTemplate(configuration: RunConfiguration): Boolean
 }
 
 private const val UNNAMED = "Unnamed"
 
-val IS_RUN_MANAGER_INITIALIZED: Key<Boolean> = Key.create<Boolean>("RunManagerInitialized")
-private  val LOG = Logger.getInstance(RunManager::class.java)
+val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
+private val LOG = Logger.getInstance(RunManager::class.java)

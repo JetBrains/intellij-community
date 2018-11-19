@@ -103,7 +103,7 @@ public abstract class StartedActivated {
 
     private ThreeState myState;
 
-    public MySection(final ThrowableRunnable<VcsException> start, final ThrowableRunnable<VcsException> stop) {
+    MySection(final ThrowableRunnable<VcsException> start, final ThrowableRunnable<VcsException> stop) {
       myStart = start;
       myStop = stop;
       myState = ThreeState.UNSURE;

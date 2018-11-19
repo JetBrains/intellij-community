@@ -71,7 +71,7 @@ public class AssertHint {
   }
 
   public static AssertHint create(PsiMethodCallExpression expression,
-                                  Function<String, Integer> methodNameToParamCount,
+                                  Function<? super String, Integer> methodNameToParamCount,
                                   boolean checkTestNG) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
@@ -122,7 +122,7 @@ public class AssertHint {
   }
 
   public static AssertHint create(PsiMethodReferenceExpression methodExpression,
-                                  Function<String, Integer> methodNameToParamCount,
+                                  Function<? super String, Integer> methodNameToParamCount,
                                   boolean checkTestNG) {
     @NonNls final String methodName = methodExpression.getReferenceName();
     Integer minimumParamCount = methodNameToParamCount.apply(methodName);
@@ -195,14 +195,14 @@ public class AssertHint {
     if (!objectType.equals(parameterType1) || !objectType.equals(parameterType2)) {
       return null;
     }
-    if (TypeUtils.areConvertible(type1, type2)) {
+    if (TypeUtils.areConvertible(type1, type2) || TypeUtils.mayBeEqualByContract(type1, type2)) {
       return null;
     }
     final String comparedTypeText = type1.getPresentableText();
     final String comparisonTypeText = type2.getPresentableText();
     return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
-                                           StringUtil.escapeXml(comparedTypeText),
-                                           StringUtil.escapeXml(comparisonTypeText));
+                                           StringUtil.escapeXmlEntities(comparedTypeText),
+                                           StringUtil.escapeXmlEntities(comparisonTypeText));
   }
 
   public static class JUnitCommonAssertNames {

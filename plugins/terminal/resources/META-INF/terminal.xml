@@ -3,7 +3,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="Terminal" anchor="bottom" icon="TerminalIcons.OpenTerminal_13x13"
-                factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory" secondary="false"/>
+                factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
+                secondary="false"
+                canCloseContents="true"/>
 
     <projectConfigurable groupId="tools" groupWeight="130" displayName="Terminal" id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
 
@@ -11,6 +13,9 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.terminal.TerminalUsageTriggerCollector"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
   </extensions>
 
   <project-components>

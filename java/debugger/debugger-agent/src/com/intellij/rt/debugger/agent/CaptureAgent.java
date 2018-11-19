@@ -187,7 +187,7 @@ public class CaptureAgent {
     private final Map<String, String> myFields = new HashMap<String, String>();
     private String mySuperName;
 
-    public CaptureInstrumentor(int api, ClassVisitor cv, List<InstrumentPoint> instrumentPoints) {
+    CaptureInstrumentor(int api, ClassVisitor cv, List<InstrumentPoint> instrumentPoints) {
       super(api, cv);
       this.myInstrumentPoints = instrumentPoints;
     }
@@ -356,7 +356,7 @@ public class CaptureAgent {
     final String myMethodDesc;
     final KeyProvider myKeyProvider;
 
-    public InstrumentPoint(boolean capture, String className, String methodName, String methodDesc, KeyProvider keyProvider) {
+    InstrumentPoint(boolean capture, String className, String methodName, String methodDesc, KeyProvider keyProvider) {
       myCapture = capture;
       myClassName = className;
       myMethodName = methodName;
@@ -485,7 +485,7 @@ public class CaptureAgent {
     private final String myClassName;
     private final String myFieldName;
 
-    public FieldKeyProvider(String className, String fieldName) {
+    FieldKeyProvider(String className, String fieldName) {
       myClassName = className;
       myFieldName = fieldName;
     }
@@ -508,7 +508,7 @@ public class CaptureAgent {
   private static class ParamKeyProvider implements KeyProvider {
     private final int myIdx;
 
-    public ParamKeyProvider(int idx) {
+    ParamKeyProvider(int idx) {
       myIdx = idx;
     }
 

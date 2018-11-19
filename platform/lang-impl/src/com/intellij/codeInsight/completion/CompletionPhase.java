@@ -119,11 +119,11 @@ public abstract class CompletionPhase implements Disposable {
         // lookup is not visible, we have to check ourselves if editor retains focus
         ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
           @Override
-          public void focusGained(Editor editor) {
+          public void focusGained(@NotNull Editor editor) {
           }
 
           @Override
-          public void focusLost(Editor editor) {
+          public void focusLost(@NotNull Editor editor) {
             indicator.closeAndFinish(true);
           }
         }, this);
@@ -157,7 +157,7 @@ public abstract class CompletionPhase implements Disposable {
       @NotNull Editor editor = indicator.getEditor();
       final HintListener hintListener = new HintListener() {
         @Override
-        public void hintHidden(final EventObject event) {
+        public void hintHidden(@NotNull final EventObject event) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };

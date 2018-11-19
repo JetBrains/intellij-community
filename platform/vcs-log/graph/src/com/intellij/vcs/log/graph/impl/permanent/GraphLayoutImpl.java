@@ -6,6 +6,7 @@ import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class GraphLayoutImpl implements GraphLayout {
@@ -41,17 +42,7 @@ public class GraphLayoutImpl implements GraphLayout {
   }
 
   private int getHeadOrder(int layoutIndex) {
-    int a = 0;
-    int b = myStartLayoutIndexForHead.length - 1;
-    while (b > a) {
-      int middle = (a + b + 1) / 2;
-      if (myStartLayoutIndexForHead[middle] <= layoutIndex) {
-        a = middle;
-      }
-      else {
-        b = middle - 1;
-      }
-    }
-    return a;
+    int i = Arrays.binarySearch(myStartLayoutIndexForHead, layoutIndex);
+    return i<0 ? Math.max(0,-i-2) : i;
   }
 }

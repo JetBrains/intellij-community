@@ -2,21 +2,31 @@
 package org.jetbrains.yaml.formatter;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.YAMLLanguage;
-import org.jetbrains.yaml.YAMLTextUtil;
+import org.jetbrains.yaml.*;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
 import java.util.Iterator;
 import java.util.List;
 
 public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
+  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "([^\\s{}\\[\\]][^\\s]*\\.)+[^\\s{}\\[\\].][^\\s.]*:?\\s*";
+
   @Nullable
   @Override
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
@@ -35,6 +45,12 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     int lineNumber = document.getLineNumber(caretOffset);
     int lineStartOffset = YAMLTextUtil.getLineStartSafeOffset(document, lineNumber);
     int indent = caretOffset - lineStartOffset;
+
+    String specialKeyPaste = tryToPasteAsKeySequence(text, file, editor, caretOffset, indent);
+    if (specialKeyPaste != null) {
+      return specialKeyPaste;
+    }
+
     if (indent == 0) {
       // It could be copy and paste of lines
       // User could fix indentation later if he wanted to copy some block into top-level block
@@ -48,10 +64,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   private static String indentText(@NotNull String text, @NotNull String curLineIndent) {
     List<String> lines = LineTokenizer.tokenizeIntoList(text, false, false);
     if (lines.isEmpty()) {
-      // Such situation should not be possible
-      Logger.getInstance(YAMLCopyPasteProcessor.class).error(text.isEmpty()
-                                                             ? "Pasted empty text"
-                                                             : "Text '" + text + "' was converted into empty line list");
+      // Such situation sometimes happens but I don't know how it is possible
       return text;
     }
     int minIndent = calculateMinBlockIndent(lines);
@@ -96,5 +109,138 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
 
   private static boolean isEmptyLine(@NotNull String str) {
     return YAMLTextUtil.getStartIndentSize(str) < str.length();
+  }
+
+  /** @return text to be pasted or null if it is not possible to paste text as key sequence */
+  @Nullable
+  private static String tryToPasteAsKeySequence(@NotNull String text,
+                                                @NotNull PsiFile file,
+                                                @NotNull Editor editor,
+                                                int caretOffset,
+                                                int indent) {
+    if (!text.matches(CONFIG_KEY_SEQUENCE_PATTERN)) {
+      return null;
+    }
+    List<String> keys = separateCompositeKey(text);
+    assert !keys.isEmpty();
+
+    PsiElement element = file.findElementAt(caretOffset);
+    if (element != null) {
+      String result = tryToPasteAsKeySequenceAtMapping(editor, keys, element, caretOffset, indent);
+      if (result != null) {
+        return result;
+      }
+    }
+
+    if ((element == null || element.getTextRange().getStartOffset() == caretOffset) && caretOffset > 0) {
+      // check the previous token
+      element = file.findElementAt(caretOffset - 1);
+      if (element != null) {
+        // If we are in the end of map then add element to it:
+        // top:
+        //   key1: value 1
+        //   <caret>
+        String result = tryToPasteAsKeySequenceAtMapping(editor, keys, element, caretOffset, indent);
+        if (result != null) {
+          return result;
+        }
+
+        // disputable: insert keys into empty key-value
+        // key:
+        //   <caret>
+        // anotherKey: some value
+        YAMLKeyValue keyValue = getPreviousKeyValuePairBeforeEOL(element);
+        if (keyValue != null && keyValue.getValue() == null) { // we insert new value
+          int parentIndent = YAMLUtil.getIndentToThisElement(keyValue);
+          if (indent > parentIndent) {
+            return YAMLElementGenerator.createChainedKey(keys, indent);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /** @return found preceding block-style key-value pair after eol or null */
+  @Nullable
+  private static YAMLKeyValue getPreviousKeyValuePairBeforeEOL(@NotNull PsiElement element) {
+    if (PsiUtilCore.getElementType(element.getParent()) != YAMLElementTypes.MAPPING) {
+      // TODO: RUBY-22437 support JSON-like mappings
+      return null;
+    }
+    boolean eolMet = false;
+    PsiElement cur;
+    for (cur = element; cur != null; cur = cur.getPrevSibling()) {
+      if (!YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(cur))) {
+        break;
+      }
+      if (PsiUtilCore.getElementType(cur) == YAMLTokenTypes.EOL) {
+        eolMet = true;
+      }
+    }
+    if (eolMet && PsiUtilCore.getElementType(cur) == YAMLElementTypes.KEY_VALUE_PAIR) {
+      return (YAMLKeyValue)cur;
+    }
+    return null;
+  }
+
+  /** @return text to be pasted or null if it is not possible to paste key sequence */
+  @Nullable
+  private static String tryToPasteAsKeySequenceAtMapping(@NotNull Editor editor,
+                                                         @NotNull List<String> keys,
+                                                         @NotNull PsiElement element,
+                                                         int caretOffset, int indent) {
+    while (true) {
+      // TODO: RUBY-22437 support JSON-like mappings
+      YAMLBlockMappingImpl blockMapping;
+      if (element.getParent() instanceof YAMLFile) {
+        // We are at the end of the file
+        PsiElement prev = element.getPrevSibling();
+        if (!(prev instanceof YAMLDocument)) {
+          return null;
+        }
+        element = ((YAMLDocument)prev).getTopLevelValue();
+        if (!(element instanceof YAMLBlockMappingImpl)) {
+          return null;
+        }
+        blockMapping = ((YAMLBlockMappingImpl)element);
+      }
+      else {
+        blockMapping = PsiTreeUtil.getParentOfType(element, YAMLBlockMappingImpl.class);
+      }
+      if (blockMapping == null) {
+        return null;
+      }
+
+      int mappingIndent = YAMLUtil.getIndentToThisElement(blockMapping);
+      if (mappingIndent == indent) {
+        YAMLKeyValue keyValue = ApplicationManager.getApplication().runWriteAction(
+          (Computable<YAMLKeyValue>)() -> {
+            YAMLKeyValue lastKeyVal = blockMapping.getOrCreateKeySequence(keys, caretOffset);
+            if (lastKeyVal == null) {
+              return null;
+            }
+            ASTNode colon = lastKeyVal.getNode().findChildByType(YAMLTokenTypes.COLON);
+            if (colon != null) {
+              int newOffset = colon.getTextRange().getEndOffset();
+              editor.getCaretModel().moveToOffset(newOffset);
+            }
+            return lastKeyVal;
+          }
+        );
+        if (keyValue != null) {
+          return "";
+        }
+      }
+      element = blockMapping;
+    }
+  }
+
+  /** @return separated key sequence or null if text is not a key sequence */
+  @NotNull
+  private static List<String> separateCompositeKey(@NotNull String text) {
+    text = text.trim();
+    text = StringUtil.trimEnd(text, ':');
+    return StringUtil.split(text, ".");
   }
 }

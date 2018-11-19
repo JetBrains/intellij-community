@@ -132,7 +132,7 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
   private static class MyLocalQuickFix implements LocalQuickFix {
     private final String myText;
 
-    public MyLocalQuickFix(String text) {
+    MyLocalQuickFix(String text) {
       myText = text;
     }
 

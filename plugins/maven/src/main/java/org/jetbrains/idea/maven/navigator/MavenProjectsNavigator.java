@@ -49,6 +49,7 @@ import java.util.List;
 public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>,
                                                                                    Disposable, ProjectComponent {
   public static final String TOOL_WINDOW_ID = "Maven";
+  public static final String TOOL_WINDOW_PLACE_ID = "Maven tool window";
 
   private MavenProjectsNavigatorState myState = new MavenProjectsNavigatorState();
 
@@ -376,7 +377,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     }
 
     @Override
-    public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(@NotNull final List<MavenProject> ignored, @NotNull final List<MavenProject> unignored, boolean fromImport) {
       scheduleStructureRequest(() -> myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored)));
     }
 
@@ -386,18 +387,18 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     }
 
     @Override
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+    public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
       scheduleUpdateProjects(MavenUtil.collectFirsts(updated), deleted);
     }
 
     @Override
-    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                 NativeMavenProjectHolder nativeMavenProject) {
       scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.emptyList());
     }
 
     @Override
-    public void pluginsResolved(MavenProject project) {
+    public void pluginsResolved(@NotNull MavenProject project) {
       scheduleUpdateProjects(Collections.singletonList(project), Collections.emptyList());
     }
 

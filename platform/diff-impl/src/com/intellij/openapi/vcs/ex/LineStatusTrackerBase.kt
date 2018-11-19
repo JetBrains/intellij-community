@@ -20,7 +20,6 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.diagnostic.Logger
@@ -62,7 +61,7 @@ abstract class LineStatusTrackerBase<R : Range> {
     this.project = project
     this.document = document
 
-    vcsDocument = DocumentImpl(this.document.immutableCharSequence)
+    vcsDocument = DocumentImpl(this.document.immutableCharSequence, true)
     vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
     vcsDocument.setReadOnly(true)
 
@@ -81,7 +80,7 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   open val virtualFile: VirtualFile? get() = null
 
-  abstract protected fun Block.toRange(): R
+  protected abstract fun Block.toRange(): R
 
   protected open fun createDocumentTrackerHandler(): DocumentTracker.Handler = MyDocumentTrackerHandler()
 
@@ -137,11 +136,9 @@ abstract class LineStatusTrackerBase<R : Range> {
     if (side.isLeft) {
       vcsDocument.setReadOnly(false)
       try {
-        runWriteAction {
           CommandProcessor.getInstance().runUndoTransparentAction {
             task(vcsDocument)
           }
-        }
         return true
       }
       finally {
@@ -181,17 +178,11 @@ abstract class LineStatusTrackerBase<R : Range> {
       after.ourData.innerRanges = before.ourData.innerRanges
     }
 
-    override fun afterRefresh() {
-      checkIfFileUnchanged()
-      calcInnerRanges()
-      updateHighlighters()
-    }
-
     override fun afterRangeChange() {
       updateHighlighters()
     }
 
-    override fun afterExplicitChange() {
+    override fun afterBulkRangeChange() {
       checkIfFileUnchanged()
       calcInnerRanges()
       updateHighlighters()
@@ -405,8 +396,8 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   protected open class BlockData(internal var innerRanges: List<Range.InnerRange>? = null)
 
-  open protected fun createBlockData(): BlockData = BlockData()
-  open protected val Block.ourData: BlockData get() = getBlockData(this)
+  protected open fun createBlockData(): BlockData = BlockData()
+  protected open val Block.ourData: BlockData get() = getBlockData(this)
   protected fun getBlockData(block: Block): BlockData {
     if (block.data == null) block.data = createBlockData()
     return block.data as BlockData

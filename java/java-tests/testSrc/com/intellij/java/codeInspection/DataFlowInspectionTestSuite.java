@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2017 JetBrains s.r.o.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License",
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -20,53 +20,52 @@ import com.intellij.java.codeInsight.completion.SmartTypeCompletionDfaTest;
 import com.intellij.java.codeInsight.daemon.quickFix.*;
 import com.intellij.java.slicer.SliceBackwardTest;
 import com.intellij.java.slicer.SliceTreeTest;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+  DataFlowInspectionTest.class,
+  DataFlowInspection8Test.class,
+  DataFlowInspection9Test.class,
+  DataFlowInspection10Test.class,
+  DataFlowInspectionHeavyTest.class,
+  DataFlowInspectionAncientTest.class,
+  DataFlowInspectionCancellingTest.class,
+  ContractCheckTest.class,
+  HardcodedContractsTest.class,
+  DataFlowRangeAnalysisTest.class,
+
+  ContractInferenceFromSourceTest.class,
+  NullityInferenceFromSourceTestCase.DfaInferenceTest.class,
+  NullityInferenceFromSourceTestCase.LightInferenceTest.class,
+  PurityInferenceFromSourceTest.class,
+  ParameterNullityInferenceFromSourceTest.class,
+
+  SliceTreeTest.class,
+  SliceBackwardTest.class,
+
+  SmartTypeCompletionDfaTest.class,
+  NormalCompletionDfaTest.class,
+
+  NullableStuffInspectionTest.class,
+  NullableStuffInspectionAncientTest.class,
+
+  CheckerNullityTest.class,
+
+  AddAssertStatementFixTest.class,
+  SurroundWithIfFixTest.class,
+  ReplaceWithTernaryOperatorTest.class,
+  ReplaceWithObjectsEqualsTest.class,
+  ReplaceWithOfNullableFixTest.class,
+  ReplaceWithNullCheckFixTest.class,
+  ReplaceFromOfNullableFixTest.class,
+  ReplaceWithTrivialLambdaFixTest.class,
+  UnwrapIfStatementFixTest.class,
+  StreamFilterNotNullFixTest.class,
+  RedundantInstanceofFixTest.class,
+  ReplaceComputeWithComputeIfPresentFixTest.class,
+  DeleteSwitchLabelFixTest.class,
+  })
 public class DataFlowInspectionTestSuite {
-  public static Test suite() {
-    TestSuite suite = new TestSuite();
-
-    suite.addTestSuite(DataFlowInspectionTest.class);
-    suite.addTestSuite(DataFlowInspection8Test.class);
-    suite.addTestSuite(DataFlowInspection9Test.class);
-    suite.addTestSuite(DataFlowInspection10Test.class);
-    suite.addTestSuite(DataFlowInspectionHeavyTest.class);
-    suite.addTestSuite(DataFlowInspectionAncientTest.class);
-    suite.addTestSuite(DataFlowInspectionCancellingTest.class);
-    suite.addTestSuite(ContractCheckTest.class);
-    suite.addTestSuite(HardcodedContractsTest.class);
-    suite.addTestSuite(DataFlowRangeAnalysisTest.class);
-
-    suite.addTestSuite(ContractInferenceFromSourceTest.class);
-    suite.addTestSuite(NullityInferenceFromSourceTestCase.DfaInferenceTest.class);
-    suite.addTestSuite(NullityInferenceFromSourceTestCase.LightInferenceTest.class);
-    suite.addTestSuite(PurityInferenceFromSourceTest.class);
-    suite.addTestSuite(ParameterNullityInferenceFromSourceTest.class);
-
-    suite.addTestSuite(SliceTreeTest.class);
-    suite.addTestSuite(SliceBackwardTest.class);
-
-    suite.addTestSuite(SmartTypeCompletionDfaTest.class);
-    suite.addTestSuite(NormalCompletionDfaTest.class);
-
-    suite.addTestSuite(NullableStuffInspectionTest.class);
-    suite.addTestSuite(NullableStuffInspectionAncientTest.class);
-    
-    suite.addTestSuite(CheckerNullityTest.class);
-
-    suite.addTestSuite(AddAssertStatementFixTest.class);
-    suite.addTestSuite(SurroundWithIfFixTest.class);
-    suite.addTestSuite(ReplaceWithTernaryOperatorTest.class);
-    suite.addTestSuite(ReplaceWithObjectsEqualsTest.class);
-    suite.addTestSuite(ReplaceWithOfNullableFixTest.class);
-    suite.addTestSuite(ReplaceWithNullCheckFixTest.class);
-    suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
-    suite.addTestSuite(ReplaceWithTrivialLambdaFixTest.class);
-    suite.addTestSuite(UnwrapIfStatementFixTest.class);
-    suite.addTestSuite(StreamFilterNotNullFixTest.class);
-    suite.addTestSuite(RedundantInstanceofFixTest.class);
-    suite.addTestSuite(ReplaceComputeWithComputeIfPresentFixTest.class);
-    return suite;
-  }
 }

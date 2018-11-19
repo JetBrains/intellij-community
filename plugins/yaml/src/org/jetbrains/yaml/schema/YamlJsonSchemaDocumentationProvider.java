@@ -16,47 +16,47 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class YamlJsonSchemaDocumentationProvider extends DocumentationProviderEx {
-    @Nullable
-    @Override
-    public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-      return findSchemaAndGenerateDoc(element, true);
-    }
+  @Nullable
+  @Override
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    return findSchemaAndGenerateDoc(element, true);
+  }
 
-    @Nullable
-    @Override
-    public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-      return null;
-    }
+  @Nullable
+  @Override
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+    return null;
+  }
 
-    @Nullable
-    @Override
-    public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-      return findSchemaAndGenerateDoc(element, false);
-    }
+  @Nullable
+  @Override
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+    return findSchemaAndGenerateDoc(element, false);
+  }
 
-    @Nullable
-    private static String findSchemaAndGenerateDoc(PsiElement element, final boolean preferShort) {
-      final JsonSchemaService jsonSchemaService = JsonSchemaService.Impl.get(element.getProject());
-      PsiFile containingFile = element.getContainingFile();
-      if (containingFile == null) return null;
-      VirtualFile virtualFile = containingFile.getVirtualFile();
-      if (virtualFile == null) return null;
-      JsonSchemaObject schemaObject = jsonSchemaService.getSchemaObject(virtualFile);
-      if (schemaObject == null) return null;
-      return JsonSchemaDocumentationProvider.generateDoc(element, schemaObject, preferShort);
-    }
+  @Nullable
+  private static String findSchemaAndGenerateDoc(PsiElement element, final boolean preferShort) {
+    final JsonSchemaService jsonSchemaService = JsonSchemaService.Impl.get(element.getProject());
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return null;
+    VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (virtualFile == null) return null;
+    JsonSchemaObject schemaObject = jsonSchemaService.getSchemaObject(virtualFile);
+    if (schemaObject == null) return null;
+    return JsonSchemaDocumentationProvider.generateDoc(element, schemaObject, preferShort, null);
+  }
 
-    @Nullable
-    @Override
-    public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
-      return null;
-    }
+  @Nullable
+  @Override
+  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+    return null;
+  }
 
-    @Nullable
-    @Override
-    public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
-      return null;
-    }
+  @Nullable
+  @Override
+  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+    return null;
+  }
 
   @Nullable
   @Override

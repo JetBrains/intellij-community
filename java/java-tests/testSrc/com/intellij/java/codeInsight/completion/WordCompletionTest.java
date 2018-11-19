@@ -129,6 +129,7 @@ public class WordCompletionTest extends CompletionTestCase {
 
   public void testCompleteStringLiteralCopy() throws Throwable {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
+    selectItem(myItems[1]);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 

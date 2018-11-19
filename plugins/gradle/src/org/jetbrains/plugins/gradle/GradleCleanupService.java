@@ -8,14 +8,15 @@ import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/8/2017
  */
 public class GradleCleanupService implements Disposable {
   private static final Logger LOG = Logger.getInstance(GradleCleanupService.class);
+  // todo should be replaced when it will be possible to distinguish active gradle daemon processes used by other clients
+  private static final boolean DISABLE_DAEMONS_STOP = Boolean.getBoolean("idea.gradle.disableDaemonsStopOnExit");
 
   @Override
   public void dispose() {
-    if(ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() || DISABLE_DAEMONS_STOP) return;
     // do not use DefaultGradleConnector.close() it sends org.gradle.launcher.daemon.protocol.StopWhenIdle message and waits
     try {
       GradleDaemonServices.stopDaemons();

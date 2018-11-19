@@ -49,7 +49,7 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
-      public void schemeChanged(final Object source) {
+      public void schemeChanged(@NotNull final Object source) {
         previewPanel.setColorScheme(options.getSelectedScheme());
         optionsPanel.updateOptionsList();
       }

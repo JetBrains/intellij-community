@@ -44,8 +44,6 @@ public class FixAllQuickfixTest extends LightQuickFixParameterizedTestCase {
     enableInspectionTool(new UnusedDeclarationInspection(true));
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   @NonNls
   protected String getBasePath() {

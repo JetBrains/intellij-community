@@ -1,6 +1,7 @@
 package com.siyeh.igtest.performance.object_allocation_in_loop;
 
 import java.util.regex.*;
+import java.util.function.*;
 
 class ObjectAllocationInLoop {
 
@@ -43,5 +44,35 @@ class ObjectAllocationInLoop {
       }
     }
     return true;
+  }
+
+  void methodRef(int[] data, String foo) {
+    for(int val : data) {
+      Runnable r = <warning descr="Object allocation via instance-bound method reference 'System.out::println()' in loop">System.out::println</warning>;
+      Supplier<String> r1 = <warning descr="Object allocation via instance-bound method reference 'foo::trim()' in loop">foo::trim</warning>;
+      Predicate<String> r2 = String::isEmpty;
+      Supplier<String> r3 = String::new;
+      IntFunction<String[]> r4 = String[]::new;
+      Runnable r5 = <warning descr="Object allocation via instance-bound method reference 'this::foo()' in loop">this::foo</warning>;
+    }
+  }
+
+  void foo() {}
+
+  void lambda(int[] data, String foo) {
+    for(int val : data) {
+      Runnable r = () -> System.out.println();
+      Supplier<String> r1 = <warning descr="Object allocation via capturing lambda in loop">()</warning> -> foo.trim();
+      Runnable r2 = <warning descr="Object allocation via capturing lambda in loop">()</warning> -> methodRef(data, foo);
+      Supplier<Object> r3 = <warning descr="Object allocation via capturing lambda in loop">()</warning> -> this;
+      IntSupplier r4 = <warning descr="Object allocation via capturing lambda in loop">()</warning> -> {
+        int x = 5;
+        return val;
+      };
+      IntSupplier r5 = () -> {
+        int x = 5;
+        return x;
+      };
+    }
   }
 }

@@ -87,7 +87,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         }
         String location = presentation.getLocationString();
         if (!StringUtil.isEmpty(location)) {
-          append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), SimpleTextAttributes.GRAY_ATTRIBUTES, false);
+          append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), SimpleTextAttributes.GRAYED_ATTRIBUTES, false);
         }
       }
 
@@ -115,13 +115,6 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   }
 
   @NotNull
-  @Deprecated
-  @SuppressWarnings("unused")
-  protected EditorColorsScheme getColorsScheme() {
-    return getScheme();
-  }
-
-  @NotNull
   private static EditorColorsScheme getScheme() {
     return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
   }
@@ -146,8 +139,8 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     return getSimpleTextAttributes(presentation, getScheme());
   }
   
-  public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,
-                                                             @NotNull EditorColorsScheme colorsScheme)
+  private static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,
+                                                              @NotNull EditorColorsScheme colorsScheme)
   {
     if (presentation instanceof ColoredItemPresentation) {
       final TextAttributesKey textAttributesKey = ((ColoredItemPresentation) presentation).getTextAttributesKey();

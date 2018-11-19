@@ -43,13 +43,13 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
 
   private Pattern myCompiledPattern;
   private String myPattern;
-  private final List<T> myItems;
+  private final List<? extends T> myItems;
   private final String myNotInMessage;
 
   public ListChooseByNameModel(@NotNull final Project project,
                                final String prompt,
                                final String notInMessage,
-                               List<T> items) {
+                               List<? extends T> items) {
     super(project, prompt, null);
 
     myItems = items;

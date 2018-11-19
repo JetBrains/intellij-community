@@ -355,7 +355,7 @@ public class XSDModelLoader implements ModelLoader {
   }
 
   private static String getSimpleTypesString(XSTypeDefinition et) {
-    StringBuffer typesHierarchy = new StringBuffer();
+    StringBuilder typesHierarchy = new StringBuilder();
     while (et != null && !"anySimpleType".equals(et.getName()) && !"anyType".equals(et.getName()) && et.getNamespace() != null) {
       typesHierarchy.append(et.getNamespace().substring(et.getNamespace().lastIndexOf("/") + 1)).append(":").append(et.getName()).append(";");
       if (et instanceof XSSimpleType) {

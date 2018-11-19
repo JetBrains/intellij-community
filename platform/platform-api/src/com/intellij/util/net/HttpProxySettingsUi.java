@@ -71,7 +71,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
            !Comparing.strEqual(settings.PROXY_HOST, myProxyHostTextField.getText());
   }
 
-  public HttpProxySettingsUi(@NotNull final HttpConfigurable settings) {
+  HttpProxySettingsUi(@NotNull final HttpConfigurable settings) {
     ButtonGroup group = new ButtonGroup();
     group.add(myUseHTTPProxyRb);
     group.add(myAutoDetectProxyRb);
@@ -148,7 +148,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
       reset(settings);  // since password might have been set
 
-      //noinspection ThrowableResultOfMethodCallIgnored
       final IOException exception = exceptionReference.get();
       if (exception == null) {
         Messages.showMessageDialog(myMainPanel, "Connection successful", title, Messages.getInformationIcon());

@@ -8,6 +8,7 @@ import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class FeatureUsageEventLoggerTest {
 
@@ -15,7 +16,7 @@ class FeatureUsageEventLoggerTest {
   fun testSingleEvent() {
     testLogger(
       { logger -> logger.log("recorder-id", "test-action", false) },
-      newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "test-action", false)
+      newEvent("recorder-id", "test-action")
     )
   }
 
@@ -26,36 +27,32 @@ class FeatureUsageEventLoggerTest {
         logger.log("recorder-id", "test-action", false)
         logger.log("recorder-id", "second-action", false)
       },
-      newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "test-action", false),
-      newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "second-action", false)
+      newEvent("recorder-id", "test-action"),
+      newEvent("recorder-id", "second-action")
     )
   }
 
   @Test
   fun testMergedEvents() {
-    val action = LogEventAction("test-action", 2)
-    val time = System.currentTimeMillis()
     testLogger(
       { logger ->
         logger.log("recorder-id", "test-action", false)
         logger.log("recorder-id", "test-action", false)
       },
-      newLogEvent("session-id", "999.999", "-1", time, "recorder-id", "2", action)
+      newEvent("recorder-id", "test-action", count = 2)
     )
   }
 
   @Test
   fun testTwoMergedEvents() {
-    val action = LogEventAction("test-action", 2)
-    val time = System.currentTimeMillis()
     testLogger(
       { logger ->
         logger.log("recorder-id", "test-action", false)
         logger.log("recorder-id", "test-action", false)
         logger.log("recorder-id", "second-action", false)
       },
-      newLogEvent("session-id", "999.999", "-1", time, "recorder-id", "2", action),
-      newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "second-action", false)
+      newEvent("recorder-id", "test-action", count = 2),
+      newEvent("recorder-id", "second-action", count = 1)
     )
   }
 
@@ -67,9 +64,9 @@ class FeatureUsageEventLoggerTest {
         logger.log("recorder-id", "second-action", false)
         logger.log("recorder-id", "test-action", false)
       },
-      newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "test-action", false),
-      newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "second-action", false),
-      newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "test-action", false)
+      newEvent("recorder-id", "test-action"),
+      newEvent("recorder-id", "second-action"),
+      newEvent("recorder-id", "test-action")
     )
   }
 
@@ -77,7 +74,7 @@ class FeatureUsageEventLoggerTest {
   fun testStateEvent() {
     testLogger(
       { logger -> logger.log("recorder-id", "state", true) },
-      newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "state", true)
+      newStateEvent("recorder-id", "state")
     )
   }
 
@@ -87,7 +84,7 @@ class FeatureUsageEventLoggerTest {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "dialog-id", false)
+    val expected = newEvent("recorder-id", "dialog-id")
     expected.event.addData("type", "close")
     expected.event.addData("state", 1)
 
@@ -100,7 +97,7 @@ class FeatureUsageEventLoggerTest {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newLogEvent("session-id", "999.999", "-1", "recorder-id", "2", "dialog-id", false)
+    val expected = newEvent("recorder-id", "dialog-id")
     expected.event.increment()
     expected.event.addData("type", "close")
     expected.event.addData("state", 1)
@@ -119,7 +116,7 @@ class FeatureUsageEventLoggerTest {
     data["value"] = true
     data["default"] = false
 
-    val expected = newLogEvent("session-id", "999.999", "-1", "settings", "2", "ui", true)
+    val expected = newStateEvent("settings", "ui")
     expected.event.addData("name", "myOption")
     expected.event.addData("value", true)
     expected.event.addData("default", false)
@@ -134,7 +131,7 @@ class FeatureUsageEventLoggerTest {
     data["value"] = true
     data["default"] = false
 
-    val expected = newLogEvent("session-id", "999.999", "-1", "settings", "2", "ui", true)
+    val expected = newStateEvent("settings", "ui")
     expected.event.addData("name", "myOption")
     expected.event.addData("value", true)
     expected.event.addData("default", false)
@@ -156,22 +153,37 @@ class FeatureUsageEventLoggerTest {
     val actual = logger.testWriter.logged.mapNotNull { line -> LogEventSerializer.fromString(line) }
     assertEquals(expected.size, actual.size)
     for (i in 0 until expected.size) {
-      assertEventEquals(actual[i], expected[i])
+      assertEvent(actual[i], expected[i])
     }
   }
 
-  private fun assertEventEquals(first: LogEvent, second: LogEvent) {
+  private fun assertEvent(actual: LogEvent, expected: LogEvent) {
     // Compare events but skip event time
-    assertEquals(first.session, second.session)
-    assertEquals(first.bucket, second.bucket)
-    assertEquals(first.build, second.build)
-    assertEquals(first.group, second.group)
-    assertEquals(first.event, second.event)
+    assertEquals(actual.session, expected.session)
+    assertEquals(actual.bucket, expected.bucket)
+    assertEquals(actual.build, expected.build)
+    assertEquals(actual.group, expected.group)
+    assertEquals(actual.event.id, expected.event.id)
+
+    assertTrue { actual.event.data.containsKey("created") }
+    assertTrue { actual.time <= actual.event.data["created"] as Long }
+
+    if (actual.event.isEventGroup()) {
+      assertEquals(actual.event.data.size - 2, expected.event.data.size)
+      assertTrue { actual.event.data.containsKey("last") }
+      assertTrue { actual.time <= actual.event.data["last"] as Long }
+    }
+    else {
+      assertEquals(actual.event.data.size - 1, expected.event.data.size)
+    }
+    if (actual.event is LogEventAction || expected.event is LogEventAction) {
+      assertEquals((actual.event as LogEventAction).count, (expected.event as LogEventAction).count)
+    }
   }
 }
 
 class TestFeatureUsageFileEventLogger(session: String, build: String, writer: TestFeatureUsageEventWriter) :
-  FeatureUsageFileEventLogger(session, build, "-1", "2", writer) {
+  FeatureUsageFileEventLogger(session, build, "-1", "1", writer) {
   val testWriter = writer
 
   override fun dispose() {

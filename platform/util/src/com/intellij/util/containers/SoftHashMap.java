@@ -32,6 +32,14 @@ import java.lang.ref.ReferenceQueue;
  */
 @Deprecated
 public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
+  /**
+   * Soft keys hash map.
+   * Null keys are NOT allowed
+   * Null values are allowed
+   *
+   * @deprecated use {@link ContainerUtil#createSoftMap()} instead
+   */
+  @Deprecated
   public SoftHashMap() {
     DeprecatedMethodException.report("Use ContainerUtil.createSoftMap() instead");
   }
@@ -40,7 +48,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
     super(initialCapacity);
   }
 
-  SoftHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  SoftHashMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     super(hashingStrategy);
   }
 

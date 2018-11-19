@@ -180,7 +180,7 @@ public class SystemHealthMonitor implements BaseComponent {
   }
 
   private static final class MyNotification extends Notification implements NotificationFullContent {
-    public MyNotification(@NotNull String content) {
+    MyNotification(@NotNull String content) {
       super(GROUP.getDisplayId(), "", content, NotificationType.WARNING);
     }
   }

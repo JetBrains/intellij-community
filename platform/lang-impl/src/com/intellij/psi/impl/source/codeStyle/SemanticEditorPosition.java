@@ -41,10 +41,10 @@ public class SemanticEditorPosition {
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
   private final Function<IElementType, SyntaxElement> myTypeMapper;
-  private final BiFunction<EditorEx, Integer, HighlighterIterator> myCreateHighlighterIteratorAtOffset;
+  private final BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> myCreateHighlighterIteratorAtOffset;
 
   private SemanticEditorPosition(@NotNull EditorEx editor, int offset,
-                                 @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
+                                 @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
                                  @NotNull Function<IElementType, SyntaxElement> typeMapper) {
     myCreateHighlighterIteratorAtOffset = createHighlighterIteratorAtOffset;
     myEditor = editor;
@@ -174,7 +174,7 @@ public class SemanticEditorPosition {
 
   public void moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(@NotNull SyntaxElement leftParenthesis,
                                                                         @NotNull SyntaxElement rightParenthesis,
-                                                                        @NotNull Predicate<SemanticEditorPosition> terminationCondition) {
+                                                                        @NotNull Predicate<? super SemanticEditorPosition> terminationCondition) {
     while (!myIterator.atEnd()) {
       if (terminationCondition.test(this)) {
         break;
@@ -322,7 +322,7 @@ public class SemanticEditorPosition {
                                   myTypeMapper);
   }
 
-  public SemanticEditorPosition copyAnd(@NotNull Consumer<SemanticEditorPosition> modifier) {
+  public SemanticEditorPosition copyAnd(@NotNull Consumer<? super SemanticEditorPosition> modifier) {
     SemanticEditorPosition position = copy();
     modifier.accept(position);
     return position;
@@ -330,7 +330,7 @@ public class SemanticEditorPosition {
   
   @NotNull
   public static SemanticEditorPosition createEditorPosition(@NotNull EditorEx editor, int offset,
-                                                            @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
+                                                            @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
                                                             @NotNull Function<IElementType, SyntaxElement> typeMapper) {
     return new SemanticEditorPosition(editor, offset, createHighlighterIteratorAtOffset, typeMapper);
   }

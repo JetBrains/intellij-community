@@ -26,6 +26,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -43,8 +44,17 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTe
     if (locationElements == null) {
       collectContextElements(dataContext, true, false, classes, new PsiElementProcessor.CollectElements<>());
     }
-    if (Comparing.equal(classes, patterns)) {
-      if (patterns.size() == 1) {
+    int patternsSize = patterns.size();
+    if (patternsSize == classes.size()) {
+      final Iterator<String> patternsIterator = patterns.iterator();
+      final Iterator<String> classesIterator = classes.iterator();
+      while (patternsIterator.hasNext() && classesIterator.hasNext()) {
+        if (!Comparing.equal(patternsIterator.next(), classesIterator.next())) {
+          return false;
+        }
+      }
+
+      if (patternsSize == 1) {
         final String pattern = patterns.iterator().next();
         if (!pattern.contains(",")) {
           final PsiMethod method = PsiTreeUtil.getParentOfType(CommonDataKeys.PSI_ELEMENT.getData(dataContext), PsiMethod.class);

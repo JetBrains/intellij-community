@@ -292,4 +292,6 @@ public void testConvertToObjectStream() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "String.class");
   }
+
+  public void testFilterInaccessibleConstructors() { doAntiTest(); }
 }

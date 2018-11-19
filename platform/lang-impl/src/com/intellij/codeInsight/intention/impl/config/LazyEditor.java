@@ -43,7 +43,7 @@ class LazyEditor extends UserDataHolderBase implements Editor {
   private final PsiFile myFile;
   private Editor myEditor;
 
-  public LazyEditor(PsiFile file) {
+  LazyEditor(PsiFile file) {
     myFile = file;
   }
 

@@ -212,12 +212,12 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
   }
 
   @Override
-  public void addChangeListener(ChangeListener changeListener) {
+  public void addChangeListener(@NotNull ChangeListener changeListener) {
     myChangeListeners.add(changeListener);
   }
 
   @Override
-  public void removeChangeListener(ChangeListener changeListener) {
+  public void removeChangeListener(@NotNull ChangeListener changeListener) {
     myChangeListeners.remove(changeListener);
   }
 

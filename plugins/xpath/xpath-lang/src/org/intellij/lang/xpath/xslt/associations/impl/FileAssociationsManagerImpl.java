@@ -17,7 +17,7 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class FileAssociationsManagerImpl extends FileAssociationsManager implements ProjectComponent, Disposable, JDOMExternalizable {
+class FileAssociationsManagerImpl extends FileAssociationsManager implements Disposable, JDOMExternalizable, NamedComponent {
   private static final Logger LOG = Logger.getInstance(FileAssociationsManagerImpl.class);
 
   private final Project myProject;
@@ -46,18 +46,17 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   private final Map<VirtualFilePointer, VirtualFilePointerContainer> myAssociations;
   private boolean myTempCopy;
 
-  public FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
+  FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
     myProject = project;
     myFilePointerManager = filePointerManager;
     myAssociations = new LinkedHashMap<>();
   }
-  
+
   public void markAsTempCopy() {
     myTempCopy = true;
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
   public void readExternal(Element element) throws InvalidDataException {
     final List<Element> children = element.getChildren("file");
     for (Element child : children) {
@@ -85,14 +84,14 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   public TransactionalManager getTempManager() {
     return new TempManager(this, myProject, myFilePointerManager);
   }
-  
+
   @Override
   @NotNull
   @NonNls
   public String getComponentName() {
     return "XSLT-Support.FileAssociationsManager";
   }
-  
+
   @Override
   public void dispose() {
     clear();
@@ -158,7 +157,6 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
       if (pointer.getUrl().equals(virtualFile.getUrl())) {
         VirtualFilePointerContainer container = myAssociations.get(pointer);
         if (container != null) {
-          //noinspection ConstantConditions
           final VirtualFilePointer p = container.findByUrl(assoc.getVirtualFile().getUrl());
           if (p != null) {
             container.remove(p);

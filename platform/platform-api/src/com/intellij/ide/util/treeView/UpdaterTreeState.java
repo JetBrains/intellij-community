@@ -17,22 +17,21 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class UpdaterTreeState {
-
   private final AbstractTreeUi myUi;
-  protected WeakHashMap<Object, Object> myToSelect = new WeakHashMap<>();
-  protected WeakHashMap<Object, Condition> myAdjustedSelection = new WeakHashMap<>();
-  protected WeakHashMap<Object, Object> myToExpand = new WeakHashMap<>();
+  private final Map<Object, Object> myToSelect = new WeakHashMap<>();
+  private Map<Object, Condition> myAdjustedSelection = new WeakHashMap<>();
+  private final Map<Object, Object> myToExpand = new WeakHashMap<>();
   private int myProcessingCount;
 
   private boolean myCanRunRestore = true;
 
   private final WeakHashMap<Object, Object> myAdjustmentCause2Adjustment = new WeakHashMap<>();
 
-  public UpdaterTreeState(AbstractTreeUi ui) {
+  UpdaterTreeState(AbstractTreeUi ui) {
     this(ui, false);
   }
 
-  public UpdaterTreeState(AbstractTreeUi ui, boolean isEmpty) {
+  private UpdaterTreeState(AbstractTreeUi ui, boolean isEmpty) {
     myUi = ui;
 
     if (!isEmpty) {
@@ -116,7 +115,7 @@ public class UpdaterTreeState {
   }
 
 
-  public boolean isProcessingNow() {
+  boolean isProcessingNow() {
     return myProcessingCount > 0;
   }
 
@@ -176,7 +175,7 @@ public class UpdaterTreeState {
           }
         });
       }
-    }, false, true, true, false);
+    });
 
     return true;
   }
@@ -236,14 +235,16 @@ public class UpdaterTreeState {
 
     Set<Object> toSelect = new HashSet<>();
     for (Map.Entry<Object, Condition> entry : adjusted.entrySet()) {
-      if (entry.getValue().value(entry.getKey())) continue;
+      Condition condition = entry.getValue();
+      Object key = entry.getKey();
+      if (condition.value(key)) continue;
 
       for (final Object eachSelected : allSelected) {
-        if (isParentOrSame(entry.getKey(), eachSelected)) continue;
-        toSelect.add(entry.getKey());
+        if (isParentOrSame(key, eachSelected)) continue;
+        toSelect.add(key);
       }
       if (allSelected.isEmpty()) {
-        toSelect.add(entry.getKey());
+        toSelect.add(key);
       }
     }
 
@@ -265,7 +266,7 @@ public class UpdaterTreeState {
 
           processHangByParent(hangByParent).notify(result);
         }
-      }, false, true, true);
+      }, false, true);
     } else {
       result.setDone();
     }
@@ -322,7 +323,7 @@ public class UpdaterTreeState {
     return false;
   }
 
-  public void clearExpansion() {
+  void clearExpansion() {
     myToExpand.clear();
   }
 
@@ -335,7 +336,7 @@ public class UpdaterTreeState {
     myToSelect.put(element, element);
   }
 
-  public void addAdjustedSelection(final Object element, Condition isExpired, @Nullable Object adjustmentCause) {
+  void addAdjustedSelection(final Object element, Condition isExpired, @Nullable Object adjustmentCause) {
     myAdjustedSelection.put(element, isExpired);
     if (adjustmentCause != null) {
       myAdjustmentCause2Adjustment.put(adjustmentCause, element);
@@ -345,12 +346,12 @@ public class UpdaterTreeState {
   @NonNls
   @Override
   public String toString() {
-    return "UpdaterState toSelect" +
+    return "UpdaterState toSelect " +
            myToSelect + " toExpand=" +
            myToExpand + " processingNow=" + isProcessingNow() + " canRun=" + myCanRunRestore;
   }
 
-  public void setProcessingNow(boolean processingNow) {
+  private void setProcessingNow(boolean processingNow) {
     if (processingNow) {
       myProcessingCount++;
     } else {

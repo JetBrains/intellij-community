@@ -120,6 +120,10 @@ public class CommonBundle extends BundleBase {
     return message("button.apply");
   }
 
+  public static String getAddButtonText() {
+    return message("button.add.a");
+  }
+
   public static String settingsTitle() {
     return SystemInfo.isMac ? message("title.settings.mac") : message("title.settings");
   }

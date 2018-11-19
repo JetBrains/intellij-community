@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -195,14 +194,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD);
-  }
-
-  @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  protected String getHelpId() {
+    return HelpID.EXTRACT_METHOD;
   }
 
   private void createUIComponents() {
@@ -336,7 +329,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     ExtractMethodInfoHelper myHelper;
     String myEnteredName;
 
-    public MyExtractMethodSettings(GroovyExtractMethodDialog dialog) {
+    MyExtractMethodSettings(GroovyExtractMethodDialog dialog) {
       myHelper = dialog.getHelper();
       myEnteredName = dialog.getEnteredName();
     }

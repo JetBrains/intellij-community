@@ -21,6 +21,7 @@
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
+    <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension"/>
     <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
@@ -34,8 +35,10 @@
 
   <depends>com.intellij.properties</depends>
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
+  <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
@@ -75,7 +78,7 @@
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
 
-    <compileServer.plugin classpath="maven-jps-plugin.jar;plexus-utils-2.0.6.jar"/>
+    <compileServer.plugin classpath="maven-jps-plugin.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
@@ -191,6 +194,12 @@
     <projectTaskRunner implementation="org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunner"/>
     <runAnything.executionProvider implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingProvider"/>
     <runAnything.helpGroup implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingHelpGroup"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
+
+    <registryKey key="maven.import.compiler.arguments" defaultValue="true"
+                 description="Enable importing of the maven compiler plugin arguments"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -314,15 +323,14 @@
       <param name="delimiters/delimiter" disableReferences="true"/>
     </pluginDescriptor>
 
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
+
+    <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
+    <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
     <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
   </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar</implementation-class>
-    </component>
-  </application-components>
 
   <project-components>
     <component>
@@ -594,9 +602,8 @@
       <reference id="EditSource"/>
     </group>
 
-    <group id="Maven.BuildMenu" popup="true">
-      <reference id="Maven.RunBuild"/>
-      <reference ref="RunContextGroup"/>
+    <group id="Maven.BuildMenu" popup="true"  class="org.jetbrains.idea.maven.navigator.actions.MavenBuildMenu">
+      <action id="Maven.CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
       <separator/>
       <reference ref="Maven.TasksGroup"/>
     </group>

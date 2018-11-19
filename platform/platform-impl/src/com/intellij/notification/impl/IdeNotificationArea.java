@@ -186,7 +186,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     private final int myWidth;
     private final Font myFont;
 
-    public TextIcon(JComponent component, @NotNull String str, @NotNull Color textColor) {
+    TextIcon(JComponent component, @NotNull String str, @NotNull Color textColor) {
       myStr = str;
       myComponent = component;
       myTextColor = textColor;

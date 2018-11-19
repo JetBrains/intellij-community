@@ -99,7 +99,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     setMirrors(getProvides(), mirror.getProvides());
   }
 
-  private static <T extends PsiElement> void setMirrors(Iterable<T> stubs, Iterable<T> mirrors) {
+  private static <T extends PsiElement> void setMirrors(Iterable<? extends T> stubs, Iterable<? extends T> mirrors) {
     setMirrors(newArrayList(stubs), newArrayList(mirrors));
   }
 

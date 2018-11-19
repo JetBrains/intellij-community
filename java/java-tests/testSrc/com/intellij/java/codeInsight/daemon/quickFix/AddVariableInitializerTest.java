@@ -20,9 +20,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 
 public class AddVariableInitializerTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() {
-    doAllTests();
-  }
 
   @Override
   protected void setUp() throws Exception {

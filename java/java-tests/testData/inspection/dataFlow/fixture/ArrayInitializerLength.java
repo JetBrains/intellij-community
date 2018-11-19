@@ -60,4 +60,13 @@ class ArrayInitializerLength {
     }
     System.out.println(obj);
   }
+
+  void test2DArray() {
+    int[][] md = {{1, 2, 3}, {3, 4}};
+    int elem = md[1][<warning descr="Array index is out of bounds">2</warning>];
+    int[] subArray = md[0];
+    if (<warning descr="Condition 'subArray.length == 3' is always 'true'">subArray.length == 3</warning>) {
+      System.out.println("Always");
+    }
+  }
 }

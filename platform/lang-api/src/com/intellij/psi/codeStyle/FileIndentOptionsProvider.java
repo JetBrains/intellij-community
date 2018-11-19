@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,7 @@ public abstract class FileIndentOptionsProvider {
    * @return The indent options source hint or {@code null} if not available.
    */
   @Nullable
-  protected String getHint(@NotNull IndentOptions indentOptions) {
+  public String getHint(@NotNull IndentOptions indentOptions) {
     return null;
   }
 
@@ -100,7 +101,8 @@ public abstract class FileIndentOptionsProvider {
       sb.append("Tab");
     }
     else {
-      sb.append(indentOptions.INDENT_SIZE).append(" spaces");
+      int indent = indentOptions.INDENT_SIZE;
+      sb.append(indentOptions.INDENT_SIZE).append(indent > 1 ? " spaces" : " space");
     }
     if (hint != null) sb.append(" (").append(hint).append(')');
     return sb.toString();
@@ -120,4 +122,38 @@ public abstract class FileIndentOptionsProvider {
     return null;
   }
 
+  protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
+  }
+
+  /**
+   * @return True if "Configure indents for [Language]" action should be available when the provider is active (returns its own indent
+   *          options), false otherwise.
+   */
+  public boolean isShowFileIndentOptionsEnabled() {
+    return true;
+  }
+
+  /**
+   * Creates an action which can be used to disable the provider.
+   *
+   * @param project The project to disable the provider in.
+   * @return The disable action.
+   */
+  @Nullable
+  public AnAction createDisableAction(@NotNull Project project) {
+    return null;
+  }
+
+  /**
+   * Creates a default action when the provider is inactive (disabled). Default actions are collected from multiple providers if none
+   * of them is returning any indent options. The action may suggest to enable the provider if it's currently disabled.
+   *
+   * @param project The project to run the default action for.
+   * @return The default action.
+   */
+  @Nullable
+  public AnAction createDefaultAction(@NotNull Project project) {
+    return null;
+  }
 }

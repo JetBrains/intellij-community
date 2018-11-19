@@ -264,13 +264,13 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyUndoCommandListener : CommandListener {
-    override fun commandStarted(event: CommandEvent?) {
+    override fun commandStarted(event: CommandEvent) {
       if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
         hasUndoInCommand = false
       }
     }
 
-    override fun commandFinished(event: CommandEvent?) {
+    override fun commandFinished(event: CommandEvent) {
       if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
         hasUndoInCommand = false
       }
@@ -289,7 +289,7 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
 
-    override fun beforeCommandFinished(event: CommandEvent?) {
+    override fun beforeCommandFinished(event: CommandEvent) {
       registerRedoAction()
     }
 
@@ -320,14 +320,6 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {
-    override fun onRangeAdded(block: Block) {
-      super.onRangeAdded(block)
-
-      if (block.ourData.marker == null) { // do not override markers, that are set via other methods of this listener
-        block.marker = defaultMarker
-      }
-    }
-
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
       super.onRangeRefreshed(before, after)
 
@@ -394,13 +386,6 @@ class PartialLocalLineStatusTracker(project: Project,
       return false
     }
 
-    override fun afterRefresh() {
-      super.afterRefresh()
-
-      updateAffectedChangeLists()
-      fireExcludedFromCommitChanged()
-    }
-
     override fun afterRangeChange() {
       super.afterRangeChange()
 
@@ -408,8 +393,15 @@ class PartialLocalLineStatusTracker(project: Project,
       fireExcludedFromCommitChanged()
     }
 
-    override fun afterExplicitChange() {
-      super.afterExplicitChange()
+    override fun afterBulkRangeChange() {
+      super.afterBulkRangeChange()
+
+      blocks.forEach {
+        // do not override markers, that are set via other methods of this listener
+        if (it.ourData.marker == null) {
+          it.marker = defaultMarker
+        }
+      }
 
       updateAffectedChangeLists()
       fireExcludedFromCommitChanged()
@@ -435,9 +427,27 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
+  internal fun hasPartialState(): Boolean {
+    return documentTracker.readLock {
+      if (affectedChangeListsIds.size > 1) return@readLock true
+
+      var hasIncluded = false
+      var hasExcluded = false
+      blocks.forEach {
+        if (it.excludedFromCommit) {
+          hasExcluded = true
+        }
+        else {
+          hasIncluded = true
+        }
+      }
+      return@readLock hasIncluded && hasExcluded
+    }
+  }
+
   fun hasPartialChangesToCommit(): Boolean {
     return documentTracker.readLock {
-      affectedChangeLists.size > 1 || hasBlocksExcludedFromCommit()
+      affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit }
     }
   }
 
@@ -603,12 +613,6 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
   enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
-
-  fun hasBlocksExcludedFromCommit(): Boolean {
-    return documentTracker.readLock {
-      blocks.any { it.excludedFromCommit }
-    }
-  }
 
   fun getExcludedFromCommitState(changelistId: String): ExclusionState {
     val marker = ChangeListMarker(changelistId)

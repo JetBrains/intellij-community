@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -12,9 +13,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,13 +43,12 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
       myReplacement = null;
       return;
     }
-    PsiDocumentManager.getInstance(project).commitDocument(document);
     CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
     myReplacement = codeStyleFacade.getLineIndent(editor, file.getLanguage(), lineStartOffset, true);
     if (myReplacement == null) {
       return;
     }
-    int tabSize = codeStyleFacade.getTabSize(file.getFileType());
+    int tabSize = CodeStyle.getIndentOptions(file).TAB_SIZE;
     int targetColumn = getWidth(myReplacement, tabSize);
     int endOffset = CharArrayUtil.shiftForward(charSequence, caretOffset, " \t");
     LogicalPosition logicalPosition = caretOffset < endOffset ? editor.offsetToLogicalPosition(endOffset) : pos;
@@ -66,8 +64,12 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
       int prevLineEndOffset = document.getLineEndOffset(logicalPosition.line - 1);
       myStartOffset = CharArrayUtil.shiftBackward(charSequence, prevLineEndOffset - 1, " \t") + 1;
       if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1)) {
-        int spacing = CodeStyleManager.getInstance(project).getSpacing(file, endOffset);
-        myReplacement = StringUtil.repeatSymbol(' ', Math.max(0, spacing));
+        int spacing = codeStyleFacade.getJoinedLinesSpacing(editor, file.getLanguage(), endOffset, true);
+        if (spacing < 0) {
+          LOG.error("The call `codeStyleFacade.getJoinedLinesSpacing` should not return the negative value");
+          spacing = 0;
+        }
+        myReplacement = StringUtil.repeatSymbol(' ', spacing);
       }
     }
   }

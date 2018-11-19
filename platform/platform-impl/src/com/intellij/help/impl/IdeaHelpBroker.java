@@ -57,7 +57,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * Constructor
    */
 
-  public IdeaHelpBroker(HelpSet hs){
+  IdeaHelpBroker(HelpSet hs){
     setHelpSet(hs);
   }
 

@@ -44,7 +44,7 @@ public class RelocateAction extends BasicAction {
       return;
     }
 
-    RelocateDialog dlg = new RelocateDialog(vcs.getProject(), info.getURL());
+    RelocateDialog dlg = new RelocateDialog(vcs.getProject(), info.getUrl());
     if (!dlg.showAndGet()) {
       return;
     }

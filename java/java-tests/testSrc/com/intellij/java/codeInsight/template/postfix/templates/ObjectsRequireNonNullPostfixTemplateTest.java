@@ -23,7 +23,6 @@ public class ObjectsRequireNonNullPostfixTemplateTest extends PostfixTemplateTes
       myDefaultLanguageLevel = null;
     }
     finally {
-      //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
   }

@@ -20,12 +20,12 @@ public final class GroupByScopeTypeAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE;
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean flag) {
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
     myUpdate.run();
   }

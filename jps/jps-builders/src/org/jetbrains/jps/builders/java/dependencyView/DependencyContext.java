@@ -121,7 +121,7 @@ class DependencyContext implements NamingContext {
       @Override
       public void debug(String comment, boolean t) {
         if (log.isDebugEnabled()) {
-          log.debug(comment + Boolean.toString(t));
+          log.debug(comment + t);
         }
       }
     };

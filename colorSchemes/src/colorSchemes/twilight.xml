@@ -456,7 +456,7 @@
     </option>
     <option name="DEFAULT_FUNCTION_CALL">
       <value>
-        <option name="FOREGROUND" value="7587A6" />
+        <option name="FOREGROUND" value="DAD085" />
       </value>
     </option>
     <option name="DEFAULT_FUNCTION_DECLARATION">
@@ -601,7 +601,7 @@
     </option>
     <option name="DJANGO_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="AC885B" />
+        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
     <option baseAttributes="DEFAULT_BRACES" name="DJANGO_TAG_START_END" />
@@ -774,7 +774,7 @@
     <option baseAttributes="XML_TAG" name="HTML_TAG" />
     <option name="HTML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="AC885B" />
+        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
     <option name="HYPERLINK_ATTRIBUTES">
@@ -1394,7 +1394,7 @@
     </option>
     <option name="RUBY_PARAMETER_ID">
       <value>
-        <option name="FOREGROUND" value="7587A6" />
+        <option name="FOREGROUND" value="A0C2D6" />
       </value>
     </option>
     <option name="RUBY_REGEXP">
@@ -1689,7 +1689,7 @@
     </option>
     <option name="XML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="AC885B" />
+        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
     <option name="YAML_COMMENT">

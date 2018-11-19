@@ -45,11 +45,9 @@ public class CollectionUtils {
     );
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls private static final Set<String> s_allCollectionClassesAndInterfaces;
   /**
-   * @noinspection StaticCollection
    */
   @NonNls private static final Map<String, String> s_interfaceForCollection =
     new HashMap<>();

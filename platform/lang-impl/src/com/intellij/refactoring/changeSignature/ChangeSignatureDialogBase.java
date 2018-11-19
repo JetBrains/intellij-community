@@ -681,7 +681,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       JBTableRowEditor editor = getRowEditor(getRowItem(row));
       editor.addDocumentListener(new JBTableRowEditor.RowDocumentListener() {
         @Override
-        public void documentChanged(DocumentEvent e, int column) {
+        public void documentChanged(@NotNull DocumentEvent e, int column) {
           if (String.class.equals(myParametersTableModel.getColumnClass(column))) {
             myParametersTableModel.setValueAtWithoutUpdate(e.getDocument().getText(), row, column);
           }

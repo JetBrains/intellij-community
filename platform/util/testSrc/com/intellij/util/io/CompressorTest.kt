@@ -72,7 +72,7 @@ class CompressorTest {
     tempDir.newFile("dir/d2/f22").writeText("22")
 
     val tar = tempDir.newFile("test.tgz")
-    Compressor.Tar(tar).use { it.addDirectory("tar/", dir) }
+    Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory("tar/", dir) }
     assertTar(
       tar,
       "tar/" to "", "tar/d1/" to "", "tar/d1/d11/" to "", "tar/d2/" to "",

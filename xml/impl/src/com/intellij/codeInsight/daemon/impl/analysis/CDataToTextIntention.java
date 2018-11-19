@@ -29,7 +29,7 @@ public class CDataToTextIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert CData to text";
+    return "Convert CDATA to text";
   }
 
   @Override
@@ -58,7 +58,7 @@ public class CDataToTextIntention implements IntentionAction {
     StringBuilder text = new StringBuilder();
     for (ASTNode astNode : cdatas) {
       ASTNode textNode = astNode.getFirstChildNode().getTreeNext();
-      if (textNode != null && textNode.getElementType() != XmlTokenType.XML_CDATA_END) text.append(StringUtil.escapeXml(textNode.getText()));
+      if (textNode != null && textNode.getElementType() != XmlTokenType.XML_CDATA_END) text.append(StringUtil.escapeXmlEntities(textNode.getText()));
     }
 
     editor.getDocument().replaceString(cdatas.get(0).getStartOffset(),
@@ -69,11 +69,11 @@ public class CDataToTextIntention implements IntentionAction {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     PsiElement parent = element != null ? element.getParent() : null;
-    if (parent != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
+    if (parent != null && parent.getNode() != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
 
     element = file.findElementAt(offset - 1);
     parent = element != null ? element.getParent() : null;
-    if (parent != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
+    if (parent != null && parent.getNode() != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
     return null;
   }
 

@@ -203,7 +203,7 @@ public class Splash extends JDialog implements StartupProgress {
     private final Color myTextColor;
     private boolean myRedrawing;
 
-    public SplashImage(Icon originalIcon, Color textColor) {
+    SplashImage(Icon originalIcon, Color textColor) {
       myIcon = originalIcon;
       myTextColor = textColor;
     }

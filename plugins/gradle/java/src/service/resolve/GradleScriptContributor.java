@@ -20,7 +20,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 7/23/13 4:21 PM
  */
 public class GradleScriptContributor extends NonCodeMembersContributor {
 

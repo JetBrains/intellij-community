@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -92,7 +77,7 @@ class PrintDialog extends DialogWrapper {
   }
 
 
-  public PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
+  PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
     super(project, true);
     mySelectedText = selectedText;
     setOKButtonText(CodeEditorBundle.message("print.print.button"));
@@ -495,7 +480,7 @@ class PrintDialog extends DialogWrapper {
   }
 
   private static class MyTailPanel extends JPanel {
-    public MyTailPanel(){
+    MyTailPanel(){
       setFocusable(false);
     }
 
@@ -633,28 +618,30 @@ class PrintDialog extends DialogWrapper {
     printSettings.FOOTER_HEADER_ALIGNMENT2 = (String)myLineAlignmentCombo2.getSelectedItem();
     printSettings.FOOTER_HEADER_PLACEMENT2 = (String)myLinePlacementCombo2.getSelectedItem();
 
-    try {
-      printSettings.FOOTER_HEADER_FONT_SIZE = Integer.parseInt((String)myFooterFontSizeCombo.getSelectedItem());
+    String fontSize = (String)myFooterFontSizeCombo.getSelectedItem();
+    if (fontSize != null) {
+      try {
+        printSettings.FOOTER_HEADER_FONT_SIZE = Integer.parseInt(fontSize);
+      }
+      catch(NumberFormatException ignored) { }
     }
-    catch(NumberFormatException ignored) { }
 
     printSettings.FOOTER_HEADER_FONT_NAME = myFooterFontNameCombo.getFontName();
-
   }
 
-  @Override
   @NotNull
+  @Override
   protected Action[] createActions() {
-    return new Action[]{getOKAction(),getCancelAction(), new ApplyAction(), getHelpAction()};
+    return new Action[]{getOKAction(), getCancelAction(), new ApplyAction(), getHelpAction()};
   }
 
   @Override
-  public void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.PRINT);
+  protected String getHelpId() {
+    return HelpID.PRINT;
   }
 
-  class ApplyAction extends AbstractAction{
-    public ApplyAction(){
+  private class ApplyAction extends AbstractAction{
+    ApplyAction(){
       putValue(Action.NAME, CodeEditorBundle.message("print.apply.button"));
     }
 
@@ -664,11 +651,11 @@ class PrintDialog extends DialogWrapper {
     }
   }
 
-
   private static class MyTextField extends JTextField {
-    public MyTextField(int size) {
+    MyTextField(int size) {
      super(size);
     }
+
     @Override
     public Dimension getMinimumSize() {
       return super.getPreferredSize();
@@ -676,14 +663,13 @@ class PrintDialog extends DialogWrapper {
   }
 
   private static class MyLabel extends JLabel {
-    public MyLabel(String text) {
+    MyLabel(String text) {
      super(text);
     }
+
     @Override
     public Dimension getMinimumSize() {
       return super.getPreferredSize();
     }
   }
-
-
 }

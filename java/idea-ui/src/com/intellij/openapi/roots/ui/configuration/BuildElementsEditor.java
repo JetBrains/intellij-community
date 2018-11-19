@@ -32,7 +32,6 @@ import java.io.IOException;
 
 public class BuildElementsEditor extends ModuleElementsEditor {
   private JRadioButton myInheritCompilerOutput;
-  @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myPerModuleCompilerOutput;
 
   private CommitableFieldPanel myOutputPathPanel;
@@ -280,7 +279,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   private static class CommitableFieldPanel extends FieldPanel {
     private final Runnable myCommitRunnable;
 
-    public CommitableFieldPanel(final JTextField textField,
+    CommitableFieldPanel(final JTextField textField,
                                 String labelText,
                                 final String viewerDialogTitle,
                                 ActionListener browseButtonActionListener,

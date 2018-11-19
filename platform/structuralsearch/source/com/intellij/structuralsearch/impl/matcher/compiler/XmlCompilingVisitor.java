@@ -9,6 +9,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 
+import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.CODE;
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.TEXT;
 
 /**
@@ -35,23 +36,21 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
 
     @Override
     public void visitXmlTag(XmlTag tag) {
-      if (!handleWord(tag.getName(), myCompilingVisitor.getContext())) return;
+      if (!handleWord(tag.getName(), CODE, myCompilingVisitor.getContext())) return;
       super.visitXmlTag(tag);
     }
 
     @Override
     public void visitXmlAttribute(XmlAttribute attribute) {
-      if (!handleWord(attribute.getName(), myCompilingVisitor.getContext())) return;
-      handleWord(attribute.getValue(), myCompilingVisitor.getContext());
+      if (!handleWord(attribute.getName(), CODE, myCompilingVisitor.getContext())) return;
+      handleWord(attribute.getValue(), CODE, myCompilingVisitor.getContext());
       super.visitXmlAttribute(attribute);
     }
 
     @Override
     public void visitXmlText(XmlText text) {
       final String string = text.getText();
-      if (!myCompilingVisitor.getContext().getPattern().isTypedVar(string)) {
-        myCompilingVisitor.processTokenizedName(string, false, TEXT);
-      }
+      handleWord(string, TEXT, myCompilingVisitor.getContext());
       super.visitXmlText(text);
     }
   }

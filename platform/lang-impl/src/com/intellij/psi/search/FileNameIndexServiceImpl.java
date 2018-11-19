@@ -57,7 +57,7 @@ public class FileNameIndexServiceImpl implements FileNameIndexService {
   }
 
   @Override
-  public boolean processFilesWithFileType(@NotNull FileType fileType, @NotNull Processor<VirtualFile> processor, @NotNull GlobalSearchScope scope) {
+  public boolean processFilesWithFileType(@NotNull FileType fileType, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope) {
     return myIndex.processValues(FileTypeIndexImpl.NAME, fileType, null, (file, value) -> processor.process(file), scope);
   }
 }

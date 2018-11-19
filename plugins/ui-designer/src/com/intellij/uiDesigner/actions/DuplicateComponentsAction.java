@@ -31,8 +31,8 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
-    FormEditingUtil.remapToActionTargets(selection);
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> input, final AnActionEvent e) {
+    List<RadComponent> selection = FormEditingUtil.remapToActionTargets(input);
     RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     assert parent != null;
     List<RadComponent> duplicates = new ArrayList<>();
@@ -122,8 +122,8 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    FormEditingUtil.remapToActionTargets(selection);
+  protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> input, final AnActionEvent e) {
+    List<RadComponent> selection = FormEditingUtil.remapToActionTargets(input);
     final RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(parent != null && (parent.getLayoutManager().isGrid() || parent.getLayoutManager().isIndexed()));
     // The action is enabled in any of the following cases:

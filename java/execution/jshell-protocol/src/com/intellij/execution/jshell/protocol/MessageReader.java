@@ -1,8 +1,8 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.protocol;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.io.*;
+import java.util.Base64;
 import java.util.function.Consumer;
 
 /**
@@ -10,14 +10,14 @@ import java.util.function.Consumer;
  */
 public class MessageReader<T> extends Endpoint {
   private final BufferedReader myIn;
-  private final JAXBContext myContext;
+  private final Class<T> myMsgType;
 
-  public MessageReader(InputStream input, Class<T> msgType) throws Exception {
+  public MessageReader(InputStream input, Class<T> msgType) {
     myIn = new BufferedReader(new InputStreamReader(input));
-    myContext = JAXBContext.newInstance(msgType);
+    myMsgType = msgType;
   }
 
-  public T receive(final Consumer<String> unparsedOutputSink) throws IOException {
+  public T receive(final Consumer<? super String> unparsedOutputSink) throws IOException {
     while (true) {
       String line = myIn.readLine();
       if (line == null) {
@@ -26,13 +26,13 @@ public class MessageReader<T> extends Endpoint {
       if (MSG_BEGIN.equals(line)) {
         final StringBuilder buf = new StringBuilder();
         for (String body = myIn.readLine(); !MSG_END.equals(body.trim()); body = myIn.readLine()) {
-          buf.append(body).append("\n");
+          buf.append(body);
         }
-        try {
-          //noinspection unchecked
-          return (T)myContext.createUnmarshaller().unmarshal(new StringReader(buf.toString()));
+        byte[] bytes = Base64.getDecoder().decode(buf.toString());
+        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+          return myMsgType.cast(ois.readObject());
         }
-        catch (JAXBException e) {
+        catch (ClassNotFoundException e) {
           throw new IOException(e);
         }
       }
@@ -41,5 +41,4 @@ public class MessageReader<T> extends Endpoint {
       }
     }
   }
-
 }

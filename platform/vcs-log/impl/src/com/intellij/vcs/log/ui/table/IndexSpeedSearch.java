@@ -116,7 +116,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
   private static class SimpleVcsLogUserFilter implements VcsLogUserFilter {
     @NotNull private final Collection<VcsUser> myMatchedUsers;
 
-    public SimpleVcsLogUserFilter(@NotNull Collection<VcsUser> matchedUsers) {
+    SimpleVcsLogUserFilter(@NotNull Collection<VcsUser> matchedUsers) {
       myMatchedUsers = matchedUsers;
     }
 

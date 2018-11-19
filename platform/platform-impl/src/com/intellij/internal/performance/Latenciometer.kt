@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import gnu.trove.TIntArrayList
 
 /**
  * @author yole
@@ -17,19 +18,30 @@ class LatencyRecorderImpl : LatencyRecorder {
 }
 
 class LatencyRecord {
-  var totalKeysTyped: Int = 0
   var totalLatency: Long = 0L
-  var maxLatency: Long = 0L
+  var maxLatency: Int = 0
+  val samples = TIntArrayList()
+  var samplesSorted = false
 
-  fun update(latencyInMS: Long) {
-    totalKeysTyped++
+  fun update(latencyInMS: Int) {
+    samplesSorted = false
+    samples.add(latencyInMS)
     totalLatency += latencyInMS
     if (latencyInMS > maxLatency) {
       maxLatency = latencyInMS
     }
   }
 
-  val averageLatency: Long get() = totalLatency / totalKeysTyped
+  val averageLatency: Long get() = totalLatency / samples.size()
+
+  fun percentile(n: Int): Int {
+    if (!samplesSorted) {
+      samples.sort()
+      samplesSorted = true
+    }
+    val index = (samples.size() * n / 100).coerceAtMost(samples.size() - 1)
+    return samples[index]
+  }
 }
 
 data class LatencyDistributionRecordKey(val name: String) {
@@ -38,9 +50,9 @@ data class LatencyDistributionRecordKey(val name: String) {
 
 class LatencyDistributionRecord(val key: LatencyDistributionRecordKey) {
   val totalLatency: LatencyRecord = LatencyRecord()
-  val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf<String, LatencyRecord>()
+  val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf()
 
-  fun update(action: String, latencyInMS: Long) {
+  fun update(action: String, latencyInMS: Int) {
     totalLatency.update(latencyInMS)
     actionLatencyRecords.getOrPut(action) { LatencyRecord() }.update(latencyInMS)
   }
@@ -58,7 +70,7 @@ fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
   val latencyRecord = latencyMap.getOrPut(key) {
     LatencyDistributionRecord(key)
   }
-  latencyRecord.update(getActionKey(action), latencyInMS)
+  latencyRecord.update(getActionKey(action), latencyInMS.toInt())
 }
 
 fun getActionKey(action: String): String =

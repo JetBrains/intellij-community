@@ -160,7 +160,7 @@ public class LongRangeBasics {
   public void testBitwiseAnd() {
     int state = getState() & 0xF;
     switch (state) {
-      <warning descr="Switch label 'case 24:' is unreachable">case 24:</warning>
+      case <warning descr="Switch label '24' is unreachable">24</warning>:
         System.out.println("Impossible");
     }
   }
@@ -198,8 +198,8 @@ public class LongRangeBasics {
       System.out.println(s2.trim());
     }
     if(code == 0) {
-      System.out.println(s1.<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>());
-      System.out.println(s2.<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>());
+      System.out.println(s1.<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>());
+      System.out.println(s2.<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>());
     }
   }
 

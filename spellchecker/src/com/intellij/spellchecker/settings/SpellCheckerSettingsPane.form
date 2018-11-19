@@ -150,12 +150,6 @@
                             </constraints>
                             <properties/>
                           </component>
-                          <component id="e674e" class="com.intellij.openapi.ui.ComboBox" default-binding="true">
-                            <constraints>
-                              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties/>
-                          </component>
                           <vspacer id="ea51e">
                             <constraints>
                               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>

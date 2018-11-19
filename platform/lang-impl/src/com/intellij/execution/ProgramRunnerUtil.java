@@ -43,7 +43,7 @@ public class ProgramRunnerUtil {
 
   @NotNull
   public static String getCannotRunOnErrorMessage(@NotNull RunProfile profile, @NotNull ExecutionTarget target) {
-    return StringUtil.escapeXml("Cannot run '" + profile.getName() + "' on '" + target.getDisplayName() + "'");
+    return StringUtil.escapeXmlEntities("Cannot run '" + profile.getName() + "' on '" + target.getDisplayName() + "'");
   }
 
   public static void executeConfigurationAsync(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId, ProgramRunner.Callback callback) {
@@ -198,13 +198,15 @@ public class ProgramRunnerUtil {
   @NotNull
   public static Icon getRawIcon(@NotNull RunnerAndConfigurationSettings settings) {
     Icon icon = settings.getFactory().getIcon(settings.getConfiguration());
-    return icon == null ? AllIcons.RunConfigurations.Unknown : icon;
+    return icon == null ? AllIcons.Actions.Help : icon;
   }
 
+  @NotNull
   public static Icon getTemporaryIcon(@NotNull Icon rawIcon) {
     return IconLoader.getTransparentIcon(rawIcon, 0.3f);
   }
 
+  @NotNull
   public static String shortenName(@Nullable String name, final int toBeAdded) {
     if (name == null) {
       return "";

@@ -10,6 +10,12 @@ import java.util.EventListener;
 public interface RunManagerListener extends EventListener {
   Topic<RunManagerListener> TOPIC = new Topic<>("RunManager", RunManagerListener.class);
 
+  default void runConfigurationSelected(@Nullable RunnerAndConfigurationSettings settings) {
+    //noinspection deprecation
+    runConfigurationSelected();
+  }
+
+  @Deprecated
   default void runConfigurationSelected() {
   }
 
@@ -35,6 +41,9 @@ public interface RunManagerListener extends EventListener {
   default void endUpdate() {
   }
 
-  default void stateLoaded() {
+  /**
+   * Called also in case when RunManager doesn't have state.
+   */
+  default void stateLoaded(@NotNull RunManager runManager, boolean isFirstLoadState) {
   }
 }

@@ -50,15 +50,21 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   public void loadState(@NotNull Element state) {
     configurations.clear();
     historyConfigurations.clear();
-    readConfigurations(state, configurations, historyConfigurations);
-    historyConfigurations.forEach(c -> c.getMatchOptions().initScope(myProject));
+    final SmartList<Configuration> tmp = new SmartList<>();
+    readConfigurations(state, configurations, tmp);
+    tmp.forEach(c -> {
+      c.getMatchOptions().initScope(myProject);
+      addHistoryConfiguration(c);
+    });
+    Collections.reverse(historyConfigurations);
   }
 
   public void addHistoryConfiguration(@NotNull Configuration configuration) {
     configuration = configuration.copy();
-    configuration.setCreated(System.currentTimeMillis());
-    configuration.setName(configuration.getMatchOptions().getSearchPattern());
-    final Configuration old = findConfigurationByName(historyConfigurations, configuration.getName());
+    if (configuration.getCreated() <= 0) {
+      configuration.setCreated(System.currentTimeMillis());
+    }
+    final Configuration old = findConfiguration(historyConfigurations, configuration);
     if (old != null) historyConfigurations.remove(old); // move to most recent
     historyConfigurations.add(0, configuration);
     while (historyConfigurations.size() > MAX_RECENT_SIZE) {
@@ -104,8 +110,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
 
   private static void readConfigurations(@NotNull Element element,
-                                        @NotNull Collection<Configuration> configurations,
-                                        @NotNull Collection<Configuration> historyConfigurations) {
+                                         @NotNull Collection<Configuration> configurations,
+                                         @NotNull Collection<Configuration> historyConfigurations) {
     for (final Element pattern : element.getChildren()) {
       final Configuration config = readConfiguration(pattern);
       if (config == null) continue;
@@ -155,8 +161,27 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
 
   @Nullable
-  private static Configuration findConfigurationByName(final Collection<Configuration> configurations, final String name) {
+  private static Configuration findConfigurationByName(Collection<Configuration> configurations, final String name) {
     return configurations.stream().filter(config -> config.getName().equals(name)).findFirst().orElse(null);
+  }
+
+  @Nullable
+  private static Configuration findConfiguration(@NotNull Collection<Configuration> configurations, Configuration configuration) {
+    return configurations.stream()
+      .filter(c -> {
+        if (configuration instanceof ReplaceConfiguration) {
+          final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
+          return c instanceof ReplaceConfiguration &&
+                 c.getMatchOptions().getSearchPattern().equals(replaceConfiguration.getMatchOptions().getSearchPattern()) &&
+                 c.getReplaceOptions().getReplacement().equals(replaceConfiguration.getReplaceOptions().getReplacement());
+        }
+        else {
+          return c instanceof SearchConfiguration && c.getMatchOptions().getSearchPattern().equals(
+            configuration.getMatchOptions().getSearchPattern());
+        }
+      })
+      .findFirst()
+      .orElse(null);
   }
 
   @NotNull
@@ -173,7 +198,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
                                                  @NotNull Project project) {
     String name = showInputDialog(newConfiguration.getName(), project);
     Configuration config;
-    while ((config = findConfigurationByName(configurations, name)) != null && name !=  null) {
+    while ((config = findConfigurationByName(configurations, name)) != null && name != null) {
      final int answer =
         Messages.showYesNoDialog(
           project,

@@ -1,0 +1,23 @@
+PyFile:FStringTrailingWhitespaceInIncompleteFragmentInFormatPart.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: {42:{ 
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('f'')
+        PyFStringFragment
+          PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('42')
+          PyFStringFragmentFormatPart
+            PsiElement(Py:FSTRING_FRAGMENT_FORMAT_START)(':')
+            PyFStringFragment
+              PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+              PsiErrorElement:expression expected
+                PsiWhiteSpace(' ')
+              PsiErrorElement:} expected
+                <empty list>
+        PsiElement(Py:FSTRING_END)(''')

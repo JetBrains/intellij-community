@@ -108,7 +108,7 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
               CvsVfsUtil.refreshAndfFindChild(parent, CvsUtil.CVS_IGNORE_FILE);
             if (cvsIgnoreFile == null) {
               final String path = parent.getPath() + "/" + CvsUtil.CVS_IGNORE_FILE;
-              LOG.error(String.valueOf(CvsVfsUtil.findFileByPath(path)) + " " + parent.getPath() + " " +
+              LOG.error(CvsVfsUtil.findFileByPath(path) + " " + parent.getPath() + " " +
                         new File(VfsUtil.virtualToIoFile(parent), CvsUtil.CVS_IGNORE_FILE).isFile());
               return;
             }

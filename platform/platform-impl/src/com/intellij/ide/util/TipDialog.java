@@ -3,8 +3,9 @@ package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TipsOfTheDayUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
@@ -48,7 +49,7 @@ public class TipDialog extends DialogWrapper {
     setTitle(IdeBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel();
-    myTipPanel.setTips(ContainerUtil.newArrayList(Extensions.getExtensions(TipAndTrickBean.EP_NAME)));
+    myTipPanel.setTips(ContainerUtil.newArrayList(TipAndTrickBean.EP_NAME.getExtensionList()));
     myTipPanel.nextTip();
     setDoNotAskOption(myTipPanel);
     setHorizontalStretch(1.33f);
@@ -96,7 +97,7 @@ public class TipDialog extends DialogWrapper {
   private class OpenTipsAction extends AbstractAction {
     private static final String LAST_OPENED_TIP_PATH = "last.opened.tip.path";
 
-    public OpenTipsAction() {
+    OpenTipsAction() {
       super(IdeBundle.message("action.open.tip"));
     }
 
@@ -125,18 +126,19 @@ public class TipDialog extends DialogWrapper {
   }
 
   private class PreviousTipAction extends AbstractAction {
-    public PreviousTipAction() {
+    PreviousTipAction() {
       super(IdeBundle.message("action.previous.tip"));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+      FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "previous.tip");
       myTipPanel.prevTip();
     }
   }
 
   private class NextTipAction extends AbstractAction {
-    public NextTipAction() {
+    NextTipAction() {
       super(IdeBundle.message("action.next.tip"));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
       putValue(DialogWrapper.FOCUSED_ACTION, Boolean.TRUE); // myPreferredFocusedComponent
@@ -144,6 +146,7 @@ public class TipDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+      FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "next.tip");
       myTipPanel.nextTip();
     }
   }

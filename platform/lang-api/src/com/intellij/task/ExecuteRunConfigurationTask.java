@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public interface ExecuteRunConfigurationTask extends ProjectTask {
 

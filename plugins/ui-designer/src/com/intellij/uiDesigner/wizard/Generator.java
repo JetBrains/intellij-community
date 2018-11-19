@@ -245,9 +245,9 @@ public final class Generator {
     final LwRootContainer[] rootContainer = new LwRootContainer[1];
     final FormProperty[] formProperties = exposeForm(data.myProject, data.myFormFile, rootContainer);
 
-    final StringBuffer getDataBody = new StringBuffer();
-    final StringBuffer setDataBody = new StringBuffer();
-    final StringBuffer isModifiedBody = new StringBuffer();
+    final StringBuilder getDataBody = new StringBuilder();
+    final StringBuilder setDataBody = new StringBuilder();
+    final StringBuilder isModifiedBody = new StringBuilder();
 
     // iterate exposed formproperties
 
@@ -556,7 +556,6 @@ public final class Generator {
     methodsBuffer.append(";}\n");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String suggestGetterName(final String propertyName, final String propertyType) {
     return PropertyUtilBase.suggestGetterName(propertyName, "boolean".equals(propertyType) ? PsiType.BOOLEAN : null);
   }
@@ -570,9 +569,8 @@ public final class Generator {
     PsiClass beanClass = null;
 
     // find get/set pair and bean class
-    outer: for (int i = 0; i < allGetDataMethods.length; i++) {
-      final PsiMethod _getMethod = allGetDataMethods[i];
-
+    outer:
+    for (final PsiMethod _getMethod : allGetDataMethods) {
       if (!PsiType.VOID.equals(_getMethod.getReturnType())) {
         continue;
       }

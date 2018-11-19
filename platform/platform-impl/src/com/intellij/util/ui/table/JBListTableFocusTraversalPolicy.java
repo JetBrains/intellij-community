@@ -27,7 +27,7 @@ import java.util.List;
 class JBListTableFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
   private final JBTableRowEditor myEditor;
 
-  public JBListTableFocusTraversalPolicy(JBTableRowEditor editor) {
+  JBListTableFocusTraversalPolicy(JBTableRowEditor editor) {
     myEditor = editor;
   }
 

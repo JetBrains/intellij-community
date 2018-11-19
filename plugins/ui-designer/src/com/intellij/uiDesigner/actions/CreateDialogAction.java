@@ -88,7 +88,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     final boolean generateCancel,
     final boolean generateMain
   ) {
-    @NonNls final StringBuffer result = new StringBuffer(1024);
+    @NonNls final StringBuilder result = new StringBuilder(1024);
 
     result.append("public class ").append(className).append(" extends javax.swing.JDialog {\n");
     result.append("private javax.swing.JPanel contentPane;\n");
@@ -173,7 +173,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
   @Override
   @NotNull
-  protected PsiElement[] create(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
+  protected PsiElement[] create(@NotNull final String newName, final PsiDirectory directory) throws IncorrectOperationException {
     PsiFile sourceFile = PsiFileFactory.getInstance(directory.getProject())
       .createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
     sourceFile = (PsiFile)directory.add(sourceFile);
@@ -201,7 +201,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     private JCheckBox myChkGenerateMain;
     private JTextField myTfClassName;
 
-    public MyContentPane() {
+    MyContentPane() {
     }
 
     public JPanel getPanel() {

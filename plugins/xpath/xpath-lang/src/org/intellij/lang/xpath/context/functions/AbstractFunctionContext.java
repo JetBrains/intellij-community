@@ -52,7 +52,7 @@ public abstract class AbstractFunctionContext implements FunctionContext {
     return Collections.unmodifiableMap(map);
   }
 
-  protected static synchronized FunctionContext getInstance(ContextType contextType, Factory<FunctionContext> factory) {
+  protected static synchronized FunctionContext getInstance(ContextType contextType, Factory<? extends FunctionContext> factory) {
     return ourInstances.computeIfAbsent(contextType, k -> factory.create());
   }
 

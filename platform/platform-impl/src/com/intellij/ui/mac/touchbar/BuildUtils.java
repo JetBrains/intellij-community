@@ -30,8 +30,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class BuildUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
@@ -114,15 +114,17 @@ class BuildUtils {
         if (jb instanceof JBOptionButton) {
           final JBOptionButton ob = (JBOptionButton)jb;
           final Action[] opts = ob.getOptions();
-          for (Action a : opts) {
-            if (a == null)
-              continue;
-            final AnAction anAct = _createAnAction(a, ob, true);
-            if (anAct == null)
-              continue;
+          if (opts != null) {
+            for (Action a : opts) {
+              if (a == null)
+                continue;
+              final AnAction anAct = _createAnAction(a, ob, true);
+              if (anAct == null)
+                continue;
 
-            // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
-            tbb = out.addAnActionButton(anAct).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(ob).setPriority(--prio[0]);
+              // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
+              tbb = out.addAnActionButton(anAct).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(ob).setPriority(--prio[0]);
+            }
           }
         }
 
@@ -280,7 +282,7 @@ class BuildUtils {
   }
 
   // creates releaseOnClose touchbar
-  static TouchBar createStopRunningBar(List<Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
+  static TouchBar createStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true, true);
     tb.addButton().setText("Stop All").setActionOnEDT(() -> {
       stoppableDescriptors.forEach((pair) -> { pair.second.run(); });
@@ -298,7 +300,7 @@ class BuildUtils {
     private final @Nullable Customizer myCustomizer;
 
     private int mySeparatorCounter = 0;
-    private LinkedList<InternalNode> myNodePath = new LinkedList<>();
+    private final LinkedList<InternalNode> myNodePath = new LinkedList<>();
 
     GroupVisitor(@NotNull TouchBar out, @Nullable String filterByPrefix, @Nullable Customizer customizer) {
       this.myOut = out;
@@ -485,9 +487,12 @@ class BuildUtils {
           continue;
         }
 
-        //if (actionGroup.isPopup()) System.out.println(String.format("add child with isPopup=true: i=%d, childId='%s', group='%s', group id='%s'", i, childId, group.toString(), groupId));
         try {
-          _traverse((ActionGroup)child, visitor);
+          if (childGroup.isPopup()) {
+            // System.out.println(String.format("add child with isPopup=true: i=%d, group='%s', group id='%s'", i, group.toString(), groupId));
+            visitor.visitLeaf(child);
+          } else
+            _traverse((ActionGroup)child, visitor);
         } finally {
           visitor.leaveNode(childGroup);
         }
@@ -505,7 +510,7 @@ class BuildUtils {
           setEnabledInModalContext(true);
           if (useTextFromAction) {
             final Object name = action == null ? fromButton.getText() : action.getValue(Action.NAME);
-            getTemplatePresentation().setText(name != null && name instanceof String ? (String)name : "");
+            getTemplatePresentation().setText(name instanceof String ? (String)name : "");
           }
         }
         @Override
@@ -549,26 +554,28 @@ class BuildUtils {
         secondary.add(jbdesc);
     }
 
-    final Comparator<TouchbarDataKeys.DlgButtonDesc> cmp = (desc1, desc2) -> Integer.compare(desc1.getOrder(), desc2.getOrder());
+    final Comparator<TouchbarDataKeys.DlgButtonDesc> cmp = Comparator.comparingInt(TouchbarDataKeys.DlgButtonDesc::getOrder);
     main.sort(cmp);
     secondary.sort(cmp);
     return ContainerUtil.concat(secondary, main);
   }
 
-  private static void _collectActions(@NotNull AnAction act, @NotNull List<AnAction> out) {
+  private static void _collectActions(@NotNull AnAction act, @NotNull List<? super AnAction> out) {
     if (act instanceof ActionGroup) {
       final ActionGroup group = (ActionGroup)act;
       final AnAction[] children = group.getChildren(null);
-      for (int i = 0; i < children.length; i++) {
-        final AnAction child = children[i];
-        if (child == null)
+      for (final AnAction child : children) {
+        if (child == null) {
           continue;
+        }
 
         if (child instanceof ActionGroup) {
           final @NotNull ActionGroup childGroup = (ActionGroup)child;
           _collectActions(childGroup, out);
-        } else
+        }
+        else {
           out.add(child);
+        }
       }
     } else
       out.add(act);

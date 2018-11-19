@@ -306,7 +306,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     private final AtomicReference<TaskState> myState = new AtomicReference<>(TaskState.CREATED);
     private final Semaphore mySemaphore = new Semaphore(0);
 
-    public TestTask() {
+    TestTask() {
       super(BackgroundTaskQueueTest.this.getProject(), "Test Task", true);
     }
 

@@ -19,6 +19,9 @@ interface GroovyFileImports {
   val allNamedImports: Collection<GroovyNamedImport>
 
 
+  fun getImportsByName(name: String): Collection<GroovyNamedImport>
+
+
   fun processStaticImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean
 
   fun processAllNamedImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean

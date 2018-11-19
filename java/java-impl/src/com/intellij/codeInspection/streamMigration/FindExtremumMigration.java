@@ -115,7 +115,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
   @Nullable
   static private ExtremumTerminal extractIfElseCase(@NotNull PsiStatement[] statements,
                                                     @NotNull TerminalBlock terminalBlock,
-                                                    @Nullable List<PsiVariable> nonFinalVariables) {
+                                                    @Nullable List<? extends PsiVariable> nonFinalVariables) {
     if (statements.length != 1) return null;
     PsiStatement statement = statements[0];
     PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
@@ -133,7 +133,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                                     @NotNull PsiExpression thenCondition,
                                                     @NotNull PsiStatement elseBranch,
                                                     @NotNull TerminalBlock terminalBlock,
-                                                    @Nullable List<PsiVariable> nonFinalVariables) {
+                                                    @Nullable List<? extends PsiVariable> nonFinalVariables) {
     PsiIfStatement elseIfStatement = tryCast(elseBranch, PsiIfStatement.class);
     if (elseIfStatement == null || elseIfStatement.getElseBranch() != null) return null;
     PsiExpression elseIfCondition = elseIfStatement.getCondition();
@@ -151,7 +151,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                                     @NotNull PsiStatement comparisonBranch,
                                                     @NotNull PsiExpression comparisonExpr,
                                                     @NotNull TerminalBlock terminalBlock,
-                                                    @Nullable List<PsiVariable> nonFinalVariables) {
+                                                    @Nullable List<? extends PsiVariable> nonFinalVariables) {
     if (!ourEquivalence.statementsAreEquivalent(nullCheckBranch, comparisonBranch)) return null;
     return SimpleRefExtremumTerminal
       .extract(nullCheckExpr, comparisonExpr, new PsiStatement[]{comparisonBranch}, terminalBlock, nonFinalVariables);
@@ -174,7 +174,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
   }
 
 
-  static private boolean containsAnyVariable(@NotNull PsiExpression expression, @NotNull List<PsiVariable> variables) {
+  static private boolean containsAnyVariable(@NotNull PsiExpression expression, @NotNull List<? extends PsiVariable> variables) {
     for (PsiVariable variable : variables) {
       if (VariableAccessUtils.variableIsUsed(variable, expression)) return true;
     }
@@ -315,7 +315,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                                    @NotNull PsiExpression comparisonExpr,
                                                    @NotNull PsiStatement[] statements,
                                                    @NotNull TerminalBlock terminalBlock,
-                                                   @Nullable List<PsiVariable> nonFinalVariables,
+                                                   @Nullable List<? extends PsiVariable> nonFinalVariables,
                                                    boolean isNegated) {
       Comparison comparison = Comparison.extract(comparisonExpr, terminalBlock.getVariable(), isNegated);
       if (comparison == null) return null;
@@ -502,7 +502,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     private static PrimitiveExtremumTerminal extract(@NotNull PsiExpression condition,
                                                      @NotNull PsiStatement[] statements,
                                                      @NotNull TerminalBlock terminalBlock,
-                                                     @Nullable List<PsiVariable> nonFinalVariables,
+                                                     @Nullable List<? extends PsiVariable> nonFinalVariables,
                                                      boolean isNegated) {
       Comparison comparison = Comparison.extract(condition, terminalBlock.getVariable(), isNegated);
       if (comparison == null || comparison.isExternalComparison()) return null;
@@ -586,7 +586,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                                      @NotNull PsiExpression comparisonExpr,
                                                      @NotNull PsiStatement[] statements,
                                                      @NotNull TerminalBlock terminalBlock,
-                                                     @Nullable List<PsiVariable> nonFinalVars) {
+                                                     @Nullable List<? extends PsiVariable> nonFinalVars) {
       PsiBinaryExpression nullCheckBinary = tryCast(nullCheckExpr, PsiBinaryExpression.class);
       if (nullCheckBinary == null) return null;
       PsiVariable nullCheckingVar = ExpressionUtils.getVariableFromNullComparison(nullCheckBinary, true);

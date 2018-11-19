@@ -3,7 +3,6 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -23,7 +22,7 @@ public class InvertBooleanAction extends BaseRefactoringAction {
   @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     if (elements.length == 1 && elements[0] != null) {
-      for (InvertBooleanDelegate delegate : Extensions.getExtensions(InvertBooleanDelegate.EP_NAME)) {
+      for (InvertBooleanDelegate delegate : InvertBooleanDelegate.EP_NAME.getExtensionList()) {
         if (delegate.isVisibleOnElement(elements[0])) {
           return true;
         }
@@ -37,7 +36,7 @@ public class InvertBooleanAction extends BaseRefactoringAction {
                                                         @NotNull final Editor editor,
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context) {
-    for (InvertBooleanDelegate delegate : Extensions.getExtensions(InvertBooleanDelegate.EP_NAME)) {
+    for (InvertBooleanDelegate delegate : InvertBooleanDelegate.EP_NAME.getExtensionList()) {
       if (delegate.isAvailableOnElement(element)) {
         return true;
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.codeInsight.CodeSmellInfo;
@@ -102,40 +88,54 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   @NotNull
   @Override
   public List<CodeSmellInfo> findCodeSmells(@NotNull final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final List<CodeSmellInfo> result = new ArrayList<>();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
-
-    final Ref<Exception> exception = Ref.create();
-    ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator progress) {
-        try {
-          for (int i = 0; i < filesToCheck.size(); i++) {
-            if (progress.isCanceled()) throw new ProcessCanceledException();
-
-            final VirtualFile file = filesToCheck.get(i);
-
-            progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
-            progress.setFraction((double)i / (double)filesToCheck.size());
-
-            result.addAll(findCodeSmells(file, progress));
+    List<CodeSmellInfo> result = new ArrayList<>();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
+      final Ref<Exception> exception = Ref.create();
+      ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator progress) {
+          try {
+            result.addAll(findCodeSmells(filesToCheck, progress));
+          }
+          catch (ProcessCanceledException e) {
+            exception.set(e);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            exception.set(e);
           }
         }
-        catch (ProcessCanceledException e) {
-          exception.set(e);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          exception.set(e);
-        }
+      });
+      if (!exception.isNull()) {
+        ExceptionUtil.rethrowAllAsUnchecked(exception.get());
       }
-    });
-    if (!exception.isNull()) {
-      ExceptionUtil.rethrowAllAsUnchecked(exception.get());
+    }
+    else if (ProgressManager.getInstance().hasProgressIndicator()) {
+      result.addAll(findCodeSmells(filesToCheck, ProgressManager.getInstance().getProgressIndicator()));
+    }
+    else {
+      throw new RuntimeException("Must run from Event Dispatch Thread or with a progress indicator");
     }
 
+    return result;
+  }
+
+  @NotNull
+  private List<CodeSmellInfo> findCodeSmells(@NotNull List<VirtualFile> files,
+                                             @NotNull ProgressIndicator progress) {
+    final List<CodeSmellInfo> result = new ArrayList<>();
+    for (int i = 0; i < files.size(); i++) {
+      if (progress.isCanceled()) throw new ProcessCanceledException();
+
+      final VirtualFile file = files.get(i);
+
+      progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
+      progress.setFraction((double)i / (double)files.size());
+
+      result.addAll(findCodeSmells(file, progress));
+    }
     return result;
   }
 
@@ -173,9 +173,9 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     // repeat several times when accidental background activity cancels highlighting
     int retries = 100;
     for (int i = 0; i < retries; i++) {
-      int oldDelay = settings.AUTOREPARSE_DELAY;
+      int oldDelay = settings.getAutoReparseDelay();
       try {
-        settings.AUTOREPARSE_DELAY = 0;
+        settings.setAutoReparseDelay(0);
         return dumbService.runReadActionInSmartMode(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator));
       }
       catch (ProcessCanceledException e) {
@@ -188,7 +188,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
         exception = e;
       }
       finally {
-        settings.AUTOREPARSE_DELAY = oldDelay;
+        settings.setAutoReparseDelay(oldDelay);
       }
     }
     throw exception;

@@ -173,7 +173,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
 
   private class NameGroupsPanel extends AddEditDeleteListPanel<String> {
 
-    public NameGroupsPanel() {
+    NameGroupsPanel() {
       super(InspectionsBundle.message("suspicious.name.combination.options.title"), myNameGroups);
       myListModel.addListDataListener(new ListDataListener() {
         @Override
@@ -221,7 +221,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myProblemsHolder;
 
-    public MyVisitor(final ProblemsHolder problemsHolder) {
+    MyVisitor(final ProblemsHolder problemsHolder) {
       myProblemsHolder = problemsHolder;
     }
     @Override public void visitVariable(PsiVariable variable) {

@@ -158,7 +158,7 @@ public class UserDefinedJsonSchemaConfiguration {
             final VirtualFile relativeFile = getRelativeFile(project, patternText);
             if (relativeFile == null || !VfsUtilCore.isAncestor(relativeFile, vfile, true)) return false;
             JsonSchemaService service = JsonSchemaService.Impl.get(project);
-            return service.isApplicableToFile(vfile) && !service.isSchemaFile(vfile);
+            return service.isApplicableToFile(vfile);
           });
           break;
       }
@@ -204,7 +204,6 @@ public class UserDefinedJsonSchemaConfiguration {
     if (!Objects.equals(name, info.name)) return false;
     if (!Objects.equals(relativePathToSchema, info.relativePathToSchema)) return false;
 
-    //noinspection RedundantIfStatement
     return Objects.equals(patterns, info.patterns);
   }
 
@@ -311,7 +310,6 @@ public class UserDefinedJsonSchemaConfiguration {
       Item item = (Item)o;
 
       if (mappingKind != item.mappingKind) return false;
-      //noinspection RedundantIfStatement
       return Objects.equals(path, item.path);
     }
 

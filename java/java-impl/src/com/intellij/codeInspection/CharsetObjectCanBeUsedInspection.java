@@ -220,7 +220,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   static class CharsetObjectCanBeUsedFix implements LocalQuickFix {
     private final String myConstantName;
 
-    public CharsetObjectCanBeUsedFix(String constantName) {
+    CharsetObjectCanBeUsedFix(String constantName) {
       myConstantName = constantName;
     }
 

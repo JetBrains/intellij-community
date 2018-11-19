@@ -24,7 +24,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -62,8 +61,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
-
-import static com.intellij.util.JdomKt.loadElement;
 
 /**
  * Configuration that holds configured xml tag, attribute and method parameter
@@ -264,7 +261,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private static List<BaseInjection> loadDefaultInjections() {
     final List<Configuration> cfgList = new ArrayList<>();
     final Set<Object> visited = new THashSet<>();
-    for (LanguageInjectionConfigBean configBean : Extensions.getExtensions(LanguageInjectionSupport.CONFIG_EP_NAME)) {
+    for (LanguageInjectionConfigBean configBean : LanguageInjectionSupport.CONFIG_EP_NAME.getExtensionList()) {
       PluginDescriptor descriptor = configBean.getPluginDescriptor();
       final ClassLoader loader = descriptor.getPluginClassLoader();
       try {
@@ -353,14 +350,13 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @Nullable
   public static Configuration load(final InputStream is) throws IOException, JDOMException {
     final List<Element> elements = new ArrayList<>();
-    final Element rootElement = loadElement(is);
+    final Element rootElement = JDOMUtil.load(is);
     final Element state;
     if (rootElement.getName().equals(COMPONENT_NAME)) {
       state = rootElement;
     }
     else {
       elements.add(rootElement);
-      //noinspection unchecked
       elements.addAll(rootElement.getChildren("component"));
       state = ContainerUtil.find(elements, element -> "component".equals(element.getName()) && COMPONENT_NAME.equals(element.getAttributeValue("name")));
     }
@@ -385,8 +381,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     replaceInjections(newInjections, originalInjections, true);
   }
 
-  static void importInjections(final Collection<BaseInjection> existingInjections, final Collection<BaseInjection> importingInjections,
-                               final Collection<BaseInjection> originalInjections, final Collection<BaseInjection> newInjections) {
+  static void importInjections(final Collection<? extends BaseInjection> existingInjections, final Collection<? extends BaseInjection> importingInjections,
+                               final Collection<? super BaseInjection> originalInjections, final Collection<? super BaseInjection> newInjections) {
     final MultiValuesMap<InjectionPlace, BaseInjection> placeMap = new MultiValuesMap<>();
     for (BaseInjection exising : existingInjections) {
       for (InjectionPlace place : exising.getInjectionPlaces()) {
@@ -467,7 +463,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return false;
   }
 
-  protected void setInjections(Collection<BaseInjection> injections) {
+  protected void setInjections(Collection<? extends BaseInjection> injections) {
     for (BaseInjection injection : injections) {
       myInjections.get(injection.getSupportId()).add(injection);
     }
@@ -730,7 +726,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
 
       if (myDfaOption != DfaOption.RESOLVE) {
-        //noinspection EnumSwitchStatementWhichMissesCases
         switch (myDfaOption) {
           case OFF:
             break;

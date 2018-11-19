@@ -31,7 +31,7 @@ import java.util.function.Function;
  */
 public class TreeTester {
   private final TreeNode myNode;
-  private Function<TreeNode, String> myPresenter = Object::toString;
+  private Function<? super TreeNode, String> myPresenter = Object::toString;
 
   public static TreeTester forTree(JTree tree) {
     return forNode((TreeNode)tree.getModel().getRoot());
@@ -45,7 +45,7 @@ public class TreeTester {
     myNode = node;
   }
 
-  public TreeTester withPresenter(Function<TreeNode, String> presenter) {
+  public TreeTester withPresenter(Function<? super TreeNode, String> presenter) {
     myPresenter = presenter;
     return this;
   }

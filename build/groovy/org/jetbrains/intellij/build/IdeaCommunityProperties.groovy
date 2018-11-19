@@ -27,15 +27,19 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   IdeaCommunityProperties(String home) {
     baseFileName = "idea"
     platformPrefix = "Idea"
-    productCode = "IC"
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
     productLayout.productApiModules = JAVA_API_MODULES
-    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
-                                                 ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"]
+    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES + [
+      "intellij.platform.duplicates.analysis",
+      "intellij.platform.structuralSearch",
+      "intellij.java.structuralSearch",
+      "intellij.java.typeMigration",
+      "intellij.platform.main"
+    ]
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.mainModules = ["intellij.idea.community.main"]
@@ -98,6 +102,13 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
           "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
+        extraExecutables = [
+          "plugins/Kotlin/kotlinc/bin/kotlin",
+          "plugins/Kotlin/kotlinc/bin/kotlinc",
+          "plugins/Kotlin/kotlinc/bin/kotlinc-js",
+          "plugins/Kotlin/kotlinc/bin/kotlinc-jvm",
+          "plugins/Kotlin/kotlinc/bin/kotlin-dce-js"
+        ]
       }
 
       @Override

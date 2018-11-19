@@ -16,8 +16,6 @@ public class RedundantCollectionOperationInspectionTest extends LightQuickFixPar
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantCollectionOperation";

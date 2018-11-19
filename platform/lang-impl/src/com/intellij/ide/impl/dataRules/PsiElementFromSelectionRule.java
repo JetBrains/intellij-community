@@ -19,10 +19,11 @@ package com.intellij.ide.impl.dataRules;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiElementFromSelectionRule implements GetDataRule {
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     final Object element = dataProvider.getData(PlatformDataKeys.SELECTED_ITEM.getName());
     if (element instanceof PsiElement) {
       PsiElement psiElement = (PsiElement)element;

@@ -47,7 +47,7 @@ public class JDKSerializer<T> implements DataNodeSerializer<T> {
 class MultiLoaderObjectInputStream extends ObjectInputStream {
   private final ClassLoader[] myLoaders;
 
-  public MultiLoaderObjectInputStream(InputStream inputStream, ClassLoader... loaders) throws IOException {
+  MultiLoaderObjectInputStream(InputStream inputStream, ClassLoader... loaders) throws IOException {
     super(inputStream);
     myLoaders = loaders;
   }

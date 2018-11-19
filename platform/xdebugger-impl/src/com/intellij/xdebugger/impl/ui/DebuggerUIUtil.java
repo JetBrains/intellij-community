@@ -73,9 +73,7 @@ public class DebuggerUIUtil {
   }
 
   public static void focusEditorOnCheck(final JCheckBox checkbox, final JComponent component) {
-    final Runnable runnable = () -> getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      getGlobalInstance().requestFocus(component, true);
-    });
+    final Runnable runnable = () -> getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(component, true));
     checkbox.addActionListener(e -> {
       if (checkbox.isSelected()) {
         SwingUtilities.invokeLater(runnable);
@@ -220,7 +218,7 @@ public class DebuggerUIUtil {
 
     balloon.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         Disposer.dispose(disposable);
         propertiesPanel.saveProperties();
         propertiesPanel.dispose();
@@ -247,14 +245,20 @@ public class DebuggerUIUtil {
     editor.setShowMoreOptionsLink(true);
 
     final JPanel panel = editor.getMainPanel();
-    final Balloon balloon = JBPopupFactory.getInstance()
+
+    BalloonBuilder builder = JBPopupFactory.getInstance()
       .createDialogBalloonBuilder(panel, null)
       .setHideOnClickOutside(true)
       .setCloseButtonEnabled(false)
       .setAnimationCycle(0)
-      .setBlockClicksThroughBalloon(true)
-      .createBalloon();
+      .setBlockClicksThroughBalloon(true);
 
+    Color borderColor = UIManager.getColor("DebuggerPopup.borderColor");
+    if (borderColor != null ) {
+      builder.setBorderColor(borderColor);
+    }
+
+    Balloon balloon = builder.createBalloon();
 
     editor.setDelegate(new BreakpointEditor.Delegate() {
       @Override
@@ -323,7 +327,7 @@ public class DebuggerUIUtil {
     private final AtomicBoolean myObsolete = new AtomicBoolean(false);
     private final EditorTextField myTextArea;
 
-    public FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
+    FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
       myTextArea = textArea;
     }
 
@@ -435,7 +439,7 @@ public class DebuggerUIUtil {
     return object instanceof Obsolescent && ((Obsolescent)object).isObsolete();
   }
 
-  public static void setTreeNodeValue(XValueNodeImpl valueNode, XExpression text, Consumer<String> errorConsumer) {
+  public static void setTreeNodeValue(XValueNodeImpl valueNode, XExpression text, Consumer<? super String> errorConsumer) {
     XDebuggerTree tree = valueNode.getTree();
     Project project = tree.getProject();
     XValueModifier modifier = valueNode.getValueContainer().getModifier();

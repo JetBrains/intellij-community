@@ -73,7 +73,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
 
   private class ExtLoginWorker extends CvsLoginWorkerImpl<ExtConnectionCvsSettings> {
 
-    public ExtLoginWorker(final Project project, final ExtConnectionCvsSettings settings) {
+    ExtLoginWorker(final Project project, final ExtConnectionCvsSettings settings) {
       super(project, settings);
     }
 

@@ -21,7 +21,6 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -38,7 +37,7 @@ public interface InconsistentResourceBundleInspectionProvider {
   String getPresentableName();
 
   void check(BidirectionalMap<PropertiesFile, PropertiesFile> parents,
-             List<PropertiesFile> files,
+             List<? extends PropertiesFile> files,
              Map<PropertiesFile, Set<String>> keysUpToParent,
              Map<PropertiesFile, Map<String, String>> propertiesFilesNamesMaps,
              InspectionManager manager,

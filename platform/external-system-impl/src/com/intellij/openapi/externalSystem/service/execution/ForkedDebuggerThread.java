@@ -5,11 +5,13 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.engine.managerThread.DebuggerCommand;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
@@ -61,7 +63,7 @@ class ForkedDebuggerThread extends Thread {
   @Nullable
   private final ExecutionConsole myMainExecutionConsole;
 
-  public ForkedDebuggerThread(@NotNull ProcessHandler mainProcessHandler,
+  ForkedDebuggerThread(@NotNull ProcessHandler mainProcessHandler,
                               @NotNull RunContentDescriptor mainRunContentDescriptor,
                               @NotNull ServerSocket socket,
                               @NotNull Project project) {
@@ -144,12 +146,7 @@ class ForkedDebuggerThread extends Thread {
               @Override
               public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
                 myMainProcessHandler.removeProcessListener(this);
-                if (willBeDestroyed) {
-                  forkedProcessHandler.destroyProcess();
-                }
-                else {
-                  forkedProcessHandler.detachProcess();
-                }
+                terminateForkedProcess(forkedProcessHandler);
               }
             });
 
@@ -192,9 +189,7 @@ class ForkedDebuggerThread extends Thread {
   }
 
   private static void attachVM(@NotNull Project project, String runConfigName, @NotNull String debugPort, ProgramRunner.Callback callback) {
-    RemoteConfigurationType remoteConfigurationType = RemoteConfigurationType.getInstance();
-    ConfigurationFactory factory = remoteConfigurationType.getFactory();
-    RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createRunConfiguration(runConfigName, factory);
+    RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createConfiguration(runConfigName, RemoteConfigurationType.class);
     runSettings.setActivateToolWindowBeforeRun(false);
 
     RemoteConfiguration configuration = (RemoteConfiguration)runSettings.getConfiguration();
@@ -221,7 +216,7 @@ class ForkedDebuggerThread extends Thread {
     @NotNull private final String myProcessName;
     @Nullable private RangeHighlighter myHyperlink;
 
-    public MyForkedProcessListener(@NotNull RunContentDescriptor descriptor, @NotNull String processName) {
+    MyForkedProcessListener(@NotNull RunContentDescriptor descriptor, @NotNull String processName) {
       myDescriptor = descriptor;
       myProcessName = processName;
     }
@@ -229,6 +224,14 @@ class ForkedDebuggerThread extends Thread {
     @Override
     public void startNotified(@NotNull ProcessEvent event) {
       postLink();
+    }
+
+    @Override
+    public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+      if (!willBeDestroyed) {
+        // always terminate forked process
+        terminateForkedProcess(event.getProcessHandler());
+      }
     }
 
     @Override
@@ -309,6 +312,33 @@ class ForkedDebuggerThread extends Thread {
         }
       }
       return null;
+    }
+  }
+
+  private void terminateForkedProcess(@NotNull ProcessHandler processHandler) {
+    DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(processHandler);
+    if (debugProcess != null) {
+      debugProcess.getManagerThread().invokeCommand(new DebuggerCommand() {
+        @Override
+        public void action() {
+          VirtualMachineProxy virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+          if (virtualMachineProxy instanceof VirtualMachineProxyImpl &&
+              ((VirtualMachineProxyImpl)virtualMachineProxy).canBeModified()) {
+            // use success exit code here to avoid the main process interruption
+            ((VirtualMachineProxyImpl)virtualMachineProxy).exit(0);
+          }
+          else {
+            debugProcess.stop(true);
+          }
+        }
+
+        @Override
+        public void commandCancelled() {
+          debugProcess.stop(true);
+        }
+      });
+    } else {
+      processHandler.destroyProcess();
     }
   }
 }

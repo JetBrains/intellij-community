@@ -1,0 +1,4 @@
+root:
+  # Hello1
+  <caret>key: value # Hello2
+  another_key: another_value

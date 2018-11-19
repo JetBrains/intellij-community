@@ -57,8 +57,8 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
   private void fillCharsetActions(@NotNull DefaultActionGroup group,
                                   @Nullable final VirtualFile virtualFile,
-                                  @NotNull List<Charset> charsets,
-                                  @NotNull final Function<Charset, String> charsetFilter) {
+                                  @NotNull List<? extends Charset> charsets,
+                                  @NotNull final Function<? super Charset, String> charsetFilter) {
     for (final Charset charset : charsets) {
       AnAction action = new DumbAwareAction(charset.displayName(), null, EmptyIcon.ICON_16) {
         @Override
@@ -128,7 +128,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   @NotNull
   protected DefaultActionGroup createCharsetsActionGroup(@Nullable String clearItemText,
                                                          @Nullable Charset alreadySelected,
-                                                         @NotNull Function<Charset, String> charsetFilter) {
+                                                         @NotNull Function<? super Charset, String> charsetFilter) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);

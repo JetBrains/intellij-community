@@ -7,6 +7,7 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -53,11 +54,13 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     return getModel().getSize();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return XDebuggerBundle.message("action.next.frame.text");
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return XDebuggerBundle.message("action.previous.frame.text");

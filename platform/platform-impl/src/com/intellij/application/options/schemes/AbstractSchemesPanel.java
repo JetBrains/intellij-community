@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
@@ -82,6 +83,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final JPanel verticalContainer = rightCustomComponent != null ? createVerticalContainer() : this;
     JPanel controlsPanel = createControlsPanel();
     verticalContainer.add(controlsPanel);
+    IdeUICustomization.getInstance().customizeSchemePanel(this, verticalContainer);
     verticalContainer.add(Box.createRigidArea(new JBDimension(0, 12)));
     if (rightCustomComponent != null) {
       JPanel horizontalContainer = new JPanel();
@@ -160,7 +162,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.selectScheme(scheme);
   }
   
-  public final void resetSchemes(@NotNull Collection<T> schemes) {
+  public final void resetSchemes(@NotNull Collection<? extends T> schemes) {
     mySchemesCombo.resetSchemes(schemes);
   }
   
@@ -168,7 +170,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     removeAll();
   }
 
-  public final void editCurrentSchemeName(@NotNull BiConsumer<T,String> newSchemeNameConsumer) {
+  public final void editCurrentSchemeName(@NotNull BiConsumer<? super T, ? super String> newSchemeNameConsumer) {
     T currentScheme = getSelectedScheme();
     if (currentScheme != null) {
       String currentName = currentScheme.getName();
@@ -183,7 +185,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
   }
 
-  public final void editNewSchemeName(@NotNull String preferredName, boolean isProjectScheme, @NotNull Consumer<String> nameConsumer) {
+  public final void editNewSchemeName(@NotNull String preferredName, boolean isProjectScheme, @NotNull Consumer<? super String> nameConsumer) {
     String name =
       SchemeNameGenerator.getUniqueName(preferredName, schemeName -> getModel().containsScheme(schemeName, isProjectScheme));
     mySchemesCombo.startEdit(name, isProjectScheme, nameConsumer);
@@ -279,7 +281,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   private static class ShowSchemesActionsListAction extends NonTrivialActionGroup {
 
-    ShowSchemesActionsListAction(Collection<AnAction> actions) {
+    ShowSchemesActionsListAction(Collection<? extends AnAction> actions) {
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText("Show Scheme Actions");

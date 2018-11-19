@@ -90,7 +90,7 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
         }
         pause = MyExecutor.PAUSE;
       }
-    });
+    }, project.getDisposed());
   }
 
   private static void showNotification(Project project, String text, MessageType type) {
@@ -106,7 +106,7 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
     private final static long PAUSE = 300;
     private final String myName;
 
-    public MyExecutor(@NotNull final Executor executor, @NotNull final RunnerAndConfigurationSettings configuration,
+    MyExecutor(@NotNull final Executor executor, @NotNull final RunnerAndConfigurationSettings configuration,
                       @NotNull Alarm alarm) throws ExecutionException {
       myName = configuration.getName();
       myProject = configuration.getConfiguration().getProject();

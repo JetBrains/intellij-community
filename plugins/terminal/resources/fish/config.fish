@@ -4,6 +4,12 @@ else
   set -e XDG_CONFIG_HOME
 end
 
+if test -d ~/.config/fish/conf.d
+  for f in ~/.config/fish/conf.d/*.fish
+    source $f
+  end
+end
+
 if test -d ~/.config/fish/functions
   for f in ~/.config/fish/functions/*.fish
     source $f
@@ -25,16 +31,19 @@ if test -n "$JEDITERM_SOURCE"
 end
 
 function override_jb_variables
+  if not type "string" > /dev/null
+    return
+  end
   for variable in (env)
-  	set name_and_value (string split -m 2 "=" -- $variable)
-  	set name $name_and_value[1]
-  	set value $name_and_value[2]
-  	if string match -q -- "_INTELLIJ_FORCE_SET_*" $name
-  		set new_name (string sub -s 21 -- $name)
-  		if [ $new_name ]
-  			set -x $new_name $value
-  		end
-  	end
+    set name_and_value (string split -m 2 "=" -- $variable)
+    set name $name_and_value[1]
+    set value $name_and_value[2]
+    if string match -q -- "_INTELLIJ_FORCE_SET_*" $name
+      set new_name (string sub -s 21 -- $name)
+      if [ $new_name ]
+        set -x $new_name $value
+      end
+    end
   end
 end
 

@@ -8,7 +8,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -183,9 +182,8 @@ public class UnscrambleDialog extends DialogWrapper {
   public static List<String> getSavedLogFileUrls() {
     final List<String> res = new ArrayList<>();
     final String savedUrl = PropertiesComponent.getInstance().getValue(PROPERTY_LOG_FILE_HISTORY_URLS);
-    final String[] strings = savedUrl == null ? ArrayUtil.EMPTY_STRING_ARRAY : savedUrl.split(":::");
-    for (int i = 0; i != strings.length; ++i) {
-      res.add(strings[i]);
+    if (savedUrl != null) {
+      ContainerUtil.addAll(res, savedUrl.split(":::"));
     }
     return res;
   }
@@ -202,10 +200,15 @@ public class UnscrambleDialog extends DialogWrapper {
     myEditorPanel.add(myStacktraceEditorPanel, BorderLayout.CENTER);
   }
 
-  @Override
   @NotNull
-  protected Action[] createActions(){
-    return new Action[]{createNormalizeTextAction(), getOKAction(), getCancelAction(), getHelpAction()};
+  @Override
+  protected Action[] createActions() {
+    return ArrayUtil.prepend(createNormalizeTextAction(), super.createActions());
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "find.analyzeStackTrace";
   }
 
   @Override
@@ -282,7 +285,7 @@ public class UnscrambleDialog extends DialogWrapper {
   }
 
   private final class NormalizeTextAction extends AbstractAction {
-    public NormalizeTextAction(){
+    NormalizeTextAction(){
       putValue(NAME, IdeBundle.message("unscramble.normalize.button"));
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }
@@ -372,11 +375,6 @@ public class UnscrambleDialog extends DialogWrapper {
         close(OK_EXIT_CODE);
       }
     });
-  }
-
-  @Override
-  public void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("find.analyzeStackTrace");
   }
 
   private boolean performUnscramble() {

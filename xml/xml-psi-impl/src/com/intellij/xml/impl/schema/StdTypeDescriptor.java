@@ -19,7 +19,7 @@ package com.intellij.xml.impl.schema;
  * @author Mike
  */
 class StdTypeDescriptor extends TypeDescriptor {
-  public StdTypeDescriptor(String name) {
+  StdTypeDescriptor(String name) {
     super();
   }
 }

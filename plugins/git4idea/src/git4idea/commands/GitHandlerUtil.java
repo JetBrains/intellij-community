@@ -133,7 +133,7 @@ public class GitHandlerUtil {
      * @param handler       a handler instance
      * @param operationName an operation name
      */
-    public GitHandlerListenerBase(final GitHandler handler, final String operationName) {
+    GitHandlerListenerBase(final GitHandler handler, final String operationName) {
       this(handler, operationName, true);
     }
 
@@ -144,7 +144,7 @@ public class GitHandlerUtil {
      * @param operationName an operation name
      * @param showErrors    if true, the errors are shown when process is terminated
      */
-    public GitHandlerListenerBase(final GitHandler handler, final String operationName, boolean showErrors) {
+    GitHandlerListenerBase(final GitHandler handler, final String operationName, boolean showErrors) {
       myHandler = handler;
       myOperationName = operationName;
       myShowErrors = showErrors;
@@ -172,11 +172,9 @@ public class GitHandlerUtil {
       if (myHandler.errors().isEmpty()) {
         String text = getErrorText();
         if ((text == null || text.length() == 0) && myHandler.errors().isEmpty()) {
-          //noinspection ThrowableInstanceNeverThrown
           myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
         }
         else {
-          //noinspection ThrowableInstanceNeverThrown
           myHandler.addError(new VcsException(text));
         }
       }
@@ -191,8 +189,7 @@ public class GitHandlerUtil {
      * {@inheritDoc}
      */
     @Override
-    public void startFailed(final Throwable exception) {
-      //noinspection ThrowableInstanceNeverThrown
+    public void startFailed(@NotNull final Throwable exception) {
       myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
       if (myShowErrors) {
         EventQueue.invokeLater(() -> GitUIUtil.showOperationError(myHandler.project(), myOperationName, exception.getMessage()));
@@ -211,7 +208,7 @@ public class GitHandlerUtil {
      * @param operationName an operation name
      * @param showErrors    if true, the errors are shown when process is terminated
      */
-    public GitLineHandlerListenerBase(GitHandler handler, String operationName, boolean showErrors) {
+    GitLineHandlerListenerBase(GitHandler handler, String operationName, boolean showErrors) {
       super(handler, operationName, showErrors);
     }
 
@@ -254,7 +251,6 @@ public class GitHandlerUtil {
     @Override
     public void onLineAvailable(final String line, final Key outputType) {
       if (isErrorLine(line.trim())) {
-        //noinspection ThrowableInstanceNeverThrown
         myHandler.addError(new VcsException(line));
       }
       if (myProgressIndicator != null) {

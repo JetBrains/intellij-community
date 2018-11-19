@@ -12,7 +12,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.parseInt;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SpellCheckerSettings implements PersistentStateComponent<Element> {
@@ -106,7 +107,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  @SuppressWarnings({"ConstantConditions"})
   public Element getState() {
     if (myBundledDisabledDictionariesPaths.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&

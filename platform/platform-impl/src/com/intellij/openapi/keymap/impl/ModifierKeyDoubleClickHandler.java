@@ -136,7 +136,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     private final AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
     private final AtomicLong ourLastTimePressed = new AtomicLong(0);
 
-    public MyDispatcher(@NotNull String actionId, int modifierKeyCode, int actionKeyCode, boolean skipIfActionHasShortcut) {
+    MyDispatcher(@NotNull String actionId, int modifierKeyCode, int actionKeyCode, boolean skipIfActionHasShortcut) {
       myActionId = actionId;
       myModifierKeyCode = modifierKeyCode;
       myActionKeyCode = actionKeyCode;
@@ -262,7 +262,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     }
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
       if (!myIsRunningAction) resetState();
     }
 

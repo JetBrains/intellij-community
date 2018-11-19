@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.NameValue;
-import com.intellij.util.xml.Stubbed;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 
 public interface PluginModule extends DomElement {
@@ -26,5 +23,6 @@ public interface PluginModule extends DomElement {
   @NotNull
   @Stubbed
   @NameValue
+  @Required
   GenericAttributeValue<String> getValue();
 }

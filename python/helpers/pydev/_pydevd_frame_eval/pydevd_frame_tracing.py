@@ -50,6 +50,24 @@ def _get_line_for_frame(frame):
     return line
 
 
+def suspend_at_builtin_breakpoint():
+    # used by built-in breakpoint() function appeared in Python 3.7
+    frame = sys._getframe(3)
+    t = threading.currentThread()
+    if t.additional_info.is_tracing:
+        return False
+    if t.additional_info.pydev_step_cmd == -1:
+        # do not handle breakpoints while stepping, because they're handled by old tracing function
+        t.additional_info.is_tracing = True
+        pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, frame.f_lineno))
+        debugger = get_global_debugger()
+        debugger.set_suspend(t, CMD_SET_BREAK)
+        debugger.do_wait_suspend(t, frame, 'line', None, "frame_eval")
+        t.additional_info.is_tracing = False
+        return t.additional_info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT
+    return False
+
+
 def _pydev_stop_at_break():
     frame = sys._getframe(1)
     t = threading.currentThread()

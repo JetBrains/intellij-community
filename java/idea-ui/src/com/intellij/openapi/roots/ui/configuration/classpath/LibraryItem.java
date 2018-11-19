@@ -33,7 +33,7 @@ import java.util.List;
 class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
   private final StructureConfigurableContext myContext;
 
-  public LibraryItem(LibraryOrderEntry orderEntry, StructureConfigurableContext context) {
+  LibraryItem(LibraryOrderEntry orderEntry, StructureConfigurableContext context) {
     super(orderEntry, true);
     myContext = context;
   }

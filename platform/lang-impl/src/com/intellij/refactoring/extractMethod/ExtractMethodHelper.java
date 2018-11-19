@@ -39,7 +39,7 @@ public class ExtractMethodHelper {
                                        @NotNull final List<PsiElement> scope,
                                        @NotNull final SimpleDuplicatesFinder finder,
                                        @NotNull final Editor editor,
-                                       @NotNull final Consumer<Pair<SimpleMatch, PsiElement>> replacer) {
+                                       @NotNull final Consumer<? super Pair<SimpleMatch, PsiElement>> replacer) {
     finder.setReplacement(callElement);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       replaceDuplicates(callElement, editor, replacer, finder.findDuplicates(scope, generatedMethod));
@@ -99,8 +99,8 @@ public class ExtractMethodHelper {
    */
   public static void replaceDuplicates(@NotNull PsiElement callElement,
                                        @NotNull Editor editor,
-                                       @NotNull Consumer<Pair<SimpleMatch, PsiElement>> replacer,
-                                       @NotNull List<SimpleMatch> duplicates) {
+                                       @NotNull Consumer<? super Pair<SimpleMatch, PsiElement>> replacer,
+                                       @NotNull List<? extends SimpleMatch> duplicates) {
     if (!duplicates.isEmpty()) {
       final String message = RefactoringBundle
         .message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
@@ -121,7 +121,6 @@ public class ExtractMethodHelper {
             highlightInEditor(project, match, editor, highlighterMap);
 
             int promptResult = FindManager.PromptResult.ALL;
-            //noinspection ConstantConditions
             if (!isUnittest) {
               ReplacePromptDialog promptDialog =
                 new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);
@@ -152,7 +151,7 @@ public class ExtractMethodHelper {
     }
   }
 
-  private static void replaceDuplicate(final Project project, final Consumer<Pair<SimpleMatch, PsiElement>> replacer,
+  private static void replaceDuplicate(final Project project, final Consumer<? super Pair<SimpleMatch, PsiElement>> replacer,
                                        final Pair<SimpleMatch, PsiElement> replacement) {
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> replacer.consume(replacement)), "Replace duplicate", null);
   }

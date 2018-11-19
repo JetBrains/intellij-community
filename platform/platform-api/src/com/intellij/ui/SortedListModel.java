@@ -8,18 +8,18 @@ import java.util.*;
 
 public class SortedListModel<T> extends AbstractListModel<T> {
   private List<T> myItems = new ArrayList<>();
-  private final Comparator<T> myComparator;
+  private final Comparator<? super T> myComparator;
 
-  public SortedListModel(Comparator<T> comparator) {
+  public SortedListModel(Comparator<? super T> comparator) {
     myComparator = comparator;
   }
 
-  public SortedListModel(Collection<T> items, Comparator<T> comparator) {
+  public SortedListModel(Collection<? extends T> items, Comparator<? super T> comparator) {
     this(comparator);
     addAll(items);
   }
 
-  public static <T> SortedListModel<T> create(Comparator<T> comparator) {
+  public static <T> SortedListModel<T> create(Comparator<? super T> comparator) {
     return new SortedListModel<>(comparator);
   }
 
@@ -40,11 +40,11 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     return addAll(Arrays.asList(items));
   }
 
-  public int[] addAll(Iterator<T> iterator) {
+  public int[] addAll(Iterator<? extends T> iterator) {
     return addAll(ContainerUtil.collect(iterator));
   }
 
-  public int[] addAll(Collection<T> items) {
+  public int[] addAll(Collection<? extends T> items) {
     int[] indices = new int[items.size()];
     int i = 0;
     for (T item : items) {
@@ -126,7 +126,7 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     private final Iterator<T> myIterator;
     private int myCounter = -1;
 
-    public MyIterator() {
+    MyIterator() {
       myIterator = myItems.iterator();
     }
 

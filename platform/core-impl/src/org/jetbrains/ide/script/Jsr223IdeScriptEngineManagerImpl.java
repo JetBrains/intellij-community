@@ -18,11 +18,11 @@ package org.jetbrains.ide.script;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringHash;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 
@@ -223,7 +222,7 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
     final ConcurrentMap<Long, ClassLoader> myLuckyGuess = ContainerUtil.newConcurrentMap();
 
-    public AllPluginsLoader() {
+    AllPluginsLoader() {
       // Groovy performance: do not specify parent loader to enable our luckyGuesser
       // Also specify null explicitly to suppress getSystemClassLoader() as parent
       super(null);
@@ -320,6 +319,24 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
         }
       }
       return getClass().getClassLoader().getResources(name);
+    }
+
+    // used by kotlin engine
+    @NotNull
+    public List<URL> getUrls() {
+      return JBIterable.of(PluginManagerCore.getPlugins())
+        .map(PluginDescriptor::getPluginClassLoader)
+        .unique()
+        .flatMap(o -> {
+          try {
+            return (List<URL>)o.getClass().getMethod("getUrls").invoke(o);
+          }
+          catch (Exception e) {
+            return Collections.emptyList();
+          }
+        })
+        .unique()
+        .toList();
     }
   }
 }

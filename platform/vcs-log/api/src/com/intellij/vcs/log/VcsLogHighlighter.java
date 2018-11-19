@@ -28,11 +28,12 @@ public interface VcsLogHighlighter {
   /**
    * Return the style which should be used for the log table commit entry, or VcsCommitStyle.DEFAULT if this highlighter does not specify any style for this commit.
    *
+   * @param commitId      id of selected commit.
    * @param commitDetails details of selected commit.
    * @param isSelected    if true, the row currently has selection on it.
    */
   @NotNull
-  VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails commitDetails, boolean isSelected);
+  VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, boolean isSelected);
 
   /**
    * This method is called when new data arrives to the ui.

@@ -84,7 +84,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   @Override
-  protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<GotoData> successCallback) {
+  protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<? super GotoData> successCallback) {
     int offset = editor.getCaretModel().getOffset();
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       GotoData data = createDataForSource(editor, offset, element);

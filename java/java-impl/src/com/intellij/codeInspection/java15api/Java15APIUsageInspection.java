@@ -232,7 +232,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
 
-    public MyVisitor(final ProblemsHolder holder, boolean onTheFly) {
+    MyVisitor(final ProblemsHolder holder, boolean onTheFly) {
       myHolder = holder;
       myOnTheFly = onTheFly;
     }
@@ -410,7 +410,6 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
 
     private void registerError(PsiElement reference, LanguageLevel api) {
       if (reference != null && isInProject(reference)) {
-        //noinspection DialogTitleCapitalization
         myHolder.registerProblem(reference,
                                  InspectionsBundle.message("inspection.1.5.problem.descriptor", getShortName(api)),
                                  myOnTheFly ? new LocalQuickFix[] {(LocalQuickFix)QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(LanguageLevel.values()[api.ordinal() + 1])} : null);

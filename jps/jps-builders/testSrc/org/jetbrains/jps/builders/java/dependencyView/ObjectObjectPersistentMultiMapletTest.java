@@ -55,7 +55,7 @@ public class ObjectObjectPersistentMultiMapletTest extends UsefulTestCase {
   private static class IntValueStreamable implements Streamable {
     public int value;
 
-    public IntValueStreamable(int value) {
+    IntValueStreamable(int value) {
       this.value = value;
     }
 

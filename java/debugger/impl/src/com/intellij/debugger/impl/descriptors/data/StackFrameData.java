@@ -60,7 +60,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   private static class FrameDisplayKey implements DisplayKey<StackFrameDescriptorImpl>{
     private final String myContextKey;
 
-    public FrameDisplayKey(final String contextKey) {
+    FrameDisplayKey(final String contextKey) {
       myContextKey = contextKey;
     }
 

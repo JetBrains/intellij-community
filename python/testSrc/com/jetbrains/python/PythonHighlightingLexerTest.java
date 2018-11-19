@@ -16,6 +16,7 @@
 package com.jetbrains.python;
 
 import com.jetbrains.python.fixtures.PyLexerTestCase;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -177,7 +178,49 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
     doTest(LanguageLevel.PYTHON34, "expr = br'raw bytes'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  // PY-31758
+  public void testFStringEscapeSequences() {
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\nbar'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\\nbar'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\u0041bar'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\x41bar'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\101bar'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\N{GREEK SMALL LETTER ALPHA}bar'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\",
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "INVALID_CHARACTER_ESCAPE_TOKEN");
+
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\u00'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "INVALID_UNICODE_ESCAPE_TOKEN", "Py:FSTRING_END");
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\uZZZZbar'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "INVALID_UNICODE_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\x0'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "INVALID_UNICODE_ESCAPE_TOKEN", "Py:FSTRING_END");
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\xZZbar'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "INVALID_UNICODE_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\10'",
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_END");
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\777'",
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
+    
+    doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\N{GREEK SMALL LETTER ALPHA'", 
+                             "Py:FSTRING_START", "Py:FSTRING_TEXT", "INVALID_UNICODE_ESCAPE_TOKEN", "Py:FSTRING_END");
+
+  }
+
   private static void doTest(LanguageLevel languageLevel, String text, String... expectedTokens) {
     PyLexerTestCase.doLexerTest(text, new PythonHighlightingLexer(languageLevel), expectedTokens);
+  }
+
+  private static void doTestStringHighlighting(LanguageLevel languageLevel, String text, String... expectedTokens) {
+    PyLexerTestCase.doLexerTest(text, new PyHighlighter(languageLevel).getHighlightingLexer(), expectedTokens);
   }
 }

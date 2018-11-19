@@ -38,7 +38,7 @@ import java.util.Map;
 class XPathFunctionProviderImpl extends XPathFunctionProvider {
     private final Map<QName, FunctionImplementation> myFunctions = new HashMap<>();
 
-    public XPathFunctionProviderImpl() {
+    XPathFunctionProviderImpl() {
         // XPathView extensions
         myFunctions.put(new QName(null, "file-type"), new FileTypeFunction());
         myFunctions.put(new QName(null, "file-name"), new FileNameFunction());
@@ -58,13 +58,12 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
         if (contextType == XPathSupport.TYPE) {
             return myFunctions;
         } else {
-            //noinspection unchecked
-            return Collections.emptyMap();
+          return Collections.emptyMap();
         }
     }
 
     private static class JaxenEvaluate extends FunctionImplementation {
-        public JaxenEvaluate() {
+        JaxenEvaluate() {
             super("evaluate", XPathType.NODESET,
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED));
         }
@@ -76,7 +75,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
     }
 
     private static class JaxenLower extends FunctionImplementation {
-        public JaxenLower() {
+        JaxenLower() {
             super("lower-case", XPathType.STRING,
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED),
                     new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL));
@@ -89,7 +88,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
     }
 
     private static class JaxenUpper extends FunctionImplementation {
-        public JaxenUpper() {
+        JaxenUpper() {
             super("upper-case", XPathType.STRING,
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED),
                     new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL));
@@ -102,7 +101,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
     }
 
     private static class JaxenEndsWith extends FunctionImplementation {
-        public JaxenEndsWith() {
+        JaxenEndsWith() {
             super("ends-with", XPathType.BOOLEAN,
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED),
                     new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED));

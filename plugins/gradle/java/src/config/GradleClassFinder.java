@@ -41,7 +41,6 @@ import java.util.Map;
  * @author peter
  */
 public class GradleClassFinder extends NonClasspathClassFinder {
-
   @NotNull private final GradleBuildClasspathManager myBuildClasspathManager;
   private final Map<String, PackageDirectoryCache> myCaches;
 
@@ -80,20 +79,15 @@ public class GradleClassFinder extends NonClasspathClassFinder {
 
     PsiFile containingFile = aClass.getContainingFile();
     VirtualFile file = containingFile != null ? containingFile.getVirtualFile() : null;
-    return (file != null &&
-            !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file) &&
-            !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibraryClasses(file) &&
-            !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrarySource(file)) ? aClass : null;
+    return file != null &&
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file) &&
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibraryClasses(file) &&
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrarySource(file) ? aClass : null;
   }
 
   @NotNull
   @Override
   public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    if (scope instanceof ExternalModuleBuildGlobalSearchScope) {
-      return super.getSubPackages(psiPackage, scope);
-    }
-    else {
-      return PsiPackage.EMPTY_ARRAY;
-    }
+    return scope instanceof ExternalModuleBuildGlobalSearchScope ? super.getSubPackages(psiPackage, scope) : PsiPackage.EMPTY_ARRAY;
   }
 }

@@ -356,7 +356,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Override
-  @Nullable public Object getData(Project project, String dataId) {
+  @Nullable public Object getData(Project project, @NotNull String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
     }
@@ -433,7 +433,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private static final class MySmallIcon implements Icon{
     private final Image myImage;
 
-    public MySmallIcon(@NotNull final Image delegate) {
+    MySmallIcon(@NotNull final Image delegate) {
       myImage = delegate;
     }
 

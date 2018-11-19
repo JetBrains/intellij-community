@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
@@ -55,7 +54,7 @@ class DiffPreviewPanel implements PreviewPanel {
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public DiffPreviewPanel() {
+  DiffPreviewPanel() {
     myViewer = new MyViewer();
     myViewer.init();
 
@@ -96,7 +95,7 @@ class DiffPreviewPanel implements PreviewPanel {
   private static class SampleRequest extends ContentDiffRequest {
     private final List<DiffContent> myContents;
 
-    public SampleRequest() {
+    SampleRequest() {
       myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
@@ -120,7 +119,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   private static class SampleContext extends DiffContext {
-    public SampleContext() {
+    SampleContext() {
       TextDiffSettings settings = new TextDiffSettings();
       settings.setHighlightPolicy(HighlightPolicy.BY_WORD);
       settings.setIgnorePolicy(IgnorePolicy.IGNORE_WHITESPACES);
@@ -163,11 +162,12 @@ class DiffPreviewPanel implements PreviewPanel {
     }
 
     @Override
-    public void mouseMoved(EditorMouseEvent e) {
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
       int line = getLineNumber(mySide, e);
-      if (getChange(mySide, line) != null || getFoldRegion(mySide, line) != null) {
-        EditorUtil.setHandCursor(e.getEditor());
-      }
+      Cursor cursor = getChange(mySide, line) != null || getFoldRegion(mySide, line) != null
+                      ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                      : null;
+      ((EditorEx)e.getEditor()).setCustomCursor(DiffPreviewPanel.class, cursor);
     }
   }
 
@@ -217,7 +217,9 @@ class DiffPreviewPanel implements PreviewPanel {
     for (SimpleThreesideDiffChange change : myViewer.getChanges()) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
-      if (DiffUtil.isSelectedByLine(line, startLine, endLine)) return change;
+      if (DiffUtil.isSelectedByLine(line, startLine, endLine) && change.isChange(side)) {
+        return change;
+      }
     }
     return null;
   }
@@ -251,7 +253,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   private static class MyViewer extends SimpleThreesideDiffViewer {
-    public MyViewer() {super(new SampleContext(), new SampleRequest());}
+    MyViewer() {super(new SampleContext(), new SampleRequest());}
 
     @Override
     protected boolean forceRediffSynchronously() {

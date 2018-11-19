@@ -120,7 +120,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       PsiElement castTypeElement = descriptor.getPsiElement();
       PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
       if (cast != null) {
-        RedundantCastUtil.removeCast(cast);
+        RemoveRedundantCastUtil.removeCast(cast);
       }
     }
   }

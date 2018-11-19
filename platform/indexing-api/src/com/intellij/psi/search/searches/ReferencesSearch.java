@@ -99,6 +99,8 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
       SearchScope scope = myEffectiveScope;
       if (scope == null) {
+        if (!myElementToSearch.isValid()) return GlobalSearchScope.EMPTY_SCOPE;
+
         SearchScope useScope = PsiSearchHelper.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch);
         myEffectiveScope = scope = myScope.intersectWith(useScope);
       }
@@ -165,7 +167,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   }
 
   @NotNull
-  private static Query<PsiReference> uniqueResults(@NotNull Query<PsiReference> composite) {
+  private static Query<PsiReference> uniqueResults(@NotNull Query<? extends PsiReference> composite) {
     return new UniqueResultsQuery<>(composite, ContainerUtil.canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 

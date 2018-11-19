@@ -48,7 +48,7 @@ public class TopLevelDirectoryNode extends AbstractFolderNode {
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     data.setPresentableText(myTitle);
     data.setIcon(myIcon);
   }

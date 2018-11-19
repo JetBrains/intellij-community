@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration.ui;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +42,7 @@ public class TypeMigrationTreeStructure extends AbstractTreeStructureBase {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;
@@ -57,7 +59,7 @@ public class TypeMigrationTreeStructure extends AbstractTreeStructureBase {
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(final Object element) {
+  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     return true;
   }
 }

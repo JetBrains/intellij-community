@@ -96,7 +96,7 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
       @NotNull
       private final PsiElement myClassOrLambda;
 
-      public LocalVariableReferenceFinder(@NotNull PsiElement classOrLambda) {
+      LocalVariableReferenceFinder(@NotNull PsiElement classOrLambda) {
         myClassOrLambda = classOrLambda;
       }
 

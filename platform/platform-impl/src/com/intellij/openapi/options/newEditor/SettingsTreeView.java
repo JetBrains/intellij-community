@@ -475,7 +475,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.addText(myDisplayName, getPlainAttributes());
     }

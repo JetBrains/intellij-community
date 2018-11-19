@@ -18,7 +18,7 @@ import javax.swing.*;
 class HttpFileEditor extends BaseRemoteFileEditor {
   private final RemoteFilePanel myPanel;
 
-  public HttpFileEditor(@NotNull Project project, @NotNull HttpVirtualFile virtualFile) {
+  HttpFileEditor(@NotNull Project project, @NotNull HttpVirtualFile virtualFile) {
     super(project);
 
     myPanel = new RemoteFilePanel(project, virtualFile, this);

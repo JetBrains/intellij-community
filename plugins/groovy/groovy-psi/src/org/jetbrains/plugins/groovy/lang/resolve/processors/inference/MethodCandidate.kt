@@ -4,54 +4,66 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.*
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider.checkProviders
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult.applicable
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.mapParametersToArguments
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.applicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import java.util.*
 
 class MethodCandidate(val method: PsiMethod,
                       val siteSubstitutor: PsiSubstitutor,
-                      val qualifier: Argument?,
-                      val arguments: List<Argument>,
-                      val context: GroovyPsiElement) {
+                      private val arguments: Arguments?,
+                      private val context: PsiElement) {
 
-  val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazy {
+  val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazyPub {
     mapArguments(typeComputer)
   }
 
-  private val erasedArguments: Array<PsiType?> by lazy {
-    arguments.map(typeComputer).map(TypeConversionUtil::erasure).toTypedArray()
+  private val erasedArguments: Array<PsiType?>? by lazyPub {
+    arguments?.map(typeComputer)?.map(TypeConversionUtil::erasure)?.toTypedArray()
   }
 
   fun isApplicable(substitutor: PsiSubstitutor): Boolean {
     if (substitutor.substitutionMap.isEmpty() && argumentMapping.size == method.parameters.size) { //fast pass
-      if (argumentMapping.size == arguments.size) return true
-      return checkProviders(erasedArguments, method, substitutor, context, true) == applicable
+      if (argumentMapping.size == arguments?.size) return true
+      val erasedArguments = erasedArguments ?: return true
+      return checkProviders(erasedArguments, method) == applicable
     }
 
     return PsiUtil.isApplicable(erasedArguments, method, substitutor, context, true)
   }
 
-  private val typeComputer: (Argument) -> PsiType? = { it ->
-    val type = if (it.expression != null) getTopLevelTypeCached(it.expression) else it.type
+  private val typeComputer: (Argument) -> PsiType? = ::computeType
 
-    type ?: TypesUtil.getJavaLangObject(context)
+  private fun computeType(argument: Argument): PsiType? {
+    val type = argument.topLevelType
+    return if (type is GrMapType) {
+      TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, context)
+    }
+    else {
+      type ?: TypesUtil.getJavaLangObject(context)
+    }
   }
 
-  private val completionTypeComputer: (Argument) -> PsiType? = { it ->
-    if (it.expression != null) {
-      var type = getTopLevelTypeCached(it.expression)
-      if (it.expression is GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
+  private val completionTypeComputer: (Argument) -> PsiType? = ::computeCompletionType
+
+  private fun computeCompletionType(argument: Argument): PsiType? {
+    return if (argument is ExpressionArgument) {
+      var type = getTopLevelTypeCached(argument.expression)
+      if (argument.expression is GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
         type = null
       }
       type
     }
-    else it.type
+    else argument.type
   }
 
   fun completionMapArguments(): Map<Argument, Pair<PsiParameter, PsiType?>> {
@@ -59,6 +71,7 @@ class MethodCandidate(val method: PsiMethod,
   }
 
   private fun mapArguments(typeComputer: (Argument) -> PsiType?): Map<Argument, Pair<PsiParameter, PsiType?>> {
+    if (arguments == null) return emptyMap()
     val erasedSignature = GrClosureSignatureUtil.createSignature(method, siteSubstitutor, true)
 
     val argInfos = mapParametersToArguments(erasedSignature, arguments.toTypedArray(), typeComputer, context, true) ?: return emptyMap()

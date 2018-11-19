@@ -32,12 +32,12 @@ public class ShowModuleGroupsAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS;
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean flag) {
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = flag;
     myUpdate.run();
   }

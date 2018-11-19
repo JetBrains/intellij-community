@@ -47,7 +47,7 @@ public class CompilerTestUtil {
   }
 
   @NotNull
-  private static IComponentStore getApplicationStore() {
+  public static IComponentStore getApplicationStore() {
     return ServiceKt.getStateStore(ApplicationManager.getApplication());
   }
 

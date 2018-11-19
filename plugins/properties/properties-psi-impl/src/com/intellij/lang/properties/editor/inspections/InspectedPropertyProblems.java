@@ -26,9 +26,9 @@ import java.util.SortedSet;
 
 public class InspectedPropertyProblems {
   private final Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] myDescriptors;
-  private final SortedSet<HighlightInfoType> myHighlightTypes;
+  private final SortedSet<? extends HighlightInfoType> myHighlightTypes;
 
-  public InspectedPropertyProblems(Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] descriptors, SortedSet<HighlightInfoType> types) {
+  public InspectedPropertyProblems(Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] descriptors, SortedSet<? extends HighlightInfoType> types) {
     myDescriptors = descriptors;
     myHighlightTypes = types;
   }

@@ -37,7 +37,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   /**
    * Should be called in read action
    */
-  public MethodHierarchyTreeStructure(final Project project, final PsiMethod method) {
+  public MethodHierarchyTreeStructure(@NotNull Project project, @NotNull PsiMethod method) {
     super(project, null);
     myBaseDescriptor = buildHierarchyElement(project, method);
     ((MethodHierarchyNodeDescriptor)myBaseDescriptor).setTreeStructure(this);
@@ -48,7 +48,6 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   private HierarchyNodeDescriptor buildHierarchyElement(final Project project, final PsiMethod method) {
     final PsiClass suitableBaseClass = findSuitableBaseClass(method);
 
-    HierarchyNodeDescriptor descriptor = null;
     final ArrayList<PsiClass> superClasses = createSuperClasses(suitableBaseClass);
 
     if (!suitableBaseClass.equals(method.getContainingClass())) {
@@ -67,6 +66,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       }
     }
 
+    HierarchyNodeDescriptor descriptor = null;
     for(int i = superClasses.size() - 1; i >= 0; i--){
       final PsiClass superClass = superClasses.get(i);
       final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, superClass, false, this);

@@ -28,31 +28,37 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.tryWithPause
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.withPauseWhenNull
 import com.intellij.ui.LoadingNode
 import com.intellij.util.ui.tree.TreeUtil
 import org.fest.assertions.Assertions.assertThat
 import org.fest.reflect.core.Reflection.field
+import org.fest.swing.cell.JTreeCellReader
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
-import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.exception.ComponentLookupException
 import org.junit.Assert.assertNotNull
 import java.awt.Point
 import java.awt.Rectangle
 import java.util.*
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import kotlin.collections.ArrayList
 
 class ProjectViewFixture internal constructor(project: Project, robot: Robot) : ToolWindowFixture("Project", project, robot) {
+
+  val nodeReader: JTreeCellReader = ExtendedJTreeCellReader()
 
   private fun selectProjectPane(): PaneFixture = getPaneById("ProjectPane")
   fun selectAndroidPane(): PaneFixture = getPaneById("AndroidView")
@@ -78,41 +84,22 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
    * @return NodeFixture object for a pathTo; may be used for expanding, scrolling and clicking node
    */
   fun path(vararg pathTo: String): NodeFixture {
-    selectProjectPane()
-    val times = 3
-    repeat(times) {
-      val nodeFixture = getNodeFixture(pathTo)
-      if (nodeFixture != null) return nodeFixture
-    }
-    throw Exception("Unable to find path: ${Arrays.toString(pathTo)} for current project structure in $times times.")
-  }
-
-  private fun getNodeFixture(pathTo: Array<out String>): NodeFixture? {
-    return try {
-      withPauseWhenNull(timeout = Timeouts.seconds30) {
-        try {
-          getNodeFixtureByPath(pathTo as Array<String>)
-        }
-        catch (e: Exception) {
-          LOG.debug("Exception during getting node by path (${Arrays.toString(pathTo)}) : $e")
-          null
-        }
-      }
-    }
-    catch (timedOutError: WaitTimedOutError) {
-      LOG.warn("Unable to find path: ${Arrays.toString(pathTo)} for current project structure.", timedOutError)
-      null
+    val projectPane = selectProjectPane()
+    val canonicalPath = pathTo.toList().expandSlashedPath()
+    return tryWithPause(exceptionClass = ComponentLookupException::class.java,
+                        condition = "node with path ${Arrays.toString(pathTo)} will appear",
+                        timeout = Timeouts.seconds30) {
+      activate()
+      projectPane.getNode(canonicalPath)
     }
   }
 
-  private fun getNodeFixtureByPath(pathTo: Array<String>): NodeFixture? {
-    if (pathTo.size == 1) {
-      if (pathTo[0].contains("/")) {
-        val newPath = pathTo[0].split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        return selectProjectPane().getNode(newPath)
-      }
+
+  private fun List<String>.expandSlashedPath(): List<String> {
+    return if (this.size == 1 && this[0].contains("/")) {
+      this[0].split("/".toRegex()).dropLastWhile { it.isEmpty() }
     }
-    return selectProjectPane().getNode(pathTo)
+    else this
   }
 
 
@@ -128,9 +115,53 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
       return this
     }
 
-    fun getNode(path: Array<String>): NodeFixture? {
+    fun getNode(path: List<String>): NodeFixture {
       val tree = myPane.tree
-      val root = computeOnEdt { myPane.tree.model.root } ?: throw Exception("Unfortunately the root for a tree model in ProjectView is null")
+      val root = computeOnEdt { myPane.tree.model.root } ?: throw Exception("The root for a tree model in ProjectView is null")
+      val pathToNode = traverseChildren(tree, TreePath(root), path)
+      return NodeFixture(pathToNode.lastPathComponent as DefaultMutableTreeNode, pathToNode, myPane)
+    }
+
+    private fun traverseChildren(tree: JTree, treePath: TreePath, path: List<String>): TreePath {
+      val model = tree.model
+      val parent = treePath.lastPathComponent
+      val childCount: Int = computeOnEdt { model.getChildCount(parent) } ?: throw Exception("Unable to calculate children for ${path[0]}")
+      expandIfLoadingNode(childCount, model, parent, tree, treePath)
+
+      for (i in (0 until childCount)){
+        val child = computeOnEdt { model.getChild(parent, i) }
+        if (nodeReader.valueAt(tree, child) == path[0]) {
+          return if (path.size == 1)
+             treePath.pathByAddingChild(child)
+          else
+             traverseChildren(tree, treePath.pathByAddingChild(child), path.drop(1))
+        }
+      }
+      throw ComponentLookupException("Unable to find child with name '${path[0]}'")
+    }
+
+    private fun expandIfLoadingNode(childCount: Int,
+                                    model: TreeModel,
+                                    parent: Any?,
+                                    tree: JTree,
+                                    treePath: TreePath) {
+      if (childCount == 1) {
+        val singleChild = computeOnEdt { model.getChild(parent, 0) }
+        if (singleChild is LoadingNode) {
+          runOnEdt { TreeUtil.selectPath(tree, treePath.pathByAddingChild(singleChild)) }
+          waitUntil("children will be loaded", Timeouts.seconds30) {
+            computeOnEdt { model.getChildCount(parent) > 1 || model.getChild(parent, 0) !is LoadingNode }!!
+          }
+        }
+      }
+    }
+
+    //TODO: remove this method
+    @Deprecated("Because of unreliable logic for reading Nodes", ReplaceWith("getNode1 function"))
+    fun getNode2(path: Array<String>): NodeFixture? {
+      val tree = myPane.tree
+      val root = computeOnEdt { myPane.tree.model.root } ?: throw Exception(
+        "Unfortunately the root for a tree model in ProjectView is null")
       var pivotRoot: Any = root
       for (pathItem in path) {
         var (childCount, children) = getChildrenAndCountOnEdt(tree, pivotRoot)
@@ -159,6 +190,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
       return NodeFixture(pivotRoot as DefaultMutableTreeNode, TreeUtil.getPathFromRoot(pivotRoot), myPane)
     }
 
+    //TODO: remove this method
     private fun getChildrenAndCountOnEdt(tree: JTree,
                                          node: Any): Pair<Int, ArrayList<DefaultMutableTreeNode?>> {
       return computeOnEdt {
@@ -213,6 +245,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
 
     fun invokeContextMenu() {
       expand()
+      myRobot.waitForIdle()
       myRobot.click(locationOnScreen, MouseButton.RIGHT_BUTTON, 1)
     }
 

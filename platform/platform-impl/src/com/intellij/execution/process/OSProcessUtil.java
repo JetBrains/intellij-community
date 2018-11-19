@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
 
 import java.util.ArrayList;
@@ -37,6 +38,10 @@ public class OSProcessUtil {
           return WinProcessManager.kill(process, true);
         }
         else {
+          if (!process.isAlive()) {
+            logSkippedActionWithTerminatedProcess(process, "killProcessTree", null);
+            return true;
+          }
           createWinProcess(process).killRecursively();
           return true;
         }
@@ -58,12 +63,16 @@ public class OSProcessUtil {
   public static void killProcess(int pid) {
     if (SystemInfo.isWindows) {
       try {
-        if (Registry.is("disable.winp")) {
-          WinProcessManager.kill(pid, false);
+        if (!Registry.is("disable.winp")) {
+          try {
+            createWinProcess(pid).kill();
+            return;
+          }
+          catch (Throwable e) {
+            LOG.error("Failed to kill process with winp, fallback to default logic", e);
+          }
         }
-        else {
-          createWinProcess(pid).kill();
-        }
+        WinProcessManager.kill(pid, false);
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process", e);
@@ -74,18 +83,31 @@ public class OSProcessUtil {
     }
   }
 
+  static void logSkippedActionWithTerminatedProcess(@NotNull Process process, @NotNull String actionName, @Nullable String commandLine) {
+    Integer pid = null;
+    try {
+      pid = getProcessID(process);
+    }
+    catch (Throwable ignored) {
+    }
+    LOG.info("Cannot " + actionName + " already terminated process (pid: " + pid + ", command: " + commandLine + ")");
+  }
+
   public static int getProcessID(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
           return ((WinPtyProcess)process).getChildProcessId();
         }
-        if (Registry.is("disable.winp")) {
-          return WinProcessManager.getProcessId(process);
+        if (!Registry.is("disable.winp")) {
+          try {
+            return createWinProcess(process).getPid();
+          }
+          catch (Throwable e) {
+            LOG.error("Failed to get PID with winp, fallback to default logic", e);
+          }
         }
-        else {
-          return createWinProcess(process).getPid();
-        }
+        return WinProcessManager.getProcessId(process);
       }
       catch (Throwable e) {
         throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()

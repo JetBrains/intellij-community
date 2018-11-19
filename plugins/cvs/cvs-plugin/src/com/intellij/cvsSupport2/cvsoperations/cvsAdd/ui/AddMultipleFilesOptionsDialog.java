@@ -56,7 +56,7 @@ import java.util.Observer;
  * author: lesya
  */
 public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
-  private final Collection<AddedFileInfo> myRoots;
+  private final Collection<? extends AddedFileInfo> myRoots;
   private final static JCheckBox CHECKBOX = new JCheckBox();
 
   private final ColumnInfo INCLUDED = new ColumnInfo("") {
@@ -168,7 +168,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   private final Observer myObserver;
 
 
-  public AddMultipleFilesOptionsDialog(Project project, Collection<AddedFileInfo> roots, Options options) {
+  public AddMultipleFilesOptionsDialog(Project project, Collection<? extends AddedFileInfo> roots, Options options) {
     super(project, options);
 
     myRoots = roots;
@@ -313,7 +313,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private class SelectAllAction extends SelectUnselectAllAction {
 
-    public SelectAllAction() {
+    SelectAllAction() {
       super(CvsBundle.message("action.name.select.all"), AllIcons.Actions.Selectall);
     }
 
@@ -324,7 +324,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   }
 
   private class UnselectAllAction extends SelectUnselectAllAction {
-    public UnselectAllAction() {
+    UnselectAllAction() {
       super(CvsBundle.message("action.name.unselect.all"), AllIcons.Actions.Unselectall);
     }
 

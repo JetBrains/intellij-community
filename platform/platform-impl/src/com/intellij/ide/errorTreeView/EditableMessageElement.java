@@ -23,7 +23,6 @@ import javax.swing.tree.TreeCellEditor;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/26/14
  */
 public interface EditableMessageElement {
   @NotNull

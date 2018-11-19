@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
  * This class holds those markers and utility method for working with them.
  *
  * @author Denis Zhdanov
- * @since 5/2/12 12:57 PM
  */
 public class StoragePathMacros {
   /**

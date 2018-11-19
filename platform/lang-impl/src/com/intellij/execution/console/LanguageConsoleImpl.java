@@ -91,7 +91,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   private final MessageBusConnection myBusConnection;
   private final FocusChangeListener myFocusListener = new FocusChangeListener() {
     @Override
-    public void focusGained(Editor editor) {
+    public void focusGained(@NotNull Editor editor) {
       myCurrentEditor = (EditorEx)editor;
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
         TransactionGuard.submitTransaction(LanguageConsoleImpl.this, () -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
@@ -99,7 +99,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
 
     @Override
-    public void focusLost(Editor editor) {
+    public void focusLost(@NotNull Editor editor) {
     }
   };
 

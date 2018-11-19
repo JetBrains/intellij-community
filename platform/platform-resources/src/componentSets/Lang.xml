@@ -68,7 +68,7 @@
     </component>
     <component>
       <interface-class>com.intellij.openapi.module.impl.ExternalModuleListStorage</interface-class>
-      <implementation-class>com.intellij.openapi.module.impl.ExternalModuleListStorage</implementation-class>
+      <implementation-class>com.intellij.openapi.module.impl.ExternalModuleListStorageImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
 
@@ -146,6 +146,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.focusMode.FocusModePassFactory</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.hints.ParameterHintsPassFactory</implementation-class>

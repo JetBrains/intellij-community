@@ -20,7 +20,6 @@ import groovyjarjarcommonscli.Options;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/26/2014
  */
 @SuppressWarnings("AccessStaticViaInstance")
 public class GradleCommandLineOptionsProvider {

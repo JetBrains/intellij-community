@@ -29,7 +29,7 @@ class PropertyAccessorInvocation implements Invocation {
   final int myLastElement;
   private final JavaMethod[] myMethods;
 
-  public PropertyAccessorInvocation(final JavaMethod[] methods) {
+  PropertyAccessorInvocation(final JavaMethod[] methods) {
     myMethods = methods;
     myLastElement = myMethods.length - 1;
   }

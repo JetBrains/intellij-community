@@ -221,7 +221,7 @@ public class MergeTestUtils {
   private static class ColorToIdConvertor implements Convertor<Color, String> {
     private final Editor myEditor;
 
-    public ColorToIdConvertor(Editor editor) {
+    ColorToIdConvertor(Editor editor) {
       myEditor = editor;
     }
 
@@ -242,7 +242,7 @@ public class MergeTestUtils {
   private static class HighlighterToRangeConvertor implements Function<RangeHighlighter, Range> {
     private final Convertor<Color, String> myColorToId;
 
-    public HighlighterToRangeConvertor(Editor editor) {
+    HighlighterToRangeConvertor(Editor editor) {
       myColorToId = new ColorToIdConvertor(editor);
     }
 

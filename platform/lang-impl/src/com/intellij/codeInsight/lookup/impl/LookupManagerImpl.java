@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
@@ -38,12 +39,14 @@ public class LookupManagerImpl extends LookupManager {
   private Editor myActiveLookupEditor = null;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
+  public static final Key<Boolean> SUPPRESS_AUTOPOPUP_JAVADOC = Key.create("LookupManagerImpl.suppressAutopopupJavadoc");
+
   public LookupManagerImpl(Project project, MessageBus bus) {
     myProject = project;
 
     bus.connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(final Project project, final LightweightHint hint, final int flags) {
+      public void hintShown(final Project project, @NotNull final LightweightHint hint, final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {
@@ -193,7 +196,7 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   protected boolean isAutoPopupJavadocSupportedBy(@SuppressWarnings("unused") LookupElement lookupItem) {
-    return true;
+    return lookupItem.getUserData(SUPPRESS_AUTOPOPUP_JAVADOC) == null;
   }
 
   @NotNull

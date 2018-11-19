@@ -134,7 +134,7 @@ class MethodRepr extends ProtoMember {
     myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
   }
 
-  public MethodRepr(final DependencyContext context, final DataInput in) {
+  MethodRepr(final DependencyContext context, final DataInput in) {
     super(context, in);
     try {
       final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);

@@ -49,7 +49,7 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     public String columnName;
     public Function<FileStatusColorDescriptor,Object> dataFunction;
 
-    public ColumnInfo(Class columnClass, String columnName, Function<FileStatusColorDescriptor,Object> dataFunction) {
+    ColumnInfo(Class columnClass, String columnName, Function<FileStatusColorDescriptor,Object> dataFunction) {
       this.columnClass = columnClass;
       this.columnName = columnName;
       this.dataFunction = dataFunction;

@@ -1,6 +1,6 @@
 class Foo {
   String field;
-  String field2 = field.<warning descr="Method invocation 'substring' will produce 'java.lang.NullPointerException'">substring</warning>(1);
+  String field2 = field.<warning descr="Method invocation 'substring' will produce 'NullPointerException'">substring</warning>(1);
   int field3 = field2.length();
   Runnable r = new Runnable() {
     public void run() {
@@ -40,7 +40,7 @@ class FieldInitLoop {
 
   static String bar() {
     // bar() is invoked from ABC initializer before XYZ initializer
-    return XYZ.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>();
+    return XYZ.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>();
   }
 }
 
@@ -74,7 +74,7 @@ class FieldInitNoLoop {
 
 class NonFinalNotInitialized {
   String x;
-  String y = x.<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>();
+  String y = x.<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>();
 }
 
 class NonFinalInitialized {
@@ -87,7 +87,7 @@ class NonFinalInitialized {
 
 class NonFinalAssignedInside {
   String x;
-  String y = x.<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>()+(x = " foo ").trim();
+  String y = x.<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>()+(x = " foo ").trim();
   String z = x.trim();
 }
 

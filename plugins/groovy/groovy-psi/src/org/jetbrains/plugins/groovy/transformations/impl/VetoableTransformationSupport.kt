@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -27,10 +13,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DOCUMENTATION_DELEG
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
 
-private val VETOABLE_FQN = "groovy.beans.Vetoable"
-private val VCL_FQN = "java.beans.VetoableChangeListener"
-private val VCS_FQN = "java.beans.VetoableChangeSupport"
-val ORIGIN_INFO: String = "via @Vetoable"
+private const val VETOABLE_FQN = "groovy.beans.Vetoable"
+private const val VCL_FQN = "java.beans.VetoableChangeListener"
+private const val VCS_FQN = "java.beans.VetoableChangeSupport"
+const val ORIGIN_INFO: String = "via @Vetoable"
 
 class VetoableTransformationSupport : AstTransformationSupport {
 

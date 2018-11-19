@@ -26,7 +26,7 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 
 public class ListWithFilter<T> extends JPanel implements DataProvider {
-  private final JList<T> myList;
+  private final JList<? extends T> myList;
   private final SearchTextField mySearchField = new SearchTextField(false);
   private final NameFilteringListModel<T> myModel;
   private final JScrollPane myScrollPane;
@@ -41,18 +41,20 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     return null;
   }
 
-  public static <T> JComponent wrap(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer) {
+  @NotNull
+  public static <T> JComponent wrap(@NotNull JList<? extends T> list, @NotNull JScrollPane scrollPane, @Nullable Function<? super T, String> namer) {
     return wrap(list, scrollPane, namer, false);
   }
 
-  public static <T> JComponent wrap(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer,
+  @NotNull
+  public static <T> JComponent wrap(@NotNull JList<? extends T> list, @NotNull JScrollPane scrollPane, @Nullable Function<? super T, String> namer,
                                     boolean highlightAllOccurrences) {
     return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences);
   }
 
-  private ListWithFilter(@NotNull JList<T> list,
+  private ListWithFilter(@NotNull JList<? extends T> list,
                          @NotNull JScrollPane scrollPane,
-                         @Nullable Function<T, String> namer,
+                         @Nullable Function<? super T, String> namer,
                          boolean highlightAllOccurrences) {
     super(new BorderLayout());
 
@@ -75,7 +77,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     myList.addKeyListener(mySpeedSearch);
     int selectedIndex = myList.getSelectedIndex();
     int modelSize = myList.getModel().getSize();
-    myModel = new NameFilteringListModel<>(myList, namer, s -> mySpeedSearch.shouldBeShowing(s), mySpeedSearch);
+    myModel = new NameFilteringListModel<T>(myList, namer, mySpeedSearch::shouldBeShowing, mySpeedSearch);
     if (myModel.getSize() == modelSize) {
       myList.setSelectedIndex(selectedIndex);
     }

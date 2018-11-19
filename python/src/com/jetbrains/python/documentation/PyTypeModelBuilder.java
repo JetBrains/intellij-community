@@ -141,7 +141,7 @@ public class PyTypeModelBuilder {
     private final List<TypeModel> members;
     private final boolean homogeneous;
 
-    public TupleType(List<TypeModel> members, boolean homogeneous) {
+    TupleType(List<TypeModel> members, boolean homogeneous) {
       this.members = members;
       this.homogeneous = homogeneous;
     }
@@ -185,7 +185,7 @@ public class PyTypeModelBuilder {
   static class ClassObjectType extends TypeModel {
     private final TypeModel classType;
 
-    public ClassObjectType(TypeModel classType) {
+    ClassObjectType(TypeModel classType) {
       this.classType = classType;
     }
 
@@ -198,7 +198,7 @@ public class PyTypeModelBuilder {
   static class GenericType extends TypeModel {
     private final String name;
 
-    public GenericType(@Nullable String name) {
+    GenericType(@Nullable String name) {
       this.name = name;
     }
 
@@ -421,7 +421,7 @@ public class PyTypeModelBuilder {
     private final ChainIterable<String> myBody;
     private final PsiElement myAnchor;
 
-    public TypeToBodyWithLinksVisitor(ChainIterable<String> body, PsiElement anchor) {
+    TypeToBodyWithLinksVisitor(ChainIterable<String> body, PsiElement anchor) {
       myBody = body;
       myAnchor = anchor;
     }

@@ -29,8 +29,10 @@ public class NST {
   private static String MIN_OS_VERSION = "10.12.2";
   static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
+  private static final boolean ourHeadless = GraphicsEnvironment.isHeadless();
+
   static {
-    final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
+    final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false) && !ourHeadless;
     if (
       isSupportedOS()
       && isRegistryKeyEnabled
@@ -62,6 +64,8 @@ public class NST {
       }
     } else if (!isSupportedOS())
       LOG.info("OS doesn't support touchbar, skip nst loading");
+    else if (ourHeadless)
+      LOG.info("The graphics environment is headless, skip nst loading");
     else if (!isRegistryKeyEnabled)
       LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
     else

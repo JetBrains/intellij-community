@@ -5,7 +5,6 @@ package org.jetbrains.jps.incremental.artifacts.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
@@ -196,7 +196,14 @@ public class JarsBuilder {
         myBuiltJars.remove(jar);
       }
       else {
-        jarOutputStream.close();
+        try {
+          jarOutputStream.close();
+        }
+        catch (IOException e) {
+          String messageText = "Cannot create '" + jar.getPresentableDestination() + "': " + e.getMessage();
+          myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, messageText));
+          LOG.debug(e);
+        }
       }
     }
   }
@@ -224,7 +231,6 @@ public class JarsBuilder {
           if (manifestFile.exists()) {
             final String fullManifestPath = FileUtil.toSystemIndependentName(manifestFile.getAbsolutePath());
             packedFilePaths.add(fullManifestPath);
-            //noinspection IOResourceOpenedButNotSafelyClosed
             return createManifest(new FileInputStream(manifestFile), manifestFile);
           }
         }
@@ -265,10 +271,10 @@ public class JarsBuilder {
     }
   }
 
-  private static void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
-                                             final String relativeOutputPath, final Set<String> writtenPaths)
+  private void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
+                                      final String relativeOutputPath, final Set<String> writtenPaths)
     throws IOException {
-    final long timestamp = FileSystemUtil.lastModified(root.getRootFile());
+    final long timestamp = FSOperations.lastModified(root.getRootFile());
     root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
@@ -290,7 +296,15 @@ public class JarsBuilder {
           }
           jarOutputStream.putNextEntry(newEntry);
           FileUtil.copy(inputStream, jarOutputStream);
-          jarOutputStream.closeEntry();
+          try {
+            jarOutputStream.closeEntry();
+          }
+          catch (IOException e) {
+            String messageText = "Cannot extract '" + pathInJar + "' from '" + root.getRootFile().getAbsolutePath() + "' while building '" +
+                                 root.getTarget().getArtifact().getName() + "' artifact: " + e.getMessage();
+            myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, messageText));
+            LOG.debug(e);
+          }
         }
       }
     });

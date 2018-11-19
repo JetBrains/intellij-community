@@ -112,7 +112,7 @@ public class Prefs {
     void set(Preferences prefs, String key, T value);
   }
 
-  private static <T> void migrate(String key, T def, Getter<T> getter, Setter<T> setter) {
+  private static <T> void migrate(String key, T def, Getter<T> getter, Setter<? super T> setter) {
     // rewrite from old location into the new one
     final Preferences prefs = Preferences.userRoot();
     final T val = getter.get(prefs, key, def);

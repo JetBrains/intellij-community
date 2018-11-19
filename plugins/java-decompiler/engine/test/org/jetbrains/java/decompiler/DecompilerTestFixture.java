@@ -118,7 +118,7 @@ public class DecompilerTestFixture {
   private static class TestConsoleDecompiler extends ConsoleDecompiler {
     private final HashMap<String, ZipFile> zipFiles = new HashMap<>();
 
-    public TestConsoleDecompiler(File destination, Map<String, Object> options) {
+    TestConsoleDecompiler(File destination, Map<String, Object> options) {
       super(destination, options, new PrintStreamLogger(System.out));
     }
 

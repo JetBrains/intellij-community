@@ -37,14 +37,15 @@ public interface VcsLog {
   List<CommitId> getSelectedCommits();
 
   /**
-   * Returns short details of the selected commit which are visible in the table. <br/>
-   * Short details are loaded faster than full details and since it is done while scrolling,
+   * Returns metadata of the selected commit which are visible in the table. <br/>
+   * Metadata can be retrieved from index, or loaded from the repository.
+   * Metadata is loaded faster than full details and since it is done while scrolling,
    * there is a better chance that details for a commit are loaded when user selects it.
    * This makes this method preferable to {@link #getSelectedDetails()}.
    * Still, check for LoadingDetails instance has to be done when using details from this list.
    */
   @NotNull
-  List<VcsShortCommitDetails> getSelectedShortDetails();
+  List<VcsCommitMetadata> getSelectedShortDetails();
 
   /**
    * Returns details of the selected commits.

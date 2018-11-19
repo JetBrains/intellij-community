@@ -323,8 +323,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       SvnVcs vcs = SvnVcs.getInstance(myProject);
       Info info = vcs.getInfo(copyRoot);
 
-      if (info != null && info.getRepositoryRootURL() != null) {
-        Node node = new Node(copyRoot, info.getURL(), info.getRepositoryRootURL());
+      if (info != null && info.getRepositoryRootUrl() != null) {
+        Node node = new Node(copyRoot, info.getUrl(), info.getRepositoryRootUrl());
         mapping.add(new RootUrlInfo(node, findRootAndGetFormat(info.getFile()), vcsRoot));
       }
     }

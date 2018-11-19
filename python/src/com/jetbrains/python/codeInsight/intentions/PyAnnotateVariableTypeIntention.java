@@ -143,7 +143,6 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     }
     else if (isInstanceAttribute(target, context)) {
       // Set isDefinition=true to start searching right from the class level.
-      //noinspection ConstantConditions
       final List<PyTargetExpression> classLevelDefinitions = findClassLevelDefinitions(target, context);
       return ContainerUtil.exists(classLevelDefinitions, PyAnnotateVariableTypeIntention::hasInlineAnnotation);
     }

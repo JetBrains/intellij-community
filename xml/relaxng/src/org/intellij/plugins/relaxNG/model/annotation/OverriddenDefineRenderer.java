@@ -40,7 +40,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
 
   private final Define myDefine;
 
-  public OverriddenDefineRenderer(@NotNull Define define) {
+  OverriddenDefineRenderer(@NotNull Define define) {
     myDefine = define;
   }
 

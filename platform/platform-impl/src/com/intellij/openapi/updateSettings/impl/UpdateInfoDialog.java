@@ -56,7 +56,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
   private final boolean myForceHttps;
-  private final Collection<PluginDownloader> myUpdatedPlugins;
+  private final Collection<? extends PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final UpdateChain myPatches;
   private final boolean myWriteProtected;
@@ -68,8 +68,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                    @Nullable UpdateChain patches,
                    boolean enableLink,
                    boolean forceHttps,
-                   @Nullable Collection<PluginDownloader> updatedPlugins,
-                   @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
+                   @Nullable Collection<? extends PluginDownloader> updatedPlugins,
+                   @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
     myForceHttps = forceHttps;
@@ -166,7 +166,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     List<ButtonInfo> buttons = myNewBuild.getButtons();
     for (ButtonInfo info : buttons) {
-      if (!info.isDownload() || myPatches == null) {
+      if (!info.isDownload() || myPatches == null && myTestPatch == null) {
         actions.add(new ButtonAction(info));
       }
     }
@@ -312,7 +312,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JEditorPane myLicenseArea;
     private JBScrollPane myScrollPane;
 
-    public UpdateInfoPanel() {
+    UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
 
@@ -337,6 +337,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       if (myPatches != null && !StringUtil.isEmptyOrSpaces(myPatches.getSize())) {
         myPatchInfo.setText(myPatches.getSize() + " MB");
+      }
+      else if (myTestPatch != null) {
+        myPatchInfo.setText(Math.max(1, myTestPatch.length() >> 20) + " MB");
       }
       else {
         myPatchLabel.setVisible(false);

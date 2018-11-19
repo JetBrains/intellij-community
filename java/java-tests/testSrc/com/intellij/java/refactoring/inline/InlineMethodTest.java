@@ -110,13 +110,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testChainingConstructor() { doTest(); }
 
   public void testChainingConstructor1() {
-    BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-    try {
-      doTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTest());
   }
 
   public void testNestedCall() { doTest(); }
@@ -231,6 +225,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in javadoc");
   }
 
+  public void testMethodUsedReflectively() {
+    doTestConflict("Inlined method is used reflectively");
+  }
+
   public void testNotAStatement() {
     doTestConflict("Inlined result would contain parse errors");
   }
@@ -311,6 +309,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
   
   public void testReturnStatementWithoutBraces() {
+    doTestInlineThisOnly();
+  }
+
+  public void testIfElseIfWithSingleStatement() {
     doTestInlineThisOnly();
   }
 
@@ -415,6 +417,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testTailCallInsideLambda() {
+    doTest();
+  }
+
+  public void testChainedBuilderCall() {
+    doTest();
+  }
+
+  public void testMissedQualifierWithSideEffectsOnInliningEmptyMethod() {
     doTest();
   }
 

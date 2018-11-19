@@ -60,7 +60,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
     private final String myAllPluginsRoot;
     private final boolean myRunningFromSources;
 
-    public AgentBuilderImpl(@NotNull RemoteAgentProxyFactory agentProxyFactory,
+    AgentBuilderImpl(@NotNull RemoteAgentProxyFactory agentProxyFactory,
                             @NotNull Class<T> agentInterface,
                             @NotNull Class<?> pluginClass) {
       myAgentProxyFactory = agentProxyFactory;

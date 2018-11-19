@@ -284,6 +284,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testSwitch$identifierWithin() { doTest() }
 
   void testSyn$syn1() throws Throwable { doTest() }
+  
+  void testSyn$newLineBeforeBlock() { doTest() }
 
   void testTop_methods$method1() throws Throwable { doTest() }
 

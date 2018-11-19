@@ -32,12 +32,12 @@ public final class PauseOutputAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return myAntBuildMessageView.isOutputPaused();
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean flag) {
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     myAntBuildMessageView.setOutputPaused(flag);
   }
 

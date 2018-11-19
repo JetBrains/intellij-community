@@ -59,7 +59,7 @@ public class DetailsComponent {
   public DetailsComponent(boolean detailsEnabled, boolean paintBorder) {
     myDetailsEnabled = detailsEnabled;
     myPaintBorder = paintBorder;
-    myComponent = new JPanel(new BorderLayout());
+    myComponent = new NonOpaquePanel(new BorderLayout());
 
     myComponent.setOpaque(false);
     myContentGutter.setOpaque(false);
@@ -214,7 +214,7 @@ public class DetailsComponent {
   }
 
   private class MyWrapper extends Wrapper implements NullableComponent {
-    public MyWrapper(final JComponent c) {
+    MyWrapper(final JComponent c) {
       super(c == null || NullableComponent.Check.isNull(c) ? myEmptyContentLabel : c);
     }
 

@@ -54,9 +54,9 @@ public class SliceLeafAnalyzer {
     myProvider = provider;
   }
 
-  static SliceNode filterTree(SliceNode oldRoot,
-                              NullableFunction<SliceNode, SliceNode> filter,
-                              PairProcessor<SliceNode, List<SliceNode>> postProcessor) {
+  public static SliceNode filterTree(SliceNode oldRoot,
+                                     NullableFunction<? super SliceNode, ? extends SliceNode> filter,
+                                     PairProcessor<? super SliceNode, ? super List<SliceNode>> postProcessor) {
     SliceNode filtered = filter.fun(oldRoot);
     if (filtered == null) return null;
 
@@ -75,7 +75,7 @@ public class SliceLeafAnalyzer {
     return filtered;
   }
 
-  private void groupByValues(@NotNull Collection<PsiElement> leaves,
+  private void groupByValues(@NotNull Collection<? extends PsiElement> leaves,
                                     @NotNull SliceRootNode oldRoot,
                                     @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     assert oldRoot.myCachedChildren.size() == 1;
@@ -88,14 +88,14 @@ public class SliceLeafAnalyzer {
   }
 
   @NotNull
-  public SliceRootNode createTreeGroupedByValues(@NotNull Collection<PsiElement> leaves,
+  public SliceRootNode createTreeGroupedByValues(@NotNull Collection<? extends PsiElement> leaves,
                                                         @NotNull SliceRootNode oldRoot,
                                                         @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceRootNode root = oldRoot.copy();
     root.setChanged();
     root.targetEqualUsages.clear();
-    root.myCachedChildren = new ArrayList<>(leaves.size());
+    List<SliceNode> leafValueRoots = new ArrayList<>(leaves.size());
 
     for (final PsiElement leafExpression : leaves) {
       SliceNode newNode = filterTree(oldRootStart, oldNode -> {
@@ -114,8 +114,10 @@ public class SliceLeafAnalyzer {
                                                                  root,
                                                                  myProvider.createRootUsage(leafExpression, oldRoot.getValue().params),
                                                                  Collections.singletonList(newNode));
-      root.myCachedChildren.add(lvNode);
+      leafValueRoots.add(lvNode);
     }
+    root.setChildren(leafValueRoots);
+
     return root;
   }
 
@@ -125,7 +127,8 @@ public class SliceLeafAnalyzer {
 
     final Map<SliceNode, Collection<PsiElement>> map = createMap();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(), "Expanding all nodes... (may very well take the whole day)", true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(),
+                                                              "Expanding All Nodes... (May Very Well Take the Whole Day)", true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         Collection<PsiElement> l = calcLeafExpressions(root, treeStructure, map);
@@ -162,7 +165,7 @@ public class SliceLeafAnalyzer {
                                           () -> ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy()));
   }
 
-  static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
+  public static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
     private final AbstractTreeStructure myTreeStructure;
     // use tree structure because it's setting 'parent' fields in the process
 

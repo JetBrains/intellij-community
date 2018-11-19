@@ -27,7 +27,6 @@ import java.util.Map;
 
 /**
  * @author anna
- * @since Mar 2, 2005
  */
 public abstract class DependencyValidationManager extends NamedScopesHolder {
   @NotNull

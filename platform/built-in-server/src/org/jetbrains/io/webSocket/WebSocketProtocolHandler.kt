@@ -11,7 +11,7 @@ import org.jetbrains.builtInWebServer.LOG
 import org.jetbrains.io.NettyUtil
 
 abstract class WebSocketProtocolHandler : ChannelInboundHandlerAdapter() {
-  override final fun channelRead(context: ChannelHandlerContext, message: Any) {
+  final override fun channelRead(context: ChannelHandlerContext, message: Any) {
     // Pong frames need to get ignored
     when (message) {
       !is WebSocketFrame, is PongWebSocketFrame -> ReferenceCountUtil.release(message)
@@ -32,7 +32,7 @@ abstract class WebSocketProtocolHandler : ChannelInboundHandlerAdapter() {
     }
   }
 
-  abstract protected fun textFrameReceived(channel: Channel, message: TextWebSocketFrame)
+  protected abstract fun textFrameReceived(channel: Channel, message: TextWebSocketFrame)
 
   protected open fun closeFrameReceived(channel: Channel, message: CloseWebSocketFrame) {
     channel.close()
@@ -45,7 +45,7 @@ abstract class WebSocketProtocolHandler : ChannelInboundHandlerAdapter() {
 }
 
 open class WebSocketProtocolHandshakeHandler(private val handshaker: WebSocketClientHandshaker) : ChannelInboundHandlerAdapter() {
-  override final fun channelRead(context: ChannelHandlerContext, message: Any) {
+  final override fun channelRead(context: ChannelHandlerContext, message: Any) {
     val channel = context.channel()
     if (!handshaker.isHandshakeComplete) {
       handshaker.finishHandshake(channel, message as FullHttpResponse)
@@ -63,6 +63,6 @@ open class WebSocketProtocolHandshakeHandler(private val handshaker: WebSocketCl
     context.fireChannelRead(message)
   }
 
-  open protected fun completed() {
+  protected open fun completed() {
   }
 }

@@ -10,6 +10,12 @@ deprecated: testInProgress5.png -> /process/step_5.svg; to be removed in IDEA 20
 deprecated: testInProgress6.png -> /process/step_6.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_6
 deprecated: testInProgress7.png -> /process/step_7.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_7
 deprecated: testInProgress8.png -> /process/step_8.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_8
+deprecated: trackTests.png -> /nodes/jsf/renderer.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Jsf.Renderer
 deprecated: includeNonStartedTests_Rerun.png; to be removed in IDEA 2020
 deprecated: hideIgnored.png; to be removed in IDEA 2020
 deprecated: loadingTree.png; to be removed in IDEA 2020
+deprecated: ql_console.png; to be removed in IDEA 2020 - use DatabaseIcons.ConsoleRun
+deprecated: scrollToStackTrace.png; to be removed in IDEA 2020
+deprecated: selectFirstDefect.png; to be removed in IDEA 2020
+deprecated: sourceAtException.png; to be removed in IDEA 2020
+deprecated: withCoverageLayer.png; to be removed in IDEA 2020

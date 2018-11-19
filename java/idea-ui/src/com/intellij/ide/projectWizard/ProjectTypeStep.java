@@ -78,7 +78,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   private final ModulesProvider myModulesProvider;
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Map<ProjectTemplate, ModuleBuilder> myBuilders = FactoryMap.create(key -> (ModuleBuilder)key.createModuleBuilder());
   private final Map<String, ModuleWizardStep> myCustomSteps = new THashMap<>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
@@ -672,6 +671,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       }
     }
     return false;
+  }
+
+  public static void resetGroupForTests() {
+    PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, null);
   }
 
   @TestOnly

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -31,7 +32,6 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
 
   private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41));
@@ -347,7 +347,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         float arc = COMPONENT_ARC.getFloat();
 
         Object op = comboBox.getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (comboBox.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, arc, true, hasFocus, Outline.valueOf(op.toString()));
         } else {
           if (hasFocus) {
@@ -548,6 +548,33 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected static class CustomComboPopup extends BasicComboPopup {
     public CustomComboPopup(JComboBox combo) {
       super(combo);
+    }
+
+    @Override
+    protected void configurePopup() {
+      super.configurePopup();
+
+      Border border = UIManager.getBorder("ComboPopup.border");
+      if (border != null) {
+        setBorder(border);
+      }
+    }
+
+    @Override
+    public void updateUI() {
+      setUI(new BasicPopupMenuUI() {
+        @Override
+        public void uninstallDefaults() {}
+
+        @Override
+        public void installDefaults() {
+          if (popupMenu.getLayout() == null || popupMenu.getLayout() instanceof UIResource)
+            popupMenu.setLayout(new DefaultMenuLayout(popupMenu, BoxLayout.Y_AXIS));
+
+          popupMenu.setOpaque(true);
+          LookAndFeel.installColorsAndFont(popupMenu, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
+        }
+      });
     }
 
     @Override

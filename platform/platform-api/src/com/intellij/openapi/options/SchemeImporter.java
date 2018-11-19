@@ -44,4 +44,12 @@ public interface SchemeImporter <T extends Scheme> {
   default String getAdditionalImportInfo(@NotNull T scheme) {
     return null;
   }
+
+  /**
+   * @return File to import scheme. If it's {@code null} than file chooser is shown.
+   */
+  @Nullable
+  default VirtualFile getImportFile() {
+    return null;
+  }
 }

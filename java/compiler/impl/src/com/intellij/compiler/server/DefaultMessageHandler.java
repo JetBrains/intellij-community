@@ -42,7 +42,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   @Override
-  public void buildStarted(UUID sessionId) {
+  public void buildStarted(@NotNull UUID sessionId) {
   }
 
   @Override
@@ -229,7 +229,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
 
-  private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<String> affectedPaths) {
+  private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<? super String> affectedPaths) {
     final PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(myProject);
 
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
@@ -286,7 +286,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     return searchScope;
   }
 
-  private static boolean processIdentifiers(PsiSearchHelper helper, @NotNull final PsiElementProcessor<PsiIdentifier> processor, @NotNull final String identifier, @NotNull SearchScope searchScope, short searchContext) {
+  private static boolean processIdentifiers(PsiSearchHelper helper, @NotNull final PsiElementProcessor<? super PsiIdentifier> processor, @NotNull final String identifier, @NotNull SearchScope searchScope, short searchContext) {
     TextOccurenceProcessor processor1 =
       (element, offsetInElement) -> !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
     SearchScope javaScope = searchScope instanceof GlobalSearchScope
@@ -297,7 +297,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
   private boolean affectDirectUsages(final PsiField psiField,
                                   final boolean ignoreAccessScope,
-                                  final Set<String> affectedPaths) throws ProcessCanceledException {
+                                  final Set<? super String> affectedPaths) throws ProcessCanceledException {
     return ReadAction.compute(() -> {
       if (psiField.isValid()) {
         final PsiFile fieldContainingFile = psiField.getContainingFile();

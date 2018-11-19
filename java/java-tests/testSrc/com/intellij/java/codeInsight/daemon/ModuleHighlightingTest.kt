@@ -122,25 +122,29 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testExports() {
     addFile("pkg/empty/package-info.java", "package pkg.empty;")
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
-    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
     highlight("""
         module M {
           exports <error descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</error>;
           exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
           exports pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate 'exports' target: M2">M2</error>;
         }""".trimIndent())
+
+    addTestFile("pkg/tests/T.java", "package pkg.tests;\nclass T { }", M_TEST)
+    highlight("module-info.java", "module M { exports pkg.tests; }".trimIndent(), M_TEST, true)
   }
 
   fun testOpens() {
-    addFile("pkg/empty/package-info.java", "package pkg.empty;")
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
-    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
+    addFile("pkg/resources/resource.txt", "...")
     highlight("""
         module M {
           opens <warning descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</warning>;
-          opens <warning descr="Package is empty: pkg.empty">pkg.empty</warning>;
           opens pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate 'opens' target: M2">M2</error>;
+          opens pkg.resources;
         }""".trimIndent())
+
+    addTestFile("pkg/tests/T.java", "package pkg.tests;\nclass T { }", M_TEST)
+    highlight("module-info.java", "module M { opens pkg.tests; }".trimIndent(), M_TEST, true)
   }
 
   fun testWeakModule() {
@@ -327,7 +331,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testNonRootJdkModule() {
     highlight("test.java", """
-        import <error descr="Package 'javax.doomed' is declared in module 'javax.doomed', which is not in the module graph">javax.doomed</error>.*;
+        import <error descr="Package 'java.non.root' is declared in module 'java.non.root', which is not in the module graph">java.non.root</error>.*;
         """.trimIndent())
   }
 

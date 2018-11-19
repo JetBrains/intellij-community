@@ -64,7 +64,7 @@ public class BinaryOSProcessHandlerTest {
     private final boolean blocking;
     private int exitCode = -1;
 
-    public TestBinaryOSProcessHandler(Process process, boolean blocking) {
+    TestBinaryOSProcessHandler(Process process, boolean blocking) {
       super(process, "test", null);
       this.blocking = blocking;
     }

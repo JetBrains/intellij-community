@@ -6,6 +6,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -29,13 +30,13 @@ public class ContentManagerWatcher {
     contentManager.addContentManagerListener(
       new ContentManagerAdapter(){
         @Override
-        public void contentAdded(ContentManagerEvent e) {
+        public void contentAdded(@NotNull ContentManagerEvent e) {
           e.getContent().addPropertyChangeListener(myPropertyChangeListener);
           myToolWindow.setAvailable(true,null);
         }
 
         @Override
-        public void contentRemoved(ContentManagerEvent e) {
+        public void contentRemoved(@NotNull ContentManagerEvent e) {
           e.getContent().removePropertyChangeListener(myPropertyChangeListener);
           myToolWindow.setAvailable(myContentManager.getContentCount()>0,null);
         }

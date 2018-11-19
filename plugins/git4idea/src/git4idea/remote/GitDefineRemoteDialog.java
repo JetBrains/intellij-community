@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRemote;
@@ -73,7 +74,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return null;
-  };
+  }
 
   @Nullable
   @Override
@@ -112,7 +113,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
     String error = validateRemoteUnderModal(url);
     if (error != null) {
       LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", getRemoteName(), url, error));
-      Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote");
+      Messages.showErrorDialog(myRepository.getProject(), XmlStringUtil.wrapInHtml(error), "Invalid Remote");
     }
     else {
       super.doOKAction();

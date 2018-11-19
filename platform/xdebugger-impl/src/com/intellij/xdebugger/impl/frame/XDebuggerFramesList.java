@@ -19,7 +19,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -45,7 +44,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   private void copyStack() {
     List items = getModel().getItems();
-    //noinspection unchecked
     if (!items.isEmpty()) {
       StringBuilder plainBuf = new StringBuilder();
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
@@ -148,7 +146,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
     private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer(myProject);
 
-    public XDebuggerGroupedFrameListRenderer() {
+    XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
         @Nullable
         @Override
@@ -192,7 +190,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   private class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
     private final FileColorManager myColorsManager;
 
-    public XDebuggerFrameListRenderer(@NotNull Project project) {
+    XDebuggerFrameListRenderer(@NotNull Project project) {
       myColorsManager = FileColorManager.getInstance(project);
     }
 
@@ -202,11 +200,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
                                          final int index,
                                          final boolean selected,
                                          final boolean hasFocus) {
-      // Fix GTK background
-      if (UIUtil.isUnderGTKLookAndFeel()){
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        UIUtil.changeBackGround(this, background);
-      }
       if (value == null) {
         append(XDebuggerBundle.message("stack.frame.loading.text"), SimpleTextAttributes.GRAY_ATTRIBUTES);
         return;

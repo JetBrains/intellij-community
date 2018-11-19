@@ -209,7 +209,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
       }
 
       @Override
-      public boolean fixWhitespaceBefore() {
+      public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
         return true;
       }
     };

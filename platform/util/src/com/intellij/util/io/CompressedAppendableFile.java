@@ -60,6 +60,9 @@ public class CompressedAppendableFile {
 
   static final String INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION = ".s";
 
+  private static int ourFilesCount;
+  private final int myCount = ourFilesCount++;
+
   public CompressedAppendableFile(File file) {
     this(file, 32768);
   }
@@ -589,5 +592,10 @@ public class CompressedAppendableFile {
       if (read == -1) return -1;
       return buf[0] & 0xFF;
     }
+  }
+
+  @Override
+  public int hashCode() {
+    return myCount;
   }
 }

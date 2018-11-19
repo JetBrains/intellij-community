@@ -101,4 +101,13 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     addBorderHighlighter(0, 7, 0, Color.red);
     checkResult();
   }
+
+  public void testSoftWrapAtHighlighterBoundary() throws Exception {
+    initText("a bc");
+    configureSoftWraps(2);
+    assertNotNull(getEditor().getSoftWrapModel().getSoftWrap(2));
+    addRangeHighlighter(1, 3, HighlighterLayer.CARET_ROW + 1, null, Color.red);
+    addRangeHighlighter(1, 2, HighlighterLayer.CARET_ROW + 2, null, Color.blue);
+    checkResult();
+  }
 }

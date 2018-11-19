@@ -70,7 +70,7 @@ public class MvcModuleStructureSynchronizer implements ProjectComponent {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         myModificationTracker.incModificationCount();
         queue(SyncAction.SyncLibrariesInPluginsModule, myProject);
         queue(SyncAction.UpgradeFramework, myProject);

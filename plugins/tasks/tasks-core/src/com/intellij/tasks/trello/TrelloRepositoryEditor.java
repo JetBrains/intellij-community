@@ -39,7 +39,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
   public TrelloRepositoryEditor(Project project,
                                 TrelloRepository repository,
-                                Consumer<TrelloRepository> changeListener) {
+                                Consumer<? super TrelloRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
     myURLText.setVisible(false);
@@ -215,7 +215,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
 
   private class BoardsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloBoard> {
-    public BoardsComboBoxUpdater() {
+    BoardsComboBoxUpdater() {
       super(TrelloRepositoryEditor.this.myProject, "Downloading Trello boards...", myBoardComboBox);
     }
 
@@ -250,7 +250,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
   }
 
   private class ListsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloList> {
-    public ListsComboBoxUpdater() {
+    ListsComboBoxUpdater() {
       super(TrelloRepositoryEditor.this.myProject, "Downloading Trello lists...", myListComboBox);
     }
 

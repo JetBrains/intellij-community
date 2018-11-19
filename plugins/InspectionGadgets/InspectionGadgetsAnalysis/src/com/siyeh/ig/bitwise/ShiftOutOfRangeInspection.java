@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bitwise;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -75,7 +76,7 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
     @NotNull
     public String getName() {
       final int newValue = isLong ? value & 63 : value & 31;
-      return InspectionGadgetsBundle.message("shift.out.of.range.quickfix", Integer.valueOf(value), Integer.valueOf(newValue));
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", Integer.valueOf(value), Integer.valueOf(newValue));
     }
 
     @NotNull

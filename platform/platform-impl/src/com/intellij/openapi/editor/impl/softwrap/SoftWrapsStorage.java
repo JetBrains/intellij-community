@@ -19,6 +19,7 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,12 +34,11 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Jun 29, 2010 3:04:20 PM
  */
 public class SoftWrapsStorage implements Dumpable {
 
-  private final List<SoftWrapImpl>        myWraps     = new ArrayList<>();
-  private final List<SoftWrapImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
+  private final List<SoftWrapImpl> myWraps = new ArrayList<>();
+  private final List<SoftWrapImpl> myWrapsView = Collections.unmodifiableList(myWraps);
   private final List<SoftWrapChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
@@ -72,26 +72,7 @@ public class SoftWrapsStorage implements Dumpable {
    *                  to position at {@link #myWraps} collection where soft wrap for the given index should be inserted
    */
   public int getSoftWrapIndex(int offset) {
-    int start = 0;
-    int end = myWraps.size() - 1;
-
-    // We use custom inline implementation of binary search here because profiling shows that standard Collections.binarySearch()
-    // is a bottleneck. The most probable reason is a big number of interface calls.
-    while (start <= end) {
-      int i = (start + end) >>> 1;
-      SoftWrap softWrap = myWraps.get(i);
-      int softWrapOffset = softWrap.getStart();
-      if (softWrapOffset > offset) {
-        end = i - 1;
-      }
-      else if (softWrapOffset < offset) {
-        start = i + 1;
-      }
-      else {
-        return i;
-      }
-    }
-    return -(start + 1);
+    return ObjectUtils.binarySearch(0, myWraps.size(), i -> Integer.compare(myWraps.get(i).getStart(), offset));
   }
 
   /**

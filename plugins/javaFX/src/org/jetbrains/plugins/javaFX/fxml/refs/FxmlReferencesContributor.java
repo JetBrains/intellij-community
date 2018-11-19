@@ -159,7 +159,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
       private final PsiReference myReference;
       private final PsiElement myPosition;
 
-      public JavaClassReferenceWrapper(PsiReference reference, PsiElement position) {
+      JavaClassReferenceWrapper(PsiReference reference, PsiElement position) {
         myReference = reference;
         myPosition = position;
       }

@@ -23,6 +23,7 @@ import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -511,6 +512,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private boolean isOnNextStepButton(MouseEvent e) {
     final int index = myList.getSelectedIndex();
     final Rectangle bounds = myList.getCellBounds(index, index);
+    if (bounds != null) {
+      JBInsets.removeFrom(bounds, UIUtil.getListCellPadding());
+    }
     final Point point = e.getPoint();
     return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
   }
@@ -529,7 +533,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private class MyList extends JBList implements DataProvider {
-    public MyList() {
+    MyList() {
       super(myListModel);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }

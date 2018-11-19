@@ -97,7 +97,6 @@ public class ManagePackagesDialog extends DialogWrapper {
           }
           catch (final IOException e1) {
             application.invokeLater(() -> {
-              //noinspection DialogTitleCapitalization
               Messages.showErrorDialog(myMainPanel, "Error updating package list: " + e1.getMessage(), "Reload List of Packages");
               LOG.info("Error updating list of repository packages", e1);
               myPackages.setPaintBusy(false);
@@ -140,7 +139,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       }
     });
 
-    UiNotifyConnector.doWhenFirstShown(myPackages, () -> initModel());
+    UiNotifyConnector.doWhenFirstShown(myPackages, this::initModel);
     myOptionsCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
@@ -333,7 +332,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private class MyPackageFilter extends FilterComponent {
-    public MyPackageFilter() {
+    MyPackageFilter() {
       super("PACKAGE_FILTER", 5);
       getTextEditor().addKeyListener(new KeyAdapter() {
         @Override
@@ -362,7 +361,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     protected final List<RepoPackage> myFilteredOut = new ArrayList<>();
     protected List<RepoPackage> myView = new ArrayList<>();
 
-    public PackagesModel(List<RepoPackage> packages) {
+    PackagesModel(List<RepoPackage> packages) {
       super(packages);
       myView = packages;
     }
@@ -396,9 +395,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     public void filter(List<RepoPackage> filtered, @Nullable final RepoPackage toSelect){
       myView.clear();
       myPackages.clearSelection();
-      for (RepoPackage repoPackage : filtered) {
-        myView.add(repoPackage);
-      }
+      myView.addAll(filtered);
       if (toSelect != null)
         myPackages.setSelectedValue(toSelect, true);
       Collections.sort(myView);

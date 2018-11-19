@@ -98,14 +98,14 @@ public class DiffHyperlink implements Printable {
 
   @Override
   public void printOn(final Printer printer) {
-    if (!hasMoreThanOneLine(myActual.trim()) && !hasMoreThanOneLine(myExpected.trim()) && myPrintOneLine) {
+    if (!hasMoreThanOneLine(myActual) && !hasMoreThanOneLine(myExpected) && myPrintOneLine) {
       printer.print(NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
       printer.print(ExecutionBundle.message("diff.content.expected.for.file.title"), ConsoleViewContentType.SYSTEM_OUTPUT);
       printer.print(myExpected + NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
       printer.print(ExecutionBundle.message("junit.actual.text.label"), ConsoleViewContentType.SYSTEM_OUTPUT);
-      printer.print(myActual + NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+      printer.print(myActual, ConsoleViewContentType.ERROR_OUTPUT);
     }
-    printer.print(" ", ConsoleViewContentType.ERROR_OUTPUT);
+    printer.print(NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     printer.printHyperlink(ExecutionBundle.message("junit.click.to.see.diff.link"), myDiffHyperlink);
     printer.print(NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
   }

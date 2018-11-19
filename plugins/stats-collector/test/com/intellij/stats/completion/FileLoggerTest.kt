@@ -2,6 +2,7 @@
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.stats.storage.FilePathProvider
 import com.intellij.testFramework.PlatformTestCase
@@ -56,24 +57,33 @@ class FileLoggerTest : PlatformTestCase() {
 
     val logger = loggerProvider.newCompletionLogger()
 
+    val editorMock = mock(Editor::class.java).apply {
+      `when`(caretModel).thenReturn(mock(CaretModel::class.java))
+    }
+
     val lookup = mock(LookupImpl::class.java).apply {
       `when`(getRelevanceObjects(ArgumentMatchers.any(), ArgumentMatchers.anyBoolean())).thenReturn(emptyMap())
       `when`(items).thenReturn(emptyList())
       `when`(psiFile).thenReturn(null)
-      `when`(editor).thenReturn(mock(Editor::class.java))
+      `when`(editor).thenReturn(editorMock)
     }
 
     val watchService = FileSystems.getDefault().newWatchService()
-    val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE)
+    val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY)
 
-    logger.completionStarted(lookup, true, 2)
+    logger.completionStarted(lookup, true, 2, System.currentTimeMillis(), 0)
 
-    logger.completionCancelled()
+    logger.completionCancelled(System.currentTimeMillis())
     loggerProvider.dispose()
 
-    watchService.poll(15, TimeUnit.SECONDS)
+    var attemps = 0
+    while (!logFile.exists() && attemps < 5) {
+      watchService.poll(15, TimeUnit.SECONDS)
+      attemps += 1
+    }
+
     key.cancel()
-    assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
     watchService.close()
+    assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
   }
 }

@@ -28,7 +28,7 @@ class LightTestFixtureBuilderImpl<F extends IdeaProjectTestFixture> implements T
 
   private final F myFixture;
 
-  public LightTestFixtureBuilderImpl(F fixture) {
+  LightTestFixtureBuilderImpl(F fixture) {
     myFixture = fixture;
   }
 

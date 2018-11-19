@@ -41,7 +41,7 @@ import java.util.Collections;
 class StackTraceElementObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(StackTraceElementObjectRenderer.class);
 
-  public StackTraceElementObjectRenderer(final NodeRendererSettings rendererSettings) {
+  StackTraceElementObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "StackTraceElement", null, null);
     setClassName("java.lang.StackTraceElement");
     setEnabled(true);

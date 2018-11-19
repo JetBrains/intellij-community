@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Denis Zhdanov
- * @since 8/9/13 4:28 PM
  */
 public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
 
@@ -96,7 +95,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
     start(facade);
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "unchecked", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
   @Override
   protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull final C impl)
     throws RemoteException
@@ -152,7 +151,6 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
     }, (int)myTtlMs.get(), TimeUnit.MILLISECONDS);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static class LineAwarePrintStream extends PrintStream {
     private LineAwarePrintStream(@NotNull final PrintStream delegate) {
       super(new OutputStream() {
@@ -162,7 +160,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
         @Override
         public void write(int b) {
           char c = (char)b;
-          myBuffer.append(Character.toString(c));
+          myBuffer.append(c);
           if (c == '\n') {
             doFlush();
           }

@@ -36,7 +36,7 @@ public class BackwardDependenciesHandler extends DependenciesHandlerBase {
     this(project, Collections.singletonList(scope), selectedScope, new HashSet<>());
   }
 
-  public BackwardDependenciesHandler(final Project project, final List<AnalysisScope> scopes, final @Nullable AnalysisScope scopeOfInterest, Set<PsiFile> excluded) {
+  public BackwardDependenciesHandler(final Project project, final List<? extends AnalysisScope> scopes, final @Nullable AnalysisScope scopeOfInterest, Set<PsiFile> excluded) {
     super(project, scopes, excluded);
     myScopeOfInterest = scopeOfInterest;
   }

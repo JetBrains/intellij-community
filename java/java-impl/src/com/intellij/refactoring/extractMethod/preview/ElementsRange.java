@@ -14,12 +14,12 @@ class ElementsRange {
   private final PsiElement myStart;
   private final PsiElement myEnd;
 
-  public ElementsRange(@NotNull PsiElement start, @NotNull PsiElement end) {
+  ElementsRange(@NotNull PsiElement start, @NotNull PsiElement end) {
     myStart = start;
     myEnd = end;
   }
 
-  public ElementsRange(@NotNull PsiElement[] elements) {
+  ElementsRange(@NotNull PsiElement[] elements) {
     myStart = elements[0];
     myEnd = elements[elements.length - 1];
   }

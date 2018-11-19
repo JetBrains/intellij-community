@@ -91,6 +91,14 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testconditional$ternaryWithoutThenElse() { doTest() }
 
+  void testconditional$ternaryNLBeforeColon() { doTest() }
+
+  void testconditional$ternaryNLBeforeElse() { doTest() }
+
+  void testconditional$ternaryNLBeforeQuestion() { doTest() }
+
+  void testconditional$ternaryNLBeforeThen() { doTest() }
+
   void testerrors$err_final() throws Throwable { doTest() }
 
   void testgstring$daniel_sun() throws Throwable { doTest() }
@@ -178,6 +186,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testgstring$newline() { doTest() }
 
   void testmapLiteral() throws Throwable { doTest() }
+
+  void testmapKeys() { doTest() }
+
+  void testnamedArgumentKeys() { doTest() }
 
   void testexpressionlabelWithoutExpression() { doTest() }
 
@@ -318,8 +330,6 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$path2() throws Throwable { doTest() }
 
-  void testpath$path3() throws Throwable { doTest() }
-
   void testpath$path4() throws Throwable { doTest() }
 
   void testpath$path5() throws Throwable { doTest() }
@@ -331,8 +341,6 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$path8() throws Throwable { doTest() }
 
   void testpath$path9() throws Throwable { doTest() }
-
-  void testpath$path10() throws Throwable { doTest() }
 
   void testpath$regexp() { doTest() }
 
@@ -365,6 +373,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testreferences$keywords() { doTest() }
 
   void testreferences$emptyTypeArgs() { doTest() }
+
+  void testreferences$dots() { doTest() }
 
   void testregex$chen() throws Throwable { doTest() }
 
@@ -600,6 +610,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testbinary$elvisAssignWithoutRValue() { doTest() }
 
+  void testbinary$assignmentError() { doTest() }
+
   void testcommandExpr$closureArg() { doTest() }
 
   void testcommandExpr$simple() { doTest() }
@@ -655,6 +667,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testcommandExpr$keywords() { doTest() }
 
   void testcommandExpr$literalInvoked() { doTest() }
+
+  void testcommandExpr$literalInvokedWithUnfinishedLiteral() { doTest() }
 
   void testcommandExpr$slashyInvoked() { doTest() }
 

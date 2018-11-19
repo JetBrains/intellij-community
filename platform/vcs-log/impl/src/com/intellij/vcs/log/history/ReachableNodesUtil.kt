@@ -5,17 +5,14 @@ import com.intellij.openapi.util.Ref
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.visible.VisiblePack
 
-fun findMatchingAncestorNodeId(commitId: Int, permanentGraphInfo: PermanentGraphInfo<Int>, condition: (Int) -> Boolean): Int? {
+fun LinearGraph.findAncestorNode(startNodeId: Int, condition: (Int) -> Boolean): Int? {
   val resultNodeId = Ref<Int>()
 
-  val startNodeId = permanentGraphInfo.permanentCommitsInfo.getNodeId(commitId)
-  val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph))
-  reachableNodes.walk(setOf(startNodeId), true) { currentNodeId ->
+  DfsWalk(setOf(startNodeId), this).walk(true) { currentNodeId: Int ->
     if (condition(currentNodeId)) {
       resultNodeId.set(currentNodeId)
       false // stop walk, we have found it
@@ -24,6 +21,7 @@ fun findMatchingAncestorNodeId(commitId: Int, permanentGraphInfo: PermanentGraph
       true // continue walk
     }
   }
+
   return resultNodeId.get()
 }
 
@@ -40,8 +38,9 @@ fun findVisibleAncestorRow(commitId: Int,
                            visibleLinearGraph: LinearGraph,
                            permanentGraphInfo: PermanentGraphInfo<Int>,
                            condition: (Int) -> Boolean): Int? {
-  val nodeId = findMatchingAncestorNodeId(commitId, permanentGraphInfo) { nodeId ->
+  val startNodeId = permanentGraphInfo.permanentCommitsInfo.getNodeId(commitId)
+  val ancestorNodeId = permanentGraphInfo.linearGraph.findAncestorNode(startNodeId) { nodeId: Int ->
     condition(nodeId) && visibleLinearGraph.getNodeIndex(nodeId) != null
   } ?: return null
-  return visibleLinearGraph.getNodeIndex(nodeId)
+  return visibleLinearGraph.getNodeIndex(ancestorNodeId)
 }

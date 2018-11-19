@@ -65,12 +65,13 @@ public class ModuleSourceSet {
     return getDisplayName();
   }
 
+  @NotNull
   public String getDisplayName() {
     return (myType == Type.PRODUCTION ? "" : "Tests of ") + "'" + myModule.getName() + "' module";
   }
 
   @NotNull
-  public static Set<Module> getModules(@NotNull Collection<ModuleSourceSet> sourceSets) {
+  public static Set<Module> getModules(@NotNull Collection<? extends ModuleSourceSet> sourceSets) {
     return sourceSets.stream().map(ModuleSourceSet::getModule).collect(Collectors.toSet());
   }
 }

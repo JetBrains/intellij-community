@@ -33,7 +33,7 @@ public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSp
   private static class KeepTrailingSpacesOnEmptyLinesFilter extends SmartStripTrailingSpacesFilter {
     private @NotNull final Document myDocument;
 
-    public KeepTrailingSpacesOnEmptyLinesFilter(@NotNull Document document) {
+    KeepTrailingSpacesOnEmptyLinesFilter(@NotNull Document document) {
       myDocument = document;
     }
 

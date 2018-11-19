@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
@@ -19,6 +20,7 @@ import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.treeStructure.treetable.TreeTable
@@ -95,6 +97,9 @@ fun <C : Container> ContainerFixture<C>.componentWithBrowseButton(boundedLabelTe
   else throw unableToFindComponent("ComponentWithBrowseButton", timeout)
 }
 
+inline fun <reified V: JComponent> ContainerFixture<*>.containsChildComponent(noinline predicate: (V) -> Boolean) =
+  robot().finder().findAll(target(), GuiTestUtilKt.typeMatcher(V::class.java, predicate)).size == 1
+
 fun <C : Container> ContainerFixture<C>.treeTable(timeout: Timeout = defaultTimeout): TreeTableFixture {
   val table: TreeTable = findComponentWithTimeout(timeout)
   return TreeTableFixture(robot(), table)
@@ -138,6 +143,13 @@ fun <C : Container> ContainerFixture<C>.checkbox(labelText: String, timeout: Tim
   return CheckBoxFixture(robot(), jCheckBox)
 }
 
+fun <C : Container> ContainerFixture<C>.checkboxContainingText(labelText: String,
+                                                               ignoreCase: Boolean = false,
+                                                               timeout: Timeout = defaultTimeout): CheckBoxFixture {
+  val jCheckBox: JCheckBox = findComponentWithTimeout(timeout) { it.isShowing && it.isVisible && it.text.contains(labelText, ignoreCase) }
+  return CheckBoxFixture(robot(), jCheckBox)
+}
+
 /**
  * Finds a ActionLink component in hierarchy of context component by name and returns ActionLinkFixture.
  *
@@ -165,6 +177,15 @@ fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, timeout
   return ActionButtonFixture(robot(), actionButton)
 }
 
+fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, filter: (ActionButton) -> Boolean, timeout: Timeout = defaultTimeout): ActionButtonFixture {
+  val actionButton: ActionButton = try {
+    findComponentWithTimeout(timeout) { ActionButtonFixture.textMatcher(actionName).invoke(it).and(filter.invoke(it)) }
+  }
+  catch (componentLookupException: ComponentLookupException) {
+    findComponentWithTimeout(timeout) { ActionButtonFixture.actionIdMatcher(actionName).invoke(it).and(filter.invoke(it)) }
+  }
+  return ActionButtonFixture(robot(), actionButton)
+}
 
 /**
  * Finds a InplaceButton component in hierarchy of context component by icon and returns InplaceButtonFixture.
@@ -190,6 +211,13 @@ fun <C : Container> ContainerFixture<C>.actionButtonByClass(actionClassName: Str
 
 }
 
+
+fun <C : Container> ContainerFixture<C>.tab(textLabel: String, timeout: Timeout = defaultTimeout): JBTabbedPaneFixture {
+  val jbTabbedPane: JBTabbedPane = findComponentWithTimeout(timeout) {
+    it.indexOfTab(textLabel) != -1
+  }
+  return JBTabbedPaneFixture(textLabel, jbTabbedPane, robot())
+}
 
 /**
  * Finds a JRadioButton component in hierarchy of context component by label text and returns JRadioButtonFixture.
@@ -354,20 +382,52 @@ fun <C : Container> ContainerFixture<C>.label(labelName: String, timeout: Timeou
   return JLabelFixture(robot(), jbLabel)
 }
 
-
 /**
  * Find an AsyncProcessIcon component in a current context (gets by receiver) and returns a fixture for it.
  * Indexing processIcon is excluded from this search
  */
 fun <C : Container> ContainerFixture<C>.asyncProcessIcon(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture {
   val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
+  return asyncProcessIconByTooltip(indexingProcessIconTooltipText, Predicate.notEquality, timeout)
+}
+
+/**
+ * Find an AsyncProcessIcon component corresponding to background tasks
+ * @return fixture of AsyncProcessIcon
+ * @throws WaitTimedOutError if no icon is found
+ */
+fun <C : Container> ContainerFixture<C>.indexingProcessIcon(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture {
+  val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
+  return asyncProcessIconByTooltip(indexingProcessIconTooltipText, Predicate.equality, timeout)
+}
+
+/**
+ * Find an AsyncProcessIcon component corresponding to background tasks
+ * @return if found - fixture of AsyncProcessIcon, or null if not found
+ */
+fun <C : Container> ContainerFixture<C>.indexingProcessIconNullable(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture? {
+  val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
+  return try {
+    asyncProcessIconByTooltip(indexingProcessIconTooltipText, Predicate.equality, timeout)
+  }
+  catch (ignored: WaitTimedOutError) {
+    // asyncIcon not found and it's OK, so no background process is going
+    null
+  }
+}
+
+/**
+ * Find an AsyncProcessIcon component by tooltip and predicate
+ * @param expectedTooltip
+ */
+fun <C : Container> ContainerFixture<C>.asyncProcessIconByTooltip(expectedTooltip: String, predicate: FinderPredicate, timeout: Timeout = defaultTimeout): AsyncProcessIconFixture {
   val asyncProcessIcon = GuiTestUtil.waitUntilFound(
     robot(),
     target(),
     GuiTestUtilKt.typeMatcher(AsyncProcessIcon::class.java) {
       it.isShowing &&
       it.isVisible &&
-      it.toolTipText != indexingProcessIconTooltipText
+      predicate(it.toolTipText ?: "", expectedTooltip)
     },
     timeout)
   return AsyncProcessIconFixture(robot(), asyncProcessIcon)
@@ -403,7 +463,7 @@ inline fun <reified ComponentType : Component, ContainerComponentType : Containe
   }
   catch (e: WaitTimedOutError) {
     throw ComponentLookupException(
-      "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in $timeout seconds")
+      "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in ${timeout.toPrintable()} seconds")
   }
 }
 

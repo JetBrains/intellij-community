@@ -34,11 +34,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AntRunConfiguration extends LocatableConfigurationBase implements RunProfileWithCompileBeforeLaunchOption{
+public final class AntRunConfiguration extends LocatableConfigurationBase implements RunProfileWithCompileBeforeLaunchOption{
   private AntSettings mySettings = new AntSettings();
 
-  public AntRunConfiguration(Project project, ConfigurationFactory factory, String name) {
-    super(project, factory, name);
+  public AntRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
+    super(project, factory);
   }
 
   @Override
@@ -69,7 +69,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     return target == null ? null : target.getDisplayName();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return new AntRunProfileState(env);
@@ -291,7 +291,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     }
 
     private abstract static class TableColumn extends ElementsColumnInfoBase<BuildFileProperty> {
-      public TableColumn(final String name) {
+      TableColumn(final String name) {
         super(name);
       }
 
@@ -308,7 +308,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     }
   }
 
-  private static void copyProperties(final Iterable<BuildFileProperty> from, final List<BuildFileProperty> to) {
+  private static void copyProperties(final Iterable<BuildFileProperty> from, final List<? super BuildFileProperty> to) {
     to.clear();
     for (BuildFileProperty p : from) {
       to.add(p.clone());

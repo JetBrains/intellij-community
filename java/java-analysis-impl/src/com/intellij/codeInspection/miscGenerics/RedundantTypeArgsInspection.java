@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -105,7 +106,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
                                           final PsiType[] typeArguments,
                                           PsiCallExpression expression,
                                           final InspectionManager inspectionManager,
-                                          final List<ProblemDescriptor> problems, boolean isOnTheFly) {
+                                          final List<? super ProblemDescriptor> problems, boolean isOnTheFly) {
     PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList == null) return;
     final JavaResolveResult resolveResult = reference.advancedResolve(false);
@@ -131,7 +132,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
   private static void checkMethodReference(PsiMethodReferenceExpression expression,
                                            InspectionManager inspectionManager,
-                                           List<ProblemDescriptor> problems, 
+                                           List<? super ProblemDescriptor> problems,
                                            boolean isOnTheFly) {
     final PsiTypeElement qualifierTypeElement = expression.getQualifierType();
     if (qualifierTypeElement != null) {
@@ -191,8 +192,8 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)element;
       try {
         final PsiMethodCallExpression expr =
-          (PsiMethodCallExpression)JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("foo()", null);
-        typeArgumentList.replace(expr.getTypeArgumentList());
+          (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("foo()", null);
+        new CommentTracker().replaceAndRestoreComments(typeArgumentList, expr.getTypeArgumentList());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

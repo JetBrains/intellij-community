@@ -13,7 +13,7 @@ import java.util.List;
 class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
   private final String myTagName;
 
-  public JDOMElementBinding(@NotNull MutableAccessor accessor) {
+  JDOMElementBinding(@NotNull MutableAccessor accessor) {
     super(accessor);
 
     Tag tag = myAccessor.getAnnotation(Tag.class);
@@ -46,7 +46,7 @@ class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeB
 
   @Nullable
   @Override
-  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     if (myAccessor.getValueClass().isArray()) {
       myAccessor.set(context, elements.toArray(new Element[0]));
     }

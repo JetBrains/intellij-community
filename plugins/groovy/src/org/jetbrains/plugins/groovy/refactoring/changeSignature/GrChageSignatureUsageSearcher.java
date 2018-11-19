@@ -290,7 +290,7 @@ class GrChageSignatureUsageSearcher {
     private final PsiElement myCollidingElement;
     private final PsiMethod myMethod;
 
-    public RenamedParameterCollidesWithLocalUsageInfo(PsiParameter parameter, PsiElement collidingElement, PsiMethod method) {
+    RenamedParameterCollidesWithLocalUsageInfo(PsiParameter parameter, PsiElement collidingElement, PsiMethod method) {
       super(parameter, collidingElement);
       myCollidingElement = collidingElement;
       myMethod = method;

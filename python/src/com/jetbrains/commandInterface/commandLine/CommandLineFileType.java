@@ -15,7 +15,6 @@
  */
 package com.jetbrains.commandInterface.commandLine;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,7 @@ import javax.swing.*;
  * @author Ilya.Kazakevich
  */
 public final class CommandLineFileType extends LanguageFileType {
-  public static final FileType INSTANCE = new CommandLineFileType();
+  public static final CommandLineFileType INSTANCE = new CommandLineFileType();
   /**
    * Command line extension
    */
@@ -59,10 +58,5 @@ public final class CommandLineFileType extends LanguageFileType {
   @Override
   public Icon getIcon() {
     return null;
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return true;
   }
 }

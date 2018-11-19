@@ -104,7 +104,7 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
 
   public static Pair<String,CodeStyleScheme> selectOrCreateTargetScheme(@NotNull Project project,
                                                                         @NotNull CodeStyleScheme currentScheme,
-                                                                        @NotNull SchemeFactory<CodeStyleScheme> schemeFactory,
+                                                                        @NotNull SchemeFactory<? extends CodeStyleScheme> schemeFactory,
                                                                         String... schemeNames) {
     final ImportSchemeChooserDialog schemeChooserDialog =
       new ImportSchemeChooserDialog(project, schemeNames, !currentScheme.isDefault() ? currentScheme.getName() : null);

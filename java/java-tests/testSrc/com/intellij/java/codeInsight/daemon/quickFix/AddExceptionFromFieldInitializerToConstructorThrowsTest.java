@@ -21,9 +21,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  * @author Dmitry Batkovich
  */
 public class AddExceptionFromFieldInitializerToConstructorThrowsTest extends LightQuickFixParameterizedTestCase {
-  public void test() {
-    doAllTests();
-  }
 
   @Override
   protected String getBasePath() {

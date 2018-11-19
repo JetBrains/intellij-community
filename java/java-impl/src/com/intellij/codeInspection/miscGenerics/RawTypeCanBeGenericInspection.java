@@ -66,7 +66,7 @@ public class RawTypeCanBeGenericInspection extends AbstractBaseJavaLocalInspecti
     if (variableResolved == null) return null;
     PsiSubstitutor targetSubstitutor = TypeConversionUtil.getClassSubstitutor(variableResolved, initializerResolveResult.getElement(), initializerResolveResult.getSubstitutor());
     if (targetSubstitutor == null) return null;
-    PsiType type = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory().createType(variableResolved, targetSubstitutor);
+    PsiType type = JavaPsiFacade.getElementFactory(variable.getProject()).createType(variableResolved, targetSubstitutor);
     if (variableType.equals(type)) return null;
     return type;
   }
@@ -74,7 +74,7 @@ public class RawTypeCanBeGenericInspection extends AbstractBaseJavaLocalInspecti
   private static class MyLocalQuickFix implements LocalQuickFix {
     private final String myName;
 
-    public MyLocalQuickFix(@NotNull String name) {
+    MyLocalQuickFix(@NotNull String name) {
       myName = name;
     }
 

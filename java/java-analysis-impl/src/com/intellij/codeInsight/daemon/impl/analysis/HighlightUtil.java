@@ -15,7 +15,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -47,6 +46,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -609,7 +609,6 @@ public class HighlightUtil extends HighlightUtilBase {
         ((declarationScope = ((PsiParameter)variable).getDeclarationScope()) instanceof PsiCatchSection ||
          declarationScope instanceof PsiForeachStatement ||
          declarationScope instanceof PsiLambdaExpression)) {
-      @SuppressWarnings("unchecked")
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         @Override
@@ -796,7 +795,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkIllegalModifierCombination(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
+  public static HighlightInfo checkIllegalModifierCombination(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
     @PsiModifier.ModifierConstant String modifier = keyword.getText();
     String incompatible = getIncompatibleModifier(modifier, modifierList);
     if (incompatible != null) {
@@ -808,6 +807,21 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return null;
+  }
+
+  /**
+   * Checks if the supplied modifier list contains incompatible modifiers (e.g. public and private).
+   *
+   * @param modifierList a {@link PsiModifierList} to check
+   * @return true if the supplied modifier list contains incompatible modifiers
+   */
+  public static boolean isIllegalModifierCombination(@NotNull PsiModifierList modifierList) {
+    for (PsiElement child : modifierList.getChildren()) {
+      if (child instanceof PsiKeyword && getIncompatibleModifier(child.getText(), modifierList) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Contract("null -> null")
@@ -1021,27 +1035,15 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (value != null) {
-        if (!StringUtil.endsWithChar(text, '\'')) {
-          String message = JavaErrorMessages.message("unclosed.char.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
-      }
-      else {
+      if (value == null) {
         if (!StringUtil.startsWithChar(text, '\'')) {
           return null;
         }
-        if (StringUtil.endsWithChar(text, '\'')) {
-          if (text.length() == 1) {
-            String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-          }
-          text = text.substring(1, text.length() - 1);
-        }
-        else {
-          String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
+        if (!StringUtil.endsWithChar(text, '\'') || text.length() == 1) {
+          String message = JavaErrorMessages.message("unclosed.char.literal");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
+        text = text.substring(1, text.length() - 1);
 
         StringBuilder chars = new StringBuilder();
         boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
@@ -1351,8 +1353,8 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static HighlightInfo checkSwitchSelectorType(@NotNull PsiSwitchStatement statement, @NotNull LanguageLevel level) {
-    PsiExpression expression = statement.getExpression();
+  static HighlightInfo checkSwitchSelectorType(@NotNull PsiSwitchBlock switchBlock, @NotNull LanguageLevel level) {
+    PsiExpression expression = switchBlock.getExpression();
     if (expression == null) return null;
     PsiType type = expression.getType();
     if (type == null) return null;
@@ -1369,7 +1371,9 @@ public class HighlightUtil extends HighlightUtilBase {
       String expected = JavaErrorMessages.message(is7 ? "valid.switch.17.selector.types" : "valid.switch.selector.types");
       String message = JavaErrorMessages.message("incompatible.types", expected, JavaHighlightUtil.formatType(type));
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertSwitchToIfIntention(statement));
+      if (switchBlock instanceof PsiSwitchStatement) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertSwitchToIfIntention((PsiSwitchStatement)switchBlock));
+      }
       if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(PsiType.INT, expression));
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithAdapterFix(PsiType.INT, expression));
@@ -1601,7 +1605,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @NotNull
   static String staticContextProblemDescription(@NotNull PsiElement refElement) {
-    String type = LanguageFindUsages.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getType(refElement);
+    String type = LanguageFindUsages.getType(refElement);
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorMessages.message("non.static.symbol.referenced.from.static.context", type, name);
   }
@@ -1724,7 +1728,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType type = resource.getType();
     if (type == null) return null;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(resource.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(resource.getProject());
     PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
     if (TypeConversionUtil.isAssignable(autoCloseable, type)) return null;
 
@@ -1842,89 +1846,114 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static HighlightInfo checkCaseStatement(@NotNull PsiSwitchLabelStatement statement) {
-    PsiSwitchStatement switchStatement = statement.getEnclosingSwitchStatement();
-    if (switchStatement == null) {
+  static HighlightInfo checkCaseStatement(@NotNull PsiSwitchLabelStatementBase statement) {
+    PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
+    if (switchBlock == null) {
       String description = JavaErrorMessages.message("case.statement.outside.switch");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
     }
-    if (switchStatement.getBody() == null) return null;
-    PsiExpression switchExpression = switchStatement.getExpression();
-    PsiType switchType = switchExpression == null ? PsiType.INT : switchExpression.getType();
-    // check constant expression
-    PsiExpression caseValue = statement.getCaseValue();
 
-    // Every case constant expression associated with a switch statement must be assignable ($5.2) to the type of the switch Expression.
-    if (caseValue != null && switchExpression != null) {
-      HighlightInfo highlightInfo = checkAssignability(switchType, caseValue.getType(), caseValue, caseValue);
-      if (highlightInfo != null) return highlightInfo;
-    }
-    Object value = null;
+    return null;
+  }
 
-    boolean isEnumSwitch = false;
-    if (!statement.isDefaultCase() && caseValue != null) {
-      if (caseValue instanceof PsiReferenceExpression) {
-        PsiElement element = ((PsiReferenceExpression)caseValue).resolve();
-        if (element instanceof PsiEnumConstant) {
-          isEnumSwitch = true;
-          value = ((PsiEnumConstant)element).getName();
-          if (((PsiReferenceExpression)caseValue).getQualifier() != null) {
-            String message = JavaErrorMessages.message("qualified.enum.constant.in.switch");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(caseValue).descriptionAndTooltip(message).create();
+  @Nullable
+  static Collection<HighlightInfo> checkSwitchLabelValues(@NotNull PsiSwitchBlock switchBlock) {
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) return null;
+
+    PsiExpression selectorExpression = switchBlock.getExpression();
+    PsiType selectorType = selectorExpression == null ? PsiType.INT : selectorExpression.getType();
+    MultiMap<Object, PsiElement> values = new MultiMap<>();
+    Object defaultValue = new Object();
+    Collection<HighlightInfo> results = new ArrayList<>();
+    boolean hasDefaultCase = false;
+
+    for (PsiStatement st : body.getStatements()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
+      PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
+      boolean defaultCase = labelStatement.isDefaultCase();
+
+      if (defaultCase) {
+        values.putValue(defaultValue, ObjectUtils.notNull(labelStatement.getFirstChild(), labelStatement));
+        hasDefaultCase = true;
+      }
+      else {
+        PsiExpressionList expressionList = labelStatement.getCaseValues();
+        if (expressionList != null) {
+          for (PsiExpression expr : expressionList.getExpressions()) {
+            if (selectorExpression != null) {
+              HighlightInfo result = checkAssignability(selectorType, expr.getType(), expr, expr);
+              if (result != null) {
+                results.add(result);
+                continue;
+              }
+            }
+
+            Object value = null;
+            if (expr instanceof PsiReferenceExpression) {
+              PsiElement element = ((PsiReferenceExpression)expr).resolve();
+              if (element instanceof PsiEnumConstant) {
+                value = ((PsiEnumConstant)element).getName();
+                if (((PsiReferenceExpression)expr).getQualifier() != null) {
+                  String message = JavaErrorMessages.message("qualified.enum.constant.in.switch");
+                  results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(message).create());
+                  continue;
+                }
+              }
+            }
+            if (value == null) {
+              value = ConstantExpressionUtil.computeCastTo(expr, selectorType);
+            }
+            if (value == null) {
+              String description = JavaErrorMessages.message("constant.expression.required");
+              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description).create());
+              continue;
+            }
+
+            values.putValue(value, expr);
           }
         }
       }
-      if (!isEnumSwitch) {
-        value = ConstantExpressionUtil.computeCastTo(caseValue, switchType);
-      }
-      if (value == null) {
-        String description = JavaErrorMessages.message("constant.expression.required");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(caseValue).descriptionAndTooltip(description).create();
+    }
+
+    for (Map.Entry<Object, Collection<PsiElement>> entry : values.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        Object value = entry.getKey();
+        String description = value == defaultValue ? JavaErrorMessages.message("duplicate.default.switch.label") : JavaErrorMessages.message("duplicate.switch.label", value);
+        for (PsiElement element : entry.getValue()) {
+          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create());
+        }
       }
     }
 
-    // check duplicate
-    PsiStatement[] statements = switchStatement.getBody().getStatements();
-    for (PsiStatement st : statements) {
-      if (st == statement) continue;
-      if (!(st instanceof PsiSwitchLabelStatement)) continue;
-      PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)st;
-      if (labelStatement.isDefaultCase() != statement.isDefaultCase()) continue;
-      PsiExpression caseExpr = labelStatement.getCaseValue();
-      if (isEnumSwitch && caseExpr instanceof PsiReferenceExpression) {
-        PsiElement element = ((PsiReferenceExpression)caseExpr).resolve();
-        if (!(element instanceof PsiEnumConstant && Comparing.equal(((PsiEnumConstant)element).getName(), value))) continue;
+    if (results.isEmpty() && switchBlock instanceof PsiSwitchExpression) {
+      if (values.isEmpty()) {
+        String message = JavaErrorMessages.message("switch.expr.empty");
+        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(switchBlock).descriptionAndTooltip(message).create());
       }
-      else {
-        // not assignable error already caught
-        if (!TypeConversionUtil.areTypesAssignmentCompatible(switchType, caseExpr)) continue;
-        if (!Comparing.equal(ConstantExpressionUtil.computeCastTo(caseExpr, switchType), value)) continue;
+      else if (!hasDefaultCase) {
+        if (selectorType instanceof PsiClassType) {
+          PsiClass type = ((PsiClassType)selectorType).resolve();
+          if (type != null && type.isEnum()) {
+            Set<Object> constants = new HashSet<>();
+            for (PsiField field : type.getFields()) {
+              if (field instanceof PsiEnumConstant) {
+                constants.add(field.getName());
+              }
+            }
+            constants.removeAll(values.keySet());
+            hasDefaultCase = constants.isEmpty();
+          }
+        }
+        if (!hasDefaultCase) {
+          PsiElement range = ObjectUtils.notNull(selectorExpression, switchBlock);
+          String message = JavaErrorMessages.message("switch.expr.incomplete");
+          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create());
+        }
       }
-      String description = statement.isDefaultCase()
-                           ? JavaErrorMessages.message("duplicate.default.switch.label")
-                           : JavaErrorMessages.message("duplicate.switch.label", value);
-      PsiElement element = value == null ? statement : caseValue;
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
     }
 
-    // must be followed with colon
-    PsiElement lastChild = statement.getLastChild();
-    while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
-      lastChild = lastChild.getPrevSibling();
-    }
-    if (!PsiUtil.isJavaToken(lastChild, JavaTokenType.COLON)) {
-      int start = statement.getTextRange().getEndOffset();
-      int end = statement.getTextRange().getEndOffset() + 1;
-      String description = JavaErrorMessages.message("switch.colon.expected.after.case.label");
-      CharSequence chars = statement.getContainingFile().getViewProvider().getContents();
-      boolean isAfterEndOfLine = end >= chars.length() || chars.charAt(start) == '\n' || chars.charAt(start) == '\r';
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description);
-      if (isAfterEndOfLine) {
-        builder.endOfLine();
-      }
-      return builder.create();
-    }
-    return null;
+    return results;
   }
 
 
@@ -2418,13 +2447,54 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static HighlightInfo checkStatementPrependedWithCaseInsideSwitch(@NotNull PsiSwitchStatement statement) {
-    PsiCodeBlock body = statement.getBody();
+  static HighlightInfo checkSwitchBlockStatements(@NotNull PsiSwitchBlock switchBlock,
+                                                  @NotNull LanguageLevel languageLevel,
+                                                  @NotNull PsiFile file) {
+    PsiCodeBlock body = switchBlock.getBody();
     if (body != null) {
       PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
-      if (first != null && !(first instanceof PsiSwitchLabelStatement) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
+      if (first != null && !(first instanceof PsiSwitchLabelStatementBase) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
         String description = JavaErrorMessages.message("statement.must.be.prepended.with.case.label");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(first).descriptionAndTooltip(description).create();
+      }
+
+      PsiElement element = first, alien = null;
+      boolean classicLabels = false, enhancedLabels = false, levelChecked = false;
+      while (element != null && !PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
+        if (element instanceof PsiSwitchLabeledRuleStatement) {
+          if (!levelChecked) {
+            HighlightInfo info = checkFeature(element, Feature.ENHANCED_SWITCH, languageLevel, file);
+            if (info != null) return info;
+            levelChecked = true;
+          }
+          if (classicLabels) {
+            alien = element;
+            break;
+          }
+          enhancedLabels = true;
+        }
+        else if (element instanceof PsiStatement) {
+          if (enhancedLabels) {
+            alien = element;
+            break;
+          }
+          classicLabels = true;
+        }
+
+        if (!levelChecked && element instanceof PsiSwitchLabelStatementBase) {
+          PsiExpressionList values = ((PsiSwitchLabelStatementBase)element).getCaseValues();
+          if (values != null && values.getExpressionCount() > 1) {
+            HighlightInfo info = checkFeature(values, Feature.ENHANCED_SWITCH, languageLevel, file);
+            if (info != null) return info;
+            levelChecked = true;
+          }
+        }
+
+        element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
+      }
+      if (alien != null) {
+        String description = JavaErrorMessages.message("different.case.kinds.in.switch");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(alien).descriptionAndTooltip(description).create();
       }
     }
 
@@ -2495,6 +2565,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  @Nullable
   static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType, PsiType rType, @NotNull TextRange textRange, int navigationShift) {
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> lTypeData = typeData(lType);
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> rTypeData = typeData(rType);
@@ -2542,10 +2613,10 @@ public class HighlightUtil extends HighlightUtilBase {
         PsiElement element2 = results[1].getElement();
         if (element1 instanceof PsiMethod && element2 instanceof PsiMethod) {
           String candidate1 = PsiFormatUtil.formatMethod((PsiMethod)element1, PsiSubstitutor.EMPTY,
-                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | 
+                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
                                                          PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
           String candidate2 = PsiFormatUtil.formatMethod((PsiMethod)element2, PsiSubstitutor.EMPTY,
-                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | 
+                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
                                                          PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
           return JavaErrorMessages.message("incompatible.types.reason.ambiguous.method.reference", candidate1, candidate2);
         }
@@ -2608,7 +2679,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo checkMustBeThrowable(@NotNull PsiType type, @NotNull PsiElement context, boolean addCastIntention) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", context.getResolveScope());
     if (!TypeConversionUtil.isAssignable(throwable, type)) {
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange(), 0);
@@ -2630,7 +2701,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfo checkMustBeThrowable(@NotNull PsiClass aClass, @NotNull PsiElement context) {
-    PsiClassType type = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+    PsiClassType type = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
     return checkMustBeThrowable(type, context, false);
   }
 
@@ -2738,7 +2809,8 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
     }
 
-    if (resolved instanceof PsiClass &&
+    if (containingFile instanceof PsiClassOwner &&
+        resolved instanceof PsiClass &&
         ((PsiClass)resolved).getContainingClass() == null &&
         PsiUtil.isFromDefaultPackage(resolved) &&
         (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null ||
@@ -2928,7 +3000,9 @@ public class HighlightUtil extends HighlightUtilBase {
     STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
-    RAW_LITERALS(LanguageLevel.JDK_X, "feature.raw.literals");
+    RAW_LITERALS(LanguageLevel.JDK_12_PREVIEW, "feature.raw.literals"),
+    ENHANCED_SWITCH(LanguageLevel.JDK_12_PREVIEW, "feature.enhanced.switch"),
+    SWITCH_EXPRESSION(LanguageLevel.JDK_12_PREVIEW, "feature.switch.expressions");
 
     private final LanguageLevel level;
     private final String key;

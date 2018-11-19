@@ -494,7 +494,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   @Nullable
-  public static Property findProperty(List<Property> properties, String name) {
+  public static Property findProperty(List<? extends Property> properties, String name) {
     for (Property property : properties) {
       if (name.equals(property.getName())) {
         return property;
@@ -503,7 +503,7 @@ public abstract class PropertyTable extends JBTable {
     return null;
   }
 
-  public static int findProperty(List<Property> properties, Property property) {
+  public static int findProperty(List<? extends Property> properties, Property property) {
     String name = property.getName();
     int size = properties.size();
 
@@ -517,7 +517,7 @@ public abstract class PropertyTable extends JBTable {
     return -1;
   }
 
-  private static int findFullPathProperty(List<Property> properties, Property property) {
+  private static int findFullPathProperty(List<? extends Property> properties, Property property) {
     Property parent = property.getParent();
     if (parent == null) {
       return findProperty(properties, property);
@@ -543,7 +543,7 @@ public abstract class PropertyTable extends JBTable {
     return builder.toString();
   }
 
-  public static void moveProperty(List<Property> source, String name, List<Property> destination, int index) {
+  public static void moveProperty(List<? extends Property> source, String name, List<? super Property> destination, int index) {
     Property property = extractProperty(source, name);
     if (property != null) {
       if (index == -1) {
@@ -556,7 +556,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   @Nullable
-  public static Property extractProperty(List<Property> properties, String name) {
+  public static Property extractProperty(List<? extends Property> properties, String name) {
     int size = properties.size();
     for (int i = 0; i < size; i++) {
       if (name.equals(properties.get(i).getName())) {
@@ -940,7 +940,7 @@ public abstract class PropertyTable extends JBTable {
     private final boolean myExpand;
     private final boolean mySelect;
 
-    public MyExpandCurrentAction(boolean expand, boolean select) {
+    MyExpandCurrentAction(boolean expand, boolean select) {
       myExpand = expand;
       mySelect = select;
     }
@@ -1076,7 +1076,7 @@ public abstract class PropertyTable extends JBTable {
 
   private class PropertyCellEditorListener implements PropertyEditorListener {
     @Override
-    public void valueCommitted(PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
+    public void valueCommitted(@NotNull PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
       if (isEditing()) {
         Object value;
         TableCellEditor tableCellEditor = cellEditor;
@@ -1103,14 +1103,14 @@ public abstract class PropertyTable extends JBTable {
     }
 
     @Override
-    public void editingCanceled(PropertyEditor source) {
+    public void editingCanceled(@NotNull PropertyEditor source) {
       if (isEditing()) {
         cellEditor.cancelCellEditing();
       }
     }
 
     @Override
-    public void preferredSizeChanged(PropertyEditor source) {
+    public void preferredSizeChanged(@NotNull PropertyEditor source) {
     }
   }
 
@@ -1324,7 +1324,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private static class GroupProperty extends Property {
-    public GroupProperty(@Nullable String name) {
+    GroupProperty(@Nullable String name) {
       super(null, StringUtil.notNullize(name));
     }
 

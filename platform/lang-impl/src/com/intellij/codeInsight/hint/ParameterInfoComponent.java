@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.hint;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
@@ -10,14 +9,15 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.util.Function;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -50,14 +51,16 @@ public class ParameterInfoComponent extends JPanel {
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
-  private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
-  private static final Border BOTTOM_BORDER = new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM);
+  private static final Color BACKGROUND = JBColor.namedColor("ParameterInfo.background", HintUtil.getInformationColor());
+  private static final Color FOREGROUND = JBColor.namedColor("ParameterInfo.foreground", new JBColor(0x1D1D1D, 0xBBBBBB));
+  private static final Color HIGHLIGHTED_COLOR = JBColor.namedColor("ParameterInfo.highlightedColor", new JBColor(0x1D1D1D, 0xE8E8E8));
+  private static final Color DISABLED_COLOR = JBColor.namedColor("ParameterInfo.disabledColor", new JBColor(0xA8A8A8, 0x777777));
+  private static final Color CONTEXT_HELP_FOREGROUND = JBColor.namedColor("ParameterInfo.ContextHelp.foreground", new JBColor(0x787878, 0x878787));
+  static final Color BORDER_COLOR = JBColor.namedColor("ParameterInfo.borderColor", HintUtil.INFORMATION_BORDER_COLOR);
+  private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
+  private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(BORDER_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
   protected int myWidthLimit = 500;
-
-  private static final Map<ParameterInfoUIContextEx.Flag, String> FLAG_TO_TAG =
-    ImmutableMap.of(ParameterInfoUIContextEx.Flag.HIGHLIGHT, "b", ParameterInfoUIContextEx.Flag.DISABLE, "font color=gray",
-                    ParameterInfoUIContextEx.Flag.STRIKEOUT, "strike");
 
   private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
     if (o1.getStartOffset() == o2.getStartOffset()) {
@@ -97,12 +100,16 @@ public class ParameterInfoComponent extends JPanel {
       myWidthLimit = layeredPane.getWidth();
     }
 
-    NORMAL_FONT = UIUtil.getLabelFont();
-    BOLD_FONT = NORMAL_FONT.deriveFont(Font.BOLD);
+    NORMAL_FONT = editor != null && Registry.is("parameter.info.editor.font")
+                  ? editor.getColorsScheme().getFont(EditorFontType.PLAIN)
+                  : UIUtil.getLabelFont();
+    BOLD_FONT = editor != null && Registry.is("parameter.info.editor.font")
+                ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
+                : NORMAL_FONT.deriveFont(Font.BOLD);
 
     myObjects = objects;
 
-    setBackground(HintUtil.getInformationColor());
+    setBackground(BACKGROUND);
 
     myHandler = handler;
     myMainPanel = new JPanel(new GridBagLayout());
@@ -112,9 +119,7 @@ public class ParameterInfoComponent extends JPanel {
       AccessibleContextUtil.setName(this, "Parameter Info. Press TAB to navigate through each element. Press ESC to close.");
     }
 
-    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel);
-    pane.setBorder(null);
-    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
     add(pane, BorderLayout.CENTER);
 
     myAllowSwitchLabel = allowSwitchLabel && !(editor instanceof EditorWindow);
@@ -147,10 +152,10 @@ public class ParameterInfoComponent extends JPanel {
         upShortcut.isEmpty() || downShortcut.isEmpty()
         ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
         : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
-      myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
+      myShortcutLabel.setForeground(CONTEXT_HELP_FOREGROUND);
       Font labelFont = UIUtil.getLabelFont();
       myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
-      myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
+      myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
       add(myShortcutLabel, BorderLayout.SOUTH);
     }
   }
@@ -195,7 +200,7 @@ public class ParameterInfoComponent extends JPanel {
     private Function<String, String> myEscapeFunction;
     private final ParameterInfoController.Model result = new ParameterInfoController.Model();
     
-    public MyParameterContext(boolean singleParameterInfo) {
+    MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
     }
 
@@ -294,9 +299,7 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public Color getDefaultParameterColor() {
-      Color color = HintUtil.getInformationColor();
-      return mySingleParameterInfo || !isHighlighted() ? color :
-             ColorUtil.isDark(color) ? ColorUtil.brighter(color, 2) : ColorUtil.darker(color, 2);
+      return mySingleParameterInfo || !isHighlighted() ? BACKGROUND : BORDER_COLOR;
     }
   }
 
@@ -360,21 +363,22 @@ public class ParameterInfoComponent extends JPanel {
   private class OneElementComponent extends JPanel {
     private OneLineComponent[] myOneLineComponents;
 
-    public OneElementComponent() {
+    OneElementComponent() {
       super(new GridBagLayout());
+      setOpaque(true);
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
     }
 
     @Override
     public String toString() {
-      boolean highlighted = myOneLineComponents.length > 0 && 
-                            !HintUtil.getInformationColor().equals(myOneLineComponents[0].getBackground());
+      boolean highlighted = myOneLineComponents.length > 0 && !BACKGROUND.equals(myOneLineComponents[0].getBackground());
       String text = Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
       return highlighted ? '[' + text + ']' : text;
     }
 
     private void setup(String htmlText, Color background) {
       removeAll();
+      setBackground(background);
       myOneLineComponents = new OneLineComponent[1];
       myOneLineComponents[0] = new OneLineComponent();
       myOneLineComponents[0].doSetup(htmlText, background);
@@ -384,7 +388,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private String setup(String text,
-                         Function<String, String> escapeFunction,
+                         Function<? super String, String> escapeFunction,
                          int highlightStartOffset,
                          int highlightEndOffset,
                          boolean isDisabled,
@@ -393,6 +397,7 @@ public class ParameterInfoComponent extends JPanel {
                          Color background) {
       StringBuilder buf = new StringBuilder();
       removeAll();
+      setBackground(background);
 
       String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT), myWidthLimit, ',');
 
@@ -432,14 +437,14 @@ public class ParameterInfoComponent extends JPanel {
       return buf.toString();
     }
 
-    private String escapeString(String line, Function<String, String> escapeFunction) {
+    private String escapeString(String line, Function<? super String, String> escapeFunction) {
       line = XmlStringUtil.escapeString(line);
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
 
     public String setup(final ParameterInfoController.Model result,
                         final String[] texts,
-                        Function<String, String> escapeFunction,
+                        Function<? super String, String> escapeFunction,
                         final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
                         final Color background) {
       StringBuilder buf = new StringBuilder();
@@ -552,24 +557,19 @@ public class ParameterInfoComponent extends JPanel {
       myLabel.setBackground(background);
       setBackground(background);
 
-      myLabel.setForeground(JBColor.foreground());
+      myLabel.setForeground(FOREGROUND);
 
       myLabel.setText(XmlStringUtil.wrapInHtml(text));
-
-      //IDEA-95904 Darcula parameter info pop-up colors hard to read
-      if (UIUtil.isUnderDarcula()) {
-        myLabel.setText(myLabel.getText().replace("<b>", "<b color=ffC800>"));
-      }
       return myLabel.getText();
     }
 
     private String buildLabelText(@NotNull final String text, @NotNull final Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
-      final String disabledTag = FLAG_TO_TAG.get(ParameterInfoUIContextEx.Flag.DISABLE);
+      final String disabledTag = getTagValue(ParameterInfoUIContextEx.Flag.DISABLE);
 
       final Map<Integer, Integer> faultMap = new HashMap<>();
       if (isDisabledBeforeHighlight) {
-        final String tag = getTag(disabledTag);
+        final String tag = getOpeningTag(disabledTag);
         labelText.insert(0, tag);
         faultMap.put(0, tag.length());
       }
@@ -578,8 +578,8 @@ public class ParameterInfoComponent extends JPanel {
         final TextRange highlightRange = entry.getKey();
         final ParameterInfoUIContextEx.Flag flag = entry.getValue();
 
-        final String tagValue = FLAG_TO_TAG.get(flag);
-        final String tag = getTag(tagValue);
+        final String tagValue = getTagValue(flag);
+        final String tag = getOpeningTag(tagValue);
 
         int startOffset = highlightRange.getStartOffset();
         int endOffset = highlightRange.getEndOffset() + tag.length();
@@ -610,16 +610,24 @@ public class ParameterInfoComponent extends JPanel {
       return labelText.toString();
     }
 
-    private String getTag(@NotNull final String tagValue) {
-      return "<" + tagValue + ">";
-    }
-
-    private String getClosingTag(@NotNull final String tagValue) {
-      return "</" + tagValue + ">";
-    }
-
     public void setDisabledBeforeHighlight() {
       isDisabledBeforeHighlight = true;
     }
+  }
+
+  private static String getOpeningTag(@NotNull String value) {
+    return "<" + value + ">";
+  }
+
+  private static String getClosingTag(@NotNull String value) {
+    int index = value.indexOf(' ');
+    return "</" + (0 <= index ? value.substring(0, index) : value) + ">";
+  }
+
+  private static String getTagValue(@NotNull ParameterInfoUIContextEx.Flag flag) {
+    if (flag == ParameterInfoUIContextEx.Flag.HIGHLIGHT) return "b color=" + ColorUtil.toHex(HIGHLIGHTED_COLOR);
+    if (flag == ParameterInfoUIContextEx.Flag.DISABLE) return "font color=" + ColorUtil.toHex(DISABLED_COLOR);
+    if (flag == ParameterInfoUIContextEx.Flag.STRIKEOUT) return "strike";
+    throw new IllegalArgumentException("flag=" + flag);
   }
 }

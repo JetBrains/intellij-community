@@ -1,15 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
-import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -24,7 +20,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -52,6 +47,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
@@ -65,7 +61,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
-import static com.intellij.util.JdomKt.element;
 import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
@@ -216,7 +211,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     List<String> moduleNames = getFilteredModuleNameList(myProject, myModuleBytecodeTarget, false);
     if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !moduleNames.isEmpty()) {
-      final Element bytecodeTarget = element(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+      final Element bytecodeTarget = new Element(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+      state.addContent(bytecodeTarget);
       if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
         bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
       }
@@ -251,7 +247,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private void updateModuleNames(Map<String, String> moduleNameMap) {
-    JpsJavaCompilerOptions settings = getCompilerSettings();
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     boolean updated = false;
     for (Map.Entry<String, String> entry : moduleNameMap.entrySet()) {
       String targetLevel = myModuleBytecodeTarget.remove(entry.getKey());
@@ -365,7 +361,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @NotNull
   @Override
   public List<String> getAdditionalOptions(@NotNull Module module) {
-    JpsJavaCompilerOptions settings = getCompilerSettings();
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     if (settings != null) {
       String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
       if (!StringUtil.isEmptyOrSpaces(options)) {
@@ -377,30 +373,24 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options) {
-    JpsJavaCompilerOptions settings = getCompilerSettings();
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     if (settings != null) {
-      String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
-      String newValue = ParametersListUtil.join(options);
-      if (!newValue.equals(previous)) {
-        settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
-        BuildManager.getInstance().clearState(myProject);
-      }
+      setAdditionalOptions(settings, module, options);
     }
   }
 
-  private JpsJavaCompilerOptions getCompilerSettings() {
-    BackendCompiler compiler = getDefaultCompiler();
-    if (compiler != null) {
-      String id = compiler.getId();
-      if (id == JavaCompilers.JAVAC_ID) {
-        return JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
-      }
-      else if (JavaCompilers.ECLIPSE_ID == id) {
-        return EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class);
-      }
+  public void setAdditionalOptions(@NotNull JpsJavaCompilerOptions settings, @NotNull Module module, @NotNull List<String> options) {
+    String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
+    String newValue = ParametersListUtil.join(options);
+    if (!newValue.equals(previous)) {
+      settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
+      BuildManager.getInstance().clearState(myProject);
     }
+  }
 
-    return null;
+  private JpsJavaCompilerOptions getJavaCompilerSettings() {
+    CompilerOptions compilerOptions = getDefaultCompiler().getOptions();
+    return compilerOptions instanceof JpsJavaCompilerOptions ? (JpsJavaCompilerOptions)compilerOptions : null;
   }
 
   public static String getTestsExternalCompilerHome() {
@@ -453,7 +443,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     final Set<FileType> types = new HashSet<>();
-    for (BackendCompiler compiler : Extensions.getExtensions(BackendCompiler.EP_NAME, myProject)) {
+    for (BackendCompiler compiler : BackendCompiler.EP_NAME.getExtensions(myProject)) {
       myRegisteredCompilers.add(compiler);
       types.addAll(compiler.getCompilableFileTypes());
     }
@@ -547,7 +537,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return myModuleProcessorProfiles;
   }
 
-  public void setModuleProcessorProfiles(Collection<ProcessorConfigProfile> moduleProfiles) {
+  public void setModuleProcessorProfiles(Collection<? extends ProcessorConfigProfile> moduleProfiles) {
     myModuleProcessorProfiles.clear();
     myModuleProcessorProfiles.addAll(moduleProfiles);
     myProcessorsProfilesMap = null;

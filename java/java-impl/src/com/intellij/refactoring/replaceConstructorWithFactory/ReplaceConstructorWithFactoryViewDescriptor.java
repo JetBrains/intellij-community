@@ -29,14 +29,14 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
   private final PsiMethod myConstructor;
   private final PsiClass myClass;
 
-  public ReplaceConstructorWithFactoryViewDescriptor(
+  ReplaceConstructorWithFactoryViewDescriptor(
     PsiMethod constructor) {
     super();
     myConstructor = constructor;
     myClass = null;
   }
 
-  public ReplaceConstructorWithFactoryViewDescriptor(PsiClass aClass) {
+  ReplaceConstructorWithFactoryViewDescriptor(PsiClass aClass) {
     super();
     myClass = aClass;
     myConstructor = null;

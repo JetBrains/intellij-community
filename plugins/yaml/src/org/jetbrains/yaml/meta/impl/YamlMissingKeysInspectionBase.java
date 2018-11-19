@@ -75,7 +75,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
     private final Collection<String> myMissingKeys;
     private final SmartPsiElementPointer<YAMLMapping> myMappingHolder;
 
-    public AddMissingKeysQuickFix(@NotNull final Collection<String> missingKeys, @NotNull final YAMLMapping mapping) {
+    AddMissingKeysQuickFix(@NotNull final Collection<String> missingKeys, @NotNull final YAMLMapping mapping) {
       myMissingKeys = missingKeys;
       myMappingHolder = SmartPointerManager.getInstance(mapping.getProject()).createSmartPsiElementPointer(mapping);
     }
@@ -124,7 +124,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
 
   @NotNull
   private static String composeKeyList(@NotNull final Collection<String> missingKeys) {
-    return missingKeys.stream().collect(Collectors.joining(", "));
+    return String.join(", ", missingKeys);
   }
 
   @NotNull

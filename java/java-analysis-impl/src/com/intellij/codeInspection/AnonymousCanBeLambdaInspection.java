@@ -350,7 +350,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
   private static void collectLocalVariablesDefinedInsideLambda(PsiLambdaExpression lambdaExpression,
                                                                final Set<PsiVariable> variables,
-                                                               Set<String> namesOfVariablesInTheBlock) {
+                                                               Set<? super String> namesOfVariablesInTheBlock) {
     PsiElement block = PsiUtil.getTopLevelEnclosingCodeBlock(lambdaExpression, null);
     if (block == null) {
       block = lambdaExpression;
@@ -489,7 +489,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     return false;
   }
 
-  public static void restoreComments(Collection<PsiComment> comments, PsiElement lambda) {
+  public static void restoreComments(Collection<? extends PsiComment> comments, PsiElement lambda) {
     PsiElement anchor = PsiTreeUtil.getParentOfType(lambda, PsiStatement.class, PsiField.class);
     if (anchor == null) {
       anchor = lambda;
@@ -505,7 +505,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     private final PsiMethod myMethod;
     private final PsiAnonymousClass myAnonymClass;
 
-    public ForbiddenRefsChecker(PsiMethod method, PsiAnonymousClass aClass) {
+    ForbiddenRefsChecker(PsiMethod method, PsiAnonymousClass aClass) {
       myMethod = method;
       myAnonymClass = aClass;
     }

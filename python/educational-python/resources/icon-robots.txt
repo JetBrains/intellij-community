@@ -1,2 +1,2 @@
 skip: tips
-skip: PyCharmEdu*.png
+skip: PyCharmEdu*.*

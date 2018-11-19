@@ -48,7 +48,7 @@ public class MorphAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     Processor<ComponentItem> processor = selectedValue -> {
       Runnable runnable = () -> {
         for(RadComponent c: selection) {
@@ -160,7 +160,7 @@ public class MorphAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     if (selection.size() == 0) {
       e.getPresentation().setEnabled(false);
       return;

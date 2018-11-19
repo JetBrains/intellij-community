@@ -10,13 +10,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentInputMapUIResource;
@@ -154,9 +150,9 @@ public class ActionButtonWithText extends ActionButton {
 
     UISettings.setupAntialiasing(g);
     g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
-    SwingUtilities2.drawStringUnderlineCharAt(this, g, text,
-                                              getMnemonicCharIndex(text),
-                                              textRect.x,
+    UIUtilities.drawStringUnderlineCharAt(this, g, text,
+                                          getMnemonicCharIndex(text),
+                                          textRect.x,
                                               textRect.y + fm.getAscent());
   }
 

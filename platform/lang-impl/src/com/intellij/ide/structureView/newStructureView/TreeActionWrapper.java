@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.structureView.newStructureView;
 
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 public class TreeActionWrapper extends ToggleAction implements DumbAware, ActionWithDelegate<TreeAction> {
   private final TreeAction myAction;
   private final TreeActionsOwner myStructureView;
-
 
   public TreeActionWrapper(@NotNull TreeAction action, @NotNull TreeActionsOwner structureView) {
     myAction = action;
@@ -34,13 +33,13 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware, Action
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return TreeModelWrapper.isActive(myAction, myStructureView);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    myStructureView.setActionActive(myAction.getName(), TreeModelWrapper.shouldRevert(myAction) ?  !state : state);
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    myStructureView.setActionActive(myAction.getName(), TreeModelWrapper.shouldRevert(myAction) != state);
   }
 
   @NotNull

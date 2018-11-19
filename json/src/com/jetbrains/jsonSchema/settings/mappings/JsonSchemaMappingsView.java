@@ -30,6 +30,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.jetbrains.jsonSchema.JsonMappingKind;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
@@ -50,7 +51,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
@@ -62,7 +62,7 @@ public class JsonSchemaMappingsView implements Disposable {
   private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
   private static final String REMOVE_SCHEMA_MAPPING = "settings.json.schema.remove.mapping";
   private final TreeUpdater myTreeUpdater;
-  private final Consumer<String> mySchemaPathChangedCallback;
+  private final Consumer<? super String> mySchemaPathChangedCallback;
   private TableView<UserDefinedJsonSchemaConfiguration.Item> myTableView;
   private JComponent myComponent;
   private Project myProject;
@@ -75,7 +75,7 @@ public class JsonSchemaMappingsView implements Disposable {
 
   public JsonSchemaMappingsView(Project project,
                                 TreeUpdater treeUpdater,
-                                Consumer<String> schemaPathChangedCallback) {
+                                Consumer<? super String> schemaPathChangedCallback) {
     myTreeUpdater = treeUpdater;
     mySchemaPathChangedCallback = schemaPathChangedCallback;
     createUI(project);
@@ -172,9 +172,8 @@ public class JsonSchemaMappingsView implements Disposable {
 
   public List<UserDefinedJsonSchemaConfiguration.Item> getData() {
     return Collections.unmodifiableList(
-      myTableView.getListTableModel().getItems().stream()
-                 .filter(i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path))
-                 .collect(Collectors.toList()));
+      ContainerUtil
+        .filter(myTableView.getListTableModel().getItems(), i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path)));
   }
 
   public void setItems(String schemaFilePath,
@@ -210,7 +209,7 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   private class MappingItemColumnInfo extends ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String> {
-    public MappingItemColumnInfo() {super("");}
+    MappingItemColumnInfo() {super("");}
 
     @Nullable
     @Override
@@ -262,7 +261,7 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   class MyAddActionButtonRunnable implements AnActionButtonRunnable {
-    public MyAddActionButtonRunnable() {
+    MyAddActionButtonRunnable() {
       super();
     }
 
@@ -305,7 +304,7 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   private class MyEditActionButtonRunnableImpl implements AnActionButtonRunnable {
-    public MyEditActionButtonRunnableImpl() {
+    MyEditActionButtonRunnableImpl() {
       super();
     }
 

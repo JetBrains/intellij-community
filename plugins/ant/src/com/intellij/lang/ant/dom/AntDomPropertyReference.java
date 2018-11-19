@@ -28,7 +28,6 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +129,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
           String envPrefix = antProperty.getEnvironment().getValue();
           if (envPrefix != null) {
             if (!envPrefix.endsWith(".")) {
-              envPrefix = envPrefix + ".";
+              envPrefix += ".";
             }
             if (refText.startsWith(envPrefix)) {
               final String envVariableName = refText.substring(envPrefix.length());
@@ -173,7 +172,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     private final PsiElement myElement;
     private final PropertiesProvider myProvider;
 
-    public MyResolveResult(final PsiElement element, PropertiesProvider provider) {
+    MyResolveResult(final PsiElement element, PropertiesProvider provider) {
       myElement = element;
       myProvider = provider;
     }
@@ -218,7 +217,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
           result.add(new MyResolveResult(param, null));
         }
       }
-      return ContainerUtil.toArray(result, new ResolveResult[result.size()]);
+      return result.toArray(ResolveResult.EMPTY_ARRAY);
     }
   }
 }

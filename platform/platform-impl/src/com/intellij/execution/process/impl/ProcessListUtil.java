@@ -47,7 +47,7 @@ public class ProcessListUtil {
   @NotNull
   public static ProcessInfo[] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
-    return result.isEmpty() ? ProcessInfo.EMPTY_ARRAY : result.toArray(new ProcessInfo[0]);
+    return result.toArray(ProcessInfo.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -86,7 +86,7 @@ public class ProcessListUtil {
 
   @Nullable
   private static List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
-                                                      @NotNull NullableFunction<String, List<ProcessInfo>> parser) {
+                                                      @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser) {
     String output;
     try {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine(command));
@@ -265,7 +265,7 @@ public class ProcessListUtil {
     final String user;
     final String state;
 
-    public MacProcessInfo(int pid, String commandLine, String user, String state) {
+    MacProcessInfo(int pid, String commandLine, String user, String state) {
       this.pid = pid;
       this.commandLine = commandLine;
       this.user = user;

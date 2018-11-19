@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.TitledHandler;
 import com.intellij.ide.projectView.ProjectView;
@@ -75,7 +76,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     }
 
     String names = StringUtil.join(moduleDescriptions, description -> "\'" + description.getName() + "\'", ", ");
-    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleDescriptions.size()), getActionTitle(), Messages.getQuestionIcon());
+    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleDescriptions.size()), getActionTitle(), CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
     if (ret != Messages.OK) return;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       final Runnable action = () -> {
@@ -118,14 +119,14 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   }
 
   public static void removeModule(@NotNull final Module moduleToRemove,
-                                  @NotNull Collection<ModifiableRootModel> otherModuleRootModels,
+                                  @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
                                   @NotNull final ModifiableModuleModel moduleModel) {
     removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
     moduleModel.disposeModule(moduleToRemove);
   }
 
   private static void removeDependenciesOnModules(@NotNull Set<String> moduleNamesToRemove,
-                                                  @NotNull Collection<ModifiableRootModel> otherModuleRootModels) {
+                                                  @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels) {
     for (final ModifiableRootModel modifiableRootModel : otherModuleRootModels) {
       final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
       for (final OrderEntry orderEntry : orderEntries) {

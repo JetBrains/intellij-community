@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -65,7 +66,7 @@ public class TouchBarsManager {
           }
         }
 
-        pd.get(BarType.DEFAULT).show();
+        StartupManager.getInstance(project).registerPostStartupActivity(() -> pd.get(BarType.DEFAULT).show());
 
         project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
           @Override
@@ -75,10 +76,12 @@ public class TouchBarsManager {
           @Override
           public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
             // TODO: probably, need to remove debugger-panel from stack completely
+            final String twid = env.getExecutor().getToolWindowId();
             ourStack.pop(topContainer -> {
               if (topContainer.getType() != BarType.DEBUGGER)
                 return false;
-              if (!executorId.equals(ToolWindowId.DEBUG) && !executorId.equals(ToolWindowId.RUN_DASHBOARD))
+
+              if (!ToolWindowId.DEBUG.equals(twid) && !ToolWindowId.RUN_DASHBOARD.equals(twid))
                 return false;
 
               // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
@@ -235,7 +238,7 @@ public class TouchBarsManager {
     if (editor instanceof EditorEx)
       ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
       @Override
-      public void focusGained(Editor editor) {
+      public void focusGained(@NotNull Editor editor) {
         // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
         pd.get(BarType.DEFAULT).setOptionalContextVisible(null);
 
@@ -247,7 +250,7 @@ public class TouchBarsManager {
         }
       }
       @Override
-      public void focusLost(Editor editor) {}
+      public void focusLost(@NotNull Editor editor) {}
     });
   }
 
@@ -375,7 +378,7 @@ public class TouchBarsManager {
     };
   }
 
-  public static void showStopRunningBar(List<Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
+  public static void showStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = BuildUtils.createStopRunningBar(stoppableDescriptors);
     BarContainer container = new BarContainer(BarType.DIALOG, tb, null, null);
     container.setOnHideCallback(() -> { container.release(); });
@@ -393,7 +396,7 @@ public class TouchBarsManager {
   private static boolean _hasPopup() { return ourTemporaryBars.values().stream().anyMatch(bc -> bc.isPopup()); }
   private static boolean _hasNonModalDialog() { return ourTemporaryBars.values().stream().anyMatch(bc -> bc.isNonModalDialog()); }
 
-  private static BarContainer _findByParentComponent(Container child, Collection<BarContainer> candidates, Predicate<BarContainer> filter) {
+  private static BarContainer _findByParentComponent(Container child, Collection<? extends BarContainer> candidates, Predicate<? super BarContainer> filter) {
     for (BarContainer bc: candidates) {
       if (filter != null && !filter.apply(bc))
         continue;

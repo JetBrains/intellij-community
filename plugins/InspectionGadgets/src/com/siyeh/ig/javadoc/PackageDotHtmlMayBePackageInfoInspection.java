@@ -90,7 +90,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
 
     private final String aPackage;
 
-    public PackageDotHtmlMayBePackageInfoFix(String aPackage) {
+    PackageDotHtmlMayBePackageInfoFix(String aPackage) {
       this.aPackage = aPackage;
     }
 

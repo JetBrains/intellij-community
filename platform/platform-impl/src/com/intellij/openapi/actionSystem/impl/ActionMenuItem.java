@@ -16,11 +16,9 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
-import com.intellij.ui.plaf.gtk.GtkMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
@@ -28,8 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.MenuItemUI;
-import javax.swing.plaf.synth.SynthMenuItemUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -159,10 +155,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       setAcceleratorFromShortcuts(getActiveKeymapShortcuts(id).getShortcuts());
     }
     else {
-      final ShortcutSet shortcutSet = action.getShortcutSet();
-      if (shortcutSet != null) {
-        setAcceleratorFromShortcuts(shortcutSet.getShortcuts());
-      }
+      ShortcutSet shortcutSet = action.getShortcutSet();
+      setAcceleratorFromShortcuts(shortcutSet.getShortcuts());
     }
   }
 
@@ -181,18 +175,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   @Override
   public void updateUI() {
-    if (UIUtil.isStandardMenuLAF()) {
-      super.updateUI();
-    }
-    else {
-      setUI(BegMenuItemUI.createUI(this));
-    }
-  }
-
-  @Override
-  public void setUI(MenuItemUI ui) {
-    MenuItemUI newUi = UIUtil.isUnderGTKLookAndFeel() && ui instanceof SynthMenuItemUI ? new GtkMenuItemUI((SynthMenuItemUI)ui) : ui;
-    super.setUI(newUi);
+    setUI(BegMenuItemUI.createUI(this));
   }
 
   /**
@@ -217,11 +200,10 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
       action.update(myEvent);
       myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
-      if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu ||
-          UIUtil.isUnderWindowsLookAndFeel() && SystemInfo.isWin7OrNewer) {
+      if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
       }
-      else if (!(getUI() instanceof GtkMenuItemUI)) {
+      else {
         if (myToggled) {
           setIcon(LafIconLookup.getIcon("checkmark"));
           setSelectedIcon(LafIconLookup.getSelectedIcon("checkmark"));
@@ -357,12 +339,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         }
         else if (Presentation.PROP_TEXT.equals(name)) {
           setText(myPresentation.getText());
-          if(Registry.is("ide.action.menu.item.pack.on.text.update", false)) {
-            Window window = UIUtil.getWindow(ActionMenuItem.this);
-            if (window != null) window.pack();
-            ActionMenuItemUpdateCollector instance = ActionMenuItemUpdateCollector.getInstance();
-            instance.record(myAction.getAction(), myPlace, this.toString());
-          }
+          Window window = UIUtil.getWindow(ActionMenuItem.this);
+          if (window != null) window.pack();
         }
         else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name) || SELECTED.equals(name)) {
           updateIcon(myAction.getAction());

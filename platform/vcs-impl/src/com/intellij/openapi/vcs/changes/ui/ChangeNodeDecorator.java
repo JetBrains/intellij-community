@@ -43,7 +43,7 @@ public interface ChangeNodeDecorator {
     @SimpleTextAttributes.StyleAttributeConstant
     private final int myFontStyle;
 
-    private Stress(@SimpleTextAttributes.StyleAttributeConstant int fontStyle) {
+    Stress(@SimpleTextAttributes.StyleAttributeConstant int fontStyle) {
       myFontStyle = fontStyle;
     }
 

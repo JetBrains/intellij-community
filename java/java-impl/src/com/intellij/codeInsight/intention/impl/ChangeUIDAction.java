@@ -43,7 +43,7 @@ public class ChangeUIDAction extends PsiElementBaseIntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     Application application = ApplicationManager.getApplication();
     Random random = application.isUnitTestMode() ? new Random(42) : new SecureRandom();
-    PsiExpression newInitializer = factory.createExpressionFromText(Long.toString(random.nextLong()) + "L", null);
+    PsiExpression newInitializer = factory.createExpressionFromText(random.nextLong() + "L", null);
     PsiExpression initializer = field.getInitializer();
     if (initializer != null) {
       new CommentTracker().replaceAndRestoreComments(initializer, newInitializer);

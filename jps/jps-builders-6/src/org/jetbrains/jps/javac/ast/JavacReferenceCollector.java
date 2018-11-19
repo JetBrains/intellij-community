@@ -27,7 +27,7 @@ import javax.tools.*;
 public class JavacReferenceCollector {
   public static void installOn(JavaCompiler.CompilationTask task,
                                boolean divideImportRefs,
-                               Consumer<JavacFileData> fileDataConsumer) {
+                               Consumer<? super JavacFileData> fileDataConsumer) {
     JavacReferenceCollectorListener.installOn(task, divideImportRefs, fileDataConsumer);
   }
 }

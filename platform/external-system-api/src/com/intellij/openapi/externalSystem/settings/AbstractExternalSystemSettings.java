@@ -24,13 +24,13 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
  * <b>Note:</b> non-abstract sub-classes of this class are expected to be marked by {@link State} annotation configured as necessary.
  *  
  * @author Denis Zhdanov
- * @since 4/3/13 4:04 PM
  */
 public abstract class AbstractExternalSystemSettings<
   SS extends AbstractExternalSystemSettings<SS, PS, L>,
@@ -100,7 +99,6 @@ public abstract class AbstractExternalSystemSettings<
   
   protected abstract void copyExtraSettingsFrom(@NotNull SS settings);
   
-  @SuppressWarnings("unchecked")
   @NotNull
   public Collection<PS> getLinkedProjectsSettings() {
     return myLinkedProjectsSettingsView.values();
@@ -155,7 +153,7 @@ public abstract class AbstractExternalSystemSettings<
 
   private void setLinkedProjectsSettings(@NotNull Collection<PS> settings, @Nullable ExternalSystemSettingsListener listener) {
     // do not add invalid 'null' settings
-    settings = settings.stream().filter(ps -> ps.getExternalProjectPath() != null).collect(Collectors.toList());
+    settings = ContainerUtil.filter(settings, ps -> ps.getExternalProjectPath() != null);
 
     List<PS> added = ContainerUtilRt.newArrayList();
     Map<String, PS> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);

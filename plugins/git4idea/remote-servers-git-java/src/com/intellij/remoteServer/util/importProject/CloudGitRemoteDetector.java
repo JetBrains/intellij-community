@@ -99,7 +99,7 @@ public class CloudGitRemoteDetector implements GitRepositoryChangeListener, Proj
 
     private final Map<GitRepository, RepositoryNotifier> myRepositoryToNotifier = new HashMap<>();
 
-    public CloudTypeDelegate(CloudGitDeploymentDetector deploymentDetector) {
+    CloudTypeDelegate(CloudGitDeploymentDetector deploymentDetector) {
       myDeploymentDetector = deploymentDetector;
     }
 
@@ -189,7 +189,7 @@ public class CloudGitRemoteDetector implements GitRepositoryChangeListener, Proj
 
     private String myApplicationName;
 
-    public RepositoryNotifier(CloudGitDeploymentDetector deploymentDetector, GitRepository repository) {
+    RepositoryNotifier(CloudGitDeploymentDetector deploymentDetector, GitRepository repository) {
       myDeploymentDetector = deploymentDetector;
       myRepositoryRoot = repository.getRoot();
       myCloudName = deploymentDetector.getCloudType().getPresentableName();

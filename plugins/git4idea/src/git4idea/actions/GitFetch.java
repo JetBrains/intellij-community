@@ -9,10 +9,12 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static git4idea.GitUtil.getRepositoriesFromRoots;
+import static git4idea.fetch.GitFetchSupport.fetchSupport;
 
 public class GitFetch extends GitRepositoryAction {
   @Override
@@ -29,8 +31,7 @@ public class GitFetch extends GitRepositoryAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-        new GitFetcher(project, indicator, true).fetchRootsAndNotify(GitUtil.getRepositoriesFromRoots(repositoryManager, gitRoots),
-                                                                     null, true);
+        fetchSupport(project).fetch(getRepositoriesFromRoots(repositoryManager, gitRoots)).showNotification();
       }
     });
   }

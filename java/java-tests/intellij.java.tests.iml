@@ -57,5 +57,8 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.copyright" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="TEST" />
   </component>
 </module>

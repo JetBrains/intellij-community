@@ -28,7 +28,7 @@ import static com.intellij.psi.CommonClassNames.*;
  */
 class CollectConversion {
  
-  static void addCollectConversion(PsiReferenceExpression ref, Collection<ExpectedTypeInfo> expectedTypes, Consumer<LookupElement> consumer) {
+  static void addCollectConversion(PsiReferenceExpression ref, Collection<? extends ExpectedTypeInfo> expectedTypes, Consumer<? super LookupElement> consumer) {
     PsiClass collectors = JavaPsiFacade.getInstance(ref.getProject()).findClass(JAVA_UTIL_STREAM_COLLECTORS, ref.getResolveScope());
     if (collectors == null) return;
 
@@ -47,7 +47,7 @@ class CollectConversion {
     convertQualifierViaCollectors(ref, expectedTypes, consumer, qualifier);
   }
 
-  private static void suggestCollectorsArgument(Collection<ExpectedTypeInfo> expectedTypes, Consumer<LookupElement> consumer, PsiClass collectors, PsiExpression qualifier) {
+  private static void suggestCollectorsArgument(Collection<? extends ExpectedTypeInfo> expectedTypes, Consumer<? super LookupElement> consumer, PsiClass collectors, PsiExpression qualifier) {
     PsiType matchingExpectation = JBIterable.from(expectedTypes).map(ExpectedTypeInfo::getType)
       .find(t -> TypeConversionUtil.erasure(t).equalsToText(Collector.class.getName()));
     if (matchingExpectation == null) return;
@@ -63,15 +63,15 @@ class CollectConversion {
   }
 
   private static void convertQualifierViaCollectors(PsiReferenceExpression ref,
-                                                    Collection<ExpectedTypeInfo> expectedTypes,
-                                                    Consumer<LookupElement> consumer, PsiExpression qualifier) {
+                                                    Collection<? extends ExpectedTypeInfo> expectedTypes,
+                                                    Consumer<? super LookupElement> consumer, PsiExpression qualifier) {
     for (Pair<String, PsiType> pair : suggestCollectors(expectedTypes, qualifier)) {
       consumer.consume(new MyLookupElement(pair.first, pair.second, ref));
     }
   }
   
   // each pair of method name in Collectors class, and the corresponding collection type
-  private static List<Pair<String, PsiType>> suggestCollectors(Collection<ExpectedTypeInfo> expectedTypes, PsiExpression qualifier) {
+  private static List<Pair<String, PsiType>> suggestCollectors(Collection<? extends ExpectedTypeInfo> expectedTypes, PsiExpression qualifier) {
     PsiType component = PsiUtil.substituteTypeParameter(qualifier.getType(), JAVA_UTIL_STREAM_STREAM, 0, true);
     if (component == null) return Collections.emptyList();
 

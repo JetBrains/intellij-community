@@ -10,7 +10,7 @@ class NullabilityBasics {
     if (isEmpty(x) && Math.random() > 0.5) {
       return;
     }
-    System.out.println(x.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(x.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
   }
 
   @Nullable String getNullable() {
@@ -26,6 +26,6 @@ class NullabilityBasics {
     if (x == null) {
       System.out.println("x is null!");
     }
-    System.out.println(x.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(x.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
   }
 }

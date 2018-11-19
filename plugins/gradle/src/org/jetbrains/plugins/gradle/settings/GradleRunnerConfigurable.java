@@ -14,7 +14,6 @@ import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/2/2015
  */
 public class GradleRunnerConfigurable implements Configurable {
   private JPanel myMainPanel;
@@ -94,7 +93,7 @@ public class GradleRunnerConfigurable implements Configurable {
   }
 
   static class TestRunnerItem {
-    public TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner value) {
+    TestRunnerItem(GradleSystemRunningSettings.PreferredTestRunner value) {
       this.value = value;
     }
 

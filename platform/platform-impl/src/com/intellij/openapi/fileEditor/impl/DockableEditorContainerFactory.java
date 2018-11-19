@@ -25,6 +25,7 @@ import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
 
@@ -49,12 +50,12 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
     final Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
     EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, myDockManager, false) {
       @Override
-      protected void afterFileClosed(VirtualFile file) {
+      protected void afterFileClosed(@NotNull VirtualFile file) {
         containerRef.get().fireContentClosed(file);
       }
 
       @Override
-      protected void afterFileOpen(VirtualFile file) {
+      protected void afterFileOpen(@NotNull VirtualFile file) {
         containerRef.get().fireContentOpen(file);
       }
 

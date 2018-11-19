@@ -39,19 +39,19 @@ public class CopyPasteUtil {
     return elts != null ? elts : PsiElement.EMPTY_ARRAY;
   }
 
-  public static void addDefaultListener(@NotNull Disposable parent, @NotNull Consumer<PsiElement> consumer) {
+  public static void addDefaultListener(@NotNull Disposable parent, @NotNull Consumer<? super PsiElement> consumer) {
     CopyPasteManager.getInstance().addContentChangedListener(new DefaultCopyPasteListener(consumer), parent);
   }
 
   public static class DefaultCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    private final Consumer<PsiElement> consumer;
+    private final Consumer<? super PsiElement> consumer;
 
     @Deprecated
     public DefaultCopyPasteListener(AbstractTreeUpdater updater) {
       this(element -> updater.addSubtreeToUpdateByElement(element));
     }
 
-    private DefaultCopyPasteListener(@NotNull Consumer<PsiElement> consumer) {
+    private DefaultCopyPasteListener(@NotNull Consumer<? super PsiElement> consumer) {
       this.consumer = consumer;
     }
 

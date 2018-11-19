@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ class ProbablyIncreasingLowerboundAlgorithm<T extends AbstractBlockWrapper> {
   private int myLastCalculatedOffset = -1;
   private int myLastCalculatedAnswerIndex = -1;
 
-  public ProbablyIncreasingLowerboundAlgorithm(@NotNull List<T> blocks) {
+  ProbablyIncreasingLowerboundAlgorithm(@NotNull List<T> blocks) {
     myBlocks = blocks;
   }
 
@@ -87,18 +88,7 @@ class ProbablyIncreasingLowerboundAlgorithm<T extends AbstractBlockWrapper> {
   }
 
   private int calcLeftRespNeighborIndex(final int blockOffset) {
-    int l = -1, r = myBlocks.size();
-    while (r - l > 1) {
-      int m = (l + r) / 2;
-      if (myBlocks.get(m).getStartOffset() >= blockOffset) {
-        r = m;
-      }
-      else {
-        l = m;
-      }
-    }
-
-    return l;
+    int i = ObjectUtils.binarySearch(0,myBlocks.size(),m-> myBlocks.get(m).getStartOffset() < blockOffset ? -1 : 1);
+    return -i - 2;
   }
-
 }

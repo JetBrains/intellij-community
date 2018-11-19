@@ -59,7 +59,6 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
   }
 
   @Override
-  @SuppressWarnings({"StringEquality"})
   public void initComponent() {
     final Language xmlLang = StdFileTypes.XML.getLanguage();
 

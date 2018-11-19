@@ -38,7 +38,7 @@ import java.util.List;
 public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStructureViewBuilder {
 
   @NotNull
-  public static TemplateLanguageStructureViewBuilder create(@NotNull PsiFile psiFile, @Nullable PairFunction<PsiFile, Editor, StructureViewModel> modelFactory) {
+  public static TemplateLanguageStructureViewBuilder create(@NotNull PsiFile psiFile, @Nullable PairFunction<? super PsiFile, ? super Editor, ? extends StructureViewModel> modelFactory) {
     return new TemplateLanguageStructureViewBuilder(psiFile) {
       @Override
       protected TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi) {

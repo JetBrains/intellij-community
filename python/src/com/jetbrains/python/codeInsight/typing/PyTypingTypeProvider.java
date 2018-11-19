@@ -218,6 +218,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  public static boolean isGenerator(@NotNull final PyType type) {
+    return type instanceof PyCollectionType && GENERATOR.equals(((PyClassLikeType)type).getClassQName());
+  }
+
   @Nullable
   private static Ref<PyType> getParameterTypeFromFunctionComment(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final PyStarExpression starExpr = as(expression, PyStarExpression.class);
@@ -521,7 +525,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         if (pyClass != null && scopeOwner instanceof PyFunction) {
           final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
 
-          boolean isInstanceAttribute = false;
+          boolean isInstanceAttribute;
           if (context.maySwitchToAST(target)) {
             isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
               .select(PyParameter.class)
@@ -536,16 +540,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
           // Set isDefinition=true to start searching right from the class level.
           final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
-          final List<? extends RatedResolveResult> classAttrs = classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
+          final List<? extends RatedResolveResult> classAttrs =
+            classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
           if (classAttrs == null) {
             return null;
           }
           return StreamEx.of(classAttrs)
-                         .map(RatedResolveResult::getElement)
-                         .select(PyTargetExpression.class)
-                         .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
-                         .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
-                         .collect(PyTypeUtil.toUnionFromRef());
+            .map(RatedResolveResult::getElement)
+            .select(PyTargetExpression.class)
+            .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+            .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+            .collect(PyTypeUtil.toUnionFromRef());
         }
       }
       else {
@@ -644,7 +649,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     for (Map.Entry<PyClass, PySubscriptionExpression> e : getResolvedSuperClassesAndTypeParameters(cls, context).entrySet()) {
       final PySubscriptionExpression subscriptionExpr = e.getValue();
       final PyClass superClass = e.getKey();
-      final Map<PyType, PyType> superSubstitutions = doPreventingRecursion(RECURSION_KEY, false, () -> getGenericSubstitutions(superClass, context));
+      final Map<PyType, PyType> superSubstitutions =
+        doPreventingRecursion(RECURSION_KEY, false, () -> getGenericSubstitutions(superClass, context));
       if (superSubstitutions != null) {
         results.putAll(superSubstitutions);
       }
@@ -703,6 +709,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     for (QualifiedName qName : allBaseClassesQNames) {
+      if (qName == null) continue;
       final List<PsiElement> classes = PyResolveUtil.resolveQualifiedNameInScope(qName, (PyFile)pyClass.getContainingFile(), context);
       // Better way to handle results of the multiresove
       final PyClass firstFound = ContainerUtil.findInstance(classes, PyClass.class);
@@ -1263,7 +1270,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           // see https://github.com/python/typeshed/commit/41561f11c7b06368aebe512acf69d8010662266d
           // or comment in typeshed/stdlib/3/builtins.pyi near _PathLike class
           final QualifiedName osPathLikeQName = QualifiedName.fromComponents("os", PyNames.PATH_LIKE);
-          final PsiElement osPathLike = PyResolveImportUtil.resolveTopLevelMember(osPathLikeQName, PyResolveImportUtil.fromFoothold(element));
+          final PsiElement osPathLike =
+            PyResolveImportUtil.resolveTopLevelMember(osPathLikeQName, PyResolveImportUtil.fromFoothold(element));
           if (osPathLike != null) {
             elements.add(Pair.create(null, osPathLike));
             continue;
@@ -1323,9 +1331,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (!function.isGenerator()) {
         return wrapInCoroutineType(returnType, function);
       }
-      else if (returnType instanceof PyClassLikeType &&
-               returnType instanceof PyCollectionType &&
-               GENERATOR.equals(((PyClassLikeType)returnType).getClassQName())) {
+      else if (returnType instanceof PyCollectionType && isGenerator(returnType)) {
         return wrapInAsyncGeneratorType(((PyCollectionType)returnType).getIteratedItemType(), function);
       }
     }

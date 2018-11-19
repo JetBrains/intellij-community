@@ -630,7 +630,7 @@ public class SrcFileAnnotator implements Disposable {
     private final VirtualFile myVFile;
     private final Document myDocument;
 
-    public MyEditorBean(Editor editor, VirtualFile VFile, Document document) {
+    MyEditorBean(Editor editor, VirtualFile VFile, Document document) {
       myEditor = editor;
       myVFile = VFile;
       myDocument = document;

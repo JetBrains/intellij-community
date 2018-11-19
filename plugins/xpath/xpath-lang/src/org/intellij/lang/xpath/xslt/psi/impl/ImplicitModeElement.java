@@ -81,7 +81,6 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
     }
 
     @Override
-    @SuppressWarnings({"ConstantConditions"})
     public String getText() {
         return getName();
     }
@@ -169,8 +168,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
 
                         if (method.getName() == "navigate") {
                             nameElement.navigate((Boolean)args[0]);
-                            //noinspection ConstantConditions
-                            return null;
+                          return null;
                         } else if (method.getName() == "canNavigate") {
                             return nameElement.canNavigate();
                         } else if (method.getName() == "getTextOffset") {

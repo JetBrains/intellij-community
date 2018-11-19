@@ -51,7 +51,7 @@ public class TypeFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
       private final JLabel myTypeLabel = new JLabel("type=");
@@ -68,29 +68,31 @@ public class TypeFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createParallelGroup()
-                .addGroup(
-                  layout.createSequentialGroup()
-                        .addComponent(myTypeLabel)
-                        .addComponent(myTextField)
-                        .addComponent(myHelpLabel)
-                )
-                .addComponent(myHierarchyCheckBox)
+            .addGroup(
+              layout.createSequentialGroup()
+                .addComponent(myTypeLabel)
+                .addComponent(myTextField)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+                .addComponent(myHelpLabel)
+            )
+            .addComponent(myHierarchyCheckBox)
         );
         layout.setVerticalGroup(
           layout.createSequentialGroup()
-                .addGroup(
-                  layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(myTypeLabel)
-                        .addComponent(myTextField)
-                        .addComponent(myHelpLabel)
-                )
-                .addComponent(myHierarchyCheckBox)
+            .addGroup(
+              layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(myTypeLabel)
+                .addComponent(myTextField)
+                .addComponent(myHelpLabel)
+            )
+            .addComponent(myHierarchyCheckBox)
         );
       }
 
       @Override
       protected void loadValues() {
         myTextField.setText((myConstraint.isInvertExprType() ? "!" : "") + myConstraint.getNameOfExprType());
+        myHierarchyCheckBox.setSelected(myConstraint.isExprTypeWithinHierarchy());
       }
 
       @Override

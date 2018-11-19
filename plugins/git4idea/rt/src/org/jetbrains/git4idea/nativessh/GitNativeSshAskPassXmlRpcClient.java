@@ -22,13 +22,13 @@ class GitNativeSshAskPassXmlRpcClient {
 
   // Obsolete collection usage because of the XmlRpcClientLite API
   @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
-  String askPassphrase(String token, @NotNull String description) {
+  String handleInput(String token, @NotNull String description) {
     Vector parameters = new Vector();
     parameters.add(token);
     parameters.add(description);
 
     try {
-      return (String)myClient.execute(methodName("askPassphrase"), parameters);
+      return (String)myClient.execute(methodName("handleInput"), parameters);
     }
     catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);

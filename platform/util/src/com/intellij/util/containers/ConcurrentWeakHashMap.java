@@ -33,10 +33,10 @@ import java.lang.ref.WeakReference;
 public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class WeakKey<K, V> extends WeakReference<K> implements KeyReference<K, V> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
-    @NotNull private final TObjectHashingStrategy<K> myStrategy;
+    @NotNull private final TObjectHashingStrategy<? super K> myStrategy;
     private final V value;
 
-    private WeakKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<K> strategy, V v, ReferenceQueue<K> q) {
+    private WeakKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<? super K> strategy, V v, ReferenceQueue<K> q) {
       super(k, q);
       myStrategy = strategy;
       value = v;
@@ -68,7 +68,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
 
   @NotNull
   @Override
-  protected KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  protected KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     return new WeakKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, value, myReferenceQueue);
   }
 
@@ -82,16 +82,17 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
   }
 
   ConcurrentWeakHashMap(float loadFactor) {
+    this(DEFAULT_CAPACITY, loadFactor, DEFAULT_CONCURRENCY_LEVEL, ContainerUtil.canonicalStrategy());
   }
 
   ConcurrentWeakHashMap(int initialCapacity,
                         float loadFactor,
                         int concurrencyLevel,
-                        @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+                        @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
-  ConcurrentWeakHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentWeakHashMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     super(hashingStrategy);
   }
 }

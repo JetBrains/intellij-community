@@ -27,7 +27,6 @@ import java.util.List;
  * Used to group ordered collections of {@link StdArrangementTokens} along with their {@link StdArrangementTokenUiRole roles}.
  * 
  * @author Denis Zhdanov
- * @since 3/6/13 8:01 PM
  */
 public class CompositeArrangementSettingsToken {
 
@@ -68,14 +67,14 @@ public class CompositeArrangementSettingsToken {
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
-                                           @NotNull Collection<ArrangementSettingsToken> children)
+                                           @NotNull Collection<? extends ArrangementSettingsToken> children)
   {
     this(token, deduceRole(token), ContainerUtilRt.map2List(children, WRAPPER));
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
                                            @NotNull StdArrangementTokenUiRole role,
-                                           @NotNull List<CompositeArrangementSettingsToken> children)
+                                           @NotNull List<? extends CompositeArrangementSettingsToken> children)
   {
     myToken = token;
     myRole = role;

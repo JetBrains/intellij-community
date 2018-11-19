@@ -176,7 +176,6 @@ public class ContentEntryTreeEditor {
     myExcludePatternsField.setText(StringUtil.join(entry.getExcludePatterns(), ";"));
 
     final Runnable init = () -> {
-      //noinspection ConstantConditions
       myFileSystemTree.updateTree();
       myFileSystemTree.select(file, null);
     };
@@ -285,7 +284,7 @@ public class ContentEntryTreeEditor {
   }
 
   private static class MyFileTreeBuilder extends FileTreeBuilder {
-    public MyFileTreeBuilder(JTree tree,
+    MyFileTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
                              Comparator<NodeDescriptor> comparator,

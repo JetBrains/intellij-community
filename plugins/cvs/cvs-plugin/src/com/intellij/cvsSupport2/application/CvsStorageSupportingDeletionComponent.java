@@ -49,7 +49,7 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
     CvsEntriesManager.getInstance().registerAsVirtualFileListener();
     project.getMessageBus().connect(myListenerDisposable).subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
-      public void commandStarted(CommandEvent event) {
+      public void commandStarted(@NotNull CommandEvent event) {
         myCommandLevel++;
         if (myCommandLevel == 1) {
           myAnotherProjectCommand = (event.getProject() == null) == (event.getProject() == myProject);
@@ -61,7 +61,7 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
       }
 
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         myCommandLevel--;
         if (LOG.isDebugEnabled()) {
           LOG.debug("Finished" + event.getCommandName() + ", commandLevel: " + myCommandLevel);
@@ -205,7 +205,6 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
   }
 
   private static File getStorageRoot() {
-    //noinspection HardCodedStringLiteral
     return new File(PathManager.getSystemPath(), "CVS-TO-DELETE");
   }
 

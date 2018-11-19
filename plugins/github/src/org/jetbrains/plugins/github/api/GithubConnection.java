@@ -252,7 +252,6 @@ public class GithubConnection {
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
-        //noinspection ThrowableResultOfMethodCallIgnored
         GithubStatusCodeException error = getStatusCodeException(response);
 
         Header headerOTP = response.getFirstHeader("X-GitHub-OTP");
@@ -411,7 +410,7 @@ public class GithubConnection {
     @Nullable private final String myNextPage;
     @NotNull private final Header[] myHeaders;
 
-    public ResponsePage(@Nullable JsonElement response, @Nullable String next, @NotNull Header[] headers) {
+    ResponsePage(@Nullable JsonElement response, @Nullable String next, @NotNull Header[] headers) {
       myResponse = response;
       myNextPage = next;
       myHeaders = headers;

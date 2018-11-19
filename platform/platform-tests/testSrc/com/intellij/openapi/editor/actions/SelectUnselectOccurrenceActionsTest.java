@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -36,7 +37,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     super.setUp();
     EditorHintListener listener = new EditorHintListener() {
       @Override
-      public void hintShown(Project project, LightweightHint hint, int flags) {
+      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
         hintCount++;
       }
     };

@@ -38,7 +38,7 @@ public class LineTokenizer extends LineTokenizerBase<String> {
   }
 
   @Override
-  protected void addLine(List<String> lines, int start, int end, boolean appendNewLine) {
+  protected void addLine(List<? super String> lines, int start, int end, boolean appendNewLine) {
     if (appendNewLine) {
       lines.add(myText.substring(start, end) + "\n");
     }

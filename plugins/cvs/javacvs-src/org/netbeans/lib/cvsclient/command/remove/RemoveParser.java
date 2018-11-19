@@ -25,7 +25,7 @@ final class RemoveParser extends DefaultEntryParser {
 
 	// Setup ==================================================================
 
-	public RemoveParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
+	RemoveParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
 		super(eventManager, cvsFileSystem);
 	}
 

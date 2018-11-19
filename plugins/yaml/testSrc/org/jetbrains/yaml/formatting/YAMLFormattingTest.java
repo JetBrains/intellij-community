@@ -2,7 +2,6 @@
 package org.jetbrains.yaml.formatting;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
-import java.util.Calendar;
 import java.util.function.Consumer;
 
 /**
@@ -22,7 +20,6 @@ import java.util.function.Consumer;
  * Answer files: {source}.{answerName}.txt
  * Source files: {source}.yml
  */
-@SuppressWarnings("DefaultAnnotationParam")
 public class YAMLFormattingTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
@@ -80,6 +77,10 @@ public class YAMLFormattingTest extends LightPlatformCodeInsightFixtureTestCase 
 
   public void testSecondItem_3() {
     doPartialReformatTest(10, 11);
+  }
+
+  public void testPartialFormattingBugIdea197964() {
+    doPartialReformatTest(7, 8);
   }
 
   public void testComments_default() {

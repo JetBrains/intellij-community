@@ -93,5 +93,5 @@ public abstract class JobLauncher {
    * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(java.lang.Runnable)} instead
    */
   @NotNull
-  public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback);
+  public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
 }

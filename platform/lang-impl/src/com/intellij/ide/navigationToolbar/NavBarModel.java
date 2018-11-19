@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -23,7 +9,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -156,7 +141,7 @@ public class NavBarModel {
       }
     }
 
-    for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+    for (final NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       for (VirtualFile root : modelExtension.additionalRoots(psiElement.getProject())) {
         VirtualFile parent = root.getParent();
         if (parent == null || !projectFileIndex.isInContent(parent)) {
@@ -218,7 +203,6 @@ public class NavBarModel {
     myChanged = changed;
   }
 
-  @SuppressWarnings({"SimplifiableIfStatement"})
   static boolean isValid(final Object object) {
     if (object instanceof Project) {
       return !((Project)object).isDisposed();
@@ -236,9 +220,9 @@ public class NavBarModel {
   public static PsiElement normalize(@Nullable PsiElement child) {
     if (child == null) return null;
 
-    NavBarModelExtension[] extensions = Extensions.getExtensions(NavBarModelExtension.EP_NAME);
-    for (int i = extensions.length - 1; i >= 0; i--) {
-      NavBarModelExtension modelExtension = extensions[i];
+    List<NavBarModelExtension> extensions = NavBarModelExtension.EP_NAME.getExtensionList();
+    for (int i = extensions.size() - 1; i >= 0; i--) {
+      NavBarModelExtension modelExtension = extensions.get(i);
       child = modelExtension.adjustElement(child);
       if (child == null) return null;
     }
@@ -263,7 +247,7 @@ public class NavBarModel {
     final Object rootElement = size() > 1 ? getElement(1) : null;
     if (rootElement != null && !isValid(rootElement)) return true;
 
-    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       if (modelExtension instanceof AbstractNavBarModelExtension) {
         if (!((AbstractNavBarModelExtension)modelExtension).processChildren(object, rootElement, processor)) return false;
       }

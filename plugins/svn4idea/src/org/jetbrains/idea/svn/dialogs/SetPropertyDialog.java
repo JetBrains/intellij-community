@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -62,16 +61,9 @@ public class SetPropertyDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HELP_ID);
+  protected String getHelpId() {
+    return HELP_ID;
   }
-
-  @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
 
   @Override
   public JComponent getPreferredFocusedComponent() {
@@ -224,7 +216,6 @@ public class SetPropertyDialog extends DialogWrapper {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void fillProperties(final Collection<String> names) {
     names.add(SvnPropertyKeys.SVN_EOL_STYLE);
     names.add(SvnPropertyKeys.SVN_KEYWORDS);

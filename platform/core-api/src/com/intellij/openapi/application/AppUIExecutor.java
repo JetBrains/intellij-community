@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 
 /**
  * An executor that invokes given runnables on Swing Event Dispatch thread when all constraints of a given set are satisfied at the same time.
@@ -17,7 +16,7 @@ import java.util.concurrent.Executor;
  * some action when all documents are committed and indices are available, one can use
  * {@code AppUIExecutor.onUiThread().withDocumentsCommitted(project).inSmartMode(project)}.
  */
-public interface AppUIExecutor extends Executor {
+public interface AppUIExecutor {
 
   /**
    * Creates an executor working with the given modality state.
@@ -77,15 +76,20 @@ public interface AppUIExecutor extends Executor {
   AppUIExecutor expireWith(@NotNull Disposable parentDisposable);
 
   /**
+   * Schedule execution of the given task.
+   */
+  void execute(@NotNull Runnable command);
+
+  /**
    * Schedule the given task's execution and return a Promise that allows to get the result when the task is complete,
    * or cancel the task if it's no longer needed.
    */
-  <T> CancellablePromise<T> submit(Callable<T> task);
+  <T> CancellablePromise<T> submit(@NotNull Callable<T> task);
 
   /**
    * Schedule the given task's execution and return a Promise that allows to check if the task is complete,
    * or cancel the task if it's no longer needed.
    */
-  CancellablePromise<?> submit(Runnable task);
+  CancellablePromise<?> submit(@NotNull Runnable task);
   
 }

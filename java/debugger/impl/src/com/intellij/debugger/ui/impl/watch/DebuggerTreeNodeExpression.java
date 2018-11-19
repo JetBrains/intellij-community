@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -14,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -151,11 +148,8 @@ public class DebuggerTreeNodeExpression {
             castNeeded = false;
           }
         }
-        else if(type instanceof PsiArrayType) {
-          LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expressionWithThis);
-          if(thisClass == JavaPsiFacade.getInstance(expressionWithThis.getProject()).getElementFactory().getArrayClass(languageLevel)) {
-            castNeeded = false;
-          }
+        else if (type instanceof PsiArrayType && PsiUtil.isArrayClass(thisClass)) {
+          castNeeded = false;
         }
       }
     }
@@ -175,7 +169,7 @@ public class DebuggerTreeNodeExpression {
     }
 
     try {
-      PsiExpression res = JavaPsiFacade.getInstance(howToEvaluateThis.getProject()).getElementFactory()
+      PsiExpression res = JavaPsiFacade.getElementFactory(howToEvaluateThis.getProject())
         .createExpressionFromText(psiExpression.getText(), howToEvaluateThis.getContext());
       res.putUserData(ADDITIONAL_IMPORTS_KEY, howToEvaluateThis.getUserData(ADDITIONAL_IMPORTS_KEY));
       return res;
@@ -290,7 +284,7 @@ public class DebuggerTreeNodeExpression {
   private static class IncorrectOperationRuntimeException extends RuntimeException {
     private final IncorrectOperationException myException;
 
-    public IncorrectOperationRuntimeException(IncorrectOperationException exception) {
+    IncorrectOperationRuntimeException(IncorrectOperationException exception) {
       myException = exception;
     }
 

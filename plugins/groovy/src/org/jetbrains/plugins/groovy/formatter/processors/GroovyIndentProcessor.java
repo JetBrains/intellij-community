@@ -384,7 +384,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitParameterList(@NotNull GrParameterList parameterList) {
-    myResult = getContinuationWithoutFirstIndent();
+    if (myChildType == T_LPAREN || myChildType == T_RPAREN) {
+      myResult = getNoneIndent();
+    }
+    else {
+      myResult = getContinuationWithoutFirstIndent();
+    }
   }
 
   @Override

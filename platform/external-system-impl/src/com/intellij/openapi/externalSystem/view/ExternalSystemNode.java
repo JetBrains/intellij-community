@@ -42,7 +42,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/15/2014
  */
 public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode> {
 

@@ -2,8 +2,8 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.util.io.FileUtil.ensureExists
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.testGuiFramework.framework.IdeTestApplication
-import org.fest.swing.image.ScreenshotTaker
+import com.intellij.testGuiFramework.framework.GuiTestPaths
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
@@ -22,28 +22,21 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
   private var myFolder: File? = null
   private var isTestSuccessful = false
   private val screenshotName
-    get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis()) + ".png"
+    get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis()) + ".jpg"
 
 
   override fun starting(description: Description) {
     val folderName = description.testClass.simpleName + "-" + description.methodName
     try {
-      myFolder = File(IdeTestApplication.getFailedTestScreenshotDirPath(), folderName)
+      myFolder = File(GuiTestPaths.failedTestScreenshotDir, folderName)
       ensureExists(myFolder!!)
     }
     catch (e: IOException) {
       println("Could not create folder $folderName")
     }
 
-    myExecutorService.scheduleAtFixedRate({
-                                            try {
-                                              myScreenshotTaker.saveDesktopAsPng(
-                                                File(myFolder, screenshotName).path)
-                                            }
-                                            catch (e: Throwable) {
-                                              // Do nothing
-                                            }
-                                          }, 100, myPeriod.toLong(), TimeUnit.MILLISECONDS)
+    myExecutorService.scheduleAtFixedRate({ myScreenshotTaker.safeTakeScreenshotAndSave(File(myFolder, screenshotName)) },
+                                          100, myPeriod.toLong(), TimeUnit.MILLISECONDS)
   }
 
   override fun finished(description: Description) {

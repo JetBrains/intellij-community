@@ -20,34 +20,33 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
   protected OpenAnotherLogTabAction() {
-    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.ToolbarDecorator.Export);
+    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.Actions.OpenNewTab);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || !Registry.is("vcs.log.open.another.log.visible")) {
+    if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
-    e.getPresentation()
-      .setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager); // only for main log (it is a question, how and where we want to open tabs for external logs)
+    // only for main log (it is a question, how and where we want to open tabs for external logs)
+    e.getPresentation().setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER));

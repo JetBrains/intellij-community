@@ -64,15 +64,16 @@ public class VcsLogContentUtil {
 
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
                                                                           @NotNull Class<U> clazz,
-                                                                          @NotNull Condition<U> condition) {
+                                                                          @NotNull Condition<? super U> condition) {
     return findAndSelect(project, clazz, condition) != null;
   }
 
   @Nullable
   public static <U extends AbstractVcsLogUi> U findAndSelect(@NotNull Project project,
                                                              @NotNull Class<U> clazz,
-                                                             @NotNull Condition<U> condition) {
+                                                             @NotNull Condition<? super U> condition) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    if (toolWindow == null) return null;
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> {

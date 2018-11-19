@@ -92,7 +92,7 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
     private final String myClassName;
     private final String myReplacement;
 
-    public AbsoluteAlignmentInUserInterfaceFix(String className, String replacement) {
+    AbsoluteAlignmentInUserInterfaceFix(String className, String replacement) {
       myClassName = className;
       myReplacement = replacement;
     }

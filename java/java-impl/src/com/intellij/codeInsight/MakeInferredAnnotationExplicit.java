@@ -64,7 +64,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
         PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
       String annotations = StreamEx.of(InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner))
-                                   .remove(InferredAnnotationsManagerImpl::isExperimentalInferredAnnotation)
+                                   .remove(DefaultInferredAnnotationProvider::isExperimentalInferredAnnotation)
                                    .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
                                    .joining(" ");
       if (!annotations.isEmpty()) {
@@ -110,7 +110,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
     for (PsiAnnotation inferred : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner)) {
-      if (InferredAnnotationsManagerImpl.isExperimentalInferredAnnotation(inferred)) continue;
+      if (DefaultInferredAnnotationProvider.isExperimentalInferredAnnotation(inferred)) continue;
       final PsiAnnotation toInsert = correctAnnotation(inferred);
       final String qname = toInsert.getQualifiedName();
       assert qname != null;

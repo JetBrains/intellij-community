@@ -180,7 +180,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     TemplateManager.getInstance(myProject).startTemplate(editor, template, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         if (index + 1 < templates.size()){
           ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.runWriteCommandAction(myProject, ()->
               runTemplates(myProject, editor, templates, index + 1)

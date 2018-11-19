@@ -128,7 +128,7 @@ public abstract class OrderEnumerator {
    * @param handlers custom handlers registered to the module
    * @return true if the enumerator would have recursively processed the given ModuleOrderEntry.
    */
-  public abstract boolean shouldRecurse(@NotNull ModuleOrderEntry entry, @NotNull List<OrderEnumerationHandler> handlers);
+  public abstract boolean shouldRecurse(@NotNull ModuleOrderEntry entry, @NotNull List<? extends OrderEnumerationHandler> handlers);
 
   /**
    * @return {@link OrderRootsEnumerator} instance for processing classes roots
@@ -150,7 +150,7 @@ public abstract class OrderEnumerator {
    * @param rootTypeProvider custom root type provider
    * @return {@link OrderRootsEnumerator} instance for processing roots of the provided type
    */
-  public abstract OrderRootsEnumerator roots(@NotNull NotNullFunction<OrderEntry, OrderRootType> rootTypeProvider);
+  public abstract OrderRootsEnumerator roots(@NotNull NotNullFunction<? super OrderEntry, ? extends OrderRootType> rootTypeProvider);
 
   /**
    * @return classes roots for all entries processed by this enumerator

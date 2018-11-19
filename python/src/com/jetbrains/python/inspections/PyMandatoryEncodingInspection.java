@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -56,12 +57,14 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   }
 
   private class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
     @Override
     public void visitPyFile(PyFile node) {
+      if (!LanguageLevel.forElement(node).isPython2()) return;
+
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(node);
       if (charsetString == null) {
         TextRange tr = new TextRange(0,0);

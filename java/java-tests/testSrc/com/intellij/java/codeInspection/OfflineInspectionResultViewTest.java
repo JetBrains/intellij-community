@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
@@ -112,8 +111,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     assert files != null;
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> map = new HashMap<>();
     for (File file : files) {
-      final String problems = FileUtil.loadFile(file);
-      final Map<String, Set<OfflineProblemDescriptor>> descriptors = OfflineViewParseUtil.parse(problems);
+      final Map<String, Set<OfflineProblemDescriptor>> descriptors = OfflineViewParseUtil.parse(file);
       for (Set<OfflineProblemDescriptor> problemDescriptors : descriptors.values()) {
         for (OfflineProblemDescriptor descriptor : problemDescriptors) {
           descriptor.setModule(moduleName);

@@ -90,7 +90,7 @@ public class UnloadedModulesCompilationCheckinHandler extends CheckinHandler {
     compilerManager.makeWithModalProgress(new ModuleCompileScope(myProject, affectedModules, affectedUnloadedModules, true, false),
                                           new CompileStatusNotification() {
                                             @Override
-                                            public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+                                            public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
                                               result.set(
                                                 aborted ? BuildResult.CANCELED : errors > 0 ? BuildResult.FAILED : BuildResult.SUCCESSFUL);
                                             }

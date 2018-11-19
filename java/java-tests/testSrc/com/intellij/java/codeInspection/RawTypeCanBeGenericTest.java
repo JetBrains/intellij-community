@@ -60,6 +60,10 @@ public class RawTypeCanBeGenericTest extends LightCodeInsightFixtureTestCase {
     doTest(getMessage("list", "List<String>"));
   }
 
+  public void testAvoidUnrelatedWarnings() {
+    doTest(getMessage("iterator", "Iterator<String>"));
+  }
+
   public void testAtEquals() {
     doTest(getMessage("list", "List<String>"));
   }

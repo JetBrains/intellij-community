@@ -14,9 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public interface InputRedirectAware extends RunConfiguration {
-  String REDIRECT_INPUT = "REDIRECT_INPUT";
-  String INPUT_FILE = "INPUT_FILE";
-
   List<String> TYPES_WITH_REDIRECT_AWARE_UI = Arrays.asList("Application", "Java Scratch", "JUnit", "JarApplication");
 
   @NotNull
@@ -33,11 +30,11 @@ public interface InputRedirectAware extends RunConfiguration {
   static File getInputFile(@NotNull RunConfiguration configuration) {
     InputRedirectOptions inputRedirectOptions = getInputRedirectOptions(configuration);
 
-    if (inputRedirectOptions == null || !inputRedirectOptions.myRedirectInput) {
+    if (inputRedirectOptions == null || !inputRedirectOptions.isRedirectInput()) {
       return null;
     }
 
-    String filePath = inputRedirectOptions.myInputFile;
+    String filePath = inputRedirectOptions.getRedirectInputPath();
     if (!StringUtil.isEmpty(filePath)) {
       filePath = FileUtil.toSystemDependentName(filePath);
       File file = new File(filePath);
@@ -52,7 +49,22 @@ public interface InputRedirectAware extends RunConfiguration {
     return null;
   }
 
-  class InputRedirectOptions {
+  interface InputRedirectOptions {
+    boolean isRedirectInput();
+
+    void setRedirectInput(boolean value);
+
+    @Nullable
+    String getRedirectInputPath();
+
+    void setRedirectInputPath(String value);
+  }
+
+  @Deprecated
+  final class InputRedirectOptionsImpl implements InputRedirectOptions {
+    public static final String REDIRECT_INPUT = "REDIRECT_INPUT";
+    public static final String INPUT_FILE = "INPUT_FILE";
+
     @Nullable public String myInputFile = null;
     public boolean myRedirectInput = false;
 
@@ -70,11 +82,33 @@ public interface InputRedirectAware extends RunConfiguration {
       }
     }
 
-    public InputRedirectOptions copy() {
-      InputRedirectOptions options = new InputRedirectOptions();
+    @NotNull
+    public InputRedirectOptionsImpl copy() {
+      InputRedirectOptionsImpl options = new InputRedirectOptionsImpl();
       options.myRedirectInput = myRedirectInput;
       options.myInputFile = myInputFile;
       return options;
+    }
+
+    @Override
+    public boolean isRedirectInput() {
+      return myRedirectInput;
+    }
+
+    @Override
+    public void setRedirectInput(boolean value) {
+      myRedirectInput = value;
+    }
+
+    @Nullable
+    @Override
+    public String getRedirectInputPath() {
+      return myInputFile;
+    }
+
+    @Override
+    public void setRedirectInputPath(String value) {
+      myInputFile = value;
     }
   }
 }

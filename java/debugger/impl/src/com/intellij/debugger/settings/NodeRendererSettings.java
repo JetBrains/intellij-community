@@ -12,7 +12,6 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -145,7 +143,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(@NotNull final Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
@@ -232,7 +229,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     });
 
     // plugins registered renderers come after that
-    Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
+    allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
     // now all predefined stuff
     allRenderers.add(myHexRenderer);
@@ -393,11 +390,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     @Override
-    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) {
-      return null;
-    }
-
-    @Override
     public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
       final DescriptorUpdater descriptorUpdater = new DescriptorUpdater(descriptor, listener);
 
@@ -465,7 +457,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private static class ListObjectRenderer extends CompoundReferenceRenderer {
-    public ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
+    ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
       super(rendererSettings,
             "List",
             createLabelRenderer(" size = ", "size()", null),

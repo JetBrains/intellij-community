@@ -239,7 +239,7 @@ public class MavenArtifactDownloader {
     public final String extension;
     public final MavenExtraArtifactType type;
 
-    public DownloadElement(String classifier, String extension, MavenExtraArtifactType type) {
+    DownloadElement(String classifier, String extension, MavenExtraArtifactType type) {
       this.classifier = classifier;
       this.extension = extension;
       this.type = type;

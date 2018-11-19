@@ -30,7 +30,6 @@ import org.intellij.lang.xpath.psi.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings({"NullableProblems"})
 public class XPathParserDefinition implements ParserDefinition {
 
     @Override

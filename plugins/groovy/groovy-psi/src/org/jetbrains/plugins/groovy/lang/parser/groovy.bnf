@@ -3,6 +3,7 @@
   generate = [
     psi = 'no'
     exact-types = 'elements'
+    java = '8'
   ]
 
   parserClass = 'org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser'
@@ -428,20 +429,20 @@ enum_constant_initializer ::= class_body
 
 
 // region Methods
-method ::= method_identifier parse_parameter_list nl_throws [mb_nl lazy_block]
+method ::= method_identifier method_parameter_list nl_throws [mb_nl lazy_block]
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
-constructor ::= constructor_identifier parse_parameter_list nl_throws [mb_nl lazy_constructor_block]
+constructor ::= constructor_identifier method_parameter_list nl_throws [mb_nl lazy_constructor_block]
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrConstructorElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
-annotation_method ::= method_identifier parse_parameter_list [mb_nl annotation_method_default] nl_throws
+annotation_method ::= method_identifier method_parameter_list [mb_nl annotation_method_default] nl_throws
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationMethodElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
 private annotation_method_default ::= 'default' annotation_value { pin = 1 }
 
@@ -453,11 +454,7 @@ private constructor_identifier ::= <<constructorIdentifier>>
 // region Parameters
 fake parameter_list ::= { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterListElementType' }
 
-private parse_parameter_list ::= parse_empty_parameter_list | parse_non_empty_parameter_list
-private parse_empty_parameter_list ::= '(' empty_parameter_list ')'
-private parse_non_empty_parameter_list ::= '(' method_parameter_list ')' { pin = 1 }
-
-method_parameter_list ::= <<paren_list_inner parse_parameter>> { elementType = parameter_list }
+method_parameter_list ::= <<paren_list parse_parameter>> { elementType = parameter_list }
 private parse_parameter ::= <<parseTailLeftFlat parameter_start parameter>>
 private parameter_start ::= parameter_start_modifiers | parameter_start_no_modifiers
 private parameter_start_modifiers ::= non_empty_modifier_list parameter_start_after_modifiers { pin = 1 }
@@ -520,28 +517,28 @@ private throws_list_item ::= mb_nl type_code_reference
 
 
 // region Generics
-type_parameter_list ::= '<' type_parameters '>'
+type_parameter_list ::= '<' mb_nl type_parameters <<mb_nl_group '>'>>
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterListElementType'
   consumeTokenMethod = 'consumeTokenFast'
 }
 private type_parameters ::= type_parameter type_parameters_tail*
-private type_parameters_tail ::= ',' type_parameter { pin = 1 }
+private type_parameters_tail ::= ',' mb_nl type_parameter { pin = 1 }
 
 type_parameter ::= IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
 {
   name = 'type parameter'
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType'
 }
-type_parameter_bounds_list ::= 'extends' type_parameter_bounds
+type_parameter_bounds_list ::= 'extends' mb_nl type_parameter_bounds
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterBoundsElementType'
 }
 empty_type_parameter_bounds_list ::= { elementType = type_parameter_bounds_list }
 private type_parameter_bounds ::= type_code_reference type_parameter_bounds_tail*
-private type_parameter_bounds_tail ::= '&' type_code_reference { pin = 1 }
+private type_parameter_bounds_tail ::= '&' mb_nl type_code_reference { pin = 1 }
 
 type_argument_list ::= diamond_type_argument_list | non_empty_type_argument_list
 private diamond_type_argument_list ::=  <<isDiamondAllowed>> fast_l_angle '>'
@@ -774,7 +771,7 @@ expression_list ::= expression (',' expression)*
 // FIXME get rid of this weird logic
 private for_body ::= &<<extendedStatement>> | &';' | block_or_statement { name = 'loop body' }
 
-synchronized_statement ::= 'synchronized' '(' expression ')' lazy_block
+synchronized_statement ::= 'synchronized' '(' expression ')' mb_nl lazy_block
 {
   pin = 2
 }
@@ -867,6 +864,7 @@ private string_literal_as_reference ::= '('                                     
 }
 private application_argument_start ::= IDENTIFIER
                                      | simple_literal_tokens
+                                     | GSTRING_BEGIN
                                      | primitive_type
                                      | '~' | '!'
                                      | 'this' | 'super'
@@ -975,31 +973,23 @@ private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argumen
   pin = 2
 }
 
-private qualified_expressions ::= method_reference_expression | qualified_reference_expression | property_expression
+private qualified_expressions ::= method_reference_expression | attribute_expression | qualified_reference_expression | property_expression
 method_reference_expression ::= expression (mb_nl method_reference_dot) (mb_nl qualified_reference_expression_identifiers)
-qualified_reference_expression ::= expression (mb_nl reference_dot) <<mb_nl_group (type_argument_list? qualified_reference_expression_identifiers)>>
-{
-  elementType = reference_expression
-}
+qualified_reference_expression ::= expression (mb_nl reference_dot) after_dot { elementType = reference_expression }
+attribute_expression ::= expression (mb_nl attribute_dot) after_dot
 property_expression ::= expression (mb_nl property_dot) <<mb_nl_group (type_argument_list? property_expression_identifiers)>>
+
 private method_reference_dot ::= '.&' | '::' { consumeTokenMethod = 'consumeTokenFast' }
-private reference_dot ::= '.' attribute_dot? | '?.' attribute_dot? | '*.' { consumeTokenMethod = 'consumeTokenFast' }
-private attribute_dot ::= mb_nl ('@') { consumeTokenMethod = 'consumeTokenFast' }
-private property_dot ::= reference_dot | method_reference_dot
+private reference_dot ::= '.' | '?.' | '*.' { consumeTokenMethod = 'fast' }
+private attribute_dot ::= reference_dot mb_nl ('@') { consumeTokenMethod = 'fast' }
+private property_dot ::= reference_dot  | attribute_dot | method_reference_dot
+
+private after_dot ::= <<mb_nl_group (type_argument_list? qualified_reference_expression_identifiers)>>
 private qualified_reference_expression_identifiers ::= IDENTIFIER
                                                      | string_literal_tokens
                                                      | regex_literal
-                                                     | 'true'
-                                                     | 'false'
-                                                     | 'null'
-                                                     | 'new'
-                                                     | 'class' | 'interface' | 'trait' | 'enum'
-                                                     | 'this' | 'super'
-                                                     | 'case'
-                                                     | 'as' | 'in'
-                                                     | 'else'
                                                      | modifier
-                                                     | statement_keywords
+                                                     | keyword
                                                      | primitive_type
 {
   name = 'property selector'
@@ -1073,7 +1063,7 @@ land_expression ::= expression '&&' mb_nl expression
 lor_expression ::= expression '||' mb_nl expression
 
 private conditionals ::= ternary_expression | elvis_expression
-ternary_expression ::= expression (ternary_tail_pin | ternary_tail)
+ternary_expression ::= expression mb_nl (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
 elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
@@ -1082,10 +1072,8 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 }
 
 private priority15 ::= assignment_expression | tuple_assignment_expression
-assignment_expression ::= expression (<<assignmentOperator>> mb_nl) expression application*
-{
-  rightAssociative = true
-}
+assignment_expression ::= expression assignment_expression_rvalue { rightAssociative = true }
+private assignment_expression_rvalue ::= (<<assignmentOperator>> mb_nl) expression_or_application { pin = 1 }
 
 tuple_assignment_expression ::= single_tuple_assignment | multi_tuple_assignment
 private single_tuple_assignment ::= single_tuple tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
@@ -1155,10 +1143,7 @@ private named_argument_tail ::= ':' expression
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-argument_label ::= IDENTIFIER | string_literal_tokens | '*' | 'null' | 'class' | primitive_type | 'default'
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
+argument_label ::= IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
 // endregion
 
 
@@ -1287,6 +1272,7 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 
 
 // region Generated parser utils
+private external keyword ::= parseKeyword
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants
 private external clear_error ::= clearError

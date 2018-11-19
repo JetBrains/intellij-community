@@ -15,8 +15,9 @@
  */
 package com.intellij.unscramble
 
+import com.intellij.testFramework.PlatformTestUtil
+import groovy.transform.CompileStatic
 import junit.framework.TestCase
-
 /**
  * @author peter
  */
@@ -266,6 +267,20 @@ Thread 7381: (state = BLOCKED)
     assert threads[1].stackTrace.contains('XToolkit')
     assert threads[2].emptyStackTrace
     
+  }
+
+  @CompileStatic
+  void "test very long line parsing performance"() {
+    def spaces = ' ' * 1_000_000
+    def letters = 'a' * 1_000_000
+    PlatformTestUtil.startPerformanceTest('parsing spaces', 100, {
+      def threads = ThreadDumpParser.parse(spaces)
+      assert threads.empty
+    }).assertTiming()
+    PlatformTestUtil.startPerformanceTest('parsing letters', 100, {
+      def threads = ThreadDumpParser.parse(letters)
+      assert threads.empty
+    }).assertTiming()
   }
 
 }

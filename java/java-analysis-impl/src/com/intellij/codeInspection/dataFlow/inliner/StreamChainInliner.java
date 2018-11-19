@@ -18,10 +18,7 @@ package com.intellij.codeInspection.dataFlow.inliner;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -265,12 +262,12 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false));
     }
 
     @Override
     void iteration(CFGBuilder builder) {
-      DfaValue presentOptional = builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
+      DfaValue presentOptional = DfaOptionalSupport.getOptionalValue(builder.getFactory(), true);
       if (myFunction != null) {
         builder.push(myResult)
                .push(presentOptional)
@@ -294,7 +291,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false));
     }
 
     @Override
@@ -306,7 +303,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       myComparatorModel.invoke(builder);
-      builder.assignAndPop(myResult, builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true));
+      builder.assignAndPop(myResult, DfaOptionalSupport.getOptionalValue(builder.getFactory(), true));
     }
 
     @Override
@@ -418,7 +415,7 @@ public class StreamChainInliner implements CallInliner {
     void before(CFGBuilder builder) {
       if (myStreamSource == null) {
         PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
-        builder.pushExpression(arg).checkNotNull(arg, NullabilityProblemKind.passingNullableToNotNullParameter).pop();
+        builder.evaluateFunction(arg);
       }
       super.before(builder);
     }
@@ -429,13 +426,16 @@ public class StreamChainInliner implements CallInliner {
         builder.assignTo(myParameter).pop();
         buildStreamCFG(builder, myChain, myStreamSource);
       } else {
+        PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
         PsiType outType = StreamApiUtil.getStreamElementType(myCall.getType());
-        builder.pop()
-               .pushUnknown()
-               .ifConditionIs(true)
-                 .doWhileUnknown()
-                   .push(builder.getFactory().createTypeValue(outType, Nullability.UNKNOWN))
-                   .chain(myNext::iteration)
+        builder.invokeFunction(1, arg, Nullability.NULLABLE)
+               .ifNotNull()
+                 .pushUnknown()
+                 .ifConditionIs(true)
+                   .doWhileUnknown()
+                     .push(builder.getFactory().createTypeValue(outType, Nullability.UNKNOWN))
+                     .chain(myNext::iteration)
+                   .end()
                  .end()
                .end();
       }
@@ -544,9 +544,12 @@ public class StreamChainInliner implements CallInliner {
         builder.invokeFunction(0, myFunction, Nullability.NOT_NULL);
       }
       else {
-        DfaValue value = builder.getFactory().createTypeValue(myCall.getType(), Nullability.NOT_NULL);
+        DfaValueFactory factory = builder.getFactory();
+        DfaValue value = factory.createTypeValue(myCall.getType(), Nullability.NOT_NULL);
         if (myImmutable) {
-          value = builder.getFactory().withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+          value = factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+        } else {
+          value = factory.withFact(value, DfaFactType.LOCALITY, true);
         }
         builder.push(value);
       }

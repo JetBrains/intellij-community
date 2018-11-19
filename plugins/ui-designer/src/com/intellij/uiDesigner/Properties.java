@@ -139,7 +139,6 @@ public final class Properties {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void loadEnumProperties(final String className, final Element enumPropertyElement) {
     Map<String, IntEnumEditor.Pair[]> map = new HashMap<>();
     for (Element e : enumPropertyElement.getChildren("property")) {

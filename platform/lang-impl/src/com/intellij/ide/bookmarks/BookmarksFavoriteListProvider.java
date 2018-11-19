@@ -95,7 +95,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
         }
 
         @Override
-        protected void update(PresentationData presentation) {
+        protected void update(@NotNull PresentationData presentation) {
           presentation.setPresentableText(bookmark.toString());
           presentation.setIcon(bookmark.getIcon());
         }

@@ -40,8 +40,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.DoubleArrayList;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
 import org.assertj.core.util.VisibleForTesting;
@@ -50,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -129,9 +126,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
         insideReadAction.set(true);
-        while (true) {
-          ProgressManager.checkCanceled();
-        }
+        waitForPCE();
       }
 
       @Override
@@ -188,10 +183,14 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void testThereIsNoDelayBetweenIndicatorCancelAndProgressManagerCheckCanceled() throws Throwable {
     for (int i=0; i<100;i++) {
       final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-      List<Thread> threads = ContainerUtil.map(Collections.nCopies(10, ""),
-                                               s -> new Thread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      int N = 10;
+      Semaphore started = new Semaphore(N);
+      Semaphore others = new Semaphore(1);
+      List<Thread> threads = ContainerUtil.map(Collections.nCopies(N, ""),
+                                               __ -> new Thread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
                                                  try {
-                                                   Thread.sleep(new Random().nextInt(100));
+                                                   started.up();
+                                                   others.waitFor();
                                                    indicator.cancel();
                                                    ProgressManager.checkCanceled();
                                                    fail("checkCanceled() must know about canceled indicator even from different thread");
@@ -203,6 +202,8 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
                                                  }
                                                }, indicator), "indicator test"));
       threads.forEach(Thread::start);
+      started.waitFor();
+      others.up();
       ConcurrencyUtil.joinAll(threads);
     }
     if (exception != null) throw exception;
@@ -384,14 +385,18 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         progress.cancel();
         assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
         assertTrue(progress.isCanceled());
-        while (true) { // wait for PCE
-          ProgressManager.checkCanceled();
-        }
+        waitForPCE();
       }, ProgressWrapper.wrap(progress));
       fail("PCE must have been thrown");
     }
     catch (ProcessCanceledException ignored) {
 
+    }
+  }
+
+  private static void waitForPCE() {
+    while (true) {
+      ProgressManager.checkCanceled();
     }
   }
 
@@ -458,24 +463,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
     @Override
     public void initStateFrom(@NotNull ProgressIndicator indicator) {
-    }
-
-    @NotNull
-    @Override
-    public Stack<String> getTextStack() {
-      throw new RuntimeException();
-    }
-
-    @NotNull
-    @Override
-    public DoubleArrayList getFractionStack() {
-      throw new RuntimeException();
-    }
-
-    @NotNull
-    @Override
-    public Stack<String> getText2Stack() {
-      throw new RuntimeException();
     }
 
     @Override

@@ -103,7 +103,7 @@ public final class NettyUtil {
   }
 
   private static final class CorsHandlerDoNotUseOwnLogger extends CorsHandler {
-    public CorsHandlerDoNotUseOwnLogger(@NotNull CorsConfig config) {
+    CorsHandlerDoNotUseOwnLogger(@NotNull CorsConfig config) {
       super(config);
     }
 

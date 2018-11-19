@@ -9,7 +9,7 @@ import java.io.File;
 class LazyAttachVirtualFile extends LightVirtualFile {
   private final String myRemotePath;
 
-  public LazyAttachVirtualFile(String path,
+  LazyAttachVirtualFile(String path,
                                String content) {
     super(new File(path).getName(), content);
     myRemotePath = path;

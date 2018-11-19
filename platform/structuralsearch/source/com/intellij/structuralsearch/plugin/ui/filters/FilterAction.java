@@ -35,6 +35,7 @@ public abstract class FilterAction extends AnAction implements Filter {
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
+    initFilter();
     myTable.addFilter(this);
   }
 
@@ -49,6 +50,8 @@ public abstract class FilterAction extends AnAction implements Filter {
   protected abstract void setLabel(SimpleColoredComponent component);
 
   public abstract boolean hasFilter();
+
+  public void initFilter() {}
 
   public abstract void clearFilter();
 

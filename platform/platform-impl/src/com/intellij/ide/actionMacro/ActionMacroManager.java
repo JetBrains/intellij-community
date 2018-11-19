@@ -78,7 +78,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     myActionManager = actionManager;
     messageBus.connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, final AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, final AnActionEvent event) {
         String id = actionManager.getId(action);
         if (id == null) return;
         //noinspection HardCodedStringLiteral
@@ -220,7 +220,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
       myBalloon.addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           if (myBalloon != null) {
             Disposer.dispose(myBalloon);
           }

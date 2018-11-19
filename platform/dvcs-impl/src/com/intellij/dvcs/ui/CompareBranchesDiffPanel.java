@@ -38,11 +38,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,10 +61,10 @@ class CompareBranchesDiffPanel extends JPanel {
   private final CommitCompareInfo myCompareInfo;
   private final DvcsCompareSettings myVcsSettings;
 
-  private final JBLabel myLabel;
+  private final JEditorPane myLabel;
   private final MyChangesBrowser myChangesBrowser;
 
-  public CompareBranchesDiffPanel(CompareBranchesHelper helper, String branchName, String currentBranchName, CommitCompareInfo compareInfo) {
+  CompareBranchesDiffPanel(CompareBranchesHelper helper, String branchName, String currentBranchName, CommitCompareInfo compareInfo) {
     myHelper = helper;
     myProject = helper.getProject();
     myCurrentBranchName = currentBranchName;
@@ -76,11 +72,18 @@ class CompareBranchesDiffPanel extends JPanel {
     myBranchName = branchName;
     myVcsSettings = helper.getDvcsCompareSettings();
 
-    myLabel = new JBLabel();
-    myChangesBrowser = new MyChangesBrowser(helper.getProject(), emptyList());
-
-    HyperlinkLabel swapSidesLabel = new HyperlinkLabel("Swap branches");
-    swapSidesLabel.addHyperlinkListener(new HyperlinkAdapter() {
+    myLabel = new JEditorPane() {
+      @Override
+      public void setText(String t) {
+        super.setText(t);
+        getPreferredSize();
+      }
+    };
+    myLabel.setEditorKit(UIUtil.getHTMLEditorKit());
+    myLabel.setEditable(false);
+    myLabel.setBackground(null);
+    myLabel.setOpaque(false);
+    myLabel.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
@@ -89,13 +92,11 @@ class CompareBranchesDiffPanel extends JPanel {
       }
     });
 
-    JPanel topPanel = new JPanel(new HorizontalLayout(JBUI.scale(10)));
-    topPanel.add(myLabel);
-    topPanel.add(swapSidesLabel);
+    myChangesBrowser = new MyChangesBrowser(helper.getProject(), emptyList());
 
-    setLayout(new BorderLayout(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
-    add(topPanel, BorderLayout.NORTH);
-    add(myChangesBrowser);
+    setLayout(new BorderLayout());
+    add(myLabel, BorderLayout.NORTH);
+    add(myChangesBrowser, BorderLayout.CENTER);
 
     refreshView();
   }
@@ -105,7 +106,7 @@ class CompareBranchesDiffPanel extends JPanel {
 
     String currentBranchText = String.format("current working tree on <b><code>%s</code></b>", myCurrentBranchName);
     String otherBranchText = String.format("files in <b><code>%s</code></b>", myBranchName);
-    myLabel.setText(String.format("<html>Difference between %s and %s:</html>",
+    myLabel.setText(String.format("<html>Difference between %s and %s:&emsp;<a href=\"\">Swap branches</a></html>",
                                   swapSides ? otherBranchText : currentBranchText,
                                   swapSides ? currentBranchText : otherBranchText));
 
@@ -115,7 +116,7 @@ class CompareBranchesDiffPanel extends JPanel {
   }
 
   private class MyChangesBrowser extends SimpleChangesBrowser {
-    public MyChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
+    MyChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
       super(project, false, true);
       setChangesToDisplay(changes);
     }
@@ -147,7 +148,7 @@ class CompareBranchesDiffPanel extends JPanel {
   }
 
   private class MyCopyChangesAction extends DumbAwareAction {
-    public MyCopyChangesAction() {
+    MyCopyChangesAction() {
       super("Get from Branch", "Replace file content with its version from branch " + myBranchName, AllIcons.Actions.Download);
       copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
     }

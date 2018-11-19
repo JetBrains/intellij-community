@@ -29,7 +29,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since Jan 19, 2005
  */
 public abstract class DependenciesBuilder {
   private final Project myProject;

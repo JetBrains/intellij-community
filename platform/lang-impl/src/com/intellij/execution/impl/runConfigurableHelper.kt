@@ -15,18 +15,16 @@ internal class RunConfigurationBean {
 
   constructor(configurable: SingleConfigurationConfigurable<*>) {
     this.configurable = configurable
-    settings = this.configurable.settings as RunnerAndConfigurationSettings
+    settings = this.configurable.settings
   }
 
-  override fun toString(): String {
-    return settings.toString()
-  }
+  override fun toString() = settings.toString()
 }
 
 enum class RunConfigurableNodeKind {
   CONFIGURATION_TYPE, FOLDER, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN;
 
-  fun supportsDnD(): Boolean = this == FOLDER || this == CONFIGURATION || this == TEMPORARY_CONFIGURATION
+  fun supportsDnD() = this == FOLDER || this == CONFIGURATION || this == TEMPORARY_CONFIGURATION
 
   val isConfiguration: Boolean
     get() = (this == CONFIGURATION) or (this == TEMPORARY_CONFIGURATION)

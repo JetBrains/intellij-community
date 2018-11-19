@@ -7,13 +7,16 @@ import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import org.fest.swing.exception.WaitTimedOutError
+import javax.swing.Icon
 
 /**
  * @author Artem.Gainanov
  */
-class GutterFixture(private val myIde: IdeFrameFixture) {
+open class GutterFixture(private val myIde: IdeFrameFixture) {
 
-  enum class GutterIcon {
+  interface IGutterIcon
+
+  enum class GutterIcon : IGutterIcon {
     BREAKPOINT,
     DISABLED_BREAKPOINT,
     CSS_COLOR,
@@ -32,15 +35,16 @@ class GutterFixture(private val myIde: IdeFrameFixture) {
      * OVERRIDDEN=[7, 8]}
      */
     get() {
-      val result = GutterIcon.values().map { Pair(it, mutableListOf<Int>()) }.toMap()
+      val result: Map<out GutterIcon, MutableList<Int>> = GutterIcon.values().map { Pair(it, mutableListOf<Int>()) }.toMap()
       runOnEdt {
         for (highlighter in getMarkupModel().allHighlighters) {
           val lineNumber = myIde.editor.editor.document.getLineNumber(highlighter.startOffset) + 1
-          if (highlighter.gutterIconRenderer?.icon != null) {
+          val icon = highlighter.gutterIconRenderer?.icon
+          if (icon != null) {
             if (highlighter.gutterIconRenderer?.javaClass?.name == "com.intellij.psi.css.browse.CssColorGutterRenderer") {
               result[GutterIcon.CSS_COLOR]!!.add(lineNumber)
             }
-            when (highlighter.gutterIconRenderer?.icon) {
+            when (icon) {
               AllIcons.Gutter.ImplementingMethod -> result[GutterIcon.IMPLEMENTATION]!!.add(lineNumber)
               AllIcons.Gutter.OverridenMethod -> result[GutterIcon.OVERRIDDEN]!!.add(lineNumber)
               AllIcons.Gutter.ImplementedMethod -> result[GutterIcon.IMPLEMENTED]!!.add(lineNumber)
@@ -48,12 +52,15 @@ class GutterFixture(private val myIde: IdeFrameFixture) {
               AllIcons.RunConfigurations.TestState.Run -> result[GutterIcon.RUN_SCRIPT]!!.add(lineNumber)
               AllIcons.Debugger.Db_set_breakpoint -> result[GutterIcon.BREAKPOINT]!!.add(lineNumber)
               AllIcons.Debugger.Db_disabled_breakpoint -> result[GutterIcon.DISABLED_BREAKPOINT]!!.add(lineNumber)
+              else -> handleUnmatchedIcon(icon)?.let { result.getOrDefault(it, mutableListOf(lineNumber)).add(lineNumber) }
             }
           }
         }
       }
       return result.mapValues { it.value.toList() }
     }
+
+  protected open fun handleUnmatchedIcon(icon: Icon): IGutterIcon? = null
 
   /**
    * Waits until all specified kinds of gutter icons are shown and in required quantities

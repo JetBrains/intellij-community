@@ -27,13 +27,14 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class ModuleRule implements GetDataRule {
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     Object moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
     if (moduleContext != null) {
       return moduleContext;

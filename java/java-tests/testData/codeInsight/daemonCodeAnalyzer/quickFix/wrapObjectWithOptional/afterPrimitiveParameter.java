@@ -5,7 +5,7 @@ public class Test {
 
   void m() {
     long ll = 10;
-    f(10, Optional.ofNullable(ll), 10);
+    f(10, Optional.of(ll), 10);
   }
 
 

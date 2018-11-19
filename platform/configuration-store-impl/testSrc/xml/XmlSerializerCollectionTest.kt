@@ -9,7 +9,6 @@ import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SmartList
-import com.intellij.util.element
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
@@ -49,7 +48,8 @@ internal class XmlSerializerCollectionTest {
   fun jdomExternalizableStringListWithoutClassAttribute() {
     val testList = arrayOf("foo", "bar")
     val element = Element("test")
-    val listElement = element.element("list")
+    val listElement = Element("list")
+    element.addContent(listElement)
     for (id in testList) {
       listElement.addContent(Element("item").setAttribute("itemvalue", id))
     }

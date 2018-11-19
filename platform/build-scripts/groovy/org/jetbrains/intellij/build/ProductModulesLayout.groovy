@@ -19,9 +19,6 @@ class ProductModulesLayout {
    */
   String mainJarName
 
-  List<String> platformApiJarModules = []
-  List<String> platformImplJarModules = []
-
   /**
    * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
    * @see CommunityRepositoryModules#PLATFORM_API_MODULES
@@ -54,6 +51,14 @@ class ProductModulesLayout {
    */
   List<String> bundledPluginModules = []
 
+  /**
+   * Names of the main modules of the plugins which need to be bundled in windows distribution of the product.
+   */
+  final Map<OsFamily, List<String>> bundledOsPluginModules = [:]
+
+  Set<String> getAllBundledPluginsModules() {
+    return (bundledOsPluginModules.values().flatten() as Set<String>) + bundledPluginModules
+  }
 
   private LinkedHashMap<String, PluginPublishingSpec> pluginsToPublish = []
 
@@ -165,8 +170,11 @@ class ProductModulesLayout {
   }
 
   /**
-   * If {@code true} then all plugins that compatible with an IDE will be built.
-   * Otherwise only plugins from {@link #setPluginModulesToPublish} will be considered.
+   * If {@code true} then all plugins that compatible with an IDE will be built. By default these plugins will be placed to "auto-uploading"
+   * subdirectory and may be automatically uploaded to plugins.jetbrains.com; use {@link #setPluginPublishingSpec} to override this behavior
+   * for specific plugins if needed.
+   * <br>
+   * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.
    * 
    * @see #setPluginPublishingSpec
    */

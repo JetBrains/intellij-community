@@ -125,7 +125,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return isAccessible(moduleSystem -> moduleSystem.isAccessible(pkg.getQualifiedName(), null, place));
   }
 
-  private static boolean isAccessible(Predicate<JavaModuleSystem> predicate) {
+  private static boolean isAccessible(Predicate<? super JavaModuleSystem> predicate) {
     return Stream.of(JavaModuleSystem.EP_NAME.getExtensions()).allMatch(predicate);
   }
 

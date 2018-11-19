@@ -34,6 +34,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -454,6 +455,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     frame.setVisible(true);
     addFrameStateListener(frame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
   }
 
   @Override
@@ -496,6 +498,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       addFrameStateListener(frame);
     }
     myEventDispatcher.getMulticaster().frameCreated(frame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
 
     return frame;
   }
@@ -524,7 +527,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final void releaseFrame(final IdeFrameImpl frame) {
+  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
     myEventDispatcher.getMulticaster().beforeFrameReleased(frame);
 
     final Project project = frame.getProject();
@@ -654,7 +657,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   int updateFrameBounds(@NotNull IdeFrameImpl frame) {
     int extendedState = frame.getExtendedState();
     if (SystemInfo.isMacOSLion) {
-      ComponentPeer peer = frame.getPeer();
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
       if (peer instanceof FramePeer) {
         // frame.state is not updated by jdk so get it directly from peer
         extendedState = ((FramePeer)peer).getState();

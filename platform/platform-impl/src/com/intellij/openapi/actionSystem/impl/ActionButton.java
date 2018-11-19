@@ -52,7 +52,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private boolean myNoIconsInPopup = false;
   private Insets myInsets;
 
-  public ActionButton(AnAction action,
+  public ActionButton(@NotNull AnAction action,
                       Presentation presentation,
                       String place,
                       @NotNull Dimension minimumSize) {
@@ -151,7 +151,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         ((ActionManagerImpl)manager).addActionPopup(curLast);
         curLast.addListener(new JBPopupAdapter() {
           @Override
-          public void onClosed(LightweightWindowEvent event) {
+          public void onClosed(@NotNull LightweightWindowEvent event) {
             ((ActionManagerImpl)manager).removeActionPopup(curLast);
           }
         });
@@ -176,35 +176,41 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return UIUtil.getParentOfType(ActionToolbar.class, this);
   }
 
-  private void actionPerformed(final AnActionEvent event) {
+  protected void actionPerformed(final AnActionEvent event) {
     HelpTooltip.hide(this);
-
-    if (myAction instanceof ActionGroup &&
-        !(myAction instanceof CustomComponentAction) &&
-        ((ActionGroup)myAction).isPopup() &&
-        !((ActionGroup)myAction).canBePerformed(event.getDataContext())) {
-      final ActionManagerImpl am = (ActionManagerImpl)ActionManager.getInstance();
-      ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new MenuItemPresentationFactory() {
-        @Override
-        protected void processPresentation(Presentation presentation) {
-          if (myNoIconsInPopup) {
-            presentation.setIcon(null);
-            presentation.setHoveredIcon(null);
-          }
-        }
-      });
-      popupMenu.setDataContextProvider(() -> this.getDataContext());
-
-      if (event.isFromActionToolbar()) {
-        popupMenu.getComponent().show(this, 0, getHeight());
-      }
-      else {
-        popupMenu.getComponent().show(this, getWidth(), 0);
-      }
-
+    if (isPopupMenuAction(event, myAction)) {
+      showPopupMenu(event, (ActionGroup) myAction);
     } else {
       ActionUtil.performActionDumbAware(myAction, event);
     }
+  }
+
+  protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+    final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
+    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
+      @Override
+      protected void processPresentation(Presentation presentation) {
+        if (myNoIconsInPopup) {
+          presentation.setIcon(null);
+          presentation.setHoveredIcon(null);
+        }
+      }
+    });
+    popupMenu.setDataContextProvider(() -> this.getDataContext());
+
+    if (event.isFromActionToolbar()) {
+      popupMenu.getComponent().show(this, 0, getHeight());
+    }
+    else {
+      popupMenu.getComponent().show(this, getWidth(), 0);
+    }
+  }
+
+  protected boolean isPopupMenuAction(AnActionEvent event, AnAction action) {
+    return action instanceof ActionGroup &&
+        !(action instanceof CustomComponentAction) &&
+        ((ActionGroup) action).isPopup() &&
+        !((ActionGroup) action).canBePerformed(event.getDataContext());
   }
 
   @Override
@@ -310,7 +316,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else {
       myDisabledIcon = null;
-      Logger.getInstance(ActionButton.class).error("invalid icon for action " + myAction);
+      Logger.getInstance(ActionButton.class).error("invalid icon (" + myIcon + ") for action " + myAction.getClass());
     }
   }
 
@@ -338,10 +344,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @Override
   public void paintComponent(Graphics g) {
-    super.paintComponent(g);
-
+    jComponentPaint(g);
     paintButtonLook(g);
     paintDownArrowIfGroup(g);
+  }
+
+  protected void jComponentPaint(Graphics g) {
+    super.paintComponent(g);
   }
 
   private void paintDownArrowIfGroup(Graphics g) {
@@ -388,6 +397,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         if (skipPress || !isButtonEnabled()) return;
         myMouseDown = true;
         ourGlobalMouseDown = true;
+        onMousePressed(e);
         repaint();
         break;
 
@@ -395,6 +405,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         if (skipPress || !isButtonEnabled()) return;
         myMouseDown = false;
         ourGlobalMouseDown = false;
+        onMouseReleased(e);
         if (myRollover) {
           performAction(e);
         }
@@ -415,6 +426,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         onMousePresenceChanged(false);
         break;
     }
+  }
+
+  protected void onMouseReleased(@NotNull MouseEvent e) {
+    // Extension point
+  }
+
+  protected void onMousePressed(@NotNull MouseEvent e) {
+    // Extension point
   }
 
   protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {

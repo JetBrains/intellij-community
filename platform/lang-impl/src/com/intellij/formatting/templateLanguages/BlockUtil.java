@@ -61,9 +61,9 @@ class BlockUtil {
     return new Pair<>(before, after);
   }
 
-  private static void splitByRightBoundAndCollectBlocks(@NotNull List<Block> blocks,
-                                                        @NotNull List<DataLanguageBlockWrapper> before,
-                                                        @NotNull List<DataLanguageBlockWrapper> after,
+  private static void splitByRightBoundAndCollectBlocks(@NotNull List<? extends Block> blocks,
+                                                        @NotNull List<? super DataLanguageBlockWrapper> before,
+                                                        @NotNull List<? super DataLanguageBlockWrapper> after,
                                                         @NotNull TextRange bounds) {
     for (Block block : blocks) {
       final TextRange textRange = block.getTextRange();
@@ -81,7 +81,7 @@ class BlockUtil {
   }
 
   @Nullable
-  private static DataLanguageBlockWrapper createAndAddBlock(List<DataLanguageBlockWrapper> list, Block block, @Nullable final Indent indent) {
+  private static DataLanguageBlockWrapper createAndAddBlock(List<? super DataLanguageBlockWrapper> list, Block block, @Nullable final Indent indent) {
     DataLanguageBlockWrapper wrapper = DataLanguageBlockWrapper.create(block, indent);
     if (wrapper != null) {
       list.add(wrapper);
@@ -90,7 +90,7 @@ class BlockUtil {
   }
 
 
-  public static List<Block> mergeBlocks(@NotNull List<TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
+  public static List<Block> mergeBlocks(@NotNull List<? extends TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
     ArrayList<Block> result = new ArrayList<>(tlBlocks.size() + foreignBlocks.size());
     int vInd = 0;
     int fInd = 0;
@@ -164,7 +164,7 @@ class BlockUtil {
     return result;
   }
 
-  private static int getEndOffset(@NotNull List<TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
+  private static int getEndOffset(@NotNull List<? extends TemplateLanguageBlock> tlBlocks, @NotNull List<? extends DataLanguageBlockWrapper> foreignBlocks) {
     return Math.max(foreignBlocks.get(foreignBlocks.size() - 1).getTextRange().getEndOffset(),
                     tlBlocks.get(tlBlocks.size() - 1).getTextRange().getEndOffset());
   }
@@ -189,7 +189,7 @@ class BlockUtil {
     return list;
   }
 
-  static List<Block> splitBlockIntoFragments(@NotNull Block block, @NotNull List<TemplateLanguageBlock> subBlocks) {
+  static List<Block> splitBlockIntoFragments(@NotNull Block block, @NotNull List<? extends TemplateLanguageBlock> subBlocks) {
     final List<Block> children = new ArrayList<>(5);
     final TextRange range = block.getTextRange();
     int childStartOffset = range.getStartOffset();

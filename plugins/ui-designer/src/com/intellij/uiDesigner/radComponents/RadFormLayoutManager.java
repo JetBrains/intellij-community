@@ -922,7 +922,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     CellConstraints cc;
     try {
       LayoutManager layout = parent.getLayout();
-      //noinspection HardCodedStringLiteral
       Method method = layout.getClass().getMethod("getConstraints", Component.class);
       cc = (CellConstraints)createSerializedCopy(method.invoke(layout, child));
     }
@@ -935,7 +934,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {
-    public ComponentInsetsProperty() {
+    ComponentInsetsProperty() {
       super(null, "Insets");
     }
 

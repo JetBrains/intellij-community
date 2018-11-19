@@ -112,7 +112,7 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
     }
   }
 
-  protected static boolean stripWords(final Processor<WordOccurrence> processor,
+  protected static boolean stripWords(final Processor<? super WordOccurrence> processor,
                                     final CharSequence tokenText,
                                     int from,
                                     int to,

@@ -18,9 +18,13 @@ package org.jetbrains.plugins.gradle.service.execution;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static com.intellij.openapi.util.io.FileUtil.filesEqual;
+import static com.intellij.openapi.util.io.FileUtil.loadFile;
+import static org.junit.Assert.*;
 
 public class GradleExecutionHelperTest {
 
@@ -47,5 +51,24 @@ public class GradleExecutionHelperTest {
     );
 
     assertEquals(obfuscatedArgs, expectedArgs);
+  }
+
+  @Test
+  public void testWriteToFileGradleInitScript() throws IOException {
+    String prefix = "init";
+
+    File tempFile = GradleExecutionHelper.writeToFileGradleInitScript("foo", prefix);
+    assertTrue(tempFile.exists());
+    assertEquals("foo", loadFile(tempFile));
+
+    assertTrue(filesEqual(tempFile, GradleExecutionHelper.writeToFileGradleInitScript("foo", prefix)));
+
+    File anotherTempFile = GradleExecutionHelper.writeToFileGradleInitScript("bar", prefix);
+    assertTrue(anotherTempFile.exists());
+    assertEquals("bar", loadFile(anotherTempFile));
+
+    assertFalse(filesEqual(tempFile, anotherTempFile));
+
+    assertTrue(filesEqual(anotherTempFile, GradleExecutionHelper.writeToFileGradleInitScript("bar", prefix)));
   }
 }

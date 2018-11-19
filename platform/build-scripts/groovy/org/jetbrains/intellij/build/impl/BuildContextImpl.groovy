@@ -66,10 +66,16 @@ class BuildContextImpl extends BuildContext {
 
     def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
+    if (productProperties.productCode != null && applicationInfo.productCode == null) {
+      applicationInfo.productCode = productProperties.productCode
+    }
+    else if (productProperties.productCode == null && applicationInfo.productCode != null) {
+      productProperties.productCode = applicationInfo.productCode
+    }
     bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
-    fullBuildNumber = "$productProperties.productCode-$buildNumber"
+    fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
     systemSelector = productProperties.getSystemSelector(applicationInfo)
 
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
@@ -182,6 +188,11 @@ class BuildContextImpl extends BuildContext {
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     compilationContext.notifyArtifactBuilt(artifactPath)
+  }
+
+  @Override
+  boolean isBundledJreModular() {
+    return compilationContext.isBundledJreModular()
   }
 
   @Override

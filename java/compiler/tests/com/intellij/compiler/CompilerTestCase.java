@@ -28,6 +28,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.AssertionFailedError;
 import org.apache.log4j.Level;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,8 +38,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * @author Jeka
+ * @deprecated use {@link BaseCompilerTestCase} instead
  */
+@Deprecated
 public abstract class CompilerTestCase extends ModuleTestCase {
   private static final int COMPILING_TIMEOUT = 2 * 60 * 1000;
   protected static final String SOURCE = "source";
@@ -98,7 +100,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         mySemaphore.down();
         doCompile(new CompileStatusNotification() {
           @Override
-          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+          public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
             try {
               assertFalse("Code did not compile!", aborted);
               if (errors > 0) {
@@ -152,7 +154,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         Disposable eventDisposable = Disposer.newDisposable();
         myProject.getMessageBus().connect(eventDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
           @Override
-          public void fileGenerated(String outputRoot, String relativePath) {
+          public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
             generated.add(relativePath);
           }
         });
@@ -160,7 +162,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
         doCompile(new CompileStatusNotification() {
           @Override
-          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+          public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
             Disposer.dispose(eventDisposable);
             try {
               String prefix = FileUtil.toSystemIndependentName(myModuleRoot.getPath());

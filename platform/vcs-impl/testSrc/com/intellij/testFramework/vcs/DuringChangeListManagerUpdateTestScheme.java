@@ -69,6 +69,7 @@ public class DuringChangeListManagerUpdateTestScheme {
     if (test.getException() != null) {
       test.getException().printStackTrace();
     }
+    //noinspection ThrowableNotThrown
     assert test.get() : (test.getException() == null ? null : test.getException().getMessage());
   }
 

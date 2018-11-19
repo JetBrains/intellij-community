@@ -18,7 +18,7 @@ public class GeneralStatement extends Statement {
     type = Statement.TYPE_GENERAL;
   }
 
-  public GeneralStatement(Statement head, Collection<Statement> statements, Statement post) {
+  public GeneralStatement(Statement head, Collection<? extends Statement> statements, Statement post) {
 
     this();
 

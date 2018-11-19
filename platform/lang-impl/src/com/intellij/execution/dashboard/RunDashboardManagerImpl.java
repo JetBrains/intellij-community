@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -155,13 +156,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     });
     myContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         updateToolWindowContent();
         updateDashboard(true);
       }
 
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         if (myContentManager.getContentCount() == 0 && !isShowConfigurations()) {
           setShowConfigurations(true);
         }
@@ -222,9 +223,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations() {
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
-    List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-      .filter(settings -> myState.configurationTypes.contains(settings.getType().getId()))
-      .collect(Collectors.toList());
+    List<RunnerAndConfigurationSettings> configurations = ContainerUtil
+      .filter(RunManager.getInstance(myProject).getAllSettings(),
+              settings -> myState.configurationTypes.contains(settings.getType().getId()));
 
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
     configurations.forEach(configurationSettings -> {
@@ -254,12 +255,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private List<RunContentDescriptor> filterByContent(List<RunContentDescriptor> descriptors) {
-    return descriptors.stream()
-      .filter(descriptor -> {
-        Content content = descriptor.getAttachedContent();
-        return content != null && content.getManager() == myContentManager;
-      })
-      .collect(Collectors.toList());
+    return ContainerUtil.filter(descriptors, descriptor -> {
+      Content content = descriptor.getAttachedContent();
+      return content != null && content.getManager() == myContentManager;
+    });
   }
 
   @Override
@@ -553,7 +552,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   private class DashboardContentManagerListener extends ContentManagerAdapter {
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       if (myShowConfigurations || myToolWindowContentManager == null) return;
 
       Content toolWindowContent = myDashboardToToolWindowContents.get(event.getContent());
@@ -568,7 +567,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (myShowConfigurations || myToolWindowContentManager == null) return;
 
       Content toolWindowContent = myDashboardToToolWindowContents.remove(event.getContent());
@@ -580,7 +579,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
         contentAdded(event);
       }
@@ -594,7 +593,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   private class ToolWindowContentManagerListener extends ContentManagerAdapter {
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent().equals(myToolWindowContent)) {
         Content content = myContentManager.getSelectedContent();
         if (content != null) {
@@ -615,7 +614,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       if (event.getContent().equals(myToolWindowContent)) return;
 
       if (event.getOperation() != ContentManagerEvent.ContentOperation.add) return;

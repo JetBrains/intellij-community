@@ -241,7 +241,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   }
 
   private static class ErrorWithFix extends Pair<ErrorInfo, QuickFix> {
-    public ErrorWithFix(final ErrorInfo first, final QuickFix second) {
+    ErrorWithFix(final ErrorInfo first, final QuickFix second) {
       super(first, second);
     }
   }
@@ -249,7 +249,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private class QuickFixPopupStep extends BaseListPopupStep<ErrorWithFix> {
     private final boolean myShowSuppresses;
 
-    public QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
+    QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
       super(null, fixList);
       myShowSuppresses = showSuppresses;
     }
@@ -292,7 +292,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private static class SuppressFix extends QuickFix {
     private final String myInspectionId;
 
-    public SuppressFix(final GuiEditor editor, final String name, final String inspectionId, final RadComponent component) {
+    SuppressFix(final GuiEditor editor, final String name, final String inspectionId, final RadComponent component) {
       super(editor, name, component);
       myInspectionId = inspectionId;
     }
@@ -309,7 +309,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private final class MyShowHintRequest implements Runnable{
     private final QuickFixManager myManager;
 
-    public MyShowHintRequest(@NotNull final QuickFixManager manager) {
+    MyShowHintRequest(@NotNull final QuickFixManager manager) {
       myManager = manager;
     }
 

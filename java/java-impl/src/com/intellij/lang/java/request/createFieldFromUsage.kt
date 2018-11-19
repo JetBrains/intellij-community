@@ -13,6 +13,7 @@ import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
@@ -66,7 +67,7 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
       }
     }
     else {
-      val baseClass = extractBaseClassFromSwitchStatement()
+      val baseClass = resolveClassInClassTypeOnly(PsiImplUtil.getSwitchLabel(myRef)?.enclosingSwitchStatement?.expression?.type)
       if (baseClass != null) {
         processHierarchy(baseClass)
       }
@@ -74,12 +75,6 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
         processOuterAndImported()
       }
     }
-  }
-
-  private fun extractBaseClassFromSwitchStatement(): PsiClass? {
-    val parent = myRef.parent as? PsiSwitchLabelStatement ?: return null
-    val switchStatement = parent.parentOfType<PsiSwitchStatement>() ?: return null
-    return resolveClassInClassTypeOnly(switchStatement.expression?.type)
   }
 
   private fun processHierarchy(baseClass: PsiClass) {

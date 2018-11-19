@@ -208,8 +208,12 @@ public class DirectoryEntry extends Entry {
   }
 
   Entry findDirectChild(String name, boolean isDirectory) {
+    int nameHash = calcNameHash(name);
+    
     for (Entry child : getChildren()) {
-      if (child.isDirectory() == isDirectory && child.nameEquals(name)) return child;
+      if (child.isDirectory() == isDirectory && nameHash == child.getNameHash() && child.nameEquals(name)) {
+        return child;
+      }
     }
     return null;
   }

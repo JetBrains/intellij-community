@@ -39,7 +39,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since 28-Nov-2005
  */
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
@@ -384,7 +383,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return serialization filter.
    */
-  @SuppressWarnings({"MethodMayBeStatic", "DeprecatedIsStillUsed"})
+  @SuppressWarnings({"DeprecatedIsStillUsed"})
   @Nullable
   @Deprecated
   protected SerializationFilter getSerializationFilter() {

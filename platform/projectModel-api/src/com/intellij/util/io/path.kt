@@ -75,7 +75,7 @@ fun Path.delete() {
     }
   }
   catch (e: Exception) {
-    FileUtil.delete(toFile())
+    deleteAsIOFile()
   }
 }
 
@@ -116,7 +116,7 @@ private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleF
       Files.delete(file)
     }
     catch (e: Exception) {
-      FileUtil.delete(file.toFile())
+      deleteAsIOFile()
     }
     return FileVisitResult.CONTINUE
   }
@@ -126,11 +126,19 @@ private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleF
       Files.delete(dir)
     }
     catch (e: Exception) {
-      FileUtil.delete(dir.toFile())
+      deleteAsIOFile()
     }
     return FileVisitResult.CONTINUE
   }
 })
+
+private fun Path.deleteAsIOFile() {
+  try {
+    FileUtil.delete(toFile())
+  }
+  // according to specification #toFile() method may throw UnsupportedOperationException
+  catch (ignored: UnsupportedOperationException) {}
+}
 
 fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
@@ -140,37 +148,38 @@ val Path.systemIndependentPath: String
 val Path.parentSystemIndependentPath: String
   get() = parent!!.toString().replace(File.separatorChar, '/')
 
+@Throws(IOException::class)
 fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 
+@Throws(IOException::class)
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
+@Throws(IOException::class)
 fun Path.readChars(): CharSequence = inputStream().reader().readCharSequence(size().toInt())
 
+@Throws(IOException::class)
 fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
 
+@Throws(IOException::class)
 fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
 
+@Throws(IOException::class)
 @JvmOverloads
 fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   outputStream().use { it.write(data, offset, size) }
   return this
 }
 
-/** @deprecated use [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream] (to be removed in IDEA 2019) */
 fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
-  val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
-  tempFile.write(data, offset, size)
-  try {
-    Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-  }
-  catch (e: IOException) {
-    LOG.warn(e)
-    FileUtil.rename(tempFile.toFile(), this.toFile())
+  writeSafe {
+    it.write(data, offset, size)
   }
   return this
 }
 
-/** @deprecated use [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream] (to be removed in IDEA 2019) */
+/**
+ * Consider using [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream]
+ */
 fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
   val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
   tempFile.outputStream().use(outConsumer)
@@ -184,6 +193,7 @@ fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
   return this
 }
 
+@Throws(IOException::class)
 fun Path.write(data: String): Path {
   parent?.createDirectories()
 
@@ -213,7 +223,7 @@ fun Path.isFile(): Boolean = Files.isRegularFile(this)
 fun Path.move(target: Path): Path = Files.move(this, target, StandardCopyOption.REPLACE_EXISTING)
 
 fun Path.copy(target: Path): Path {
-  parent?.createDirectories()
+  target.parent?.createDirectories()
   return Files.copy(this, target, StandardCopyOption.REPLACE_EXISTING)
 }
 

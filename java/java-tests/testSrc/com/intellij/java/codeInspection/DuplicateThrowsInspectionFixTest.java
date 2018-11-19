@@ -14,8 +14,6 @@ public class DuplicateThrowsInspectionFixTest extends LightQuickFixParameterized
     return new LocalInspectionTool[]{new DuplicateThrowsInspection()};
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/inspection/duplicateThrows/quickFix";

@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -130,14 +129,17 @@ private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveR
 private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
   if (isQualified) return false
   val parent = parent
-  return parent !is GrReferenceElement<*> &&
-         parent !is GrExtendsClause &&
-         parent !is GrImplementsClause &&
-         parent !is GrAnnotation &&
-         parent !is GrImportStatement &&
-         parent !is GrNewExpression &&
-         parent !is GrAnonymousClassDefinition &&
-         parent !is GrCodeReferenceElement
+  return when (parent) {
+    is GrReferenceElement<*>,
+    is GrExtendsClause,
+    is GrImplementsClause,
+    is GrAnnotation,
+    is GrImportStatement,
+    is GrNewExpression,
+    is GrAnonymousClassDefinition,
+    is GrCodeReferenceElement -> false
+    else -> true
+  }
 }
 
 private fun resolveToTypeParameter(place: PsiElement, name: String): Collection<GroovyResolveResult> {
@@ -160,7 +162,7 @@ private fun GrCodeReferenceElement.resolveAsPartOfFqn(reference: GrCodeReference
     }
     currentElement = e ?: return emptyList()
   }
-  return listOf(BaseGroovyResolveResult(currentElement, this, null))
+  return listOf(BaseGroovyResolveResult(currentElement, this))
 }
 
 private fun PsiClass.getPackage(): PsiPackage? {

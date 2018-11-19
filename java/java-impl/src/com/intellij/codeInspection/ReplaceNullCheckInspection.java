@@ -62,8 +62,8 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         PsiStatement nextToDelete = context.myNextToDelete;
         int maybeImplicitElseLength = nextToDelete != null ? nextToDelete.getTextLength() : 0;
         boolean isInfoLevel = noWarningReplacementBigger && ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
-        if (!isOnTheFly && isInfoLevel) return;
         ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
+        if (!isOnTheFly && highlight == ProblemHighlightType.INFORMATION) return;
         holder.registerProblem(ifStatement.getFirstChild(), InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
                                new ReplaceWithRequireNonNullFix(method, false));
       }

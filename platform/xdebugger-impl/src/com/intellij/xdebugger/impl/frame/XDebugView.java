@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.SingleAlarm;
@@ -31,7 +32,12 @@ public abstract class XDebugView implements Disposable {
   }
 
   protected final void requestClear() {
-    myClearAlarm.cancelAndRequest();
+    if (ApplicationManager.getApplication().isUnitTestMode()) { // no delay in tests
+      clear();
+    }
+    else {
+      myClearAlarm.cancelAndRequest();
+    }
   }
 
   protected final void cancelClear() {

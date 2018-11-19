@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory {
   private static final String THEME_SCHEMA = "/schemes/theme.schema.json";
 
@@ -25,7 +22,7 @@ public class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory
     return Collections.singletonList(new JsonSchemaFileProvider() {
       @Override
       public boolean isAvailable(@NotNull VirtualFile file) {
-        return file.getName().endsWith(".theme.json");
+        return isAllowedFileName(file.getName());
       }
 
       @NotNull
@@ -46,5 +43,10 @@ public class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory
         return SchemaType.embeddedSchema;
       }
     });
+  }
+
+
+  public static boolean isAllowedFileName(@NotNull String fileName) {
+    return fileName.endsWith(".theme.json");
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.test.assertFalse
 
 /**
  * Set of utils to work with a File as an object on the File System
@@ -23,8 +24,23 @@ class FileSystemUtils(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
 val GuiTestCase.fileSystemUtils by FileSystemUtils
 
 fun FileSystemUtils.checkFileExists(filePath: Path) {
+  assertFileExists(filePath)
+  assertFileNotEmpty(filePath)
+}
+
+fun FileSystemUtils.assertFileExists(filePath: Path) {
   testCase.logTestStep("Going to check whether file `$filePath` created")
   assert(filePath.toFile().exists()) { "Can't find a file `$filePath`" }
+}
+
+fun FileSystemUtils.checkFileAbsent(filePath: Path) {
+  testCase.logTestStep("Going to check whether file `$filePath` is absent")
+  assertFalse(filePath.toFile().exists(), "File `$filePath` is present")
+}
+
+fun FileSystemUtils.assertFileNotEmpty(filePath: Path) {
+  testCase.logTestStep("Going to check whether file `$filePath` is not empty")
+  assert(filePath.toFile().length() > 0) { "File `$filePath` is empty" }
 }
 
 fun FileSystemUtils.checkFileContainsLine(filePath: Path, line: String) {

@@ -30,7 +30,7 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
   public DistinctRootsCollection() {
   }
 
-  public DistinctRootsCollection(Collection<T> collection) {
+  public DistinctRootsCollection(Collection<? extends T> collection) {
     addAll(collection);
   }
 

@@ -7,11 +7,11 @@ public class CharUsedInArithmeticContext {
     }
 
     void bar() {
-        int i = 'a' + 5;
+        int i = <warning descr="'char' ''a'' used in arithmetic context">'a'</warning> + 5;
     }
 
     void airplane(int i1, int i2) {
-        System.out.println (i2 + '-' + i1 + " = " + (i2 - i1));
+        System.out.println (i2 + <warning descr="'char' ''-'' used in arithmetic context">'-'</warning> + i1 + " = " + (i2 - i1));
     }
 
     boolean compare(char c1, char c2) {

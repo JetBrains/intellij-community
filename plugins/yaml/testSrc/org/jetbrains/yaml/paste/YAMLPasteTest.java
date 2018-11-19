@@ -113,13 +113,13 @@ public abstract class YAMLPasteTest extends LightPlatformCodeInsightFixtureTestC
   private void doTest(@NotNull String insert, @NotNull String resultSuffix, boolean selectWord) {
     String testName = getTestName(true);
     String fileName = ObjectUtils.notNull(StringUtil.substringBefore(testName, "_"), testName);
-    myFixture.configureByFile(fileName + ".yml");
+    myFixture.configureByFile(fileName + ".before.yml");
     CopyPasteManager.getInstance().setContents(new StringSelection(insert));
     if (selectWord) {
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
     }
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
-    myFixture.checkResultByFile(fileName + resultSuffix + ".txt");
+    myFixture.checkResultByFile(fileName + resultSuffix + ".after.yml");
   }
 
   public static class YAMLPasteNoReformatTest extends YAMLPasteTest {

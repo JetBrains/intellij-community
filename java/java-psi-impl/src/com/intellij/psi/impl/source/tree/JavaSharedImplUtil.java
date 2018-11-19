@@ -63,7 +63,8 @@ public class JavaSharedImplUtil {
     List<PsiAnnotation[]> annotations = ContainerUtil.newSmartList();
 
     List<PsiAnnotation> current = null;
-    boolean found = (stopAt == null), stop = false;
+    boolean found = stopAt == null;
+    boolean stop = false;
     for (PsiElement child = anchor.getNextSibling(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
 
@@ -75,7 +76,7 @@ public class JavaSharedImplUtil {
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
-        annotations.add(ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
+        annotations.add(current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
         current = null;
         if (stop) return annotations;
       }

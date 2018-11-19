@@ -5,7 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -142,7 +145,7 @@ public class AnnotationUtil {
       }
       else if (element instanceof PsiClass) {
         //noinspection unchecked
-        InheritanceUtil.processSupers((PsiClass)element, false, (Processor)Processors.cancelableCollectProcessor(result));
+        InheritanceUtil.processSupers((PsiClass)element, false, Processors.cancelableCollectProcessor(result));
       }
       else if (element instanceof PsiParameter) {
         collectSuperParameters(result, (PsiParameter)element);
@@ -235,9 +238,7 @@ public class AnnotationUtil {
     return isAnnotated(listOwner, annotationFqn, flags, null);
   }
 
-  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, @Flags int flags, @Nullable Set<PsiMember> processed) {
-    if (!listOwner.isValid()) return false;
-
+  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, @Flags int flags, @Nullable Set<? super PsiMember> processed) {
     PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) return false;
 
@@ -368,14 +369,14 @@ public class AnnotationUtil {
   @NotNull
   public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                   boolean inHierarchy,
-                                                  @Nullable Set<PsiModifierListOwner> visited) {
+                                                  @Nullable Set<? super PsiModifierListOwner> visited) {
     return getAllAnnotations(owner, inHierarchy, visited, true);
   }
 
   @NotNull
   public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                   boolean inHierarchy,
-                                                  @Nullable Set<PsiModifierListOwner> visited, boolean withInferred) {
+                                                  @Nullable Set<? super PsiModifierListOwner> visited, boolean withInferred) {
     final PsiModifierList list = owner.getModifierList();
     PsiAnnotation[] annotations = PsiAnnotation.EMPTY_ARRAY;
     if (list != null) {

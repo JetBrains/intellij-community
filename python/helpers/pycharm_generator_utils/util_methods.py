@@ -1,5 +1,7 @@
-from pycharm_generator_utils.constants import *
+import ast
 import keyword
+
+from pycharm_generator_utils.constants import *
 
 try:
     import inspect
@@ -236,7 +238,7 @@ def is_callable(x):
 
 
 def sorted_no_case(p_array):
-    """Sort an array case insensitevely, returns a sorted copy"""
+    """Sort an array case insensitively, returns a sorted copy"""
     p_array = list(p_array)
     p_array = sorted(p_array, key=lambda x: x.upper())
     return p_array
@@ -259,8 +261,18 @@ def cleanup(value):
         if replacement:
             result.append(value[prev:i])
             result.append(replacement)
+            prev = i + 1
         i += 1
+    result.append(value[prev:])
     return "".join(result)
+
+
+def is_valid_expr(s):
+    try:
+        compile(s, '<unknown>', 'eval', ast.PyCF_ONLY_AST)
+    except SyntaxError:
+        return False
+    return True
 
 
 _prop_types = [type(property())]
@@ -615,9 +627,14 @@ def action(msg, *data):
     CURRENT_ACTION = msg % data
     note(msg, *data)
 
+
+def set_verbose(verbose):
+    global _is_verbose
+    _is_verbose = verbose
+
+
 def note(msg, *data):
     """Say something at debug info level (stderr)"""
-    global _is_verbose
     if _is_verbose:
         sys.stderr.write(msg % data)
         sys.stderr.write("\n")

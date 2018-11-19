@@ -15,12 +15,10 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAssignmentExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -54,7 +52,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("assignment.used.as.condition.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "==");
     }
 
     @Override
@@ -79,10 +77,16 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      if (expression.getRExpression() == null || !(expression.getLExpression() instanceof PsiReferenceExpression)) {
+      if (expression.getRExpression() == null ||
+          expression.getOperationTokenType() != JavaTokenType.EQ ||
+          !PsiType.BOOLEAN.equals(expression.getType())) {
         return;
       }
-      final PsiElement parent = expression.getParent();
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (!PsiUtil.isCondition(expression, parent)) {
         return;
       }

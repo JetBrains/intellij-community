@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since May 11, 2010 5:30:28 PM
  */
 public class JavaIndenterTest extends AbstractJavaFormatterTest {
 

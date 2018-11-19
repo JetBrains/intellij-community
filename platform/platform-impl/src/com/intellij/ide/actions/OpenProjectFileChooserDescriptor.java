@@ -15,18 +15,15 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.ProductIcons;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,9 +34,6 @@ import javax.swing.*;
  * <strong>Due to a high I/O impact SHOULD NOT be used in any other cases.</strong>
  */
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
-  private static final Icon ourProjectIcon = PlatformUtils.isJetBrainsProduct()
-                                 ? AllIcons.Nodes.IdeaProject
-                                 : IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
   private static final boolean ourCanInspectDirs = SystemProperties.getBooleanProperty("idea.chooser.lookup.for.project.dirs", true);
 
   public OpenProjectFileChooserDescriptor(boolean chooseFiles) {
@@ -65,7 +59,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   public Icon getIcon(VirtualFile file) {
     if (canInspectDirectory(file)) {
       if (isIprFile(file) || isIdeaDirectory(file)) {
-        return dressIcon(file, ourProjectIcon);
+        return dressIcon(file, ProductIcons.getInstance().getProjectIcon());
       }
       Icon icon = getImporterIcon(file);
       if (icon != null) {
@@ -95,7 +89,8 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   private static Icon getImporterIcon(VirtualFile file) {
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
     if (provider != null) {
-      return file.isDirectory() && provider.lookForProjectsInDirectory() ? ourProjectIcon : provider.getIcon(file);
+      return file.isDirectory() && provider.lookForProjectsInDirectory() ? ProductIcons.getInstance().getProjectIcon()
+                                                                         : provider.getIcon(file);
     }
     return null;
   }

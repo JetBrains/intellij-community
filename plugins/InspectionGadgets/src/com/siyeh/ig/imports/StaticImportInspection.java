@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +34,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.StringUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -150,7 +150,8 @@ public class StaticImportInspection extends BaseInspection {
       final Map<PsiJavaCodeReferenceElement, PsiMember> referenceTargetMap = new HashMap<>();
       for (PsiJavaCodeReferenceElement reference : references) {
         final PsiElement target = reference.resolve();
-        if (target instanceof PsiEnumConstant && reference.getParent() instanceof PsiSwitchLabelStatement) continue;
+        if (target instanceof PsiEnumConstant &&
+            reference instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)reference) != null) continue;
         if (target instanceof PsiMember) {
           final PsiMember member = (PsiMember)target;
           referenceTargetMap.put(reference, member);
@@ -284,9 +285,7 @@ public class StaticImportInspection extends BaseInspection {
         if (fqName == null) {
           return false;
         }
-        final String text =
-          StringUtils.stripAngleBrackets(reference.getText());
-        return text.equals(fqName);
+        return PsiNameHelper.getQualifiedClassName(reference.getText(), false).equals(fqName);
       }
     }
   }
@@ -317,7 +316,7 @@ public class StaticImportInspection extends BaseInspection {
 
     private boolean shouldReportImportStatement(PsiImportStaticStatement importStatement) {
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
-      if (importReference == null) {
+      if (importReference == null || importReference.multiResolve(false).length == 0) {
         return false;
       }
       PsiClass targetClass = importStatement.resolveTargetClass();

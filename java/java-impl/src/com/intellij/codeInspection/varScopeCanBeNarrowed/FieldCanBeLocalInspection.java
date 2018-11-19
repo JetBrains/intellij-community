@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -67,17 +66,15 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     removeReadFields(aClass, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
 
     if (candidates.isEmpty()) return;
-    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+    final List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
 
     for (final PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
-        if (!ReferencesSearch.search(field, new LocalSearchScope(aClass)).forEach(reference -> {
+        if (ReferencesSearch.search(field, new LocalSearchScope(aClass)).anyMatch(reference -> {
           final PsiElement element = reference.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
-            return qualifier == null || qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null;
-          }
-          return true;
+          if (!(element instanceof PsiReferenceExpression)) return false;
+          final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
+          return qualifier != null && (!(qualifier instanceof PsiThisExpression) || ((PsiThisExpression)qualifier).getQualifier() != null);
         })) {
           continue;
         }
@@ -175,8 +172,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   private static void removeReadFields(PsiClass aClass,
-                                       final Set<PsiField> candidates,
-                                       final Set<PsiField> usedFields,
+                                       final Set<? super PsiField> candidates,
+                                       final Set<? super PsiField> usedFields,
                                        final boolean ignoreFieldsUsedInMultipleMethods) {
     final Set<PsiField> ignored = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -213,10 +210,10 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   private static void checkCodeBlock(final PsiElement body,
-                                     final Set<PsiField> candidates,
-                                     Set<PsiField> usedFields,
+                                     final Set<? super PsiField> candidates,
+                                     Set<? super PsiField> usedFields,
                                      boolean ignoreFieldsUsedInMultipleMethods,
-                                     Set<PsiField> ignored) {
+                                     Set<? super PsiField> ignored) {
     try {
       final Ref<Collection<PsiVariable>> writtenVariables = new Ref<>();
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject())
@@ -273,7 +270,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     return writtenVariables.get();
   }
 
-  private static boolean hasImplicitReadOrWriteUsage(final PsiField field, ImplicitUsageProvider[] implicitUsageProviders) {
+  private static boolean hasImplicitReadOrWriteUsage(final PsiField field, List<ImplicitUsageProvider> implicitUsageProviders) {
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitRead(field) || provider.isImplicitWrite(field)) {
         return true;
@@ -342,14 +339,14 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       return element;
     }
 
-    private static boolean groupByCodeBlocks(final Collection<PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+    private static boolean groupByCodeBlocks(final Collection<? extends PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
       for (PsiReference psiReference : allReferences) {
         final PsiElement element = psiReference.getElement();
         final PsiCodeBlock block = PsiTreeUtil.getTopmostParentOfType(element, PsiCodeBlock.class);
         if (block == null) {
           return false;
         }
-        
+
         Collection<PsiReference> references = refs.get(block);
         if (references == null) {
           references = new ArrayList<>();

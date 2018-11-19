@@ -47,13 +47,13 @@ public interface TreeStructureProvider {
    * project view.
    *
    * @param selected the list of nodes currently selected in the project view.
-   * @param dataName the identifier of the requested data object (for example, as defined in
+   * @param dataId the identifier of the requested data object (for example, as defined in
    *                 {@link com.intellij.openapi.actionSystem.PlatformDataKeys})
    * @return the data object, or null if no data object can be returned by this provider.
    * @see com.intellij.openapi.actionSystem.DataProvider
    */
   @Nullable
-  default Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
+  default Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
     return null;
   }
 }

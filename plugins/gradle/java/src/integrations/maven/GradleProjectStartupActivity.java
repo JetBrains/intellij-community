@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/13
  */
 public class GradleProjectStartupActivity implements StartupActivity {
 

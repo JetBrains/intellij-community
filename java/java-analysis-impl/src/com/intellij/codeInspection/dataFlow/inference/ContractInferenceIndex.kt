@@ -4,13 +4,17 @@ package com.intellij.codeInspection.dataFlow.inference
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
+import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
-import com.intellij.psi.stub.JavaStubImplUtil
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.gist.GistManager
 import java.util.*
 
@@ -95,4 +99,22 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
   }
 }
 
-fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(JavaStubImplUtil.getMethodStubIndex(method))
+fun getIndexedData(method: PsiMethodImpl): MethodData? {
+  val file = method.containingFile
+  val map = CachedValuesManager.getCachedValue(file) {
+    val fileData = gist.getFileData(file)
+    val result = hashMapOf<PsiMethod, MethodData>()
+    if (fileData != null) {
+      val spine = (file as PsiFileImpl).stubbedSpine
+      var methodIndex = 0
+      for (i in 0 until spine.stubCount) {
+        if (spine.getStubType(i) === JavaElementType.METHOD) {
+          fileData[methodIndex]?.let { result[spine.getStubPsi(i) as PsiMethod] = it }
+          methodIndex++
+        }
+      }
+    }
+    CachedValueProvider.Result.create(result, file)
+  }
+  return map[method]
+}

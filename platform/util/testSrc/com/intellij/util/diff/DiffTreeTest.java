@@ -37,7 +37,7 @@ public class DiffTreeTest extends TestCase {
     private final Node[] myChildren;
     private final int myId;
 
-    public Node(final int id, int startOffset, @NotNull Node... children) {
+    Node(final int id, int startOffset, @NotNull Node... children) {
       myStartOffset = startOffset;
       myChildren = children;
       myId = id;

@@ -51,7 +51,6 @@ import static java.util.Collections.*;
  *
  * @author Kirill Likhodedov
  */
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class GitImpl extends GitImplBase {
 
   private static final Logger LOG = Logger.getInstance(Git.class);
@@ -144,7 +143,8 @@ public class GitImpl extends GitImplBase {
                                 @NotNull final String clonedDirectoryName, @NotNull final GitLineHandlerListener... listeners) {
     return runCommand(() -> {
       GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
-      handler.setStdoutSuppressed(false);
+      handler.setSilent(false);
+      handler.setStderrSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
       if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project) && Registry.is("git.clone.recurse.submodules")) {
@@ -525,8 +525,20 @@ public class GitImpl extends GitImplBase {
                                 @NotNull final GitRemote remote,
                                 @NotNull final List<GitLineHandlerListener> listeners,
                                 final String... params) {
+    return fetch(repository, remote, listeners, null, params);
+  }
+
+  @NotNull
+  public GitCommandResult fetch(@NotNull final GitRepository repository,
+                                @NotNull final GitRemote remote,
+                                @NotNull final List<GitLineHandlerListener> listeners,
+                                @Nullable GitAuthenticationGate authenticationGate,
+                                final String... params) {
     return runCommand(() -> {
-      final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
+      GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
+      if (authenticationGate != null) {
+        h.setAuthenticationGate(authenticationGate);
+      }
       h.setSilent(false);
       h.setStdoutSuppressed(false);
       h.setUrls(remote.getUrls());
@@ -727,6 +739,15 @@ public class GitImpl extends GitImplBase {
       h.setUrls(authenticationUrls);
       return h;
     });
+  }
+
+  @Override
+  @NotNull
+  public GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CAT_FILE);
+    h.setSilent(true);
+    h.addParameters("-t", object);
+    return runCommand(h);
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {

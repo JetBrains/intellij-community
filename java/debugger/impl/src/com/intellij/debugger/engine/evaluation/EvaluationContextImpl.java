@@ -35,7 +35,7 @@ public final class EvaluationContextImpl implements EvaluationContext {
 
   public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext,
                                @Nullable StackFrameProxyImpl frameProxy,
-                               @NotNull EvaluatingComputable<Value> thisObjectFactory) {
+                               @NotNull EvaluatingComputable<? extends Value> thisObjectFactory) {
     this(suspendContext, frameProxy, new DebuggerComputableValue(thisObjectFactory));
   }
 

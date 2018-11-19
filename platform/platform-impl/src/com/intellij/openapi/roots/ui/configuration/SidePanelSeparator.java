@@ -2,8 +2,12 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -15,7 +19,7 @@ import static javax.swing.SwingConstants.LEFT;
 public class SidePanelSeparator extends SeparatorWithText {
   @Override
   protected void paintComponent(Graphics g) {
-    final JBColor separatorColor = new JBColor(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND, Gray._80);
+    Color separatorColor = JBUI.CurrentTheme.Popup.separatorColor();
     g.setColor(separatorColor);
     if ("--".equals(getCaption())) {
       final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);

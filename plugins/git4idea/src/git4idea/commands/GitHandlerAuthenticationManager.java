@@ -5,12 +5,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import git4idea.config.GitVcsApplicationSettings;
-import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +25,8 @@ import org.jetbrains.git4idea.ssh.GitXmlRpcSshService;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.UUID;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Manager for Git remotes authentication.
@@ -50,10 +54,10 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   public static GitHandlerAuthenticationManager prepare(@NotNull Project project, @NotNull GitLineHandler handler) throws IOException {
     GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler);
     manager.prepareHttpAuth();
-    if (GitVcsSettings.getInstance(project).isIdeaSsh()) {
+    if (GitVcsApplicationSettings.getInstance().isUseIdeaSsh()) {
       manager.prepareSshAuth();
     }
-    else if (GitVcsApplicationSettings.getInstance().isOverrideSshAskPass()) {
+    else if (Registry.is("git.ssh.native.override.ssh.askpass")) {
       manager.prepareNativeSshAuth();
     }
     return manager;
@@ -69,8 +73,11 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   private void prepareHttpAuth() throws IOException {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
-    GitHttpAuthenticator httpAuthenticator =
-      service.createAuthenticator(myProject, myHandler.getUrls(), myHandler.isIgnoreAuthenticationRequest());
+    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
+    GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
+                                                                         myHandler.getUrls(),
+                                                                         authenticationGate,
+                                                                         myHandler.isIgnoreAuthenticationRequest());
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
@@ -125,7 +132,9 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_VAR, "ssh");
-    mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject, myHandler.isIgnoreAuthenticationRequest()), myProject);
+    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
+    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.isIgnoreAuthenticationRequest());
+    mySshHandler = ssh.registerHandler(guiHandler, myProject);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
@@ -159,12 +168,23 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void prepareNativeSshAuth() throws IOException {
     GitXmlRpcNativeSshService service = ServiceManager.getService(GitXmlRpcNativeSshService.class);
-    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject, myHandler.isIgnoreAuthenticationRequest());
+
+    boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
+    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
+    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject,
+                                                                                  authenticationGate,
+                                                                                  myHandler.isIgnoreAuthenticationRequest(),
+                                                                                  doNotRememberPasswords);
 
     myNativeSshHandler = service.registerHandler(authenticator, myProject);
     int port = service.getXmlRcpPort();
 
-    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV, service.getScriptPath().getPath());
+    boolean useBatchFile = SystemInfo.isWindows &&
+                           (!Registry.is("git.use.shell.script.on.windows") ||
+                            !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myProject));
+
+    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV,
+                                           service.getScriptPath(useBatchFile).getPath());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV, myNativeSshHandler.toString());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("myHandler=%s, port=%s", myNativeSshHandler, port));

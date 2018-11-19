@@ -45,7 +45,7 @@ public class ConditionalReturnStatementValue implements ReturnValue {
   @Override
   @Nullable
   public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(methodCallExpression.getProject());
     PsiIfStatement statement;
     if (myReturnValue == null) {
       statement = (PsiIfStatement)elementFactory.createStatementFromText("if(a) return;", null);

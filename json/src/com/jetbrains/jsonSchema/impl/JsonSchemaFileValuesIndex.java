@@ -1,14 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
+import com.intellij.json.JsonLexer;
 import com.intellij.json.json5.Json5FileType;
-import com.intellij.json.psi.JsonFile;
+import com.intellij.json.json5.Json5Lexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -40,14 +45,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
       @Override
       @NotNull
       public Map<String, String> map(@NotNull FileContent inputData) {
-        PsiFile file = inputData.getPsiFile();
-        if (!(file instanceof JsonFile)) return ContainerUtil.newHashMap();
-        HashMap<String, String> map = ContainerUtil.newHashMap();
-        String schemaUrl = JsonCachedValues.fetchSchemaUrl(file);
-        map.put(JsonCachedValues.URL_CACHE_KEY, schemaUrl == null ? NULL : schemaUrl);
-        String schemaId = JsonCachedValues.fetchSchemaId(file);
-        map.put(JsonCachedValues.ID_CACHE_KEY, schemaId == null ? NULL : schemaId);
-        return map;
+        return readTopLevelProps(inputData.getFileType(), inputData.getContentAsText());
       }
     };
 
@@ -104,5 +102,80 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
     }
 
     return null;
+  }
+
+  @NotNull
+  static Map<String, String> readTopLevelProps(@NotNull FileType fileType, @NotNull CharSequence content) {
+    if (fileType != JsonFileType.INSTANCE && fileType != Json5FileType.INSTANCE) return ContainerUtil.newHashMap();
+
+    Lexer lexer = fileType == Json5FileType.INSTANCE ? new Json5Lexer() : new JsonLexer();
+    final HashMap<String, String> map = ContainerUtil.newHashMap();
+    lexer.start(content);
+
+    // We only care about properties at the root level having the form of "property" : "value".
+    int nesting = 0;
+    boolean idFound = false;
+    boolean obsoleteIdFound = false;
+    boolean schemaFound = false;
+    while (!(idFound && schemaFound && obsoleteIdFound) && lexer.getCurrentPosition().getOffset() < lexer.getBufferEnd()) {
+      IElementType token = lexer.getTokenType();
+      // Nesting level can only change at curly braces.
+      if (token == JsonElementTypes.L_CURLY) {
+        nesting++;
+      }
+      else if (token == JsonElementTypes.R_CURLY) {
+        nesting--;
+      }
+      else if (nesting == 1 &&
+               (token == JsonElementTypes.DOUBLE_QUOTED_STRING
+                || token == JsonElementTypes.SINGLE_QUOTED_STRING
+                || token == JsonElementTypes.IDENTIFIER)) {
+        // We are looking for two special properties at the root level.
+        switch (lexer.getTokenText()) {
+          case "$id":
+          case "\"$id\"":
+          case "'$id'":
+            idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
+            break;
+          case "id":
+          case "\"id\"":
+          case "'id'":
+            obsoleteIdFound |= captureValueIfString(lexer, map, JsonCachedValues.OBSOLETE_ID_CACHE_KEY);
+            break;
+          case "$schema":
+          case "\"$schema\"":
+          case "'$schema'":
+            schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
+            break;
+        }
+      }
+      lexer.advance();
+    }
+    return map;
+  }
+
+  private static boolean captureValueIfString(@NotNull Lexer lexer, @NotNull HashMap<String, String> destMap, @NotNull String key) {
+    IElementType token;
+    lexer.advance();
+    token = skipWhitespacesAndGetTokenType(lexer);
+    if (token == JsonElementTypes.COLON) {
+      lexer.advance();
+      token = skipWhitespacesAndGetTokenType(lexer);
+      if (token == JsonElementTypes.DOUBLE_QUOTED_STRING || token == JsonElementTypes.SINGLE_QUOTED_STRING) {
+        destMap.put(key, lexer.getTokenText().substring(1, lexer.getTokenText().length() - 1));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static IElementType skipWhitespacesAndGetTokenType(@NotNull Lexer lexer) {
+    while (lexer.getTokenType() == TokenType.WHITE_SPACE ||
+           lexer.getTokenType() == JsonElementTypes.LINE_COMMENT ||
+           lexer.getTokenType() == JsonElementTypes.BLOCK_COMMENT) {
+      lexer.advance();
+    }
+    return lexer.getTokenType();
   }
 }

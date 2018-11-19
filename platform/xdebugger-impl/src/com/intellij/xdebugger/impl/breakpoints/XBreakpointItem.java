@@ -22,7 +22,7 @@ class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
   private XLightBreakpointPropertiesPanel myPropertiesPanel;
 
-  public XBreakpointItem(XBreakpoint<?> breakpoint) {
+  XBreakpointItem(XBreakpoint<?> breakpoint) {
     myBreakpoint = breakpoint;
   }
 
@@ -38,9 +38,7 @@ class XBreakpointItem extends BreakpointItem {
 
   @Override
   public void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
-    if (plainView) {
-      renderer.setIcon(getIcon());
-    }
+    renderer.setIcon(getIcon());
     final SimpleTextAttributes attributes =
       myBreakpoint.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
     renderer.append(StringUtil.notNullize(getDisplayText()), attributes);

@@ -48,6 +48,8 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
+  public static final String DIFF_TITLE_RENAME_SEPARATOR = " -> ";
+
   private final DiffContentFactoryEx myContentFactory = DiffContentFactoryEx.getInstanceEx();
 
   //

@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
-import org.jetbrains.plugins.groovy.formatter.blocks.ParameterListBlock;
 import org.jetbrains.plugins.groovy.formatter.blocks.SyntheticGroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -52,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -90,7 +90,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
     if (init(node)) return;
     if (manageComments()) return;
-    if (manageMethodParameterList(block2)) return;
 
     if (myParent instanceof GroovyPsiElement) {
       ((GroovyPsiElement) myParent).accept(this);
@@ -136,14 +135,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       final CompositeElement parent = (CompositeElement)treePrev.getTreeParent();
       myParent = SourceTreeToPsiMap.treeElementToPsi(parent);
     }
-  }
-
-  private boolean manageMethodParameterList(GroovyBlock block2) {
-    if (block2 instanceof ParameterListBlock) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
-      return true;
-    }
-    return false;
   }
 
   private boolean manageComments() {
@@ -600,7 +591,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitMethod(@NotNull GrMethod method) {
-    if (myType1 == GroovyTokenTypes.mRPAREN && myType2 == GroovyElementTypes.THROW_CLAUSE) {
+    if (myType2 == PARAMETER_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
+    }
+    else if (myType1 == PARAMETER_LIST && myType2 == GroovyElementTypes.THROW_CLAUSE) {
       if (mySettings.THROWS_KEYWORD_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS) {
         createLF(true);
       }
@@ -618,14 +612,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == GroovyElementTypes.TYPE_PARAMETER_LIST) {
       createSpaceInCode(true);
     }
-    else {
-      processParentheses(
-        mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
-        mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES,
-        mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE,
-        mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE
-      );
-    }
+  }
+
+  @Override
+  public void visitParameterList(@NotNull GrParameterList parameterList) {
+    processParentheses(
+      mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
+      mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES,
+      mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE,
+      mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE
+    );
   }
 
   private boolean processBrackets(@NotNull Boolean spaceWithin,
@@ -826,7 +822,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
-    if (ASSIGNMENT_OPERATORS.contains(myType1) || ASSIGNMENT_OPERATORS.contains(myType2)) {
+    if (ASSIGNMENTS.contains(myType1) || ASSIGNMENTS.contains(myType2)) {
       createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     }
   }
@@ -834,7 +830,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
 
-    @SuppressWarnings("SimplifiableConditionalExpression" )
     boolean spaceAround = isLeftOrRight(LOGICAL_OPERATORS) ? mySettings.SPACE_AROUND_LOGICAL_OPERATORS :
                           isLeftOrRight(EQUALITY_OPERATORS) ? mySettings.SPACE_AROUND_EQUALITY_OPERATORS :
                           isLeftOrRight(RELATIONAL_OPERATORS) ? mySettings.SPACE_AROUND_RELATIONAL_OPERATORS :
@@ -923,7 +918,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitDocTag(@NotNull GrDocTag docTag) {
     if (myType1 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START || myType2 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
-      createSpaceInCode(false);
+      createSpaceProperty(false, false, 0);
+    }
+    else if (myType1 == GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN && myType2 != GroovyDocTokenTypes.mGDOC_COMMENT_DATA) {
+      createSpaceProperty(false, false, 0);
+    }
+    else if (myType1 != GroovyDocTokenTypes.mGDOC_TAG_NAME && myType2 == GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN) {
+      createSpaceProperty(false, false, 0);
     }
   }
 

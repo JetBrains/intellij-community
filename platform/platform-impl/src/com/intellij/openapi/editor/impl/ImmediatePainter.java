@@ -191,7 +191,7 @@ class ImmediatePainter {
     return attributes.getEffectType() != EffectType.BOXED || attributes.getEffectColor() == null;
   }
 
-  private void paintWithDoubleBuffering(final Graphics graphics, final Consumer<Graphics> painter) {
+  private void paintWithDoubleBuffering(final Graphics graphics, final Consumer<? super Graphics> painter) {
     final Rectangle bounds = graphics.getClipBounds();
 
     createOrUpdateImageBuffer(myEditor.getComponent(), bounds.getSize());
@@ -252,7 +252,7 @@ class ImmediatePainter {
     return caretColor == null ? new JBColor(Gray._0, Gray._255) : caretColor;
   }
 
-  private static void updateAttributes(final EditorImpl editor, final int offset, final List<TextAttributes> attributes) {
+  private static void updateAttributes(final EditorImpl editor, final int offset, final List<? extends TextAttributes> attributes) {
     final List<RangeHighlighterEx> list1 = new ArrayList<>();
     final List<RangeHighlighterEx> list2 = new ArrayList<>();
 
@@ -283,7 +283,7 @@ class ImmediatePainter {
   // TODO Unify with com.intellij.openapi.editor.impl.view.IterationState.setAttributes
   private static void updateAttributes(final EditorImpl editor,
                                        final TextAttributes attributes,
-                                       final List<RangeHighlighterEx> highlighters) {
+                                       final List<? extends RangeHighlighterEx> highlighters) {
     if (highlighters.size() > 1) {
       ContainerUtil.quickSort(highlighters, IterationState.BY_LAYER_THEN_ATTRIBUTES);
     }

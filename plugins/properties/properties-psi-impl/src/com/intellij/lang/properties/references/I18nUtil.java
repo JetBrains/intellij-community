@@ -52,14 +52,14 @@ public class I18nUtil {
   }
 
   public static void createProperty(@NotNull Project project,
-                                    @NotNull Collection<PropertiesFile> propertiesFiles,
+                                    @NotNull Collection<? extends PropertiesFile> propertiesFiles,
                                     @NotNull String key,
                                     @NotNull String value) throws IncorrectOperationException {
     createProperty(project, propertiesFiles, key, value, false);
   }
 
   public static void createProperty(@NotNull Project project,
-                                    @NotNull Collection<PropertiesFile> propertiesFiles,
+                                    @NotNull Collection<? extends PropertiesFile> propertiesFiles,
                                     @NotNull String key,
                                     @NotNull String value,
                                     boolean replaceIfExist) throws IncorrectOperationException {

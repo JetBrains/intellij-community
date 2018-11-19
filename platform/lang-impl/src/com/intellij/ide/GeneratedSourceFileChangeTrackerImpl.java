@@ -21,12 +21,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author nik
@@ -35,7 +36,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
   private final Project myProject;
   private final FileDocumentManager myDocumentManager;
   private final EditorNotifications myEditorNotifications;
-  private final MergingUpdateQueue myCheckingQueue;
+  private final SingleAlarm myCheckingQueue;
   private final Set<VirtualFile> myFilesToCheck = Collections.synchronizedSet(new HashSet<>());
   private final Set<VirtualFile> myEditedGeneratedFiles = Collections.synchronizedSet(new HashSet<>());
 
@@ -43,7 +44,12 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     myProject = project;
     myDocumentManager = documentManager;
     myEditorNotifications = editorNotifications;
-    myCheckingQueue = new MergingUpdateQueue("Checking for changes in generated sources", 500, false, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myCheckingQueue = new SingleAlarm(this::checkFiles, 500, Alarm.ThreadToUse.POOLED_THREAD, project);
+  }
+
+  @TestOnly
+  public void waitForAlarm() throws Exception {
+    myCheckingQueue.waitForAllExecuted(1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -53,12 +59,6 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
 
   @Override
   public void projectOpened() {
-    final Update check = new Update("check for changes in generated files") {
-      @Override
-      public void run() {
-        checkFiles();
-      }
-    };
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
@@ -67,7 +67,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
         ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
         if (file != null && (fileIndex.isInContent(file) || fileIndex.isInLibrary(file))) {
           myFilesToCheck.add(file);
-          myCheckingQueue.queue(check);
+          myCheckingQueue.cancelAndRequest();
         }
       }
     }, myProject);
@@ -89,18 +89,12 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     });
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         myFilesToCheck.addAll(myEditedGeneratedFiles);
         myEditedGeneratedFiles.clear();
-        myCheckingQueue.queue(check);
+        myCheckingQueue.cancelAndRequest();
       }
     });
-    myCheckingQueue.activate();
-  }
-
-  @Override
-  public void projectClosed() {
-    myCheckingQueue.deactivate();
   }
 
   private void checkFiles() {

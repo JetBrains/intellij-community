@@ -41,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CompositePsiElement extends CompositeElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositePsiElement");
 
-  protected static int ourHC = 0;
+  protected static int ourHC;
 
   protected CompositePsiElement(IElementType type) {
     super(type);
@@ -225,8 +225,9 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return true;
   }
 
+  @Override
   public String toString() {
-    return "PsiElement" + "(" + getElementType().toString() + ")";
+    return "PsiElement" + "(" + getElementType() + ")";
   }
 
   @Override

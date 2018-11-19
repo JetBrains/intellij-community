@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.core;
 
 final class VerticalInfo extends DimensionInfo {
-  public VerticalInfo(final LayoutState layoutState, final int gap){
+  VerticalInfo(final LayoutState layoutState, final int gap){
     super(layoutState, gap);
   }
 

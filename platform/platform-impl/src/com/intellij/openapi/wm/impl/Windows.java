@@ -171,9 +171,9 @@ public class Windows {
   }
 
   static class Signal {
-    private final Predicate<AWTEvent> isAppropriatePredicate;
+    private final Predicate<? super AWTEvent> isAppropriatePredicate;
 
-    public Signal(Predicate<AWTEvent> isAppropriatePredicate) {
+    Signal(Predicate<? super AWTEvent> isAppropriatePredicate) {
       this.isAppropriatePredicate = isAppropriatePredicate;
     }
 

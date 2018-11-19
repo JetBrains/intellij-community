@@ -10,7 +10,7 @@ import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.execution.testframework.autotest.AdjustAutotestDelayActionGroup;
 import com.intellij.execution.testframework.export.ExportTestResultsAction;
-import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
+import com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
@@ -19,11 +19,12 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import com.intellij.util.config.DumbAwareToggleInvertedBooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposable {
+  private static final Logger LOG = Logger.getInstance(ToolbarPanel.class);
   protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;
@@ -74,7 +76,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     actionGroup.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
     actionGroup.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
 
-    for (ToggleModelActionProvider actionProvider : Extensions.getExtensions(ToggleModelActionProvider.EP_NAME)) {
+    for (ToggleModelActionProvider actionProvider : ToggleModelActionProvider.EP_NAME.getExtensionList()) {
       final ToggleModelAction toggleModelAction = actionProvider.createToggleModelAction(properties);
       myActions.add(toggleModelAction);
       actionGroup.add(toggleModelAction);
@@ -133,24 +135,26 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     for (ToggleModelAction action : myActions) {
       action.setModel(model);
     }
-    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, new TestFrameworkPropertyListener<Boolean>() {
+    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, createComparatorPropertyListener(model), model, true);
+    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, createComparatorPropertyListener(model), model, true);
+  }
+
+  private static TestFrameworkPropertyListener<Boolean> createComparatorPropertyListener(TestFrameworkRunningModel model) {
+    return new TestFrameworkPropertyListener<Boolean>() {
       @Override
       public void onChanged(Boolean value) {
-        final AbstractTestTreeBuilder builder = model.getTreeBuilder();
-        if (builder != null) {
-          builder.setTestsComparator(model);
+        try {
+          //todo reflection to avoid binary incompatibility with substeps plugin
+          final AbstractTestTreeBuilderBase builder = (AbstractTestTreeBuilderBase)model.getClass().getMethod("getTreeBuilder").invoke(model);
+          if (builder != null) {
+            builder.setTestsComparator(model);
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
-    }, model, true);
-    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, new TestFrameworkPropertyListener<Boolean>() {
-      @Override
-      public void onChanged(Boolean value) {
-        final AbstractTestTreeBuilder builder = model.getTreeBuilder();
-        if (builder != null) {
-          builder.setTestsComparator(model);
-        }
-      }
-    }, model, true);
+    };
   }
 
   @Override
@@ -173,11 +177,13 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
@@ -195,7 +201,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     private TestFrameworkRunningModel myModel;
 
-    public SortByDurationAction(TestConsoleProperties properties) {
+    SortByDurationAction(TestConsoleProperties properties) {
       super(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"),
             ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.description"),
             AllIcons.RunConfigurations.SortbyDuration, properties,

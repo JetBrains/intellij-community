@@ -64,7 +64,6 @@ final public class LogMessageParser extends AbstractMessageParser {
     initDateFormats();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initDateFormats() {
     SimpleDateFormat delegate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
     delegate.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -216,8 +215,7 @@ final public class LogMessageParser extends AbstractMessageParser {
       return;
     }
     if (line.startsWith(TOTAL_REVISIONS)) {
-      final String separator = SELECTED_REVISIONS;
-      final int semicolonIndex = line.indexOf(separator);
+      final int semicolonIndex = line.indexOf(SELECTED_REVISIONS);
       if (semicolonIndex < 0) {
         // no selected revisions here..
         logInfo.setTotalRevisions(line.substring(TOTAL_REVISIONS.length()).trim());

@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.*;
@@ -12,6 +10,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
+
+import java.util.List;
 
 public class GrDefaultMethodComparator extends GrMethodComparator {
 
@@ -20,16 +21,16 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
                            @NotNull GroovyMethodResult result2,
                            @NotNull Context context) {
     final PsiMethod method1 = result1.getElement();
-    final PsiSubstitutor substitutor1 = result1.getSubstitutor(false);
+    final PsiSubstitutor substitutor1 = result1.getContextSubstitutor();
     final PsiElement resolveContext1 = result1.getCurrentFileResolveContext();
 
     final PsiMethod method2 = result2.getElement();
-    final PsiSubstitutor substitutor2 = result2.getSubstitutor(false);
+    final PsiSubstitutor substitutor2 = result2.getContextSubstitutor();
     final PsiElement resolveContext2 = result2.getCurrentFileResolveContext();
 
-    final PsiType[] argTypes = context.getArgumentTypes();
+    final List<Argument> arguments = context.getArguments();
 
-    if (context.isConstructor() && argTypes != null && argTypes.length == 1) {
+    if (context.isConstructor() && arguments != null && arguments.size() == 1) {
       if (method1.getParameterList().isEmpty()) return true;
       if (method2.getParameterList().isEmpty()) return false;
     }
@@ -37,11 +38,11 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 
-    if (argTypes != null && argTypes.length == 0) {
+    if (arguments != null && arguments.size() == 0) {
       if (params2.length == 1 && params2[0].getType() instanceof PsiArrayType) return true;
     }
 
-    if (argTypes == null && params1.length != params2.length) return false;
+    if (arguments == null && params1.length != params2.length) return false;
 
     if (params1.length < params2.length) {
       PsiParameter last = ArrayUtil.getLastElement(params1);
@@ -59,8 +60,8 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
       PsiType type1 = substitutor1.substitute(pType1);
       PsiType type2 = substitutor2.substitute(pType2);
 
-      if (argTypes != null && argTypes.length > i) {
-        PsiType argType = argTypes[i];
+      if (arguments != null && arguments.size() > i) {
+        PsiType argType = arguments.get(i).getType();
         if (argType != null) {
           final boolean converts1 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type1), argType, myPlace);
           final boolean converts2 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type2), argType, myPlace);
@@ -108,7 +109,7 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
   }
 
   private static boolean typesAgree(@NotNull PsiType type1, @NotNull PsiType type2, @NotNull Context context) {
-    final boolean hasArguments = context.getArgumentTypes() != null;
+    final boolean hasArguments = context.getArguments() != null;
     if (hasArguments && type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
       type1 = ((PsiArrayType)type1).getComponentType();
     }

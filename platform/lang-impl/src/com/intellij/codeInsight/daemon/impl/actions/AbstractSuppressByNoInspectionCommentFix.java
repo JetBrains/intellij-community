@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressionUtil;
@@ -80,7 +81,7 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
-    return context.isValid() && context.getManager().isInProject(context) && getContainer(context) != null;
+    return context.isValid() && BaseIntentionAction.canModify(context) && getContainer(context) != null;
   }
 
   @Override

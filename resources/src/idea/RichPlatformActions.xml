@@ -166,7 +166,7 @@
 
     <action internal="true" id="CollectFUStatistics" class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction"
             text="Collect Statistics from Collector...">
-      <add-to-group group-id="Internal" anchor="after" relative-to-action="SendFUStatistics"/>
+      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
     <!-- Help -->
@@ -354,12 +354,6 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <group id="TestStatisticsTablePopupMenu">
-      <reference ref="TestTreePopupMenu"/>
-      <action id="Testing.SelectInTree" class="com.intellij.execution.testframework.actions.SelectInTreeAction"
-              text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
-    </group>
-
     <!--  TODO: fix
       <group id="UsageView.Popup">-->
     <!--<reference ref="EditSource"/>-->
@@ -385,16 +379,13 @@
     </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
-      <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
-              icon="AllIcons.General.PluginManager"/>
-
+      <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"/>
       <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
     </group>
 
-    <group id="WelcomeScreen.Configure.IDEA">
-      <action class="com.intellij.ide.actions.TemplateProjectSettingsGroup"/>
-      <add-to-group group-id="WelcomeScreen.Configure" anchor="last"/>
-    </group>
+    <action id="WelcomeScreen.Configure.ProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="RunConfigurationTemplatesForNewProjects"/>
+    </action>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>

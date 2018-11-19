@@ -205,7 +205,7 @@ public final class PropertyInspector extends JPanel{
    */
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     @Override
-    public void selectedComponentChanged(final GuiEditor source){
+    public void selectedComponentChanged(@NotNull final GuiEditor source){
       synchWithTree(false);
     }
   }

@@ -90,7 +90,7 @@ public class QuickfixUtil {
     return result;
   }
 
-  public static String[] getArgumentsTypes(List<ParamInfo> listOfPairs) {
+  public static String[] getArgumentsTypes(List<? extends ParamInfo> listOfPairs) {
     final List<String> result = new ArrayList<>();
 
     if (listOfPairs == null) return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -102,7 +102,7 @@ public class QuickfixUtil {
     return ArrayUtil.toStringArray(result);
   }
 
-  public static String[] getArgumentsNames(List<ParamInfo> listOfPairs) {
+  public static String[] getArgumentsNames(List<? extends ParamInfo> listOfPairs) {
     final ArrayList<String> result = new ArrayList<>();
     for (ParamInfo listOfPair : listOfPairs) {
       String name = listOfPair.name;

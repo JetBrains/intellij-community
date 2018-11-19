@@ -662,7 +662,7 @@ public class PyExtractMethodUtil {
     private final Project myProject;
     @Nullable private final Function<String, Boolean> myFunction;
 
-    public PyExtractMethodValidator(final PsiElement element, final Project project) {
+    PyExtractMethodValidator(final PsiElement element, final Project project) {
       myElement = element;
       myProject = project;
       final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);

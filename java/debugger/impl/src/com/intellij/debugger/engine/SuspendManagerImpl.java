@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,6 +46,7 @@ public class SuspendManagerImpl implements SuspendManager {
     });
   }
 
+  @NotNull
   @Override
   public SuspendContextImpl pushSuspendContext(@MagicConstant(flagsFromClass = EventRequest.class) final int suspendPolicy, int nVotes) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null) {
@@ -64,7 +65,6 @@ public class SuspendManagerImpl implements SuspendManager {
               catch (InternalException e) {
                 //InternalException 13 means that there are running threads that we are trying to resume
                 //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
-                //noinspection StatementWithEmptyBody
                 if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == JvmtiError.THREAD_NOT_SUSPENDED) {
                   //Its funny, but second resume solves the problem
                 }
@@ -98,6 +98,7 @@ public class SuspendManagerImpl implements SuspendManager {
     return suspendContext;
   }
 
+  @NotNull
   @Override
   public SuspendContextImpl pushSuspendContext(final EventSet set) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, set.suspendPolicy(), set.size(), set) {
@@ -134,7 +135,6 @@ public class SuspendManagerImpl implements SuspendManager {
           catch (InternalException e) {
             //InternalException 13 means that there are running threads that we are trying to resume
             //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
-            //noinspection StatementWithEmptyBody
             if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == JvmtiError.THREAD_NOT_SUSPENDED &&
                                                   set.suspendPolicy() == EventRequest.SUSPEND_ALL) {
               //Its funny, but second resume solves the problem
@@ -275,7 +275,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
   }
 
-  private void processVote(final SuspendContextImpl suspendContext) {
+  private void processVote(@NotNull SuspendContextImpl suspendContext) {
     LOG.assertTrue(suspendContext.myVotesToVote > 0);
     suspendContext.myVotesToVote--;
 
@@ -285,17 +285,7 @@ public class SuspendManagerImpl implements SuspendManager {
     if(suspendContext.myVotesToVote == 0) {
       if(suspendContext.myIsVotedForResume) {
         // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
-        myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-          @Override
-          protected void action() {
-            resume(suspendContext);
-          }
-
-          @Override
-          public Priority getPriority() {
-            return Priority.HIGH;
-          }
-        });
+        myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
       }
       else {
         LOG.debug("vote paused");
@@ -310,7 +300,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
   }
 
-  public void notifyPaused(SuspendContextImpl suspendContext) {
+  public void notifyPaused(@NotNull SuspendContextImpl suspendContext) {
     pushPausedContext(suspendContext);
     myDebugProcess.myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
   }

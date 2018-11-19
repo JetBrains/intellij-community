@@ -124,7 +124,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static MultiMap<VirtualFile, FunExprOccurrence> getAllOccurrences(List<SamDescriptor> descriptors) {
+  private static MultiMap<VirtualFile, FunExprOccurrence> getAllOccurrences(List<? extends SamDescriptor> descriptors) {
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
     descriptors.get(0).dumbService.runReadActionInSmartMode(() -> processIndexValues(descriptors, null, (file, infos) -> {
       result.putValues(file, infos.values());
@@ -134,7 +134,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     return result;
   }
 
-  private static void processIndexValues(List<SamDescriptor> descriptors,
+  private static void processIndexValues(List<? extends SamDescriptor> descriptors,
                                          VirtualFile inFile,
                                          FileBasedIndex.ValueProcessor<Map<Integer, FunExprOccurrence>> processor) {
     for (SamDescriptor descriptor : descriptors) {
@@ -145,7 +145,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
   }
 
-  private static void processOffsets(List<SamDescriptor> descriptors, Project project, PairProcessor<VirtualFile, Set<FunExprOccurrence>> processor) {
+  private static void processOffsets(List<SamDescriptor> descriptors, Project project, PairProcessor<? super VirtualFile, ? super Set<FunExprOccurrence>> processor) {
     if (descriptors.isEmpty()) return;
 
     List<PsiClass> samClasses = ContainerUtil.map(descriptors, d -> d.samClass);
@@ -172,15 +172,15 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static Set<FunExprOccurrence> filterInapplicable(List<PsiClass> samClasses,
+  private static Set<FunExprOccurrence> filterInapplicable(List<? extends PsiClass> samClasses,
                                                            VirtualFile vFile,
-                                                           Collection<FunExprOccurrence> occurrences, Project project) {
+                                                           Collection<? extends FunExprOccurrence> occurrences, Project project) {
     return DumbService.getInstance(project).runReadActionInSmartMode(
       () -> new HashSet<>(ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile))));
   }
 
   private static boolean processFile(@NotNull Processor<? super PsiFunctionalExpression> consumer,
-                                     List<SamDescriptor> descriptors,
+                                     List<? extends SamDescriptor> descriptors,
                                      VirtualFile vFile, Set<FunExprOccurrence> occurrences) {
     return descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       PsiFile file = descriptors.get(0).samClass.getManager().findFile(vFile);
@@ -207,7 +207,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     });
   }
 
-  private static List<Integer> getOccurrenceOffsets(List<SamDescriptor> descriptors,
+  private static List<Integer> getOccurrenceOffsets(List<? extends SamDescriptor> descriptors,
                                                     VirtualFile vFile,
                                                     Set<FunExprOccurrence> occurrences) {
     List<Integer> offsets = new ArrayList<>();
@@ -222,14 +222,14 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     return offsets;
   }
 
-  private static boolean hasType(List<SamDescriptor> descriptors, PsiFunctionalExpression expression) {
+  private static boolean hasType(List<? extends SamDescriptor> descriptors, PsiFunctionalExpression expression) {
     if (!canHaveType(expression, ContainerUtil.map(descriptors, d -> d.samClass))) return false;
 
     PsiClass actualClass = PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType());
     return ContainerUtil.exists(descriptors, d -> InheritanceUtil.isInheritorOrSelf(actualClass, d.samClass, true));
   }
 
-  private static boolean canHaveType(PsiFunctionalExpression expression, List<PsiClass> samClasses) {
+  private static boolean canHaveType(PsiFunctionalExpression expression, List<? extends PsiClass> samClasses) {
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
       PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
@@ -349,7 +349,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
   }
 
-  private static boolean performSearchUsingCompilerIndices(@NotNull List<SamDescriptor> descriptors,
+  private static boolean performSearchUsingCompilerIndices(@NotNull List<? extends SamDescriptor> descriptors,
                                                            @NotNull GlobalSearchScope searchScope,
                                                            @NotNull Project project,
                                                            @NotNull Processor<? super PsiFunctionalExpression> consumer) {

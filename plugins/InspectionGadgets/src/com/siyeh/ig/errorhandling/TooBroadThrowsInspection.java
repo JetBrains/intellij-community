@@ -114,10 +114,10 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
   private static class AddThrowsClauseFix extends InspectionGadgetsFix {
 
-    private final Collection<SmartTypePointer> types;
+    private final Collection<? extends SmartTypePointer> types;
     private final boolean originalNeeded;
 
-    AddThrowsClauseFix(Collection<SmartTypePointer> types, boolean originalNeeded) {
+    AddThrowsClauseFix(Collection<? extends SmartTypePointer> types, boolean originalNeeded) {
       this.types = types;
       this.originalNeeded = originalNeeded;
     }

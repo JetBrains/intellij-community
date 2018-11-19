@@ -61,10 +61,19 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void showInScreenCoordinates(@NotNull Component owner, @NotNull Point point);
 
   /**
+   * Returns location most appropriate for the specified data context.
+   *
+   * @see #showInBestPositionFor(DataContext)
+   * @see #setLocation(Point)
+   */
+  Point getBestPositionFor(@NotNull DataContext dataContext);
+
+  /**
    * Shows the popup in the position most appropriate for the specified data context.
    *
    * @param dataContext the data context to which the popup is related.
    * @see com.intellij.openapi.ui.popup.JBPopupFactory#guessBestPopupLocation(com.intellij.openapi.actionSystem.DataContext)
+   * @see #getBestPositionFor(DataContext)
    */
   void showInBestPositionFor(@NotNull DataContext dataContext);
 
@@ -173,8 +182,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   boolean isCancelKeyEnabled();
 
-  void addListener(JBPopupListener listener);
-  void removeListener(JBPopupListener listener);
+  void addListener(@NotNull JBPopupListener listener);
+  void removeListener(@NotNull JBPopupListener listener);
 
   boolean isDisposed();
 
@@ -204,4 +213,9 @@ public interface JBPopup extends Disposable, LightweightWindow {
    *           {@code false} otherwise
    */
   boolean dispatchKeyEvent(@NotNull KeyEvent e);
+
+  /**
+   * Tells whether it's OK to invoke one of the 'show' methods. Some implementation might prohibit it e.g. if the popup is shown already.
+   */
+  default boolean canShow() { return !isDisposed(); }
 }

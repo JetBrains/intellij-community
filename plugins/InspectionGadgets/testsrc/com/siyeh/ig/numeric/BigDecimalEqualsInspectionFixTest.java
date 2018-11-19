@@ -26,5 +26,4 @@ public class BigDecimalEqualsInspectionFixTest extends LightQuickFixParameterize
     return "/codeInsight/daemonCodeAnalyzer/quickFix/bigDecimalEquals";
   }
 
-  public void test() {  doAllTests(); }
 }

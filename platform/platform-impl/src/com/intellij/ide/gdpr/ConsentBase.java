@@ -9,7 +9,7 @@ abstract class ConsentBase {
   private final String myId;
   private final Version myVersion;
 
-  public ConsentBase(String id, Version version) {
+  ConsentBase(String id, Version version) {
     myId = id;
     myVersion = version;
   }

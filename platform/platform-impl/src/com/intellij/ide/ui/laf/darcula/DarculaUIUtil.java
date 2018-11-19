@@ -246,7 +246,7 @@ public class DarculaUIUtil {
           g2.translate(x, y);
 
           Object op = editorTextField.getClientProperty("JComponent.outline");
-          if (op != null) {
+          if (editorTextField.isEnabled() && op != null) {
             paintOutlineBorder(g2, width, height, 0, true, hasFocus, Outline.valueOf(op.toString()));
           } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
             paintFocusBorder(g2, width, height, 0, true);
@@ -259,7 +259,7 @@ public class DarculaUIUtil {
 
       @Override
     public Insets getBorderInsets(Component c) {
-      return isTableCellEditor(c) ? JBUI.insets(2).asUIResource() :
+      return isTableCellEditor(c) || isCompact(c) ? JBUI.insets(2).asUIResource() :
              isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
     }
   }
@@ -323,7 +323,7 @@ public class DarculaUIUtil {
         int bw = 1;
 
         Object op = editorTextField.getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (editorTextField.isEnabled() && op != null) {
           Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
           bw = isCellRenderer ? 1 : 2;
         } else {
@@ -462,8 +462,8 @@ public class DarculaUIUtil {
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
     return enabled ?
-            focused ? JBColor.namedColor("Outline.focusedColor", 0x87AFDA) : JBColor.namedColor("Outline.color", Gray.xBF) :
-           JBColor.namedColor("Outline.disabledColor", Gray.xCF);
+            focused ? JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA) : JBColor.namedColor("Component.borderColor", Gray.xBF) :
+           JBColor.namedColor("Component.disabledBorderColor", Gray.xCF);
   }
 
   public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
@@ -490,7 +490,7 @@ public class DarculaUIUtil {
   public static Color getButtonTextColor(@NotNull AbstractButton button) {
     Color fg = button.getForeground();
     if (fg instanceof UIResource && DarculaButtonUI.isDefaultButton(button)) {
-      Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      Color selectedFg = UIManager.getColor("Button.default.foreground");
       if (selectedFg != null) {
         return selectedFg;
       }

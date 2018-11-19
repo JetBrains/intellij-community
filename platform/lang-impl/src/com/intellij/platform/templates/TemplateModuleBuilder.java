@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.Consumer;
@@ -175,7 +177,19 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
       factory.applyResult(field.getValue(), model);
     }
+    applyProjectDefaults(module.getProject());
+    for (ProjectTemplateParameterFactory factory : ProjectTemplateParameterFactory.EP_NAME.getExtensions()) {
+      String value = factory.getImmediateValue();
+      if (value != null)
+        factory.applyResult(value, model);
+    }
     model.commit();
+  }
+
+  private static void applyProjectDefaults(Project project) {
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    String charset = EncodingProjectManager.getInstance(defaultProject).getDefaultCharsetName();
+    EncodingProjectManager.getInstance(project).setDefaultCharsetName(charset);
   }
 
   private WizardInputField getBasePackageField() {
@@ -311,7 +325,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @SuppressWarnings("UseOfPropertiesAsHashtable")
   @Nullable
-  private byte[] processTemplates(@Nullable String projectName, String content, File file, Consumer<VelocityException> exceptionConsumer)
+  private byte[] processTemplates(@Nullable String projectName, String content, File file, Consumer<? super VelocityException> exceptionConsumer)
     throws IOException {
     String patchedContent = content;
     if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEscaped()) {

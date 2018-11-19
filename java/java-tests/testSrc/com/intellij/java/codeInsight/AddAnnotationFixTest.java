@@ -50,7 +50,6 @@ import static com.intellij.psi.impl.DebugUtil.sleep;
 
 /**
  * @author anna
- * @since 27-Jun-2007
  */
 public class AddAnnotationFixTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;

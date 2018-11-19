@@ -201,6 +201,7 @@ public class JavaColorProvider implements ElementColorProvider {
               argumentList.add(factory.createExpressionFromText("true", null));
               replaceInt(expr[0], color.getRGB() | color.getAlpha() << 24, true, true);
             }
+            return;
           case INT_BOOL:
             if ("true".equals(expr[1].getText())) {
               replaceInt(expr[0], color.getRGB() | color.getAlpha() << 24, true, true);
@@ -281,7 +282,7 @@ public class JavaColorProvider implements ElementColorProvider {
   private static void replaceFloat(PsiExpression expr, float newValue) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     if (getFloat(expr) != newValue) {
-      expr.replace(factory.createExpressionFromText(String.valueOf(newValue) + "f", null));
+      expr.replace(factory.createExpressionFromText(newValue + "f", null));
     }
   }
 

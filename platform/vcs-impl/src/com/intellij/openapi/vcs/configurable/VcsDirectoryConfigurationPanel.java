@@ -3,7 +3,6 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -37,8 +36,8 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
@@ -120,7 +119,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private static class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
 
-    public MyDirectoryRenderer(Project project) {
+    MyDirectoryRenderer(Project project) {
       myProject = project;
     }
 
@@ -279,7 +278,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
     myVcsConfiguration = getInstance(myProject);
-    myProjectMessage = XmlStringUtil.wrapInHtml(StringUtil.escapeXml(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " +
+    myProjectMessage = XmlStringUtil.wrapInHtml(StringUtil.escapeXmlEntities(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " +
                                                 DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage(myProject)
                                                   .replace('\n', ' '));
     myIsDisabled = myProject.isDefault();
@@ -334,8 +333,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private void updateRootCheckers() {
     myCheckers.clear();
-    VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
-    for (VcsRootChecker checker : checkers) {
+    for (VcsRootChecker checker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList()) {
       VcsKey key = checker.getSupportedVcs();
       AbstractVcs vcs = myVcsManager.findVcsByName(key.getName());
       if (vcs == null) {

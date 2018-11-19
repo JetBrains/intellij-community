@@ -26,7 +26,7 @@ class ChainedCallCompletion {
     definedInClass(CommonClassNames.JAVA_LANG_OBJECT);
 
   static void addChains(final PsiElement place, LookupElement qualifierItem,
-                        final Consumer<LookupElement> result,
+                        final Consumer<? super LookupElement> result,
                         PsiType qualifierType,
                         final PsiType expectedType, JavaSmartCompletionParameters parameters) throws
                                                                                                            IncorrectOperationException {

@@ -109,8 +109,8 @@ public class XsltDocumentationProvider implements DocumentationProvider {
                 p = p.getPrevSibling();
             }
             if (p instanceof XmlComment) {
-                final String commentText = XmlUtil.getCommentText((XmlComment)p);
-                return commentText != null ? commentText.replaceAll("&", "&amp;").replaceAll("<", "&lt;") : null;
+                final String commentText = ((XmlComment)p).getCommentText();
+                return commentText.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
             } else {
                 return null;
             }
@@ -241,7 +241,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         private final String myCategory;
         private final String myName;
 
-        public DocElement(PsiManager mgr, PsiElement element, String category, String name) {
+        DocElement(PsiManager mgr, PsiElement element, String category, String name) {
             super(mgr, XsltLanguage.INSTANCE);
             myElement = element;
             myCategory = category;
@@ -262,6 +262,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             return myName;
         }
 
+        @Override
         public String toString() {
             return "DocElement";
         }

@@ -50,7 +50,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   
   private volatile long myComputationStarted = 0;
 
-  public DetectAndAdjustIndentOptionsTask(@NotNull Project project, 
+  DetectAndAdjustIndentOptionsTask(@NotNull Project project,
                                           @NotNull Document document, 
                                           @NotNull TimeStampedIndentOptions toAdjust,
                                           @NotNull ExecutorService executor) {
@@ -101,7 +101,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
     if (!currentDefault.equals(myOptionsToAdjust)) {
       myOptionsToAdjust.setDetected(true);
-      //noinspection deprecation
+      myOptionsToAdjust.setOverrideLanguageOptions(true);
       CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
     }
   }

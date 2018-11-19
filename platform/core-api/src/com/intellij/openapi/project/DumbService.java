@@ -217,7 +217,9 @@ public abstract class DumbService {
    * earlier within the same Swing event dispatch thread event processing, and there were no other tasks already running at that moment. Otherwise this method does nothing.<p/>
    *
    * This functionality can be useful in refactorings (invoked in "smart mode"), when after VFS or root changes
-   * (which could start "dumb mode") some reference resolve is required (which again requires "smart mode").
+   * (which could start "dumb mode") some reference resolve is required (which again requires "smart mode").<p/>
+   *
+   * Should be invoked on dispatch thread.
    */
   public abstract void completeJustSubmittedTasks();
 
@@ -320,7 +322,7 @@ public abstract class DumbService {
    * Obsolete, does nothing, just executes the passed runnable.
    * @see #completeJustSubmittedTasks()
    */
-  @SuppressWarnings({"deprecation", "unused"})
+  @SuppressWarnings({"unused"})
   @Deprecated
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     runnable.run();

@@ -69,6 +69,7 @@ class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiteralExpre
     return myParent;
   }
 
+  @Override
   public String toString() {
     return "PsiLiteralExpression:" + getText();
   }

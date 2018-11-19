@@ -74,7 +74,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     private static class TemplateUsageGroup implements UsageGroup {
         private final XsltTemplate myTemplate;
 
-        public TemplateUsageGroup(@NotNull XsltTemplate template) {
+        TemplateUsageGroup(@NotNull XsltTemplate template) {
             myTemplate = template;
         }
 

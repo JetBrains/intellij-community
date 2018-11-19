@@ -29,7 +29,7 @@ class HistoryModel extends AbstractListModel implements ComboBoxModel, Multiline
     private final int length;
     private HistoryElement selectedItem;
 
-    public HistoryModel(HistoryElement[] history, Document document) {
+    HistoryModel(HistoryElement[] history, Document document) {
         this.history = history;
         this.myDocument = document;
         if (history.length > 0) {

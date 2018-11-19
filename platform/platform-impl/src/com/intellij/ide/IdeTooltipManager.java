@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -86,7 +86,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
     myIsEnabled = Registry.get("ide.tooltip.callout");
     myIsEnabled.addListener(new RegistryValueListener.Adapter() {
       @Override
-      public void afterValueChanged(RegistryValue value) {
+      public void afterValueChanged(@NotNull RegistryValue value) {
         processEnabled();
       }
     }, ApplicationManager.getApplication());
@@ -95,7 +95,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
     ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         hideCurrent(null, action, event);
       }
     });
@@ -168,8 +168,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
       // The case when a tooltip is going to appear on the Component but the MOUSE_ENTERED event comes to the Component before it,
       // we dont want to hide the tooltip in that case (IDEA-194208)
       Point tooltipPoint = myQueuedTooltip.getPoint();
-      Component realQueuedComponent = SwingUtilities.getDeepestComponentAt(myQueuedTooltip.getComponent(), tooltipPoint.x, tooltipPoint.y);
-      return eventComponent != realQueuedComponent;
+      if (tooltipPoint != null) {
+        Component realQueuedComponent =
+          SwingUtilities.getDeepestComponentAt(myQueuedTooltip.getComponent(), tooltipPoint.x, tooltipPoint.y);
+        return eventComponent != realQueuedComponent;
+      }
     }
 
     return true;
@@ -390,44 +393,43 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
     }, tooltip.getDismissDelay());
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getTextForeground(boolean awtTooltip) {
     return UIUtil.getToolTipForeground();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getLinkForeground(boolean awtTooltip) {
-    return JBColor.blue;
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getTextBackground(boolean awtTooltip) {
     Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
     return color != null ? color : UIUtil.getToolTipBackground();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
-    AllIcons.General.Mdot.getIconWidth();  // keep icon reference
     return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getBorderColor(boolean awtTooltip) {
     return new JBColor(Gray._160, new Color(91, 93, 95));
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public boolean isOwnBorderAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public boolean isOpaqueAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Font getTextFont(boolean awtTooltip) {
     return UIManager.getFont("ToolTip.font");
   }
@@ -645,6 +647,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
         return factory;
       }
     };
+    String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
+    if (editorFontName != null) {
+      String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";
+      kit.getStyleSheet().addRule("pre {" + style + "}");
+      text = text.replace("<code>", "<code style='" + style + "'>");
+    }
     pane.setEditorKit(kit);
     pane.setText(text);
 

@@ -24,7 +24,6 @@ import com.intellij.util.IncorrectOperationException;
  * {@code Project Settings - Code Style - Alignment and Braces - Place on New Line}).
  *
  * @author Denis Zhdanov
- * @since Apr 28, 2010 12:12:13 PM
  */
 public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 

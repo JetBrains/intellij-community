@@ -9,12 +9,10 @@ import com.intellij.stats.storage.FilePathProvider
 import java.util.*
 
 class CompletionFileLoggerProvider(filePathProvider: FilePathProvider, private val installationIdProvider: InstallationIdProvider) : Disposable, CompletionLoggerProvider() {
-  private val logFileManager = LogFileManager(filePathProvider)
-  private val eventLogger = EventLoggerWithValidation(logFileManager, ClientSessionValidator())
+  private val eventLogger = EventLoggerWithValidation(LogFileManager(filePathProvider), ClientSessionValidator())
 
   override fun dispose() {
     eventLogger.dispose()
-    logFileManager.flush()
   }
 
   override fun newCompletionLogger(): CompletionLogger {

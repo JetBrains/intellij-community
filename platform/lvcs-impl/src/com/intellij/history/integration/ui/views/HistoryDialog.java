@@ -508,7 +508,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private class RevertAction extends MyAction {
-    public RevertAction() {
+    RevertAction() {
       super(message("action.revert"), null, AllIcons.Actions.Rollback);
     }
 
@@ -524,7 +524,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private class CreatePatchAction extends MyAction {
-    public CreatePatchAction() {
+    CreatePatchAction() {
       super(message("action.create.patch"), null, AllIcons.Vcs.Patch);
     }
 
@@ -542,7 +542,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private static class RevisionProcessingProgressAdapter implements RevisionProcessingProgress {
     private final ProgressIndicator myIndicator;
 
-    public RevisionProcessingProgressAdapter(ProgressIndicator i) {
+    RevisionProcessingProgressAdapter(ProgressIndicator i) {
       myIndicator = i;
     }
 

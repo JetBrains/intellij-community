@@ -51,7 +51,7 @@ public final class LoaderFactory {
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(final ModuleRootEvent event) {
+      public void rootsChanged(@NotNull final ModuleRootEvent event) {
         clearClassLoaderCache();
       }
     });
@@ -147,7 +147,7 @@ public final class LoaderFactory {
 
     private final String myModuleName;
 
-    public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
+    DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
       super(build().urls(urls).parent(parent));
       myModuleName = moduleName;
     }

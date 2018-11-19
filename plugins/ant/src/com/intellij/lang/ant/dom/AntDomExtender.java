@@ -453,7 +453,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       this(introspector, null, null);
     }
 
-    public ClassIntrospectorAdapter(AntIntrospector introspector, Map<String, Class> coreTaskDefs, Map<String, Class> coreTypeDefs) {
+    ClassIntrospectorAdapter(AntIntrospector introspector, Map<String, Class> coreTaskDefs, Map<String, Class> coreTypeDefs) {
       myIntrospector = introspector;
       myCoreTaskDefs = coreTaskDefs != null? coreTaskDefs : Collections.emptyMap();
       myCoreTypeDefs = coreTypeDefs != null? coreTypeDefs : Collections.emptyMap();
@@ -677,7 +677,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
     private final Enumeration<T> myEnum;
 
-    public EnumerationToIteratorAdapter(Enumeration<T> enumeration) {
+    EnumerationToIteratorAdapter(Enumeration<T> enumeration) {
       myEnum = enumeration;
     }
 

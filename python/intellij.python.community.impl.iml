@@ -25,17 +25,12 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
-    <orderEntry type="module-library">
-      <library name="jsoup" type="repository">
-        <properties maven-id="org.jsoup:jsoup:1.10.3" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.10.3/jsoup-1.10.3.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
+    <orderEntry type="library" name="libthrift" level="project" />
+    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="netty-handler" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" name="jsoup" level="project" />
   </component>
 </module>

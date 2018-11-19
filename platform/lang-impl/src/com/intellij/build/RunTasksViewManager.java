@@ -37,6 +37,6 @@ public class RunTasksViewManager extends TasksViewManager {
 
   @Override
   protected Icon getContentIcon() {
-    return AllIcons.General.Run;
+    return AllIcons.RunConfigurations.TestState.Run;
   }
 }

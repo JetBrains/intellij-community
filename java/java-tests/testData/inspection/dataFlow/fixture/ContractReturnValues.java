@@ -4,7 +4,7 @@ import org.jetbrains.annotations.*;
 class ContractReturnValues {
   void testRequireNonNull() {
     System.out.println(Objects.requireNonNull(nullable()).trim());
-    System.out.println(nullable().<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(nullable().<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
   }
 
   void test(StringBuilder sb) {
@@ -116,7 +116,7 @@ class ContractReturnValues {
       System.out.println("Is Empty");
     } else {
       // In this case system can produce NullPointerException, because Objects.toString(String str) calls methods String.valueOf()
-      System.out.println(text.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+      System.out.println(text.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
     }
   }
 }

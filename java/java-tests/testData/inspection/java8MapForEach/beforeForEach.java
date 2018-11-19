@@ -1,4 +1,4 @@
-// "Fix all 'Replace with Map.forEach' problems in file" "true"
+// "Fix all 'Map.forEach can be used' problems in file" "true"
 import java.util.Map;
 import java.util.function.Supplier;
 

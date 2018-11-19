@@ -29,8 +29,6 @@ import java.net.MalformedURLException;
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
 
 /**
  * Tests that {@link com.intellij.openapi.util.ScalableIcon#scale(float)} works correctly for custom JB icons.

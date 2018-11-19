@@ -186,7 +186,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         longestOverlap = prefix.length();
       }
 
-      suggestedName = String.valueOf(Character.toUpperCase(suggestedName.charAt(0))) + suggestedName.substring(1);
+      suggestedName = Character.toUpperCase(suggestedName.charAt(0)) + suggestedName.substring(1);
       final int overlap = getOverlap(suggestedName, prefix);
 
       if (overlap < longestOverlap) continue;

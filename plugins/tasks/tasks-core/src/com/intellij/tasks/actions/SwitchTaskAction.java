@@ -69,23 +69,26 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       presentation.setText("");
       presentation.setIcon(null);
     }
-    else {
+    else if (e.isFromActionToolbar()) {
       TaskManager taskManager = TaskManager.getManager(project);
       LocalTask activeTask = taskManager.getActiveTask();
-      presentation.setVisible(true);
-      presentation.setEnabled(true);
 
       if (isImplicit(activeTask) &&
           taskManager.getAllRepositories().length == 0 &&
           !TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
-        presentation.setVisible(false);
+        presentation.setEnabledAndVisible(false);
       }
       else {
         String s = getText(activeTask);
-        presentation.setText(s);
+        presentation.setEnabledAndVisible(true);
+        presentation.setText(s, false);
         presentation.setIcon(activeTask.getIcon());
         presentation.setDescription(activeTask.getSummary());
       }
+    }
+    else {
+      presentation.setEnabledAndVisible(true);
+      presentation.copyFrom(getTemplatePresentation());
     }
   }
 
@@ -149,6 +152,11 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       @Override
       public boolean hasSubstep(List<TaskListItem> selectedValues) {
         return selectedValues.size() > 1 || selectedValues.get(0).getTask() != null;
+      }
+
+      @Override
+      public boolean isSpeedSearchEnabled() {
+        return true;
       }
     };
 

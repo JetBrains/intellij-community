@@ -12,12 +12,12 @@ import java.util.List;
 public class LoadFullValueCommand extends AbstractFrameCommand {
   public static final String NEXT_VALUE_SEPARATOR = "__pydev_val__";
   private final @NotNull IPyDebugProcess myDebugProcess;
-  private final @NotNull List<PyFrameAccessor.PyAsyncValue<String>> myVars;
+  private final @NotNull List<? extends PyFrameAccessor.PyAsyncValue<String>> myVars;
 
   public LoadFullValueCommand(final @NotNull RemoteDebugger debugger,
                               final @NotNull String threadId,
                               final @NotNull String frameId,
-                              final @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) {
+                              final @NotNull List<? extends PyFrameAccessor.PyAsyncValue<String>> vars) {
     super(debugger, LOAD_FULL_VALUE, threadId, frameId);
     myDebugProcess = debugger.getDebugProcess();
     myVars = vars;

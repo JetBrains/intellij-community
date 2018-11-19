@@ -55,7 +55,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -144,7 +144,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       if (callable == null) return value;
 
       if (PyiUtil.isInsideStub(callable)) {
-        final PyCallable originalCallable = PyiUtil.stubToOriginal(callable, PyCallable.class);
+        final PyCallable originalCallable = PyiUtil.getOriginalElementOrLeaveAsIs(callable, PyCallable.class);
 
         final PyNamedParameter originalParameter = originalCallable.getParameterList().findParameterByName(name);
         if (originalParameter != null) return originalParameter.getDefaultValue();

@@ -294,7 +294,7 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
   }
 
   private static class MyBufferedIS extends BufferedInputStream {
-    public MyBufferedIS(final InputStream in) {
+    MyBufferedIS(final InputStream in) {
       super(in, 512);
     }
 

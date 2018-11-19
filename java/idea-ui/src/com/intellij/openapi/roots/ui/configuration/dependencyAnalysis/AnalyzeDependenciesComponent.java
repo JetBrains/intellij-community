@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 
 import com.intellij.ProjectTopics;
@@ -85,7 +83,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     myMessageBusConnection = myModule.getProject().getMessageBus().connect();
     myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         myClasspaths.clear();
         updateTree();
       }
@@ -262,7 +260,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      *
      * @param explanation the wrapped explanation
      */
-    public PathNode(T explanation) {
+    PathNode(T explanation) {
       myExplanation = explanation;
     }
 
@@ -469,7 +467,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      *
      * @param url the wrapped explanation
      */
-    public UrlNode(ModuleDependenciesAnalyzer.UrlExplanation url) {
+    UrlNode(ModuleDependenciesAnalyzer.UrlExplanation url) {
       super(url);
       setNameFieldShown(false);
     }
@@ -547,7 +545,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      *
      * @param orderEntryExplanation the explanation to wrap
      */
-    public OrderEntryNode(ModuleDependenciesAnalyzer.OrderEntryExplanation orderEntryExplanation) {
+    OrderEntryNode(ModuleDependenciesAnalyzer.OrderEntryExplanation orderEntryExplanation) {
       super(orderEntryExplanation);
       setNameFieldShown(false);
     }
@@ -619,7 +617,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     /**
      * The constructor
      */
-    public SdkFilterAction() {
+    SdkFilterAction() {
       super("Include SDK", "If selected, the SDK classes are included", AllIcons.Nodes.PpJdk);
     }
 
@@ -627,7 +625,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.isSdkIncluded();
     }
 
@@ -635,7 +633,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.setIncludeSdk(state);
       updateTree();
     }
@@ -648,15 +646,15 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     /**
      * The constructor
      */
-    public UrlModeAction() {
-      super("Use URL mode", "If selected, the URLs are displayed, otherwise order entries", AllIcons.Nodes.PpFile);
+    UrlModeAction() {
+      super("Use URL mode", "If selected, the URLs are displayed, otherwise order entries", AllIcons.Nodes.Folder);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.isUrlMode();
     }
 
@@ -664,7 +662,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.setUrlMode(state);
       updateTree();
     }

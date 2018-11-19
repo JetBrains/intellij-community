@@ -158,12 +158,11 @@ public class ConsoleViewUtil {
     editor.putUserData(REPLACE_ACTION_ENABLED, true);
   }
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static class ColorCache {
     static {
       LafManager.getInstance().addLafManagerListener(new LafManagerListener() {
         @Override
-        public void lookAndFeelChanged(LafManager source) {
+        public void lookAndFeelChanged(@NotNull LafManager source) {
           mergedTextAttributes.clear();
         }
       });

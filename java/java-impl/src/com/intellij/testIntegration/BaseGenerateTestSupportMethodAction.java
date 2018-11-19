@@ -132,7 +132,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     return true;
   }
 
-  private static void chooseAndPerform(Editor editor, List<TestFramework> frameworks, final Consumer<TestFramework> consumer) {
+  private static void chooseAndPerform(Editor editor, List<? extends TestFramework> frameworks, final Consumer<? super TestFramework> consumer) {
     if (frameworks.size() == 1) {
       consumer.consume(frameworks.get(0));
       return;

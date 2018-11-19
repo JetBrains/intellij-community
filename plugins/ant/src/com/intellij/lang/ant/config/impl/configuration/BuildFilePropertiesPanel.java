@@ -242,7 +242,7 @@ public class BuildFilePropertiesPanel {
     };
     private static final ColumnInfo[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
 
-    public PropertiesTab() {
+    PropertiesTab() {
       myPropertiesTable = new JBTable();
       UIPropertyBinding.TableListBinding<BuildFileProperty> tableListBinding = getBinding().bindList(myPropertiesTable, PROPERTY_COLUMNS,
                                                                                                      AntBuildFileImpl.ANT_PROPERTIES);
@@ -374,7 +374,7 @@ public class BuildFilePropertiesPanel {
     };
     private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{CHECK_BOX_COLUMN, NAME_COLUMN, DESCRIPTION};
 
-    public FiltersTab() {
+    FiltersTab() {
       myFiltersTable.getTableHeader().setReorderingAllowed(false);
 
       UIPropertyBinding.TableListBinding tableListBinding = getBinding().bindList(myFiltersTable, COLUMNS, AntBuildFileImpl.TARGET_FILTERS);
@@ -416,7 +416,7 @@ public class BuildFilePropertiesPanel {
     private final GlobalAntConfiguration myAntGlobalConfiguration;
     private final Project myProject;
 
-    public ExecutionTab(final GlobalAntConfiguration antConfiguration, @NotNull final Project project) {
+    ExecutionTab(final GlobalAntConfiguration antConfiguration, @NotNull final Project project) {
       myAntGlobalConfiguration = antConfiguration;
       myProject = project;
       myAntCommandLine.attachLabel(myAntCmdLineLabel);
@@ -508,7 +508,7 @@ public class BuildFilePropertiesPanel {
     private JPanel myWholePanel;
     private AntClasspathEditorPanel myClasspath;
 
-    public AdditionalClasspathTab() {
+    AdditionalClasspathTab() {
       getBinding().addBinding(myClasspath.setClasspathProperty(AntBuildFileImpl.ADDITIONAL_CLASSPATH));
     }
 

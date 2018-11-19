@@ -55,7 +55,7 @@ public class PluginBuildUtil {
     return sandboxHome + File.separator + "plugins" + File.separator + module.getName();
   }
 
-  public static void getDependencies(Module module, final Set<Module> modules) {
+  public static void getDependencies(Module module, final Set<? super Module> modules) {
     productionRuntimeDependencies(module).forEachModule(dep -> {
       if (ModuleType.get(dep) == StdModuleTypes.JAVA && !modules.contains(dep)) {
         modules.add(dep);
@@ -78,7 +78,7 @@ public class PluginBuildUtil {
     });
   }
 
-  public static void getLibraries(Module module, final Set<Library> libs) {
+  public static void getLibraries(Module module, final Set<? super Library> libs) {
     productionRuntimeDependencies(module).forEachLibrary(library -> {
       libs.add(library);
       return true;

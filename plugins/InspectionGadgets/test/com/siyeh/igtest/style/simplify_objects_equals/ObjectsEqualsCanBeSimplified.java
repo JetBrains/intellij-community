@@ -13,6 +13,15 @@ class Test {
     if(arr1 != null && Objects.equals(arr1, arr2)) System.out.println();
     
   }
+
+  void testPrimitives(int a, int b, long c, long d, double e, double f, boolean g, boolean h) {
+    if(Objects.<warning descr="Can be replaced with '=='">equals</warning>(a, b)) {}
+    if(Objects.equals(a, c)) {}
+    if(Objects.<warning descr="Can be replaced with '=='">equals</warning>(c, d)) {}
+    if(Objects.equals(e, f)) {}
+    if(Objects.<warning descr="Can be replaced with '=='">equals</warning>(g, h)) {}
+    if(Objects.equals(a, h)) {}
+  }
   
   void testOverridden(First f1, First f2, Second s1, Second s2, Third t1, Third t2) {
     // No conflicting equals signatures

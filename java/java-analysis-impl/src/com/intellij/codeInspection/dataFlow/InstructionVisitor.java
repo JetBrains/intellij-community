@@ -306,10 +306,8 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitNot(NotInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    DfaValue dfaValue = memState.pop();
-
-    dfaValue = dfaValue.createNegated();
-    pushExpressionResult(dfaValue, instruction, memState);
+    memState.pop();
+    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 

@@ -82,11 +82,11 @@ class AddonlyIntSet {
   private int mask;
   private boolean hasZeroKey;
 
-  public AddonlyIntSet() {
+  AddonlyIntSet() {
     this(21);
   }
 
-  public AddonlyIntSet(int expectedSize) {
+  AddonlyIntSet(int expectedSize) {
     int powerOfTwo = Integer.highestOneBit((3 * expectedSize) / 2) << 1;
     shift = Integer.numberOfLeadingZeros(powerOfTwo) + 1;
     mask = powerOfTwo - 1;

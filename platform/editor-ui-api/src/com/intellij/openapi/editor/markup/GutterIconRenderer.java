@@ -6,8 +6,15 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.CompositeIcon;
+import com.intellij.ui.RetrievableIcon;
+import com.intellij.util.ui.accessibility.SimpleAccessible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.regex.Pattern;
 
 /**
  * Interface which should be implemented in order to draw icons in the gutter area and handle events
@@ -22,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
  */
-public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware {
+public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware, SimpleAccessible {
   /**
    * Returns the action group actions from which are used to fill the context menu
    * displayed when the icon is right-clicked.
@@ -106,6 +113,42 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   @Nullable
   public GutterDraggableObject getDraggableObject() {
     return null;
+  }
+
+  @Override
+  @NotNull
+  public String getAccessibleName() {
+    return getAccessibleName(getIcon(), "icon: ");
+  }
+
+  private static String getAccessibleName(@Nullable Icon icon, @NotNull String prefix) {
+    if (icon instanceof RetrievableIcon) {
+      return getAccessibleName(((RetrievableIcon)icon).retrieveIcon(), prefix);
+    }
+    if (icon instanceof CompositeIcon) {
+      StringBuilder b = new StringBuilder("composite icon: ");
+      int count = ((CompositeIcon)icon).getIconCount();
+      for (int i = 0; i < count; i++) {
+        b.append(getAccessibleName(((CompositeIcon)icon).getIcon(i), ""));
+        if (i < count - 1) b.append(" & ");
+      }
+      return b.toString();
+    }
+    if (icon instanceof IconLoader.CachedImageIcon) {
+      String path = ((IconLoader.CachedImageIcon)icon).getOriginalPath();
+      if (path != null) {
+        String[] split = path.split(Pattern.quote("/") + "|" + Pattern.quote("\\"));
+        String name = split[split.length - 1];
+        return prefix + name.split(Pattern.quote("."))[0];
+      }
+    }
+    return prefix + "unknown";
+  }
+
+  @Nullable
+  @Override
+  public String getAccessibleTooltipText() {
+    return getTooltipText();
   }
 
   public enum Alignment {

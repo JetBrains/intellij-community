@@ -24,7 +24,6 @@ import com.intellij.util.ui.UIUtil;
 public class UsageTreeColorsScheme {
 
   /**
-   * @noinspection UnusedParameters
    */
   public UsageTreeColorsScheme(EditorColorsManager editorColorsManager) {
   }
@@ -34,7 +33,7 @@ public class UsageTreeColorsScheme {
   }
 
   public EditorColorsScheme getScheme() {
-    return EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground());
+    return EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeBackground());
   }
 
 }

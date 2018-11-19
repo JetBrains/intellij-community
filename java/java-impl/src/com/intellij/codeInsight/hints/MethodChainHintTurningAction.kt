@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 
 class MethodChainHintTurningAction : ToggleAction() {
-  override fun isSelected(e: AnActionEvent?): Boolean {
+  override fun isSelected(e: AnActionEvent): Boolean {
     return CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE
   }
 
-  override fun setSelected(e: AnActionEvent?, state: Boolean) {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
     CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE = state
     MethodChainHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
   }

@@ -1,8 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,7 +35,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
       PsiFile file = usage.getFile();
-      if (file instanceof GroovyFile && file.isValid() && file.isPhysical()) {
+      if (file instanceof GroovyFile && ReadAction.compute(() -> file.isValid()) && file.isPhysical()) {
         files.add((GroovyFile)file);
       }
     }
@@ -71,7 +71,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       }
     };
 
-    if (!progressManager.runProcessWithProgressSynchronously(findUnusedImports, "Optimizing imports (Groovy) ... ", false, project)) {
+    if (!progressManager.runProcessWithProgressSynchronously(findUnusedImports, "Optimizing Imports (Groovy) ... ", false, project)) {
       return;
     }
 

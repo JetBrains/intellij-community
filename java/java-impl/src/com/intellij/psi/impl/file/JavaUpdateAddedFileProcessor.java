@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
- * @since Sep 18, 2008
  */
 public class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -125,14 +111,14 @@ public final class FloatingDecorator extends JDialog {
 
     super.show();
     final UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getEnableAlphaMode()) {
+    if (uiSettings.getState().getEnableAlphaMode()) {
       final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
       windowManager.setAlphaModeEnabled(this, true);
       if (myInfo.isActive()) {
         windowManager.setAlphaModeRatio(this, 0.0f);
       }
       else {
-        windowManager.setAlphaModeRatio(this, uiSettings.getAlphaModeRatio());
+        windowManager.setAlphaModeRatio(this, uiSettings.getState().getAlphaModeRatio());
       }
     }
     paint(getGraphics()); // This prevents annoying flick
@@ -160,7 +146,7 @@ public final class FloatingDecorator extends JDialog {
     myInfo=info;
     // Set alpha mode
     final UISettings uiSettings=UISettings.getInstance();
-    if (uiSettings.getEnableAlphaMode() && isShowing() && isDisplayable()) {
+    if (uiSettings.getState().getEnableAlphaMode() && isShowing() && isDisplayable()) {
       myDelayAlarm.cancelAllRequests();
       if (myInfo.isActive()) { // make window non transparent
         myFrameTicker.cancelAllRequests();
@@ -179,10 +165,10 @@ public final class FloatingDecorator extends JDialog {
             if (myCurrentFrame > 0) {
               myCurrentFrame = TOTAL_FRAME_COUNT - myCurrentFrame;
             }
-            myEndRatio = uiSettings.getAlphaModeRatio();
+            myEndRatio = uiSettings.getState().getAlphaModeRatio();
             myFrameTicker.addRequest(myAnimator, DELAY);
           },
-          uiSettings.getAlphaModeDelay()
+          uiSettings.getState().getAlphaModeDelay()
         );
       }
     }
@@ -205,7 +191,7 @@ public final class FloatingDecorator extends JDialog {
     private Point myLastPoint;
     private boolean myDragging;
 
-    public BorderItem(final int anchor){
+    BorderItem(final int anchor){
       myAnchor=anchor;
       enableEvents(MouseEvent.MOUSE_EVENT_MASK|MouseEvent.MOUSE_MOTION_EVENT_MASK);
     }
@@ -402,10 +388,10 @@ public final class FloatingDecorator extends JDialog {
       LOG.assertTrue(isShowing());
       final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
       myDelayAlarm.cancelAllRequests();
-      if (uiSettings.getEnableAlphaMode()) {
+      if (uiSettings.getState().getEnableAlphaMode()) {
         if (!myInfo.isActive()) {
           windowManager.setAlphaModeEnabled(FloatingDecorator.this, true);
-          windowManager.setAlphaModeRatio(FloatingDecorator.this, uiSettings.getAlphaModeRatio());
+          windowManager.setAlphaModeRatio(FloatingDecorator.this, uiSettings.getState().getAlphaModeRatio());
         }
       }
       else {

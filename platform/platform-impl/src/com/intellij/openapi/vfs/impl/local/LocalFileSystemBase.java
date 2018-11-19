@@ -265,7 +265,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  private static boolean processFile(@NotNull NewVirtualFile file, @NotNull Processor<VirtualFile> processor) {
+  private static boolean processFile(@NotNull NewVirtualFile file, @NotNull Processor<? super VirtualFile> processor) {
     if (!processor.process(file)) return false;
     if (file.isDirectory()) {
       for (VirtualFile child : file.getCachedChildren()) {
@@ -453,7 +453,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
     File ioFile = convertToIOFileAndCheck(file);
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") OutputStream stream =
+    OutputStream stream =
       useSafeStream(requestor, file) ? new SafeFileOutputStream(ioFile, SystemInfo.isUnix) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override

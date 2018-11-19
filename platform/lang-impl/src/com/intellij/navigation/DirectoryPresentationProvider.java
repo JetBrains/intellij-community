@@ -1,20 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.ProductIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,9 +24,7 @@ public class DirectoryPresentationProvider implements ItemPresentationProvider<P
     final String locationString = vFile.getPath();
 
     if (ProjectRootsUtil.isProjectHome(directory)) {
-      final Icon projectIcon = PlatformUtils.isJetBrainsProduct()
-                               ? AllIcons.Nodes.IdeaProject
-                               : IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+      final Icon projectIcon = ProductIcons.getInstance().getProjectIcon();
       return new PresentationData(project.getName(), locationString, projectIcon, null);
     }
 

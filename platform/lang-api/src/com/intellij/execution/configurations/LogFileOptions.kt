@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations
 
 import com.intellij.openapi.components.BaseState
@@ -51,13 +49,13 @@ class LogFileOptions : BaseState {
   var pathPattern: String? by string()
 
   @get:Attribute("checked")
-  var isEnabled: Boolean by property(true)
+  var isEnabled by property(true)
 
   @get:Attribute("skipped")
-  var isSkipContent: Boolean by property(true)
+  var isSkipContent by property(true)
 
   @get:Attribute("show_all")
-  var isShowAll: Boolean by property(false)
+  var isShowAll by property(false)
 
   @get:Attribute(value = "charset", converter = CharsetConverter::class)
   var charset: Charset by property(Charset.defaultCharset())
@@ -125,13 +123,9 @@ class LogFileOptions : BaseState {
 }
 
 private class PathConverter : Converter<String>() {
-  override fun fromString(value: String): String? {
-    return FileUtilRt.toSystemDependentName(value)
-  }
+  override fun fromString(value: String) = FileUtilRt.toSystemDependentName(value)
 
-  override fun toString(value: String): String {
-    return FileUtilRt.toSystemIndependentName(value)
-  }
+  override fun toString(value: String) = FileUtilRt.toSystemIndependentName(value)
 }
 
 private class CharsetConverter : Converter<Charset>() {
@@ -142,10 +136,7 @@ private class CharsetConverter : Converter<Charset>() {
     catch (ignored: Exception) {
       Charset.defaultCharset()
     }
-
   }
 
-  override fun toString(value: Charset): String {
-    return value.name()
-  }
+  override fun toString(value: Charset) = value.name()
 }

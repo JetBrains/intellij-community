@@ -28,9 +28,9 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.asNormalEdge;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getNotNullNodeIndex;
 
 public class GraphElementComparatorByLayoutIndex implements Comparator<GraphElement> {
-  @NotNull private final NotNullFunction<Integer, Integer> myLayoutIndexGetter;
+  @NotNull private final NotNullFunction<? super Integer, Integer> myLayoutIndexGetter;
 
-  public GraphElementComparatorByLayoutIndex(@NotNull NotNullFunction<Integer, Integer> layoutIndexGetter) {
+  public GraphElementComparatorByLayoutIndex(@NotNull NotNullFunction<? super Integer, Integer> layoutIndexGetter) {
     myLayoutIndexGetter = layoutIndexGetter;
   }
 

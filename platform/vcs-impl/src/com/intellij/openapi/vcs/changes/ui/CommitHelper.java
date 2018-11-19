@@ -48,7 +48,6 @@ import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgr
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 
 public class CommitHelper {
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<>("DOCUMENT_BEING_COMMITTED");
@@ -62,7 +61,7 @@ public class CommitHelper {
   @NotNull private final String myActionName;
   @NotNull private final String myCommitMessage;
 
-  @NotNull private final List<CheckinHandler> myHandlers;
+  @NotNull private final List<? extends CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
   @NotNull private final NullableFunction<Object, Object> myAdditionalData;
@@ -78,7 +77,7 @@ public class CommitHelper {
                       @NotNull List<Change> includedChanges,
                       @NotNull String actionName,
                       @NotNull String commitMessage,
-                      @NotNull List<CheckinHandler> handlers,
+                      @NotNull List<? extends CheckinHandler> handlers,
                       boolean allOfDefaultChangeListChangesIncluded,
                       boolean synchronously,
                       @NotNull NullableFunction<Object, Object> additionalDataHolder,
@@ -92,7 +91,7 @@ public class CommitHelper {
                       @NotNull List<Change> includedChanges,
                       @NotNull String actionName,
                       @NotNull String commitMessage,
-                      @NotNull List<CheckinHandler> handlers,
+                      @NotNull List<? extends CheckinHandler> handlers,
                       boolean allOfDefaultChangeListChangesIncluded,
                       boolean synchronously,
                       @NotNull NullableFunction<Object, Object> additionalDataHolder,
@@ -168,7 +167,7 @@ public class CommitHelper {
     }
   }
 
-  static boolean hasOnlyWarnings(@NotNull List<VcsException> exceptions) {
+  static boolean hasOnlyWarnings(@NotNull List<? extends VcsException> exceptions) {
     return exceptions.stream().allMatch(VcsException::isWarning);
   }
 
@@ -358,9 +357,13 @@ public class CommitHelper {
     private void updateChangelistAfterRefresh() {
       if (!(myChangeList instanceof LocalChangeList)) return;
 
-      ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-      LocalChangeList localList = clManager.findChangeList(myChangeList.getName());
+      ChangeListManagerEx clManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
+      String listName = myChangeList.getName();
+
+      LocalChangeList localList = clManager.findChangeList(listName);
       if (localList == null) return;
+
+      clManager.editChangeListData(listName, null);
 
       if (!localList.isDefault()) {
         clManager.scheduleAutomaticEmptyChangeListDeletion(localList);
@@ -443,7 +446,7 @@ public class CommitHelper {
   @CalledInAwt
   public static void moveToFailedList(@NotNull ChangeList changeList,
                                       @NotNull String commitMessage,
-                                      @NotNull List<Change> failedChanges,
+                                      @NotNull List<? extends Change> failedChanges,
                                       @NotNull String newChangelistName,
                                       @NotNull Project project) {
     // No need to move since we'll get exactly the same changelist.
@@ -486,7 +489,7 @@ public class CommitHelper {
   }
 
   @NotNull
-  static List<VcsException> collectErrors(@NotNull List<VcsException> exceptions) {
-    return exceptions.stream().filter(e -> !e.isWarning()).collect(toList());
+  static List<VcsException> collectErrors(@NotNull List<? extends VcsException> exceptions) {
+    return filter(exceptions, e -> !e.isWarning());
   }
 }

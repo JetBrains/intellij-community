@@ -186,7 +186,7 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
     private final CvsHandler myHandler;
     private final CvsOperationExecutor myExecutor;
 
-    public MyCvsOperationExecutorCallback(CvsContext context, CvsHandler handler, CvsOperationExecutor executor) {
+    MyCvsOperationExecutorCallback(CvsContext context, CvsHandler handler, CvsOperationExecutor executor) {
       myContext = context;
       myHandler = handler;
       myExecutor = executor;

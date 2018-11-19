@@ -108,7 +108,7 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   }
 
   @Override
-  public <Node> void collectOutsRecursively(@NotNull Graph<Node> graph, Node start, Set<Node> set) {
+  public <Node> void collectOutsRecursively(@NotNull Graph<Node> graph, Node start, Set<? super Node> set) {
     if (!set.add(start)) {
       return;
     }
@@ -134,7 +134,7 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
 
   @NotNull
   @Override
-  public <Node> List<List<Node>> removePathsWithCycles(@NotNull List<List<Node>> paths) {
+  public <Node> List<List<Node>> removePathsWithCycles(@NotNull List<? extends List<Node>> paths) {
     final List<List<Node>> result = new ArrayList<>();
     for (List<Node> path : paths) {
       if (!containsCycle(path)) {

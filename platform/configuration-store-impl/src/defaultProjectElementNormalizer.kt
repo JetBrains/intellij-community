@@ -4,12 +4,12 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.*
@@ -116,7 +116,7 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
     processComponents(it.javaClass)
   }
 
-  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, _ ->
+  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ComponentManagerImpl) { aClass, _ ->
     processComponents(aClass)
     true
   }

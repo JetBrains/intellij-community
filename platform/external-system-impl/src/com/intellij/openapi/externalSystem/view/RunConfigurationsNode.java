@@ -35,7 +35,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/7/2014
  */
 @Order(ExternalSystemNode.BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER)
 public class RunConfigurationsNode extends ExternalSystemNode<Void> {
@@ -48,7 +47,7 @@ public class RunConfigurationsNode extends ExternalSystemNode<Void> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(ExternalSystemIcons.TaskGroup);
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("unused")
 
 package com.intellij.testGuiFramework.generators
@@ -58,6 +44,7 @@ import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.messages.SheetController
@@ -85,8 +72,8 @@ import javax.swing.tree.TreePath
 
 //**********COMPONENT GENERATORS**********
 
-private val leftButton = MouseEvent.BUTTON1
-private val rightButton = MouseEvent.BUTTON3
+private const val leftButton = MouseEvent.BUTTON1
+private const val rightButton = MouseEvent.BUTTON3
 
 private fun MouseEvent.isLeftButton() = (this.button == leftButton)
 private fun MouseEvent.isRightButton() = (this.button == rightButton)
@@ -176,7 +163,7 @@ class JBListGenerator : ComponentCodeGenerator<JBList<*>> {
   private fun JBList<*>.isFrameworksTree() = this.javaClass.name.toLowerCase().contains("AddSupportForFrameworksPanel".toLowerCase())
   override fun generate(cmp: JBList<*>, me: MouseEvent, cp: Point): String {
     val cellText = getCellText(cmp, cp).orEmpty()
-    if (cmp.isPopupList()) return """popupClick("$cellText")"""
+    if (cmp.isPopupList()) return """popupMenu("$cellText").clickSearchedItem()"""
     if (me.button == MouseEvent.BUTTON2) return """jList("$cellText").item("$cellText").rightClick()"""
     if (me.clickCount == 2) return """jList("$cellText").doubleClickItem("$cellText")"""
     return """jList("$cellText").clickItem("$cellText")"""
@@ -305,7 +292,7 @@ class ProjectViewTreeGenerator : ComponentCodeGenerator<ProjectViewTree> {
   override fun accept(cmp: Component): Boolean = cmp is ProjectViewTree
   private fun JTree.getPath(cp: Point) = this.getClosestPathForLocation(cp.x, cp.y)
   override fun generate(cmp: ProjectViewTree, me: MouseEvent, cp: Point): String {
-    val path = getJTreePathItemsString(cmp, cmp.getPath(cp))
+    val path = if(cmp.getPath(cp) != null) getJTreePathItemsString(cmp, cmp.getPath(cp)) else ""
     if (me.isRightButton()) return "path($path).rightClick()"
     if (me.clickCount == 2) return "path($path).doubleClick()"
     return "path($path).click()"
@@ -434,6 +421,25 @@ class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
 
   override fun generate(cmp: JFrame): String = "ideFrame {"
 }
+
+class TabbedPaneGenerator : ComponentCodeGenerator<Component> {
+  override fun priority(): Int = 2
+
+  override fun generate(cmp: Component, me: MouseEvent, cp: Point): String {
+    val tabbedPane = when {
+      cmp.parent.parent is JBTabbedPane -> cmp.parent.parent as JTabbedPane
+      else -> cmp.parent as JTabbedPane
+    }
+    val selectedTabIndex = tabbedPane.indexAtLocation(me.locationOnScreen.x - tabbedPane.locationOnScreen.x,
+                                                      me.locationOnScreen.y - tabbedPane.locationOnScreen.y)
+    val title = tabbedPane.getTitleAt(selectedTabIndex)
+
+    return """tab("${title}").selectTab()"""
+  }
+
+  override fun accept(cmp: Component): Boolean = cmp.parent.parent is JBTabbedPane || cmp.parent is JBTabbedPane
+}
+
 
 //**********LOCAL CONTEXT GENERATORS**********
 

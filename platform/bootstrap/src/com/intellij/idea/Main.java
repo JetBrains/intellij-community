@@ -33,6 +33,7 @@ public class Main {
   private static final String[] NO_ARGS = {};
   private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions");
+  private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -40,7 +41,6 @@ public class Main {
 
   private Main() { }
 
-  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(String[] args) {
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
@@ -96,8 +96,7 @@ public class Main {
   }
 
   private static boolean isCommandLine(String[] args) {
-    if (isHeadless()) return true;
-    return args.length > 0 && Comparing.strEqual(args[0], "diff");
+    return isHeadless(args) || args.length > 0 && GUI_COMMANDS.contains(args[0]);
   }
 
   private static boolean checkGraphics() {
@@ -145,7 +144,7 @@ public class Main {
     return null;
   }
 
-  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
   public static void showMessage(String title, String message, boolean error) {
     PrintStream stream = error ? System.err : System.out;
     stream.println("\n" + title + ": " + message);

@@ -18,21 +18,18 @@ public class StructuralSearchAction extends AnAction {
    */
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    triggerAction(null, SearchContext.buildFromDataContext(event.getDataContext()));
+    triggerAction(null, new SearchContext(event.getDataContext()));
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
     final Project project = searchContext.getProject();
-    if (project == null) {
-      return;
-    }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     if (Registry.is("ssr.use.new.search.dialog")) {
-      final StructuralSearchDialog searchDialog = new StructuralSearchDialog(searchContext);
+      final StructuralSearchDialog searchDialog = new StructuralSearchDialog(searchContext, false);
       if (config != null) {
         searchDialog.setUseLastConfiguration(true);
-        searchDialog.setValuesFromConfig(config);
+        searchDialog.loadConfiguration(config);
       }
       searchDialog.show();
     }
@@ -52,18 +49,16 @@ public class StructuralSearchAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final DataContext context = event.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(context);
-    final StructuralSearchPlugin plugin = project==null ? null:StructuralSearchPlugin.getInstance( project );
+    final Project project = event.getProject();
+    final StructuralSearchPlugin plugin = (project == null) ? null : StructuralSearchPlugin.getInstance(project);
 
     if (plugin == null || plugin.isSearchInProgress() || plugin.isDialogVisible()) {
-      presentation.setEnabled( false );
+      presentation.setEnabled(false);
     } else {
-      presentation.setEnabled( true );
+      presentation.setEnabled(true);
     }
 
     super.update(event);
   }
 
 }
-

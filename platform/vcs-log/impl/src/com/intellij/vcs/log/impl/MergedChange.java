@@ -33,4 +33,21 @@ public abstract class MergedChange extends Change {
    * Returns a list of changes that were merged in a merge commit.
    */
   public abstract List<Change> getSourceChanges();
+
+  /**
+   * A simple implementation with a merge change and a list of source changes inside.
+   */
+  public static class SimpleMergedChange extends MergedChange {
+    private final List<Change> mySourceChanges;
+
+    public SimpleMergedChange(@NotNull Change mergedChange, @NotNull List<Change> sourceChanges) {
+      super(mergedChange);
+      mySourceChanges = sourceChanges;
+    }
+
+    @Override
+    public List<Change> getSourceChanges() {
+      return mySourceChanges;
+    }
+  }
 }

@@ -7,6 +7,6 @@ scalar key ('bar')
 : (':')
 whitespace (' ')
 scalar text ('>')
-Eol ('\n')
+block scalar EOL ('\n')
 indent ('  ')
 scalar text ('IC Real Tech, Inc. 3050 N Andrews Ave EXT Pompano Beach, FL 33064')

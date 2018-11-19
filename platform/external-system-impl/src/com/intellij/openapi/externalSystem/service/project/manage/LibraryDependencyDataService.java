@@ -43,7 +43,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 4/12/13 6:19 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData, LibraryOrderEntry> {

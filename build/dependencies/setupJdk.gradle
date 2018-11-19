@@ -1,3 +1,5 @@
+import java.util.concurrent.TimeUnit
+
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 task setupJdks(dependsOn: ['setupJdk18', 'setupJdk16'])
 cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
@@ -24,6 +26,7 @@ task downloadJdk18 {
       src "$jdkRepo/intellij-jdk/${artifactName}"
       dest outputFile
       tempAndMove true
+      timeout TimeUnit.MINUTES.toMillis(30).toInteger()
     }
   }
 }

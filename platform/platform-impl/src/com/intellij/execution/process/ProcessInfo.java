@@ -25,7 +25,7 @@ import java.util.Optional;
 
 
 public class ProcessInfo {
-  public static ProcessInfo[] EMPTY_ARRAY = new ProcessInfo[0];
+  public static final ProcessInfo[] EMPTY_ARRAY = new ProcessInfo[0];
 
   private final int myPid;
   @NotNull private final String myCommandLine;

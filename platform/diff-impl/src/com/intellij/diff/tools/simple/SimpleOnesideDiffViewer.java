@@ -174,7 +174,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   //
 
   private class MyReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
-    public MyReadOnlyLockAction() {
+    MyReadOnlyLockAction() {
       super(getContext(), getEditableEditors());
     }
   }

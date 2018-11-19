@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspectionTool {
-  protected void addMoveToPackageFix(PsiFile file, String packName, List<LocalQuickFix> availableFixes) {
+  protected void addMoveToPackageFix(PsiFile file, String packName, List<? super LocalQuickFix> availableFixes) {
     MoveToPackageFix moveToPackageFix = new MoveToPackageFix(packName);
     if (moveToPackageFix.isAvailable(file)) {
       availableFixes.add(moveToPackageFix);

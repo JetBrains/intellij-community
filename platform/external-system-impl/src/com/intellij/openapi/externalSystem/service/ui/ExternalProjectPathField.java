@@ -54,7 +54,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 24.05.13 19:13
  */
 public class ExternalProjectPathField extends ComponentWithBrowseButton<ExternalProjectPathField.MyPathAndProjectButtonPanel>
   implements TextAccessor

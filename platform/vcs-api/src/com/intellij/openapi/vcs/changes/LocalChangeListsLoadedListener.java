@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 public interface LocalChangeListsLoadedListener {
-  void processLoadedLists(final List<LocalChangeList> lists);
+  void processLoadedLists(@NotNull List<LocalChangeList> lists);
 }

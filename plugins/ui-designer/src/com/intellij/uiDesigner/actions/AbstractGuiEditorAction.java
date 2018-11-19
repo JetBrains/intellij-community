@@ -57,7 +57,7 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
     }
   }
 
-  protected abstract void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e);
+  protected abstract void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e);
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
@@ -74,7 +74,7 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
     }
   }
 
-  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
   }
 
   @Nullable

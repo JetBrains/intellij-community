@@ -992,6 +992,11 @@ public class Py3TypeTest extends PyTestCase {
    doTest("bytes", "expr = br'raw bytes'");
   }
 
+  public void testFStringLiteralType() {
+    doTest("str",
+           "expr = f'foo'");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

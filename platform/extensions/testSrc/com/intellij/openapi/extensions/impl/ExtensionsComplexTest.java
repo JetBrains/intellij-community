@@ -1,29 +1,18 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,9 +48,9 @@ public class ExtensionsComplexTest {
   }
 
   @Test
-  public void testPluginInit() {
+  public void testPluginInit() throws IOException, JDOMException {
     initExtensionPoints(
-      PLUGIN_NAME, "<extensionPoints>\n" +
+      "<extensionPoints>\n" +
                    "  <extensionPoint name=\"extensionPoint\" beanClass=\"com.intellij.openapi.extensions.impl.XMLTestBean\" />\n" +
                    "  <extensionPoint name=\"dependentOne\" beanClass=\"com.intellij.openapi.extensions.impl.DependentObjectOne\" />\n" +
                    "</extensionPoints>", null);
@@ -89,7 +78,6 @@ public class ExtensionsComplexTest {
     Extensions.instantiateArea("area", areaInstance, null);
 
     initExtensionPoints(
-      PLUGIN_NAME,
       "<extensionPoints>\n" +
       "  <extensionPoint name=\"dependentTwo\" beanClass=\"com.intellij.openapi.extensions.impl.DependentObjectTwo\" area=\"area\"/>\n" +
       "  <extensionPoint name=\"extensionPoint4area\" beanClass=\"com.intellij.openapi.extensions.impl.XMLTestBean\" area=\"area\" />\n" +
@@ -111,19 +99,18 @@ public class ExtensionsComplexTest {
     assertSame(dependentObjectOne, dependentObjectTwo.getOne());
   }
 
-  private static void initExtensionPoints(@NonNls String pluginName, @NonNls String data, AreaInstance instance) {
-    final Element element = ExtensionComponentAdapterTest.readElement(data);
+  private static void initExtensionPoints(@NonNls String data, AreaInstance instance) throws IOException, JDOMException {
+    final Element element = JDOMUtil.load(data);
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
-      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtensionPoint(pluginName, child);
+      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtensionPoint(ExtensionsComplexTest.PLUGIN_NAME, child);
     }
   }
 
-  private static void initExtensions(@NonNls String data, AreaInstance instance) {
-    final Element element = ExtensionComponentAdapterTest.readElement(data);
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
-      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtension(element.getNamespaceURI(), child);
+  private static void initExtensions(@NonNls String data, AreaInstance instance) throws IOException, JDOMException {
+    final Element element = JDOMUtil.load(data);
+    for (final Element child : element.getChildren()) {
+      ExtensionsImplTest.registerExtension(((ExtensionsAreaImpl)Extensions.getArea(instance)), element.getNamespaceURI(), child);
     }
   }
 

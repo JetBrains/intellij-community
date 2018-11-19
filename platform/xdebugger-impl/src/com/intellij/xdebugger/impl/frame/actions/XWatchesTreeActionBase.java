@@ -32,7 +32,7 @@ import java.util.List;
  */
 public abstract class XWatchesTreeActionBase extends AnAction implements DumbAware {
   @NotNull
-  public static <T extends TreeNode> List<? extends T> getSelectedNodes(final @NotNull XDebuggerTree tree, Class<T> nodeClass) {
+  public static <T extends TreeNode> List<? extends T> getSelectedNodes(final @NotNull XDebuggerTree tree, Class<? extends T> nodeClass) {
     List<T> list = new ArrayList<>();
     TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths != null) {

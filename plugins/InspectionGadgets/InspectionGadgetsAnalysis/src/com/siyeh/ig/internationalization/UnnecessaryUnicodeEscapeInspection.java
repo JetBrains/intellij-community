@@ -70,7 +70,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     private final char c;
     private final RangeMarker myRangeMarker;
 
-    public UnnecessaryUnicodeEscapeFix(char c, RangeMarker rangeMarker) {
+    UnnecessaryUnicodeEscapeFix(char c, RangeMarker rangeMarker) {
       this.c = c;
       myRangeMarker = rangeMarker;
     }

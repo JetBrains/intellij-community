@@ -24,8 +24,8 @@ import com.intellij.vcs.log.VcsRefType;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class SimpleRefGroup implements RefGroup {
   @NotNull private final String myName;
@@ -66,7 +66,7 @@ public class SimpleRefGroup implements RefGroup {
   }
 
   @NotNull
-  public static List<Color> getColors(@NotNull Collection<VcsRef> refs) {
+  public static List<Color> getColors(@NotNull Collection<? extends VcsRef> refs) {
     MultiMap<VcsRefType, VcsRef> referencesByType = ContainerUtil.groupBy(refs, VcsRef::getType);
     if (referencesByType.size() == 1) {
       Map.Entry<VcsRefType, Collection<VcsRef>> firstItem =

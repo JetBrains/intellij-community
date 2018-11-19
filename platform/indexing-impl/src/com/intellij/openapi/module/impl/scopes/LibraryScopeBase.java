@@ -27,12 +27,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public abstract class LibraryScopeBase extends GlobalSearchScope {
-  private final LinkedHashSet<VirtualFile> myEntries;
+  private final Set<VirtualFile> myEntries;
   protected final ProjectFileIndex myIndex;
 
   public LibraryScopeBase(Project project, VirtualFile[] classes, VirtualFile[] sources) {
@@ -89,7 +90,7 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
   }
 
   @Override
-  public int hashCode() {
+  public int calcHashCode() {
     return myEntries.hashCode();
   }
 }

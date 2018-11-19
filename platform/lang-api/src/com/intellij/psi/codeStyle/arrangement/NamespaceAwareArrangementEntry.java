@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 1:00 PM
  */
 public interface NamespaceAwareArrangementEntry {
   

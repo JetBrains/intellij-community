@@ -386,11 +386,7 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
-    <option name="Clojure Literal">
-      <value>
-        <option name="FOREGROUND" value="D0D0FF" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_INSTANCE_FIELD" name="Clojure Literal" />
     <option name="Clojure Numbers">
       <value>
         <option name="FOREGROUND" value="A5C261" />
@@ -449,7 +445,11 @@
         <option name="FOREGROUND" value="6D9CBE" />
       </value>
     </option>
-    <option baseAttributes="DEFAULT_IDENTIFIER" name="DEFAULT_FUNCTION_CALL" />
+    <option name="DEFAULT_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="DA4939" />
+      </value>
+    </option>
     <option name="DEFAULT_FUNCTION_DECLARATION">
       <value>
         <option name="FOREGROUND" value="FFC66D" />
@@ -457,16 +457,11 @@
     </option>
     <option name="DEFAULT_GLOBAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="D0D0FF" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option baseAttributes="TEXT" name="DEFAULT_IDENTIFIER" />
-    <option name="DEFAULT_INSTANCE_FIELD">
-      <value>
-        <option name="FOREGROUND" value="D0D0FF" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_LOCAL_VARIABLE" name="DEFAULT_INSTANCE_FIELD" />
     <option name="DEFAULT_INSTANCE_METHOD">
       <value>
         <option name="FOREGROUND" value="FFC66D" />
@@ -495,11 +490,7 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
-    <option name="DEFAULT_LOCAL_VARIABLE">
-      <value>
-        <option name="FOREGROUND" value="D0D0FF" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_IDENTIFIER" name="DEFAULT_LOCAL_VARIABLE" />
     <option name="DEFAULT_METADATA">
       <value>
         <option name="FOREGROUND" value="E8BF6A" />
@@ -525,7 +516,6 @@
     <option baseAttributes="TEXT" name="DEFAULT_SEMICOLON" />
     <option name="DEFAULT_STATIC_FIELD">
       <value>
-        <option name="FOREGROUND" value="D0D0FF" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -887,7 +877,6 @@
     </option>
     <option name="JS.GLOBAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="D0D0FF" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -896,11 +885,7 @@
         <option name="FOREGROUND" value="FFC66D" />
       </value>
     </option>
-    <option name="JS.LOCAL_VARIABLE">
-      <value>
-        <option name="FOREGROUND" value="D0D0FF" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_LOCAL_VARIABLE" name="JS.LOCAL_VARIABLE" />
     <option name="JS.PARAMETER">
       <value>
         <option name="EFFECT_TYPE" value="1" />
@@ -1047,11 +1032,7 @@
     </option>
     <option baseAttributes="TEXT" name="PARAMETER_ATTRIBUTES" />
     <option baseAttributes="DEFAULT_PARAMETER" name="PHP_PARAMETER" />
-    <option name="PHP_VAR">
-      <value>
-        <option name="FOREGROUND" value="D0D0FF" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_LOCAL_VARIABLE" name="PHP_VAR" />
     <option name="PROTOCOL_REFERENCE">
       <value>
         <option name="FOREGROUND" value="FFFFFF" />
@@ -1116,11 +1097,7 @@
         <option name="FOREGROUND" value="A5C261" />
       </value>
     </option>
-    <option name="PUPPET_VARIABLE">
-      <value>
-        <option name="FOREGROUND" value="D0D0FF" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_LOCAL_VARIABLE" name="PUPPET_VARIABLE" />
     <option name="PUPPET_VARIABLE_INTERPOLATION">
       <value>
         <option name="FOREGROUND" value="A5C261" />
@@ -1377,7 +1354,11 @@
         <option name="FOREGROUND" value="DA4939" />
       </value>
     </option>
-    <option baseAttributes="RUBY_IDENTIFIER" name="RUBY_PARAMETER_ID" />
+    <option name="RUBY_PARAMETER_ID">
+      <value>
+        <option name="FOREGROUND" value="D4B01D" />
+      </value>
+    </option>
     <option name="RUBY_REGEXP">
       <value>
         <option name="FOREGROUND" value="A5C261" />

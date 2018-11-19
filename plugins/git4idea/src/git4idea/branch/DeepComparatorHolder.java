@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogDataProvider;
 import com.intellij.vcs.log.VcsLogUi;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +42,10 @@ public class DeepComparatorHolder implements Disposable {
   }
 
   @NotNull
-  public DeepComparator getInstance(@NotNull VcsLogUi ui) {
+  public DeepComparator getInstance(@NotNull VcsLogDataProvider dataProvider, @NotNull VcsLogUi ui) {
     DeepComparator comparator = myComparators.get(ui);
     if (comparator == null) {
-      comparator = new DeepComparator(myProject, myRepositoryManager, ui, this);
+      comparator = new DeepComparator(myProject, myRepositoryManager, dataProvider, ui, this);
       myComparators.put(ui, comparator);
       if (ui instanceof Disposable) {
         Disposer.register((Disposable)ui, new Disposable() {

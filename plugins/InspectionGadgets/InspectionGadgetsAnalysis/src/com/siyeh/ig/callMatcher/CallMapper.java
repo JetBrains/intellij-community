@@ -57,7 +57,7 @@ public class CallMapper<T> {
     return register(CallHandler.of(matcher, call -> value));
   }
 
-  public CallMapper<T> registerAll(List<CallHandler<T>> handlers) {
+  public CallMapper<T> registerAll(List<? extends CallHandler<T>> handlers) {
     handlers.forEach(this::register);
     return this;
   }

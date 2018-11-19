@@ -77,7 +77,7 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
 
     String hideEmptyPackages = cfg.getChildTextTrim("hideEmptyPackages");
     if (!StringUtil.isEmptyOrSpaces(hideEmptyPackages)) {
-      ProjectView.getInstance(project).setHideEmptyPackages(Boolean.parseBoolean(hideEmptyPackages), ProjectViewPane.ID);
+      ProjectView.getInstance(project).setHideEmptyPackages(ProjectViewPane.ID, Boolean.parseBoolean(hideEmptyPackages));
     }
 
     String optimizeImportsBeforeCommit = cfg.getChildTextTrim("optimizeImportsBeforeCommit");

@@ -110,7 +110,7 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
     return extension;
   }
 
-  private static DomExtensionImpl addExtension(final List<DomExtensionImpl> list, @Nullable final XmlName name, final Type type) {
+  private static DomExtensionImpl addExtension(final List<? super DomExtensionImpl> list, @Nullable final XmlName name, final Type type) {
     final DomExtensionImpl extension = new DomExtensionImpl(type, name);
     list.add(extension);
     return extension;

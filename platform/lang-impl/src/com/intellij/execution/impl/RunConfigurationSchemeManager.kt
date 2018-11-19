@@ -23,7 +23,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
   private val converters by lazy {
-    ConfigurationType.CONFIGURATION_TYPE_EP.extensions.filterIsInstance(RunConfigurationConverter::class.java)
+    ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filterIsInstance(RunConfigurationConverter::class.java)
   }
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
@@ -43,7 +43,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
   }
 
-  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
+  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<in String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
     val settings = RunnerAndConfigurationSettingsImpl(manager)
     val element = readData(settings, dataHolder)
     manager.addConfiguration(element, settings, isCheckRecentsLimit = false)
@@ -125,7 +125,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
     else if (scheme.isTemplate) {
       val factory = scheme.factory
-      if (factory != UnknownConfigurationType.getFactory() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
+      if (factory != UnknownConfigurationType.getInstance() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
         return null
       }
     }

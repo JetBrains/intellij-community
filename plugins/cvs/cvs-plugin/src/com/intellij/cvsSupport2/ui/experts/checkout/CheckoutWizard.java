@@ -101,7 +101,7 @@ public class CheckoutWizard extends CvsWizard {
   }
 
   private class MySelectLocationStep extends SelectLocationStep {
-    public MySelectLocationStep(Project project) {
+    MySelectLocationStep(Project project) {
       super(CvsBundle.message("dialog.title.select.check.out.location"), CheckoutWizard.this, project, false);
       init();
     }

@@ -17,6 +17,7 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroup;
+import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.icons.AllIcons;
@@ -74,8 +75,8 @@ class GitBranchPopupActions {
     return createActions(null, "", false);
   }
 
-  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
-    DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
+  ActionGroup createActions(@Nullable LightActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
+    LightActionGroup popupGroup = new LightActionGroup(false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
     if (myRepository.isRebaseInProgress()) {
@@ -97,10 +98,12 @@ class GitBranchPopupActions {
 
     List<LocalBranchActions> localBranchActions = StreamEx.of(branchesCollection.getLocalBranches())
       .filter(branch -> !branch.equals(currentBranch))
-      .map(GitBranch::getName)
-      .sorted(StringUtil::naturalCompare)
-      .map(localName -> new LocalBranchActions(myProject, repositoryList, localName, myRepository))
-      .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
+      .sorted((b1, b2) -> {
+        int delta = FAVORITE_BRANCH_COMPARATOR.compare(b1, b2);
+        if (delta != 0) return delta;
+        return StringUtil.naturalCompare(b1.myBranchName, b2.myBranchName);
+      })
       .toList();
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
     if (currentBranch != null) {
@@ -310,7 +313,7 @@ class GitBranchPopupActions {
              myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
     }
 
-    static class CheckoutAction extends DumbAwareAction {
+    private static class CheckoutAction extends DumbAwareAction {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myBranchName;
@@ -360,7 +363,7 @@ class GitBranchPopupActions {
       @NotNull private final List<GitRepository> myRepositories;
       @NotNull private final String myCurrentBranchName;
 
-      public RenameBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String currentBranchName) {
+      RenameBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String currentBranchName) {
         super("Rename...");
         myProject = project;
         myRepositories = repositories;
@@ -415,7 +418,7 @@ class GitBranchPopupActions {
                          @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
       super(project, repositories, branchName, selectedRepository);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 
@@ -470,12 +473,12 @@ class GitBranchPopupActions {
       };
     }
 
-    static class CheckoutRemoteBranchAction extends DumbAwareAction {
+    private static class CheckoutRemoteBranchAction extends DumbAwareAction {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myRemoteBranchName;
 
-      public CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories,
+      CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories,
                                         @NotNull String remoteBranchName) {
         super("Checkout As...");
         myProject = project;
@@ -535,9 +538,9 @@ class GitBranchPopupActions {
     private final String myBranchName;
     private final GitRepository mySelectedRepository;
 
-    public CompareAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+    CompareAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
-      super("Compare With...");
+      super("Compare with Current");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -552,6 +555,14 @@ class GitBranchPopupActions {
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
       reportUsage(myProject, "git.branch.compare");
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      String description = String.format("Compare commits in %1$s and %2$s, and the file tree in %1$s and its current state",
+                                         getBranchPresentation(myBranchName),
+                                         getCurrentBranchPresentation(myRepositories));
+      e.getPresentation().setDescription(description);
+    }
   }
 
   private static class MergeAction extends DumbAwareAction {
@@ -561,14 +572,21 @@ class GitBranchPopupActions {
     private final String myBranchName;
     private final boolean myLocalBranch;
 
-    public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+    MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        boolean localBranch) {
-      super("Merge into Current",
-            String.format("Merge %s into %s", getBranchPresentation(branchName), getCurrentBranchPresentation(repositories)), null);
+      super("Merge into Current");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
       myLocalBranch = localBranch;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      String description = String.format("Merge %s into %s",
+                                         getBranchPresentation(myBranchName),
+                                         getCurrentBranchPresentation(myRepositories));
+      e.getPresentation().setDescription(description);
     }
 
     @Override
@@ -591,33 +609,31 @@ class GitBranchPopupActions {
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
 
-    public RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Rebase Current onto Selected", getDescription(branchName, repositories), null);
+    RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+      super("Rebase Current onto Selected");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
     }
 
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean isOnBranch = and(myRepositories, GitRepository::isOnBranch);
+
+      String description = isOnBranch
+                           ? String.format("Rebase %s onto %s",
+                                           getCurrentBranchPresentation(myRepositories),
+                                           getBranchPresentation(myBranchName))
+                           : "Rebase is not possible in the detached HEAD state";
+      e.getPresentation().setDescription(description);
+      e.getPresentation().setEnabled(isOnBranch);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebase(myRepositories, myBranchName);
       reportUsage(myProject, "git.branch.rebase");
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(and(myRepositories, GitRepository::isOnBranch));
-    }
-
-    @NotNull
-    private static String getDescription(@NotNull String selectedBranch,
-                                         @NotNull Collection<GitRepository> repositories) {
-      return and(repositories, GitRepository::isOnBranch)
-             ? String.format("Rebase %s onto %s", getCurrentBranchPresentation(repositories), getBranchPresentation(selectedBranch))
-             : "Rebase is not possible in the detached HEAD state";
     }
   }
 
@@ -626,14 +642,20 @@ class GitBranchPopupActions {
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
 
-    public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Checkout and Rebase onto Current",
-            String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
-                          getBranchPresentation(branchName), getCurrentBranchPresentation(repositories), branchName),
-            null);
+    CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+      super("Checkout and Rebase onto Current");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      String description = String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
+                                         getBranchPresentation(myBranchName),
+                                         getCurrentBranchPresentation(myRepositories),
+                                         myBranchName);
+      e.getPresentation().setDescription(description);
     }
 
     @Override
@@ -700,6 +722,6 @@ class GitBranchPopupActions {
 
   @NotNull
   private static String getBranchPresentation(@NotNull String branch) {
-    return String.format("'%s'", branch);
+    return "'" + branch + "'";
   }
 }

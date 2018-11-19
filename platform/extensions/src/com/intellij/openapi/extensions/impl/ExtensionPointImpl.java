@@ -10,21 +10,21 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author AKireyev
  */
 @SuppressWarnings("SynchronizeOnThis")
-public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
+public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
   private final AreaInstance myArea;
@@ -33,6 +33,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final Kind myKind;
 
   private volatile List<T> myExtensionsCache;
+  // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.java.net/browse/JDK-6260652),
+  // but instead returns Object[], so, we cannot use toArray() anymore.
+  // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
+  private volatile T[] myExtensionsCacheAsArray;
 
   private final ExtensionsAreaImpl myOwner;
   private final PluginDescriptor myDescriptor;
@@ -113,6 +117,11 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           break;
         }
       }
+      if (getExtensionIndex(extension) != -1) {
+        LOG.error("Extension was already added: " + extension);
+        return;
+      }
+
       registerExtension(extension, adapter, index, true);
     }
     else {
@@ -122,11 +131,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void registerExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
-    if (getExtensionIndex(extension) != -1) {
-      LOG.error("Extension was already added: " + extension);
-      return;
-    }
-
     Class<T> extensionClass = getExtensionClass();
     if (!extensionClass.isInstance(extension)) {
       LOG.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
@@ -149,7 +153,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
 
         notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
-        adapter.setNotificationSent(true);
+        adapter.setNotificationSent();
       }
     }
   }
@@ -178,6 +182,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             result = Collections.emptyList();
           }
           else {
+            myExtensionsCacheAsArray = array;
             result = Collections.unmodifiableList(Arrays.asList(array));
           }
           myExtensionsCache = result;
@@ -190,7 +195,18 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Override
   @NotNull
   public T[] getExtensions() {
-    return ArrayUtil.toObjectArray(getExtensionList(), getExtensionClass());
+    List<T> list = getExtensionList();
+    if (list.isEmpty()) {
+      //noinspection unchecked
+      return (T[])Array.newInstance(getExtensionClass(), 0);
+    }
+    return myExtensionsCacheAsArray.clone();
+  }
+
+  @NotNull
+  @Override
+  public Stream<T> extensions() {
+    return getExtensionList().stream();
   }
 
   @Override
@@ -226,6 +242,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myExtensionAdapters = new LinkedHashSet<>(adapters);
 
       Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
+      OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.size());
 
       myLoadedAdapters = Collections.emptyList();
       boolean errorHappened = false;
@@ -237,11 +254,12 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             errorHappened = true;
             LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n" );
           }
-          if (i > 0 && extension == result[i - 1]) {
+          if (!duplicates.add(extension)) {
             errorHappened = true;
+            T duplicate = duplicates.get(extension);
             LOG.error("Duplicate extension found: " + extension + "; " +
-                      " Adapter:      " + adapter + ";\n" +
-                      " Prev adapter: " + adapters.get(i-1) + ";\n" +
+                      " Prev extension: " + duplicate + ";\n" +
+                      " Adapter:        " + adapter + ";\n" +
                       " getExtensionClass(): " + getExtensionClass() + ";\n" +
                       " result:" + Arrays.asList(result));
           }
@@ -251,6 +269,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             continue;
           }
           result[i] = extension;
+
           registerExtension(extension, adapter, myLoadedAdapters.size(), !loaded.contains(adapter));
         }
         catch (ProcessCanceledException e) {
@@ -288,8 +307,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Override
   @Nullable
   public T getExtension() {
-    T[] extensions = getExtensions();
-    return extensions.length == 0 ? null : extensions[0];
+    List<T> extensions = getExtensionList();
+    return extensions.isEmpty() ? null : extensions.get(0);
   }
 
   @Override
@@ -314,7 +333,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @Override
-  public void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
+  public synchronized void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
     for (ExtensionComponentAdapter adapter : ContainerUtil.concat(myExtensionAdapters, myLoadedAdapters)) {
       if (adapter.getAssignableToClassName().equals(extensionClass.getCanonicalName())) {
         unregisterExtensionAdapter(adapter);
@@ -436,7 +455,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public synchronized void reset() {
     myOwner.removeAllComponents(myExtensionAdapters);
     myExtensionAdapters = Collections.emptySet();
-    for (T extension : getExtensions()) {
+    for (T extension : getExtensionList()) {
       unregisterExtension(extension);
     }
   }
@@ -462,6 +481,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return extensionClass;
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -476,6 +496,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private void clearCache() {
     myExtensionsCache = null;
+    myExtensionsCacheAsArray = null;
   }
 
   private void unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
@@ -510,7 +531,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     private final LoadingOrder myLoadingOrder;
 
     private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), null, null, null, false);
+      super(extension.getClass().getName(), null, null, null, LoadingOrder.ANY, null);
       myExtension = extension;
       myLoadingOrder = loadingOrder;
     }
@@ -523,18 +544,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     @Override
     public LoadingOrder getOrder() {
       return myLoadingOrder;
-    }
-
-    @Override
-    @Nullable
-    public String getOrderId() {
-      return null;
-    }
-
-    @Override
-    @NonNls
-    public Element getDescribingElement() {
-      return new Element("RuntimeExtension: " + myExtension);
     }
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -21,6 +22,12 @@ class GrLatestHighlightingTest extends GrHighlightingTestBase {
   InspectionProfileEntry[] getCustomInspections() {
     [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection(), new GroovyAccessibilityInspection(),
      new MissingReturnInspection()]
+  }
+
+  @Override
+  void setUp() throws Exception {
+    super.setUp()
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
   }
 
   void 'test IDEA-184690'() {
@@ -157,15 +164,15 @@ def method(Box<A> box) {
 '''
   }
 
-  void testPerformanceLike() {
+  void testOverloadedInClosure() {
     testHighlighting '''
 def <T> void foo(T t, Closure cl) {}
 
-foo(1) { println it }
+foo(1) { println <warning descr="Method call is ambiguous">it</warning> }
 '''
   }
 
-  void testPerformanceLikeCS() {
+  void testOverloadedInClosureCS() {
     testHighlighting '''
 import groovy.transform.CompileStatic
 
@@ -174,14 +181,14 @@ def <T> void foo(T t, Closure<T> cl) {}
 @CompileStatic
 def m() {
   foo(1) { 
-    println it 
+    println <warning descr="Method call is ambiguous">it</warning> 
     1
   }
 }
 '''
   }
 
-  void testPerformanceLikeCS2() {
+  void testOverloadedInClosureCS2() {
     myFixture.enableInspections(new MissingReturnInspection())
 
     testHighlighting '''
@@ -198,8 +205,7 @@ def m() {
   }
 
 
-  void testPerformanceLikeCS3() {
-
+  void testOverloadedInClosureCS3() {
     testHighlighting '''
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
@@ -383,6 +389,7 @@ class GoodCodeRed {
   }
 
   void 'test recursive generics'() {
+    RecursionManager.disableAssertOnRecursionPrevention()
     testHighlighting '''
 import groovy.transform.CompileStatic
 
@@ -435,6 +442,32 @@ class Cl {
 '''
   }
 
+  void 'test constructor  parameter'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class Cl {
+
+    Cl(Map<String, Integer> a, Condition<Cl> con, String s) {
+    }
+
+    interface Condition<T> {}
+
+    static <T> Condition<T> alwaysFalse() {
+        return (Condition<T>)null
+    }
+
+
+    static m() {
+        new Cl(alwaysFalse(), name: 1, m: 2, new Object().toString(), sad: 12)
+    }
+}
+'''
+  }
+
+
+
   void 'test call without reference'() {
     testHighlighting '''
 class E {
@@ -447,6 +480,83 @@ class E {
 
 new E().bar()()
 
+'''
+  }
+
+  void 'test with closeable IDEA-197035'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def m() {
+    def stream = new FileInputStream("df")
+    def c = stream.with { file ->
+        new BufferedInputStream(file)
+    }.withCloseable {
+        int a = 0
+        new BufferedInputStream(it)
+    }
+}
+'''
+  }
+
+  void 'test SOE on map literal'() {
+    testHighlighting '''
+static method(a) {}
+static method(a, b) {}
+def q 
+
+method(
+        foo: {
+            q.v = []
+        },
+        bar: 42
+)
+
+interface Foo {
+     getProp()
+}
+
+class A {
+    Foo foo
+}
+
+new A(foo: {
+    prop
+}) 
+'''
+  }
+
+  void 'test IDEA-198057-1'() {
+    testHighlighting '''
+Optional<BigDecimal> foo(Optional<String> string) {
+    string.flatMap {
+        try {
+            return Optional.of(new BigDecimal(it))
+        } catch (Exception ignored) {
+            return Optional.<BigDecimal> empty()
+        }
+    }
+}
+'''
+  }
+
+  void 'test IDEA-198057-2'() {
+    testHighlighting '''
+Optional<BigDecimal> foo(Optional<String> string) {
+  string.flatMap {
+     return Optional.<BigDecimal> empty()    
+  }
+}
+'''
+  }
+
+  void 'test IDEA-198057-3'() {
+    testHighlighting '''
+void foo() {
+    def o = Optional.<BigDecimal> empty()
+    Optional<BigDecimal>  d = o  
+}
 '''
   }
 

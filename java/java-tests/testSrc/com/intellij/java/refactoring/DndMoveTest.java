@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since Aug 31, 2010
  */
 public class DndMoveTest extends CodeInsightTestCase {
   @NotNull

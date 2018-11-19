@@ -35,7 +35,6 @@ public class PausesStat {
   private Object maxDurationDescription;
   private int totalNumberRecorded;
   private int indexToOverwrite; // used when pauses.size() == N_MAX and we have to overflow cyclically
-  private String startDescription;
 
   public PausesStat(@NotNull String name) {
     myName = name;
@@ -53,13 +52,12 @@ public class PausesStat {
     }
   }
 
-  public void started(@NotNull String description) {
+  public void started() {
     assertEdt();
     LOG.assertTrue(!started);
     LOG.assertTrue(startTimeStamp == 0, startTimeStamp);
     startTimeStamp = System.nanoTime();
     started = true;
-    startDescription = description;
   }
 
   private void assertEdt() {
@@ -104,6 +102,6 @@ public class PausesStat {
            "\nTotal time spent: " + total + "ms" +
            "\nAverage duration: " + (number == 0 ? 0 : total / number) + "ms" +
            "\nMedian  duration: " + ArrayUtil.averageAmongMedians(duration, 3) + "ms" +
-           "\nMax  duration:    " + (maxDuration == 65535 ? ">" : "") + maxDuration+ "ms (it was '"+maxDurationDescription+"')";
+           "\nMax     duration: " + (maxDuration == 65535 ? ">" : "") + maxDuration+ "ms (it was '"+maxDurationDescription+"')";
   }
 }

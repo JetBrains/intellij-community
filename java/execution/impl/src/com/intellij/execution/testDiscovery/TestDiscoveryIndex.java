@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,7 +36,7 @@ public class TestDiscoveryIndex implements Disposable {
   public TestDiscoveryIndex(final Project project, @NotNull Path basePath) {
     myBasePath = basePath;
 
-    if (Files.exists(basePath)) {
+    if (basePath.toFile().exists()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         getHolder(); // proactively init with maybe io costly compact
       }));
@@ -55,6 +54,13 @@ public class TestDiscoveryIndex implements Disposable {
       return null;
     });
   }
+
+  @NotNull
+  public MultiMap<String, String> getTestsByFile(String relativePath, byte frameworkId) {
+    MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByFile(relativePath, frameworkId));
+    return map == null ? MultiMap.empty() : map;
+  }
+
 
   @NotNull
   public MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) {
@@ -88,10 +94,11 @@ public class TestDiscoveryIndex implements Disposable {
   public void updateTestData(@NotNull String testClassName,
                              @NotNull String testMethodName,
                              @NotNull MultiMap<String, String> usedMethods,
+                             @NotNull String[] usedFiles,
                              @Nullable String moduleName,
                              byte frameworkId) {
     executeUnderLock(holder -> {
-      holder.updateTestData(testClassName, testMethodName, usedMethods, moduleName, frameworkId);
+      holder.updateTestData(testClassName, testMethodName, usedMethods, usedFiles, moduleName, frameworkId);
       return null;
     });
   }

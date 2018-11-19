@@ -173,7 +173,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     }
   }
 
-  public static void clearActions(Project project, List<MavenProject> mavenProjects) {
+  public static void clearActions(Project project, List<? extends MavenProject> mavenProjects) {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
       //noinspection TestOnlyProblems
@@ -212,7 +212,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     private final MavenProject myMavenProject;
     private final String myGoal;
 
-    public MavenGoalAction(MavenProject mavenProject, String goal) {
+    MavenGoalAction(MavenProject mavenProject, String goal) {
       myMavenProject = mavenProject;
       myGoal = goal;
       Presentation template = getTemplatePresentation();

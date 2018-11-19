@@ -253,6 +253,24 @@ public class GeneratedParserUtilBase {
     return false;
   }
 
+  public static boolean consumeToken(PsiBuilder builder, TokenSet tokens) {
+    addVariantSmart(builder, tokens.getTypes(), true);
+    return consumeTokenFast(builder, tokens);
+  }
+
+  public static boolean consumeTokenSmart(PsiBuilder builder, TokenSet tokens) {
+    addCompletionVariantSmart(builder, tokens.getTypes());
+    return consumeTokenFast(builder, tokens);
+  }
+
+  public static boolean consumeTokenFast(PsiBuilder builder, TokenSet tokens) {
+    if (nextTokenIsFast(builder, tokens)) {
+      builder.advanceLexer();
+      return true;
+    }
+    return false;
+  }
+
   public static boolean nextTokenIsFast(PsiBuilder builder, IElementType token) {
     return builder.getTokenType() == token;
   }
@@ -263,6 +281,10 @@ public class GeneratedParserUtilBase {
       if (token == tokenType) return true;
     }
     return false;
+  }
+
+  public static boolean nextTokenIsFast(PsiBuilder builder, TokenSet tokens) {
+    return tokens.contains(builder.getTokenType());
   }
 
   public static boolean nextTokenIsSmart(PsiBuilder builder, IElementType token) {
@@ -549,12 +571,14 @@ public class GeneratedParserUtilBase {
         eatMoreFlagOnce ? (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker() : null;
       PsiBuilder.Marker extensionMarker = null;
       IElementType extensionTokenType = null;
+      String errorMessage = null;
       // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
         extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
         extensionTokenType = latestDoneMarker.getTokenType();
+        errorMessage = PsiBuilderImpl.getErrorMessage(latestDoneMarker);
         ((PsiBuilder.Marker)latestDoneMarker).drop();
       }
       // advance to the last error pos
@@ -589,7 +613,12 @@ public class GeneratedParserUtilBase {
         errorReported = reportError(builder, state, frame, elementType != null, false, false);
       }
       if (extensionMarker != null) {
-        extensionMarker.done(extensionTokenType);
+        if (extensionTokenType == TokenType.ERROR_ELEMENT && errorMessage != null) {
+          extensionMarker.error(errorMessage);
+        }
+        else {
+          extensionMarker.done(extensionTokenType);
+        }
       }
       state.suppressErrors = false;
       if (errorReported || result) {

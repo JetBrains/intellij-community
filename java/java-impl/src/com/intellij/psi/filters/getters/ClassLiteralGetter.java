@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class ClassLiteralGetter {
 
   public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
-                                    @NotNull Consumer<LookupElement> result, final PrefixMatcher matcher) {
+                                    @NotNull Consumer<? super LookupElement> result, final PrefixMatcher matcher) {
     PsiType expectedType = parameters.getDefaultType();
     if (!InheritanceUtil.isInheritor(expectedType, CommonClassNames.JAVA_LANG_CLASS)) {
       expectedType = parameters.getExpectedType();
@@ -64,7 +64,7 @@ public class ClassLiteralGetter {
 
   private static void addInheritorClassLiterals(final PsiFile context,
                                                 final PsiType classParameter,
-                                                final Consumer<LookupElement> result, PrefixMatcher matcher) {
+                                                final Consumer<? super LookupElement> result, PrefixMatcher matcher) {
     final String canonicalText = classParameter.getCanonicalText();
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(canonicalText) && StringUtil.isEmpty(matcher.getPrefix())) {
       return;
@@ -73,7 +73,7 @@ public class ClassLiteralGetter {
     CodeInsightUtil.processSubTypes(classParameter, context, true, matcher, type -> addClassLiteralLookupElement(type, result, context));
   }
 
-  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final Consumer<LookupElement> resultSet, final PsiFile context) {
+  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final Consumer<? super LookupElement> resultSet, final PsiFile context) {
     if (type instanceof PsiClassType &&
         PsiUtil.resolveClassInType(type) != null &&
         !((PsiClassType)type).hasParameters() &&

@@ -80,7 +80,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
   }
 
   private static class GlobalMethodCallElement extends JavaMethodCallElement {
-    public GlobalMethodCallElement(PsiMethod member, boolean shouldImport, boolean mergedOverloads) {
+    GlobalMethodCallElement(PsiMethod member, boolean shouldImport, boolean mergedOverloads) {
       super(member, shouldImport, mergedOverloads);
     }
 

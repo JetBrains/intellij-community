@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -44,10 +30,10 @@ public class ErrorHighlightingPanel {
 
   public void reset() {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    myAutoreparseDelayField.setText(Integer.toString(settings.AUTOREPARSE_DELAY));
+    myAutoreparseDelayField.setText(Integer.toString(settings.getAutoReparseDelay()));
 
-    myMarkMinHeight.setText(Integer.toString(settings.ERROR_STRIPE_MARK_MIN_HEIGHT));
-    myNextErrorGoesToErrorsFirst.setSelected(settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST);
+    myMarkMinHeight.setText(Integer.toString(settings.getErrorStripeMarkMinHeight()));
+    myNextErrorGoesToErrorsFirst.setSelected(settings.isNextErrorActionGoesToErrorsFirst());
 
     for (ErrorOptionsProvider optionsProvider : myExtensions) {
       optionsProvider.reset();
@@ -57,11 +43,11 @@ public class ErrorHighlightingPanel {
   public void apply() throws ConfigurationException {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
 
-    settings.AUTOREPARSE_DELAY = getAutoReparseDelay();
+    settings.setAutoReparseDelay(getAutoReparseDelay());
 
-    settings.ERROR_STRIPE_MARK_MIN_HEIGHT = getErrorStripeMarkMinHeight();
+    settings.setErrorStripeMarkMinHeight(getErrorStripeMarkMinHeight());
 
-    settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = myNextErrorGoesToErrorsFirst.isSelected();
+    settings.setNextErrorActionGoesToErrorsFirst(myNextErrorGoesToErrorsFirst.isSelected());
 
 
     for (ErrorOptionsProvider optionsProvider : myExtensions) {
@@ -80,10 +66,10 @@ public class ErrorHighlightingPanel {
 
   public boolean isModified() {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    boolean isModified = settings.AUTOREPARSE_DELAY != getAutoReparseDelay();
-    
-    isModified |= getErrorStripeMarkMinHeight() != settings.ERROR_STRIPE_MARK_MIN_HEIGHT;
-    isModified |= myNextErrorGoesToErrorsFirst.isSelected() != settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
+    boolean isModified = settings.getAutoReparseDelay() != getAutoReparseDelay();
+
+    isModified |= getErrorStripeMarkMinHeight() != settings.getErrorStripeMarkMinHeight();
+    isModified |= myNextErrorGoesToErrorsFirst.isSelected() != settings.isNextErrorActionGoesToErrorsFirst();
     for (ErrorOptionsProvider optionsProvider : myExtensions) {
       isModified |= optionsProvider.isModified();
     }

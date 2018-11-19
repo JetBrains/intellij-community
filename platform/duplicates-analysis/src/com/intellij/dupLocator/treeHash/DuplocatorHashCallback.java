@@ -318,13 +318,16 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       }
     }
 
-    fileWriter = null;
-    //duplicates
+    writeDuplicates(path, project, getInfo());
+  }
+
+  //duplicates
+  public static void writeDuplicates(String path, Project project, DupInfo info) throws IOException {
+    FileWriter fileWriter = null;
     try {
       fileWriter = new FileWriter(path + File.separator + "duplicates.xml");
       PrettyPrintWriter writer = new PrettyPrintWriter(fileWriter);
       writer.startNode("root");
-      final DupInfo info = getInfo();
       final int patterns = info.getPatterns();
       for (int i = 0; i < patterns; i++) {
         writer.startNode("duplicate");
@@ -344,7 +347,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void writeFragments(final List<PsiFragment> psiFragments,
+  private static void writeFragments(final List<? extends PsiFragment> psiFragments,
                                      final PrettyPrintWriter writer,
                                      Project project,
                                      final boolean shouldWriteOffsets) {

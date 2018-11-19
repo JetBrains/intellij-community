@@ -12,7 +12,6 @@ import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,10 +29,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -54,7 +51,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -67,10 +63,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -184,13 +177,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
   }
 
-  @NotNull
-  @Override
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyle.getSettings(getProject());
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -287,38 +273,50 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
       ourReportedLeakedProjects = true;
 
-      TIntHashSet hashCodes = new TIntHashSet();
-      for (Project project : e.getLeakedProjects()) {
-        hashCodes.add(System.identityHashCode(project));
-      }
-
-      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof.zip";
-      System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof.zip']");
-      try {
-        FileUtil.delete(new File(dumpPath));
-        MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
-      }
-      catch (Exception ex) {
-        ex.printStackTrace();
-      }
-
-      StringBuilder leakers = new StringBuilder();
-      leakers.append("Too many projects leaked: \n");
-      LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked,backLink)->{
-        int hashCode = System.identityHashCode(leaked);
-        leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
-               .append(getCreationPlace(leaked)).append("\n");
-        leakers.append(backLink).append("\n");
-        leakers.append(";-----\n");
-
-        hashCodes.remove(hashCode);
-
-        return !hashCodes.isEmpty();
-      });
-
-      fail(leakers+"\nPlease see '"+dumpPath+"' for a memory dump");
+      reportLeakedProjects(e);
       return null;
     }
+  }
+
+  public static String publishHeapDump(@NotNull String fileNamePrefix) {
+    String fileName = fileNamePrefix + ".hprof.zip";
+    File dumpFile = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName);
+    try {
+      FileUtil.delete(dumpFile);
+      MemoryDumpHelper.captureMemoryDumpZipped(dumpFile);
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    String dumpPath = dumpFile.getAbsolutePath();
+    System.out.println("##teamcity[publishArtifacts '" + dumpPath + "']");
+    return dumpPath;
+  }
+
+  @Contract(value = "_ -> fail")
+  public static void reportLeakedProjects(@NotNull TooManyProjectLeakedException e) {
+    TIntHashSet hashCodes = new TIntHashSet();
+    for (Project project : e.getLeakedProjects()) {
+      hashCodes.add(System.identityHashCode(project));
+    }
+
+    String dumpPath = publishHeapDump("leakedProjects");
+
+    StringBuilder leakers = new StringBuilder();
+    leakers.append("Too many projects leaked: \n");
+    LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked, backLink)->{
+      int hashCode = System.identityHashCode(leaked);
+      leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
+             .append(getCreationPlace(leaked)).append("\n");
+      leakers.append(backLink).append("\n");
+      leakers.append(";-----\n");
+
+      hashCodes.remove(hashCode);
+
+      return !hashCodes.isEmpty();
+    });
+
+    fail(leakers+"\nPlease see '"+dumpPath+"' for a memory dump");
   }
 
   @NotNull
@@ -435,10 +433,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
-    final ProjectManager projectManager = ProjectManager.getInstance();
+    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     assert projectManager != null : "The ProjectManager is not initialized yet";
-    ProjectManagerImpl projectManagerImpl = (ProjectManagerImpl)projectManager;
-    if (projectManagerImpl.isDefaultProjectInitialized()) {
+    if (projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
@@ -471,20 +468,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return survivors;
   }
 
-  public static void addSurvivingFiles(@NotNull Collection<VirtualFile> files) {
+  public static void addSurvivingFiles(@NotNull Collection<? extends VirtualFile> files) {
     for (VirtualFile each : files) {
       registerSurvivor(eternallyLivingFiles(), each);
     }
   }
 
-  private static void registerSurvivor(Set<VirtualFile> survivors, VirtualFile file) {
+  private static void registerSurvivor(Set<? super VirtualFile> survivors, VirtualFile file) {
     addSubTree(file, survivors);
     while (file != null && survivors.add(file)) {
       file = file.getParent();
     }
   }
 
-  private static void addSubTree(VirtualFile root, Set<VirtualFile> to) {
+  private static void addSubTree(VirtualFile root, Set<? super VirtualFile> to) {
     if (root instanceof VirtualDirectoryImpl) {
       for (VirtualFile child : ((VirtualDirectoryImpl)root).getCachedChildren()) {
         if (child instanceof VirtualDirectoryImpl) {
@@ -533,7 +530,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           }
         }
       })
-      .append(super::tearDown)
+      .append(() -> super.tearDown())
       .append(() -> {
         if (myEditorListenerTracker != null) {
           myEditorListenerTracker.checkListenersLeak();
@@ -570,12 +567,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull final Project projectToClose) {
     RunAll runAll = new RunAll();
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    if (projectManager instanceof ProjectManagerImpl) {
-      for (Project project : projectManager.closeTestProject(projectToClose)) {
-        runAll = runAll
-          .append(() -> { throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)); })
-          .append(() -> ((ProjectManagerImpl)projectManager).forceCloseProject(project, true));
-      }
+    for (Project project : projectManager.closeTestProject(projectToClose)) {
+      runAll = runAll
+        .append(() -> { throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)); })
+        .append(() -> projectManager.forceCloseProject(project, true));
     }
     runAll.append(() -> WriteAction.run(() -> Disposer.dispose(projectToClose))).run();
   }

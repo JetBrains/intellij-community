@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.util.Ref;
@@ -144,7 +144,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   public static SvnStatusHandler.ExternalDataCallback createStatusCallback(@NotNull StatusConsumer handler,
                                                                            @NotNull File base,
                                                                            @Nullable Info infoBase,
-                                                                           @NotNull Supplier<PortableStatus> statusSupplier) {
+                                                                           @NotNull Supplier<? extends PortableStatus> statusSupplier) {
     Map<File, Info> externalsMap = newHashMap();
     Ref<String> changelistName = Ref.create();
 
@@ -161,8 +161,8 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
           if (baseInfo != null) {
             pending.setURL(pendingFile.isAbsolute()
-                           ? append(baseInfo.getURL(), getRelativePath(baseFile.getPath(), pending.getPath()))
-                           : append(baseInfo.getURL(), toSystemIndependentName(pending.getPath())));
+                           ? append(baseInfo.getUrl(), getRelativePath(baseFile.getPath(), pending.getPath()))
+                           : append(baseInfo.getUrl(), toSystemIndependentName(pending.getPath())));
           }
           if (StatusType.STATUS_EXTERNAL.equals(pending.getNodeStatus())) {
             externalsMap.put(pending.getFile(), pending.getInfo());

@@ -251,9 +251,7 @@ public class FrameworkDetectionManager implements FrameworkDetectionIndexListene
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(myProject);
     for (Integer id : detectors) {
       final Collection<? extends DetectedFrameworkDescription> frameworks = runDetector(id, index, excludesConfiguration, false);
-      for (DetectedFrameworkDescription framework : frameworks) {
-        descriptions.add(framework);
-      }
+      descriptions.addAll(frameworks);
     }
     return FrameworkDetectionUtil.removeDisabled(descriptions);
   }
@@ -278,7 +276,7 @@ public class FrameworkDetectionManager implements FrameworkDetectionIndexListene
   private class FrameworkDetectionHighlightingPass extends TextEditorHighlightingPass {
     private final Collection<Integer> myDetectors;
 
-    public FrameworkDetectionHighlightingPass(Editor editor, Collection<Integer> detectors) {
+    FrameworkDetectionHighlightingPass(Editor editor, Collection<Integer> detectors) {
       super(FrameworkDetectionManager.this.myProject, editor.getDocument(), false);
       myDetectors = detectors;
     }

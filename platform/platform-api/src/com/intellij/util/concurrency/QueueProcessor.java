@@ -33,7 +33,7 @@ public class QueueProcessor<T> {
     POOLED
   }
 
-  private final PairConsumer<T, Runnable> myProcessor;
+  private final PairConsumer<? super T, ? super Runnable> myProcessor;
   private final Deque<T> myQueue = new ArrayDeque<>();
 
   private boolean isProcessing;
@@ -46,18 +46,18 @@ public class QueueProcessor<T> {
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
    */
-  public QueueProcessor(@NotNull Consumer<T> processor) {
+  public QueueProcessor(@NotNull Consumer<? super T> processor) {
     this(processor, Conditions.alwaysFalse());
   }
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
    */
-  public QueueProcessor(@NotNull Consumer<T> processor, @NotNull Condition<?> deathCondition) {
+  public QueueProcessor(@NotNull Consumer<? super T> processor, @NotNull Condition<?> deathCondition) {
     this(processor, deathCondition, true);
   }
 
-  public QueueProcessor(@NotNull Consumer<T> processor, @NotNull Condition<?> deathCondition, boolean autostart) {
+  public QueueProcessor(@NotNull Consumer<? super T> processor, @NotNull Condition<?> deathCondition, boolean autostart) {
     this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
   }
 
@@ -72,7 +72,7 @@ public class QueueProcessor<T> {
   }
 
   @NotNull
-  private static <T> PairConsumer<T, Runnable> wrappingProcessor(@NotNull final Consumer<T> processor) {
+  private static <T> PairConsumer<T, Runnable> wrappingProcessor(@NotNull final Consumer<? super T> processor) {
     return (item, continuation) -> {
       // try-with-resources is the most simple way to ensure no suppressed exception is lost
       try (SilentAutoClosable ignored = continuation::run) {
@@ -91,7 +91,7 @@ public class QueueProcessor<T> {
    *                  After QueueProcessor has started once, autostart setting doesn't matter anymore: all other elements will be processed immediately.
    */
 
-  public QueueProcessor(@NotNull PairConsumer<T, Runnable> processor,
+  public QueueProcessor(@NotNull PairConsumer<? super T, ? super Runnable> processor,
                         boolean autostart,
                         @NotNull ThreadToUse threadToUse,
                         @NotNull Condition<?> deathCondition) {
@@ -116,7 +116,7 @@ public class QueueProcessor<T> {
       }
     }
   }
-  
+
   private void finishProcessing(boolean continueProcessing) {
     synchronized (myQueue) {
       isProcessing = false;
@@ -209,7 +209,7 @@ public class QueueProcessor<T> {
         finishProcessing(false);
         return;
       }
-      runSafely(() -> myProcessor.consume(item, () -> finishProcessing(true)));
+      runSafely(() -> myProcessor.consume(item, (Runnable)() -> finishProcessing(true)));
     };
     final Application application = ApplicationManager.getApplication();
     if (myThreadToUse == ThreadToUse.AWT) {

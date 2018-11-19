@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -73,6 +74,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     super(XmlElementType.XML_ATTRIBUTE);
   }
 
+  protected XmlAttributeImpl(@NotNull IElementType elementType) {
+    super(elementType);
+  }
+
   @Override
   public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
@@ -97,7 +102,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public void setValue(String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute("a", valueText, this);
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(
+      StringUtil.defaultIfEmpty(getName(), "a"), valueText, this);
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
@@ -423,7 +429,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         buffer.append(XmlUtil.getCharFromEntityRef(child.getText()));
       }
       else if (elementType == XmlElementType.XML_ENTITY_REF) {
-        buffer.append(XmlUtil.getEntityValue((XmlEntityRef)child));
+        buffer.append(getEntityValue((XmlEntityRef)child));
       }
       else {
         appendChildToDisplayValue(buffer, child);
@@ -448,6 +454,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     final VolatileState volatileState = new VolatileState(buffer.toString(), gapDisplayStarts, gapPhysicalStarts, valueTextRange);
     myVolatileState = volatileState;
     return volatileState;
+  }
+
+  private static String getEntityValue(final XmlEntityRef entityRef) {
+    final XmlEntityDecl decl = entityRef.resolve(entityRef.getContainingFile());
+    if (decl != null) {
+      final XmlAttributeValue valueElement = decl.getValueElement();
+      if (valueElement != null) {
+        return valueElement.getValue();
+      }
+    }
+    return entityRef.getText();
   }
 
   private static class VolatileState {

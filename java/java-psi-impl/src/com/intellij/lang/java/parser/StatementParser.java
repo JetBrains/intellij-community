@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -27,33 +25,32 @@ public class StatementParser {
 
   private final JavaParser myParser;
 
-  public StatementParser(@NotNull final JavaParser javaParser) {
+  public StatementParser(@NotNull JavaParser javaParser) {
     myParser = javaParser;
   }
 
   @Nullable
-  public PsiBuilder.Marker parseCodeBlock(final PsiBuilder builder) {
+  public PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder) {
     return parseCodeBlock(builder, false);
   }
 
   @Nullable
-  public PsiBuilder.Marker parseCodeBlock(final PsiBuilder builder, final boolean isStatement) {
+  public PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder, boolean isStatement) {
     if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
-    else if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false);
-
+    if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false);
     return parseBlockLazy(builder, JavaTokenType.LBRACE, JavaTokenType.RBRACE, JavaElementType.CODE_BLOCK);
   }
 
   @Nullable
-  public PsiBuilder.Marker parseCodeBlockDeep(final PsiBuilder builder, final boolean parseUntilEof) {
+  public PsiBuilder.Marker parseCodeBlockDeep(@NotNull PsiBuilder builder, boolean parseUntilEof) {
     if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
 
-    final PsiBuilder.Marker codeBlock = builder.mark();
+    PsiBuilder.Marker codeBlock = builder.mark();
     builder.advanceLexer();
 
     parseStatements(builder, parseUntilEof ? BraceMode.TILL_LAST : BraceMode.TILL_FIRST);
 
-    final boolean greedyBlock = !expectOrError(builder, JavaTokenType.RBRACE, "expected.rbrace");
+    boolean greedyBlock = !expectOrError(builder, JavaTokenType.RBRACE, "expected.rbrace");
     builder.getTokenType(); // eat spaces
 
     done(codeBlock, JavaElementType.CODE_BLOCK);
@@ -63,28 +60,22 @@ public class StatementParser {
     return codeBlock;
   }
 
-  public void parseStatements(final PsiBuilder builder) {
+  public void parseStatements(@NotNull PsiBuilder builder) {
     parseStatements(builder, null);
   }
 
-  private void parseStatements(final PsiBuilder builder, @Nullable final BraceMode braceMode) {
+  private void parseStatements(PsiBuilder builder, @Nullable BraceMode braceMode) {
     while (builder.getTokenType() != null) {
-      final PsiBuilder.Marker statement = parseStatement(builder);
+      PsiBuilder.Marker statement = parseStatement(builder);
       if (statement != null) continue;
 
-      final IElementType tokenType = builder.getTokenType();
-      if (tokenType == JavaTokenType.RBRACE) {
-        if (braceMode == BraceMode.TILL_FIRST) {
-          return;
-        }
-        else if (braceMode == BraceMode.TILL_LAST) {
-          if (builder.lookAhead(1) == null) {
-            return;
-          }
-        }
+      IElementType tokenType = builder.getTokenType();
+      if (tokenType == JavaTokenType.RBRACE &&
+          (braceMode == BraceMode.TILL_FIRST || braceMode == BraceMode.TILL_LAST && builder.lookAhead(1) == null)) {
+        break;
       }
 
-      final PsiBuilder.Marker error = builder.mark();
+      PsiBuilder.Marker error = builder.mark();
       builder.advanceLexer();
       if (tokenType == JavaTokenType.ELSE_KEYWORD) {
         error.error(JavaErrorMessages.message("else.without.if"));
@@ -102,8 +93,8 @@ public class StatementParser {
   }
 
   @Nullable
-  public PsiBuilder.Marker parseStatement(final PsiBuilder builder) {
-    final IElementType tokenType = builder.getTokenType();
+  public PsiBuilder.Marker parseStatement(@NotNull PsiBuilder builder) {
+    IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IF_KEYWORD) {
       return parseIfStatement(builder);
     }
@@ -151,20 +142,20 @@ public class StatementParser {
       return null;
     }
     else if (tokenType == JavaTokenType.SEMICOLON) {
-      final PsiBuilder.Marker empty = builder.mark();
+      PsiBuilder.Marker empty = builder.mark();
       builder.advanceLexer();
       done(empty, JavaElementType.EMPTY_STATEMENT);
       return empty;
     }
     else if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
-      final PsiBuilder.Marker refPos = builder.mark();
+      PsiBuilder.Marker refPos = builder.mark();
       myParser.getDeclarationParser().parseAnnotations(builder);
       skipQualifiedName(builder);
-      final IElementType suspectedLT = builder.getTokenType(), next = builder.lookAhead(1);
+      IElementType suspectedLT = builder.getTokenType(), next = builder.lookAhead(1);
       refPos.rollbackTo();
       if (suspectedLT == JavaTokenType.LT || suspectedLT == JavaTokenType.DOT && next == JavaTokenType.AT) {
-        final PsiBuilder.Marker declStatement = builder.mark();
-        final PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
+        PsiBuilder.Marker declStatement = builder.mark();
+        PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
         if (decl == null) {
           PsiBuilder.Marker marker = myParser.getReferenceParser().parseType(builder, 0);
           error(builder, JavaErrorMessages.message("expected.identifier"));
@@ -175,17 +166,17 @@ public class StatementParser {
       }
     }
 
-    final PsiBuilder.Marker pos = builder.mark();
-    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+    PsiBuilder.Marker pos = builder.mark();
+    PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
 
     if (expr != null) {
       int count = 1;
-      final PsiBuilder.Marker list = expr.precede();
-      final PsiBuilder.Marker statement = list.precede();
+      PsiBuilder.Marker list = expr.precede();
+      PsiBuilder.Marker statement = list.precede();
       while (builder.getTokenType() == JavaTokenType.COMMA) {
-        final PsiBuilder.Marker commaPos = builder.mark();
+        PsiBuilder.Marker commaPos = builder.mark();
         builder.advanceLexer();
-        final PsiBuilder.Marker expr1 = myParser.getExpressionParser().parse(builder);
+        PsiBuilder.Marker expr1 = myParser.getExpressionParser().parse(builder);
         if (expr1 == null) {
           commaPos.rollbackTo();
           break;
@@ -212,15 +203,15 @@ public class StatementParser {
       pos.drop();
     }
 
-    final PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
+    PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
     if (decl != null) {
-      final PsiBuilder.Marker statement = decl.precede();
+      PsiBuilder.Marker statement = decl.precede();
       done(statement, JavaElementType.DECLARATION_STATEMENT);
       return statement;
     }
 
     if (builder.getTokenType() == JavaTokenType.IDENTIFIER && builder.lookAhead(1) == JavaTokenType.COLON) {
-      final PsiBuilder.Marker statement = builder.mark();
+      PsiBuilder.Marker statement = builder.mark();
       advance(builder, 2);
       parseStatement(builder);
       done(statement, JavaElementType.LABELED_STATEMENT);
@@ -228,7 +219,7 @@ public class StatementParser {
     }
 
     if (expr != null) {
-      final PsiBuilder.Marker statement = builder.mark();
+      PsiBuilder.Marker statement = builder.mark();
       myParser.getExpressionParser().parse(builder);
       semicolon(builder);
       done(statement, JavaElementType.EXPRESSION_STATEMENT);
@@ -238,7 +229,7 @@ public class StatementParser {
     return null;
   }
 
-  private static void skipQualifiedName(final PsiBuilder builder) {
+  private static void skipQualifiedName(PsiBuilder builder) {
     if (!expect(builder, JavaTokenType.IDENTIFIER)) return;
     while (builder.getTokenType() == JavaTokenType.DOT && builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
       advance(builder, 2);
@@ -246,30 +237,21 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseIfStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private PsiBuilder.Marker parseIfStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    if (!parseExpressionInParenth(builder)) {
-      done(statement, JavaElementType.IF_STATEMENT);
-      return statement;
-    }
-
-    final PsiBuilder.Marker thenStatement = parseStatement(builder);
-    if (thenStatement == null) {
-      error(builder, JavaErrorMessages.message("expected.statement"));
-      done(statement, JavaElementType.IF_STATEMENT);
-      return statement;
-    }
-
-    if (!expect(builder, JavaTokenType.ELSE_KEYWORD)) {
-      done(statement, JavaElementType.IF_STATEMENT);
-      return statement;
-    }
-
-    final PsiBuilder.Marker elseStatement = parseStatement(builder);
-    if (elseStatement == null) {
-      error(builder, JavaErrorMessages.message("expected.statement"));
+    if (parseExprInParenth(builder)) {
+      PsiBuilder.Marker thenStatement = parseStatement(builder);
+      if (thenStatement == null) {
+        error(builder, JavaErrorMessages.message("expected.statement"));
+      }
+      else if (expect(builder, JavaTokenType.ELSE_KEYWORD)) {
+        PsiBuilder.Marker elseStatement = parseStatement(builder);
+        if (elseStatement == null) {
+          error(builder, JavaErrorMessages.message("expected.statement"));
+        }
+      }
     }
 
     done(statement, JavaElementType.IF_STATEMENT);
@@ -277,27 +259,13 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseWhileStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
-    builder.advanceLexer();
-
-    if (!parseExpressionInParenth(builder)) {
-      done(statement, JavaElementType.WHILE_STATEMENT);
-      return statement;
-    }
-
-    final PsiBuilder.Marker bodyStatement = parseStatement(builder);
-    if (bodyStatement == null) {
-      error(builder, JavaErrorMessages.message("expected.statement"));
-    }
-
-    done(statement, JavaElementType.WHILE_STATEMENT);
-    return statement;
+  private PsiBuilder.Marker parseWhileStatement(PsiBuilder builder) {
+    return parseExprInParenthWithBlock(builder, JavaElementType.WHILE_STATEMENT, false);
   }
 
   @NotNull
-  private PsiBuilder.Marker parseForStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private PsiBuilder.Marker parseForStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
     if (!expect(builder, JavaTokenType.LPARENTH)) {
@@ -306,8 +274,8 @@ public class StatementParser {
       return statement;
     }
 
-    final PsiBuilder.Marker afterParenth = builder.mark();
-    final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, false, true);
+    PsiBuilder.Marker afterParenth = builder.mark();
+    PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, false, true);
     if (param == null || exprType(param) != JavaElementType.PARAMETER || builder.getTokenType() != JavaTokenType.COLON) {
       afterParenth.rollbackTo();
       return parseForLoopFromInitializer(builder, statement);
@@ -320,8 +288,7 @@ public class StatementParser {
 
   @NotNull
   private PsiBuilder.Marker parseForLoopFromInitializer(PsiBuilder builder, PsiBuilder.Marker statement) {
-    PsiBuilder.Marker init = parseStatement(builder);
-    if (init == null) {
+    if (parseStatement(builder) == null) {
       error(builder, JavaErrorMessages.message("expected.statement"));
       if (!expect(builder, JavaTokenType.RPARENTH)) {
         done(statement, JavaElementType.FOR_STATEMENT);
@@ -380,7 +347,6 @@ public class StatementParser {
     if (builder.getTokenType() != JavaTokenType.COMMA) {
       expressionStatement = expr.precede();
       done(expressionStatement, JavaElementType.EXPRESSION_STATEMENT);
-      expressionStatement.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
     }
     else {
       PsiBuilder.Marker expressionList = expr.precede();
@@ -397,27 +363,21 @@ public class StatementParser {
 
       done(expressionList, JavaElementType.EXPRESSION_LIST);
       done(expressionStatement, JavaElementType.EXPRESSION_LIST_STATEMENT);
-      expressionStatement.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
     }
+
+    expressionStatement.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
   }
 
   @NotNull
   private PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement) {
     builder.advanceLexer();
 
-    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
-    if (expr == null) {
+    if (myParser.getExpressionParser().parse(builder) == null) {
       error(builder, JavaErrorMessages.message("expected.expression"));
     }
 
-    if (expect(builder, JavaTokenType.RPARENTH)) {
-      final PsiBuilder.Marker bodyStatement = parseStatement(builder);
-      if (bodyStatement == null) {
-        error(builder, JavaErrorMessages.message("expected.statement"));
-      }
-    }
-    else {
-      error(builder, JavaErrorMessages.message("expected.rparen"));
+    if (expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen") && parseStatement(builder) == null) {
+      error(builder, JavaErrorMessages.message("expected.statement"));
     }
 
     done(statement, JavaElementType.FOREACH_STATEMENT);
@@ -425,24 +385,18 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseDoWhileStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private PsiBuilder.Marker parseDoWhileStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker body = parseStatement(builder);
+    PsiBuilder.Marker body = parseStatement(builder);
     if (body == null) {
       error(builder, JavaErrorMessages.message("expected.statement"));
-      done(statement, JavaElementType.DO_WHILE_STATEMENT);
-      return statement;
     }
-
-    if (!expect(builder, JavaTokenType.WHILE_KEYWORD)) {
+    else if (!expect(builder, JavaTokenType.WHILE_KEYWORD)) {
       error(builder, JavaErrorMessages.message("expected.while"));
-      done(statement, JavaElementType.DO_WHILE_STATEMENT);
-      return statement;
     }
-
-    if (parseExpressionInParenth(builder)) {
+    else if (parseExprInParenth(builder)) {
       semicolon(builder);
     }
 
@@ -451,47 +405,64 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseSwitchStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
-    builder.advanceLexer();
-
-    if (!parseExpressionInParenth(builder)) {
-      done(statement, JavaElementType.SWITCH_STATEMENT);
-      return statement;
-    }
-
-    final PsiBuilder.Marker body = parseCodeBlock(builder, true);
-    if (body == null) {
-      error(builder, JavaErrorMessages.message("expected.lbrace"));
-    }
-
-    done(statement, JavaElementType.SWITCH_STATEMENT);
-    return statement;
+  private PsiBuilder.Marker parseSwitchStatement(PsiBuilder builder) {
+    return parseExprInParenthWithBlock(builder, JavaElementType.SWITCH_STATEMENT, true);
   }
 
-  @Nullable
-  private PsiBuilder.Marker parseSwitchLabelStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
-    final boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
+  private PsiBuilder.Marker parseSwitchLabelStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
     builder.advanceLexer();
 
     if (isCase) {
-      final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
-      if (expr == null) {
-        statement.rollbackTo();
-        return null;
+      PsiBuilder.Marker expressionList = builder.mark();
+      do {
+        PsiBuilder.Marker nextExpression = myParser.getExpressionParser().parseCaseLabel(builder);
+        if (nextExpression == null) {
+          error(builder, JavaErrorMessages.message("expected.expression"));
+        }
       }
+      while (expect(builder, JavaTokenType.COMMA));
+      done(expressionList, JavaElementType.EXPRESSION_LIST);
     }
 
-    expectOrError(builder, JavaTokenType.COLON, "expected.colon");
+    if (expect(builder, JavaTokenType.ARROW)) {
+      PsiBuilder.Marker expr;
+      if (builder.getTokenType() == JavaTokenType.LBRACE) {
+        PsiBuilder.Marker body = builder.mark();
+        parseCodeBlock(builder, true);
+        body.done(JavaElementType.BLOCK_STATEMENT);
+        if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
+          PsiBuilder.Marker mark = builder.mark();
+          while (builder.getTokenType() == JavaTokenType.SEMICOLON) builder.advanceLexer();
+          mark.error(JavaErrorMessages.message("expected.switch.label"));
+        }
+      }
+      else if (builder.getTokenType() == JavaTokenType.THROW_KEYWORD) {
+        parseThrowStatement(builder);
+      }
+      else if ((expr = myParser.getExpressionParser().parse(builder)) != null) {
+        PsiBuilder.Marker body = expr.precede();
+        semicolon(builder);
+        body.done(JavaElementType.EXPRESSION_STATEMENT);
+      }
+      else {
+        error(builder, JavaErrorMessages.message("expected.switch.rule"));
+        expect(builder, JavaTokenType.SEMICOLON);
+      }
+      done(statement, JavaElementType.SWITCH_LABELED_RULE);
+    }
+    else {
+      expectOrError(builder, JavaTokenType.COLON, "expected.colon");
+      done(statement, JavaElementType.SWITCH_LABEL_STATEMENT);
+    }
 
-    done(statement, JavaElementType.SWITCH_LABEL_STATEMENT);
     return statement;
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseBreakStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private static PsiBuilder.Marker parseBreakStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
     expect(builder, JavaTokenType.IDENTIFIER);
     semicolon(builder);
@@ -500,8 +471,8 @@ public class StatementParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseContinueStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private static PsiBuilder.Marker parseContinueStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
     expect(builder, JavaTokenType.IDENTIFIER);
     semicolon(builder);
@@ -510,84 +481,63 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseReturnStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private PsiBuilder.Marker parseReturnStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
-
     myParser.getExpressionParser().parse(builder);
-
     semicolon(builder);
     done(statement, JavaElementType.RETURN_STATEMENT);
     return statement;
   }
 
   @NotNull
-  private PsiBuilder.Marker parseThrowStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private PsiBuilder.Marker parseThrowStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
-    if (expr == null) {
+    if (myParser.getExpressionParser().parse(builder) == null) {
       error(builder, JavaErrorMessages.message("expected.expression"));
-      done(statement, JavaElementType.THROW_STATEMENT);
-      return statement;
+    }
+    else {
+      semicolon(builder);
     }
 
-    semicolon(builder);
     done(statement, JavaElementType.THROW_STATEMENT);
     return statement;
   }
 
   @NotNull
-  private PsiBuilder.Marker parseSynchronizedStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
-    builder.advanceLexer();
-
-    if (!parseExpressionInParenth(builder)) {
-      done(statement, JavaElementType.SYNCHRONIZED_STATEMENT);
-      return statement;
-    }
-
-    final PsiBuilder.Marker body = parseCodeBlock(builder, true);
-    if (body == null) {
-      error(builder, JavaErrorMessages.message("expected.lbrace"));
-    }
-
-    done(statement, JavaElementType.SYNCHRONIZED_STATEMENT);
-    return statement;
+  private PsiBuilder.Marker parseSynchronizedStatement(PsiBuilder builder) {
+    return parseExprInParenthWithBlock(builder, JavaElementType.SYNCHRONIZED_STATEMENT, true);
   }
 
   @NotNull
-  private PsiBuilder.Marker parseTryStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private PsiBuilder.Marker parseTryStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    final boolean hasResourceList = builder.getTokenType() == JavaTokenType.LPARENTH;
+    boolean hasResourceList = builder.getTokenType() == JavaTokenType.LPARENTH;
     if (hasResourceList) {
       myParser.getDeclarationParser().parseResourceList(builder);
     }
 
-    final PsiBuilder.Marker tryBlock = parseCodeBlock(builder, true);
+    PsiBuilder.Marker tryBlock = parseCodeBlock(builder, true);
     if (tryBlock == null) {
       error(builder, JavaErrorMessages.message("expected.lbrace"));
-      done(statement, JavaElementType.TRY_STATEMENT);
-      return statement;
     }
-
-    if (!hasResourceList && !TRY_CLOSERS_SET.contains(builder.getTokenType())) {
+    else if (!hasResourceList && !TRY_CLOSERS_SET.contains(builder.getTokenType())) {
       error(builder, JavaErrorMessages.message("expected.catch.or.finally"));
-      done(statement, JavaElementType.TRY_STATEMENT);
-      return statement;
     }
+    else {
+      while (builder.getTokenType() == JavaTokenType.CATCH_KEYWORD) {
+        if (!parseCatchBlock(builder)) break;
+      }
 
-    while (builder.getTokenType() == JavaTokenType.CATCH_KEYWORD) {
-      if (!parseCatchBlock(builder)) break;
-    }
-
-    if (expect(builder, JavaTokenType.FINALLY_KEYWORD)) {
-      final PsiBuilder.Marker finallyBlock = parseCodeBlock(builder, true);
-      if (finallyBlock == null) {
-        error(builder, JavaErrorMessages.message("expected.lbrace"));
+      if (expect(builder, JavaTokenType.FINALLY_KEYWORD)) {
+        PsiBuilder.Marker finallyBlock = parseCodeBlock(builder, true);
+        if (finallyBlock == null) {
+          error(builder, JavaErrorMessages.message("expected.lbrace"));
+        }
       }
     }
 
@@ -595,9 +545,9 @@ public class StatementParser {
     return statement;
   }
 
-  public boolean parseCatchBlock(final PsiBuilder builder) {
+  public boolean parseCatchBlock(@NotNull PsiBuilder builder) {
     assert builder.getTokenType() == JavaTokenType.CATCH_KEYWORD : builder.getTokenType();
-    final PsiBuilder.Marker section = builder.mark();
+    PsiBuilder.Marker section = builder.mark();
     builder.advanceLexer();
 
     if (!expect(builder, JavaTokenType.LPARENTH)) {
@@ -606,7 +556,7 @@ public class StatementParser {
       return false;
     }
 
-    final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, true, false);
+    PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, true, false);
     if (param == null) {
       error(builder, JavaErrorMessages.message("expected.parameter"));
     }
@@ -617,7 +567,7 @@ public class StatementParser {
       return false;
     }
 
-    final PsiBuilder.Marker body = parseCodeBlock(builder, true);
+    PsiBuilder.Marker body = parseCodeBlock(builder, true);
     if (body == null) {
       error(builder, JavaErrorMessages.message("expected.lbrace"));
       done(section, JavaElementType.CATCH_SECTION);
@@ -629,47 +579,56 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseAssertStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private PsiBuilder.Marker parseAssertStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
-    if (expr == null) {
+    if (myParser.getExpressionParser().parse(builder) == null) {
       error(builder, JavaErrorMessages.message("expected.boolean.expression"));
-      done(statement, JavaElementType.ASSERT_STATEMENT);
-      return statement;
+    }
+    else if (expect(builder, JavaTokenType.COLON) && myParser.getExpressionParser().parse(builder) == null) {
+      error(builder, JavaErrorMessages.message("expected.expression"));
+    }
+    else {
+      semicolon(builder);
     }
 
-    if (expect(builder, JavaTokenType.COLON)) {
-      final PsiBuilder.Marker expr2 = myParser.getExpressionParser().parse(builder);
-      if (expr2 == null) {
-        error(builder, JavaErrorMessages.message("expected.expression"));
-        done(statement, JavaElementType.ASSERT_STATEMENT);
-        return statement;
-      }
-    }
-
-    semicolon(builder);
     done(statement, JavaElementType.ASSERT_STATEMENT);
     return statement;
   }
 
   @NotNull
-  private PsiBuilder.Marker parseBlockStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
+  private PsiBuilder.Marker parseBlockStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
     parseCodeBlock(builder, true);
     done(statement, JavaElementType.BLOCK_STATEMENT);
     return statement;
   }
 
-  private boolean parseExpressionInParenth(final PsiBuilder builder) {
+  @NotNull
+  public PsiBuilder.Marker parseExprInParenthWithBlock(@NotNull PsiBuilder builder, @NotNull IElementType type, boolean block) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    if (parseExprInParenth(builder)) {
+      PsiBuilder.Marker body = block ? parseCodeBlock(builder, true) : parseStatement(builder);
+      if (body == null) {
+        error(builder, JavaErrorMessages.message(block ? "expected.lbrace" : "expected.statement"));
+      }
+    }
+
+    done(statement, type);
+    return statement;
+  }
+
+  private boolean parseExprInParenth(PsiBuilder builder) {
     if (!expect(builder, JavaTokenType.LPARENTH)) {
       error(builder, JavaErrorMessages.message("expected.lparen"));
       return false;
     }
 
-    final PsiBuilder.Marker beforeExpr = builder.mark();
-    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+    PsiBuilder.Marker beforeExpr = builder.mark();
+    PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
     if (expr == null || builder.getTokenType() == JavaTokenType.SEMICOLON) {
       beforeExpr.rollbackTo();
       error(builder, JavaErrorMessages.message("expected.expression"));

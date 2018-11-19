@@ -952,12 +952,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myIsSelected;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myIsSelected = state;
       SvnRepositoryTreeCellRenderer r = new SvnRepositoryTreeCellRenderer();
       r.setShowDetails(state);
@@ -1056,8 +1056,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return;
     }
 
-    Project p = myProject;
-    CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(p, url, dir, SvnUtil.getVirtualFile(dir.getAbsolutePath()), relativePath);
+    CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(myProject, url, dir, SvnUtil.getVirtualFile(dir.getAbsolutePath()), relativePath);
     dialog.show();
     dir = dialog.getTarget();
     if (dialog.isOK() && dir != null) {
@@ -1131,7 +1130,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(() -> {
-      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes, true);
+      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes);
+      dlg.markChangesInAir(true);
       dlg.setTitle(title);
       dlg.show();
     });

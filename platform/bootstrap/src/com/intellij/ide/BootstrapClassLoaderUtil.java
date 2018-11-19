@@ -40,7 +40,6 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
     addParentClasspath(classpath, true);
-    addSAJDIJar(classpath);
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(new ArrayList<>(classpath)))
@@ -56,7 +55,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     return builder.get();
   }
 
-  private static void addParentClasspath(Collection<URL> classpath, boolean ext) throws MalformedURLException {
+  private static void addParentClasspath(Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
     if (!SystemInfo.IS_AT_LEAST_JAVA9) {
       String[] extDirs = System.getProperty("java.ext.dirs", "").split(File.pathSeparator);
       if (ext && extDirs.length == 0) return;
@@ -104,7 +103,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  private static void addIDEALibraries(Collection<URL> classpath) throws MalformedURLException {
+  private static void addIDEALibraries(Collection<? super URL> classpath) throws MalformedURLException {
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
     String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     assert selfRoot != null;
@@ -117,7 +116,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
-  private static void addLibraries(Collection<URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
+  private static void addLibraries(Collection<? super URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
     File[] files = fromDir.listFiles();
     if (files == null) return;
 
@@ -131,21 +130,11 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  private static void addAdditionalClassPath(Collection<URL> classpath) {
+  private static void addAdditionalClassPath(Collection<? super URL> classpath) {
     parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
   }
 
-  /**
-   * search and add sa-jdi.jar if available, currently works only for IDEA updated from sources
-   */
-  private static void addSAJDIJar(Collection<URL> classpath) throws MalformedURLException {
-    File saJdiJar = new File(System.getProperty("java.home"), "../lib/sa-jdi.jar");
-    if (saJdiJar.exists()) {
-      classpath.add(saJdiJar.toURI().normalize().toURL());
-    }
-  }
-
-  private static void parseClassPathString(String pathString, Collection<URL> classpath) {
+  private static void parseClassPathString(String pathString, Collection<? super URL> classpath) {
     if (pathString != null && !pathString.isEmpty()) {
       try {
         StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator + ',', false);
@@ -160,7 +149,6 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  @SuppressWarnings("Duplicates")
   private static List<URL> filterClassPath(List<URL> classpath) {
     String ignoreProperty = System.getProperty(PROPERTY_IGNORE_CLASSPATH);
     if (ignoreProperty != null) {

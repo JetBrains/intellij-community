@@ -18,6 +18,7 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NotNull;
 
 public class DomModelTreeStructure extends SimpleTreeStructure {
   private final DomElement myDomElement;
@@ -31,6 +32,7 @@ public class DomModelTreeStructure extends SimpleTreeStructure {
     return new BaseDomElementNode(myDomElement);
   }
 
+  @NotNull
   @Override
   public AbstractDomElementNode getRootElement() {
     if (myRootNode == null) {

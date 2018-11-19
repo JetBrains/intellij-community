@@ -55,6 +55,7 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
     }
   }
 
+  @Override
   public String toString(){
     return "PsiImportStatement";
   }

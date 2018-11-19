@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -318,7 +319,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   @TestOnly
-  public void checkConsistency() {
+  void checkConsistency() {
     for (VirtualFile file : new ArrayList<>(getVFileToViewProviderMap().keySet())) {
       findCachedViewProvider(file); // complete delayed validity checks
     }
@@ -372,7 +373,7 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LOG.assertTrue(vFile.isValid(), "Invalid file");
+    if (!vFile.isValid()) throw new InvalidVirtualFileAccessException(vFile);
     if (myDisposed) {
       LOG.error("Project is already disposed: " + myManager.getProject());
     }
@@ -560,14 +561,16 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidations(@NotNull Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
-    DebugUtil.performPsiModification(null, ()->{
-      for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
-        FileViewProvider viewProvider = entry.getValue();
-        if (getVFileToViewProviderMap().get(entry.getKey()) != viewProvider) {
-          markInvalidated(viewProvider);
+    if (!originalFileToPsiFileMap.isEmpty()) {
+      DebugUtil.performPsiModification(null, ()->{
+        for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
+          FileViewProvider viewProvider = entry.getValue();
+          if (getVFileToViewProviderMap().get(entry.getKey()) != viewProvider) {
+            markInvalidated(viewProvider);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   @Override

@@ -83,7 +83,7 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
       Collection<FilePath> rootPaths = entry.getValue();
       VirtualFile root = repository.getRoot();
 
-      GitFileUtils.delete(myProject, root, rootPaths);
+      GitFileUtils.deletePaths(myProject, root, rootPaths);
     }
 
     for (Map.Entry<Repository, Collection<FilePath>> entry : toCheckout.entrySet()) {

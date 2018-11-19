@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -25,6 +26,7 @@ class SpreadOperatorTest implements BaseTest {
   public final TestName myNameRule = new TestName()
   public final @Rule TestRule myRules = RuleChain.outerRule(myNameRule).around(myFixtureRule).around(new EdtRule())
 
+  @NotNull
   CodeInsightTestFixture getFixture() {
     myFixtureRule.fixture
   }

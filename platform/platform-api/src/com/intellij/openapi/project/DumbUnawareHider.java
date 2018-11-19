@@ -27,10 +27,17 @@ import java.awt.*;
  */
 public class DumbUnawareHider extends JBPanelWithEmptyText {
 
+  private final JComponent myDumbUnawareContent;
+
   public DumbUnawareHider(@NotNull JComponent dumbUnawareContent) {
     super(new BorderLayout());
+    this.myDumbUnawareContent = dumbUnawareContent;
     getEmptyText().setText("This view is not available until indices are built");
     add(dumbUnawareContent, BorderLayout.CENTER);
+  }
+
+  public JComponent getContent() {
+    return myDumbUnawareContent;
   }
 
   public void setContentVisible(boolean show) {

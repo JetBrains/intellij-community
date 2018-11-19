@@ -155,7 +155,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return SimpleDataContext.getSimpleContext(
       ContainerUtil.<String, Object>immutableMapBuilder()
         .put(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile)
-        .put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new VirtualFile[] {selectedFile})
+        .put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), selectedFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {selectedFile})
         .put(CommonDataKeys.PROJECT.getName(), getProject())
         .put(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent())
         .build(),
@@ -174,16 +174,18 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   @TestOnly
   public void updateInTests(boolean immediately) {
     update();
-    update.flush();
+    update.drainRequestsInTest();
+    UIUtil.dispatchAllInvocationEvents();
     if (immediately) {
       // for widgets with background activities, the first flush() adds handlers to be called
-      update.flush();
+      update.drainRequestsInTest();
+      UIUtil.dispatchAllInvocationEvents();
     }
   }
 
   @TestOnly
   public void flushUpdateInTests() {
-    update.flush();
+    update.drainRequestsInTest();
   }
 
   public void update() {
@@ -198,9 +200,6 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       if (isDisposed()) return;
 
       VirtualFile file = getSelectedFile();
-      actionEnabled = false;
-      String widgetText;
-      String toolTipText;
 
       WidgetState state = getWidgetState(file);
       if (state == WidgetState.NO_CHANGE) {
@@ -221,9 +220,8 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       actionEnabled = state.actionEnabled && file != null && file.isWritable();
 
-      widgetText = state.text;
-
-      toolTipText = state.toolTip;
+      String widgetText = state.text;
+      String toolTipText = state.toolTip;
       if (actionEnabled) {
         myComponent.setForeground(UIUtil.getActiveTextColor());
         myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
@@ -236,6 +234,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       myComponent.setIcon(state.icon);
       myComponent.setToolTipText(toolTipText);
       myComponent.setText(widgetText);
+      myComponent.invalidate();
 
       if (myStatusBar != null) {
         myStatusBar.updateWidget(ID());

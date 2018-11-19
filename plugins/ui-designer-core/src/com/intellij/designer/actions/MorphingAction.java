@@ -35,10 +35,10 @@ import java.util.List;
 public class MorphingAction extends AnAction {
   private final DesignerEditorPanel myDesigner;
   private final EditableArea myArea;
-  private final List<RadComponent> myComponents;
+  private final List<? extends RadComponent> myComponents;
   private final MetaModel myTarget;
 
-  public MorphingAction(DesignerEditorPanel designer, EditableArea area, List<RadComponent> components, MetaModel target) {
+  public MorphingAction(DesignerEditorPanel designer, EditableArea area, List<? extends RadComponent> components, MetaModel target) {
     super(target.getTag(), null, target.getIcon());
     myDesigner = designer;
     myArea = area;

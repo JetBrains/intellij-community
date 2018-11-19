@@ -186,12 +186,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  public boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<XmlTag> processor) {
+  public boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<? super XmlTag> processor) {
     return processTagsInNamespaceInner(myTag, tagNames, processor, null);
   }
 
   private static boolean processTagsInNamespaceInner(@NotNull final XmlTag rootTag, final String[] tagNames,
-                                                     final PsiElementProcessor<XmlTag> processor, Set<XmlTag> visitedTags) {
+                                                     final PsiElementProcessor<? super XmlTag> processor, Set<? super XmlTag> visitedTags) {
     if (visitedTags == null) visitedTags = new HashSet<>(3);
     else if (visitedTags.contains(rootTag)) return true;
 
@@ -359,7 +359,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   @Override
   @Nullable
-  public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<XmlNSDescriptorImpl> visited, boolean reference) {
+  public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<? super XmlNSDescriptorImpl> visited, boolean reference) {
     if(visited.contains(this)) return null;
 
     final QNameKey pair = new QNameKey(namespace, localName);

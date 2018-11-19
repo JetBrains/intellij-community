@@ -35,9 +35,9 @@ public class MethodLocation extends Location<PsiMethod> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.info.MethodLocation");
   private final Project myProject;
   @NotNull private final PsiMethod myMethod;
-  private final Location<PsiClass> myClassLocation;
+  private final Location<? extends PsiClass> myClassLocation;
 
-  public MethodLocation(@NotNull final Project project, @NotNull final PsiMethod method, @NotNull final Location<PsiClass> classLocation) {
+  public MethodLocation(@NotNull final Project project, @NotNull final PsiMethod method, @NotNull final Location<? extends PsiClass> classLocation) {
     myProject = project;
     myMethod = method;
     myClassLocation = classLocation;

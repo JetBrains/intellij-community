@@ -43,14 +43,23 @@ public class GitFileUtils {
   private GitFileUtils() {
   }
 
-  public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<FilePath> files,
+  /**
+   * @deprecated Use {@link #deletePaths}
+   */
+  @Deprecated
+  public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
                             String... additionalOptions) throws VcsException {
+    deletePaths(project, root, files, additionalOptions);
+  }
+
+  public static void deletePaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
+                                 String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       doDelete(project, root, paths, additionalOptions);
     }
   }
 
-  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files,
+  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files,
                                  String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       doDelete(project, root, paths, additionalOptions);
@@ -78,7 +87,17 @@ public class GitFileUtils {
 
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
     throws VcsException {
-    addPaths(project, root, VcsFileUtil.chunkFiles(root, files));
+    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
+      addPaths(project, root, paths, false);
+    }
+    updateUntrackedFilesHolderOnFileAdd(project, root, files);
+  }
+
+  public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
+      addPaths(project, root, paths, true);
+    }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
 
@@ -108,7 +127,17 @@ public class GitFileUtils {
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<FilePath> files) throws VcsException {
-    addPaths(project, root, VcsFileUtil.chunkPaths(root, files));
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      addPaths(project, root, paths, false);
+    }
+    updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+  }
+
+  public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
+                                   @NotNull Collection<FilePath> files) throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      addPaths(project, root, paths, true);
+    }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
   }
 
@@ -125,19 +154,18 @@ public class GitFileUtils {
   }
 
   private static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
-                               @NotNull List<List<String>> chunkedPaths) throws VcsException {
-    for (List<String> paths : chunkedPaths) {
+                               @NotNull List<String> paths, boolean force) throws VcsException {
+    if (!force) {
       paths = excludeIgnoredFiles(project, root, paths);
-
-      if (paths.isEmpty()) {
-        continue;
-      }
-      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
-      handler.addParameters("--ignore-errors", "-A");
-      handler.endOptions();
-      handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).throwOnError();
+      if (paths.isEmpty()) return;
     }
+
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
+    handler.addParameters("--ignore-errors", "-A");
+    if (force) handler.addParameters("-f");
+    handler.endOptions();
+    handler.addParameters(paths);
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   @NotNull

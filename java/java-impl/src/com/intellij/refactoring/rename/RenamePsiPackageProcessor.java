@@ -54,6 +54,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         return new String[]{((PsiPackage)element).getQualifiedName()};
       }
 
+      @NotNull
       @Override
       public String getNewName() {
         final PsiPackage psiPackage = (PsiPackage)element;

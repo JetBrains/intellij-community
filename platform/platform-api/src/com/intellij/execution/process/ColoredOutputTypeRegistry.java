@@ -164,7 +164,6 @@ public class ColoredOutputTypeRegistry {
     return myAnsiColorKeys[value];
   }
 
-  @SuppressWarnings("ConstantConditions")
   @NotNull
   private static AnsiConsoleViewContentType createAnsiConsoleViewContentType(@NotNull String attribute) {
     int foregroundColor = -1;

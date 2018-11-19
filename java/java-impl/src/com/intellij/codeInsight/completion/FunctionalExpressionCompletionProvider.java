@@ -74,7 +74,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     addFunctionalVariants(parameters, true, true, result.getPrefixMatcher(), result);
   }
 
-  static void addFunctionalVariants(@NotNull CompletionParameters parameters, boolean smart, boolean addInheritors, PrefixMatcher matcher, Consumer<LookupElement> result) {
+  static void addFunctionalVariants(@NotNull CompletionParameters parameters, boolean smart, boolean addInheritors, PrefixMatcher matcher, Consumer<? super LookupElement> result) {
     if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile()) || !isLambdaContext(parameters.getPosition())) return;
 
     ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
@@ -134,7 +134,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
                                                  PsiParameter[] params,
                                                  PsiElement originalPosition,
                                                  PsiSubstitutor substitutor,
-                                                 Consumer<LookupElement> result) {
+                                                 Consumer<? super LookupElement> result) {
     final PsiType expectedReturnType = substitutor.substitute(functionalInterfaceMethod.getReturnType());
     if (expectedReturnType == null) return;
 

@@ -7,9 +7,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
@@ -66,27 +68,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return;
     }
 
-    final Object userData = comment.getUserData(CompiledPattern.HANDLER_KEY);
-
-    if (userData instanceof String) {
-      final String str = (String)userData;
-      int end = comment2.getTextLength();
-
-      if (comment2.getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
-        end -= 2;
-      }
-      myMatchingVisitor.setResult(((SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(str)).handle(
-        comment2,
-        2,
-        end,
-        myMatchingVisitor.getMatchContext()
-      ));
+    final MatchingHandler handler = (MatchingHandler)comment.getUserData(CompiledPattern.HANDLER_KEY);
+    if (handler instanceof SubstitutionHandler) {
+      final IElementType tokenType = comment2.getTokenType();
+      final int end = comment2.getTextLength();
+      final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+      myMatchingVisitor.setResult(substitutionHandler.handle(comment2,
+                                                             tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2,
+                                                             tokenType == JavaTokenType.END_OF_LINE_COMMENT ? end : end - 2,
+                                                             myMatchingVisitor.getMatchContext()));
     }
-    else if (userData instanceof MatchingHandler) {
-      myMatchingVisitor.setResult(((MatchingHandler)userData).match(comment, comment2, myMatchingVisitor.getMatchContext()));
+    else if (handler != null) {
+      myMatchingVisitor.setResult(handler.match(comment, comment2, myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(comment, comment2));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(JavaMatchUtil.getCommentText(comment)),
+                                                              StructuralSearchUtil.normalize(JavaMatchUtil.getCommentText(comment2))));
     }
   }
 
@@ -813,7 +810,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {
             @Override
             public String getText(PsiElement element) {
-              StringBuilder builder = new StringBuilder(RegExpPredicate.getMeaningfulText(element));
+              StringBuilder builder = new StringBuilder(StructuralSearchUtil.getMeaningfulText(element));
               for (int i = 0; i < matchedArrayDimensions; ++i) builder.append("[]");
               return builder.toString();
             }
@@ -1089,23 +1086,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitLiteralExpression(final PsiLiteralExpression const1) {
     final PsiLiteralExpression const2 = getExpression(PsiLiteralExpression.class);
     if (const2 == null) return;
+    final PsiType type1 = const1.getType();
+    if (type1 != null && !myMatchingVisitor.setResult(type1.equals(const2.getType()))) {
+      return;
+    }
     final MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler) {
-      final PsiType type1 = const1.getType();
-      if (type1 != null && !type1.equals(const2.getType())) {
-        myMatchingVisitor.setResult(false);
-      }
-      else {
-        int offset = 0;
-        int length = const2.getTextLength();
-        final String text = const2.getText();
+      int offset = 0;
+      int length = const2.getTextLength();
+      final String text = const2.getText();
 
-        if (StringUtil.isQuotedString(text)) {
-          length--;
-          offset++;
-        }
-        myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(const2, offset, length, myMatchingVisitor.getMatchContext()));
+      if (StringUtil.isQuotedString(text)) {
+        length--;
+        offset++;
       }
+      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(const2, offset, length, myMatchingVisitor.getMatchContext()));
     }
     else if (handler != null) {
       myMatchingVisitor.setResult(handler.match(const1, const2, myMatchingVisitor.getMatchContext()));
@@ -1114,7 +1109,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final Object value1 = const1.getValue();
       final Object value2 = const2.getValue();
       if ((value1 instanceof String || value1 instanceof Character) && (value2 instanceof String || value2 instanceof Character)) {
-        myMatchingVisitor.setResult(myMatchingVisitor.matchText(value1.toString(), value2.toString()));
+        myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(value1.toString()),
+                                                                StructuralSearchUtil.normalize(value2.toString())));
       }
       else if (value1 != null && value2 != null) {
         myMatchingVisitor.setResult(value1.equals(value2));
@@ -1563,6 +1559,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitTypeParameter(PsiTypeParameter psiTypeParameter) {
     final PsiTypeParameter parameter = (PsiTypeParameter)myMatchingVisitor.getElement();
     final PsiIdentifier identifier = psiTypeParameter.getNameIdentifier();
+    assert identifier != null;
     final PsiIdentifier identifier2 = parameter.getNameIdentifier();
 
     final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
@@ -1590,8 +1587,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiIdentifier identifier = clazz.getNameIdentifier();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(identifier);
 
-    if (clazz.getModifierList().getTextLength() > 0) {
-      if (!myMatchingVisitor.match(clazz.getModifierList(), clazz2.getModifierList())) {
+    final PsiModifierList modifierList = clazz.getModifierList();
+    if (modifierList != null && modifierList.getTextLength() > 0) {
+      if (!myMatchingVisitor.match(modifierList, clazz2.getModifierList())) {
         myMatchingVisitor.setResult(false);
         return;
       }

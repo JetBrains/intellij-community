@@ -47,7 +47,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     super(psiElement, true);
   }
 
-  public void addReferences(Collection<PsiReference> references) {
+  public void addReferences(Collection<? extends PsiReference> references) {
     myReferences.addAll(references);
     for (PsiReference reference : references) {
       if (!reference.isSoft()) mySoft = false;

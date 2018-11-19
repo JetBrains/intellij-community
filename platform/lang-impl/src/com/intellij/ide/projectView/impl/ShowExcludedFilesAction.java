@@ -25,6 +25,6 @@ final class ShowExcludedFilesAction extends ProjectViewToggleAction {
 
   @Override
   void setSelected(@NotNull ProjectViewImpl view, @NotNull String id, boolean showExcludedFiles) {
-    view.setShowExcludedFiles(showExcludedFiles, id, true);
+    view.setShowExcludedFiles(id, showExcludedFiles, true);
   }
 }

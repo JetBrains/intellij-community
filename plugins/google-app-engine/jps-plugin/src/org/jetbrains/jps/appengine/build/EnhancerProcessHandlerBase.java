@@ -67,7 +67,7 @@ public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
     private final StringBuilder myBuffer = new StringBuilder();
     private final boolean myErrorStream;
 
-    public EnhancerOutputParser(boolean errorStream) {
+    EnhancerOutputParser(boolean errorStream) {
       myErrorStream = errorStream;
     }
 

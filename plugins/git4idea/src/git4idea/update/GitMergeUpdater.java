@@ -43,14 +43,16 @@ public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
   @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final GitBranchPair myBranchPair;
 
   public GitMergeUpdater(@NotNull Project project,
                          @NotNull Git git,
                          @NotNull GitRepository repository,
-                         @NotNull GitBranchPair branchAndTracked,
+                         @NotNull GitBranchPair branchPair,
                          @NotNull ProgressIndicator progressIndicator,
                          @NotNull UpdatedFiles updatedFiles) {
-    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
+    super(project, git, repository, progressIndicator, updatedFiles);
+    myBranchPair = branchPair;
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -98,12 +100,9 @@ public class GitMergeUpdater extends GitUpdater {
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
-          @Override protected String getDescription() {
-            return "Your local changes to the following files would be overwritten by merge.<br/>" +
-                              "Please, commit your changes or stash them before you can merge.";
-          }
-        };
+        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes);
+        dialog.setDescription("Your local changes to the following files would be overwritten by merge.<br/>" +
+                              "Please, commit your changes or stash them before you can merge.");
         dialog.show();
       });
       return GitUpdateResult.ERROR;
@@ -249,7 +248,7 @@ public class GitMergeUpdater extends GitUpdater {
     private final GitMerger myMerger;
     private final VirtualFile myRoot;
 
-    public MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
+    MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
       super(project, git, Collections.singleton(root), makeParams(project));
       myMerger = merger;
       myRoot = root;

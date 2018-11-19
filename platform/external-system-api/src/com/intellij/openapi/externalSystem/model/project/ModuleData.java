@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/11 12:11 PM
  */
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
 
@@ -222,6 +222,16 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
       myProperties = ContainerUtil.newHashMap();
     }
     myProperties.put(key, value);
+  }
+
+  @Nullable
+  public String getIdeGrouping() {
+    return StringUtil.isEmpty(myGroup) ? getExternalName() : getGroup() + '.' + getExternalName();
+  }
+
+  @Nullable
+  public String getIdeParentGrouping() {
+    return StringUtil.nullize(getGroup());
   }
 
   @Override

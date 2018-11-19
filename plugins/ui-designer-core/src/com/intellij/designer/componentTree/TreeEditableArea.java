@@ -273,7 +273,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  private TreePath getPath(RadComponent component) {
+  private TreePath getPath(@NotNull RadComponent component) {
     // TODO: I don't know better way gets tree path for element
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(component);
     return node == null ? null : new TreePath(node.getPath());
@@ -302,13 +302,13 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   }
 
   @Override
-  public boolean isBeforeLocation(RadComponent component, int x, int y) {
+  public boolean isBeforeLocation(@NotNull RadComponent component, int x, int y) {
     Rectangle bounds = myTree.getPathBounds(getPath(component));
     return bounds != null && y - bounds.y < myTree.getEdgeSize();
   }
 
   @Override
-  public boolean isAfterLocation(RadComponent component, int x, int y) {
+  public boolean isAfterLocation(@NotNull RadComponent component, int x, int y) {
     Rectangle bounds = myTree.getPathBounds(getPath(component));
     return bounds != null && bounds.getMaxY() - y < myTree.getEdgeSize();
   }

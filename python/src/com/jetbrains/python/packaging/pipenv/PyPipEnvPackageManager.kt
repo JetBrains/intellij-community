@@ -16,6 +16,8 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.associatedModule
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pythonSdk
@@ -44,6 +46,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       runPipEnv(sdk, *args.toTypedArray())
     }
     finally {
+      sdk.associatedModule?.baseDir?.refresh(true, false)
       refreshAndGetPackages(true)
     }
   }
@@ -55,6 +58,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       runPipEnv(sdk, *args.toTypedArray())
     }
     finally {
+      sdk.associatedModule?.baseDir?.refresh(true, false)
       refreshAndGetPackages(true)
     }
   }
@@ -87,6 +91,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
         throw e
       }
       packages = parsePipEnvGraph(output)
+      ApplicationManager.getApplication().messageBus.syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
     }
     return packages ?: emptyList()
   }

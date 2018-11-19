@@ -24,7 +24,7 @@ import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
 
 final class ThumbnailSelectInTarget implements SelectInTarget {
-  public ThumbnailSelectInTarget() {
+  ThumbnailSelectInTarget() {
   }
 
   @Override

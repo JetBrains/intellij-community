@@ -8,7 +8,7 @@ public class NegatedIfElse
         final boolean foo = baz();
         final boolean bar = baz();
         final Object bazoom = new Object();
-        if(foo != bar)
+        <warning descr="'if' statement with negated condition">if</warning>(foo != bar)
         {
            System.out.println("");
         }

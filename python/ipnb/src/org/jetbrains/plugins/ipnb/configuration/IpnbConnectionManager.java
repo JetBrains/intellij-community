@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.configuration;
 
 import com.intellij.execution.RunManager;
@@ -408,8 +409,6 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
         final IpnbRunConfiguration configuration = (IpnbRunConfiguration)configurationSettings.getConfiguration();
         configuration.setHost(IpnbConfigurationEditor.DEFAULT_HOST);
         configuration.setPort(IpnbConfigurationEditor.DEFAULT_PORT);
-        configurationSettings.setSingleton(true);
-
         ExecutionUtil.runConfiguration(configurationSettings, DefaultRunExecutor.getRunExecutorInstance());
       }
       else {

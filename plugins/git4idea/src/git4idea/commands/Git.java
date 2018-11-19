@@ -239,4 +239,7 @@ public interface Git {
                           @NotNull String commit,
                           boolean autoCommit,
                           @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);
 }

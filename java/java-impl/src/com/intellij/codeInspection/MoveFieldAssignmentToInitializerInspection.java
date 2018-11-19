@@ -74,9 +74,8 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     PsiCodeBlock codeBlock = ObjectUtils.tryCast(statement.getParent(), PsiCodeBlock.class);
     if (codeBlock == null) return false;
     if (codeBlock.getParent() != ctrOrInitializer) return false;
-    if (!ReferencesSearch.search(field, new LocalSearchScope(ctrOrInitializer)).forEach(ref -> {
-      return PsiTreeUtil.isAncestor(assignment, ref.getElement(), true);
-    })) {
+    if (ReferencesSearch.search(field, new LocalSearchScope(ctrOrInitializer))
+      .anyMatch(ref -> !PsiTreeUtil.isAncestor(assignment, ref.getElement(), true))) {
       return false;
     }
     // If it's not the first statement in the initializer, allow some more (likely unrelated) assignments only
@@ -222,7 +221,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       PsiExpression initializer = Objects.requireNonNull(assignment.getRExpression());
       field.setInitializer(ct.markUnchanged(initializer));
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (comments != null) {
         PsiCodeBlock block = factory.createCodeBlockFromText("{" + comments + "}", initializer);
         for(PsiElement child : block.getChildren()) {

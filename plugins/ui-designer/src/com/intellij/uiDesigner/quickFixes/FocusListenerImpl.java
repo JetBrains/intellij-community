@@ -16,7 +16,7 @@ import java.awt.event.FocusEvent;
 final class FocusListenerImpl extends FocusAdapter{
   private final QuickFixManager myManager;
 
-  public FocusListenerImpl(@NotNull final QuickFixManager manager) {
+  FocusListenerImpl(@NotNull final QuickFixManager manager) {
     myManager = manager;
   }
 

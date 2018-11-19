@@ -17,11 +17,18 @@ package com.intellij.util.containers;
 
 import com.intellij.util.DeprecatedMethodException;
 
-@Deprecated // use TLongArrayList instead
+/**
+ * @deprecated use TLongArrayList instead
+ */
+@Deprecated
 public class LongArrayList implements Cloneable {
   private long[] myData;
   private int mySize;
 
+  /**
+   * @deprecated use TLongArrayList instead
+   */
+  @Deprecated
   public LongArrayList() {
     myData = new long[10];
     DeprecatedMethodException.report("Use gnu.trove.TLongArrayList instead");

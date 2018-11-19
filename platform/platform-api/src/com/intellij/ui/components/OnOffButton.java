@@ -71,6 +71,14 @@ public class OnOffButton extends JToggleButton {
   }
 
   private static class DefaultOnOffButtonUI extends BasicToggleButtonUI {
+    private static final Color BORDER_COLOR = JBColor.namedColor("ToggleButton.borderColor", new JBColor(Gray._192, Gray._80));
+    private static final Color BUTTON_COLOR = JBColor.namedColor("ToggleButton.buttonColor", new JBColor(Gray._200, Gray._100));
+    private static final Color ON_BACKGROUND = JBColor.namedColor("ToggleButton.on.background", new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
+    private static final Color ON_FOREGROUND = JBColor.namedColor("ToggleButton.on.foreground", new JBColor(() -> UIUtil.getListForeground(true)));
+
+    private static final Color OFF_BACKGROUND = JBColor.namedColor("ToggleButton.off.background", new JBColor(() -> UIUtil.getPanelBackground()));
+    private static final Color OFF_FOREGROUND = JBColor.namedColor("ToggleButton.off.foreground", new JBColor(() -> UIUtil.getLabelDisabledForeground()));
+
     @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
       c.setAlignmentY(0.5f);
@@ -93,7 +101,7 @@ public class OnOffButton extends JToggleButton {
     }
 
     @Override
-    public void paint(Graphics gr, JComponent c) {
+    public void paint(Graphics g, JComponent c) {
       if (!(c instanceof OnOffButton)) return;
 
       int toggleArc = JBUI.scale(3);
@@ -109,35 +117,40 @@ public class OnOffButton extends JToggleButton {
       if (h % 2 == 1) {
         h--;
       }
-      Graphics2D g = ((Graphics2D)gr);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      int xOff = (button.getWidth() - w) / 2;
-      int yOff = (button.getHeight() - h) / 2;
-      g.translate(xOff, yOff);
-      if (button.isSelected()) {
-        g.setColor(new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
-        g.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._192, Gray._80));
-        g.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._200, Gray._100));
-        g.fillRoundRect(w - h, border, h, h - border, toggleArc, toggleArc);
-        g.setColor(UIUtil.getListForeground(true));
-        g.drawString(button.getOnText(), h / 2, h - vGap);
+
+      Graphics2D g2 = (Graphics2D)g.create();
+
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int xOff = (button.getWidth() - w) / 2;
+        int yOff = (button.getHeight() - h) / 2;
+        g2.translate(xOff, yOff);
+
+        boolean selected = button.isSelected();
+        g2.setColor(selected ? ON_BACKGROUND : OFF_BACKGROUND);
+        g2.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
+
+        g2.setColor(BORDER_COLOR);
+        g2.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
+
+        if (selected) {
+          g2.setColor(BUTTON_COLOR);
+          g2.fillRoundRect(w - h, border, h, h - border, toggleArc, toggleArc);
+
+          g2.setColor(ON_FOREGROUND);
+          g2.drawString(button.getOnText(), h / 2, h - vGap);
+        }
+        else {
+
+          g2.setColor(BUTTON_COLOR);
+          g2.fillRoundRect(0, 0, h, h, toggleArc, toggleArc);
+
+          g2.setColor(OFF_FOREGROUND);
+          g2.drawString(button.getOffText(), h + vGap, h - vGap);
+        }
+      } finally {
+        g2.dispose();
       }
-      else {
-        g.setColor(UIUtil.getPanelBackground());
-        g.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._192, Gray._100));
-        g.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(UIUtil.getLabelDisabledForeground());
-        g.drawString(button.getOffText(), h + vGap, h - vGap);
-        g.setColor(JBColor.border());
-        g.setPaint(new GradientPaint(h, 0, new JBColor(Gray._158, Gray._100), 0, h, new JBColor(Gray._210, Gray._100)));
-        g.fillRoundRect(0, 0, h, h, toggleArc, toggleArc);
-        // g.setColor(UIUtil.getBorderColor());
-        // g.drawOval(0, 0, h, h);
-      }
-      g.translate(-xOff, -yOff);
     }
 
     @Override

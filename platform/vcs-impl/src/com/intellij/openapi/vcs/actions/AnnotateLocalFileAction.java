@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -96,8 +97,15 @@ public class AnnotateLocalFileAction {
             editor = ((TextEditor)fileEditor).getEditor();
           }
         }
+
+        if (editor == null) {
+          LOG.error(String.format("Can't create text editor for file: valid - %s; file type - %s; editors - %s",
+                                  selectedFile.isValid(), selectedFile.getFileType(), Arrays.toString(fileEditors)));
+
+          return;
+        }
       }
-      LOG.assertTrue(editor != null);
+
       doAnnotate(editor, project);
     }
   }
@@ -149,7 +157,7 @@ public class AnnotateLocalFileAction {
         }
 
         if (!fileAnnotationRef.isNull()) {
-          AnnotateToggleAction.doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs);
+          AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), vcs);
         }
       }
     };

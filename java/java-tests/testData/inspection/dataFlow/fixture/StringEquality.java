@@ -17,7 +17,7 @@ class StringEquality {
     switch(s) {
       case "bar":
       case "baz":
-      <warning descr="Switch label 'case \"foo\":' is unreachable">case "foo":</warning>
+      case <warning descr="Switch label '\"foo\"' is unreachable">"foo"</warning>:
     }
   }
 
@@ -76,5 +76,32 @@ class StringEquality {
     if(!s.startsWith("--") || <warning descr="Condition 's.equals(\".\")' is always 'false' when reached">s.equals(".")</warning>) {
       System.out.println("invalid parameter");
     }
+  }
+
+  interface X {
+    Object getY();
+  }
+
+  void testWithCanonicalization(Object obj) {
+    if(obj instanceof X) {
+      X x = (X)obj;
+      if (x.getY() instanceof String) {
+        System.out.println("oops");
+      }
+    }
+  }
+
+  void testObject() {
+    Object x = " foo ".trim();
+    Object y = " foo ".trim();
+    if (x == y) {}
+  }
+  
+  void testIncorrect(String s) {
+    if(<error descr="Operator '==' cannot be applied to 'java.lang.String', 'int'">s == s.length()</error>) {}
+  }
+  
+  void testTrim() {
+    System.out.println(" EQ ".trim() == "EQ");
   }
 }

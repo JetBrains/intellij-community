@@ -35,9 +35,9 @@ public class CollectionInputDataDiffBuilder<Key, Value> extends InputDataDiffBui
 
   @Override
   public boolean differentiate(@NotNull Map<Key, Value> newData,
-                            @NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
-                            @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
-                            @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
+                            @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                            @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
+                            @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     return differentiateWithKeySeq(mySeq, newData, myInputId, addProcessor, removeProcessor);
   }
 
@@ -45,11 +45,11 @@ public class CollectionInputDataDiffBuilder<Key, Value> extends InputDataDiffBui
     return mySeq;
   }
 
-  static <Key, Value> boolean differentiateWithKeySeq(@NotNull Collection<Key> currentData,
+  static <Key, Value> boolean differentiateWithKeySeq(@NotNull Collection<? extends Key> currentData,
                                                    @NotNull Map<Key, Value> newData,
                                                    int inputId,
-                                                   @NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
-                                                   @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
+                                                   @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                                                   @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     for (Key key : currentData) {
       removeProcessor.process(key, inputId);
     }

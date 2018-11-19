@@ -9,10 +9,11 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
-import com.intellij.vcs.log.impl.*;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.RequirementsImpl;
+import com.intellij.vcs.log.impl.VcsCommitMetadataImpl;
+import com.intellij.vcs.log.impl.VcsUserImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.config.GitVersion;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
@@ -100,7 +101,6 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     createTaggedBranch();
     List<VcsCommitMetadata> expectedLog = log();
     List<TimedVcsCommit> collector = ContainerUtil.newArrayList();
-    //noinspection unchecked
     myLogProvider.readAllHashes(projectRoot, new CollectConsumer<>(collector));
     assertOrderedEquals(expectedLog, collector);
   }
@@ -137,21 +137,19 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_filter_by_branch() throws Exception {
     List<String> hashes = generateHistoryForFilters(true, false);
-    VcsLogBranchFilter branchFilter = VcsLogBranchFilterImpl.fromBranch("feature");
+    VcsLogBranchFilter branchFilter = VcsLogFilterObject.fromBranch("feature");
     repo.update();
-    List<String> actualHashes = getFilteredHashes(new VcsLogFilterCollectionBuilder().with(branchFilter).build());
+    List<String> actualHashes = getFilteredHashes(VcsLogFilterObject.collection(branchFilter));
     assertEquals(hashes, actualHashes);
   }
 
   public void test_filter_by_branch_and_user() throws Exception {
     List<String> hashes = generateHistoryForFilters(false, false);
-    VcsLogBranchFilter branchFilter = VcsLogBranchFilterImpl.fromBranch("feature");
-    VcsUserImpl user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
-                                                           Collections.emptyMap(),
-                                                           singleton(user));
+    VcsLogBranchFilter branchFilter = VcsLogFilterObject.fromBranch("feature");
+    VcsUser user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
+    VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, singleton(user));
     repo.update();
-    List<String> actualHashes = getFilteredHashes(new VcsLogFilterCollectionBuilder().with(branchFilter).with(userFilter).build());
+    List<String> actualHashes = getFilteredHashes(VcsLogFilterObject.collection(branchFilter, userFilter));
     assertEquals(hashes, actualHashes);
   }
 
@@ -173,12 +171,12 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     String bigNoBrackets = addCommit(repo, "GIT " + fileName);
 
     String text = "[git]";
-    assertEquals(Collections.singletonList(smallBrackets), getFilteredHashes(
-      new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl(text, false, true)).build()));
+    assertEquals(Collections.singletonList(smallBrackets),
+                 getFilteredHashes(VcsLogFilterObject.collection(VcsLogFilterObject.fromPattern(text, false, true))));
     assertEquals(Arrays.asList(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets, initial),
-                 getFilteredHashes(new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl(text, true, false)).build()));
+                 getFilteredHashes(VcsLogFilterObject.collection(VcsLogFilterObject.fromPattern(text, true, false))));
     assertEquals(Arrays.asList(smallNoBrackets, smallBrackets, initial),
-                 getFilteredHashes(new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl(text, true, true)).build()));
+                 getFilteredHashes(VcsLogFilterObject.collection(VcsLogFilterObject.fromPattern(text, true, true))));
   }
 
   public void test_filter_by_text_no_regex() throws Exception {
@@ -192,8 +190,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     String bigBrackets = addCommit(repo, "[GIT] " + fileName);
     echo(fileName, "content" + Math.random());
 
-    assertEquals(Arrays.asList(bigBrackets, smallBrackets), getFilteredHashes(
-      new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl("[git]", false, false)).build()));
+    assertEquals(Arrays.asList(bigBrackets, smallBrackets),
+                 getFilteredHashes(VcsLogFilterObject.collection(VcsLogFilterObject.fromPattern("[git]", false, false))));
   }
 
   private void assumeFixedStringsWorks() {
@@ -205,11 +203,9 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   private void filter_by_text_and_user(boolean regexp) throws Exception {
     List<String> hashes = generateHistoryForFilters(false, true);
     VcsUserImpl user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
-                                                           Collections.emptyMap(),
-                                                           singleton(user));
-    assertEquals(hashes, getFilteredHashes(new VcsLogFilterCollectionBuilder().with(userFilter).
-      with(new VcsLogTextFilterImpl(regexp ? ".*" : "", regexp, false)).build()));
+    VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, singleton(user));
+    VcsLogTextFilter textFilter = VcsLogFilterObject.fromPattern(regexp ? ".*" : "", regexp, false);
+    assertEquals(hashes, getFilteredHashes(VcsLogFilterObject.collection(userFilter, textFilter)));
   }
 
   public void test_filter_by_text_with_regex_and_user() throws Exception {

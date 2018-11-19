@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -21,7 +20,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHomeBean>, ModificationTracker {
+public abstract class SdkHomeSettings implements PersistentStateComponentWithModificationTracker<SdkHomeBean> {
   private final PsiModificationTrackerImpl myTracker;
   private SdkHomeBean mySdkHome = null;
 
@@ -30,7 +29,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
   }
 
   @Override
-  public long getModificationCount() {
+  public long getStateModificationCount() {
     SdkHomeBean sdkHome = mySdkHome;
     return sdkHome == null ? 0 : sdkHome.getModificationCount();
   }
@@ -56,7 +55,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
       return null;
     }
 
-    @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"}) final String sdk_home = state.getSdkHome();
+    final String sdk_home = state.getSdkHome();
     if (StringUtil.isEmpty(sdk_home)) {
       return null;
     }

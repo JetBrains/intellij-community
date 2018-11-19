@@ -105,8 +105,8 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
       val dataObj = actionObj.getAsJsonObject("data")
       for ((key, value) in context.deserialize<HashMap<String, Any>>(dataObj, object : TypeToken<HashMap<String, Any>>() {}.type)) {
         if (value is Double && value % 1 == 0.0) {
-          val intValue = Math.round(value).toInt()
-          action.addData(key, intValue)
+          val longValue = Math.round(value)
+          action.addData(key, longValue)
         }
         else {
           action.addData(key, value)

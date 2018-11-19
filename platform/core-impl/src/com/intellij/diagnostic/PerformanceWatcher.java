@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,15 +39,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author yole
  */
-public class PerformanceWatcher implements Disposable, BaseComponent {
+public class PerformanceWatcher implements Disposable {
   private static final Logger LOG = Logger.getInstance(PerformanceWatcher.class);
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
-  private final ScheduledFuture<?> myThread;
-  private final ThreadMXBean myThreadMXBean;
+  private ScheduledFuture<?> myThread;
+  private final ThreadMXBean myThreadMXBean = ManagementFactory.getThreadMXBean();
   private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
-  private final IdePerformanceListener myPublisher;
+  private final IdePerformanceListener myPublisher =
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
@@ -65,37 +65,32 @@ public class PerformanceWatcher implements Disposable, BaseComponent {
   }
 
   public PerformanceWatcher() {
-    myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
-    myThreadMXBean = ManagementFactory.getThreadMXBean();
-    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> samplePerformance(), getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
-  }
+    if (!shouldWatch()) return;
 
-  @Override
-  public void initComponent() {
-    if (shouldWatch()) {
-      final AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-      service.setNewThreadListener(new Consumer<Thread>() {
-        private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
+    AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+    service.setNewThreadListener(new Consumer<Thread>() {
+      private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
-        @Override
-        public void consume(Thread thread) {
-          if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
-              && ApplicationInfoImpl.getShadowInstance().isEAP()) {
-            File file = dumpThreads("newPooledThread/", true);
-            LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
-          }
-        }
-      });
-
-      ApplicationManager.getApplication().executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
-
-      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-        if ("Code Cache".equals(bean.getName())) {
-          watchCodeCache(bean);
-          break;
+      @Override
+      public void consume(Thread thread) {
+        if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
+            && ApplicationInfoImpl.getShadowInstance().isEAP()) {
+          File file = dumpThreads("newPooledThread/", true);
+          LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
         }
       }
+    });
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
+
+    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+      if ("Code Cache".equals(bean.getName())) {
+        watchCodeCache(bean);
+        break;
+      }
     }
+
+    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
   }
 
   private static int getMaxAttempts() {

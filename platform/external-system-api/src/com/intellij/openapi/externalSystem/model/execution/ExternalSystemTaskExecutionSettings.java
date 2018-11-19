@@ -13,15 +13,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Keeps external system task execution parameters. Basically, this is a model class which holds data represented when
  * a user opens run configuration editor for corresponding external system.
- *
- * @author Denis Zhdanov
- * @since 24.05.13 12:20
  */
 @Tag("ExternalSystemSettings")
 public class ExternalSystemTaskExecutionSettings implements Cloneable {
@@ -29,7 +28,9 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
+  @NotNull
   private List<String> myTaskNames = ContainerUtilRt.newArrayList();
+  @NotNull
   private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
 
   @Nullable private String myExecutionName;
@@ -37,13 +38,18 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private String myExternalProjectPath;
   private String myVmOptions;
   private String myScriptParameters;
-  private Map<String, String> myEnv = ContainerUtilRt.newHashMap();
+  @NotNull
+  private Map<String, String> myEnv =  ContainerUtilRt.newHashMap();
   private boolean myPassParentEnvs = true;
 
   public ExternalSystemTaskExecutionSettings() {
   }
 
   private ExternalSystemTaskExecutionSettings(@NotNull ExternalSystemTaskExecutionSettings source) {
+    setFrom(source);
+  }
+
+  public void setFrom(@NotNull ExternalSystemTaskExecutionSettings source) {
     myExecutionName = source.myExecutionName;
     myExternalSystemIdString = source.myExternalSystemIdString;
     myExternalProjectPath = source.myExternalProjectPath;
@@ -53,7 +59,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myTaskNames = ContainerUtil.copyList(source.myTaskNames);
     myTaskDescriptions = ContainerUtil.copyList(source.myTaskDescriptions);
 
-    myEnv = source.myEnv == null ? null : new THashMap<>(source.myEnv);
+    myEnv = source.myEnv.isEmpty() ? Collections.emptyMap() : new THashMap<>(source.myEnv);
     myPassParentEnvs = source.myPassParentEnvs;
   }
 
@@ -102,19 +108,21 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myScriptParameters = scriptParameters;
   }
 
+  @NotNull
   public List<String> getTaskNames() {
     return myTaskNames;
   }
 
-  public void setTaskNames(List<String> taskNames) {
+  public void setTaskNames(@NotNull List<String> taskNames) {
     myTaskNames = taskNames;
   }
 
+  @NotNull
   public List<String> getTaskDescriptions() {
     return myTaskDescriptions;
   }
 
-  public void setTaskDescriptions(List<String> taskDescriptions) {
+  public void setTaskDescriptions(@NotNull List<String> taskDescriptions) {
     myTaskDescriptions = taskDescriptions;
   }
 
@@ -123,8 +131,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     return myEnv;
   }
 
-  public void setEnv(Map<String, String> env) {
-    myEnv = env == null ? ContainerUtilRt.newHashMap() : env;
+  public void setEnv(@NotNull Map<String, String> value) {
+    myEnv = value;
   }
 
   public boolean isPassParentEnvs() {
@@ -135,6 +143,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myPassParentEnvs = passParentEnvs;
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public ExternalSystemTaskExecutionSettings clone() {
     return new ExternalSystemTaskExecutionSettings(this);
@@ -142,13 +151,13 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @Override
   public int hashCode() {
-    int result = myTaskNames != null ? myTaskNames.hashCode() : 0;
+    int result = myTaskNames.hashCode();
     result = 31 * result + (myExecutionName != null ? myExecutionName.hashCode() : 0);
     result = 31 * result + (myExternalSystemIdString != null ? myExternalSystemIdString.hashCode() : 0);
     result = 31 * result + (myExternalProjectPath != null ? myExternalProjectPath.hashCode() : 0);
     result = 31 * result + (myVmOptions != null ? myVmOptions.hashCode() : 0);
     result = 31 * result + (myScriptParameters != null ? myScriptParameters.hashCode() : 0);
-    result = 31 * result + (myEnv != null ? myEnv.hashCode() : 0);
+    result = 31 * result + myEnv.hashCode();
     result = 31 * result + (myPassParentEnvs ? 1 : 0);
     return result;
   }
@@ -160,33 +169,29 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
     ExternalSystemTaskExecutionSettings settings = (ExternalSystemTaskExecutionSettings)o;
 
-    if (myExecutionName != null ? !myExecutionName.equals(settings.myExecutionName) : settings.myExecutionName != null) {
+    if (!Objects.equals(myExecutionName, settings.myExecutionName)) {
       return false;
     }
 
-    if (myExternalProjectPath != null
-        ? !myExternalProjectPath.equals(settings.myExternalProjectPath)
-        : settings.myExternalProjectPath != null)
+    if (!Objects.equals(myExternalProjectPath, settings.myExternalProjectPath))
     {
       return false;
     }
-    if (myExternalSystemIdString != null
-        ? !myExternalSystemIdString.equals(settings.myExternalSystemIdString)
-        : settings.myExternalSystemIdString != null)
+    if (!Objects.equals(myExternalSystemIdString, settings.myExternalSystemIdString))
     {
       return false;
     }
-    if (myTaskNames != null ? !myTaskNames.equals(settings.myTaskNames) : settings.myTaskNames != null) return false;
+    if (!Objects.equals(myTaskNames, settings.myTaskNames)) return false;
     if (StringUtil.isEmpty(myVmOptions) ^ StringUtil.isEmpty(settings.myVmOptions)) return false;
     if (StringUtil.isEmpty(myScriptParameters) ^ StringUtil.isEmpty(settings.myScriptParameters)) return false;
-    if (myEnv != null ? !myEnv.equals(settings.myEnv) : settings.myEnv != null) return false;
+    if (!Objects.equals(myEnv, settings.myEnv)) return false;
     if (myPassParentEnvs != settings.myPassParentEnvs) return false;
     return true;
   }
 
   @Override
   public String toString() {
-    return (myTaskNames == null ? "" : StringUtil.join(myTaskNames, " ")) +
+    return StringUtil.join(myTaskNames, " ") +
            (StringUtil.isEmpty(myScriptParameters) ? "" : " " + myScriptParameters) +
            (StringUtil.isEmpty(myVmOptions) ? "" : " " + myVmOptions);
   }

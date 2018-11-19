@@ -21,8 +21,6 @@ import com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveFieldAssignmentToInitializerInspectionTest extends LightQuickFixParameterizedTestCase {
-  public void test() { doAllTests(); }
-
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

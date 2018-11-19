@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.TextChange;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +34,6 @@ import java.util.List;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 3/2/11 11:55 AM
  */
 public class TextChangesStorage {
   private final List<ChangeEntry> myChanges = new ArrayList<>();
@@ -386,7 +386,7 @@ public class TextChangesStorage {
     int startChangeIndex = getChangeIndex(start);
     int endChangeIndex = getChangeIndex(end);
     
-    boolean substringAffectedByChanges = startChangeIndex >= 0 || endChangeIndex >= 0 || startChangeIndex != endChangeIndex;
+    boolean substringAffectedByChanges = startChangeIndex != endChangeIndex || startChangeIndex >= 0;
     int clientShift = 0;
     int originalStart = 0;
     if (startChangeIndex < 0) {
@@ -455,29 +455,12 @@ public class TextChangesStorage {
    *                          is calculated by by {@code '-returned_index - 1'} formula
    */
   private int getChangeIndex(int clientOffset) {
-    if (myChanges.isEmpty()) {
-      return -1;
-    }
-    
-    int start = 0;
-    int end = myChanges.size() - 1;
-
-    // We inline binary search here because profiling indicates that it becomes bottleneck to use Collections.binarySearch().
-    while (start <= end) {
-      int i = (end + start) >>> 1;
+    return ObjectUtils.binarySearch(0, myChanges.size(), i->{
       ChangeEntry changeEntry = myChanges.get(i);
-      if (changeEntry.clientStartOffset > clientOffset) {
-        end = i - 1;
-        continue;
-      }
-      if (changeEntry.clientStartOffset + changeEntry.change.getText().length() < clientOffset) {
-        start = i + 1;
-        continue;
-      }
-      return i;
-    }
-
-    return -(start + 1);
+      if (changeEntry.clientStartOffset > clientOffset) return 1;
+      if (changeEntry.clientStartOffset + changeEntry.change.getText().length() < clientOffset) return -1;
+      return 0;
+    });
   }
 
   @Override

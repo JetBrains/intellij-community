@@ -36,7 +36,6 @@ import static org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter.M
 
 /**
  * @author Vladislav.Soroka
- * @since 9/25/13
  */
 public class GradleDslAnnotator implements Annotator {
   @Override

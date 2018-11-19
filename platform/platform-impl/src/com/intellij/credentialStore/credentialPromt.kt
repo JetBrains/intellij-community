@@ -14,6 +14,8 @@ import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import javax.swing.JCheckBox
 import javax.swing.JPasswordField
+import javax.swing.text.BadLocationException
+import javax.swing.text.Segment
 
 /**
  * @param project The context project (might be null)
@@ -72,7 +74,7 @@ fun askCredentials(project: Project?,
 
     RememberCheckBoxState.update(rememberCheckBox)
 
-    val credentials = Credentials(attributes.userName, passwordField.password.nullize())
+    val credentials = Credentials(attributes.userName, passwordField.getTrimmedChars())
     if (isSaveOnOk && rememberCheckBox.isSelected) {
       store.set(attributes, credentials)
       credentials.getPasswordAsString()
@@ -101,4 +103,43 @@ object RememberCheckBoxState {
       toolTip = toolTip
     )
   }
+}
+
+// do not trim trailing whitespace
+fun JPasswordField.getTrimmedChars(): CharArray? {
+  val doc = document
+  val size = doc.length
+  if (size == 0) {
+     return null
+  }
+
+  val segment = Segment()
+  try {
+    doc.getText(0, size, segment)
+  }
+  catch (e: BadLocationException) {
+    return null
+  }
+
+  val chars = segment.array
+  var startOffset = segment.offset
+  while (Character.isWhitespace(chars[startOffset])) {
+    startOffset++
+  }
+  // exclusive
+  var endIndex = segment.count
+  while (endIndex > startOffset && Character.isWhitespace(chars[endIndex - 1])) {
+    endIndex--
+  }
+
+  if (startOffset >= endIndex) {
+    return null
+  }
+  else if (startOffset == 0 && endIndex == chars.size) {
+    return chars
+  }
+
+  val result = chars.copyOfRange(startOffset, endIndex)
+  chars.fill(0.toChar(), segment.offset, segment.count)
+  return result
 }

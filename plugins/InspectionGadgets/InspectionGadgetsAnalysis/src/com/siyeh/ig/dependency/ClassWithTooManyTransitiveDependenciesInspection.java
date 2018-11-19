@@ -23,6 +23,7 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -56,8 +57,8 @@ public class ClassWithTooManyTransitiveDependenciesInspection
       return null;
     }
     final RefClass refClass = (RefClass)refEntity;
-    final PsiClass aClass = refClass.getElement();
-    if (ClassUtils.isInnerClass(aClass)) {
+    final PsiElement aClass = refClass.getPsiElement();
+    if (!(aClass instanceof PsiClass) || ClassUtils.isInnerClass((PsiClass)aClass)) {
       return null;
     }
     final Set<RefClass> dependencies =

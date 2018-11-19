@@ -142,8 +142,7 @@ public final class LocalFileReader
 			return;
 		}
 
-		for (int i = 0; i < filesAndDirectories.length; i++) {
-			final File fileOrDirectory = filesAndDirectories[i];
+		for (final File fileOrDirectory : filesAndDirectories) {
 			final String name = fileOrDirectory.getName();
 			if (name.equals(CVS_DIR)) {
 				continue;

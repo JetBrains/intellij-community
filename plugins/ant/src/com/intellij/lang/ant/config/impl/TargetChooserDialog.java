@@ -167,7 +167,7 @@ public class TargetChooserDialog extends DialogWrapper {
     private final AntBuildFile myBuildFile;
 
 
-    public AntTargetNodeDescriptor(final AntBuildTarget antTarget, final AntBuildFile buildFile) {
+    AntTargetNodeDescriptor(final AntBuildTarget antTarget, final AntBuildFile buildFile) {
       myAntTarget = antTarget;
       myBuildFile = buildFile;
     }

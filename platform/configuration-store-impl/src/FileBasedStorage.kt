@@ -6,10 +6,10 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -34,7 +34,7 @@ import java.nio.file.attribute.BasicFileAttributes
 open class FileBasedStorage(file: Path,
                             fileSpec: String,
                             rootElementName: String?,
-                            pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                            pathMacroManager: PathMacroSubstitutor? = null,
                             roamingType: RoamingType? = null,
                             provider: StreamProvider? = null) :
   XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
@@ -42,9 +42,9 @@ open class FileBasedStorage(file: Path,
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   protected var lineSeparator: LineSeparator? = null
-  protected var blockSavingTheContent: Boolean = false
+  protected var blockSavingTheContent = false
 
-  @Volatile var file: Path = file
+  @Volatile var file = file
     private set
 
   init {
@@ -53,8 +53,8 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  protected open val isUseXmlProlog: Boolean = false
-  protected open val isUseVfsForWrite: Boolean = true
+  protected open val isUseXmlProlog = false
+  protected open val isUseVfsForWrite = true
 
   private val isUseUnixLineSeparator: Boolean
     // only ApplicationStore doesn't use xml prolog
@@ -68,7 +68,7 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  override fun createSaveSession(states: StateMap): FileSaveSession = FileSaveSession(states, this)
+  override fun createSaveSession(states: StateMap) = FileSaveSession(states, this)
 
   protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {

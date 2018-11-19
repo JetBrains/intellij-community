@@ -25,9 +25,6 @@ public class ChangeNewOperatorTypeTest extends LightQuickFixParameterizedTestCas
     return LanguageLevel.JDK_1_7;
   }
 
-  public void test() {
-    doAllTests(); 
-  }
 
   @Override
   protected String getBasePath() {

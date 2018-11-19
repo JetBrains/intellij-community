@@ -26,7 +26,7 @@ import java.util.Map;
 public class ChangesPreprocess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesPreprocess");
 
-  public static List<Change> preprocessChangesRemoveDeletedForDuplicateMoved(List<Change> list) {
+  public static List<Change> preprocessChangesRemoveDeletedForDuplicateMoved(List<? extends Change> list) {
     final List<Change> result = new ArrayList<>();
     final Map<FilePath, Change> map = new HashMap<>();
     for (Change change : list) {

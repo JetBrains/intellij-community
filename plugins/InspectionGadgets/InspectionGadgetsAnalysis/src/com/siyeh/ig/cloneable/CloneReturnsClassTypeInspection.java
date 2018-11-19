@@ -51,7 +51,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
 
     final String myClassName;
 
-    public CloneReturnsClassTypeFix(String className) {
+    CloneReturnsClassTypeFix(String className) {
       myClassName = className;
     }
 

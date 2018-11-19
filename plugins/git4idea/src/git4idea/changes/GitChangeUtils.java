@@ -27,12 +27,13 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.history.browser.SHAHash;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -265,8 +266,8 @@ public class GitChangeUtils {
   }
 
   @Nullable
-  public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference,
-                                     List<VirtualFile> paths, final String... parameters) {
+  public static Hash commitExists(final Project project, final VirtualFile root, final String anyReference,
+                                  List<VirtualFile> paths, final String... parameters) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters(parameters);
@@ -277,7 +278,7 @@ public class GitChangeUtils {
     try {
       final String output = Git.getInstance().runCommand(h).getOutputOrThrow().trim();
       if (StringUtil.isEmptyOrSpaces(output)) return null;
-      return new SHAHash(output);
+      return HashImpl.build(output);
     }
     catch (VcsException e) {
       return null;

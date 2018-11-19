@@ -96,7 +96,7 @@ public class FileProcessingCompilerStateCache {
     private final long myTimestamp;
     private final ValidityState myExtState;
 
-    public MyState(long timestamp, @Nullable ValidityState extState) {
+    MyState(long timestamp, @Nullable ValidityState extState) {
       myTimestamp = timestamp;
       myExtState = extState;
     }

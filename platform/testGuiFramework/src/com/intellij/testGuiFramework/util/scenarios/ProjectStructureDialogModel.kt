@@ -2,16 +2,15 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.button
-import com.intellij.testGuiFramework.impl.jList
-import com.intellij.testGuiFramework.impl.testTreeItemExist
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.itemLibrary
+import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuArtifacts
+import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuFacets
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuLibraries
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuModules
+import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuSDKs
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.projectStructureTitle
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
@@ -30,7 +29,9 @@ class ProjectStructureDialogModel(val testCase: GuiTestCase) : TestUtilsClass(te
     const val menuFacets = "Facets"
     const val itemFacet = "Facet"
     const val menuArtifacts = "Artifacts"
+    const val itemArtifact = "Artifact"
     const val menuSDKs = "SDKs"
+    const val itemSDK = "SDK"
     const val menuGlobalLibraries = "Global Libraries"
     const val menuProblems = "Problems"
 
@@ -41,7 +42,7 @@ class ProjectStructureDialogModel(val testCase: GuiTestCase) : TestUtilsClass(te
 val GuiTestCase.projectStructureDialogModel by ProjectStructureDialogModel
 
 fun ProjectStructureDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(projectStructureTitle, true, defaultTimeout)
+  testCase.dialog(projectStructureTitle, true)
 
 fun ProjectStructureDialogModel.checkInProjectStructure(actions: GuiTestCase.()->Unit){
   with(guiTestCase){
@@ -64,15 +65,32 @@ fun ProjectStructureDialogModel.checkLibraryPresent(vararg library: String){
       logUIStep("Click '$menuLibraries'")
       tabs.clickItem(menuLibraries)
       testTreeItemExist(itemLibrary, *library)
+      jTree(*library).clickPath()
     }
   }
 }
 
-fun ProjectStructureDialogModel.checkModule(checks: JDialogFixture.()->Unit){
+private fun ProjectStructureDialogModel.checkPage(page: String, checks: JDialogFixture.()->Unit){
   with(guiTestCase){
-    logUIStep("Click $menuModules")
+    logUIStep("Click $page")
     val dialog = connectDialog()
-    dialog.jList(menuModules).clickItem(menuModules)
+    dialog.jList(page).clickItem(page)
     dialog.checks()
   }
+}
+
+fun ProjectStructureDialogModel.checkModule(checks: JDialogFixture.()->Unit){
+  checkPage(menuModules, checks)
+}
+
+fun ProjectStructureDialogModel.checkArtifact(checks: JDialogFixture.()->Unit){
+  checkPage(menuArtifacts, checks)
+}
+
+fun ProjectStructureDialogModel.checkSDK(checks: JDialogFixture.()->Unit){
+  checkPage(menuSDKs, checks)
+}
+
+fun ProjectStructureDialogModel.checkFacet(checks: JDialogFixture.()->Unit){
+  checkPage(menuFacets, checks)
 }

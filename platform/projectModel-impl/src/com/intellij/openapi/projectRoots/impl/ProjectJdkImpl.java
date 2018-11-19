@@ -19,13 +19,10 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
@@ -279,34 +276,11 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
       return myRoots.getFiles(rootType);
     }
 
-    private final List<RootSetChangedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
-    @Override
-    public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
-      if (!myListeners.contains(listener)) {
-        myListeners.add(listener);
-        super.addRootSetChangedListener(listener);
-      }
-    }
-
-    @Override
-    public void addRootSetChangedListener(@NotNull final RootSetChangedListener listener, @NotNull Disposable parentDisposable) {
-      super.addRootSetChangedListener(listener, parentDisposable);
-      Disposer.register(parentDisposable, () -> removeRootSetChangedListener(listener));
-    }
-
-    @Override
-    public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) {
-      super.removeRootSetChangedListener(listener);
-      myListeners.remove(listener);
-    }
-
     @Override
     public void rootsChanged() {
-      if (myListeners.isEmpty()) {
-        return;
+      if (myDispatcher.hasListeners()) {
+        ApplicationManager.getApplication().runWriteAction(this::fireRootSetChanged);
       }
-      ApplicationManager.getApplication().runWriteAction(this::fireRootSetChanged);
     }
   }
 

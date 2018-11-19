@@ -27,6 +27,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -142,7 +142,7 @@ public class ImportHelper{
     }
   }
 
-  public static void collectOnDemandImports(@NotNull List<Pair<String, Boolean>> resultList,
+  public static void collectOnDemandImports(@NotNull List<? extends Pair<String, Boolean>> resultList,
                                             @NotNull JavaCodeStyleSettings settings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
     TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<>();
@@ -183,7 +183,7 @@ public class ImportHelper{
     packageToCountMap.forEachEntry(new MyVisitorProcedure(true));
   }
 
-  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<Pair<String, Boolean>> names, final JavaCodeStyleSettings settings) {
+  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<? extends Pair<String, Boolean>> names, final JavaCodeStyleSettings settings) {
     int[] entryForName = ArrayUtil.newIntArray(names.size());
     PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
     for(int i = 0; i < names.size(); i++){
@@ -210,7 +210,7 @@ public class ImportHelper{
 
   @NotNull
   private static Set<String> findSingleImports(@NotNull final PsiJavaFile file,
-                                               @NotNull Collection<Pair<String,Boolean>> names,
+                                               @NotNull Collection<? extends Pair<String, Boolean>> names,
                                                @NotNull final Set<String> onDemandImports) {
     final GlobalSearchScope resolveScope = file.getResolveScope();
     final String thisPackageName = file.getPackageName();
@@ -219,7 +219,7 @@ public class ImportHelper{
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
 
     List<String> onDemandImportsList = new ArrayList<>(onDemandImports);
-    List<PsiClass> onDemandElements = onDemandImportsList.stream().map(onDemandName -> facade.findClass(onDemandName, resolveScope)).collect(Collectors.toList());
+    List<PsiClass> onDemandElements = ContainerUtil.map(onDemandImportsList, onDemandName -> facade.findClass(onDemandName, resolveScope));
     Set<String> namesToUseSingle = new THashSet<>();
     for (Pair<String, Boolean> pair : names) {
       String name = pair.getFirst();
@@ -250,25 +250,36 @@ public class ImportHelper{
         if (isStatic) {
           PsiClass aClass = onDemandElements.get(i);
           if (aClass != null) {
+
+            class AccessibilityChecker {
+              boolean checkMember(PsiMember member) {
+                if (member.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(member, file, null)) {
+                  PsiClass containingClass = member.getContainingClass();
+                  if (containingClass == null) return false;
+                  for (PsiClass superClass : InheritanceUtil.getSuperClasses(aClass)) {
+                    if (prefix.equals(superClass.getQualifiedName()) && InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {
+                      return false;
+                    }
+                  }
+                  return true;
+                }
+                return false;
+              }
+            }
+
             PsiField field = aClass.findFieldByName(shortName, true);
-            if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(field, file, null)) {
+            if (field != null && new AccessibilityChecker().checkMember(field)) {
               namesToUseSingle.add(name);
             }
             else {
               PsiClass inner = aClass.findInnerClassByName(shortName, true);
-              if (inner != null && inner.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(inner, file, null)) {
+              if (inner != null && new AccessibilityChecker().checkMember(inner)) {
                 namesToUseSingle.add(name);
               }
               else {
                 PsiMethod[] methods = aClass.findMethodsByName(shortName, true);
-                for (PsiMethod method : methods) {
-                  PsiClass containingClass = method.getContainingClass();
-                  if (containingClass == null) continue;
-                  if (method.hasModifierProperty(PsiModifier.STATIC) && 
-                      resolveHelper.isAccessible(method, file, null) &&
-                      !prefix.equals(containingClass.getQualifiedName())) {
-                    namesToUseSingle.add(name);
-                  }
+                if (Arrays.stream(methods).anyMatch(new AccessibilityChecker()::checkMember)) {
+                  namesToUseSingle.add(name);
                 }
               }
             }
@@ -361,7 +372,7 @@ public class ImportHelper{
   }
 
   @NotNull
-  private static StringBuilder buildImportListText(@NotNull List<Pair<String, Boolean>> names,
+  private static StringBuilder buildImportListText(@NotNull List<? extends Pair<String, Boolean>> names,
                                                    @NotNull final Set<String> packagesOrClassesToImportOnDemand,
                                                    @NotNull final Set<String> namesToUseSingle) {
     final Set<Pair<String, Boolean>> importedPackagesOrClasses = new THashSet<>();

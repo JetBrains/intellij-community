@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
+import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestThread
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.impl.button
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.RestartIdeAndResumeContainer
@@ -13,6 +11,7 @@ import com.intellij.testGuiFramework.remote.transport.RestartIdeCause
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
+import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 
@@ -27,20 +26,16 @@ val GuiTestCase.pluginsDialogScenarios: PluginsDialogScenarios by PluginsDialogS
 fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
   with(testCase) {
     welcomePageDialogModel.openPluginsDialog()
-    if (pluginsDialogModel.isPluginInstalled(pluginName)) {
-      val uninstallButton = pluginsDialogModel.getUninstallButton(pluginName)
-      if (uninstallButton != null) {
-        logTestStep("Uninstall `$pluginName` plugin")
-        uninstallButton.click()
-        pluginsDialogModel.pressOk()
+    pluginDialog {
+      pluginDetails(pluginName) {
+        if (isPluginInstalled()) {
+          logTestStep("Uninstall `$pluginName` plugin")
+          uninstall()
+        }
       }
-      else {
-        pluginsDialogModel.pressCancel()
-      }
-      dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
+      ok()
     }
-    else
-      pluginsDialogModel.pressCancel()
+    dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
   }
 }
 
@@ -66,17 +61,45 @@ fun PluginsDialogScenarios.actionAndRestart(actionFunction: () -> Unit) {
 fun PluginsDialogScenarios.installPluginFromDisk(pluginFileName: String) {
   with(testCase) {
     welcomePageDialogModel.openPluginsDialog()
-    pluginsDialogModel.installPluginFromDisk(pluginFileName)
-    dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
+    pluginDialog {
+      showInstallPluginFromDiskDialog()
+      installPluginFromDiskDialog {
+        setPath(pluginFileName)
+        clickOk()
+      }
+      ok()
+    }
+    if (isMac) {
+      dialogWithTextComponent(Timeouts.seconds05, { it.text.contains("IDE and Plugin Updates") }) { button("Postpone").click() }
+    } else {
+      dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
+    }
   }
 }
 
 fun PluginsDialogScenarios.isPluginRequiredVersionInstalled(pluginName: String, pluginVersion: String): Boolean {
-  var result = false
+  var version = ""
   with(testCase) {
     welcomePageDialogModel.openPluginsDialog()
-    result = pluginsDialogModel.isPluginRequiredVersionInstalled(pluginName, pluginVersion)
-    pluginsDialogModel.pressCancel()
+    pluginDialog {
+      showInstalledPlugins()
+      cancel()
+    }
+    welcomePageDialogModel.openPluginsDialog()
+    testCase.logUIStep("Get version of `$pluginName` plugin")
+    pluginDialog {
+      if (isPluginInstalled(pluginName)) { // it can be shown on trending page and not installed
+        pluginDetails(pluginName) {
+          if (isPluginInstalled(pluginName)) {
+            version = pluginVersion()
+            testCase.logInfo("Found `$version` version of `$pluginName` plugin")
+          }
+        }
+      }
+      else
+        testCase.logInfo("No `$pluginName` plugin")
+      cancel()
+    }
   }
-  return result
+  return version == pluginVersion
 }

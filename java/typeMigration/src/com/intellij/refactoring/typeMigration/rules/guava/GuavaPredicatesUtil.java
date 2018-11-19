@@ -116,7 +116,7 @@ public class GuavaPredicatesUtil {
   private static class NotConversionDescriptor extends TypeConversionDescriptorBase {
     private final PsiType myTargetType;
 
-    public NotConversionDescriptor(PsiType targetType) {
+    NotConversionDescriptor(PsiType targetType) {
       myTargetType = targetType;
     }
 
@@ -149,7 +149,7 @@ public class GuavaPredicatesUtil {
   private static class AndOrOrConversionDescriptor extends TypeConversionDescriptorBase {
     private final PsiType myTargetType;
 
-    public AndOrOrConversionDescriptor(PsiType targetType) {
+    AndOrOrConversionDescriptor(PsiType targetType) {
       myTargetType = targetType;
     }
 

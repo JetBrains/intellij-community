@@ -13,16 +13,16 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
   private int myLastUsedSlot;
   private int myBase = -1;
 
-  public IdBitSet(int capacity) {
+  IdBitSet(int capacity) {
     myBitMask = new long[(calcCapacity(capacity) >> SHIFT) + 1];
   }
 
-  public IdBitSet(int[] set, int count, int additional) {
+  IdBitSet(int[] set, int count, int additional) {
     this(ChangeBufferingList.calcMinMax(set, count), additional);
     for(int i = 0; i < count; ++i) add(set[i]);
   }
 
-  public IdBitSet(RandomAccessIntContainer set, int additionalCount) {
+  IdBitSet(RandomAccessIntContainer set, int additionalCount) {
     this(calcMax(set), additionalCount);
     ValueContainer.IntIterator iterator = set.intIterator();
     while(iterator.hasNext()) {

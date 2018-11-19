@@ -137,7 +137,6 @@ public class StubParentStrategy implements DomParentStrategy {
     return true;
   }
 
-  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof StubParentStrategy)) {

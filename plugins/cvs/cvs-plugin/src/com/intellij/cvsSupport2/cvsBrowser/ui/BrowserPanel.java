@@ -84,7 +84,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
   }
 
   private static class EditSourceAction extends AnAction implements DumbAware {
-    public EditSourceAction() {
+    EditSourceAction() {
       super(ActionsBundle.actionText("EditSource"),
             ActionsBundle.actionDescription("EditSource"),
             AllIcons.Actions.EditSource);
@@ -104,7 +104,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
   }
 
   private class MyCheckoutAction extends AnAction implements DumbAware {
-    public MyCheckoutAction() {
+    MyCheckoutAction() {
       super(CvsBundle.message("operation.name.check.out"), null, AllIcons.Actions.CheckOut);
     }
 
@@ -146,7 +146,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
   }
 
   private class MyHistoryAction extends AnAction implements DumbAware {
-    public MyHistoryAction() {
+    MyHistoryAction() {
       super(CvsBundle.message("operation.name.show.file.history"),
             CvsBundle.message("operation.name.show.file.history.description"), AllIcons.Vcs.History);
     }
@@ -176,7 +176,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
   }
 
   private class MyAnnotateAction extends AnAction implements DumbAware {
-    public MyAnnotateAction() {
+    MyAnnotateAction() {
       super(CvsBundle.message("operation.name.annotate"), null, AllIcons.Actions.Annotate);
     }
 
@@ -209,8 +209,8 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
   }
 
   private class BrowseChangesAction extends AnAction implements DumbAware {
-    public BrowseChangesAction() {
-      super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.ShowChangesOnly);
+    BrowseChangesAction() {
+      super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.Preview);
     }
 
     @Override

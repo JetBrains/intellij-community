@@ -136,7 +136,7 @@ public class AnalysisScope {
     myVFiles = null;
   }
 
-  public AnalysisScope(@NotNull Project project, @NotNull Collection<VirtualFile> virtualFiles) {
+  public AnalysisScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> virtualFiles) {
     myProject = project;
     myElement = null;
     myModule = null;
@@ -155,7 +155,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  PsiElementVisitor createFileSearcher() {
+  protected PsiElementVisitor createFileSearcher() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
@@ -591,7 +591,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final Set<Module> modules) {
+  protected static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final Set<? extends Module> modules) {
     if (modules.isEmpty()) {
       return new AnalysisScope(defaultProject);
     }
@@ -633,7 +633,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  static HashSet<Module> getAllInterestingModules(@NotNull final ProjectFileIndex fileIndex, @NotNull final VirtualFile vFile) {
+  protected static HashSet<Module> getAllInterestingModules(@NotNull final ProjectFileIndex fileIndex, @NotNull final VirtualFile vFile) {
     final HashSet<Module> modules = new HashSet<>();
     if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {

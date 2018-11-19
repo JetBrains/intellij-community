@@ -10,6 +10,8 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -18,7 +20,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -44,6 +46,7 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -76,6 +79,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.PyDebugProcess");
   private static final int CONNECTION_TIMEOUT = 60000;
+
+  private static final NotificationGroup NOTIFICATION_GROUP =
+    NotificationGroup.toolWindowGroup(PyBundle.message("debug.notification.group"), ToolWindowId.DEBUG);
 
   private final ProcessDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
@@ -120,9 +126,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private PyDebugProcess(@NotNull XDebugSession session,
-                        @NotNull DebuggerFactory debuggerFactory,
-                        @NotNull ExecutionConsole executionConsole,
-                        @Nullable ProcessHandler processHandler) {
+                         @NotNull DebuggerFactory debuggerFactory,
+                         @NotNull ExecutionConsole executionConsole,
+                         @Nullable ProcessHandler processHandler) {
     super(session);
 
     session.setPauseActionSupported(true);
@@ -132,7 +138,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     List<XBreakpointHandler> breakpointHandlers = new ArrayList<>();
     breakpointHandlers.add(new PyLineBreakpointHandler(this));
     breakpointHandlers.add(new PyExceptionBreakpointHandler(this));
-    for (PyBreakpointHandlerFactory factory : Extensions.getExtensions(PyBreakpointHandlerFactory.EP_NAME)) {
+    for (PyBreakpointHandlerFactory factory : PyBreakpointHandlerFactory.EP_NAME.getExtensionList()) {
       breakpointHandlers.add(factory.createBreakpointHandler(this));
     }
     myBreakpointHandlers = breakpointHandlers.toArray(XBreakpointHandler.EMPTY_ARRAY);
@@ -306,7 +312,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             myProcessHandler.destroyProcess();
           }
           if (shouldLogConnectionException(e)) {
-            LOG.error(e);
+            NOTIFICATION_GROUP
+              .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR, null)
+              .notify(myProject);
           }
         }
       }
@@ -460,7 +468,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     private final PyDebugProcess myProcess;
     private final String myText;
 
-    public WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
+    WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
       super("", "Enables watching executed functions return values", null);
       myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
       myProcess = debugProcess;
@@ -476,12 +484,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myWatchesReturnValues;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean watch) {
+    public void setSelected(@NotNull AnActionEvent e, boolean watch) {
       myWatchesReturnValues = watch;
       PyDebuggerSettings.getInstance().setWatchReturnValues(watch);
       final Project project = e.getProject();
@@ -662,7 +670,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           String t = PyLineBreakpointType.ID;
           final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
           if (document != null) {
-            for (XBreakpointType breakpointType : Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME)) {
+            for (XBreakpointType breakpointType : XBreakpointType.EXTENSION_POINT_NAME.getExtensionList()) {
               if (breakpointType instanceof PyBreakpointType &&
                   ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
                 t = breakpointType.getId();
@@ -901,7 +909,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final String logExpression = breakpoint.getLogExpressionObject() == null
                                    ? null
                                    : breakpoint.getLogExpressionObject().getExpression();
-      SuspendPolicy policy = breakpoint.getType().isSuspendThreadSupported()? breakpoint.getSuspendPolicy(): SuspendPolicy.NONE;
+      SuspendPolicy policy = breakpoint.getType().isSuspendThreadSupported() ? breakpoint.getSuspendPolicy() : SuspendPolicy.NONE;
       myDebugger.setBreakpoint(breakpoint.getType().getId(),
                                position.getFile(),
                                position.getLine(),
@@ -1240,6 +1248,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private interface DebuggerFactory {
-    @NotNull ProcessDebugger createDebugger(@NotNull PyDebugProcess process);
+    @NotNull
+    ProcessDebugger createDebugger(@NotNull PyDebugProcess process);
   }
 }

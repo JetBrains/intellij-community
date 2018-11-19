@@ -86,7 +86,7 @@ public class ActionHint {
    * @throws AssertionError if no action is found, but it should present, or if action is found, but it should not present.
    */
   @Nullable
-  public IntentionAction findAndCheck(Collection<IntentionAction> actions, Supplier<String> infoSupplier) {
+  public IntentionAction findAndCheck(Collection<? extends IntentionAction> actions, Supplier<String> infoSupplier) {
     IntentionAction result = actions.stream().filter(t -> {
       String text = t.getText();
       return myExactMatch ? text.equals(myExpectedText) : text.startsWith(myExpectedText);

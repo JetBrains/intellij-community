@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package com.jetbrains.python.testing
@@ -31,6 +17,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
@@ -45,11 +32,10 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.remote.PathMappingProvider
+import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
-import com.jetbrains.extensions.asPsiElement
-import com.jetbrains.extensions.asVirtualFile
-import com.jetbrains.extensions.getQName
-import com.jetbrains.extensions.isWellFormed
+import com.jetbrains.extensions.*
 import com.jetbrains.extenstions.ModuleBasedContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.getElementAndResolvableName
@@ -65,6 +51,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
+import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
@@ -172,18 +159,31 @@ fun getElementByUrl(url: String,
                          evalContext)
 }
 
+private fun Sdk.getMapping(project: Project) = (sdkAdditionalData as? RemoteSdkAdditionalData<*>)?.let { data ->
+  PathMappingProvider.getSuitableMappingProviders(data).flatMap { it.getPathMappingSettings(project, data).pathMappings }
+} ?: emptyList()
+
+private fun getFolderFromMatcher(matcher: Matcher, module: Module): String? {
+  if (!matcher.matches()) {
+    return null
+  }
+  val folder = matcher.group(1)
+  val sdk = module.getSdk()
+  if (sdk != null && PySdkUtil.isRemote(sdk)) {
+    return sdk.getMapping(module.project).find { it.canReplaceRemote(folder) }?.mapToLocal(folder)
+  }
+  else {
+    return folder
+  }
+}
+
 private fun getElementByUrl(protocol: String,
                             path: String,
                             module: Module,
                             evalContext: TypeEvalContext,
                             matcher: Matcher = PATH_URL.matcher(protocol),
                             metainfo: String? = null): Location<out PsiElement>? {
-  val folder = if (matcher.matches()) {
-    LocalFileSystem.getInstance().findFileByPath(matcher.group(1))
-  }
-  else {
-    null
-  }
+  val folder = getFolderFromMatcher(matcher, module)?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
   val qualifiedName = QualifiedName.fromDottedString(path)
   // Assume qname id good and resolve it directly
@@ -281,7 +281,7 @@ abstract class PyAbstractTestSettingsEditor(private val sharedForm: PyTestShared
 /**
  * Default target path (run all tests ion project folder)
  */
-private val DEFAULT_PATH = ""
+private const val DEFAULT_PATH = ""
 
 /**
  * Target depends on target type. It could be path to file/folder or python target
@@ -411,13 +411,18 @@ abstract class PyAbstractTestConfiguration(project: Project,
                                            private val runnerName: String)
   : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
     RefactoringListenerProvider {
+
+  /**
+   * Args after it passed to test runner itself
+   */
+  protected val rawArgumentsSeparator = "--"
+
   @DelegationProperty
   val target: ConfigurationTarget = ConfigurationTarget(DEFAULT_PATH, PyRunTargetVariant.PATH)
   @ConfigField
   var additionalArguments: String = ""
 
-  val testFrameworkName: String = configurationFactory.name!!
-
+  val testFrameworkName: String = configurationFactory.name
 
   /**
    * @see [RunnersThatRequireTestCaseClass]
@@ -515,7 +520,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
                                     locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
     val result = java.util.ArrayList<String>()
     // Set used to remove duplicate targets
-    locations.map { it.first }.distinctBy { it.psiElement }.map { getPythonTestSpecByLocation(it) }.filterNotNull().forEach {
+    locations.map { it.first }.distinctBy { it.psiElement }.map { getPythonTestSpecByLocation(it) }.forEach {
       result.addAll(it)
     }
     return result + generateRawArguments(true)
@@ -531,7 +536,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   private fun generateRawArguments(forRerun: Boolean = false): List<String> {
     val rawArguments = additionalArguments + " " + getCustomRawArgumentsString(forRerun)
     if (rawArguments.isNotBlank()) {
-      return listOf("--") + com.intellij.util.execution.ParametersListUtil.parse(rawArguments, false, true)
+      return listOf(rawArgumentsSeparator) + com.intellij.util.execution.ParametersListUtil.parse(rawArguments, false, true)
     }
     return emptyList()
   }
@@ -644,7 +649,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
 abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
   PythonTestConfigurationType.getInstance()) {
-  override abstract fun createTemplateConfiguration(project: Project): CONF_T
+  abstract override fun createTemplateConfiguration(project: Project): CONF_T
 }
 
 /**

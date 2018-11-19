@@ -392,10 +392,13 @@ public class Runner {
       File destDir = new File(dest);
       File backupDir = null;
 
+      String jarName = null;
       try {
         logger().info("Extracting patch files...");
         ui.startProcess("Extracting patch files...");
         for (int i = 0; i < patches.length; i++) {
+          jarName = new File(patches[i]).getName();
+          logger().info("Unpacking " + jarName);
           ui.setProgress(100 * i / patches.length);
           File patchFile = Utils.getTempFile("patch" + i);
           patchFiles.add(patchFile);
@@ -406,6 +409,7 @@ public class Runner {
           }
           ui.checkCancelled();
         }
+        jarName = null;
 
         if (backup) {
           backupDir = Utils.getTempFile("backup");
@@ -423,7 +427,7 @@ public class Runner {
       }
       catch (Throwable t) {
         logger().error("prepare failed", t);
-        String message = "An error occurred when preparing the patch:\n" +
+        String message = "An error occurred when " + (jarName != null ? "extracting " + jarName : "preparing the patch") + ":\n" +
                          t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
                          ui.bold("No files were changed. Please retry applying the patch.") + "\n\n" +
                          "More details in the log: " + logPath;

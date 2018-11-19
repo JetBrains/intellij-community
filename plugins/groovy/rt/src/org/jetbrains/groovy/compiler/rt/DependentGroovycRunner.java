@@ -37,6 +37,8 @@ import java.io.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -47,6 +49,7 @@ public class DependentGroovycRunner {
   public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
   private static final String STUB_DIR = "stubDir";
 
+  @SuppressWarnings("unused")
   public static boolean runGroovyc(boolean forStubs, String argsPath,
                                    @Nullable String configScript,
                                    @Nullable String targetBytecode, @Nullable Queue mailbox) {
@@ -191,8 +194,8 @@ public class DependentGroovycRunner {
     }
   }
 
-  private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages,
-                                         List<File> srcFiles, Map<String, File> class2File, String[] finalOutputs) {
+  private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List<? super CompilationUnitPatcher> patchers, List<? super CompilerMessage> compilerMessages,
+                                         List<? super File> srcFiles, Map<String, File> class2File, String[] finalOutputs) {
     String moduleClasspath = null;
 
     BufferedReader reader = null;
@@ -274,7 +277,7 @@ public class DependentGroovycRunner {
     return moduleClasspath;
   }
 
-  private static void addSources(boolean forStubs, List<File> srcFiles, final CompilationUnit unit) {
+  private static void addSources(boolean forStubs, List<? extends File> srcFiles, final CompilationUnit unit) {
     for (final File file : srcFiles) {
       if (forStubs && file.getName().endsWith(".java")) {
         continue;
@@ -284,7 +287,7 @@ public class DependentGroovycRunner {
     }
   }
 
-  private static void runPatchers(List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages, CompilationUnit unit, final AstAwareResourceLoader loader, List<File> srcFiles) {
+  private static void runPatchers(List<? extends CompilationUnitPatcher> patchers, List<? super CompilerMessage> compilerMessages, CompilationUnit unit, final AstAwareResourceLoader loader, List<File> srcFiles) {
     if (!patchers.isEmpty()) {
       for (CompilationUnitPatcher patcher : patchers) {
         try {
@@ -297,7 +300,7 @@ public class DependentGroovycRunner {
     }
   }
 
-  private static void reportCompiledItems(List<GroovyCompilerWrapper.OutputItem> compiledFiles) {
+  private static void reportCompiledItems(List<? extends GroovyCompilerWrapper.OutputItem> compiledFiles) {
     for (GroovyCompilerWrapper.OutputItem compiledFile : compiledFiles) {
       /*
       * output path
@@ -329,7 +332,7 @@ public class DependentGroovycRunner {
     System.out.println();
   }
 
-  private static void addExceptionInfo(List<CompilerMessage> compilerMessages, Throwable e, String message) {
+  private static void addExceptionInfo(List<? super CompilerMessage> compilerMessages, Throwable e, String message) {
     final StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
     compilerMessages.add(new CompilerMessage(GroovyCompilerMessageCategories.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
@@ -379,7 +382,11 @@ public class DependentGroovycRunner {
     return unit;
   }
 
-  private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader, final GroovyClassLoader transformLoader, final Queue mailbox, final GroovyCompilerWrapper wrapper) {
+  private static CompilationUnit createStubGenerator(final CompilerConfiguration config,
+                                                     final GroovyClassLoader classLoader,
+                                                     final GroovyClassLoader transformLoader,
+                                                     final Queue<Object> mailbox,
+                                                     final GroovyCompilerWrapper wrapper) {
     final JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
       private boolean annoRemovedAdded;
 
@@ -390,7 +397,11 @@ public class DependentGroovycRunner {
 
       @Override
       public void addPhaseOperation(PrimaryClassNodeOperation op, int phase) {
-        if (!annoRemovedAdded && mailbox == null && phase == Phases.CONVERSION && op.getClass().getName().startsWith("org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit$")) {
+        if (!annoRemovedAdded &&
+            mailbox == null &&
+            phase == Phases.CONVERSION &&
+            "true".equals(System.getProperty(GroovyRtConstants.GROOVYC_LEGACY_REMOVE_ANNOTATIONS)) &&
+            op.getClass().getName().startsWith("org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit$")) {
           annoRemovedAdded = true;
           super.addPhaseOperation(new PrimaryClassNodeOperation() {
             @Override
@@ -461,7 +472,7 @@ public class DependentGroovycRunner {
               System.out.flush();
               System.err.flush();
 
-              pauseAndWaitForJavac(mailbox);
+              pauseAndWaitForJavac((LinkedBlockingQueue<Object>)mailbox);
               wrapper.onContinuation();
             }
           }
@@ -472,20 +483,16 @@ public class DependentGroovycRunner {
     return unit;
   }
 
-  @SuppressWarnings("unchecked")
-  private static void pauseAndWaitForJavac(Queue mailbox) {
-    mailbox.offer(GroovyRtConstants.STUBS_GENERATED);
+  private static void pauseAndWaitForJavac(LinkedBlockingQueue<Object> mailbox) {
+    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<String>();
+    mailbox.offer(fromJps); // signal that stubs are generated
     while (true) {
       try {
-        //noinspection BusyWait
-        Thread.sleep(10);
-        Object response = mailbox.poll();
-        if (GroovyRtConstants.STUBS_GENERATED.equals(response)) {
-          mailbox.offer(response); // another thread hasn't received it => resend
-        } else if (GroovyRtConstants.BUILD_ABORTED.equals(response)) {
+        Object response = fromJps.poll(1, TimeUnit.MINUTES);
+        if (GroovyRtConstants.BUILD_ABORTED.equals(response)) {
           throw new RuntimeException(GroovyRtConstants.BUILD_ABORTED);
         } else if (GroovyRtConstants.JAVAC_COMPLETED.equals(response)) {
-          break; // stop waiting and continue compiling
+          return; // stop waiting and continue compiling
         } else if (response != null) {
           throw new RuntimeException("Unknown response: " + response);
         }

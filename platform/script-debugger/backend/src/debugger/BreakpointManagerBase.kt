@@ -60,7 +60,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
     return BreakpointManager.BreakpointCreated(breakpoint, promise)
   }
 
-  override final fun remove(breakpoint: Breakpoint): Promise<*> {
+  final override fun remove(breakpoint: Breakpoint): Promise<*> {
     @Suppress("UNCHECKED_CAST")
     val b = breakpoint as T
     val existed = breakpoints.remove(b)
@@ -70,7 +70,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
     return if (!existed || !b.isVmRegistered()) nullPromise() else doClearBreakpoint(b)
   }
 
-  override final fun removeAll(): Promise<*> {
+  final override fun removeAll(): Promise<*> {
     val list = breakpoints.toList()
     breakpoints.clear()
     breakpointDuplicationByTarget.clear()
@@ -85,7 +85,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
 
   protected abstract fun doClearBreakpoint(breakpoint: T): Promise<*>
 
-  override final fun addBreakpointListener(listener: BreakpointListener) {
+  final override fun addBreakpointListener(listener: BreakpointListener) {
     dispatcher.addListener(listener)
   }
 

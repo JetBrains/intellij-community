@@ -347,12 +347,12 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private class ArtifactRemoveHandler extends RemoveConfigurableHandler<Artifact> {
-    public ArtifactRemoveHandler() {
+    ArtifactRemoveHandler() {
       super(ArtifactConfigurableBase.class);
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Artifact> artifacts) {
+    public boolean remove(@NotNull Collection<? extends Artifact> artifacts) {
       for (Artifact artifact : artifacts) {
         myPackagingEditorContext.getOrCreateModifiableArtifactModel().removeArtifact(artifact);
         myContext.getDaemonAnalyzer().removeElement(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
@@ -365,7 +365,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     private final ArtifactType myType;
     private final ArtifactTemplate myArtifactTemplate;
 
-    public AddArtifactAction(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate, final @NotNull String actionText,
+    AddArtifactAction(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate, final @NotNull String actionText,
                              final Icon icon) {
       super(actionText, null, icon);
       myType = type;

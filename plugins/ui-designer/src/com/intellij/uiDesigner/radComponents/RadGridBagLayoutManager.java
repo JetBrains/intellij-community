@@ -460,7 +460,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {
-    public ComponentInsetsProperty() {
+    ComponentInsetsProperty() {
       super(null, "Insets");
     }
 
@@ -502,7 +502,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     private LabelPropertyRenderer<Double> myRenderer;
     private PropertyEditor<Double> myEditor;
 
-    public WeightProperty(final boolean isWeightX) {
+    WeightProperty(final boolean isWeightX) {
       super(null, isWeightX ? "Weight X" : "Weight Y");
       myIsWeightX = isWeightX;
     }
@@ -561,7 +561,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   private static class IPadProperty extends AbstractIntProperty<RadComponent> {
     private final boolean myIsIpadX;
 
-    public IPadProperty(final boolean isIpadX) {
+    IPadProperty(final boolean isIpadX) {
       super(null, isIpadX ? "Ipad X" : "Ipad Y", 0);
       myIsIpadX = isIpadX;
     }

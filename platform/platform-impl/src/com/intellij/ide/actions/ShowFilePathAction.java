@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
@@ -166,7 +167,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     });
   }
 
-  private static void show(@NotNull VirtualFile file, @NotNull Consumer<ListPopup> action) {
+  private static void show(@NotNull VirtualFile file, @NotNull Consumer<? super ListPopup> action) {
     if (!isSupported()) return;
 
     List<VirtualFile> files = new ArrayList<>();
@@ -199,7 +200,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     return url;
   }
 
-  private static ListPopup createPopup(List<VirtualFile> files, List<Icon> icons) {
+  private static ListPopup createPopup(List<? extends VirtualFile> files, List<Icon> icons) {
     BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<VirtualFile>(RevealFileAction.getActionName(), files, icons) {
       @NotNull
       @Override
@@ -324,7 +325,13 @@ public class ShowFilePathAction extends DumbAwareAction {
     PooledThreadExecutor.INSTANCE.submit(() -> {
       try {
         LOG.debug(cmd.toString());
-        ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+        new CapturingProcessHandler(cmd) {
+          @NotNull
+          @Override
+          protected BaseOutputReader.Options readerOptions() {
+            return BaseOutputReader.Options.forMostlySilentProcess();
+          }
+        }.runProcess().checkSuccess(LOG);
       }
       catch (Exception e) {
         LOG.warn(e);

@@ -75,7 +75,7 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
     final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     boolean isDefaultType = false;
     if (infos != null) {
-      final PsiType type = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
+      final PsiType type = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
       for (final ExpectedTypeInfo info : infos) {
         final PsiType infoType = TypeConversionUtil.erasure(info.getType().getDeepComponentType());
         final PsiType defaultType = TypeConversionUtil.erasure(info.getDefaultType().getDeepComponentType());

@@ -119,7 +119,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @NotNull
   private RangeHighlighterEx addRangeHighlighter(@NotNull RangeHighlighterImpl highlighter,
-                                                 @Nullable Consumer<RangeHighlighterEx> changeAttributesAction) {
+                                                 @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {

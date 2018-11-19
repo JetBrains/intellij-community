@@ -14,6 +14,7 @@ import java.util.Set;
 import static com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey;
 
 public final class ShortcutUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
+  public static final String GROUP_ID = getGroupName();
 
   private static String getGroupName() {
     if (SystemInfo.isMac) return "statistics.ui.shortcuts.on.mac";
@@ -32,6 +33,6 @@ public final class ShortcutUsagesCollector extends ApplicationUsagesCollector im
   @Override
   @NotNull
   public String getGroupId() {
-    return getGroupName();
+    return GROUP_ID;
   }
 }

@@ -21,10 +21,10 @@ import java.util.Set;
  */
 class SuperCalls {
   static Set<LookupElement> suggestQualifyingSuperCalls(PsiElement element,
-                                          PsiJavaReference javaReference,
-                                          ElementFilter elementFilter,
-                                          JavaCompletionProcessor.Options options,
-                                          Condition<String> nameCondition) {
+                                                        PsiJavaReference javaReference,
+                                                        ElementFilter elementFilter,
+                                                        JavaCompletionProcessor.Options options,
+                                                        Condition<? super String> nameCondition) {
     Set<LookupElement> set = ContainerUtil.newLinkedHashSet();
     for (final String className : getContainingClassNames(element)) {
       PsiReferenceExpression fakeSuper = JavaCompletionUtil.createReference(className + ".super.rulez", element);

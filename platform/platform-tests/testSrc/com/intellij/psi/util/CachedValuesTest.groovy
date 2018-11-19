@@ -34,10 +34,12 @@ class CachedValuesTest extends LightPlatformTestCase {
   void "test recreate cached value if outdated to avoid capturing invalid stuff"() {
     SimpleModificationTracker dependency = new SimpleModificationTracker()
     def log = []
-    Function<String, String> getCached = { arg -> CachedValuesManager.getManager(project).getCachedValue(holder, {
-      log << "capturing " + arg
-      return CachedValueProvider.Result.create('result', dependency)
-    }) }
+    Function<String, String> getCached = { arg ->
+      CachedValuesManager.getManager(project).getCachedValue(holder, {
+        log << "capturing " + arg
+        return CachedValueProvider.Result.create('result', dependency)
+      })
+    }
 
     assert 'result' == getCached.apply('foo')
 
@@ -49,15 +51,17 @@ class CachedValuesTest extends LightPlatformTestCase {
   void "test calculate value at most once per thread"() {
     AtomicInteger calcCount = new AtomicInteger()
     SimpleModificationTracker dependency = new SimpleModificationTracker()
-    Closure<String> getCached = { CachedValuesManager.getManager(project).getCachedValue(holder, {
-      calcCount.incrementAndGet()
-      TimeoutUtil.sleep(10)
-      return CachedValueProvider.Result.create('result', dependency)
-    }) }
+    Closure<String> getCached = {
+      CachedValuesManager.getManager(project).getCachedValue(holder, {
+        calcCount.incrementAndGet()
+        TimeoutUtil.sleep(10)
+        return CachedValueProvider.Result.create('result', dependency)
+      })
+    }
     assert 'result' == getCached()
     assert calcCount.getAndSet(0) == 1
 
-    for (int r=0; r<1000; r++) {
+    for (int r = 0; r < 1000; r++) {
 //      System.out.println("r = " + r)
 
       calcCount.set(0)
@@ -73,8 +77,6 @@ class CachedValuesTest extends LightPlatformTestCase {
       jobs.forEach { it.get() }
 
       assert calcCount.get() <= jobs.size()
-
     }
-
   }
 }

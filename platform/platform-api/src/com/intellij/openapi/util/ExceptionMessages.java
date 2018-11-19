@@ -73,7 +73,7 @@ public class ExceptionMessages {
       catch (NumberFormatException e) {
       }
     }
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(exceptionMessage);
     if(detailedMessage != null) {
       buf.append("\n");

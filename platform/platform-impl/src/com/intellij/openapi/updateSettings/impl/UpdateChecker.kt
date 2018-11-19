@@ -41,7 +41,6 @@ import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.collections.set
@@ -106,7 +105,7 @@ object UpdateChecker {
    */
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =
-    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, BuildNumber.currentVersion())
+    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, ApplicationInfo.getInstance().build)
 
   private fun doUpdateAndShowResult(project: Project?,
                                     fromSettings: Boolean,
@@ -223,9 +222,8 @@ object UpdateChecker {
 
     val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
 
-    val hosts = RepositoryHelper.getPluginHosts()
     val state = InstalledPluginsState.getInstance()
-    outer@ for (host in hosts) {
+    outer@ for (host in RepositoryHelper.getPluginHosts()) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
         val list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator)
@@ -244,12 +242,7 @@ object UpdateChecker {
       }
       catch (e: IOException) {
         LOG.debug(e)
-        if (host != null) {
-          LOG.info("failed to load plugin descriptions from " + host + ": " + e.message)
-        }
-        else {
-          throw e
-        }
+        LOG.info("failed to load plugin descriptions from ${host ?: "default repository"}: ${e.message}")
       }
     }
 
@@ -557,7 +550,7 @@ object UpdateChecker {
     }
     else {
       val updateInfo = UpdatesInfo(loadElement(updateInfoText))
-      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
+      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo)
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild

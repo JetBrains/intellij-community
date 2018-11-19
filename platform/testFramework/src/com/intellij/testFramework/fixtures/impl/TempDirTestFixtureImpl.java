@@ -141,7 +141,6 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
       }
     }
     finally {
-      //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
   }

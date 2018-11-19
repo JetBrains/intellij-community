@@ -154,7 +154,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
   getLineBreakpointVariants(@NotNull final Project project,
-                            @NotNull List<XLineBreakpointType> types,
+                            @NotNull List<? extends XLineBreakpointType> types,
                             @NotNull final XSourcePosition position) {
     List<Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>> promises = new SmartList<>();
     for (XLineBreakpointType type : types) {
@@ -184,7 +184,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @NotNull
   public static Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
-                                                                       @NotNull List<XLineBreakpointType> types,
+                                                                       @NotNull List<? extends XLineBreakpointType> types,
                                                                        @NotNull final XSourcePosition position,
                                                                        final boolean temporary,
                                                                        @Nullable final Editor editor,
@@ -260,7 +260,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             for (XLineBreakpointType.XLineBreakpointVariant variant : variants) {
               TextRange range = variant.getHighlightRange();
               if (range != null && range.contains(caretOffset)) {
-                //noinspection ConstantConditions
                 if (defaultVariant == null || defaultVariant.getHighlightRange().getLength() > range.getLength()) {
                   defaultVariant = variant;
                 }
@@ -328,7 +327,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   private static <P extends XBreakpointProperties> void insertBreakpoint(P properties,
-                                                                         AsyncPromise<XLineBreakpoint> res,
+                                                                         AsyncPromise<? super XLineBreakpoint> res,
                                                                          XBreakpointManager breakpointManager,
                                                                          VirtualFile file,
                                                                          int line,
@@ -345,11 +344,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       StringBuilder message = new StringBuilder(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
       if (!isEmptyExpression(breakpoint.getConditionExpression())) {
         message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition",
-                                               StringUtil.escapeXml(breakpoint.getConditionExpression().getExpression())));
+                                               StringUtil.escapeXmlEntities(breakpoint.getConditionExpression().getExpression())));
       }
       if (!isEmptyExpression(breakpoint.getLogExpressionObject())) {
         message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log",
-                                               StringUtil.escapeXml(breakpoint.getLogExpressionObject().getExpression())));
+                                               StringUtil.escapeXmlEntities(breakpoint.getLogExpressionObject().getExpression())));
       }
       if (Messages.showOkCancelDialog(message.toString(),
                                       XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),

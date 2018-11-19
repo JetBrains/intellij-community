@@ -26,7 +26,7 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
         object : LazySchemeProcessor<QuickList, QuickList>(QuickList.DISPLAY_NAME_TAG) {
           override fun createScheme(dataHolder: SchemeDataHolder<QuickList>,
                                     name: String,
-                                    attributeProvider: Function<String, String?>,
+                                    attributeProvider: Function<in String, String?>,
                                     isBundled: Boolean): QuickList {
             val item = QuickList()
             item.readExternal(dataHolder.read())

@@ -122,7 +122,7 @@ public class XLineBreakpointManager {
     if (file != null) {
       Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(file.getUrl());
       if (breakpoints != null) {
-        return breakpoints;
+        return new ArrayList<>(breakpoints);
       }
     }
     return Collections.emptyList();
@@ -213,7 +213,7 @@ public class XLineBreakpointManager {
 
   private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
-    public void mouseDragged(EditorMouseEvent e) {
+    public void mouseDragged(@NotNull EditorMouseEvent e) {
       myDragDetected = true;
     }
   }
@@ -295,7 +295,7 @@ public class XLineBreakpointManager {
 
   private class MyDependentBreakpointListener implements XDependentBreakpointListener {
     @Override
-    public void dependencySet(final XBreakpoint<?> slave, final XBreakpoint<?> master) {
+    public void dependencySet(@NotNull final XBreakpoint<?> slave, @NotNull final XBreakpoint<?> master) {
       queueBreakpointUpdate(slave);
     }
 

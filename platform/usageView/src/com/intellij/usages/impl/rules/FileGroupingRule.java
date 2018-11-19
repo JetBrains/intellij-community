@@ -58,7 +58,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     return null;
   }
 
-  protected static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
+  public static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
     private final Project myProject;
     private final VirtualFile myFile;
     private String myPresentableName;
@@ -143,7 +143,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
       if (key == CommonDataKeys.VIRTUAL_FILE) {
         sink.put(CommonDataKeys.VIRTUAL_FILE, myFile);

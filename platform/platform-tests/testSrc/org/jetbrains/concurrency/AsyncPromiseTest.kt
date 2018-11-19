@@ -11,7 +11,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class AsyncPromiseTest {
@@ -105,12 +104,7 @@ class AsyncPromiseTest {
   @Test
   fun blockingGet2() {
     val promise = AsyncPromise<String>()
-    assertConcurrent(
-        { assertThatThrownBy { promise.blockingGet(100) }.isInstanceOf(TimeoutException::class.java) },
-        {
-          Thread.sleep(1000)
-          promise.setResult("test")
-        })
+    assertThatThrownBy { promise.blockingGet(10) }.isInstanceOf(TimeoutException::class.java)
   }
 
   private fun doHandlerTest(reject: Boolean) {
@@ -127,7 +121,7 @@ class AsyncPromiseTest {
     }
 
     val numThreads = 30
-    assertConcurrent(*Array(numThreads, { r }))
+    assertConcurrent(*Array(numThreads) { r })
 
     if (reject) {
       promise.setError("test")
@@ -151,14 +145,27 @@ class AsyncPromiseTest {
   fun collectResultsMustReturnArrayWithTheSameOrder() {
     val promise0 = AsyncPromise<String>()
     val promise1 = AsyncPromise<String>()
-    val f0 = JobScheduler.getScheduler().schedule({ promise0.setResult("0") }, 10, TimeUnit.SECONDS)
-    val f1 = JobScheduler.getScheduler().schedule({ promise1.setResult("1") }, 1, TimeUnit.SECONDS)
-    val list = Arrays.asList(promise0, promise1)
+    val f0 = JobScheduler.getScheduler().schedule({ promise0.setResult("0") }, 1, TimeUnit.SECONDS)
+    val f1 = JobScheduler.getScheduler().schedule({ promise1.setResult("1") }, 1, TimeUnit.MILLISECONDS)
+    val list = listOf(promise0, promise1)
     val results = list.collectResults()
     val l = results.blockingGet(1, TimeUnit.MINUTES)
-    assertEquals(listOf("0", "1"), l)
-    f0.get();
-    f1.get();
+    assertThat(l).containsExactly("0", "1")
+    f0.get()
+    f1.get()
   }
 
+  @Test
+  fun `collectResultsMustReturnArrayWithTheSameOrder - ignore errors`() {
+    val promiseList = listOf<AsyncPromise<String>>(AsyncPromise(), AsyncPromise(), AsyncPromise())
+    val toExecute = listOf(
+      JobScheduler.getScheduler().schedule({ promiseList[0].setResult("0") }, 5, TimeUnit.MILLISECONDS),
+      JobScheduler.getScheduler().schedule({ promiseList[1].setError("boo") }, 1, TimeUnit.MILLISECONDS),
+      JobScheduler.getScheduler().schedule({ promiseList[2].setResult("1") }, 2, TimeUnit.MILLISECONDS)
+    )
+    val results = promiseList.collectResults(ignoreErrors = true)
+    val l = results.blockingGet(15, TimeUnit.SECONDS)
+    assertThat(l).containsExactly("0", "1")
+    toExecute.forEach { it.get() }
+  }
 }

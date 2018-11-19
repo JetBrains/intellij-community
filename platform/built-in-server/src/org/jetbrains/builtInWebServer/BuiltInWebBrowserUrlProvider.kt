@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.ide.browsers.OpenInBrowserRequest
@@ -24,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -38,8 +23,7 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
 
     // we must use base language because we serve file - not part of file, but the whole file
     // handlebars, for example, contains HTML and HBS psi trees, so, regardless of context, we should not handle such file
-    val viewProvider = request.file.viewProvider
-    return viewProvider.isPhysical && request.virtualFile !is LightVirtualFile && isFileOfMyLanguage(request.file)
+    return request.isPhysicalFile() && isFileOfMyLanguage(request.file)
   }
 
   protected open fun isFileOfMyLanguage(psiFile: PsiFile): Boolean = WebBrowserService.isHtmlOrXmlFile(psiFile)
@@ -56,15 +40,18 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
 
 @JvmOverloads
 fun getBuiltInServerUrls(file: VirtualFile,
-                                       project: Project,
-                                       currentAuthority: String?,
-                                       appendAccessToken: Boolean = true): List<Url> {
+                         project: Project,
+                         currentAuthority: String?,
+                         appendAccessToken: Boolean = true): List<Url> {
   if (currentAuthority != null && !compareAuthority(currentAuthority)) {
     return emptyList()
   }
 
   val info = WebServerPathToFileManager.getInstance(project).getPathInfo(file) ?: return emptyList()
+  return getBuiltInServerUrls(info, project, currentAuthority, appendAccessToken)
+}
 
+fun getBuiltInServerUrls(info: PathInfo, project: Project, currentAuthority: String? = null, appendAccessToken: Boolean = true): SmartList<Url> {
   val effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
   val path = info.path
 

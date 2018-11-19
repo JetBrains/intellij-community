@@ -16,7 +16,7 @@ public interface GitNativeSshAskPassXmlRpcHandler {
   String HANDLER_NAME = GitNativeSshAskPassXmlRpcHandler.class.getName();
 
   /**
-   * Get the passphrase for requested key
+   * Get the answer for interactive input request from ssh
    *
    * @param token       XML RPC token
    * @param description key description specified by ssh, or empty string if description is not available
@@ -24,5 +24,5 @@ public interface GitNativeSshAskPassXmlRpcHandler {
   // UnusedDeclaration suppressed: the method is used via XML RPC
   @SuppressWarnings("unused")
   @Nullable
-  String askPassphrase(String token, @NotNull String description);
+  String handleInput(String token, @NotNull String description);
 }

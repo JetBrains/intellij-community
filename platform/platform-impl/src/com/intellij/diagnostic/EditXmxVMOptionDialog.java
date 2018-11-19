@@ -99,7 +99,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
   }
 
   private class SaveAction extends AbstractAction {
-    public SaveAction(String actionName) {
+    SaveAction(String actionName) {
       super(actionName);
     }
 

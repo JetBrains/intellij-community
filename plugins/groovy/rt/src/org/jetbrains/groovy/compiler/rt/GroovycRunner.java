@@ -17,7 +17,6 @@ package org.jetbrains.groovy.compiler.rt;
 
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.URLClassPath;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -103,27 +102,13 @@ public class GroovycRunner {
 
   @Nullable
   private static ClassLoader buildMainLoader(String argsPath) {
-    Set<URL> bootstrapUrls = new HashSet<URL>();
-    try {
-      Method method = ClassLoader.class.getDeclaredMethod("getBootstrapClassPath");
-      method.setAccessible(true);
-      URLClassPath ucp = (URLClassPath)method.invoke(null);
-      Collections.addAll(bootstrapUrls, ucp.getURLs());
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-
     final List<URL> urls = new ArrayList<URL>();
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
       BufferedReader reader = new BufferedReader(new FileReader(argsPath));
       String classpath = reader.readLine();
       for (String s : classpath.split(File.pathSeparator)) {
-        URL url = new File(s).toURI().toURL();
-        if (!bootstrapUrls.contains(url)) {
-          urls.add(url);
-        }
+        urls.add(new File(s).toURI().toURL());
       }
       reader.close();
     }
@@ -135,7 +120,7 @@ public class GroovycRunner {
     final ClassLoader[] ref = new ClassLoader[1];
     new Runnable() {
       public void run() {
-        ref[0] = UrlClassLoader.build().urls(urls).useCache().get();
+        ref[0] = UrlClassLoader.build().urls(urls).useCache().allowLock().get();
       }
     }.run();
     return ref[0];

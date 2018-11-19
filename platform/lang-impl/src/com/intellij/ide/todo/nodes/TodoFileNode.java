@@ -6,13 +6,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
-import com.intellij.ide.todo.*;
+import com.intellij.ide.todo.SmartTodoItemPointer;
+import com.intellij.ide.todo.SmartTodoItemPointerComparator;
+import com.intellij.ide.todo.TodoFilter;
+import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -20,31 +21,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.search.TodoItemImpl;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.ui.HighlightedRegion;
-import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public final class TodoFileNode extends PsiFileNode implements HighlightedRegionProvider{
+public final class TodoFileNode extends PsiFileNode {
   private final TodoTreeBuilder myBuilder;
-  private final ArrayList<HighlightedRegion> myHighlightedRegions;
   private final boolean mySingleFileMode;
 
   public TodoFileNode(Project project,
-                      PsiFile file,
+                      @NotNull PsiFile file,
                       TodoTreeBuilder treeBuilder,
                       boolean singleFileMode){
     super(project,file,ViewSettings.DEFAULT);
     myBuilder=treeBuilder;
-    myHighlightedRegions= new ArrayList<>(2);
     mySingleFileMode=singleFileMode;
-  }
-
-  @Override
-  public ArrayList<HighlightedRegion> getHighlightedRegions(){
-    return myHighlightedRegions;
   }
 
   @Override
@@ -146,7 +138,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     super.updateImpl(data);
     String newName;
     if(myBuilder.getTodoTreeStructure().isPackagesShown()){
@@ -155,7 +147,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
       newName=mySingleFileMode ? getValue().getName() : getValue().getVirtualFile().getPresentableUrl();
     }
 
-    int nameEndOffset=newName.length();
+    data.setPresentableText(newName);
     int todoItemCount;
     try {
       todoItemCount = myBuilder.getTodoTreeStructure().getTodoItemCount(getValue());
@@ -163,27 +155,9 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     catch (IndexNotReadyException e) {
       return;
     }
-    if(mySingleFileMode){
-      if(todoItemCount==0){
-        newName = IdeBundle.message("node.todo.no.items.found", newName);
-      } else {
-        newName = IdeBundle.message("node.todo.found.items", newName, todoItemCount);
-      }
-    }else{
-      newName = IdeBundle.message("node.todo.items", newName, todoItemCount);
+    if (todoItemCount > 0) {
+      data.setLocationString(IdeBundle.message("node.todo.items", todoItemCount));
     }
-
-    myHighlightedRegions.clear();
-
-    TextAttributes textAttributes=new TextAttributes();
-    textAttributes.setForegroundColor(myColor);
-    myHighlightedRegions.add(new HighlightedRegion(0,nameEndOffset,textAttributes));
-
-    EditorColorsScheme colorsScheme=UsageTreeColorsScheme.getInstance().getScheme();
-    myHighlightedRegions.add(
-      new HighlightedRegion(nameEndOffset,newName.length(),colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES))
-    );
-
   }
 
   @Override

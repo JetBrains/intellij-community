@@ -21,7 +21,7 @@ public abstract class AtomicClearableLazyValue<T> extends ClearableLazyValue<T> 
 
   /** @noinspection MethodOverridesStaticMethodOfSuperclass*/
   @NotNull
-  public static <T> AtomicClearableLazyValue<T> create(final Computable<T> computable) {
+  public static <T> AtomicClearableLazyValue<T> create(final Computable<? extends T> computable) {
     return new AtomicClearableLazyValue<T>() {
       @NotNull
       @Override

@@ -16,11 +16,13 @@
 
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
  * @author Gregory.Shrago
  */
 public interface ModificationTrackerListener<T> extends EventListener {
-  void modificationCountChanged(T source);
+  void modificationCountChanged(@NotNull T source);
 }

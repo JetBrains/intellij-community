@@ -18,6 +18,10 @@ package com.intellij.remote.ext;
 import com.intellij.remote.PathMappingProvider;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Extends PathMappingsProvider with presentation info.
+ * It will be used in UI to show path mappings in groups with provider description.
+ */
 public abstract class PathMappingProviderEx extends PathMappingProvider {
 
   @NotNull

@@ -69,7 +69,7 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
   @Override
   protected JComponent createNorthPanel() {
     class MyTextField extends JTextField {
-      public MyTextField() {
+      MyTextField() {
         super("");
         addFocusListener(new FocusAdapter() {
           @Override

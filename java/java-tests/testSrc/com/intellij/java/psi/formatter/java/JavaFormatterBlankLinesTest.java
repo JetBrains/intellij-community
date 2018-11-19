@@ -19,7 +19,6 @@ package com.intellij.java.psi.formatter.java;
  * Is intended to hold specific java formatting tests for 'blank lines' settings.
  *
  * @author Denis Zhdanov
- * @since Apr 27, 2010 6:33:00 PM
  */
 public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
 
@@ -499,6 +498,38 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       " *\n" +
       " */\n" +
       "enum Enum {A, B, C}"
+    );
+  }
+
+  public void testLinesBetweenPackageAndHeader() {
+    getSettings().KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 0;
+    doTextTest(
+      "/*\n" +
+      " * This is a sample file.\n" +
+      " */\n" +
+      "\n" +
+      "\n" +
+      "package com.intellij.samples;",
+      "/*\n" +
+      " * This is a sample file.\n" +
+      " */\n" +
+      "package com.intellij.samples;"
+    );
+  }
+
+  public void testLinesBetweenPackageAndHeader2() {
+    getSettings().KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 2;
+    getSettings().BLANK_LINES_BEFORE_PACKAGE = 1;
+    doTextTest(
+      "/*\n" +
+      " * This is a sample file.\n" +
+      " */\n" +
+      "package com.intellij.samples;",
+      "/*\n" +
+      " * This is a sample file.\n" +
+      " */\n" +
+      "\n" +
+      "package com.intellij.samples;"
     );
   }
 }

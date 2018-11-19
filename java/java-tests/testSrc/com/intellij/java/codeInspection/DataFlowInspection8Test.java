@@ -20,12 +20,8 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,17 +29,11 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
-  static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_8_ANNOTATED;
   }
 
   @Override
@@ -63,6 +53,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testMethodReferenceConstantValue() { doTestWithCustomAnnotations(); }
 
   public void testOptionalOfNullable() { doTest(); }
+  public void testPrimitiveOptional() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
   public void testOptionalIsPresent() {
     myFixture.addClass("package org.junit;" +
@@ -251,4 +242,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupAmbiguousAnnotations("foo", myFixture);
     doTest();
   }
+  public void testObjectsEquals() { doTest(); }
+  public void testFlatMapSideEffect() { doTest(); }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.aliasImport;
 
 import com.intellij.codeInsight.template.Template;
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -142,7 +141,7 @@ public class GrAliasImportIntention extends Intention {
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, built, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         final GrImportStatement importStatement = ReadAction
           .compute(() -> PsiTreeUtil.findElementOfClassAtOffset(file, range.getStartOffset(), GrImportStatement.class, true));
 
@@ -256,8 +255,7 @@ public class GrAliasImportIntention extends Intention {
   public static LinkedHashSet<String> getSuggestedNames(PsiElement psiElement, final PsiElement nameSuggestionContext) {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     result.add(UsageViewUtil.getShortName(psiElement));
-    final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
-    for (NameSuggestionProvider provider : providers) {
+    for (NameSuggestionProvider provider : NameSuggestionProvider.EP_NAME.getExtensionList()) {
       SuggestedNameInfo info = provider.getSuggestedNames(psiElement, nameSuggestionContext, result);
       if (info != null) {
         if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) {

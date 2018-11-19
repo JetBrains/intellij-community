@@ -36,16 +36,23 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.packageDependencies.ChangeListsScopesProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
@@ -94,18 +101,28 @@ public class FindInProjectUtil {
     Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     if (module != null) {
       model.setModuleName(module.getName());
-    }
-
-    // model contains previous find in path settings
-    // apply explicit settings from context
-    if (module != null) {
-      model.setModuleName(module.getName());
+      model.setDirectoryName(null);
+      model.setCustomScope(false);
     }
 
     if (model.getModuleName() == null || editor == null) {
       if (directoryName != null) {
         model.setDirectoryName(directoryName);
         model.setCustomScope(false); // to select "Directory: " radio button
+      }
+    }
+
+    if (directoryName == null && module == null && project != null) {
+      ChangeList changeList = ArrayUtil.getFirstElement(dataContext.getData(VcsDataKeys.CHANGE_LISTS));
+      if (changeList == null) {
+        Change change = ArrayUtil.getFirstElement(dataContext.getData(VcsDataKeys.CHANGES));
+        changeList = change == null ? null : ChangeListManager.getInstance(project).getChangeList(change);
+      }
+      NamedScope namedScope = changeList == null ? null : ChangeListsScopesProvider.getInstance(project).getCustomScope(changeList.getName());
+      if (namedScope != null) {
+        model.setCustomScope(true);
+        model.setCustomScopeName(namedScope.getName());
+        model.setCustomScope(GlobalSearchScopesCore.filterScope(project, namedScope));
       }
     }
 
@@ -193,14 +210,14 @@ public class FindInProjectUtil {
   public static void findUsages(@NotNull FindModel findModel,
                                 @Nullable final PsiDirectory psiDirectory,
                                 @NotNull final Project project,
-                                @NotNull final Processor<UsageInfo> consumer,
+                                @NotNull final Processor<? super UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
     findUsages(findModel, project, consumer, processPresentation);
   }
 
   public static void findUsages(@NotNull FindModel findModel,
                                 @NotNull final Project project,
-                                @NotNull final Processor<UsageInfo> consumer,
+                                @NotNull final Processor<? super UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
     findUsages(findModel, project, processPresentation, Collections.emptySet(), consumer);
   }
@@ -208,7 +225,7 @@ public class FindInProjectUtil {
   public static void findUsages(@NotNull FindModel findModel,
                                 @NotNull final Project project,
                                 @NotNull FindUsagesProcessPresentation processPresentation,
-                                @NotNull Set<VirtualFile> filesToStart,
+                                @NotNull Set<? extends VirtualFile> filesToStart,
                                 @NotNull final Processor<? super UsageInfo> consumer) {
     new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
   }
@@ -510,7 +527,7 @@ public class FindInProjectUtil {
 
     @Override
     public void showSettings() {
-      Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       FindInProjectManager findInProjectManager = FindInProjectManager.getInstance(myProject);
       findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component), myFindModel);
@@ -522,7 +539,7 @@ public class FindInProjectUtil {
     }
 
     @Override
-    public void calcData(DataKey key, DataSink sink) {
+    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
       if (UsageView.USAGE_SCOPE.equals(key)) {
         SearchScope scope = getScopeFromModel(myProject, myFindModel);
         sink.put(UsageView.USAGE_SCOPE, scope);

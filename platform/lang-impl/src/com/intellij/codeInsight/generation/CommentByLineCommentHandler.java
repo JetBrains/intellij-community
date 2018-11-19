@@ -651,7 +651,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       if (endOffset == offset && block.startLine != block.endLine) return true;
       final int textLength = document.getTextLength();
       final CharSequence chars = document.getCharsSequence();
-      offset = CharArrayUtil.shiftForward(chars, offset, " \t");
       if (endOffset == textLength) {
         final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t") + 1;
         if (shifted < textLength) endOffset = shifted;

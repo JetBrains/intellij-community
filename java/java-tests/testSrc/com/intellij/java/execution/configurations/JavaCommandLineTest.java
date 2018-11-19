@@ -28,8 +28,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class JavaCommandLineTest extends BareTestFixtureTestCase {
   @Test
   public void testJdkMissing() {

@@ -347,7 +347,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     Set<String> alreadyCollected = new HashSet<>(usedVars.first);
     usedVars.second.stream().map(TextWithImports::getText).forEach(alreadyCollected::add);
     Set<TextWithImports> extra = new HashSet<>();
-    for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensions()) {
+    for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensionList()) {
       if (provider.isAvailable(sourcePosition, evalContext)) {
         extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
       }
@@ -370,7 +370,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     private final String myMessage;
     private final Icon myIcon;
 
-    public DummyMessageValueNode(String message, Icon icon) {
+    DummyMessageValueNode(String message, Icon icon) {
       super("");
       myMessage = message;
       myIcon = icon;
@@ -432,7 +432,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     private final Set<String> myVars = new HashSet<>();
     private final boolean myCollectExpressions = XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions();
 
-    public VariablesCollector(Set<String> visibleLocals, TextRange lineRange) {
+    VariablesCollector(Set<String> visibleLocals, TextRange lineRange) {
       myVisibleLocals = visibleLocals;
       myLineRange = lineRange;
     }
@@ -639,7 +639,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
           }
         }
 
-        //noinspection unchecked
         if (element instanceof PsiCompiledElement) {
           return Pair.create(visibleVars, Collections.emptySet());
         }

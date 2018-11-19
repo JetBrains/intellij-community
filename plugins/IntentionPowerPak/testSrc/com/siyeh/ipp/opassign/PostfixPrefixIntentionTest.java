@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.opassign;
 
-import com.siyeh.IntentionPowerPackBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 /**
@@ -23,13 +23,13 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class PostfixPrefixIntentionTest extends IPPTestCase {
   public void testSimple() { doTest(); }
-  public void testPrefixExpression() { doTest(IntentionPowerPackBundle.message("postfix.prefix.intention.name", "i++")); }
+  public void testPrefixExpression() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "i++")); }
   public void testIncomplete() { assertIntentionNotAvailable(); }
   public void testUnaryExpression() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("postfix.prefix.intention.name", "++i");
+    return CommonQuickFixBundle.message("fix.replace.with.x", "++i");
   }
 
   @Override

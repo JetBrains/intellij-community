@@ -20,7 +20,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.CascadeController;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
+import com.intellij.vcs.log.graph.utils.GraphUtilKt;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public class BranchFilterController extends CascadeController {
                                 @NotNull PermanentGraphInfo<?> permanentGraphInfo,
                                 @Nullable Set<Integer> idsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
-    myVisibility = ReachableNodes.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), idsOfVisibleBranches);
+    myVisibility = GraphUtilKt.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), idsOfVisibleBranches);
     myCollapsedGraph = update();
   }
 

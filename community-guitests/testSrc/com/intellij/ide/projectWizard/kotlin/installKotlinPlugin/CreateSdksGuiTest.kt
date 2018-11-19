@@ -9,17 +9,19 @@ import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.util.logUIStep
 import org.fest.swing.exception.ComponentLookupException
+import org.junit.Ignore
 import org.junit.Test
 
 class CreateSdksGuiTest : KotlinGuiTestCase() {
   val dialogName = "Project Structure for New Projects"
   @Test
+  @Ignore
   fun createJdk(){
     logTestStep("Create a JDK on the path `${KotlinTestProperties.jdk_path}`")
     welcomeFrame {
       actionLink("Configure").click()
-      popupMenu("Project Defaults").clickSearchedItem()
-      popupMenu("Project Structure").clickSearchedItem()
+      // starting from 191
+      popupMenu("Structure for New Projects").clickSearchedItem()
       logUIStep("Open `$dialogName` dialog")
       dialog(dialogName) {
         jList("SDKs").clickItem("SDKs")
@@ -44,8 +46,8 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
     logTestStep("Create a Kotlin SDK")
     welcomeFrame {
       actionLink("Configure").click()
-      popupMenu("Project Defaults").clickSearchedItem()
-      popupMenu("Project Structure").clickSearchedItem()
+      // starting from 191
+      popupMenu("Structure for New Projects").clickSearchedItem()
       logUIStep("Open `$dialogName` dialog")
       dialog(dialogName) {
         jList("SDKs").clickItem("SDKs")

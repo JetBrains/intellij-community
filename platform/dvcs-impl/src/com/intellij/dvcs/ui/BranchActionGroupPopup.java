@@ -39,6 +39,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.icons.AllIcons.General.CollapseComponent;
@@ -72,7 +73,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull Condition<AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey) {
-    super(title, new DefaultActionGroup(actions, createBranchSpeedSearchActionGroup(actions)), SimpleDataContext.getProjectContext(project),
+    super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.getProjectContext(project),
           preselectActionCondition, true);
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
@@ -104,7 +105,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
 
-    mySettingsButton = new MyToolbarButton("Settings", AllIcons.General.Gear, null, e -> {
+    mySettingsButton = new MyToolbarButton("Settings", AllIcons.General.GearPlain, null, e -> {
       final ActionPopupMenu popupMenu =
         ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(BRANCH_POPUP, new DefaultActionGroup(mySettingsActions));
       popupMenu.getComponent().show(mySettingsButton, 0, assertNotNull(mySettingsButton).getHeight());
@@ -147,7 +148,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     popupWindow.addComponentListener(windowListener);
     addPopupListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         popupWindow.removeComponentListener(windowListener);
         if (dimensionKey != null && myUserSizeChanged) {
           WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, myPrevSize);
@@ -211,8 +212,11 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   @NotNull
-  private static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
-    return new DefaultActionGroup(null, createSpeedSearchActions(actionGroup, true), false);
+  private static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actions) {
+    LightActionGroup group = new LightActionGroup();
+    group.add(actions);
+    group.addAll(createSpeedSearchActions(actions, true));
+    return group;
   }
 
   @Override
@@ -232,20 +236,27 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private static List<AnAction> createSpeedSearchActions(@NotNull ActionGroup parentActionGroup, boolean isFirstLevel) {
+    if (parentActionGroup instanceof HideableActionGroup) {
+      parentActionGroup = ((HideableActionGroup)parentActionGroup).getDelegate();
+    }
+
+    if (parentActionGroup instanceof BranchActionGroup) return Collections.emptyList();
+
     // add per repository branches into the model as Speed Search elements and show them only if regular items were not found by mask;
-    @NotNull List<AnAction> speedSearchActions = ContainerUtil.newArrayList();
+    List<AnAction> speedSearchActions = ContainerUtil.newArrayList();
     if (!isFirstLevel) speedSearchActions.add(new Separator(parentActionGroup.getTemplatePresentation().getText()));
     for (AnAction child : parentActionGroup.getChildren(null)) {
       if (child instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)child;
+        if (childGroup instanceof HideableActionGroup) {
+          childGroup = ((HideableActionGroup)childGroup).getDelegate();
+        }
+
         if (isFirstLevel) {
           speedSearchActions.addAll(createSpeedSearchActions(childGroup, false));
         }
         else if (childGroup instanceof BranchActionGroup) {
           speedSearchActions.add(createSpeedSearchActionGroupWrapper(childGroup));
-        }
-        else if (childGroup instanceof HideableActionGroup) {
-          speedSearchActions.add(createSpeedSearchActionGroupWrapper(((HideableActionGroup)childGroup).getDelegate()));
         }
       }
     }
@@ -332,7 +343,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static class MyPopupListElementRenderer extends PopupListElementRendererWithIcon {
     private ErrorLabel myInfoLabel;
 
-    public MyPopupListElementRenderer(ListPopupImpl aPopup) {
+    MyPopupListElementRenderer(ListPopupImpl aPopup) {
       super(aPopup);
     }
 
@@ -409,7 +420,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private static class MyTextSeparator extends SeparatorWithText {
 
-    public MyTextSeparator() {
+    MyTextSeparator() {
       super();
       setTextForeground(JBColor.BLACK);
       setCaptionCentered(false);
@@ -433,7 +444,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     @NotNull private final String myToCollapseText;
     @NotNull private final String myToExpandText;
 
-    public MoreAction(@NotNull Project project,
+    MoreAction(@NotNull Project project,
                       int numberOfHiddenNodes,
                       @Nullable String settingName,
                       boolean defaultExpandValue,
@@ -501,13 +512,13 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
-                                                @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
+                                                @NotNull LightActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
                                                 int maxIndex, @Nullable String settingName) {
     wrapWithMoreActionIfNeeded(project, parentGroup, actionList, maxIndex, settingName, false);
   }
 
   public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
-                                                @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
+                                                @NotNull LightActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
                                                 int maxIndex, @Nullable String settingName, boolean defaultExpandValue) {
     if (actionList.size() > maxIndex) {
       boolean hasFavorites =
@@ -539,7 +550,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       setUI(new BasicButtonUI());
     }
 
-    public MyToolbarButton(@Nullable String text,
+    MyToolbarButton(@Nullable String text,
                            @Nullable Icon icon,
                            @Nullable Icon rolloverIcon,
                            @NotNull ActionListener buttonListener) {
@@ -547,7 +558,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       addActionListener(buttonListener);
     }
 
-    public MyToolbarButton(AnAction action) {
+    MyToolbarButton(AnAction action) {
       this(action.getTemplatePresentation().getText(), action.getTemplatePresentation().getIcon(),
            action.getTemplatePresentation().getHoveredIcon());
       addActionListener(ActionUtil.createActionListener(action, this, BRANCH_POPUP));

@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class SelectAllComponentsAction extends AbstractGuiEditorAction {
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     final ComponentTreeBuilder builder = DesignerToolWindowManager.getInstance(editor).getComponentTreeBuilder();
     builder.beginUpdateSelection();
     try {

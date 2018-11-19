@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 1/21/11 4:06 PM
  */
 public class AdditionalPageAtBottomEditorCustomization extends SimpleEditorCustomization {
 

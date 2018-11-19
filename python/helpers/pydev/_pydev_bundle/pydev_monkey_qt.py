@@ -181,8 +181,8 @@ def _internal_patch_qt(QtCore, qt_support_mode='auto'):
 
     class RunnableWrapper(QtCore.QRunnable):  # Wrapper for QRunnable
 
-        def __init__(self, *args, **kwargs):
-            _original_runnable_init(self, *args, **kwargs)
+        def __init__(self, *args):
+            _original_runnable_init(self, *args)
 
             self._original_run = self.run
             self.run = self._new_run

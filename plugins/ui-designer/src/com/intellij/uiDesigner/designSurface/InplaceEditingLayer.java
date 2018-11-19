@@ -319,7 +319,7 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     @Override
-    public void selectedComponentChanged(final GuiEditor source) {
+    public void selectedComponentChanged(@NotNull final GuiEditor source) {
       finishInplaceEditing();
     }
   }
@@ -348,17 +348,17 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private final class MyPropertyEditorListener implements PropertyEditorListener {
     @Override
-    public void valueCommitted(final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError) {
+    public void valueCommitted(@NotNull final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError) {
       finishInplaceEditing();
     }
 
     @Override
-    public void editingCanceled(final PropertyEditor source) {
+    public void editingCanceled(@NotNull final PropertyEditor source) {
       cancelInplaceEditing();
     }
 
     @Override
-    public void preferredSizeChanged(final PropertyEditor source) {
+    public void preferredSizeChanged(@NotNull final PropertyEditor source) {
       adjustEditorComponentSize();
     }
   }

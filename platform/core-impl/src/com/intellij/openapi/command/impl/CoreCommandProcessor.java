@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.Nls;
@@ -67,7 +68,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
     messageBus.connect().subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
-      public void commandStarted(CommandEvent event) {
+      public void commandStarted(@NotNull CommandEvent event) {
         for (CommandListener listener : myListeners) {
           try {
             listener.commandStarted(event);
@@ -79,7 +80,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       }
 
       @Override
-      public void beforeCommandFinished(CommandEvent event) {
+      public void beforeCommandFinished(@NotNull CommandEvent event) {
         for (CommandListener listener : myListeners) {
           try {
             listener.beforeCommandFinished(event);
@@ -91,7 +92,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       }
 
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         for (CommandListener listener : myListeners) {
           try {
             listener.commandFinished(event);
@@ -384,6 +385,18 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   @Override
   public boolean isUndoTransparentActionInProgress() {
     return myUndoTransparentCount > 0;
+  }
+
+  @Override
+  public void markCurrentCommandAsGlobal(@Nullable Project project) {
+  }
+
+  @Override
+  public void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs) {
+  }
+
+  @Override
+  public void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files) {
   }
 
   private void fireCommandStarted() {

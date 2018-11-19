@@ -107,7 +107,7 @@ public class UpdateHighlightersUtil {
                                              @NotNull Document document,
                                              int startOffset,
                                              int endOffset,
-                                             @NotNull Collection<HighlightInfo> highlights,
+                                             @NotNull Collection<? extends HighlightInfo> highlights,
                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                              int group) {
     TextRange range = new TextRange(startOffset, endOffset);
@@ -127,7 +127,7 @@ public class UpdateHighlightersUtil {
   static void setHighlightersOutsideRange(@NotNull final Project project,
                                           @NotNull final Document document,
                                           @NotNull final PsiFile psiFile,
-                                          @NotNull final List<HighlightInfo> infos,
+                                          @NotNull final List<? extends HighlightInfo> infos,
                                           @Nullable final EditorColorsScheme colorsScheme,
                                           // if null global scheme will be used
                                           final int startOffset,
@@ -154,7 +154,7 @@ public class UpdateHighlightersUtil {
         RangeHighlighter highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
-        if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd <= startOffset || hiStart >= endOffset)) {
+        if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd != 0 && hiEnd <= startOffset || hiStart >= endOffset)) {
           return true; // injections are oblivious to restricting range
         }
         boolean toRemove = infoSet.contains(info) ||
@@ -264,7 +264,7 @@ public class UpdateHighlightersUtil {
   }
 
   private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
-                                                 @NotNull Collection<HighlightInfo> overlappingIntervals,
+                                                 @NotNull Collection<? extends HighlightInfo> overlappingIntervals,
                                                  @NotNull SeverityRegistrar severityRegistrar) {
     if (!isSevere(info, severityRegistrar)) {
       for (HighlightInfo overlapping : overlappingIntervals) {

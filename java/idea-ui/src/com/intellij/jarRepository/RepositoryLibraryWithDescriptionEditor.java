@@ -23,12 +23,15 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.aether.ArtifactKind;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
-import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
 import java.util.Collection;
+import java.util.EnumSet;
+
+import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.*;
 
 public class RepositoryLibraryWithDescriptionEditor
   extends LibraryPropertiesEditorBase<RepositoryLibraryProperties, RepositoryLibraryType> {
@@ -47,10 +50,15 @@ public class RepositoryLibraryWithDescriptionEditor
     //String oldVersion = properties.getVersion();
     boolean wasGeneratedName =
       RepositoryLibraryType.getInstance().getDescription(properties).equals(myEditorComponent.getLibraryEditor().getName());
+    final EnumSet<ArtifactKind> artifactKinds = ArtifactKind.kindsOf(libraryHasSources(myEditorComponent.getLibraryEditor()),
+                                                                     libraryHasJavaDocs(myEditorComponent.getLibraryEditor()));
+    if (libraryHasExternalAnnotations(myEditorComponent.getLibraryEditor())) {
+      artifactKinds.add(ArtifactKind.ANNOTATIONS);
+    }
+
     RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
       properties.getVersion(),
-      RepositoryUtils.libraryHasSources(myEditorComponent.getLibraryEditor()),
-      RepositoryUtils.libraryHasJavaDocs(myEditorComponent.getLibraryEditor()), properties.isIncludeTransitiveDependencies(),
+      artifactKinds, properties.isIncludeTransitiveDependencies(),
       properties.getExcludedDependencies());
 
     final Project project = myEditorComponent.getProject();
@@ -71,9 +79,9 @@ public class RepositoryLibraryWithDescriptionEditor
       myEditorComponent.renameLibrary(RepositoryLibraryType.getInstance().getDescription(properties));
     }
     final LibraryEditor libraryEditor = myEditorComponent.getLibraryEditor();
-    final String copyTo = RepositoryUtils.getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES), project);
+    final String copyTo = getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES), project);
     final Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(
-      project, properties, model.isDownloadSources(), model.isDownloadJavaDocs(), copyTo, null
+      project, properties.getRepositoryLibraryDescriptor(), model.getArtifactKinds(), null, copyTo
     );
     libraryEditor.removeAllRoots();
     if (roots != null) {

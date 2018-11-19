@@ -466,6 +466,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     assertStringItems("aac", "aab", "hashCode");
   }
+
+  public void testNoUninitializedSuperFieldsInConstructor() {
+    configureByTestName();
+    assertStringItems("input", "baseConstant");
+  }
+
   public void testFieldsSetInAnotherConstructor() { doTest(); }
   public void testFieldsSetAbove() { doTest(); }
 
@@ -1044,7 +1050,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNewAbstractInsideAnonymous() { doTest(); }
 
-  public void testFilterPrivateConstructors() { doTest(); }
+  public void testFilterPrivateConstructors() { doAntiTest(); }
 
   public void testExplicitMethodTypeParametersQualify() { doTest(); }
   public void testExplicitMethodTypeParametersOverZealous() { doTest(); }

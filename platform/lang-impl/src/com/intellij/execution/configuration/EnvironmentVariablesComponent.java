@@ -115,12 +115,12 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   }
 
   @Override
-  public void addChangeListener(final ChangeListener changeListener) {
+  public void addChangeListener(@NotNull final ChangeListener changeListener) {
     myEnvVars.addChangeListener(changeListener);
   }
 
   @Override
-  public void removeChangeListener(final ChangeListener changeListener) {
+  public void removeChangeListener(@NotNull final ChangeListener changeListener) {
     myEnvVars.removeChangeListener(changeListener);
   }
 }

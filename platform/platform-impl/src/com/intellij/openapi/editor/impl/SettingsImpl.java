@@ -5,7 +5,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -31,11 +30,11 @@ public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
 
   @Nullable private final EditorEx myEditor;
-  @Nullable private final Language myLanguage;
+  @Nullable private Language myLanguage;
   private Boolean myIsCamelWords;
 
   // This group of settings does not have UI
-  private SoftWrapAppliancePlaces mySoftWrapAppliancePlace        = SoftWrapAppliancePlaces.MAIN_EDITOR;
+  private final SoftWrapAppliancePlaces mySoftWrapAppliancePlace;
   private int                     myAdditionalLinesCount          = Registry.intValue("editor.virtual.lines", 5);
   private int                     myAdditionalColumnsCount        = 3;
   private int                     myLineCursorWidth               = EditorUtil.getDefaultCaretWidth();
@@ -84,18 +83,19 @@ public class SettingsImpl implements EditorSettings {
   private List<Integer> mySoftMargins = null;
   
   public SettingsImpl() {
-    this(null, null, null);
+    this(null, null);
   }
 
-  SettingsImpl(@Nullable EditorEx editor, @Nullable Project project, @Nullable EditorKind kind) {
+  SettingsImpl(@Nullable EditorEx editor, @Nullable EditorKind kind) {
     myEditor = editor;
-    myLanguage = editor != null && project != null ? getDocumentLanguage(project, editor.getDocument()) : null;
-    
     if (EditorKind.CONSOLE.equals(kind)) {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.CONSOLE;
     }
     else if (EditorKind.PREVIEW.equals(kind)) {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.PREVIEW;
+    }
+    else {
+      mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.MAIN_EDITOR;
     }
   }
   
@@ -214,19 +214,6 @@ public class SettingsImpl implements EditorSettings {
     return myEditor != null
            ? CodeStyle.getSettings(myEditor).getRightMargin(myLanguage)
            : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(myLanguage);
-  }
-
-  @Nullable
-  private static Language getDocumentLanguage(@NotNull Project project, @NotNull Document document) {
-    if (!project.isDisposed()) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      PsiFile file = documentManager.getPsiFile(document);
-      if (file != null) return file.getLanguage();
-    }
-    else {
-      LOG.warn("Attempting to get a language for document on a disposed project: " + project.getName());
-    }
-    return null;
   }
 
   @Override
@@ -715,5 +702,9 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setShowIntentionBulb(boolean show) {
     myShowIntentionBulb = show; 
+  }
+
+  public void setLanguage(@Nullable Language language) {
+    myLanguage = language;
   }
 }

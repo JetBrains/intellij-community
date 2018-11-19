@@ -51,7 +51,7 @@ public class TestGrouper implements Grouper {
     private final Collection<TreeElement> myChildren;
     private final Collection<String> myChildrenUsedStrings;
 
-    public StringGroup(String string, final Collection<TreeElement> children, Collection<String> childrenStrings) {
+    StringGroup(String string, final Collection<TreeElement> children, Collection<String> childrenStrings) {
       myString = string;
       myChildrenUsedStrings = childrenStrings;
       myChildren = new ArrayList<>(children);

@@ -29,12 +29,12 @@ import javax.swing.*;
  */
 public class TabsAlphabeticalModeSwitcher extends ToggleAction {
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return Registry.is(JBEditorTabs.TABS_ALPHABETICAL_KEY);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     JBEditorTabs.setAlphabeticalMode(state);
   }
 

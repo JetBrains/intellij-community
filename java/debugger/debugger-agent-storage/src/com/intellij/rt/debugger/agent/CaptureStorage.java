@@ -102,7 +102,7 @@ public class CaptureStorage {
     private final Object myKey;
     private final int myHash;
 
-    public HardKey(Object key) {
+    HardKey(Object key) {
       myKey = key;
       myHash = System.identityHashCode(key);
     }
@@ -121,7 +121,7 @@ public class CaptureStorage {
     private final int myHash;
     private final CapturedStack myValue;
 
-    public WeakKey(Object key, CapturedStack value, ReferenceQueue q) {
+    WeakKey(Object key, CapturedStack value, ReferenceQueue q) {
       //noinspection unchecked
       super(key, q);
       myHash = System.identityHashCode(key);
@@ -165,7 +165,7 @@ public class CaptureStorage {
   private static class UnwindCapturedStack implements CapturedStack {
     final List<StackTraceElement> myStackTraceElements;
 
-    public UnwindCapturedStack(List<StackTraceElement> elements) {
+    UnwindCapturedStack(List<StackTraceElement> elements) {
       myStackTraceElements = elements;
     }
 
@@ -203,7 +203,7 @@ public class CaptureStorage {
     final CapturedStack myInsertMatch;
     final int myRecursionDepth;
 
-    public DeepCapturedStack(Throwable exception, CapturedStack insertMatch) {
+    DeepCapturedStack(Throwable exception, CapturedStack insertMatch) {
       super(exception);
       myInsertMatch = insertMatch;
       myRecursionDepth = insertMatch.getRecursionDepth() + 1;

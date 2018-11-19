@@ -2,7 +2,7 @@ package com.siyeh.igtest.classlayout.final_method_in_final_class;
 
 public final class FinalMethodInFinalClass
 {
-    public final void foo()
+    public <warning descr="Method declared 'final' in 'final' class">final</warning> void foo()
     {
 
     }
@@ -30,5 +30,5 @@ final class Soup {
   }
 
   @java.lang.SafeVarargs
-  private static final void bar(java.util.Collection<Integer>... args) {}
+  private static <warning descr="Method declared 'final' in 'final' class">final</warning> void bar(java.util.Collection<Integer>... args) {}
 }

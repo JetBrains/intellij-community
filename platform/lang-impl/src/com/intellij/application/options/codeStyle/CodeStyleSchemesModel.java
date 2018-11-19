@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final List<CodeStyleScheme> mySchemes = new ArrayList<>();
@@ -151,19 +150,23 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     CodeStyleSettingsManager projectSettingsManager = getProjectSettings();
     projectSettingsManager.USE_PER_PROJECT_SETTINGS = isProjectScheme(mySelectedScheme);
     projectSettingsManager.PREFERRED_PROJECT_CODE_STYLE = mySelectedScheme instanceof ProjectScheme ? null : mySelectedScheme.getName();
-    projectSettingsManager.setMainProjectCodeStyle(myProjectScheme.getCodeStyleSettings());
+    CodeStyleSettings projectSettings = myProjectScheme.getCodeStyleSettings();
+    projectSettings.getModificationTracker().incModificationCount();
+    projectSettingsManager.setMainProjectCodeStyle(projectSettings);
   }
 
   private void commitClonedSettings() {
     for (CodeStyleScheme scheme : mySettingsToClone.keySet()) {
       if (!(scheme instanceof ProjectScheme)) {
-        scheme.getCodeStyleSettings().copyFrom(mySettingsToClone.get(scheme));
+        CodeStyleSettings settings = scheme.getCodeStyleSettings();
+        settings.copyFrom(mySettingsToClone.get(scheme));
+        settings.getModificationTracker().incModificationCount();
       }
     }
   }
 
   private @NotNull List<CodeStyleScheme> getIdeSchemes() {
-    return mySchemes.stream().filter(scheme -> !(scheme instanceof ProjectScheme)).collect(Collectors.toList());
+    return ContainerUtil.filter(mySchemes, scheme -> !(scheme instanceof ProjectScheme));
   }
 
   @SuppressWarnings("unused")
@@ -176,7 +179,9 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     if (myUiEventsEnabled) myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }
 
-  public void fireSchemeChanged(CodeStyleScheme scheme) {
+  void updateScheme(CodeStyleScheme scheme) {
+    CodeStyleSettings clonedSettings = getCloneSettings(scheme);
+    clonedSettings.copyFrom(scheme.getCodeStyleSettings());
     myDispatcher.getMulticaster().schemeChanged(scheme);
   }
 
@@ -276,7 +281,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   private class ProjectScheme extends CodeStyleSchemeImpl {
-    public ProjectScheme() {
+    ProjectScheme() {
       super(CodeStyleScheme.PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
       CodeStyleSettings perProjectSettings = getProjectSettings().getMainProjectCodeStyle();
       if (perProjectSettings != null) setCodeStyleSettings(perProjectSettings);

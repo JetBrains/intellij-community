@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -47,19 +34,21 @@ public class RefusedBequestInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations =
     new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
   @SuppressWarnings("PublicField") public boolean ignoreEmptySuperMethods;
+  @SuppressWarnings("PublicField") public boolean ignoreDefaultSuperMethods;
   @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
 
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations, null);
-    final JCheckBox checkBox1 = new CheckBox("Only report when super method is annotated by:", this, "onlyReportWhenAnnotated");
-    final CheckBox checkBox2 = new CheckBox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"),
-                                            this, "ignoreEmptySuperMethods");
+    final CheckBox checkBox1 = new CheckBox("Only report when super method is annotated by:", this, "onlyReportWhenAnnotated");
+    final MultipleCheckboxOptionsPanel checkBoxPanel = new MultipleCheckboxOptionsPanel(this);
+    checkBoxPanel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
+    checkBoxPanel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
 
     panel.add(checkBox1, BorderLayout.NORTH);
     panel.add(annotationsListControl, BorderLayout.CENTER);
-    panel.add(checkBox2, BorderLayout.SOUTH);
+    panel.add(checkBoxPanel, BorderLayout.SOUTH);
 
     return panel;
   }
@@ -78,14 +67,15 @@ public class RefusedBequestInspection extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) {
-    defaultWriteSettings(node, "onlyReportWhenAnnotated", "annotations");
+    defaultWriteSettings(node, "onlyReportWhenAnnotated", "annotations", "ignoreDefaultSuperMethods");
     writeBooleanOption(node, "onlyReportWhenAnnotated", false);
+    writeBooleanOption(node, "ignoreDefaultSuperMethods", false);
     annotations.writeSettings(node, "annotations");
   }
 
   @Override
   public void readSettings(@NotNull Element node) {
-    onlyReportWhenAnnotated = false;
+    onlyReportWhenAnnotated = false; // should be false when not present, used to be false by default in the past.
     super.readSettings(node);
   }
 
@@ -237,7 +227,12 @@ public class RefusedBequestInspection extends BaseInspection {
     @Nullable
     private PsiMethod getDirectSuperMethod(PsiMethod method) {
       final PsiMethod superMethod = MethodUtils.getSuper(method);
-      return superMethod == null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ? null : superMethod;
+      if (superMethod == null ||
+          superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ||
+          ignoreDefaultSuperMethods && superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+        return null;
+      }
+      return superMethod;
     }
   }
 }

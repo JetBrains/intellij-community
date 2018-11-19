@@ -127,6 +127,7 @@ class JUnitServerImpl : JUnitServer {
   override fun getPort(): Int = port
 
   override fun stopServer() {
+    if (!isStarted) return
     serverSendThread.interrupt()
     LOG.info("Server Send Thread joined")
     serverReceiveThread.interrupt()

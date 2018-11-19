@@ -45,6 +45,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   public abstract boolean openProject(@NotNull Project project);
 
+  @TestOnly
+  public abstract boolean isDefaultProjectInitialized();
+
   public abstract boolean isProjectOpened(Project project);
 
   public abstract boolean canClose(@NotNull Project project);
@@ -65,6 +68,12 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @NotNull
   public abstract Collection<Project> closeTestProject(@NotNull Project project);
 
+  @TestOnly
+  public abstract boolean forceCloseProject(@NotNull Project project, boolean dispose);
+
+  // return true if successful
+  public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
+
   // returns true on success
   public abstract boolean closeAndDispose(@NotNull Project project);
 
@@ -73,6 +82,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public Project createProject(@Nullable String name, @NotNull String path) {
     return newProject(name, path, true, false);
   }
+
+  @Nullable
+  public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
   @Nullable
   public abstract Project convertAndLoadProject(@NotNull String filePath) throws IOException;

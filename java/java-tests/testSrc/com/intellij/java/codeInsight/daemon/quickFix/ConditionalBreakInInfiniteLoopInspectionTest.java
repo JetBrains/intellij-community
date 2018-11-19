@@ -14,11 +14,6 @@ public class ConditionalBreakInInfiniteLoopInspectionTest extends LightQuickFixP
     return new LocalInspectionTool[]{new ConditionalBreakInInfiniteLoopInspection()};
   }
 
-  public void test() {
-     doAllTests();
-   }
-
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/conditionalBreakInInfiniteLoop/";

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
     final String signature = provider.getSignature(element);
     append(os, virtualFile.getPath());
     os.append(separator);
-    append(os, signature);
+    append(os, StringUtil.notNullize(signature));
     os.append(separator);
     final ProperTextRange rangeInElement = info.getRangeInElement();
     if (rangeInElement == null) {
@@ -77,8 +78,8 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
     os.append(separator);
   }
 
-  private static void append(final StringBuilder sb, final String s) {
-    sb.append(StringUtil.escapeXml(s));
+  private static void append(final StringBuilder sb, @NotNull String s) {
+    sb.append(StringUtil.escapeXmlEntities(s));
   }
 
   @Override
@@ -99,7 +100,7 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
       int idxNext = is.indexOf(separator, idx);
       if (idxNext == -1) {
         if (allowEnd) {
-          return StringUtil.unescapeXml(is.substring(idx));
+          return StringUtil.unescapeXmlEntities(is.substring(idx));
         }
       }
       final String s = is.substring(idx, idxNext);

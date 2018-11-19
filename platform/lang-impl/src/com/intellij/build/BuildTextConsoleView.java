@@ -40,7 +40,7 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     Key outputType = event instanceof OutputBuildEvent && !((OutputBuildEvent)event).isStdOut()
                      ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT;
     myAnsiEscapeDecoder.escapeText(event.getMessage(), outputType, this);

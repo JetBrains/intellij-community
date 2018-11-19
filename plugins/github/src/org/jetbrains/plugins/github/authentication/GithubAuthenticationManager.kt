@@ -31,14 +31,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
 
   @CalledInAwt
   @JvmOverloads
-  internal fun getOrRequestTokenForAccount(account: GithubAccount,
-                                           project: Project?,
-                                           parentComponent: Component? = null): String? {
-    return getTokenForAccount(account) ?: requestNewToken(account, project, parentComponent)
-  }
-
-  @CalledInAwt
-  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
+  internal fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
     val dialog = GithubLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
@@ -56,25 +49,35 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAwt
   @JvmOverloads
   fun requestNewAccount(project: Project?, parentComponent: Component? = null): GithubAccount? {
-    fun isAccountUnique(name: String, server: GithubServerPath) =
-      accountManager.accounts.none { it.name == name && it.server == server }
-
     val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
-    val account = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
+    return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
+  }
+
+  @CalledInAwt
+  @JvmOverloads
+  fun requestNewAccountForServer(server: GithubServerPath, project: Project?, parentComponent: Component? = null): GithubAccount? {
+    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique).withServer(server.toUrl(), false)
+    DialogManager.show(dialog)
+    if (!dialog.isOK) return null
+
+    return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
+  }
+
+  private fun isAccountUnique(name: String, server: GithubServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+
+  private fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount {
+    val account = GithubAccountManager.createAccount(name, server)
     accountManager.accounts += account
-    accountManager.updateAccountToken(account, dialog.getToken())
+    accountManager.updateAccountToken(account, token)
     return account
   }
 
   @TestOnly
   fun registerAccount(name: String, host: String, token: String): GithubAccount {
-    val account = GithubAccountManager.createAccount(name, GithubServerPath.from(host))
-    accountManager.accounts += account
-    accountManager.updateAccountToken(account, token)
-    return account
+    return registerAccount(name, GithubServerPath.from(host), token)
   }
 
   @TestOnly

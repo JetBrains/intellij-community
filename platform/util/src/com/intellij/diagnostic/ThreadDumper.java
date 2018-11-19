@@ -106,12 +106,12 @@ public class ThreadDumper {
     Arrays.sort(threads, new Comparator<ThreadInfo>() {
       @Override
       public int compare(ThreadInfo o1, ThreadInfo o2) {
-        final String t1 = o1.getThreadName();
-        final String t2 = o2.getThreadName();
-        if (t1.startsWith("AWT-EventQueue")) return -1;
-        if (t2.startsWith("AWT-EventQueue")) return 1;
-        final boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
-        final boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
+        boolean awt1 = o1.getThreadName().startsWith("AWT-EventQueue");
+        boolean awt2 = o2.getThreadName().startsWith("AWT-EventQueue");
+        if (awt1 && !awt2) return -1;
+        if (awt2 && !awt1) return 1;
+        boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
+        boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
         if (r1 && !r2) return -1;
         if (r2 && !r1) return 1;
         return 0;
@@ -155,7 +155,7 @@ public class ThreadDumper {
   private static void printStackTrace(@NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
     try {
       for (StackTraceElement element : stackTraceElements) {
-        f.write("\tat " + element.toString() + "\n");
+        f.write("\tat " + element + "\n");
       }
     }
     catch (IOException e) {

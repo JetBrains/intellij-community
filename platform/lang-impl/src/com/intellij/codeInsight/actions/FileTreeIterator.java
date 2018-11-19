@@ -32,7 +32,7 @@ public class FileTreeIterator {
   private Queue<PsiFile> myCurrentFiles = new LinkedList<>();
   private Queue<PsiDirectory> myCurrentDirectories = new LinkedList<>();
 
-  public FileTreeIterator(@NotNull List<PsiFile> files) {
+  public FileTreeIterator(@NotNull List<? extends PsiFile> files) {
     myCurrentFiles.addAll(files);
   }
 

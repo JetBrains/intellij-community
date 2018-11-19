@@ -229,6 +229,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected void onDispose() {
       Disposer.dispose(myModel);
       myLineStatusTracker.release();
+      myInnerDiffWorker.disable();
       super.onDispose();
     }
 
@@ -829,7 +830,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class MyMergeModel extends MergeModelBase<TextMergeChange.State> {
-      public MyMergeModel(@Nullable Project project, @NotNull Document document) {
+      MyMergeModel(@Nullable Project project, @NotNull Document document) {
         super(project, document);
       }
 
@@ -969,7 +970,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
       private final boolean myShortcut;
 
-      public ApplySelectedChangesActionBase(boolean shortcut) {
+      ApplySelectedChangesActionBase(boolean shortcut) {
         myShortcut = shortcut;
       }
 
@@ -1052,7 +1053,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
       @NotNull private final Side mySide;
 
-      public IgnoreSelectedChangesSideAction(@NotNull Side side, boolean shortcut) {
+      IgnoreSelectedChangesSideAction(@NotNull Side side, boolean shortcut) {
         super(shortcut);
         mySide = side;
         ActionUtil.copyFrom(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"));
@@ -1082,7 +1083,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
-      public IgnoreSelectedChangesAction() {
+      IgnoreSelectedChangesAction() {
         super(false);
         getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
       }
@@ -1113,7 +1114,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
       @NotNull private final Side mySide;
 
-      public ApplySelectedChangesAction(@NotNull Side side, boolean shortcut) {
+      ApplySelectedChangesAction(@NotNull Side side, boolean shortcut) {
         super(shortcut);
         mySide = side;
         ActionUtil.copyFrom(this, mySide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"));
@@ -1146,7 +1147,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class ResolveSelectedChangesAction extends ApplySelectedChangesActionBase {
       @NotNull private final Side mySide;
 
-      public ResolveSelectedChangesAction(@NotNull Side side) {
+      ResolveSelectedChangesAction(@NotNull Side side) {
         super(false);
         mySide = side;
       }
@@ -1176,7 +1177,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class ResolveSelectedConflictsAction extends ApplySelectedChangesActionBase {
-      public ResolveSelectedConflictsAction(boolean shortcut) {
+      ResolveSelectedConflictsAction(boolean shortcut) {
         super(shortcut);
         ActionUtil.copyFrom(this, "Diff.ResolveConflict");
       }
@@ -1255,7 +1256,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class ShowDiffWithBaseAction extends DumbAwareAction {
       @NotNull private final ThreeSide mySide;
 
-      public ShowDiffWithBaseAction(@NotNull ThreeSide side) {
+      ShowDiffWithBaseAction(@NotNull ThreeSide side) {
         mySide = side;
         String actionId = mySide.select("Diff.CompareWithBase.Left", "Diff.CompareWithBase.Result", "Diff.CompareWithBase.Right");
         ActionUtil.copyFrom(this, actionId);
@@ -1288,7 +1289,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class MyDividerPaintable implements DiffDividerDrawUtil.DividerPaintable {
       @NotNull private final Side mySide;
 
-      public MyDividerPaintable(@NotNull Side side) {
+      MyDividerPaintable(@NotNull Side side) {
         mySide = side;
       }
 
@@ -1322,7 +1323,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class MyLineStatusMarkerRenderer extends LineStatusMarkerPopupRenderer {
-      public MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
+      MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
         super(tracker);
       }
 
@@ -1363,10 +1364,28 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<AnAction> actions = new ArrayList<>();
         actions.add(new ShowPrevChangeMarkerAction(editor, range));
         actions.add(new ShowNextChangeMarkerAction(editor, range));
+        actions.add(new MyRollbackLineStatusRangeAction(editor, range));
         actions.add(new ShowLineStatusRangeDiffAction(editor, range));
         actions.add(new CopyLineStatusRangeAction(editor, range));
         actions.add(new ToggleByWordDiffAction(editor, range, mousePosition));
         return actions;
+      }
+
+      private class MyRollbackLineStatusRangeAction extends RangeMarkerAction {
+        private MyRollbackLineStatusRangeAction(@NotNull Editor editor, @NotNull Range range) {
+          super(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK);
+        }
+
+        @Override
+        protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
+          return true;
+        }
+
+        @Override
+        protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
+          DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
+          myTracker.rollbackChanges(range);
+        }
       }
     }
 
@@ -1398,7 +1417,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   private static class InnerChunkData {
     @NotNull public final List<CharSequence> text;
 
-    public InnerChunkData(@NotNull TextMergeChange change, @NotNull List<Document> documents) {
+    InnerChunkData(@NotNull TextMergeChange change, @NotNull List<Document> documents) {
       text = getChunks(change, documents);
     }
 

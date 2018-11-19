@@ -39,6 +39,12 @@ class GenerateXmlFromXsdTest: LightCodeInsightFixtureTestCase() {
     Disposer.dispose(dialog.disposable)
   }
 
+  fun testRelativePath() {
+    val file = LocalFileSystem.getInstance().findFileByPath("$testDataPath/top/top.xsd")
+    val dialog = GenerateInstanceDocumentFromSchemaDialog(project, file)
+    GenerateInstanceDocumentFromSchemaAction.doAction(project, dialog)
+    Disposer.dispose(dialog.disposable)
+  }
 
   override fun getBasePath(): String = "/xml/tests/testData/generate"
 }

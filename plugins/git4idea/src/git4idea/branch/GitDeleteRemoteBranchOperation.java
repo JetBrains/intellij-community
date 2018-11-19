@@ -43,7 +43,7 @@ import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELE
 class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
 
-  public GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull Git git,
+  GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull Git git,
                                         @NotNull GitBranchUiHandler handler, @NotNull List<GitRepository> repositories,
                                         @NotNull String name) {
     super(project, git, handler, repositories);

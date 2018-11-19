@@ -28,7 +28,6 @@ import javax.swing.*;
  * {@link EditorCustomization customizations} if necessary.
  *
  * @author Denis Zhdanov
- * @since Aug 20, 2010 3:21:03 PM
  */
 public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
   @NotNull
@@ -40,9 +39,9 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
 
   private static class MyEditorTextField extends LanguageTextField {
 
-    @NotNull private final Iterable<EditorCustomization> myCustomizations;
+    @NotNull private final Iterable<? extends EditorCustomization> myCustomizations;
 
-    MyEditorTextField(@NotNull Language language, @NotNull Project project, @NotNull Iterable<EditorCustomization> customizations) {
+    MyEditorTextField(@NotNull Language language, @NotNull Project project, @NotNull Iterable<? extends EditorCustomization> customizations) {
       super(language, project, "", false);
       myCustomizations = customizations;
     }

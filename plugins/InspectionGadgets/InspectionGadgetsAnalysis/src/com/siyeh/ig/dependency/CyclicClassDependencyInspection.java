@@ -26,6 +26,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclarationKt;
+import org.jetbrains.uast.UElement;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -77,11 +79,7 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
       errorString = InspectionGadgetsBundle.message("cyclic.class.dependency.problem.descriptor",
                                                     refEntity.getName(), Integer.valueOf(numMutualDependents));
     }
-    final PsiClass aClass = refClass.getElement();
-    if (aClass == null) {
-      return null;
-    }
-    final PsiElement anchor = aClass.getNameIdentifier();
+    final PsiElement anchor = UDeclarationKt.getAnchorPsi(refClass.getUastElement());
     if (anchor == null) return null;
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(anchor, errorString, (LocalQuickFix)null,

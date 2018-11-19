@@ -62,7 +62,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourceCompilerConfigurationGenerator {
 
@@ -176,7 +175,6 @@ public class GradleResourceCompilerConfigurationGenerator {
   private Map<String, GradleModuleResourceConfiguration> generateAffectedGradleModulesConfiguration(@NotNull CompileContext context) {
     final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = ContainerUtil.newTroveMap();
 
-    //noinspection MismatchedQueryAndUpdateOfCollection
     final Map<String, ExternalProject> lazyExternalProjectMap = FactoryMap.create(
       gradleProjectPath1 -> externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath1)));
 

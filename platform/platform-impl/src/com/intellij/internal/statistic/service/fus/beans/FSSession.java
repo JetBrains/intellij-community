@@ -7,11 +7,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class FSSession {
   public String id;
@@ -23,6 +20,10 @@ public class FSSession {
 
   public static FSSession create(@NotNull FUSession session) {
     return new FSSession(Integer.toString(session.getId()), session.getBuildId());
+  }
+
+  public static FSSession create(String id, String build) {
+    return new FSSession(id, build);
   }
 
   private FSSession(String id, String build) {
@@ -50,7 +51,7 @@ public class FSSession {
 
   public void removeEmptyData() {
     if (groups != null) {
-       groups = groups.stream().filter(group -> !group.getMetrics().isEmpty()).collect(Collectors.toList());
+      groups = ContainerUtil.filter(groups, group -> !group.getMetrics().isEmpty());
     }
   }
 
@@ -65,7 +66,6 @@ public class FSSession {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(id, build);
   }
 }

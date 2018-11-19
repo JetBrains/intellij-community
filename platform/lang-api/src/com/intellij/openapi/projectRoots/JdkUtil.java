@@ -50,6 +50,7 @@ public class JdkUtil {
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
 
   private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
+  private static final String JAVAAGENT = "-javaagent";
 
   private JdkUtil() { }
 
@@ -148,6 +149,16 @@ public class JdkUtil {
     boolean dynamicParameters = dynamicClasspath && javaParameters.isDynamicParameters() && useDynamicParameters();
     boolean dynamicMainClass = false;
 
+    //copy javaagents to the beginning of the classpath to load agent classes faster
+    if (isUrlClassloader(vmParameters)) {
+      for (String parameter : vmParameters.getParameters()) {
+        if (parameter.startsWith(JAVAAGENT)) {
+          int agentArgsIdx = parameter.indexOf("=", JAVAAGENT.length());
+          javaParameters.getClassPath().addFirst(parameter.substring(JAVAAGENT.length() + 1, agentArgsIdx > -1 ? agentArgsIdx : parameter.length()));
+        }
+      }
+    }
+
     if (dynamicClasspath) {
       Class commandLineWrapper;
       if (javaParameters.isArgFile()) {
@@ -178,6 +189,10 @@ public class JdkUtil {
     if (!dynamicParameters) {
       commandLine.addParameters(javaParameters.getProgramParametersList().getList());
     }
+  }
+
+  private static boolean isUrlClassloader(ParametersList vmParameters) {
+    return UrlClassLoader.class.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"));
   }
 
   private static boolean explicitClassPath(ParametersList vmParameters) {
@@ -323,7 +338,7 @@ public class JdkUtil {
 
       Set<String> classpath = new LinkedHashSet<>();
       classpath.add(PathUtil.getJarPathForClass(commandLineWrapper));
-      if (UrlClassLoader.class.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"))) {
+      if (isUrlClassloader(vmParameters)) {
         classpath.add(PathUtil.getJarPathForClass(UrlClassLoader.class));
         classpath.add(PathUtil.getJarPathForClass(StringUtilRt.class));
         classpath.add(PathUtil.getJarPathForClass(THashMap.class));

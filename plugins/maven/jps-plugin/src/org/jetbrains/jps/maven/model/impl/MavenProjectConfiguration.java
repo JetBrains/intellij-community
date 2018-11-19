@@ -17,7 +17,7 @@ package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -29,9 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -47,6 +45,7 @@ public class MavenProjectConfiguration {
   public static final String CONFIGURATION_FILE_RELATIVE_PATH = "maven/configuration.xml";
   public static final String DEFAULT_ESCAPE_STRING = "\\";
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("-D(\\S+?)=(.+)");
+  private static final Pattern MAVEN_PROPERTY_PATTERN = Pattern.compile("-D(\\S+?)(?:=(.+))?");
   public static final Set<String> DEFAULT_FILTERING_EXCLUDED_EXTENSIONS;
   static {
     final THashSet<String> set = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
@@ -224,22 +223,27 @@ public class MavenProjectConfiguration {
   // adapted from org.jetbrains.idea.maven.server.Maven3ServerEmbedder
   private static Map<String, String> getMavenAndJvmConfig(MavenModuleResourceConfiguration moduleResourceConfig) {
     return ourMavenAndJvmConfigs.computeIfAbsent(getBaseDir(moduleResourceConfig.directory), baseDir -> {
-      Map<String, String> result = new HashMap<>();
-      readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result);
-      readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result);
-      return result.isEmpty() ? emptyMap() : result;
+      return readConfigFiles(baseDir);
     });
   }
 
-  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result) {
+  @NotNull
+  public static Map<String, String> readConfigFiles(File baseDir) {
+    Map<String, String> result = new HashMap<>();
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");
+    return result.isEmpty() ? emptyMap() : result;
+  }
+
+  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
     File configFile = new File(baseDir, relativePath);
 
-    if (configFile.exists() && configFile.isFile()) {
-      try (InputStream in = new FileInputStream(configFile)) {
-        for (String parameter : ParametersListUtil.parse(StreamUtil.readText(in, CharsetToolkit.UTF8))) {
-          Matcher matcher = PROPERTY_PATTERN.matcher(parameter);
+    if (configFile.isFile()) {
+      try {
+        for (String parameter : ParametersListUtil.parse(FileUtil.loadFile(configFile, CharsetToolkit.UTF8))) {
+          Matcher matcher = MAVEN_PROPERTY_PATTERN.matcher(parameter);
           if (matcher.matches()) {
-            result.put(matcher.group(1), matcher.group(2));
+            result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), valueIfMissing));
           }
         }
       }

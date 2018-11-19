@@ -20,7 +20,7 @@ import java.util.Set;
 
 abstract class QualifiedName {
 
-  abstract void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+  abstract void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<? super Symbol.ClassSymbol> result)
     throws IncompleteHierarchyException;
 
   static class OfComponents extends QualifiedName {
@@ -31,7 +31,7 @@ abstract class QualifiedName {
     }
 
     @Override
-    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<? super Symbol.ClassSymbol> result)
       throws IncompleteHierarchyException {
       for (Symbol symbol : resolver.resolveBase(place, components)) {
         if (symbol instanceof Symbol.ClassSymbol) {
@@ -49,7 +49,7 @@ abstract class QualifiedName {
     }
 
     @Override
-    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<? super Symbol.ClassSymbol> result)
       throws IncompleteHierarchyException {
       for (Symbol symbol : resolver.resolveUnqualified(place, shortName, false)) {
         if (symbol instanceof Symbol.ClassSymbol) {
@@ -67,7 +67,7 @@ abstract class QualifiedName {
     }
 
     @Override
-    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<? super Symbol.ClassSymbol> result)
       throws IncompleteHierarchyException {
       Symbol.ClassSymbol[] candidates = resolver.findGlobalType(id);
       if (candidates.length == 0) {

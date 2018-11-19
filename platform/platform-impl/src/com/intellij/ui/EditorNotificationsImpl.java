@@ -128,7 +128,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
         if (isOutdated()) return null;
 
         final List<Provider> providers = DumbService.getInstance(myProject).
-          filterByDumbAwareness(EXTENSION_POINT_NAME.getExtensions(myProject));
+          filterByDumbAwareness(EXTENSION_POINT_NAME.getExtensionList(myProject));
 
         final List<Runnable> updates = new SmartList<>();
         for (final FileEditor editor : editors) {

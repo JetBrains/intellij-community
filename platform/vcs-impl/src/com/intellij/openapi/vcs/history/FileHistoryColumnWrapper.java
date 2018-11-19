@@ -19,7 +19,7 @@ import java.util.Enumeration;
 abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, T> {
   @NotNull private final ColumnInfo<VcsFileRevision, T> myBaseColumn;
 
-  public FileHistoryColumnWrapper(@NotNull ColumnInfo<VcsFileRevision, T> additionalColumn) {
+  FileHistoryColumnWrapper(@NotNull ColumnInfo<VcsFileRevision, T> additionalColumn) {
     super(additionalColumn.getName());
     myBaseColumn = additionalColumn;
   }
@@ -59,7 +59,6 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
 
   @Override
   public void setValue(TreeNodeOnVcsRevision o, T aValue) {
-    //noinspection unchecked
     myBaseColumn.setValue(o.getRevision(), aValue);
   }
 

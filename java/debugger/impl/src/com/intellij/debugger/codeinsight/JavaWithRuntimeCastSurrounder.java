@@ -56,7 +56,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
   private static class SurroundWithCastWorker extends RuntimeTypeEvaluator {
     private final Editor myEditor;
 
-    public SurroundWithCastWorker(Editor editor, PsiExpression expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
+    SurroundWithCastWorker(Editor editor, PsiExpression expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
       super(editor, expression, context, indicator);
       myEditor = editor;
     }
@@ -72,7 +72,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
       DebuggerInvocationUtil.invokeLater(project, () -> WriteCommandAction.writeCommandAction(project).withName(
         CodeInsightBundle.message("command.name.surround.with.runtime.cast")).run(() -> {
         try {
-          PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(myElement.getProject());
           PsiParenthesizedExpression parenth =
             (PsiParenthesizedExpression)factory.createExpressionFromText("((" + type.getCanonicalText() + ")expr)", null);
           //noinspection ConstantConditions

@@ -1,0 +1,49 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="linear-gradient" x1="6" y1="34.27997" x2="58" y2="34.27997" gradientTransform="matrix(1, 0, 0, -1, 0, 66.27997)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fe315d"/>
+      <stop offset="0.0784" stop-color="#cb417e"/>
+      <stop offset="0.1601" stop-color="#9e4e9b"/>
+      <stop offset="0.2474" stop-color="#755bb4"/>
+      <stop offset="0.3392" stop-color="#5365ca"/>
+      <stop offset="0.4365" stop-color="#386ddb"/>
+      <stop offset="0.5414" stop-color="#2374e9"/>
+      <stop offset="0.6576" stop-color="#1478f3"/>
+      <stop offset="0.794" stop-color="#0b7bf8"/>
+      <stop offset="1" stop-color="#087cfa"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-2" x1="6.06768" y1="25.27997" x2="30.56276" y2="25.27997" gradientTransform="matrix(1, 0, 0, -1, 0, 66.27997)" gradientUnits="userSpaceOnUse">
+      <stop offset="0.2581" stop-color="#f97a12"/>
+      <stop offset="0.4591" stop-color="#b07b58"/>
+      <stop offset="0.7241" stop-color="#577bae"/>
+      <stop offset="0.9105" stop-color="#1e7ce5"/>
+      <stop offset="1" stop-color="#087cfa"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-3" x1="44.93399" y1="27.07229" x2="47.93399" y2="63.82229" xlink:href="#linear-gradient"/>
+    <linearGradient id="linear-gradient-4" x1="17.86183" y1="62.07627" x2="38.45983" y2="-22.44269" gradientTransform="matrix(1, 0, 0, -1, 0, 66.27997)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fe315d"/>
+      <stop offset="0.04023" stop-color="#f63462"/>
+      <stop offset="0.1037" stop-color="#df3a71"/>
+      <stop offset="0.1667" stop-color="#c24383"/>
+      <stop offset="0.2912" stop-color="#ad4a91"/>
+      <stop offset="0.5498" stop-color="#755bb4"/>
+      <stop offset="0.9175" stop-color="#1d76ed"/>
+      <stop offset="1" stop-color="#087cfa"/>
+    </linearGradient>
+  </defs>
+  <title>IntelliJIDEA_comm_64</title>
+  <g>
+    <rect x="6" y="6" width="52" height="52" fill="url(#linear-gradient)"/>
+    <g>
+      <polygon points="6 24 6 58 30.6 32 6 24" fill="url(#linear-gradient-2)"/>
+      <polygon points="40.734 6 35.4 12.4 43.8 39.6 58 22.748 58 14.732 47.316 6 40.734 6" fill="url(#linear-gradient-3)"/>
+      <polygon points="6 58 13.89 58 30.8 51.8 48 25.4 30.98 6 6 6 6 14.73 6 27.152 15.6 30.4 6 58" fill="url(#linear-gradient-4)"/>
+    </g>
+    <g>
+      <rect x="12" y="12" width="40" height="40"/>
+      <rect x="15.79998" y="44.40002" width="15" height="2.59998" fill="#fff"/>
+      <polygon points="26.6 20.2 26.6 17.2 18.2 17.2 18.2 20.2 20.6 20.2 20.6 30.8 18.2 30.8 18.2 33.8 26.6 33.8 26.6 30.8 24.2 30.8 24.2 20.2 26.6 20.2" fill="#fff"/>
+      <path d="M34.4,34a5.45244,5.45244,0,0,1-3.2-.8A6.25265,6.25265,0,0,1,29,31.4l2.2-2.6a3.8015,3.8015,0,0,0,3,1.6,2.27106,2.27106,0,0,0,1.6-.6,2.98585,2.98585,0,0,0,.6-2V17.2h3.8V28a10.13229,10.13229,0,0,1-.4,2.6,2.9123,2.9123,0,0,1-1.2,1.8,9.39415,9.39415,0,0,1-1.8,1.2,4.33035,4.33035,0,0,1-2.4.4" fill="#fff"/>
+    </g>
+  </g>
+</svg>

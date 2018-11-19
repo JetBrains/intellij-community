@@ -31,7 +31,6 @@ import java.awt.Container
 import java.awt.GraphicsEnvironment
 import java.awt.image.BufferedImage
 import java.io.File
-import java.lang.AssertionError
 import java.nio.file.Path
 import javax.swing.AbstractButton
 import javax.swing.JLabel
@@ -149,7 +148,7 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSna
 
   val new = newData.byteInputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
   val imageMismatchError = StringBuilder("images mismatch: ")
-  if (ImageComparator(ImageComparator.AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0))).compare(old, new, imageMismatchError)) {
+  if (ImageComparator(ImageComparator.AASmootherComparator(0.5, 0.2, Color(0, 0, 0, 0))).compare(old, new, imageMismatchError)) {
     return
   }
 
@@ -207,11 +206,11 @@ internal fun dumpComponentBounds(component: Container): Map<String, IntArray> {
 }
 
 internal fun getComponentKey(c: Component, index: Int): String {
-  if (c is JLabel && c.text.isNotEmpty()) {
-    return StringUtil.removeHtmlTags(c.text)
+  if (c is JLabel && !c.text.isNullOrEmpty()) {
+    return StringUtil.removeHtmlTags(c.text, true)
   }
   if (c is AbstractButton && c.text.isNotEmpty()) {
-    return StringUtil.removeHtmlTags(c.text)
+    return StringUtil.removeHtmlTags(c.text, true)
   }
   else {
     return "${c.javaClass.simpleName} #${index}"

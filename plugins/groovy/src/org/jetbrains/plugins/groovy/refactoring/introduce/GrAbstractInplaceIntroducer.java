@@ -185,7 +185,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
 
   protected abstract GrVariable runRefactoring(GrIntroduceContext context, Settings settings, boolean processUsages);
 
-  protected final GrVariable refactorInWriteAction(Computable<GrVariable> computable) {
+  protected final GrVariable refactorInWriteAction(Computable<? extends GrVariable> computable) {
     SmartPsiElementPointer<GrVariable> pointer = WriteAction.compute(() -> {
       GrVariable var = computable.compute();
       return var != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var) : null;

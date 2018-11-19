@@ -76,7 +76,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       @NotNull
       public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder<? super InspectionProfileImpl> dataHolder,
                                                 @NotNull String name,
-                                                @NotNull Function<String, String> attributeProvider,
+                                                @NotNull Function<? super String, String> attributeProvider,
                                                 boolean isBundled) {
         return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
       }

@@ -455,4 +455,9 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createPushDownMethodFix();
+
+  @NotNull
+  public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+    throw new AbstractMethodError();
+  }
 }

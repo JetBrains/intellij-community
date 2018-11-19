@@ -22,8 +22,8 @@ Groovy script
         Modifiers
           <empty list>
         PsiElement(identifier)('LogPipeBuilder')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
@@ -40,7 +40,7 @@ Groovy script
             PsiElement(identifier)('transformer')
           PsiErrorElement:'==' unexpected
             PsiElement(==)('==')
-        PsiElement())(')')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')

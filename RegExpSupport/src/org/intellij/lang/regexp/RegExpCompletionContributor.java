@@ -43,9 +43,6 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       final ElementPattern<PsiElement> propertyPattern = psiElement().withText("\\p");
       extend(CompletionType.BASIC, psiElement().afterLeaf(propertyPattern), new PropertyCompletionProvider());
 
-      final ElementPattern<PsiElement> propertyNamePattern = psiElement().afterLeaf(psiElement().withText("{").afterLeaf(propertyPattern));
-      extend(CompletionType.BASIC, propertyNamePattern, new PropertyNameCompletionProvider());
-
       final ElementPattern<PsiElement> bracketExpressionPattern = psiElement().afterLeaf(
         or(psiElement(RegExpTT.BRACKET_EXPRESSION_BEGIN),
            psiElement(RegExpTT.CARET).afterLeaf(psiElement(RegExpTT.BRACKET_EXPRESSION_BEGIN))));
@@ -65,10 +62,6 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
       final ElementPattern<PsiElement> propertyPattern = psiElement().withText("\\\\p");
       extend(CompletionType.BASIC, psiElement().afterLeaf(propertyPattern), new PropertyCompletionProvider());
-
-      final ElementPattern<PsiElement> propertyNamePattern
-              = psiElement().afterLeaf(psiElement().withText("{").afterLeaf(propertyPattern));
-      extend(CompletionType.BASIC, propertyNamePattern, new PropertyNameCompletionProvider());
     }
 
     {
@@ -79,10 +72,6 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       final ElementPattern<PsiElement> propertyPattern
               = psiElement().withText("p").afterLeaf(backSlashPattern);
       extend(CompletionType.BASIC, psiElement().afterLeaf(propertyPattern), new PropertyCompletionProvider());
-
-      final ElementPattern<PsiElement> propertyNamePattern
-              = psiElement().afterLeaf(psiElement().withText("{").afterLeaf(propertyPattern));
-      extend(CompletionType.BASIC, propertyNamePattern, new PropertyNameCompletionProvider());
 
       final PsiElementPattern.Capture<PsiElement> namedCharacterPattern = psiElement().withText("N");
       extend(CompletionType.BASIC, psiElement().afterLeaf(namedCharacterPattern),
@@ -128,19 +117,6 @@ public final class RegExpCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static class PropertyNameCompletionProvider extends CompletionProvider<CompletionParameters> {
-
-    @Override
-    public void addCompletions(@NotNull final CompletionParameters parameters,
-                               @NotNull final ProcessingContext context,
-                               @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : RegExpLanguageHosts.getInstance().getAllKnownProperties(parameters.getPosition())) {
-        result.addElement(
-          TailTypeDecorator.withTail(createLookupElement(stringArray[0], null, emptyIcon), TailType.createSimpleTailType('}')));
-      }
-    }
-  }
-
   private static class PropertyCompletionProvider extends CompletionProvider<CompletionParameters> {
 
     @Override
@@ -174,7 +150,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
     private final boolean myEmbrace;
 
-    public NamedCharacterCompletionProvider(boolean embrace) {
+    NamedCharacterCompletionProvider(boolean embrace) {
       myEmbrace = embrace;
     }
 

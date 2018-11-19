@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * Implementations of this interface are expected to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 1/17/13 3:51 PM
  */
 public interface ExternalLibraryPathTypeMapper {
 

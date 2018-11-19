@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.CachedIntentions
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.openapi.application.ApplicationManager
@@ -114,8 +115,12 @@ fun getFirstAvailableAction(psiFile: PsiFile,
   return null
 }
 
-fun wrapIntentionToTooltipAction(intention: IntentionAction, info: HighlightInfo) =
-  DaemonTooltipAction(intention.text, info.actualStartOffset)
+fun wrapIntentionToTooltipAction(intention: IntentionAction, info: HighlightInfo): TooltipAction {
+  val pair = info.quickFixActionRanges?.find { it.first?.action == intention }
+  val offset = pair?.second?.startOffset ?: info.actualStartOffset
+
+  return DaemonTooltipAction(intention.text, offset)
+}
 
 
 

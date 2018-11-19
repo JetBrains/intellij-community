@@ -19,6 +19,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ProxyFilters;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter
   }
 
   @Override
-  public void onTestingFinished(final TestResultsViewer sender) {
+  public void onTestingFinished(@NotNull final TestResultsViewer sender) {
     // select first defect at the end (my be TRACK_RUNNING_TEST was enabled and affects on the fly selection)
     final SMTestProxy testsRootNode = sender.getTestsRootNode();
     if (TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {

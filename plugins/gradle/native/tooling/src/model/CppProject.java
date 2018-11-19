@@ -2,14 +2,17 @@
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model;
 
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
-import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
  */
 public interface CppProject extends Serializable {
-  Set<SourceFolder> getSourceFolders();
+  @Nullable
+  CppComponent getMainComponent();
 
-  Set<CppBinary> getBinaries();
+  @Nullable
+  CppTestSuite getTestComponent();
 }

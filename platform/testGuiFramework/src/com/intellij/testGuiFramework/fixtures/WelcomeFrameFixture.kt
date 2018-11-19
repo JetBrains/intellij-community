@@ -11,6 +11,7 @@ import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.fixture.ContainerFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
+import org.fest.swing.timing.Timeout
 import java.awt.Frame
 
 class WelcomeFrameFixture private constructor(robot: Robot,
@@ -48,7 +49,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
   }
 
   companion object {
-    fun find(robot: Robot): WelcomeFrameFixture {
+    fun find(robot: Robot, timeout: Timeout = Timeouts.minutes05): WelcomeFrameFixture {
       Pause.pause(object : Condition("Welcome Frame to show up") {
         override fun test(): Boolean {
           for (frame in Frame.getFrames()) {
@@ -58,7 +59,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
           }
           return false
         }
-      }, Timeouts.minutes05)
+      }, timeout)
 
       for (frame in Frame.getFrames()) {
         if (frame is FlatWelcomeFrame && frame.isShowing()) {

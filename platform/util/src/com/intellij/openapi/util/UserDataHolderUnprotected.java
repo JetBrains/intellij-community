@@ -7,6 +7,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Like UserDataHolder, but stores data in non-thread-safe way.
  * Should not be accessed across threads.
+ *
+ * @deprecated use {@link UserDataHolder}. <br/>
+ * This interface is extended only by {@link com.intellij.lang.PsiBuilder} which is used in a single thread always.
+ * {@link UserDataHolder} doesn't make any restrictions on thread-safety, so it's now used in PsiBuilder instead,
+ * and this interface is left for binary compatibility.
  */
 @Deprecated
 public interface UserDataHolderUnprotected {

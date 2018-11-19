@@ -247,7 +247,7 @@ public class CommandMerger {
     return true;
   }
 
-  public boolean isUndoAvailable(@NotNull Collection<DocumentReference> refs) {
+  public boolean isUndoAvailable(@NotNull Collection<? extends DocumentReference> refs) {
     if (hasNonUndoableActions()) {
       return false;
     }
@@ -291,7 +291,7 @@ public class CommandMerger {
     myStateAfter = state;
   }
 
-  void addAdditionalAffectedDocuments(@NotNull Collection<DocumentReference> refs) {
+  void addAdditionalAffectedDocuments(@NotNull Collection<? extends DocumentReference> refs) {
     myAllAffectedDocuments.addAll(refs);
     myAdditionalAffectedDocuments.addAll(refs);
   }

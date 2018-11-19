@@ -32,7 +32,6 @@ import static org.gradle.internal.FileUtils.hasExtension;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/23/13
  */
 public class DistributionFactoryExt extends DistributionFactory {
 

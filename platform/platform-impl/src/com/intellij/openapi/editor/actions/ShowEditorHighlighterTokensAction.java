@@ -46,7 +46,7 @@ class ShowEditorHighlighterTokensAction extends EditorAction {
 
   private static final EditorMouseMotionListener MOUSE_MOTION_LISTENER = new EditorMouseMotionListener() {
     @Override
-    public void mouseMoved(EditorMouseEvent e) {
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
       Editor editor = e.getEditor();
       LogicalPosition logicalPosition = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());

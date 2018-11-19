@@ -103,7 +103,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
 
 
   private static class InspectionAutomaticRenamer extends AutomaticRenamer {
-    public InspectionAutomaticRenamer(PsiClass inspectionClass, String newName) {
+    InspectionAutomaticRenamer(PsiClass inspectionClass, String newName) {
       super();
 
       Module module = ModuleUtilCore.findModuleForPsiElement(inspectionClass);

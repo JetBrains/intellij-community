@@ -55,7 +55,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
   private static final boolean ourUseContentCache = Boolean.valueOf(System.getProperty("javac.use.content.cache", "false"));
 
-  public OptimizedFileManager17() throws Throwable {
+  OptimizedFileManager17() throws Throwable {
     super(new Context(), true, null);
     final Field archivesField = com.sun.tools.javac.file.JavacFileManager.class.getDeclaredField("archives");
     archivesField.setAccessible(true);
@@ -232,11 +232,11 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     private final Kind kind;
     private Reference<File> absFileRef;
 
-    public InputFileObject(JavacFileManager fileManager, File f) {
+    InputFileObject(JavacFileManager fileManager, File f) {
       this(fileManager, f.getName(), f);
     }
 
-    public InputFileObject(JavacFileManager fileManager, String name, File f) {
+    InputFileObject(JavacFileManager fileManager, String name, File f) {
       super(fileManager);
       this.name = name;
       this.file = f;

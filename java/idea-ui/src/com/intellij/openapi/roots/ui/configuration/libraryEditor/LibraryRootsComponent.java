@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
@@ -62,8 +48,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -85,7 +71,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private final Collection<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @Nullable private final Project myProject;
 
-  private final Computable<LibraryEditor> myLibraryEditorComputable;
+  private final Computable<? extends LibraryEditor> myLibraryEditorComputable;
   private LibraryRootsComponentDescriptor myDescriptor;
   private Module myContextModule;
   private LibraryRootsComponent.AddExcludedRootActionButton myAddExcludedRootActionButton;
@@ -94,7 +80,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     this(project, new Computable.PredefinedValueComputable<>(libraryEditor));
   }
 
-  public LibraryRootsComponent(@Nullable Project project, @NotNull Computable<LibraryEditor> libraryEditorComputable) {
+  public LibraryRootsComponent(@Nullable Project project, @NotNull Computable<? extends LibraryEditor> libraryEditorComputable) {
     myProject = project;
     myLibraryEditorComputable = libraryEditorComputable;
     final LibraryEditor editor = getLibraryEditor();
@@ -176,10 +162,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     toolbarDecorator.addExtraAction(new AnActionButton("Remove", IconUtil.getRemoveIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        final Object[] selectedElements = getSelectedElements();
-        if (selectedElements.length == 0) {
+        final List<Object> selectedElements = getSelectedElements();
+        if (selectedElements.isEmpty()) {
           return;
         }
+
         ApplicationManager.getApplication().runWriteAction(() -> {
           for (Object selectedElement : selectedElements) {
             if (selectedElement instanceof ItemElement) {
@@ -204,9 +191,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       @Override
       public void updateButton(@NotNull AnActionEvent e) {
         super.updateButton(e);
-        Object[] elements = getSelectedElements();
         Presentation presentation = e.getPresentation();
-        if (ContainerUtil.and(elements, new FilteringIterator.InstanceOf<>(ExcludedRootElement.class))) {
+        if (ContainerUtil.and(getSelectedElements(), new FilteringIterator.InstanceOf<>(ExcludedRootElement.class))) {
           presentation.setText("Cancel Exclusion");
         }
         else {
@@ -303,12 +289,17 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return getLibraryEditor().hasChanges();
   }
 
-  private Object[] getSelectedElements() {
-    if (myTreeBuilder == null || myTreeBuilder.isDisposed()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  @NotNull
+  private List<Object> getSelectedElements() {
+    if (myTreeBuilder == null || myTreeBuilder.isDisposed()) {
+      return Collections.emptyList();
+    }
+
     final TreePath[] selectionPaths = myTreeBuilder.getTree().getSelectionPaths();
     if (selectionPaths == null) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return Collections.emptyList();
     }
+
     List<Object> elements = new ArrayList<>();
     for (TreePath selectionPath : selectionPaths) {
       final Object pathElement = getPathElement(selectionPath);
@@ -316,7 +307,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         elements.add(pathElement);
       }
     }
-    return ArrayUtil.toObjectArray(elements);
+    return elements;
   }
 
   public void onLibraryRenamed() {
@@ -391,7 +382,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AttachFilesAction extends AttachItemActionBase {
-    public AttachFilesAction(String title) {
+    AttachFilesAction(String title) {
       super(title);
     }
 
@@ -460,7 +451,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
-  private List<OrderRoot> attachFiles(List<OrderRoot> roots) {
+  private List<OrderRoot> attachFiles(List<? extends OrderRoot> roots) {
     final List<OrderRoot> rootsToAttach = filterAlreadyAdded(roots);
     if (!rootsToAttach.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(() -> getLibraryEditor().addRoots(rootsToAttach));
@@ -471,7 +462,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return rootsToAttach;
   }
 
-  private List<OrderRoot> filterAlreadyAdded(@NotNull List<OrderRoot> roots) {
+  private List<OrderRoot> filterAlreadyAdded(@NotNull List<? extends OrderRoot> roots) {
     List<OrderRoot> result = new ArrayList<>();
     for (OrderRoot root : roots) {
       final VirtualFile[] libraryFiles = getLibraryEditor().getFiles(root.getType());
@@ -540,7 +531,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AddExcludedRootActionButton extends AnActionButton {
-    public AddExcludedRootActionButton() {
+    AddExcludedRootActionButton() {
       super("Exclude", null, AllIcons.Modules.AddExcludedRoot);
     }
 

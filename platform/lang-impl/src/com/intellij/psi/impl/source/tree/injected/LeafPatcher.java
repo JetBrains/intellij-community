@@ -40,11 +40,11 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   private TextRange rangeInHost;
   private final Map<LeafElement, String> newTexts = new THashMap<>();
   @NotNull
-  private final List<PlaceInfo> myPlaceInfos;
+  private final List<? extends PlaceInfo> myPlaceInfos;
   private final StringBuilder catLeafs;
   private final StringBuilder tempLeafBuffer = new StringBuilder();
 
-  LeafPatcher(@NotNull List<PlaceInfo> placeInfos, int approxTextLength) {
+  LeafPatcher(@NotNull List<? extends PlaceInfo> placeInfos, int approxTextLength) {
     myPlaceInfos = placeInfos;
     catLeafs = new StringBuilder(approxTextLength);
   }
@@ -127,7 +127,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
     }
   }
 
-  void patch(@NotNull ASTNode parsedNode, @NotNull List<PlaceInfo> placeInfos) {
+  void patch(@NotNull ASTNode parsedNode, @NotNull List<? extends PlaceInfo> placeInfos) {
     ((TreeElement)parsedNode).acceptTree(this);
 
     assert ((TreeElement)parsedNode).textMatches(catLeafs) :

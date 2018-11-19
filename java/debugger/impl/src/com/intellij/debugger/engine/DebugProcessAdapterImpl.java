@@ -15,13 +15,15 @@
  */
 package com.intellij.debugger.engine;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author lex
  */
 public class DebugProcessAdapterImpl implements DebugProcessListener {
   //executed in manager thread
   @Override
-  public final void paused(SuspendContext suspendContext) {
+  public final void paused(@NotNull SuspendContext suspendContext) {
     paused(((SuspendContextImpl)suspendContext));
   }
 
@@ -33,13 +35,13 @@ public class DebugProcessAdapterImpl implements DebugProcessListener {
 
   //executed in manager thread
   @Override
-  public final void processDetached(DebugProcess process, boolean closedByUser) {
+  public final void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
     processDetached(((DebugProcessImpl)process), closedByUser);
   }
 
   //executed in manager thread
   @Override
-  public final void processAttached(DebugProcess process) {
+  public final void processAttached(@NotNull DebugProcess process) {
     processAttached(((DebugProcessImpl)process));
   }
 

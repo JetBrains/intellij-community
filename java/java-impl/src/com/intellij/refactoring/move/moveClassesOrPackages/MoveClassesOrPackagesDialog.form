@@ -29,7 +29,7 @@
           <text resource-bundle="messages/RefactoringBundle" key="search.in.comments.and.strings"/>
         </properties>
       </component>
-      <component id="a7936" class="com.intellij.ui.NonFocusableCheckBox" binding="myCbSearchTextOccurences">
+      <component id="a7936" class="com.intellij.ui.NonFocusableCheckBox" binding="myCbSearchTextOccurrences">
         <constraints>
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

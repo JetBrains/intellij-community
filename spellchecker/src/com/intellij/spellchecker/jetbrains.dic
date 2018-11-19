@@ -236,6 +236,7 @@ gitlab
 globals
 google
 goto
+gradle
 grapheme
 gruntfile
 gruntfiles
@@ -330,6 +331,7 @@ keepduplicates
 kerberos
 keychain
 keychains
+keycloak
 keyframe
 keyframes
 keymap
@@ -517,6 +519,7 @@ pctincrease
 pctthreshold
 pctused
 pctversion
+perf
 permalink
 petersburg
 pipelined

@@ -17,18 +17,18 @@ import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TwoColorsIcon;
+import com.intellij.util.ui.ColorsIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor {
+  public static final ColorLineMarkerProvider INSTANCE = new ColorLineMarkerProvider();
 
   private final ElementColorProvider[] myExtensions = ElementColorProvider.EP_NAME.getExtensions();
 
@@ -46,10 +46,6 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-  }
-
-  @Override
   public String getName() {
     return "Color preview";
   }
@@ -64,7 +60,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
     private final Color myColor;
 
-    public MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
+    MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
       super(element,
             element.getTextRange(),
             JBUI.scale(new ColorIcon(12, color)),
@@ -75,7 +71,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
               final Editor editor = PsiUtilBase.findEditor(elt);
               assert editor != null;
-              final Color c = ColorChooser.chooseColor(editor.getComponent(), "Choose Color", color, true);
+              final Color c = ColorChooser.chooseColor(editor.getProject(), editor.getComponent(), "Choose Color", color, true);
               if (c != null) {
                 WriteAction.run(() -> colorProvider.setColorTo(elt, c));
               }
@@ -91,10 +87,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
     @Override
     public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
-      if (infos.size() == 2 && infos.get(0) instanceof MyInfo && infos.get(1) instanceof MyInfo) {
-        return JBUI.scale(new TwoColorsIcon(12, ((MyInfo)infos.get(0)).myColor, ((MyInfo)infos.get(1)).myColor));
-      }
-      return AllIcons.Gutter.Colors;
+      return JBUI.scale(new ColorsIcon(12, infos.stream().map(_info -> ((MyInfo)_info).myColor).toArray(Color[]::new)));
     }
 
     @NotNull

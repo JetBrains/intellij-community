@@ -43,6 +43,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ELVIS_ASSIGN;
+
 /**
  * @author ven
  */
@@ -399,7 +401,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
     GrExpression lValue = expression.getLValue();
-    if (expression.isOperatorAssignment()) {
+    if (expression.isOperatorAssignment() || expression.getOperationTokenType() == T_ELVIS_ASSIGN) {
       if (lValue instanceof GrReferenceExpression && myPolicy.isReferenceAccepted((GrReferenceExpression)lValue)) {
         String referenceName = ((GrReferenceExpression)lValue).getReferenceName();
         if (referenceName != null) {
@@ -1119,7 +1121,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     error("broken control flow for a scope");
   }
 
-  private void error(String descr) {
+  private void error(@NotNull String descr) {
     PsiFile file = myScope.getContainingFile();
     String fileText = file != null ? file.getText() : null;
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);

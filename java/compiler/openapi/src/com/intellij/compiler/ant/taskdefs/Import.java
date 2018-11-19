@@ -30,7 +30,6 @@ public class Import extends Tag{
   }
 
   public Import(@NonNls String file) {
-    //noinspection HardCodedStringLiteral
     super("import", Couple.of("file", file));
   }
 }

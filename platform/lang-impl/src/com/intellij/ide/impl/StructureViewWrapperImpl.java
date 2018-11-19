@@ -11,7 +11,6 @@ import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -27,6 +26,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -86,6 +86,11 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myToolWindow = toolWindow;
     JComponent component = toolWindow.getComponent();
 
+    //noinspection TestOnlyProblems
+    if (ProjectManagerImpl.isLight(project)) {
+      LOG.error("StructureViewWrapperImpl must be not created for light project.");
+    }
+
     myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
@@ -101,6 +106,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       boolean successful = loggedRun("check if update needed", this::checkUpdate);
       if (successful) myActivityCount = count; // to check on the next turn
     });
+
     LOG.debug("timer to check if update needed: add");
     timer.start();
     Disposer.register(this, new Disposable() {
@@ -122,7 +128,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     });
     myToolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         if (myStructureView instanceof StructureViewComposite) {
           StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureView).getStructureViews();
           for (StructureViewComposite.StructureViewDescriptor view : views) {
@@ -239,6 +245,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
+        if (!getApplication().isDispatchThread()) {
+          LOG.error("EDT-based MergingUpdateQueue on background thread");
+        }
         loggedRun("rebuild a structure: ", StructureViewWrapperImpl.this::rebuild);
       }
     });
@@ -370,7 +379,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private ContentPanel createContentPanel(JComponent component) {
     final ContentPanel panel = new ContentPanel();
-    panel.setBackground(UIUtil.getTreeTextBackground());
+    panel.setBackground(UIUtil.getTreeBackground());
     panel.add(component, BorderLayout.CENTER);
     return panel;
   }
@@ -404,7 +413,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private class ContentPanel extends JPanel implements DataProvider {
-    public ContentPanel() {
+    ContentPanel() {
       super(new BorderLayout());
     }
 
@@ -418,14 +427,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private static boolean loggedRun(@NotNull String message, @NotNull Runnable task) {
     try {
       if (LOG.isTraceEnabled()) LOG.trace(message + ": started");
-      Application application = getApplication();
-      if (application == null || application.isReadAccessAllowed()) {
-        task.run();
-      }
-      else {
-        LOG.debug(new IllegalStateException("called from unexpected place"));
-        application.runReadAction(task);
-      }
+      task.run();
       return true;
     }
     catch (ProcessCanceledException exception) {

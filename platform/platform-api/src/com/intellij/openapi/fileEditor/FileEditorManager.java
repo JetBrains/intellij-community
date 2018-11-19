@@ -143,17 +143,6 @@ public abstract class FileEditorManager {
   public abstract FileEditor[] getAllEditors();
 
   /**
-   * @deprecated use addTopComponent
-   */
-  @Deprecated
-  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {}
-  /**
-   * @deprecated use removeTopComponent
-   */
-  @Deprecated
-  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {}
-
-  /**
    * Adds the specified component above the editor and paints a separator line below it.
    * If a separator line is not needed, set the client property to {@code true}:
    * <pre>    component.putClientProperty(SEPARATOR_DISABLED, true);    </pre>

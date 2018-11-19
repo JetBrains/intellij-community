@@ -29,7 +29,7 @@ public class VcsSynchronousProgressWrapper {
   private VcsSynchronousProgressWrapper() {
   }
 
-  public static boolean wrap(final ThrowableRunnable<VcsException> runnable, final Project project, final String title) {
+  public static boolean wrap(final ThrowableRunnable<? extends VcsException> runnable, final Project project, final String title) {
     final VcsException[] exc = new VcsException[1];
     final Runnable process = () -> {
       try {

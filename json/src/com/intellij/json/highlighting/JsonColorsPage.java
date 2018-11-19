@@ -62,7 +62,7 @@ public class JsonColorsPage implements ColorSettingsPage, DisplayPrioritySortabl
            "  /* As well as block comments. */\n" +
            "  <propertyKey>\"the only keywords are\"</propertyKey>: [true, false, null],\n" +
            "  <propertyKey>\"strings with\"</propertyKey>: {\n" +
-           "    <propertyKey>\"no excapes\"</propertyKey>: \"pseudopolinomiality\"\n" +
+           "    <propertyKey>\"no escapes\"</propertyKey>: \"pseudopolinomiality\"\n" +
            "    <propertyKey>\"valid escapes\"</propertyKey>: \"C-style\\r\\n and unicode\\u0021\",\n" +
            "    <propertyKey>\"illegal escapes\"</propertyKey>: \"\\0377\\x\\\"\n" +
            "  },\n" +

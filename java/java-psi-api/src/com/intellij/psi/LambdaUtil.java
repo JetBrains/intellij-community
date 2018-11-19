@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 
 /**
  * @author anna
- * @since 17.07.2012
  */
 public class LambdaUtil {
   public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
@@ -438,7 +437,7 @@ public class LambdaUtil {
     return null;
   }
 
-  public static boolean processParentOverloads(PsiFunctionalExpression functionalExpression, final Consumer<PsiType> overloadProcessor) {
+  public static boolean processParentOverloads(PsiFunctionalExpression functionalExpression, final Consumer<? super PsiType> overloadProcessor) {
     LOG.assertTrue(PsiTypesUtil.getExpectedTypeByParent(functionalExpression) == null);
     PsiElement parent = functionalExpression.getParent();
     PsiElement expr = functionalExpression;
@@ -678,7 +677,7 @@ public class LambdaUtil {
     else if (functionalInterfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = getReturnExpressions(lambdaExpression);
       for (final PsiExpression expression : returnExpressions) {
-        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, () -> expression.getType());
+        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, expression::getType);
         if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
           errors.put(expression, "Bad return type in lambda expression: " + expressionType.getPresentableText() + " cannot be converted to " + functionalInterfaceReturnType.getPresentableText());
         }
@@ -820,12 +819,12 @@ public class LambdaUtil {
 
   public static <T> T performWithSubstitutedParameterBounds(final PsiTypeParameter[] typeParameters,
                                                             final PsiSubstitutor substitutor,
-                                                            final Producer<T> producer) {
+                                                            final Producer<? extends T> producer) {
     try {
       for (PsiTypeParameter parameter : typeParameters) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
         if (types.length > 0) {
-          final List<PsiType> conjuncts = ContainerUtil.map(types, type -> substitutor.substitute(type));
+          final List<PsiType> conjuncts = ContainerUtil.map(types, substitutor::substitute);
           //don't glb to avoid flattening = Object&Interface would be preserved
           //otherwise methods with different signatures could get same erasure
           final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(PsiType.EMPTY_ARRAY));
@@ -841,7 +840,7 @@ public class LambdaUtil {
     }
   }
 
-  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Producer<T> producer) {
+  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Producer<? extends T> producer) {
     try {
       getFunctionalTypeMap().put(lambdaExpression, targetType);
       return producer.produce();
@@ -887,7 +886,7 @@ public class LambdaUtil {
   }
 
   private static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda,
-                                                 @NotNull Function<PsiLambdaExpression, PsiExpression> replacer) {
+                                                 @NotNull Function<? super PsiLambdaExpression, ? extends PsiExpression> replacer) {
     PsiElement body = lambda.getBody();
     if (body == null) return false;
     final PsiCall call = treeWalkUp(body);
@@ -931,7 +930,7 @@ public class LambdaUtil {
    *                            lazy computed for lambdas in invocation context only.
    *                            Replacement evaluated to {@code null} is treated as invalid overload
    */
-  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiExpression> newFunctionSupplier) {
+  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<? extends PsiExpression> newFunctionSupplier) {
     return isSafeLambdaReplacement(lambda, l -> {
       PsiExpression replacement = newFunctionSupplier.get();
       return replacement == null ? null : (PsiExpression)l.replace(replacement);
@@ -969,7 +968,7 @@ public class LambdaUtil {
    *                        lazy computed for lambdas in invocation context only.
    *                        Replacement evaluated to {@code null} is treated as invalid overload
    */
-  public static boolean isSafeLambdaBodyReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiElement> newBodySupplier) {
+  public static boolean isSafeLambdaBodyReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<? extends PsiElement> newBodySupplier) {
     return isSafeLambdaReplacement(lambda, l -> {
       PsiElement oldBody = l.getBody();
       PsiElement newBody = newBodySupplier.get();
@@ -1032,10 +1031,53 @@ public class LambdaUtil {
   }
 
   private static PsiExpression createExpressionFromText(String exprText, PsiElement context) {
-    PsiExpression expr = JavaPsiFacade.getInstance(context.getProject())
-                                      .getElementFactory()
+    PsiExpression expr = JavaPsiFacade.getElementFactory(context.getProject())
                                       .createExpressionFromText(exprText, context);
     //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
     return (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);
+  }
+
+  /**
+   * Returns true if given lambda captures any variable or "this" reference.
+   * @param lambda lambda to check
+   * @return true if given lambda captures any variable or "this" reference.
+   */
+  public static boolean isCapturingLambda(PsiLambdaExpression lambda) {
+    PsiElement body = lambda.getBody();
+    if (body == null) return false;
+    class CapturingLambdaVisitor extends JavaRecursiveElementWalkingVisitor {
+      boolean capturing;
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        if (expression instanceof PsiMethodReferenceExpression) return;
+        if (expression.getParent() instanceof PsiMethodCallExpression && expression.getQualifierExpression() != null) return;
+        PsiElement target = expression.resolve();
+        // variable/parameter/field/method/class are always PsiModifierListOwners
+        if (target instanceof PsiModifierListOwner &&
+            !((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC) &&
+            !PsiTreeUtil.isAncestor(body, target, true)) {
+          if (target instanceof PsiClass && ((PsiClass)target).getContainingClass() == null) return;
+          capturing = true;
+          stopWalking();
+        }
+      }
+
+      @Override
+      public void visitSuperExpression(PsiSuperExpression expression) {
+        capturing = true;
+        stopWalking();
+      }
+
+      @Override
+      public void visitThisExpression(PsiThisExpression expression) {
+        capturing = true;
+        stopWalking();
+      }
+    }
+    CapturingLambdaVisitor visitor = new CapturingLambdaVisitor();
+    body.accept(visitor);
+    return visitor.capturing;
   }
 }

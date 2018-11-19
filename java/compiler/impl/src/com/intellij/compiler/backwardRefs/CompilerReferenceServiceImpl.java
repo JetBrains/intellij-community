@@ -53,7 +53,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceBase<B
       MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
       connection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
-        public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
+        public void buildStarted(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {
           if (project == myProject) {
             closeReaderIfNeed(IndexCloseReason.COMPILATION_STARTED);
           }
@@ -62,12 +62,12 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceBase<B
 
       connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         @Override
-        public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           compilationFinished(compileContext);
         }
 
         @Override
-        public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+        public void automakeCompilationFinished(int errors, int warnings, @NotNull CompileContext compileContext) {
           compilationFinished(compileContext);
         }
 

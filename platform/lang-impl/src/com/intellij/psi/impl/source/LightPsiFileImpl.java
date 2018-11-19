@@ -78,7 +78,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   public abstract void clearCaches();
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected LightPsiFileImpl clone() {
     final FileViewProvider provider = getViewProvider().clone();
     final LightPsiFileImpl clone = (LightPsiFileImpl)provider.getPsi(getLanguage());

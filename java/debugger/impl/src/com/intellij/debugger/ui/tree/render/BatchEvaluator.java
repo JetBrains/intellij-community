@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -39,7 +40,7 @@ public class BatchEvaluator {
     myDebugProcess = process;
     myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processDetached(DebugProcess process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         myBatchEvaluatorChecked = false;
         myBatchEvaluatorObject= null;
         myBatchEvaluatorMethod = null;

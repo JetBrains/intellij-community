@@ -23,7 +23,7 @@ public class CustomScopeItem implements ModelScopeItem {
   private final Project myProject;
   private boolean mySearchInLib;
   private String myPreselect;
-  private Supplier<SearchScope> mySupplierScope;
+  private Supplier<? extends SearchScope> mySupplierScope;
 
   public CustomScopeItem(Project project, @Nullable PsiElement context) {
     myProject = project;
@@ -62,7 +62,7 @@ public class CustomScopeItem implements ModelScopeItem {
     return null;
   }
 
-  public void setSearchScopeSupplier(Supplier<SearchScope> supplier) {
+  public void setSearchScopeSupplier(Supplier<? extends SearchScope> supplier) {
     mySupplierScope = supplier;
   }
 }

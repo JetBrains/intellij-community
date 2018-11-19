@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
@@ -74,5 +75,10 @@ public class SMTRunnerTestTreeView extends TestTreeView {
       return this;
     }
     return super.getData(dataId);
+  }
+
+  @Override
+  protected String getPresentableName(AbstractTestProxy testProxy) {
+    return ((SMTestProxy)testProxy).getPresentableName();
   }
 }

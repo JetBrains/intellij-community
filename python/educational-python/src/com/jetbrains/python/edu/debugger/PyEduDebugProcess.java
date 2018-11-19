@@ -29,7 +29,7 @@ class PyEduDebugProcess extends PyDebugProcess {
   private final String myScriptName;
   private final int myLine;
 
-  public PyEduDebugProcess(@NotNull XDebugSession session,
+  PyEduDebugProcess(@NotNull XDebugSession session,
                            @NotNull ServerSocket serverSocket,
                            @NotNull ExecutionConsole executionConsole,
                            @Nullable ProcessHandler processHandler, boolean multiProcess,

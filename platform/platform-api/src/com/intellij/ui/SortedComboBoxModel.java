@@ -23,7 +23,7 @@ import java.util.Comparator;
 public class SortedComboBoxModel<T> extends SortedListModel<T> implements ComboBoxModel<T> {
   private T mySelection;
 
-  public SortedComboBoxModel(Comparator<T> comparator) {
+  public SortedComboBoxModel(Comparator<? super T> comparator) {
     super(comparator);
   }
 

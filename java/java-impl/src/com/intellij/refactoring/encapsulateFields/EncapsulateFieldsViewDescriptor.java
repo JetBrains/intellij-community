@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   private final PsiField[] myFields;
 
-  public EncapsulateFieldsViewDescriptor(FieldDescriptor[] descriptors) {
+  EncapsulateFieldsViewDescriptor(FieldDescriptor[] descriptors) {
     myFields = new PsiField[descriptors.length];
     for (int i = 0; i < descriptors.length; i++) {
       myFields[i] = descriptors[i].getField();
@@ -44,6 +44,7 @@ class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
     return myFields;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));

@@ -366,7 +366,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
     private final JComboBox myUnitsCombo;
     private final JSpinner mySpinner;
 
-    public MyCheckboxListener(final AbstractButton button, final JComboBox unitsCombo, final JSpinner spinner) {
+    MyCheckboxListener(final AbstractButton button, final JComboBox unitsCombo, final JSpinner spinner) {
       myButton = button;
       myUnitsCombo = unitsCombo;
       mySpinner = spinner;

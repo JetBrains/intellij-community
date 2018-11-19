@@ -30,13 +30,13 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
   private ComponentEditor myEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
   private final Class myPropertyType;
-  private final Condition<RadComponent> myFilter;
+  private final Condition<? super RadComponent> myFilter;
 
   public IntroComponentProperty(String name,
                                 Method readMethod,
                                 Method writeMethod,
                                 Class propertyType,
-                                Condition<RadComponent> filter,
+                                Condition<? super RadComponent> filter,
                                 final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
     myPropertyType = propertyType;

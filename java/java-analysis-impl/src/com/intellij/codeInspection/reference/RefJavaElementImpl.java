@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
@@ -24,7 +10,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -55,17 +43,18 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     }
   }
 
-  protected RefJavaElementImpl(PsiModifierListOwner elem, RefManager manager) {
-    super(getName(elem), elem, manager);
+  protected RefJavaElementImpl(UDeclaration elem, PsiElement psi, RefManager manager) {
+    super(getName(elem), psi, manager);
 
-    setAccessModifier(RefJavaUtil.getInstance().getAccessModifier(elem));
-    final boolean isSynth = elem instanceof PsiMethod && elem instanceof SyntheticElement  || elem instanceof PsiSyntheticClass;
+    PsiModifierListOwner javaPsi = ObjectUtils.notNull(ObjectUtils.tryCast(elem.getJavaPsi(), PsiModifierListOwner.class));
+    setAccessModifier(RefJavaUtil.getInstance().getAccessModifier(javaPsi));
+    final boolean isSynth = javaPsi instanceof PsiMethod && psi instanceof SyntheticElement  || psi instanceof PsiSyntheticClass;
     if (isSynth) {
       setSyntheticJSP(true);
     }
 
-    setIsStatic(elem.hasModifierProperty(PsiModifier.STATIC));
-    setIsFinal(elem.hasModifierProperty(PsiModifier.FINAL));
+    setIsStatic(elem.isStatic());
+    setIsFinal(elem.isFinal());
   }
 
   @Override
@@ -82,8 +71,9 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   @NotNull
-  private static String getName(PsiElement element) {
-   if (element instanceof PsiAnonymousClass) {
+  public static String getName(UDeclaration declaration) {
+    PsiElement element = declaration.getJavaPsi();
+    if (element instanceof PsiAnonymousClass) {
      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
      PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
      if (psiBaseClass == null) {
@@ -107,7 +97,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
    if (element instanceof PsiNamedElement) {
      name = ((PsiNamedElement)element).getName();
    }
-
    return name == null ? InspectionsBundle.message("inspection.reference.anonymous") : name;
  }
 
@@ -129,9 +118,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(isFinal, IS_FINAL_MASK);
   }
 
-  public void setReachable(boolean reachable) {
-    setFlag(reachable, IS_REACHABLE_MASK);
-  }
 
   @Override
   public boolean isSyntheticJSP() {
@@ -213,10 +199,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   void addReference(RefElement refWhat,
                     PsiElement psiWhat,
-                    PsiElement psiFrom,
+                    UDeclaration from,
                     boolean forWriting,
                     boolean forReading,
-                    PsiReferenceExpression expression) {
+                    UExpression expression) {
+    PsiElement psiFrom = from.getPsi();
     if (refWhat != null) {
       if (refWhat instanceof RefParameter) {
         if (forWriting) {
@@ -227,35 +214,28 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
         }
       }
       addOutReference(refWhat);
-      ((RefJavaElementImpl)refWhat).markReferenced(this, psiFrom, psiWhat, forWriting, forReading, expression);
+      if (refWhat instanceof RefJavaFileImpl) {
+        ((RefJavaFileImpl)refWhat).addInReference(this);
+        getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
+      } else if (refWhat instanceof RefJavaElementImpl) {
+        ((RefJavaElementImpl)refWhat).markReferenced(this, psiFrom, psiWhat, forWriting, forReading, expression);
+      }
     } else {
       if (psiWhat instanceof PsiMethod) {
-        final PsiClass containingClass = ((PsiMethod)psiWhat).getContainingClass();
-        if (containingClass != null && containingClass.isEnum() && "values".equals(((PsiMethod)psiWhat).getName())) {
-          for (PsiField enumConstant : containingClass.getFields()) {
-            if (enumConstant instanceof PsiEnumConstant) {
-              final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
-              if (enumConstantReference != null) {
-                addOutReference(enumConstantReference);
-                enumConstantReference.markReferenced(this, psiFrom, enumConstant, false, true, expression);
-              }
-            }
-          }
-        }
+        markEnumUsedIfValuesMethod((PsiMethod)psiWhat, expression, psiFrom);
       }
       getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
     }
   }
 
-  protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
+  protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, UExpression expressionFrom) {
     addInReference(refFrom);
     setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
-    getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting, expressionFrom);
+    getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting, expressionFrom == null ? null : expressionFrom.getSourcePsi());
   }
 
-  void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, PsiReferenceExpression expressionFrom) {
-    if (!checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK) && expressionFrom != null &&
-        expressionFrom.isQualified() && RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
+  void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, UExpression expressionFrom) {
+    if (!checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK) && expressionFrom instanceof UQualifiedReferenceExpression && RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
       setFlag(true, IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
     }
   }
@@ -279,12 +259,28 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   @Override
   public Icon getIcon(final boolean expanded) {
     if (isSyntheticJSP()) {
-      final PsiElement element = getElement();
+      final PsiElement element = getPsiElement();
       if (element != null && element.isValid()) {
         return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
                                 Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
       }
     }
     return super.getIcon(expanded);
+  }
+
+  private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression, PsiElement psiFrom) {
+    //TODO support kotlin enums
+    final PsiClass containingClass = psiWhat.getContainingClass();
+    if (containingClass != null && containingClass.isEnum() && "values".equals(psiWhat.getName())) {
+      for (PsiField enumConstant : containingClass.getFields()) {
+        if (enumConstant instanceof PsiEnumConstant) {
+          final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
+          if (enumConstantReference != null) {
+            addOutReference(enumConstantReference);
+            enumConstantReference.markReferenced(this, psiFrom, enumConstant, false, true, expression);
+          }
+        }
+      }
+    }
   }
 }

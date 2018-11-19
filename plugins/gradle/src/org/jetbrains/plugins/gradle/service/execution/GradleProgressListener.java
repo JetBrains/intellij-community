@@ -35,7 +35,6 @@ import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/2/2017
  */
 public class GradleProgressListener implements ProgressListener, org.gradle.tooling.events.ProgressListener {
   private final ExternalSystemTaskNotificationListener myListener;
@@ -70,8 +69,14 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   @Override
   public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
     if (!GradleEnvironment.GRADLE_PROGRESS_VERBOSE_EVENTS) {
-      if (event.getDisplayName().startsWith("Resolve ")) return;
-      if (event.getDisplayName().startsWith("Apply plugin ")) return;
+      String displayName = event.getDisplayName();
+      if (displayName.startsWith("Resolve ")) return;
+      if (displayName.startsWith("Apply plugin ")) return;
+      if (displayName.startsWith("Apply script ")) return;
+      if (displayName.startsWith("Notify ") && displayName.contains(" listeners")) return;
+      if (displayName.startsWith("Realize task ")) return;
+      if (displayName.startsWith("Metadata of ")) return;
+      if (displayName.equals("Snapshot task inputs")) return;
     }
 
     ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(myTaskId, event, myOperationId + "_");

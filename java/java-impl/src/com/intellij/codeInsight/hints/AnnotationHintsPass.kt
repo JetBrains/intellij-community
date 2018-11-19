@@ -9,6 +9,7 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiAnnotation
@@ -55,22 +56,22 @@ class AnnotationHintsPass(
   }
 
   private class AnnotationHintRenderer(text: String) : HintRenderer(text) {
-    override fun getContextMenuGroupId() = "AnnotationHintsContextMenu"
+    override fun getContextMenuGroupId(inlay: Inlay<*>) = "AnnotationHintsContextMenu"
   }
 
   class ToggleExternalAnnotationsHintsAction : ToggleAction() {
-    override fun isSelected(e: AnActionEvent?): Boolean = CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE
+    override fun isSelected(e: AnActionEvent): Boolean = CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE
 
-    override fun setSelected(e: AnActionEvent?, state: Boolean) {
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
       CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE = state
       AnnotationHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
     }
   }
 
   class ToggleInferredAnnotationsHintsAction : ToggleAction() {
-    override fun isSelected(e: AnActionEvent?): Boolean = CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE
+    override fun isSelected(e: AnActionEvent): Boolean = CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE
 
-    override fun setSelected(e: AnActionEvent?, state: Boolean) {
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
       CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE = state
       AnnotationHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
     }

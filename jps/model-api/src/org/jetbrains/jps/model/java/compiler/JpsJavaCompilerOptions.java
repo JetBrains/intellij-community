@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class JpsJavaCompilerOptions {
+public class JpsJavaCompilerOptions implements CompilerOptions {
   public boolean PREFER_TARGET_JDK_COMPILER = true;
   public boolean DEBUGGING_INFO = true;
   public boolean GENERATE_NO_WARNINGS = false;

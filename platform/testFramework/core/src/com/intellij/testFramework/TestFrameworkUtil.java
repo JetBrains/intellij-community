@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.idea.Bombed;
@@ -30,7 +31,7 @@ public class TestFrameworkUtil {
     return instance.getTime();
   }
 
-  public static boolean bombExplodes(Bombed bombedAnnotation) {
+  public static boolean bombExplodes(@NotNull Bombed bombedAnnotation) {
     Date now = new Date();
     return now.after(raidDate(bombedAnnotation));
   }

@@ -8,14 +8,24 @@ import org.jetbrains.annotations.Async;
  * @author lex
  */
 public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
+  private final Priority myPriority;
+
   protected abstract void action() throws Exception;
 
   protected void commandCancelled() {
   }
 
+  public DebuggerCommandImpl() {
+    this(Priority.LOW);
+  }
+
+  public DebuggerCommandImpl(Priority priority) {
+    myPriority = priority;
+  }
+
   @Override
   public Priority getPriority() {
-    return Priority.LOW;
+    return myPriority;
   }
 
   public final void notifyCancelled() {

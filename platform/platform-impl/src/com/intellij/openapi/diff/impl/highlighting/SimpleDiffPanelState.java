@@ -115,7 +115,7 @@ public abstract class SimpleDiffPanelState implements Disposable  {
   private static class ResetMarkupRunnable implements Runnable {
     private final SimpleDiffPanelState myState;
 
-    public ResetMarkupRunnable(SimpleDiffPanelState state) {
+    ResetMarkupRunnable(SimpleDiffPanelState state) {
       myState = state;
     }
 

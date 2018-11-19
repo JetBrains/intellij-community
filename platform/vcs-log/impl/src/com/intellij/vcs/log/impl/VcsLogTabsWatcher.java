@@ -163,7 +163,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
         String tabId = VcsLogContentUtil.getId(event.getContent());
         if (tabId != null) {
@@ -173,7 +173,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();
       if (content instanceof TabbedContent) {
         content.addPropertyChangeListener(this);
@@ -181,7 +181,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();
       if (content instanceof TabbedContent) {
         content.removePropertyChangeListener(this);

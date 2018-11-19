@@ -14,7 +14,7 @@ public abstract class ChangeHierarchyViewActionBase extends ToggleAction {
   public ChangeHierarchyViewActionBase(String text, String description, Icon icon) {super(text, description, icon);}
 
   @Override
-  public final boolean isSelected(final AnActionEvent event) {
+  public final boolean isSelected(@NotNull final AnActionEvent event) {
     final HierarchyBrowserBaseEx browser = getHierarchyBrowser(event.getDataContext());
     return browser != null && getTypeName().equals(browser.getCurrentViewType());
   }
@@ -22,7 +22,7 @@ public abstract class ChangeHierarchyViewActionBase extends ToggleAction {
   protected abstract String getTypeName();
 
   @Override
-  public final void setSelected(final AnActionEvent event, final boolean flag) {
+  public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
     if (flag) {
       final HierarchyBrowserBaseEx browser = getHierarchyBrowser(event.getDataContext());
       ApplicationManager.getApplication().invokeLater(() -> {

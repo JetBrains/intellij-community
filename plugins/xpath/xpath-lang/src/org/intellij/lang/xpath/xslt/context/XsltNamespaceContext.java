@@ -163,7 +163,7 @@ public class XsltNamespaceContext implements NamespaceContext {
     private final SmartPsiElementPointer<XmlFile> myXmlFile;
 
     // TODO: verify API
-    public MyCreateNSDeclarationAction(@NotNull XmlElement xmlElement, String prefix, @NotNull XmlFile xmlFile) {
+    MyCreateNSDeclarationAction(@NotNull XmlElement xmlElement, String prefix, @NotNull XmlFile xmlFile) {
       super(xmlElement, prefix);
       myXmlFile = SmartPointerManager.createPointer(xmlFile);
     }

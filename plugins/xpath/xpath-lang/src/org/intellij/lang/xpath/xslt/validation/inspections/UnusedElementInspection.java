@@ -55,7 +55,7 @@ public class UnusedElementInspection extends XsltInspection {
     private static class MyVisitor extends XmlElementVisitor {
         private final ProblemsHolder myHolder;
 
-        public MyVisitor(ProblemsHolder holder) {
+        MyVisitor(ProblemsHolder holder) {
             myHolder = holder;
         }
 

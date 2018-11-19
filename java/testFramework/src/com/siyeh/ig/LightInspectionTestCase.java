@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTestCase {
 
+  public static final String INSPECTION_GADGETS_TEST_DATA_PATH = "/plugins/InspectionGadgets/test/";
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -92,6 +94,13 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     myFixture.checkResult(result);
   }
 
+  protected final void checkQuickFix(String intentionName) {
+    final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
+  }
+
   protected final void doTest(@Language("JAVA") @NotNull String classText, String fileName) {
     final StringBuilder newText = new StringBuilder();
     int start = 0;
@@ -116,6 +125,9 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
       else if (text.startsWith("!")) {
         newText.append("<error descr=\"").append(text.substring(1)).append("\">");
       }
+      else if (text.startsWith(" ")) {
+        newText.append("/*").append(text).append("*/");
+      }
       else {
         newText.append("<warning descr=\"").append(text).append("\">");
       }
@@ -133,7 +145,7 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     assertNotNull("File-based tests should either return an inspection or override this method", inspection);
     final String className = inspection.getClass().getName();
     final String[] words = className.split("\\.");
-    final StringBuilder basePath = new StringBuilder("/plugins/InspectionGadgets/test/");
+    final StringBuilder basePath = new StringBuilder(INSPECTION_GADGETS_TEST_DATA_PATH);
     final int lastWordIndex = words.length - 1;
     for (int i = 0; i < lastWordIndex; i++) {
       String word = words[i];

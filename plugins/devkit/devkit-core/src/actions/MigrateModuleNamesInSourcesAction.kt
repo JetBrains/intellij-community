@@ -261,7 +261,7 @@ private val regularWordsUsedAsModuleNames = setOf(
   "commandLineTool", "chronon", "codeception", "common", "commander", "copyright", "coverage", "dependencies", "designer", "ddmlib", "doxygen", "draw9patch", "drupal", "duplicates", "drools", "eclipse", "el", "emma", "editorconfig",
   "extensions", "flex", "gherkin", "flags", "freemarker", "github", "gradle", "haml", "graph", "icons", "idea", "images", "ipnb", "jira", "joomla", "jbpm",
   "json", "junit", "layoutlib", "less", "localization", "manifest", "main", "markdown", "maven", "ognl", "openapi", "ninepatch", "perflib", "observable", "phing", "php", "phpspec",
-  "pixelprobe", "play", "profilers", "properties", "puppet", "postcss", "python", "quirksmode", "repository", "resources", "rs", "relaxng", "restClient", "rest", "ruby", "sass", "sdklib", "seam", "ssh",
+  "pixelprobe", "play", "profilers", "properties", "puppet", "postcss", "python", "repository", "resources", "rs", "relaxng", "restClient", "rest", "ruby", "sass", "sdklib", "seam", "ssh",
   "spellchecker", "stylus", "swift", "terminal", "tomcat", "textmate", "testData", "testFramework", "testng", "testRunner", "twig", "util", "updater", "vaadin", "vagrant", "vuejs", "velocity", "weblogic",
   "websocket", "wizard", "ws", "wordPress", "xml", "xpath", "yaml", "usageView", "error-prone", "spy-js", "WebStorm", "javac2", "dsm", "clion",
   "phpstorm", "WebComponents"

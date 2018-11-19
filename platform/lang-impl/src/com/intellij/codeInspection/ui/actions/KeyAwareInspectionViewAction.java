@@ -92,7 +92,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
         final Set<PsiElement> files = new HashSet<>();
         for (RefEntity selectedElement : selectedElements) {
           if (selectedElement instanceof RefElement) {
-            files.add(((RefElement)selectedElement).getElement());
+            files.add(((RefElement)selectedElement).getPsiElement());
           }
         }
 
@@ -120,7 +120,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       Set<PsiFile> files = new THashSet<>();
       for (RefEntity entity : view.getTree().getSelectedElements()) {
         if (entity instanceof RefElement && entity.isValid()) {
-          final PsiElement element = ((RefElement)entity).getElement();
+          final PsiElement element = ((RefElement)entity).getPsiElement();
           final PsiFile file = element.getContainingFile();
           files.add(file);
         }
@@ -160,7 +160,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
           break;
         default:
           context = null;
-          scope = new AnalysisScope(view.getProject(), files.stream().map(PsiFile::getVirtualFile).collect(Collectors.toList()));
+          scope = new AnalysisScope(view.getProject(), ContainerUtil.map(files, PsiFile::getVirtualFile));
       }
 
       RunInspectionIntention.selectScopeAndRunInspection(key.toString(), scope, useModule ? module : null, context, view.getProject());
@@ -172,7 +172,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
       final PsiElement psiElement;
       if (selectedElements.length > 0 && selectedElements[0] instanceof RefElement) {
-        psiElement = ((RefElement)selectedElements[0]).getElement();
+        psiElement = ((RefElement)selectedElements[0]).getPsiElement();
       }
       else {
         psiElement = null;

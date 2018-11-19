@@ -180,7 +180,7 @@ public class JsonSchemaTreeNode {
       if (mySchema.getRef() != null) sb.append("$ref: ").append(mySchema.getRef()).append("\n");
       else if (!mySchema.getProperties().isEmpty()) {
         sb.append("properties: ");
-        sb.append(mySchema.getProperties().keySet().stream().collect(Collectors.joining(", "))).append("\n");
+        sb.append(String.join(", ", mySchema.getProperties().keySet())).append("\n");
       }
       if (!myChildren.isEmpty()) {
         sb.append("OR children of NODE#").append(hashCode()).append(":\n----------------\n")

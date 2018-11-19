@@ -442,7 +442,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       private final JComponent myParent;
       private final ComboBox<String> myComboBox;
 
-      public MyEditTemplatesListener(PsiClass psiClass, JComponent panel, ComboBox<String> comboBox) {
+      MyEditTemplatesListener(PsiClass psiClass, JComponent panel, ComboBox<String> comboBox) {
         myPsiClass = psiClass;
         myParent = panel;
         myComboBox = comboBox;

@@ -30,6 +30,7 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.*
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -134,7 +135,10 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
   // Drill as deep, as we can
   while (currentName.componentCount > 0 && element == null) {
     if (psiDirectory != null) { // Resolve against folder
-      element = resolveModuleAt(currentName, psiDirectory, resolveContext).firstOrNull()
+      // There could be folder and module on the same level. Empty folder should be ignored in this case.
+      element = resolveModuleAt(currentName, psiDirectory, resolveContext).filterNot {
+        it is PsiDirectory && it.children.filterIsInstance<PyFile>().isEmpty()
+      }.firstOrNull()
     }
 
     if (element == null) { // Resolve against roots

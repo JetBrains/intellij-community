@@ -113,7 +113,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
   public RunProfile createProfile(Location<PsiMethod>[] testMethods,
                                   Module module,
-                                  ConfigurationContext context, 
+                                  ConfigurationContext context,
                                   String configurationName) {
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     JavaTestConfigurationBase configuration = (JavaTestConfigurationBase)settings.getConfiguration();
@@ -128,7 +128,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     return new MyRunProfile(testMethods, module, configuration, configurationName);
   }
 
-  public static Module detectTargetModule(Collection<Module> survivedModules, Project project) {
+  public static Module detectTargetModule(Collection<? extends Module> survivedModules, Project project) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
     survivedModules
@@ -206,7 +206,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     private final JavaTestConfigurationBase myConfiguration;
     private final String myConfigurationName;
 
-    public MyRunProfile(Location<PsiMethod>[] testMethods, Module module, JavaTestConfigurationBase configuration, String configurationName) {
+    MyRunProfile(Location<PsiMethod>[] testMethods, Module module, JavaTestConfigurationBase configuration, String configurationName) {
       myTestMethods = testMethods;
       myModule = module;
       myConfiguration = configuration;
@@ -219,6 +219,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       return createProfile(myTestMethods, myModule, myConfiguration, environment);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return myConfigurationName;
@@ -237,7 +238,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     }
 
     @Override
-    public void setShortenCommandLine(ShortenCommandLine mode) {
+    public void setShortenCommandLine(@Nullable ShortenCommandLine mode) {
       myConfiguration.setShortenCommandLine(mode);
     }
 
@@ -248,7 +249,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     }
 
     @Override
-    public void setName(String name) {
+    public void setName(@NotNull String name) {
     }
 
     @NotNull

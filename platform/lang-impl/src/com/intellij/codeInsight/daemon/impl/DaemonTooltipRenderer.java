@@ -25,11 +25,11 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   @NonNls protected static final String END_MARKER = "<!-- end marker -->";
 
 
-  public DaemonTooltipRenderer(final String text, Object[] comparable) {
+  DaemonTooltipRenderer(final String text, Object[] comparable) {
     super(text, comparable);
   }
 
-  public DaemonTooltipRenderer(final String text, final int width, Object[] comparable) {
+  DaemonTooltipRenderer(final String text, final int width, Object[] comparable) {
     super(text, width, comparable);
   }
 

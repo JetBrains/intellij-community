@@ -88,7 +88,6 @@ public abstract class AsyncValueLoader<T> {
         return promise;
       }
       else if (state == Promise.State.SUCCEEDED) {
-        //noinspection unchecked
         if (!checkFreshness || isUpToDate()) {
           return promise;
         }

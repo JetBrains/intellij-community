@@ -52,7 +52,7 @@ public class ResourceBundleImpl extends ResourceBundle {
 
   @Override
   public boolean isValid() {
-    return myValid && myDefaultPropertiesFile.getElement() != null;
+    return myValid && PropertiesImplUtil.getPropertiesFile(myDefaultPropertiesFile.getElement()) != null;
   }
 
   public void invalidate() {

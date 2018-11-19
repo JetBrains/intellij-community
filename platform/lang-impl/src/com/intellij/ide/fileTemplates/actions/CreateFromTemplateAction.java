@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
-  private final Supplier<FileTemplate> myTemplate;
+  private final Supplier<? extends FileTemplate> myTemplate;
 
   /** Avoid calling the constructor from normal IDE actions, because:
    *  - Normal actions are preloaded at startup
@@ -39,7 +39,7 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     this(template.getName(), FileTemplateUtil.getIcon(template), () -> template);
   }
 
-  public CreateFromTemplateAction(String templateName, @Nullable Icon icon, @NotNull Supplier<FileTemplate> template){
+  public CreateFromTemplateAction(String templateName, @Nullable Icon icon, @NotNull Supplier<? extends FileTemplate> template){
     super(templateName, null, icon);
     myTemplate = template;
   }
@@ -58,6 +58,7 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     presentation.setVisible(isEnabled);
   }
 
+  @NotNull
   public FileTemplate getTemplate() {
     return myTemplate.get();
   }

@@ -68,7 +68,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return list.toArray(new Configurable[0]);
   }
 
-  private static void collect(List<Configurable> list, Configurable... configurables) {
+  private static void collect(List<? super Configurable> list, Configurable... configurables) {
     for (Configurable configurable : configurables) {
       list.add(configurable);
       if (configurable instanceof Configurable.Composite) {
@@ -89,8 +89,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
-    //noinspection unchecked
+  public <T extends Configurable> void showSettingsDialog(@Nullable Project project, @NotNull Class<T> configurableClass) {
     showSettingsDialog(project, configurableClass, null);
   }
 
@@ -110,8 +109,8 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public void showSettingsDialog(@Nullable Project project,
-                                 @NotNull Predicate<Configurable> predicate,
-                                 @Nullable Consumer<Configurable> additionalConfiguration) {
+                                 @NotNull Predicate<? super Configurable> predicate,
+                                 @Nullable Consumer<? super Configurable> additionalConfiguration) {
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
     Configurable config = new ConfigurableVisitor() {
       @Override

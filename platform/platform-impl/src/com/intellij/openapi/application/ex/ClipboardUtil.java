@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 public class ClipboardUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.Clipboard");
 
-  public static <E> E handleClipboardSafely(@NotNull Supplier<E> supplier, @NotNull Supplier<E> onFail) {
+  public static <E> E handleClipboardSafely(@NotNull Supplier<? extends E> supplier, @NotNull Supplier<? extends E> onFail) {
     try {
       return useLegacyMergeSort(supplier);
     }

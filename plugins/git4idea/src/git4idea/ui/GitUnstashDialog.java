@@ -331,7 +331,7 @@ public class GitUnstashDialog extends DialogWrapper {
     private final VirtualFile myRoot;
     private final StashInfo myStashInfo;
 
-    public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
+    UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
       super(project, Git.getInstance(),
             Collections.singleton(root), makeParams(project, stashInfo));
       myRoot = root;
@@ -367,7 +367,7 @@ public class GitUnstashDialog extends DialogWrapper {
 
     private final StashInfo myStashInfo;
 
-    public UnstashMergeDialogCustomizer(StashInfo stashInfo) {
+    UnstashMergeDialogCustomizer(StashInfo stashInfo) {
       myStashInfo = stashInfo;
     }
 

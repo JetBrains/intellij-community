@@ -122,7 +122,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
 
   private static class StringConcatenationArgumentToLogCallFix extends InspectionGadgetsFix {
 
-    public StringConcatenationArgumentToLogCallFix() {}
+    StringConcatenationArgumentToLogCallFix() {}
 
     @NotNull
     @Override

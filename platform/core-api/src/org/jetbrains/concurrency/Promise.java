@@ -115,6 +115,7 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve (result value will be passed),
    * or on promise reject (null as result value will be passed).
    */
+  @NotNull
   Promise<T> onProcessed(@NotNull java.util.function.Consumer<? super T> processed);
 
   /**
@@ -122,6 +123,7 @@ public interface Promise<T> {
    * or on promise reject (null as result value will be passed).
    */
   @Deprecated
+  @NotNull
   default Promise<T> processed(@NotNull Consumer<? super T> action) {
     return onProcessed(it -> action.consume(it));
   }

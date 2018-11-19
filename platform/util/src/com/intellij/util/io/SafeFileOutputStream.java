@@ -30,8 +30,8 @@ public class SafeFileOutputStream extends OutputStream {
   private final boolean myPreserveAttributes;
   private final File myTempFile;
   private final FileOutputStream myOutputStream;
-  private boolean myClosed = false;
-  private boolean myFailed = false;
+  private boolean myClosed;
+  private boolean myFailed;
 
   public SafeFileOutputStream(File target) throws FileNotFoundException {
     this(target, false);

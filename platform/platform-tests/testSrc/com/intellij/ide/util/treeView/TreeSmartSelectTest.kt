@@ -47,7 +47,9 @@ class TreeSmartSelectTest : FlyIdeaTestCase() {
       node = node(name)
       add(node)
     }
-    TreeUtil.expandAll(myTree)
+    // the following method expands nodes on EDT,
+    // so in this case we should pause the main thread
+    TreeUtil.promiseExpandAll(myTree).blockingGet(10000)
     return node
   }
 

@@ -130,7 +130,7 @@ public class GroovyTestGenerator implements TestGenerator {
   private static void addTestMethods(Editor editor,
                                      PsiClass targetClass,
                                      TestFramework descriptor,
-                                     Collection<MemberInfo> methods,
+                                     Collection<? extends MemberInfo> methods,
                                      boolean generateBefore,
                                      boolean generateAfter) throws IncorrectOperationException {
     final HashSet<String> existingNames = new HashSet<>();
@@ -155,7 +155,7 @@ public class GroovyTestGenerator implements TestGenerator {
                                      TestFramework descriptor,
                                      PsiClass targetClass,
                                      Editor editor,
-                                     @Nullable String name, Set<String> existingNames) {
+                                     @Nullable String name, Set<? super String> existingNames) {
     GroovyPsiElementFactory f = GroovyPsiElementFactory.getInstance(targetClass.getProject());
     PsiMethod method = (PsiMethod)targetClass.add(f.createMethod("dummy", PsiType.VOID));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());

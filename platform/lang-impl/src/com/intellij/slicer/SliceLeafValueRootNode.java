@@ -23,10 +23,10 @@ import java.util.List;
 public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRenderer {
   public final List<SliceNode> myCachedChildren;
 
-  SliceLeafValueRootNode(@NotNull Project project,
-                         @NotNull SliceNode root,
-                         @NotNull SliceUsage sliceUsage,
-                         @NotNull List<SliceNode> children) {
+  public SliceLeafValueRootNode(@NotNull Project project,
+                                @NotNull SliceNode root,
+                                @NotNull SliceUsage sliceUsage,
+                                @NotNull List<SliceNode> children) {
     super(project, sliceUsage, root.targetEqualUsages);
     myCachedChildren = children;
   }
@@ -43,7 +43,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
   }
 
   @Override

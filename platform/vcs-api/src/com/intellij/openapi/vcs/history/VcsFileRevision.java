@@ -16,12 +16,10 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Date;
 
 public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription {
@@ -59,12 +57,12 @@ public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription 
     }
 
     @Override
-    public byte[] loadContent() throws IOException, VcsException {
-      return getContent();
+    public byte[] getContent() {
+      return loadContent();
     }
 
     @Override
-    public byte[] getContent() {
+    public byte[] loadContent() {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   };

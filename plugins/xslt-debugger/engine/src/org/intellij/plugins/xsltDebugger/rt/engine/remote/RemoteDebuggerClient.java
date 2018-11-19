@@ -185,7 +185,7 @@ public class RemoteDebuggerClient implements Debugger {
   private static class MyBreakpointManager implements BreakpointManager {
     private final RemoteBreakpointManager myManager;
 
-    public MyBreakpointManager(RemoteBreakpointManager manager) {
+    MyBreakpointManager(RemoteBreakpointManager manager) {
       myManager = manager;
     }
 
@@ -246,7 +246,7 @@ public class RemoteDebuggerClient implements Debugger {
     private static class MyBreakpoint implements Breakpoint {
       private final RemoteBreakpoint myBreakpoint;
 
-      public MyBreakpoint(RemoteBreakpoint breakpoint) {
+      MyBreakpoint(RemoteBreakpoint breakpoint) {
         myBreakpoint = breakpoint;
       }
 
@@ -455,7 +455,7 @@ public class RemoteDebuggerClient implements Debugger {
   private static class MyVariable implements Variable {
     private final RemoteDebugger.Variable myVariable;
 
-    public MyVariable(RemoteDebugger.Variable variable) {
+    MyVariable(RemoteDebugger.Variable variable) {
       myVariable = variable;
     }
 
@@ -507,7 +507,7 @@ public class RemoteDebuggerClient implements Debugger {
       }
     }
 
-    static List<Variable> convert(List<RemoteDebugger.Variable> list) {
+    static List<Variable> convert(List<? extends RemoteDebugger.Variable> list) {
       final ArrayList<Variable> variables = new ArrayList<Variable>(list.size());
       for (final RemoteDebugger.Variable variable : list) {
         variables.add(new MyVariable(variable));
@@ -519,7 +519,7 @@ public class RemoteDebuggerClient implements Debugger {
   private static class MyOutputEventQueue implements OutputEventQueue {
     private final RemoteDebugger.EventQueue myEventQueue;
 
-    public MyOutputEventQueue(RemoteDebugger.EventQueue eventQueue) {
+    MyOutputEventQueue(RemoteDebugger.EventQueue eventQueue) {
       myEventQueue = eventQueue;
     }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.application.options.schemes.SchemesModel;
@@ -23,6 +9,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -115,11 +102,11 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
   }
 
   void updatePanel(@NotNull InspectionProfileSchemesPanel panel) {
-    final List<InspectionProfileModifiableModel> allProfiles = myProfilePanels.stream().map(p -> p.getProfile()).collect(Collectors.toList());
+    final List<InspectionProfileModifiableModel> allProfiles = ContainerUtil.map(myProfilePanels, p -> p.getProfile());
     panel.resetSchemes(allProfiles);
   }
 
-  void apply(InspectionProfileModifiableModel selected, Consumer<InspectionProfileImpl> applyRootProfileAction) {
+  void apply(InspectionProfileModifiableModel selected, Consumer<? super InspectionProfileImpl> applyRootProfileAction) {
     for (InspectionProfileImpl profile : myDeletedProfiles) {
       profile.getProfileManager().deleteProfile(profile);
     }
@@ -139,7 +126,19 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     myDeletedProfiles.clear();
     getSortedProfiles(myApplicationProfileManager, myProjectProfileManager)
       .stream()
-      .map(InspectionProfileModifiableModel::new)
+      .map(source -> {
+        try {
+          return new InspectionProfileModifiableModel(source);
+        }
+        catch (Exception e) {
+          //noinspection ConstantConditions,InstanceofCatchParameter
+          if (e instanceof JDOMException) {
+            return null;
+          } else {
+            throw new RuntimeException(e);
+          }
+        }
+      })
       .forEach(this::addProfile);
   }
 

@@ -361,7 +361,7 @@ public class TipUIUtil {
     private WebView myWebView;
     private String myRecentText = "";
 
-    public JFXBrowser() {
+    JFXBrowser() {
       setLayout(new GridLayout(1, 1));
       setBackground(UIUtil.getTextFieldBackground());
       Long mask = ReflectionUtil.getField(Component.class, this, long.class, "eventMask");

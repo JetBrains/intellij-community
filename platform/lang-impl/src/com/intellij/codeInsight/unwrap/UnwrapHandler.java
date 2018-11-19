@@ -42,6 +42,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +50,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class UnwrapHandler implements CodeInsightActionHandler {
   public static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
@@ -108,13 +108,14 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   private static void showPopup(final List<? extends AnAction> options, Editor editor) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
 
-    List<MyItem> model = options.stream().map(a -> new MyItem(((MyUnwrapAction)a).getName(), options.indexOf(a))).collect(Collectors.toList());
+    List<MyItem> model = ContainerUtil.map(options, a -> new MyItem(((MyUnwrapAction)a).getName(), options.indexOf(a)));
     Function<MyItem, MyUnwrapAction> optionByName = item -> (MyUnwrapAction)options.get(item.index);
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
       .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
       .setMovable(false)
+      .setNamerForFiltering(item -> item.name)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setResizable(false)
       .setRequestFocus(true)
@@ -129,7 +130,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       })
       .addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.dropHighlight();
         }
       })
@@ -139,7 +140,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   private static class MyItem {
     final String name;
     final int index;
-    public MyItem(String name, int index) {
+    MyItem(String name, int index) {
       this.name = name;
       this.index = index;
     }

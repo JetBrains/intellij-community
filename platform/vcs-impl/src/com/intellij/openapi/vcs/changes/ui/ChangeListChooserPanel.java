@@ -30,13 +30,13 @@ public class ChangeListChooserPanel extends JPanel {
 
   private final MyEditorComboBox myExistingListsCombo;
   private final NewEditChangelistPanel myListPanel;
-  private final NullableConsumer<String> myOkEnabledListener;
+  private final NullableConsumer<? super String> myOkEnabledListener;
   private final Project myProject;
   private String myLastTypedDescription;
   private boolean myNewNameSuggested = false;
   @Nullable private ChangeListData myData;
 
-  public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<String> okEnabledListener) {
+  public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<? super String> okEnabledListener) {
     super(new BorderLayout());
     myProject = project;
     myExistingListsCombo = new MyEditorComboBox();
@@ -226,7 +226,7 @@ public class ChangeListChooserPanel extends JPanel {
     private static final int PREF_WIDTH = 200;
     private final LanguageTextField myEditorTextField;
 
-    public MyEditorComboBox() {
+    MyEditorComboBox() {
       super(PREF_WIDTH);
       JBColor fg = new JBColor(0x00b53d, 0x6ba65d);
       JBColor bg = new JBColor(0xebfcf1, 0x313b32);

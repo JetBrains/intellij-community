@@ -52,28 +52,28 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     mySdkModificator = sdkModificator;
     myListener = new SdkModel.Listener() {
       @Override
-      public void sdkAdded(Sdk sdk) {
+      public void sdkAdded(@NotNull Sdk sdk) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
           addJavaSdk(sdk);
         }
       }
 
       @Override
-      public void beforeSdkRemove(Sdk sdk) {
+      public void beforeSdkRemove(@NotNull Sdk sdk) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
           removeJavaSdk(sdk);
         }
       }
 
       @Override
-      public void sdkChanged(Sdk sdk, String previousName) {
+      public void sdkChanged(@NotNull Sdk sdk, String previousName) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
           updateJavaSdkList(sdk, previousName);
         }
       }
 
       @Override
-      public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
+      public void sdkHomeSelected(@NotNull final Sdk sdk, @NotNull final String newSdkHome) {
         if (sdk.getSdkType() instanceof IdeaJdk) {
           internalJdkUpdate(sdk);
         }

@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
  * @author yole
 */
 class VcsErrorViewPanel extends NewErrorTreeViewPanel {
-  public VcsErrorViewPanel(Project project) {
+  VcsErrorViewPanel(Project project) {
     super(project, null);
   }
 

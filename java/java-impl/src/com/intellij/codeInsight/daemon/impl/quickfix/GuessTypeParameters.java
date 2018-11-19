@@ -136,7 +136,7 @@ public class GuessTypeParameters {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     while (currContext != null && !manager.areElementsEquivalent(currContext, targetClass)) {
       PsiTypeParameter[] typeParameters = currContext.getTypeParameters();
-      substitutor = JavaPsiFacade.getInstance(project).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
+      substitutor = JavaPsiFacade.getElementFactory(project).createRawSubstitutor(substitutor, typeParameters);
       currContext = currContext.getContainingClass();
     }
 

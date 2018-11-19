@@ -164,7 +164,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
   private static final class FilterItem {
     private final ImageFilter myFilter;
 
-    public FilterItem(ImageFilter filter) {
+    FilterItem(ImageFilter filter) {
       myFilter = filter;
     }
 

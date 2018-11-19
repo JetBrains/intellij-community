@@ -12,12 +12,16 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -35,6 +39,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   private final DefaultActionGroup myToolBarGroup = new DefaultActionGroup();
   private final DefaultActionGroup myPopupMenuGroup = new DefaultActionGroup();
   private final ActionToolbar myToolbar;
+  private final int myToolbarAnchor;
   private final JScrollPane myViewerScrollPane;
   private final AnAction myShowDiffAction;
 
@@ -49,10 +54,13 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
     myToolbar.setTargetComponent(this);
+    myToolbarAnchor = getToolbarAnchor();
+    myToolbar.setOrientation(isVerticalToolbar() ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
 
     myViewer.installPopupHandler(myPopupMenuGroup);
 
-    myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
+    myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer, true);
+    myViewerScrollPane.setBorder(createViewerBorder());
 
     myShowDiffAction = new MyShowDiffAction();
   }
@@ -68,15 +76,30 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     JPanel topPanel = new JPanel(new BorderLayout());
 
-    TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(createToolbarComponent(), myViewer);
-    topPanel.add(toolbarPanel, BorderLayout.CENTER);
+    Component toolbarComponent = isVerticalToolbar()
+                                 ? createToolbarComponent()
+                                 : new TreeActionsToolbarPanel(createToolbarComponent(), myViewer);
 
     JComponent headerPanel = createHeaderPanel();
     if (headerPanel != null) topPanel.add(headerPanel, BorderLayout.EAST);
 
-    add(topPanel, BorderLayout.NORTH);
-    add(myViewerScrollPane, BorderLayout.CENTER);
+    switch (myToolbarAnchor) {
+      case SwingConstants.TOP:
+        topPanel.add(toolbarComponent, BorderLayout.CENTER);
+        break;
+      case SwingConstants.BOTTOM:
+        add(toolbarComponent, BorderLayout.SOUTH);
+        break;
+      case SwingConstants.LEFT:
+        add(toolbarComponent, BorderLayout.WEST);
+        break;
+      case SwingConstants.RIGHT:
+        add(toolbarComponent, BorderLayout.EAST);
+        break;
+    }
 
+    add(topPanel, BorderLayout.NORTH);
+    add(createCenterPanel(), BorderLayout.CENTER);
 
     myToolBarGroup.addAll(createToolbarActions());
     myPopupMenuGroup.addAll(createPopupMenuActions());
@@ -87,7 +110,31 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
       myToolBarGroup.add(groupByAction);
     }
 
+    if (isVerticalToolbar()) {
+      List<AnAction> treeActions = TreeActionsToolbarPanel.createTreeActions(myViewer);
+      boolean hasTreeActions = ContainerUtil.exists(treeActions,
+                                                    action -> ActionUtil.recursiveContainsAction(myToolBarGroup, action));
+      if (!hasTreeActions) {
+        myToolBarGroup.addSeparator();
+        myToolBarGroup.addAll(treeActions);
+      }
+    }
+
     myShowDiffAction.registerCustomShortcutSet(this, null);
+  }
+
+  @NotNull
+  protected Border createViewerBorder() {
+    return IdeBorderFactory.createBorder(SideBorder.ALL);
+  }
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.BOTTOM, SwingConstants.LEFT, SwingConstants.RIGHT})
+  protected int getToolbarAnchor() {
+    return SwingConstants.TOP;
+  }
+
+  private boolean isVerticalToolbar() {
+    return myToolbarAnchor == SwingConstants.LEFT || myToolbarAnchor == SwingConstants.RIGHT;
   }
 
   @NotNull
@@ -111,6 +158,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   @Nullable
   protected JComponent createHeaderPanel() {
     return null;
+  }
+
+  @NotNull
+  protected JComponent createCenterPanel() {
+    return myViewerScrollPane;
   }
 
   @NotNull
@@ -197,12 +249,12 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public boolean canShowDiff() {
-    ListSelection<Object> selection = VcsTreeModelData.getListSelection(myViewer);
+    ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
     return ContainerUtil.exists(selection.getList(), entry -> getDiffRequestProducer(entry) != null);
   }
 
   public void showDiff() {
-    ListSelection<Object> selection = VcsTreeModelData.getListSelection(myViewer);
+    ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
     ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(this::getDiffRequestProducer);
     DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
     updateDiffContext(chain);
@@ -214,7 +266,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   private class MyShowDiffAction extends DumbAwareAction {
-    public MyShowDiffAction() {
+    MyShowDiffAction() {
       ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }
 

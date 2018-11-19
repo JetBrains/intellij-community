@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/27/2015
  */
 public class ExternalSystemTaskExecutionEvent extends ExternalSystemTaskNotificationEvent {
   private static final long serialVersionUID = 1L;

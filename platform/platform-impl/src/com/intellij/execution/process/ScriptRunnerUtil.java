@@ -38,14 +38,14 @@ public final class ScriptRunnerUtil {
     return getProcessOutput(commandLine, STDOUT_OUTPUT_KEY_FILTER, DEFAULT_TIMEOUT);
   }
 
-  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<Key> outputTypeFilter, long timeout)
+  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<? super Key> outputTypeFilter, long timeout)
     throws ExecutionException {
     return getProcessOutput(new OSProcessHandler(commandLine), outputTypeFilter,
                             timeout);
   }
 
   public static String getProcessOutput(@NotNull final ProcessHandler processHandler,
-                                        @NotNull final Condition<Key> outputTypeFilter,
+                                        @NotNull final Condition<? super Key> outputTypeFilter,
                                         final long timeout)
     throws ExecutionException {
     LOG.assertTrue(!processHandler.isStartNotified());
@@ -81,7 +81,7 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset,
-                                         @NotNull ThrowableNotNullFunction<GeneralCommandLine, OSProcessHandler, ExecutionException> creator)
+                                         @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator)
     throws ExecutionException {
 
     GeneralCommandLine commandLine = new GeneralCommandLine(PathEnvironmentVariableUtil.findExecutableInWindowsPath(exePath));
@@ -202,8 +202,8 @@ public final class ScriptRunnerUtil {
                                              long millisTimeout,
                                              @Nullable String commandLine) {
     if (processHandler.isProcessTerminated()) {
-      if (commandLine == null && processHandler instanceof BaseOSProcessHandler) {
-        commandLine = ((BaseOSProcessHandler) processHandler).getCommandLine();
+      if (commandLine == null && processHandler instanceof BaseProcessHandler) {
+        commandLine = ((BaseProcessHandler)processHandler).getCommandLine();
       }
       LOG.warn("Process '" + commandLine + "' is already terminated!");
       return;

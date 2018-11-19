@@ -45,8 +45,7 @@ class PyAsyncCallInspection : PyInspection() {
     private fun isAwaitableCall(callExpr: PyCallExpression): Boolean {
       val type = myTypeEvalContext.getType(callExpr) ?: return false
       return PyABCUtil.isSubtype(type, PyNames.AWAITABLE, myTypeEvalContext) ||
-             type is PyClassType &&
-             PyTypingTypeProvider.GENERATOR == type.classQName &&
+             PyTypingTypeProvider.isGenerator(type) &&
              PyKnownDecoratorUtil.isResolvedToGeneratorBasedCoroutine(callExpr, resolveContext, myTypeEvalContext)
     }
   }

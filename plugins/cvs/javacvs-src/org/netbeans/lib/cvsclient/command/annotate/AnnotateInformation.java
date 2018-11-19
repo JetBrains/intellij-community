@@ -25,7 +25,7 @@ public final class AnnotateInformation {
 
 	// Fields =================================================================
 
-	private final List lines = new ArrayList(1000);
+	private final List<AnnotateLine> lines = new ArrayList<>(1000);
 	private final File file;
 
 	// Setup ==================================================================
@@ -49,7 +49,7 @@ public final class AnnotateInformation {
 		return file;
 	}
 
-	public List getLines() {
+	public List<AnnotateLine> getLines() {
 		return lines;
 	}
 

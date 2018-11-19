@@ -199,7 +199,6 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   public final void addComponent(@NotNull final RadComponent component, int index) {
     if (myComponents.contains(component)) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component is already added: " + component);
     }
 
@@ -240,7 +239,6 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   public final void removeComponent(@NotNull final RadComponent component) {
     if (!myComponents.contains(component)) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component is not added: " + component);
     }
 
@@ -698,7 +696,7 @@ public class RadContainer extends RadComponent implements IContainer {
   private final class MyBorderTitleProperty extends Property<RadContainer, StringDescriptor> {
     private final StringEditor myEditor;
 
-    public MyBorderTitleProperty() {
+    MyBorderTitleProperty() {
       super(null, "Title");
       myEditor = new StringEditor(getProject());
     }

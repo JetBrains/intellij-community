@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.util.RecursionManager.doPreventingRecursion
@@ -82,16 +82,16 @@ class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
 
     return object : GrTupleType(expression.resolveScope, JavaPsiFacade.getInstance(expression.project)) {
 
-      override fun inferComponents(): Array<PsiType?> {
+      override fun inferComponents(): List<PsiType?> {
         return initializers.flatMap {
-          doGetComponentTypes(it) ?: return PsiType.EMPTY_ARRAY
-        }.toTypedArray()
+          doGetComponentTypes(it) ?: return emptyList()
+        }
       }
 
       private fun doGetComponentTypes(initializer: GrExpression): Collection<PsiType>? {
         return doPreventingRecursion(initializer, false) {
           if (initializer is GrSpreadArgument) {
-            (initializer.argument.type as? GrTupleType)?.componentTypes?.toList()
+            (initializer.argument.type as? GrTupleType)?.componentTypes
           }
           else {
             TypesUtil.boxPrimitiveType(initializer.type, initializer.manager, initializer.resolveScope)?.let { listOf(it) }

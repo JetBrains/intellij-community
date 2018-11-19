@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.editorActions.wordSelection;
 
-import com.intellij.psi.*;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.List;
 public class JavaTokenSelectioner extends BasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    return e instanceof PsiJavaToken && !(e instanceof PsiKeyword) && !(e.getParent()instanceof PsiCodeBlock);
+    return e instanceof PsiJavaToken && !(e instanceof PsiKeyword) && !(e.getParent()instanceof PsiCodeBlock) && !(e.getParent() instanceof PsiClass);
   }
 
   @Override

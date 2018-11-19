@@ -63,7 +63,7 @@ public final class LanguageConsoleBuilder {
   private String processInputStateKey;
 
   // todo to be removed
-  public LanguageConsoleBuilder(@SuppressWarnings("NullableProblems") @NotNull LanguageConsoleView consoleView) {
+  public LanguageConsoleBuilder(@NotNull LanguageConsoleView consoleView) {
     this.consoleView = consoleView;
   }
 
@@ -110,7 +110,7 @@ public final class LanguageConsoleBuilder {
    * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
   public static AnAction registerExecuteAction(@NotNull LanguageConsoleView console,
-                                               @NotNull final Consumer<String> executeActionHandler,
+                                               @NotNull final Consumer<? super String> executeActionHandler,
                                                @NotNull String historyType,
                                                @Nullable String historyPersistenceId,
                                                @Nullable Condition<LanguageConsoleView> enabledCondition) {
@@ -180,14 +180,14 @@ public final class LanguageConsoleBuilder {
   }
 
   public static class MyHelper extends LanguageConsoleImpl.Helper {
-    private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
+    private final PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
 
     public MyHelper(@NotNull  Project project,
                     @NotNull String title,
                     @NotNull Language language,
-                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+                    @Nullable PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory) {
       super(project, new LightVirtualFile(title, language, ""));
       this.psiFileFactory = psiFileFactory;
     }
@@ -345,7 +345,7 @@ public final class LanguageConsoleBuilder {
         }
       };
 
-      public GutterUpdateScheduler(@NotNull ConsoleGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
+      GutterUpdateScheduler(@NotNull ConsoleGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
         this.lineStartGutter = lineStartGutter;
         this.lineEndGutter = lineEndGutter;
 
@@ -432,7 +432,7 @@ public final class LanguageConsoleBuilder {
         private int start;
         private int end;
 
-        public Task(int start, int end) {
+        Task(int start, int end) {
           this.start = start;
           this.end = end;
         }

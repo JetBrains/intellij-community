@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * Implementations of this interface are expected to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/18/12 10:30 AM
  */
 public interface ArrangementSettingsSerializer {
 

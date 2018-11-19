@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.ExecutionTargetManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -21,15 +23,15 @@ import java.util.function.BiConsumer;
 public class ConfigurationSelectionUtil {
   @NotNull
   public static String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
-    return configuration.getType().getDisplayName() + " '" + configuration.getName() + 
-           "'" + (target != null && target != DefaultExecutionTarget.INSTANCE ? " | " + target.getDisplayName() : ""); 
+    return configuration.getType().getDisplayName() + " '" + configuration.getName() +
+           "'" + (target != null && target != DefaultExecutionTarget.INSTANCE ? " | " + target.getDisplayName() : "");
   }
 
-  // todo merge with ChooseRunConfigurationPopup 
+  // todo merge with ChooseRunConfigurationPopup
   public static ListPopup createPopup(@NotNull Project project,
                                       @NotNull RunManagerImpl runManager,
-                                      @NotNull List<RunConfiguration> configurations,
-                                      @NotNull BiConsumer<List<RunConfiguration>, ExecutionTarget> onSelected) {
+                                      @NotNull List<? extends RunConfiguration> configurations,
+                                      @NotNull BiConsumer<? super List<RunConfiguration>, ? super ExecutionTarget> onSelected) {
     return JBPopupFactory.getInstance().createListPopup(new MultiSelectionListPopupStep<RunConfiguration>(null, configurations) {
       @Nullable
       @Override
@@ -99,7 +101,8 @@ public class ConfigurationSelectionUtil {
         LinkedHashSet<ExecutionTarget> intersection = new LinkedHashSet<>();
         for (int i = 0; i < selectedValues.size(); i++) {
           RunConfiguration config = selectedValues.get(i);
-          List<ExecutionTarget> targets = ExecutionTargetManager.getTargetsToChooseFor(project, runManager.getSettings(config));
+          RunnerAndConfigurationSettingsImpl settings = runManager.getSettings(config);
+          List<ExecutionTarget> targets = settings == null ? Collections.emptyList() : ExecutionTargetManager.getTargetsToChooseFor(project, settings.getConfiguration());
           if (i == 0) {
             intersection.addAll(targets);
           }

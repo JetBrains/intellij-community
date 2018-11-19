@@ -4,7 +4,9 @@ package com.intellij.ui.messages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.messages.*;
+import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.ui.messages.MessagesService;
+import com.intellij.openapi.ui.messages.TwoStepConfirmationDialog;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +28,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChars;
 import static com.intellij.openapi.ui.Messages.*;
 
 public class MessagesServiceImpl implements MessagesService {
@@ -108,7 +111,7 @@ public class MessagesServiceImpl implements MessagesService {
                                            int defaultOptionIndex,
                                            int focusedOptionIndex,
                                            Icon icon,
-                                           PairFunction<Integer, JCheckBox, Integer> exitFunc) {
+                                           PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
     if (isApplicationInUnitTestOrHeadless()) {
       return getTestImplementation().show(message);
     }
@@ -130,6 +133,17 @@ public class MessagesServiceImpl implements MessagesService {
                                : new PasswordInputDialog(message, title, icon, validator);
     dialog.show();
     return dialog.getInputString();
+  }
+
+  @Override
+  public char[] showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestInputImplementation().show(message, validator).toCharArray();
+    }
+
+    PasswordInputDialog dialog = new PasswordInputDialog(parentComponent, message, title, icon, validator);
+    dialog.show();
+    return dialog.getExitCode() == 0 ? getTrimmedChars(dialog.getTextField()) : null;
   }
 
   @Override
@@ -166,7 +180,7 @@ public class MessagesServiceImpl implements MessagesService {
                                          String title,
                                          String initialValue,
                                          Icon icon,
-                                         InputValidator validator) {
+                                         @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return getTestInputImplementation().show(message, validator);
     }
@@ -237,8 +251,8 @@ public class MessagesServiceImpl implements MessagesService {
   public void showTextAreaDialog(final JTextField textField,
                                  String title,
                                  String dimensionServiceKey,
-                                 Function<String, List<String>> parser,
-                                 final Function<List<String>, String> lineJoiner) {
+                                 Function<? super String, ? extends List<String>> parser,
+                                 final Function<? super List<String>, String> lineJoiner) {
     if (isApplicationInUnitTestOrHeadless()) {
       getTestImplementation().show(title);
       return;

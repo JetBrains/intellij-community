@@ -35,7 +35,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -89,13 +91,27 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     }
 
     @Override
-    public void setPsiElement(final PsiClass psiClass) {
+    public void setPsiElement(@NotNull PsiClass psiClass) {
       setName(psiClass.getQualifiedName());
     }
   };
 
-  public TestNGConfiguration(String s, Project project, ConfigurationFactory factory) {
-    this(s, project, new TestData(), factory);
+  public TestNGConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
+    this(null, project, new TestData(), factory);
+  }
+
+  @TestOnly
+  public TestNGConfiguration(@Nullable String name, @NotNull Project project) {
+    this(name, project, new TestData(), TestNGConfigurationType.getInstance());
+  }
+
+  public TestNGConfiguration(@NotNull Project project) {
+    this(null, project, new TestData(), TestNGConfigurationType.getInstance());
+  }
+
+  @Deprecated
+  public TestNGConfiguration(@Nullable String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
+    this(name, project, new TestData(), factory);
   }
 
   protected TestNGConfiguration(String s, Project project, TestData data, ConfigurationFactory factory) {
@@ -370,7 +386,12 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
-    DefaultJDOMExternalizer.writeExternal(getPersistantData(), element, new DifferenceFilter<>(getPersistantData(), new TestData()));
+    DefaultJDOMExternalizer.writeExternal(getPersistantData(), element, new DifferenceFilter<TestData>(getPersistantData(), new TestData()) {
+      @Override
+      public boolean isAccept(@NotNull Field field) {
+        return "TEST_OBJECT".equals(field.getName()) || super.isAccept(field);
+      }
+    });
     EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());
 
     Element propertiesElement = element.getChild("properties");

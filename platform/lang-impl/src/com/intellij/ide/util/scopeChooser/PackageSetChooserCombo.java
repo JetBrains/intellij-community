@@ -51,7 +51,6 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
             scope = (NamedScope)((JBComboBoxTableCellEditorComponent)component).getEditorValue();
           }
           if (scope instanceof NamedScope.UnnamedScope) {
-            @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
             final Map<String, PackageSet> unnamedScopes = DependencyValidationManager.getInstance(myProject).getUnnamedScopes();
             final EditUnnamedScopesDialog dlg = new EditUnnamedScopesDialog(scope);
             if (dlg.showAndGet()) {
@@ -165,7 +164,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     private PackageSet myScope;
     private final ScopeEditorPanel myPanel;
 
-    public EditUnnamedScopesDialog(final NamedScope scope) {
+    EditUnnamedScopesDialog(final NamedScope scope) {
       super(PackageSetChooserCombo.this, false);
       myScope = scope.getValue();
       myPanel = new ScopeEditorPanel(myProject, DependencyValidationManager.getInstance(myProject));

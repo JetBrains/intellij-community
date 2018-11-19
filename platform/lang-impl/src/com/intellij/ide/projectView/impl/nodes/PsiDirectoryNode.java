@@ -7,11 +7,10 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -40,18 +39,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Set;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
   // the chain from a parent directory to this one usually contains only one virtual file
-  private final SmartHashSet<VirtualFile> chain = new SmartHashSet<>();
+  private final Set<VirtualFile> chain = new SmartHashSet<>();
 
   private final PsiFileSystemItemFilter myFilter;
 
-  public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
+  public PsiDirectoryNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     this(project, value, viewSettings, null);
   }
 
-  public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings, @Nullable PsiFileSystemItemFilter filter) {
+  public PsiDirectoryNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings, @Nullable PsiFileSystemItemFilter filter) {
     super(project, value, viewSettings);
     myFilter = filter;
   }
@@ -70,7 +70,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     Project project = getProject();
     assert project != null : this;
     PsiDirectory psiDirectory = getValue();
@@ -167,7 +167,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       }
     }
     else {
-      for (final IconProvider provider : Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME)) {
+      for (final IconProvider provider : IconProvider.EXTENSION_POINT_NAME.getExtensionList()) {
         final Icon icon = provider.getIcon(psiDirectory, 0);
         if (icon != null) {
           data.setIcon(icon);
@@ -227,13 +227,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     }
   }
 
-  @Override
-  public VirtualFile getVirtualFile() {
-    PsiDirectory directory = getValue();
-    if (directory == null) return null;
-    return directory.getVirtualFile();
-  }
-
   /**
    * @return a virtual file that identifies the given element
    */
@@ -272,9 +265,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     Project project = getProject();
 
     ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
-    return file != null && ((ProjectRootsUtil.isModuleContentRoot(file, project) && service.canOpenModuleSettings()) ||
-                            (ProjectRootsUtil.isModuleSourceRoot(file, project)  && service.canOpenContentEntriesSettings()) ||
-                            (ProjectRootsUtil.isLibraryRoot(file, project) && service.canOpenModuleLibrarySettings()));
+    return file != null && (ProjectRootsUtil.isModuleContentRoot(file, project) && service.canOpenModuleSettings() ||
+                            ProjectRootsUtil.isModuleSourceRoot(file, project)  && service.canOpenContentEntriesSettings() ||
+                            ProjectRootsUtil.isLibraryRoot(file, project) && service.canOpenModuleLibrarySettings());
   }
 
   @Override
@@ -284,7 +277,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public void navigate(final boolean requestFocus) {
-    Module module = ModuleUtil.findModuleForPsiElement(getValue());
+    Module module = ModuleUtilCore.findModuleForPsiElement(getValue());
     if (module != null) {
       final VirtualFile file = getVirtualFile();
       final Project project = getProject();

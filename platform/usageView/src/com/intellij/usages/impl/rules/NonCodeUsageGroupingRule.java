@@ -99,7 +99,7 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     public static final UsageGroup INSTANCE = new DynamicUsageGroup();
     @NonNls private static final String DYNAMIC_CAPTION = "Dynamic usages";
 
-    public DynamicUsageGroup() {
+    DynamicUsageGroup() {
       super(2);
     }
 
@@ -124,7 +124,7 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
   private static class UnloadedModulesUsageGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new UnloadedModulesUsageGroup();
 
-    public UnloadedModulesUsageGroup() {
+    UnloadedModulesUsageGroup() {
       super(0);
     }
 

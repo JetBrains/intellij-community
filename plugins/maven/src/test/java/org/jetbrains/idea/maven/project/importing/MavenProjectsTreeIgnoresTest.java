@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
@@ -79,7 +80,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
 
   private class MyLoggingListener implements MavenProjectsTree.Listener {
     @Override
-    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
       if (!ignored.isEmpty()) myLog += "ignored: " + format(ignored) + " ";
       if (!unignored.isEmpty()) myLog += "unignored: " + format(unignored) + " ";
       if (ignored.isEmpty() && unignored.isEmpty()) myLog += "empty ";

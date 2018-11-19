@@ -1,114 +1,54 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
+import org.jetbrains.plugins.github.api.data.util.GithubLink;
 
 import java.util.Date;
+import java.util.List;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubPullRequest {
-  @Mandatory private Long number;
-  @Mandatory private String state;
-  @Mandatory private String title;
-  private String body;
-  private String bodyHtml;
+  @Mandatory private String url;
+  @Mandatory private Long id;
 
-  private String url;
+  //non-api urls
   @Mandatory private String htmlUrl;
   @Mandatory private String diffUrl;
   @Mandatory private String patchUrl;
-  @Mandatory private String issueUrl;
 
-  private Boolean merged;
-  private Boolean mergeable;
+  @Mandatory private Long number;
+  @Mandatory private GithubIssueState state;
+  @Mandatory private Boolean locked;
+  private String activeLockReason;
+  @Mandatory private String title;
+  private GithubUser user;
+  @Mandatory private String body;
 
-  private Integer comments;
-  private Integer commits;
-  private Integer additions;
-  private Integer deletions;
-  private Integer changedFiles;
-
-  @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
   private Date closedAt;
   private Date mergedAt;
+  @Mandatory private Date createdAt;
+  private String mergeCommitSha;
+  @Mandatory private List<GithubUser> assignees;
+  @Mandatory private List<GithubUser> requestedReviewers;
+  //requestedTeams
+  @Mandatory private List<GithubIssueLabel> labels;
+  //milestone
 
-  @Mandatory private GithubUser user;
-
-  @Mandatory private Link head;
-  @Mandatory private Link base;
-
-  @RestModel
-  public static class Link {
-    @Mandatory private String label;
-    @Mandatory private String ref;
-    @Mandatory private String sha;
-
-    private GithubRepo repo;
-    @Mandatory private GithubUser user;
-
-    @NotNull
-    public String getLabel() {
-      return label;
-    }
-
-    @NotNull
-    public String getRef() {
-      return ref;
-    }
-
-    @NotNull
-    public String getSha() {
-      return sha;
-    }
-
-    @Nullable
-    public GithubRepo getRepo() {
-      return repo;
-    }
-
-    @NotNull
-    public GithubUser getUser() {
-      return user;
-    }
-  }
-
-  public long getNumber() {
-    return number;
-  }
+  private Tag head;
+  private Tag base;
+  @Mandatory private Links _links;
+  private String authorAssociation;
 
   @NotNull
-  public String getState() {
-    return state;
-  }
-
-  @NotNull
-  public String getTitle() {
-    return title;
-  }
-
-  @NotNull
-  public String getBodyHtml() {
-    return StringUtil.notNullize(bodyHtml);
+  public String getUrl() {
+    return url;
   }
 
   @NotNull
@@ -126,9 +66,23 @@ public class GithubPullRequest {
     return patchUrl;
   }
 
+  public long getNumber() {
+    return number;
+  }
+
   @NotNull
-  public String getIssueUrl() {
-    return issueUrl;
+  public GithubIssueState getState() {
+    return state;
+  }
+
+  @NotNull
+  public String getTitle() {
+    return title;
+  }
+
+  @NotNull
+  public String getBody() {
+    return body;
   }
 
   @NotNull
@@ -153,16 +107,83 @@ public class GithubPullRequest {
 
   @NotNull
   public GithubUser getUser() {
-    return user;
+    return ObjectUtils.notNull(user, GithubUser.UNKNOWN);
   }
 
   @NotNull
-  public Link getHead() {
+  public List<GithubUser> getAssignees() {
+    return assignees;
+  }
+
+  @NotNull
+  public List<GithubUser> getRequestedReviewers() {
+    return requestedReviewers;
+  }
+
+  @NotNull
+  public List<GithubIssueLabel> getLabels() {
+    return labels;
+  }
+
+  @NotNull
+  public Links getLinks() {
+    return _links;
+  }
+
+  @NotNull
+  public Tag getHead() {
     return head;
   }
 
   @NotNull
-  public Link getBase() {
+  public Tag getBase() {
     return base;
+  }
+
+  @RestModel
+  public static class Tag {
+    @Mandatory private String label;
+    @Mandatory private String ref;
+    @Mandatory private String sha;
+
+    private GithubRepo repo;
+    private GithubUser user;
+
+    @NotNull
+    public String getLabel() {
+      return label;
+    }
+
+    @NotNull
+    public String getRef() {
+      return ref;
+    }
+
+    @NotNull
+    public String getSha() {
+      return sha;
+    }
+
+    @Nullable
+    public GithubRepo getRepo() {
+      return repo;
+    }
+
+    @Nullable
+    public GithubUser getUser() {
+      return user;
+    }
+  }
+
+  @RestModel
+  public static class Links {
+    @Mandatory private GithubLink self;
+    @Mandatory private GithubLink html;
+    @Mandatory private GithubLink issue;
+    @Mandatory private GithubLink comments;
+    @Mandatory private GithubLink reviewComments;
+    @Mandatory private GithubLink reviewComment;
+    @Mandatory private GithubLink commits;
+    @Mandatory private GithubLink statuses;
   }
 }

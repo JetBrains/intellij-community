@@ -101,7 +101,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   private static class JavaInheritorsProvider extends BaseClassInheritorsProvider<PsiClass> {
     private final Project myProject;
 
-    public JavaInheritorsProvider(Project project, PsiClass baseClass, GlobalSearchScope scope) {
+    JavaInheritorsProvider(Project project, PsiClass baseClass, GlobalSearchScope scope) {
       super(baseClass, scope);
       myProject = project;
     }

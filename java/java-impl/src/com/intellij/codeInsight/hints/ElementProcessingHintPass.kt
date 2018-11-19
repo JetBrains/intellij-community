@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -22,7 +23,6 @@ abstract class ElementProcessingHintPass(
   editor: Editor,
   private val modificationStampHolder: ModificationStampHolder
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
-  private val traverser: SyntaxTraverser<PsiElement> = SyntaxTraverser.psiTraverser(rootElement)
   private val hints = TIntObjectHashMap<SmartList<String>>()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
@@ -32,6 +32,7 @@ abstract class ElementProcessingHintPass(
     val virtualFile = rootElement.containingFile?.originalFile?.virtualFile ?: return
 
     if (isAvailable(virtualFile)) {
+      val traverser = SyntaxTraverser.psiTraverser(rootElement)
       traverser.forEach { collectElementHints(it,
                                               { offset, hint ->
                                                 var hintList = hints.get(offset)
@@ -94,7 +95,7 @@ abstract class ElementProcessingHintPass(
 
       hints.forEachEntry { offset, hintTexts ->
         hintTexts.forEach {
-          val inlay = inlayModel.addInlineElement(offset, createRenderer(it))
+          val inlay : Inlay<*>? = inlayModel.addInlineElement(offset, createRenderer(it))
           inlay?.putUserData(getHintKey(), true)
         }
         true

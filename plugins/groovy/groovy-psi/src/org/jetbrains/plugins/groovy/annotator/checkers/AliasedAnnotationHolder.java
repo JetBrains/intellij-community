@@ -33,7 +33,7 @@ class AliasedAnnotationHolder implements AnnotationHolder {
   private final GrAnnotation myAlias;
   private final GrCodeReferenceElement myReference;
 
-  public AliasedAnnotationHolder(@NotNull AnnotationHolder holder, @NotNull GrAnnotation alias) {
+  AliasedAnnotationHolder(@NotNull AnnotationHolder holder, @NotNull GrAnnotation alias) {
     myHolder = holder;
     myAlias = alias;
     myReference = myAlias.getClassReference();

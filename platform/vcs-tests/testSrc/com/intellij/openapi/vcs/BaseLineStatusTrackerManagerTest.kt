@@ -11,8 +11,10 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,6 +23,7 @@ import com.intellij.util.ThrowableRunnable
 import org.mockito.Mockito
 
 abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
+  protected lateinit var shelveManager: ShelveChangesManager
   protected lateinit var lstm: LineStatusTrackerManager
   protected lateinit var undoManager: UndoManagerImpl
 
@@ -29,10 +32,12 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
     lstm = LineStatusTrackerManager.getInstanceImpl(getProject())
     undoManager = UndoManager.getInstance(getProject()) as UndoManagerImpl
+    shelveManager = ShelveChangesManager.getInstance(getProject())
   }
 
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() })
       .append(ThrowableRunnable { lstm.releaseAllTrackers() })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
@@ -102,5 +107,9 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   protected fun Range.assertChangeList(listName: String) {
     val localRange = this as PartialLocalLineStatusTracker.LocalRange
     assertEquals(listName, localRange.changelistId.asListIdToName())
+  }
+
+  protected fun PartialLocalLineStatusTracker.assertExcludedState(expected: ExclusionState, listName: String) {
+    assertEquals(expected, getExcludedFromCommitState(listName.asListNameToId()))
   }
 }

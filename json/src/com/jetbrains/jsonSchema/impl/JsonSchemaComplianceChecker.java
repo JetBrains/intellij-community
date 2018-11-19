@@ -55,11 +55,13 @@ public class JsonSchemaComplianceChecker {
 
   public void annotate(@NotNull final PsiElement element) {
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
-    if (firstProp != null && firstProp.getValue() != null) {
+    if (firstProp != null) {
       final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(firstProp.getDelegate(), true);
       if (position == null || position.isEmpty()) return;
       final MatchResult result = new JsonSchemaResolver(myRootSchema, false, position).detailedResolve();
-      createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(firstProp.getValue(), result, myOptions));
+      for (JsonValueAdapter value : firstProp.getValues()) {
+        createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(value, result, myOptions));
+      }
     }
     checkRoot(element, firstProp);
   }
@@ -81,54 +83,54 @@ public class JsonSchemaComplianceChecker {
   }
 
   private void createWarnings(@Nullable JsonSchemaAnnotatorChecker checker) {
-    if (checker != null && ! checker.isCorrect()) {
-
-      // compute intersecting ranges - we'll solve warning priorities based on this information
-      List<TextRange> ranges = ContainerUtil.newArrayList();
-      List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = ContainerUtil.newArrayList();
-      for (Map.Entry<PsiElement, JsonValidationError> entry : checker.getErrors().entrySet()) {
-        TextRange range = entry.getKey().getTextRange();
-        boolean processed = false;
-        for (int i = 0; i < ranges.size(); i++) {
-          TextRange currRange = ranges.get(i);
-          if (currRange.intersects(range)) {
-            ranges.set(i, new TextRange(Math.min(currRange.getStartOffset(), range.getStartOffset()), Math.max(currRange.getEndOffset(), range.getEndOffset())));
-            entries.get(i).add(entry);
-            processed = true;
-            break;
-          }
+    if (checker == null || checker.isCorrect()) return;
+    // compute intersecting ranges - we'll solve warning priorities based on this information
+    List<TextRange> ranges = ContainerUtil.newArrayList();
+    List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = ContainerUtil.newArrayList();
+    for (Map.Entry<PsiElement, JsonValidationError> entry : checker.getErrors().entrySet()) {
+      TextRange range = entry.getKey().getTextRange();
+      boolean processed = false;
+      for (int i = 0; i < ranges.size(); i++) {
+        TextRange currRange = ranges.get(i);
+        if (currRange.intersects(range)) {
+          ranges.set(i, new TextRange(Math.min(currRange.getStartOffset(), range.getStartOffset()), Math.max(currRange.getEndOffset(), range.getEndOffset())));
+          entries.get(i).add(entry);
+          processed = true;
+          break;
         }
-        if (processed) continue;
-
-        ranges.add(range);
-        entries.add(ContainerUtil.newArrayList(entry));
       }
+      if (processed) continue;
 
-      // for each set of intersecting ranges, compute the best errors to show
-      for (List<Map.Entry<PsiElement, JsonValidationError>> entryList : entries) {
-        int min = entryList.stream().map(v -> v.getValue().getPriority().ordinal()).min(Integer::compareTo).orElse(Integer.MAX_VALUE);
-        for (Map.Entry<PsiElement, JsonValidationError> entry : entryList) {
-          JsonValidationError validationError = entry.getValue();
-          PsiElement psiElement = entry.getKey();
-          if (validationError.getPriority().ordinal() > min) {
-            continue;
-          }
-          registerError(psiElement, validationError);
+      ranges.add(range);
+      entries.add(ContainerUtil.newArrayList(entry));
+    }
+
+    // for each set of intersecting ranges, compute the best errors to show
+    for (List<Map.Entry<PsiElement, JsonValidationError>> entryList : entries) {
+      int min = entryList.stream().map(v -> v.getValue().getPriority().ordinal()).min(Integer::compareTo).orElse(Integer.MAX_VALUE);
+      for (Map.Entry<PsiElement, JsonValidationError> entry : entryList) {
+        JsonValidationError validationError = entry.getValue();
+        PsiElement psiElement = entry.getKey();
+        if (validationError.getPriority().ordinal() > min) {
+          continue;
         }
+        TextRange range = myWalker.adjustErrorHighlightingRange(psiElement);
+        range = range.shiftLeft(psiElement.getTextRange().getStartOffset());
+        registerError(psiElement, range, validationError);
       }
     }
   }
 
-  private void registerError(@NotNull PsiElement psiElement, @NotNull JsonValidationError validationError) {
+  private void registerError(@NotNull PsiElement psiElement, @NotNull TextRange range, @NotNull JsonValidationError validationError) {
     if (checkIfAlreadyProcessed(psiElement)) return;
     String value = validationError.getMessage();
     if (myMessagePrefix != null) value = myMessagePrefix + value;
     LocalQuickFix[] fix = validationError.createFixes(myWalker.getQuickFixAdapter(myHolder.getProject()));
     if (fix.length == 0) {
-      myHolder.registerProblem(psiElement, value);
+      myHolder.registerProblem(psiElement, range, value);
     }
     else {
-      myHolder.registerProblem(psiElement, value, fix);
+      myHolder.registerProblem(psiElement, range, value, fix);
     }
   }
 

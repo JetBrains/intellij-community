@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.fields.ExpandableSupport;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -36,14 +37,9 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   }
 
   protected void initFieldEditor(@NotNull EditorEx editor, Color background) {
-    JLabel label = ExpandableSupport.createLabel(createExpandExtension());
-    label.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
     editor.getContentComponent().putClientProperty(Expandable.class, this);
-    editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    editor.getScrollPane().getVerticalScrollBar().setBackground(background);
-    editor.getScrollPane().getVerticalScrollBar().add(JBScrollBar.LEADING, label);
-    editor.getScrollPane().getVerticalScrollBar().setOpaque(true);
+    ExtendableTextComponent.Extension extension = createExpandExtension();
+    ExtendableEditorSupport.setupExtension(editor, background, extension);
   }
 
   protected void updateFieldFolding(@NotNull EditorEx editor) {
@@ -63,7 +59,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   @NotNull
   @Override
   protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
-    EditorTextField popup = new EditorTextField(onShow.fun(field.getText()));
+    EditorTextField popup = new EditorTextField(onShow.fun(field.getText()), field.getProject(), field.getFileType());
     Color background = field.getBackground();
     popup.setBackground(background);
     popup.setOneLineMode(false);

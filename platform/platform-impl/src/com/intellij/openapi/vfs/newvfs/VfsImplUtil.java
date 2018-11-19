@@ -184,7 +184,7 @@ public class VfsImplUtil {
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                         @NotNull VirtualFile entryFile,
-                                                        @NotNull Function<String, T> producer) {
+                                                        @NotNull Function<? super String, ? extends T> producer) {
     String localPath = vfs.extractLocalPath(vfs.extractRootPath(entryFile.getPath()));
     checkSubscription();
 
@@ -211,7 +211,7 @@ public class VfsImplUtil {
     return handler;
   }
 
-  private static void forEachDirectoryComponent(String rootPath, Consumer<String> consumer) {
+  private static void forEachDirectoryComponent(String rootPath, Consumer<? super String> consumer) {
     int index = rootPath.lastIndexOf('/');
     while (index > 0) {
       String containingDirectoryPath = rootPath.substring(0, index);

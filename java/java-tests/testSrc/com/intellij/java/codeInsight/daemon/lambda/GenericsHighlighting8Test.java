@@ -1017,6 +1017,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testArrayTypeUpperBound() { doTest(); }
 
   public void testNonGenericInnerOfGenericOuter() { doTest(); }
+  public void testIDEA53597() { doTest(); }
 
   public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() {
     doTest();
@@ -1040,5 +1041,6 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   public void testBridgeMethodOverriding() { doTest(); }
   public void testNestedWildcardsWithImplicitBounds() { doTest(); }
+  public void testCallOnRawWithExplicitTypeArguments() { doTest(); }
   public void testNoCaptureConversionDuringDetectingSupertypesDeepInHierarchy() { doTest(); }
 }

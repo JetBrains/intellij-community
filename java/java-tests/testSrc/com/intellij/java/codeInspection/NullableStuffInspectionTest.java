@@ -7,25 +7,15 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
   private NullableStuffInspection myInspection = new NullableStuffInspection();
 
   private final GeneratedSourcesFilter myGeneratedSourcesFilter = new GeneratedSourcesFilter() {
@@ -38,7 +28,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_8_ANNOTATED;
   }
 
   @Override
@@ -60,9 +50,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
 
   @Override
   protected void tearDown() throws Exception {
-    myInspection = null;
-    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
-    super.tearDown();
+    try {
+      myInspection = null;
+      Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testProblems() { doTest();}

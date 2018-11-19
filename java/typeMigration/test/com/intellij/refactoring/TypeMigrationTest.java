@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author db
- * @since 22.07.2003
  */
 public class TypeMigrationTest extends TypeMigrationTestBase {
   private PsiElementFactory myFactory;
@@ -675,7 +675,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   // Checking preserving method parameters alignment
   public void testT127() {
-    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaSettings = CodeStyle.getSettings(myProject).getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTestMethodType("test234",

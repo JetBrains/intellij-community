@@ -14,9 +14,9 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
+import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +27,8 @@ import java.awt.*;
 import java.io.File;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -49,9 +49,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
   private Color myAboutLinkColor;
+  private Rectangle myAboutLogoRect;
   private String myProgressTailIconName;
   private Icon myProgressTailIcon;
-
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
@@ -62,9 +62,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String myBigIconUrl;
+  private String mySvgIconUrl;
+  private String mySvgEapIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl;
-  private String myEditorBackgroundImageUrl;
 
   private Calendar myBuildDate;
   private Calendar myMajorReleaseBuildDate;
@@ -74,8 +75,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
-  private String myEAPFeedbackUrl;
-  private String myReleaseFeedbackUrl;
+  private String myYoutrackUrl;
+  private String myFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
   private String myChannelsListUrl;
@@ -87,17 +88,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
-  @Nullable
-  private String myHelpFileName = "ideahelp.jar";
-  @Nullable
-  private String myHelpRootName = "idea";
+  private @Nullable String myHelpFileName = "ideahelp.jar";
+  private @Nullable String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
-  private String myStatisticsSettingsUrl;
   private String myFUStatisticsSettingsUrl;
-  private String myStatisticsServiceUrl;
-  private String myStatisticsServiceKey;
   private String myEventLogSettingsUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
@@ -109,8 +105,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
-
-  private Rectangle myAboutLogoRect;
 
   private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
@@ -152,8 +146,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_SHOW = "show";
   private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
   private static final String LOGO_URL_ATTR = "logo-url";
-  private static final String ELEMENT_EDITOR = "editor";
-  private static final String BACKGROUND_URL_ATTR = "background-url";
   private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
   private static final String XML_EXTENSION = ".xml";
   private static final String ATTRIBUTE_EAP = "eap";
@@ -163,9 +155,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
   private static final String ELEMENT_DOCUMENTATION = "documentation";
   private static final String ELEMENT_SUPPORT = "support";
+  private static final String ELEMENT_YOUTRACK = "youtrack";
   private static final String ELEMENT_FEEDBACK = "feedback";
-  private static final String ATTRIBUTE_RELEASE_URL = "release-url";
-  private static final String ATTRIBUTE_EAP_URL = "eap-url";
   private static final String ELEMENT_PLUGINS = "plugins";
   private static final String ATTRIBUTE_LIST_URL = "list-url";
   private static final String ATTRIBUTE_CHANNEL_LIST_URL = "channel-list-url";
@@ -179,10 +170,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_WINDOWS_URL = "win";
   private static final String ATTRIBUTE_MAC_URL = "mac";
   private static final String ELEMENT_STATISTICS = "statistics";
-  private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
   private static final String ATTRIBUTE_FU_STATISTICS_SETTINGS = "fus-settings";
-  private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
-  private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
   private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
@@ -206,8 +194,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   ApplicationInfoImpl() {
     String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, resource);
-      loadState(doc.getRootElement());
+      loadState(JDOMUtil.load(ApplicationInfoImpl.class, resource));
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
@@ -226,18 +213,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public BuildNumber getBuild() {
-    return BuildNumber.fromStringWithProductCode(myBuildNumber, getProductPrefix());
-  }
-
-  private static String getProductPrefix() {
-    String prefix = null;
-    if (PlatformUtils.isIdeaCommunity()) {
-      prefix = "IC";
-    }
-    else if (PlatformUtils.isIdeaUltimate()) {
-      prefix = "IU";
-    }
-    return prefix;
+    return BuildNumber.fromString(myBuildNumber);
   }
 
   @Override
@@ -368,9 +344,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
       try {
         final URL url = getClass().getResource(myProgressTailIconName);
-        @SuppressWarnings({"deprecation", "UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url, false);
+        @SuppressWarnings({"UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url);
         if (image != null) {
-          myProgressTailIcon = new ImageIcon(image);
+          myProgressTailIcon = new JBImageIcon(image);
         }
       } catch (Exception ignore) {}
     }
@@ -394,6 +370,25 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  @Nullable
+  public String getApplicationSvgIconUrl() {
+    return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
+  }
+
+  @Nullable
+  @Override
+  public File getApplicationSvgIconFile() {
+    String svgIconUrl = getApplicationSvgIconUrl();
+    if (svgIconUrl == null) return null;
+
+    URL url = getClass().getResource(svgIconUrl);
+    if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+      return URLUtil.urlToFile(url);
+    }
+    return null;
+  }
+
+  @Override
   public String getToolWindowIconUrl() {
     return myToolWindowIconUrl;
   }
@@ -410,11 +405,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getEditorBackgroundImageUrl() {
-    return myEditorBackgroundImageUrl;
-  }
-
-  @Override
   public String getPackageCode() {
     return myPackageCode;
   }
@@ -422,6 +412,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isEAP() {
     return myEAP;
+  }
+
+  @Override
+  public boolean isMajorEAP() {
+    return myEAP && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);
   }
 
   @Override
@@ -440,18 +435,24 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getEAPFeedbackUrl() {
-    return myEAPFeedbackUrl;
+  public String getYoutrackUrl() {
+    return myYoutrackUrl;
   }
 
   @Override
-  public String getReleaseFeedbackUrl() {
-    return myReleaseFeedbackUrl;
+  public String getFeedbackUrl() {
+    return myFeedbackUrl;
   }
 
   @Override
   public String getPluginManagerUrl() {
     return myPluginManagerUrl;
+  }
+
+  @Override
+  public boolean usesJetBrainsPluginRepository() {
+    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl) ||
+           (DEFAULT_PLUGINS_HOST + "/").equalsIgnoreCase(myPluginManagerUrl);//see ***ApplicationInfo.xml
   }
 
   @Override
@@ -528,20 +529,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myCopyrightStart;
   }
 
-  public String getStatisticsSettingsUrl() {
-    return myStatisticsSettingsUrl;
-  }
-
   public String getFUStatisticsSettingsUrl() {
     return myFUStatisticsSettingsUrl;
-  }
-
-  public String getStatisticsServiceUrl() {
-    return myStatisticsServiceUrl;
-  }
-
-  public String getStatisticsServiceKey() {
-    return myStatisticsServiceKey;
   }
 
   public String getEventLogSettingsUrl() {
@@ -601,16 +590,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private static ApplicationInfoImpl ourShadowInstance;
 
-  public boolean isBetaOrRC() {
-    String minor = getMinorVersion();
-    if (minor != null) {
-      if (minor.contains("RC") || minor.contains("Beta") || minor.contains("beta")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @NotNull
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {
@@ -649,10 +628,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       setBuildNumber(myApiVersion, myBuildNumber);
 
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
-      if (dateString.equals("__BUILD_DATE__")) {
+      if ("__BUILD_DATE__".equals(dateString)) {
         myBuildDate = new GregorianCalendar();
-        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar")) {
-          final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
+        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + "/lib/bootstrap.jar")) {
+          JarEntry jarEntry = bootstrapJar.entries().nextElement();  // META-INF is always updated on build
           myBuildDate.setTime(new Date(jarEntry.getTime()));
         }
         catch (Exception ignore) { }
@@ -748,6 +727,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
       }
+      mySvgIconUrl = iconElement.getAttributeValue("svg");
+    }
+    Element iconEap = getChild(parentNode, "icon-eap");
+    if (iconEap != null) {
+      mySvgEapIconUrl = iconEap.getAttributeValue("svg");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);
@@ -768,11 +752,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element wizardSteps = getChild(parentNode, CUSTOMIZE_IDE_WIZARD_STEPS);
     if (wizardSteps != null) {
       myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
-    }
-
-    Element editor = getChild(parentNode, ELEMENT_EDITOR);
-    if (editor != null) {
-      myEditorBackgroundImageUrl = editor.getAttributeValue(BACKGROUND_URL_ATTR);
     }
 
     Element helpElement = getChild(parentNode, HELP_ELEMENT_NAME);
@@ -804,10 +783,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       mySupportUrl = supportElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
+    Element youtrackElement = getChild(parentNode, ELEMENT_YOUTRACK);
+    if (youtrackElement != null) {
+      myYoutrackUrl = youtrackElement.getAttributeValue(ATTRIBUTE_URL);
+    }
+
     Element feedbackElement = getChild(parentNode, ELEMENT_FEEDBACK);
     if (feedbackElement != null) {
-      myEAPFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_EAP_URL);
-      myReleaseFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_RELEASE_URL);
+      myFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
     Element whatsnewElement = getChild(parentNode, ELEMENT_WHATSNEW);
@@ -843,6 +826,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
+      myPluginManagerUrl = pluginsHost;
       myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
       myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
       myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
@@ -868,17 +852,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {
-      myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
       myFUStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_FU_STATISTICS_SETTINGS);
-      myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
-      myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
       myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
-      myStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/stat-assistant.xml";
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
-      myStatisticsServiceKey  = null;
       myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
     }
 
@@ -919,8 +897,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return parentNode.getChildren(name, parentNode.getNamespace());
   }
 
-  private static Element getChild(Element parentNode, String version) {
-    return parentNode.getChild(version, parentNode.getNamespace());
+  private static Element getChild(Element parentNode, String name) {
+    return parentNode.getChild(name, parentNode.getNamespace());
   }
 
   //copy of ApplicationInfoProperties.shortenCompanyName

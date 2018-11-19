@@ -206,7 +206,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     @NotNull private final List<VirtualFile> myRoots;
     @NotNull private final TObjectIntHashMap<VirtualFile> myRootsReversed;
 
-    public MyCommitIdKeyDescriptor(@NotNull List<VirtualFile> roots) {
+    MyCommitIdKeyDescriptor(@NotNull List<VirtualFile> roots) {
       myRoots = roots;
 
       myRootsReversed = new TObjectIntHashMap<>();
@@ -281,8 +281,8 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
     @NotNull private final KeyDescriptor<CommitId> myCommitIdKeyDescriptor;
 
-    public VcsRefKeyDescriptor(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                               @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) {
+    VcsRefKeyDescriptor(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                        @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) {
       myLogProviders = logProviders;
       myCommitIdKeyDescriptor = commitIdKeyDescriptor;
     }
@@ -315,7 +315,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   private static class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
-    public MyPersistentBTreeEnumerator(File storageFile, MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
+    MyPersistentBTreeEnumerator(File storageFile, MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
       super(storageFile, commitIdKeyDescriptor, Page.PAGE_SIZE, null, VERSION);
     }
 

@@ -374,7 +374,7 @@ public class GitRebaser {
      * @param commits   the reordered commits
      * @param hasMerges if true, the vcs root has merges
      */
-    public PushRebaseEditor(GitRebaseEditorService rebaseEditorService,
+    PushRebaseEditor(GitRebaseEditorService rebaseEditorService,
                             final VirtualFile root,
                             List<String> commits,
                             boolean hasMerges) {

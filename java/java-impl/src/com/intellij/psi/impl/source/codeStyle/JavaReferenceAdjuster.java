@@ -191,7 +191,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     processRange(element, startOffset, endOffset, javaSettings.useFqNamesInJavadocAlways(), javaSettings.USE_FQ_CLASS_NAMES);
   }
 
-  private static void addReferencesInRange(List<ASTNode> array, ASTNode parent, int startOffset, int endOffset) {
+  private static void addReferencesInRange(List<? super ASTNode> array, ASTNode parent, int startOffset, int endOffset) {
     if (parent.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || parent.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
       array.add(parent);
       return;
@@ -211,7 +211,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     addReferencesInRangeForComposite(array, parent, startOffset, endOffset);
   }
 
-  private static void addReferencesInRangeForComposite(List<ASTNode> array, ASTNode parent, int startOffset, int endOffset) {
+  private static void addReferencesInRangeForComposite(List<? super ASTNode> array, ASTNode parent, int startOffset, int endOffset) {
     int offset = 0;
     for (ASTNode child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       int length = child.getTextLength();

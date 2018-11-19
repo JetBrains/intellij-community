@@ -34,7 +34,7 @@ public class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   }
 
   @Override
-  public void addConsumer(@NotNull Executor executor, @NotNull final ResultConsumer<V> consumer) {
+  public void addConsumer(@NotNull Executor executor, @NotNull final ResultConsumer<? super V> consumer) {
     myFuture.addListener(() -> {
       try {
         final V result = myFuture.get();

@@ -226,7 +226,7 @@ class GitOldChangesCollector extends GitChangesCollector {
           myUnversioned.add(file);
         }
       }
-      else { //noinspection HardCodedStringLiteral
+      else {
         if ('M' == status) {
           sc.boundedToken('\t');
           String file = GitUtil.unescapePath(sc.line());

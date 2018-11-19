@@ -108,17 +108,30 @@ abstract class GitImplBase implements Git {
    */
   @NotNull
   private GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+    GitVersion version = GitVersion.NULL;
+    if (handler.isPreValidateExecutable()) {
+      String executablePath = handler.getExecutablePath();
+      try {
+        version = GitExecutableManager.getInstance().identifyVersion(executablePath);
+      }
+      catch (Exception e) {
+        return handlePreValidationException(handler.project(), e);
+      }
+    }
+
     Project project = handler.project();
     if (project != null && handler.isRemote()) {
       try (GitHandlerAuthenticationManager authenticationManager = prepareAuthentication(project, handler)) {
-        return GitCommandResult.withAuthentication(doRun(handler, outputCollector), authenticationManager.isHttpAuthFailed());
+        GitCommandResult result = doRun(handler, version, outputCollector);
+        return GitCommandResult.withAuthentication(result, authenticationManager.isHttpAuthFailed());
       }
       catch (IOException e) {
         return GitCommandResult.startError("Failed to start Git process " + e.getLocalizedMessage());
       }
     }
-
-    return doRun(handler, outputCollector);
+    else {
+      return doRun(handler, version, outputCollector);
+    }
   }
 
   @NotNull
@@ -131,18 +144,9 @@ abstract class GitImplBase implements Git {
    * Run handler with per-project locking, logging
    */
   @NotNull
-  private static GitCommandResult doRun(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
-    GitVersion version = GitVersion.NULL;
-    if (handler.isPreValidateExecutable()) {
-      String executablePath = handler.getExecutablePath();
-      try {
-        version = GitExecutableManager.getInstance().identifyVersion(executablePath);
-      }
-      catch (Exception e) {
-        return handlePreValidationException(handler.project(), e);
-      }
-    }
-
+  private static GitCommandResult doRun(@NotNull GitLineHandler handler,
+                                        @NotNull GitVersion version,
+                                        @NotNull OutputCollector outputCollector) {
     getGitTraceEnvironmentVariables(version).forEach(handler::addCustomEnvironmentVariable);
 
     GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
@@ -181,7 +185,7 @@ abstract class GitImplBase implements Git {
     private int myExitCode = 0;
     private boolean myStartFailed = false;
 
-    public GitCommandResultListener(OutputCollector outputCollector) {
+    GitCommandResultListener(OutputCollector outputCollector) {
       myOutputCollector = outputCollector;
     }
 
@@ -190,7 +194,7 @@ abstract class GitImplBase implements Git {
       if (outputType == ProcessOutputTypes.STDOUT) {
         myOutputCollector.outputLineReceived(line);
       }
-      else if (outputType == ProcessOutputTypes.STDERR) {
+      else if (outputType == ProcessOutputTypes.STDERR && !looksLikeProgress(line)) {
         myOutputCollector.errorLineReceived(line);
       }
     }
@@ -201,7 +205,7 @@ abstract class GitImplBase implements Git {
     }
 
     @Override
-    public void startFailed(Throwable t) {
+    public void startFailed(@NotNull Throwable t) {
       myStartFailed = true;
       myOutputCollector.errorLineReceived("Failed to start Git process " + t.getLocalizedMessage());
     }

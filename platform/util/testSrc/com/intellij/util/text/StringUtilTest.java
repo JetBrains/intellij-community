@@ -3,6 +3,7 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
@@ -24,7 +25,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 22, 2006
  */
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class StringUtilTest {
@@ -551,7 +551,6 @@ public class StringUtilTest {
     assertEquals("", StringUtil.getPackageName("Number"));
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   @Test
   public void testIndexOf_1() {
     char[] chars = new char[]{'a','b','c','d','a','b','c','d','A','B','C','D'};
@@ -725,5 +724,33 @@ public class StringUtilTest {
   @Test(expected = IllegalArgumentException.class)
   public void startsWithLongerSuffixIndexGreaterThanLength() {
     StringUtil.startsWith("ab", 3, "abcdefgh");
+  }
+
+  @Test
+  public void offsetToLineNumberCol() {
+    assertEquals(LineColumn.of(0, 0), StringUtil.offsetToLineColumn("abc\nabc", 0));
+    assertEquals(LineColumn.of(0, 1), StringUtil.offsetToLineColumn("abc\nabc", 1));
+    assertEquals(LineColumn.of(0, 2), StringUtil.offsetToLineColumn("abc\nabc", 2));
+    assertEquals(LineColumn.of(0, 3), StringUtil.offsetToLineColumn("abc\nabc", 3));
+    assertEquals(LineColumn.of(1, 0), StringUtil.offsetToLineColumn("abc\nabc", 4));
+    assertEquals(LineColumn.of(1, 1), StringUtil.offsetToLineColumn("abc\nabc", 5));
+    assertEquals(LineColumn.of(1, 3), StringUtil.offsetToLineColumn("abc\nabc", 7));
+    assertNull(StringUtil.offsetToLineColumn("abc\nabc", 8));
+    assertEquals(LineColumn.of(0, 3), StringUtil.offsetToLineColumn("abc\r\nabc", 3));
+    assertEquals(LineColumn.of(1, 0), StringUtil.offsetToLineColumn("abc\r\nabc", 5));
+    assertEquals(LineColumn.of(2, 1), StringUtil.offsetToLineColumn("abc\n\nabc", 6));
+    assertEquals(LineColumn.of(1, 1), StringUtil.offsetToLineColumn("abc\r\nabc", 6));
+  }
+
+  @Test
+  public void testFirstLastDontConvertCharSequenceToString() {
+    CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
+    assertTrue(s instanceof ByteArrayCharSequence);
+    CharSequence first = StringUtil.first(s, 1, false);
+    assertTrue(String.valueOf(first.getClass()), first instanceof CharSequenceSubSequence);
+    assertEquals("t", first.toString());
+    CharSequence last = StringUtil.last(s, 1, false);
+    assertTrue(String.valueOf(last.getClass()), last instanceof CharSequenceSubSequence);
+    assertEquals("t", last.toString());
   }
 }

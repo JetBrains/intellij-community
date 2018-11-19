@@ -80,13 +80,19 @@ class CharSequenceBackedByChars : CharArrayCharSequence {
   }
 }
 
-fun ByteBuffer.toByteArray(): ByteArray {
+fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
   if (hasArray()) {
     val offset = arrayOffset()
-    if (offset == 0 && array().size == limit()) {
-      return array()
+    val array = array()
+    if (offset == 0 && array.size == limit()) {
+      return array
     }
-    return Arrays.copyOfRange(array(), offset, offset + limit())
+
+    val result = array.copyOfRange(offset, offset + limit())
+    if (isClear) {
+      array.fill(0)
+    }
+    return result
   }
 
   val bytes = ByteArray(limit())

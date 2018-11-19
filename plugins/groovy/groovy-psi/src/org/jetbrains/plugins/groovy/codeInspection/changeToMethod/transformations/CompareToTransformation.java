@@ -29,7 +29,7 @@ class CompareToTransformation extends BinaryTransformation {
   @NotNull
   private final IElementType myElementType;
 
-  public CompareToTransformation(@NotNull IElementType elementType) {
+  CompareToTransformation(@NotNull IElementType elementType) {
     myElementType = elementType;
   }
 

@@ -28,7 +28,7 @@ public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameter
     super.setUp();
     JavaCodeStyleSettings javaSettings =
       JavaCodeStyleSettings.getInstance(getProject());
-    javaSettings.REPLACE_CAST = javaSettings.REPLACE_INSTANCEOF = true;
+    javaSettings.REPLACE_INSTANCEOF = true;
   }
 
   @NotNull
@@ -36,8 +36,6 @@ public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameter
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new LambdaCanBeMethodReferenceInspection()};
   }
-
-  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

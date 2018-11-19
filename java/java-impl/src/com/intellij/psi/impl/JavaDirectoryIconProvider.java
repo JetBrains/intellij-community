@@ -43,7 +43,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       }
       else if (ProjectRootsUtil.isModuleContentRoot(vFile, project)) {
         Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
-        symbolIcon = module != null ? ModuleType.get(module).getIcon() : PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
+        symbolIcon = module == null || module.isDisposed() ? PlatformIcons.CONTENT_ROOT_ICON_CLOSED : ModuleType.get(module).getIcon();
       }
       else if (ProjectRootsUtil.findUnloadedModuleByContentRoot(vFile, project) != null) {
         symbolIcon = AllIcons.Modules.UnloadedModule;

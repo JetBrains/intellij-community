@@ -22,7 +22,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 
 /**
  * Represents a `this` expression.
- * Qualified `this` is not supported at the moment.
+ * TODO Qualified `this` is not supported at the moment.
  */
 interface UThisExpression : UInstanceExpression {
   override fun asLogString(): String = log("label = $label")

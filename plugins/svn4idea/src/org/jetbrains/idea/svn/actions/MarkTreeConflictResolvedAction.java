@@ -48,7 +48,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
     private final ConflictedSvnChange myChange;
     private final Project myProject;
 
-    public MyChecker(final AnActionEvent e) {
+    MyChecker(final AnActionEvent e) {
       final DataContext dc = e.getDataContext();
       myProject = CommonDataKeys.PROJECT.getData(dc);
       final Change[] changes = VcsDataKeys.CHANGE_LEAD_SELECTION.getData(dc);

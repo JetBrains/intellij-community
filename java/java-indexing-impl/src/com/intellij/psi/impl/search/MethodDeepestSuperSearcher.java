@@ -26,8 +26,8 @@ public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiM
   }
 
   private static boolean findDeepestSuperOrSelfSignature(@NotNull PsiMethod method,
-                                                         @NotNull Set<PsiMethod> set,
-                                                         Set<PsiMethod> guard,
+                                                         @NotNull Set<? super PsiMethod> set,
+                                                         Set<? super PsiMethod> guard,
                                                          @NotNull Processor<? super PsiMethod> processor) {
     if (guard != null && !guard.add(method)) return true;
     PsiMethod[] supers = ReadAction.compute(() -> method.findSuperMethods());

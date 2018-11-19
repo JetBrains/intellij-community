@@ -23,15 +23,14 @@ import com.jetbrains.completion.feature.Transformer
 /**
  * @author Vitaliy.Bibaev
  */
-class FeatureTransformer(val features: Map<String, Feature>,
-                         private val ignoredFeatures: Set<String>,
+class FeatureTransformer(private val features: Map<String, Feature>,
                          arraySize: Int)
     : Transformer {
     private val array = DoubleArray(arraySize)
     override fun featureArray(relevanceMap: Map<String, Any>, userFactors: Map<String, Any?>): DoubleArray {
         for ((name, feature) in features) {
             val value = relevanceMap[name]
-            if (value == null || isFeatureIgnored(name)) {
+            if (value == null) {
                 feature.setDefaults(array)
             } else {
                 feature.process(value, array)
@@ -39,10 +38,5 @@ class FeatureTransformer(val features: Map<String, Feature>,
         }
 
         return array
-    }
-
-    private fun isFeatureIgnored(name: String): Boolean {
-        val normalized = name.substringBefore('@')
-        return normalized in ignoredFeatures
     }
 }

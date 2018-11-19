@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.SafeWriteRequestor
 import org.jdom.Element
 
 abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
-  override final fun setState(component: Any?, componentName: String, state: Any?) {
+  final override fun setState(component: Any?, componentName: String, state: Any?) {
     if (state == null) {
       setSerializedState(componentName, null)
       return

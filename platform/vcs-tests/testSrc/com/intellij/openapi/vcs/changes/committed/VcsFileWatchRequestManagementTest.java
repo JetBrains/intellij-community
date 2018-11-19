@@ -183,7 +183,7 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
     private final String myPath;
     private final boolean myRecursively;
 
-    public MockKey(String path, boolean recursively) {
+    MockKey(String path, boolean recursively) {
       myPath = path;
       myRecursively = recursively;
     }

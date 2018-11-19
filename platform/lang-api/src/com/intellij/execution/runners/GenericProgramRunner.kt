@@ -34,7 +34,7 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunn
 }
 
 abstract class AsyncProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
-  override final fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
     startRunProfile(environment, state, callback, runProfileStarter { execute(environment, state) })
   }
 
@@ -50,6 +50,6 @@ internal fun startRunProfile(environment: ExecutionEnvironment, state: RunProfil
   ExecutionManager.getInstance(environment.project).startRunProfile(runProfileStarter {
     (starter?.executeAsync(state, environment) ?: resolvedPromise())
       .then { BaseProgramRunner.postProcess(environment, it, callback) }
-      .onError { ExecutionUtil.LOG.error(it) }
+      // errors are handled by com.intellij.execution.ExecutionManager.startRunProfile
   }, state, environment)
 }

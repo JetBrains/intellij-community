@@ -36,7 +36,6 @@ import java.util.*;
 /**
  * @author nik
  */
-@SuppressWarnings({"unchecked"})
 public class JDomConvertingUtil extends JDomSerializationUtil {
 
   private JDomConvertingUtil() {
@@ -98,7 +97,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
     copyChildren(from, to, Conditions.alwaysTrue());
   }
 
-  public static void copyChildren(Element from, Element to, Condition<Element> filter) {
+  public static void copyChildren(Element from, Element to, Condition<? super Element> filter) {
     final List<Element> list = from.getChildren();
     for (Element element : list) {
       if (filter.value(element)) {
@@ -111,7 +110,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
     return element -> elementName.equals(element.getName());
   }
 
-  public static List<Element> removeChildren(final Element element, final Condition<Element> filter) {
+  public static List<Element> removeChildren(final Element element, final Condition<? super Element> filter) {
     List<Element> toRemove = new ArrayList<>();
     final List<Element> list = element.getChildren();
     for (Element e : list) {
@@ -133,7 +132,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
   }
 
   @Nullable
-  public static Element findChild(Element parent, final Condition<Element> filter) {
+  public static Element findChild(Element parent, final Condition<? super Element> filter) {
     final List<Element> list = parent.getChildren();
     for (Element e : list) {
       if (filter.value(e)) {

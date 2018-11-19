@@ -51,7 +51,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   private final DomManagerImpl myDomManager;
   private final DomService myDomService;
 
-  public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
+  FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
     myXmlFile = xmlFile;
     myDomService = DomService.getInstance();
@@ -155,7 +155,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
       return element == null ? null : element.getFileDescription();
     }
 
-    //noinspection unchecked
     final Set<DomFileDescription> namedDescriptions = myDomManager.getFileDescriptions(xmlFileHeader.getRootTagLocalName());
     if (sb != null) {
       sb.append("named " + new HashSet<>(namedDescriptions) + "\n");

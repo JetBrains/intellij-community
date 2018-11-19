@@ -395,9 +395,7 @@ public class PackageChooserDialog extends PackageChooser {
             CommonBundle.getErrorTitle(),
             Messages.getErrorIcon()
           );
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(e);
-          }
+          LOG.debug(e);
         }
       };
       ApplicationManager.getApplication().runReadAction(action);
@@ -407,7 +405,7 @@ public class PackageChooserDialog extends PackageChooser {
   }
 
   private class NewPackageAction extends AnAction {
-    public NewPackageAction() {
+    NewPackageAction() {
       super(IdeBundle.message("action.new.package"),
             IdeBundle.message("action.description.create.new.package"), AllIcons.Actions.NewFolder);
     }

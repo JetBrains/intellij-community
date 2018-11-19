@@ -16,7 +16,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
   private final String myNameAttribute;
   private final String myValueAttribute;
 
-  public OptionTagBinding(@NotNull MutableAccessor accessor, @Nullable OptionTag optionTag) {
+  OptionTagBinding(@NotNull MutableAccessor accessor, @Nullable OptionTag optionTag) {
     super(accessor, optionTag == null ? null : optionTag.value(), optionTag == null ? null : optionTag.converter());
 
     if (optionTag == null) {

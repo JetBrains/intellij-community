@@ -27,12 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
   private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
-  private static final String REPEAT_ANNOTATIONS_ITEM = "CLASS";
+  private static final String REPEAT_ANNOTATIONS_ITEM = "ANNO";
   private static final String DO_NOT_IMPORT_INNER = "DO_NOT_IMPORT_INNER";
   private static final String DO_NOT_IMPORT_INNER_ITEM = "CLASS";
   private static final String COLLECTION_ITEM_ATTRIBUTE = "name";
@@ -95,7 +96,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   }
 
   public boolean REPLACE_INSTANCEOF = false;
-  public boolean REPLACE_CAST = false;
   public boolean REPLACE_NULL_CHECK = true;
 
   public boolean SPACES_WITHIN_ANGLE_BRACKETS;
@@ -296,7 +296,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(rootSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     IMPORT_LAYOUT_TABLE.copyFrom(rootSettings.IMPORT_LAYOUT_TABLE);
     REPLACE_INSTANCEOF = rootSettings.REPLACE_INSTANCEOF;
-    REPLACE_CAST = rootSettings.REPLACE_CAST;
     REPLACE_NULL_CHECK = rootSettings.REPLACE_NULL_CHECK;
     FIELD_NAME_PREFIX = rootSettings.FIELD_NAME_PREFIX;
     STATIC_FIELD_NAME_PREFIX = rootSettings.STATIC_FIELD_NAME_PREFIX;
@@ -392,7 +391,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     return CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
   }
 
-  private void readExternalCollection(Element parentElement, Collection<String> collection, String collectionName, String itemName) {
+  private void readExternalCollection(Element parentElement, Collection<? super String> collection, String collectionName, String itemName) {
     Element child = parentElement.getChild(getTagName());
     if (child != null) {
       collection.clear();
@@ -413,6 +412,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
       Element child = parentElement.getChild(getTagName());
       if (child == null) {
         child = new Element(getTagName());
+        parentElement.addContent(child);
       }
       Element element = new Element(collectionName);
       for (String item : collection) {
@@ -420,5 +420,19 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
       }
       child.addContent(element);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<String> getKnownTagNames() {
+    return Arrays.asList(getTagName(), REPEAT_ANNOTATIONS, DO_NOT_IMPORT_INNER);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!super.equals(obj)) return false;
+    JavaCodeStyleSettings otherSettings = (JavaCodeStyleSettings)obj;
+    if (!myRepeatAnnotations.equals(otherSettings.getRepeatAnnotations())) return false;
+    return myDoNotImportInner.equals(otherSettings.getDoNotImportInner());
   }
 }

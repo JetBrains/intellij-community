@@ -83,3 +83,9 @@ C3(1, 2)
 class D1:
     x: int = 0
     y: int = dataclasses.field(init=False)
+
+
+@dataclasses.dataclass
+class E1:
+    foo = "bar"  # <- has no type annotation, so doesn't count.
+    baz: str

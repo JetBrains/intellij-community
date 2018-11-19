@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -13,12 +15,20 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Stream;
 
 public interface RefManagerExtension<T> {
   @NotNull
   Key<T> getID();
 
+  @NotNull
+  default Collection<Language> getLanguages() {
+    return Collections.singleton(getLanguage());
+  }
+
+  @Deprecated
   @NotNull
   Language getLanguage();
 
@@ -70,5 +80,9 @@ public interface RefManagerExtension<T> {
   @NotNull
   default Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
     return Stream.empty();
+  }
+
+  default void markExternalReferencesProcessed(@NotNull RefElement file) {
+
   }
 }

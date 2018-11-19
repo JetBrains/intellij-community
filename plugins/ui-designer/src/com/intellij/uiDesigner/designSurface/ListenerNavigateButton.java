@@ -178,7 +178,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
   private static class MyNavigateAction extends AnAction {
     private final PsiElement myElement;
 
-    public MyNavigateAction(final String name, PsiElement element) {
+    MyNavigateAction(final String name, PsiElement element) {
       super(name);
       myElement = element;
     }

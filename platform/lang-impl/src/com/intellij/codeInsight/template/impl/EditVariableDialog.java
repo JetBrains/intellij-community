@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.CommonBundle;
@@ -25,11 +10,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,20 +23,19 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class EditVariableDialog extends DialogWrapper {
-  private ArrayList<Variable> myVariables = new ArrayList<>();
-
+  private final ArrayList<Variable> myVariables;
   private JTable myTable;
   private final Editor myEditor;
-  private final List<TemplateContextType> myContextTypes;
+  private final List<? extends TemplateContextType> myContextTypes;
 
-  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, List<TemplateContextType> contextTypes) {
+  EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, List<? extends TemplateContextType> contextTypes) {
     super(parent, true);
     myContextTypes = contextTypes;
     myVariables = variables;
@@ -61,15 +45,9 @@ class EditVariableDialog extends DialogWrapper {
     setOKButtonText(CommonBundle.getOkButtonText());
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("editing.templates.defineTemplates.editTemplVars");
+  protected String getHelpId() {
+    return "editing.templates.defineTemplates.editTemplVars";
   }
 
   @Override
@@ -114,9 +92,7 @@ class EditVariableDialog extends DialogWrapper {
     Stream<String> availableMacroNames = Arrays.stream(MacroFactory.getMacros()).filter(isAcceptableInContext).map(Macro::getPresentableName).sorted();
     Set<String> uniqueNames = availableMacroNames.collect(Collectors.toCollection(LinkedHashSet::new));
 
-    ComboBox comboField = new ComboBox();
-    uniqueNames.forEach(comboField::addItem);
-
+    ComboBox<String> comboField = new ComboBox<>(ArrayUtil.toStringArray(uniqueNames));
     comboField.setEditable(true);
     DefaultCellEditor cellEditor = new DefaultCellEditor(comboField);
     cellEditor.setClickCountToStart(1);
@@ -152,27 +128,6 @@ class EditVariableDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  /*private void showCellPopup(final JTextField field,int x,int y) {
-    JPopupMenu menu = new JPopupMenu();
-    final Macro[] macros = MacroFactory.getMacros();
-    for (int i = 0; i < macros.length; i++) {
-      final Macro macro = macros[i];
-      JMenuItem item = new JMenuItem(macro.getName());
-      item.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          try {
-            field.saveToString().insertString(field.getCaretPosition(), macro.getName() + "()", null);
-          }
-          catch (BadLocationException e1) {
-            LOG.error(e1);
-          }
-        }
-      });
-      menu.add(item);
-    }
-    menu.show(field, x, y);
-  }*/
-
   private void updateTemplateTextByVarNameChange(final Variable oldVar, final Variable newVar) {
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(null, () -> {
       Document document = myEditor.getDocument();
@@ -185,7 +140,7 @@ class EditVariableDialog extends DialogWrapper {
   private class VariablesModel extends AbstractTableModel implements EditableModel {
     private final String[] myNames;
 
-    public VariablesModel(String[] names) {
+    VariablesModel(String[] names) {
       myNames = names;
     }
 

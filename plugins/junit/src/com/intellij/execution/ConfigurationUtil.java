@@ -40,7 +40,7 @@ public class ConfigurationUtil {
   // return true if there is JUnit4 test
   public static boolean findAllTestClasses(final TestClassFilter testClassFilter,
                                            @Nullable final Module module,
-                                           final Set<PsiClass> found) {
+                                           final Set<? super PsiClass> found) {
     final PsiManager manager = testClassFilter.getPsiManager();
 
     final Project project = manager.getProject();
@@ -84,8 +84,8 @@ public class ConfigurationUtil {
   private static boolean addAnnotatedMethodsAnSubclasses(final GlobalSearchScope scope,
                                                          final TestClassFilter testClassFilter,
                                                          @Nullable final Module module,
-                                                         final Set<PsiClass> found,
-                                                         final Set<PsiClass> processed,
+                                                         final Set<? super PsiClass> found,
+                                                         final Set<? super PsiClass> processed,
                                                          final String annotation,
                                                          final Project project) {
     final Ref<Boolean> isJUnit4 = new Ref<>(Boolean.FALSE);

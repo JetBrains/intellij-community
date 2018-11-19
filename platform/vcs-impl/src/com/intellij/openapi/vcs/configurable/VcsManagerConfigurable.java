@@ -155,7 +155,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
     @NotNull private final VcsDescriptor myDescriptor;
 
-    public VcsConfigurableEP(@NotNull Project project, @NotNull VcsDescriptor descriptor) {
+    VcsConfigurableEP(@NotNull Project project, @NotNull VcsDescriptor descriptor) {
       super(project);
       myDescriptor = descriptor;
       displayName = descriptor.getDisplayName();

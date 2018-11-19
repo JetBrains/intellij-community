@@ -95,7 +95,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private boolean myDisposed;
 
-  public ApplyPatchViewer(@NotNull DiffContext context, @NotNull ApplyPatchRequest request) {
+  ApplyPatchViewer(@NotNull DiffContext context, @NotNull ApplyPatchRequest request) {
     myProject = context.getProject();
     myContext = context;
     myPatchRequest = request;
@@ -416,7 +416,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   class MyModel extends MergeModelBase<ApplyPatchChange.State> {
-    public MyModel(@Nullable Project project, @NotNull Document document) {
+    MyModel(@Nullable Project project, @NotNull Document document) {
       super(project, document);
     }
 
@@ -515,7 +515,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   private abstract class ApplySelectedChangesActionBase extends DumbAwareAction {
     private final boolean myShortcut;
 
-    public ApplySelectedChangesActionBase(boolean shortcut) {
+    ApplySelectedChangesActionBase(boolean shortcut) {
       myShortcut = shortcut;
     }
 
@@ -586,7 +586,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private class ApplyNonConflictsAction extends DumbAwareAction {
-    public ApplyNonConflictsAction() {
+    ApplyNonConflictsAction() {
       ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts");
     }
 
@@ -628,7 +628,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   //
 
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
-    public MyFocusOppositePaneAction() {
+    MyFocusOppositePaneAction() {
       super(false);
     }
 
@@ -640,7 +640,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
-    public MyToggleExpandByDefaultAction() {
+    MyToggleExpandByDefaultAction() {
       super(getTextSettings());
     }
 
@@ -651,7 +651,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private class ShowDiffWithLocalAction extends DumbAwareAction {
-    public ShowDiffWithLocalAction() {
+    ShowDiffWithLocalAction() {
       super("Compare with local content", null, AllIcons.Actions.Diff);
     }
 
@@ -734,7 +734,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    public MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
+    MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
       super(new EditorEx[]{editor}, disposable);
     }
 

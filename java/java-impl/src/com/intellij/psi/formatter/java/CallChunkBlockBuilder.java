@@ -45,7 +45,7 @@ public class CallChunkBlockBuilder {
   }
 
   @NotNull
-  public Block create(@NotNull final List<ASTNode> subNodes, final Wrap wrap, @Nullable final Alignment alignment) {
+  public Block create(@NotNull final List<? extends ASTNode> subNodes, final Wrap wrap, @Nullable final Alignment alignment) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
     final ASTNode firstNode = subNodes.get(0);
     if (firstNode.getElementType() == JavaTokenType.DOT) {
@@ -62,7 +62,7 @@ public class CallChunkBlockBuilder {
   }
 
   @NotNull
-  private List<Block> createJavaBlocks(@NotNull final List<ASTNode> subNodes) {
+  private List<Block> createJavaBlocks(@NotNull final List<? extends ASTNode> subNodes) {
     final ArrayList<Block> result = new ArrayList<>();
     for (ASTNode node : subNodes) {
       Indent indent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);

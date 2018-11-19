@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
@@ -33,10 +32,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.RunFirst;
-import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -58,8 +54,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static org.junit.Assert.*;
 
 @RunFirst
 @SkipSlowTestLocally
@@ -316,17 +310,10 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     );
   }
 
-  private VirtualDirectoryImpl createTempFsDirectory() throws IOException {
-    VirtualDirectoryImpl temp = WriteAction.computeAndWait(() ->
-         (VirtualDirectoryImpl)TempFileSystem.getInstance().findFileByPath("/").createChildDirectory(this, "temp"));
-    Disposer.register(getTestRootDisposable(), () -> {
-      try {
-        WriteAction.runAndWait(() -> temp.delete(this));
-      }
-      catch (IOException e) {
-        throw new RuntimeException();
-      }
-    });
+  private VirtualDirectoryImpl createTempFsDirectory() {
+    VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
+    VirtualDirectoryImpl temp = (VirtualDirectoryImpl)VfsTestUtil.createDir(root, "temp");
+    Disposer.register(getTestRootDisposable(), () -> VfsTestUtil.deleteFile(temp));
     return temp;
   }
 
@@ -334,7 +321,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
   }
 
-  private void eventsForCreating(List<VFileEvent> events, int N, VirtualDirectoryImpl temp) {
+  private void eventsForCreating(List<? super VFileEvent> events, int N, VirtualDirectoryImpl temp) {
     events.clear();
     TempFileSystem fs = TempFileSystem.getInstance();
     IntStream.range(0, N)
@@ -349,7 +336,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     temp.removeChildren(new TIntHashSet(), names);
   }
 
-  private void eventsForDeleting(List<VFileEvent> events, VirtualDirectoryImpl temp) {
+  private void eventsForDeleting(List<? super VFileEvent> events, VirtualDirectoryImpl temp) {
     events.clear();
     temp.getCachedChildren().stream()
       .map(v->new VFileDeleteEvent(this, v, false))

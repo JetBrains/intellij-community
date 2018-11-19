@@ -95,7 +95,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
     StringBuilder buffer = new StringBuilder();
-    final String name = StringUtil.escapeXml(libraryName);
+    final String name = StringUtil.escapeXmlEntities(libraryName);
     buffer.append("Library ");
     buffer.append("<a href='http://library/").append(name).append("'>").append(name).append("</a>");
     buffer.append(" has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
@@ -153,7 +153,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
-    final String name = StringUtil.escapeXml(myLibrary.getName());
+    final String name = StringUtil.escapeXmlEntities(myLibrary.getName());
     String libraryName = "<a href='http://library/" + name + "'>" + name + "</a>";
     return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml("Library " + libraryName + " is not used"), null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
@@ -180,7 +180,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     private final OrderRootType myType;
     private final List<String> myInvalidUrls;
 
-    public RemoveInvalidRootsQuickFix(Library library, OrderRootType type, List<String> invalidUrls) {
+    RemoveInvalidRootsQuickFix(Library library, OrderRootType type, List<String> invalidUrls) {
       super("Remove invalid " + StringUtil.pluralize("root", invalidUrls.size()));
       myLibrary = library;
       myType = type;

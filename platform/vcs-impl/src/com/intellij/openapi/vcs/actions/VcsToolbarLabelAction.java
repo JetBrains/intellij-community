@@ -44,7 +44,7 @@ public class VcsToolbarLabelAction extends DumbAwareAction implements CustomComp
   }
 
   private static class VcsToolbarLabel extends JBLabel {
-    public VcsToolbarLabel() {
+    VcsToolbarLabel() {
       super(DEFAULT_LABEL);
     }
 

@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,11 +63,11 @@ public class GrStubUtils {
     return CachedValuesManager.getCachedValue(file, () -> {
       Map<String, String> mapping = ContainerUtil.newHashMap();
       for (GrImportStatement importStatement : ((GroovyFile)file).getImportStatements()) {
-        if (importStatement.getImportReference() != null && !importStatement.isStatic() && importStatement.isAliasedImport()) {
-          String importName = importStatement.getImportReference().getClassNameText();
+        String fqn = importStatement.getImportFqn();
+        if (fqn != null && !importStatement.isStatic() && importStatement.isAliasedImport()) {
           String importedName = importStatement.getImportedName();
           if (importedName != null) {
-            mapping.put(importedName, importName);
+            mapping.put(importedName, fqn);
           }
         }
       }

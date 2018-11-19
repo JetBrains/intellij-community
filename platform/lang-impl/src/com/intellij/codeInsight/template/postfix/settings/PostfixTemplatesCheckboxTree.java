@@ -110,7 +110,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
         if (!(value instanceof CheckedTreeNode)) return;
         CheckedTreeNode node = (CheckedTreeNode)value;
 
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        Color background = UIUtil.getTreeBackground(selected, true);
         PostfixTemplateCheckedTreeNode templateNode = ObjectUtils.tryCast(node, PostfixTemplateCheckedTreeNode.class);
         SimpleTextAttributes attributes;
         if (templateNode != null) {
@@ -227,7 +227,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     });
   }
 
-  private void visitTemplateNodes(@NotNull Consumer<PostfixTemplateCheckedTreeNode> consumer) {
+  private void visitTemplateNodes(@NotNull Consumer<? super PostfixTemplateCheckedTreeNode> consumer) {
     Enumeration languages = myRoot.children();
     while (languages.hasMoreElements()) {
       CheckedTreeNode langNode = (CheckedTreeNode)languages.nextElement();
@@ -424,7 +424,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   private static class LangTreeNode extends CheckedTreeNode {
     @NotNull private final String myLanguageId;
 
-    public LangTreeNode(@NotNull String languageName, @NotNull String languageId) {
+    LangTreeNode(@NotNull String languageName, @NotNull String languageId) {
       super(languageName);
       myLanguageId = languageId;
     }

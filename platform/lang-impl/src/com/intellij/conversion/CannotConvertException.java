@@ -16,15 +16,17 @@
 
 package com.intellij.conversion;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
 public class CannotConvertException extends Exception {
-  public CannotConvertException(String message) {
+  public CannotConvertException(@NotNull String message) {
     super(message);
   }
 
-  public CannotConvertException(String message, Throwable cause) {
+  public CannotConvertException(@NotNull String message, Throwable cause) {
     super(message, cause);
   }
 }

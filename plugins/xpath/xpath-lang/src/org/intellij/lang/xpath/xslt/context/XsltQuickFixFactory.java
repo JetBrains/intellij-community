@@ -83,7 +83,7 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
     }
 
     private static class EditAssociationsFix extends Fix<XPathNodeTest> {
-        public EditAssociationsFix(XPathNodeTest test) {
+        EditAssociationsFix(XPathNodeTest test) {
             super(test);
         }
 

@@ -35,7 +35,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/8/2015
  */
 public class DefaultProjectResolverContext extends UserDataHolderBase implements ProjectResolverContext {
   @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;

@@ -23,10 +23,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.ModuleTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -60,7 +57,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     super.setUp();
     myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
         forceFSRescan();
       }
@@ -225,14 +222,14 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final List<String> generatedFilePaths = new ArrayList<>();
     myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
       @Override
-      public void fileGenerated(String outputRoot, String relativePath) {
+      public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
         generatedFilePaths.add(relativePath);
       }
     });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       final CompileStatusNotification callback = new CompileStatusNotification() {
         @Override
-        public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           try {
             if (aborted) {
               Assert.fail("compilation aborted");
@@ -250,20 +247,31 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       };
       PlatformTestUtil.saveProject(myProject);
       CompilerTestUtil.saveApplicationSettings();
+      try {
+        CompilerTester.enableDebugLogging();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
       action.accept(callback);
     });
 
-    final long start = System.currentTimeMillis();
-    while (!semaphore.waitFor(10)) {
-      if (System.currentTimeMillis() - start > 5 * 60 * 1000) {
-        throw new RuntimeException("timeout");
+    try {
+      final long start = System.currentTimeMillis();
+      while (!semaphore.waitFor(10)) {
+        if (System.currentTimeMillis() - start > 50 * 60 * 1000) {
+          throw new RuntimeException("timeout");
+        }
+        if (SwingUtilities.isEventDispatchThread()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
       }
       if (SwingUtilities.isEventDispatchThread()) {
         UIUtil.dispatchAllInvocationEvents();
       }
     }
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
+    finally {
+      CompilerTester.printBuildLog();
     }
 
     return result.get();

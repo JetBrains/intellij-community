@@ -52,12 +52,12 @@ import java.util.Map;
 
 /**
  * @author anna
- * @since 04-Sep-2008
  */
 public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefactoringProcessor {
   public static final String REFACTORING_NAME = "Replace Constructor with Builder";
   private final PsiMethod[] myConstructors;
   private final Map<String, ParameterData> myParametersMap;
+  @NotNull
   private final String myClassName;
   private final String myPackageName;
   private final boolean myCreateNewBuilderClass;
@@ -68,12 +68,12 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   public ReplaceConstructorWithBuilderProcessor(Project project,
                                                 PsiMethod[] constructors,
                                                 Map<String, ParameterData> parametersMap,
-                                                String className,
+                                                @NotNull String className,
                                                 String packageName,
                                                 MoveDestination moveDestination, boolean createNewBuilderClass) {
     super(project);
     myMoveDestination = moveDestination;
-    myElementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    myElementFactory = JavaPsiFacade.getElementFactory(myProject);
     myConstructors = constructors;
     myParametersMap = parametersMap;
 
@@ -231,7 +231,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
   private PsiMethod createMethodSignature(String createMethodName) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     final PsiMethod constructor = getWorkingConstructor();
     for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
       final String pureParamName = styleManager.variableNameToPropertyName(parameter.getName(), VariableKind.PARAMETER);

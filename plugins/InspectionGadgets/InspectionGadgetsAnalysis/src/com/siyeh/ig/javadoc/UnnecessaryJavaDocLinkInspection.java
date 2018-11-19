@@ -87,7 +87,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
 
     private final String tagName;
 
-    public UnnecessaryJavaDocLinkFix(String tagName) {
+    UnnecessaryJavaDocLinkFix(String tagName) {
       this.tagName = tagName;
     }
 

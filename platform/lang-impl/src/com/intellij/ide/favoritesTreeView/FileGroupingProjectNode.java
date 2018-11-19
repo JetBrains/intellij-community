@@ -15,7 +15,7 @@ import java.io.File;
 public class FileGroupingProjectNode extends ProjectViewNodeWithChildrenList<File> {
   private VirtualFile myVirtualFile;
 
-  public FileGroupingProjectNode(Project project, File file, ViewSettings viewSettings) {
+  public FileGroupingProjectNode(Project project, @NotNull File file, ViewSettings viewSettings) {
     super(project, file, viewSettings);
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     myVirtualFile = lfs.findFileByIoFile(file);
@@ -30,7 +30,7 @@ public class FileGroupingProjectNode extends ProjectViewNodeWithChildrenList<Fil
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     if (myVirtualFile != null && myVirtualFile.isDirectory()) {
       presentation.setIcon(AllIcons.Nodes.Folder);
     }

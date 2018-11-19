@@ -86,7 +86,7 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
   static void visitDirsRecursivelyWithoutExcluded(@NotNull Project project,
                                                   @NotNull ProjectRootManager projectRootManager,
                                                   @NotNull VirtualFile root,
-                                                  @NotNull Function<VirtualFile, Result> dirFound) {
+                                                  @NotNull Function<? super VirtualFile, ? extends Result> dirFound) {
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
     Option depthLimit = limit(Registry.intValue("vcs.root.detector.folder.depth"));
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor(NO_FOLLOW_SYMLINKS, depthLimit) {
@@ -117,7 +117,7 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
   }
 
   @Override
-  public void rootsChanged(ModuleRootEvent event) {
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
     scheduleScan();
   }
 

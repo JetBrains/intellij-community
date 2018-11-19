@@ -46,17 +46,17 @@ public class CommandUtil {
    * @param condition
    * @param value
    */
-  public static void put(@NotNull List<String> parameters, boolean condition, @NotNull String value) {
+  public static void put(@NotNull List<? super String> parameters, boolean condition, @NotNull String value) {
     if (condition) {
       parameters.add(value);
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull File path) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull File path) {
     put(parameters, path.getAbsolutePath(), Revision.UNDEFINED);
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull File path, boolean usePegRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull File path, boolean usePegRevision) {
     if (usePegRevision) {
       put(parameters, path);
     } else {
@@ -64,11 +64,11 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable Revision pegRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull File path, @Nullable Revision pegRevision) {
     put(parameters, path.getAbsolutePath(), pegRevision);
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable Revision pegRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull String path, @Nullable Revision pegRevision) {
     parameters.add(format(path, pegRevision));
   }
 
@@ -93,11 +93,11 @@ public class CommandUtil {
     return builder.toString();
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull Target target) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull Target target) {
     put(parameters, target.getPath(), target.getPegRevision());
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull Target target, boolean usePegRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull Target target, boolean usePegRevision) {
     if (usePegRevision) {
       put(parameters, target);
     } else {
@@ -105,11 +105,11 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable Depth depth) {
+  public static void put(@NotNull List<? super String> parameters, @Nullable Depth depth) {
     put(parameters, depth, false);
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable Depth depth, boolean sticky) {
+  public static void put(@NotNull List<? super String> parameters, @Nullable Depth depth, boolean sticky) {
     if (depth != null && !Depth.UNKNOWN.equals(depth)) {
       parameters.add("--depth");
       parameters.add(depth.getName());
@@ -121,14 +121,14 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable Revision revision) {
+  public static void put(@NotNull List<? super String> parameters, @Nullable Revision revision) {
     if (revision != null && !Revision.UNDEFINED.equals(revision) && !Revision.WORKING.equals(revision) && revision.isValid()) {
       parameters.add("--revision");
       parameters.add(format(revision));
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull Revision startRevision, @NotNull Revision endRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull Revision startRevision, @NotNull Revision endRevision) {
     parameters.add("--revision");
     parameters.add(format(startRevision) + ":" + format(endRevision));
   }
@@ -138,7 +138,7 @@ public class CommandUtil {
     return revision.getDate() != null ? "{" + DateFormatUtil.getIso8601Format().format(revision.getDate()) + "}" : revision.toString();
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable DiffOptions diffOptions) {
+  public static void put(@NotNull List<? super String> parameters, @Nullable DiffOptions diffOptions) {
     if (diffOptions != null) {
       StringBuilder builder = new StringBuilder();
 
@@ -161,7 +161,7 @@ public class CommandUtil {
     }
   }
 
-  public static void putChangeLists(@NotNull List<String> parameters, @Nullable Iterable<String> changeLists) {
+  public static void putChangeLists(@NotNull List<? super String> parameters, @Nullable Iterable<String> changeLists) {
     if (changeLists != null) {
       for (String changeList : changeLists) {
         parameters.add("--cl");

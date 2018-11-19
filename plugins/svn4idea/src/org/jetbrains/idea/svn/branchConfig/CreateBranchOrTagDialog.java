@@ -89,10 +89,10 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
                                                            myWorkingCopyField.getPreferredSize().height));
 
     Info info = myVcs.getInfo(file);
-    if (info == null || info.getURL() == null) {
+    if (info == null || info.getUrl() == null) {
       throw new VcsException("Can not find url for file: " + file.getPath());
     }
-    mySrcURL = info.getURL();
+    mySrcURL = info.getUrl();
 
     myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
                                                myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());

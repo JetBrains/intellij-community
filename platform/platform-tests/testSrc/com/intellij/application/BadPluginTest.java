@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- * @since 9.01.2013
  */
 public class BadPluginTest extends PlatformTestCase {
   private static final String COM_YOUR_COMPANY_UNIQUE_PLUGIN_ID = "com.your.company.unique.plugin.id";

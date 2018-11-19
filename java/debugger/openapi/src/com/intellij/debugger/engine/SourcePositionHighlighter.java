@@ -23,7 +23,7 @@ public abstract class SourcePositionHighlighter {
   @Nullable
   public static TextRange getHighlightRangeFor(SourcePosition sourcePosition) {
     DumbService dumbService = DumbService.getInstance(sourcePosition.getFile().getProject());
-    for (SourcePositionHighlighter provider : dumbService.filterByDumbAwareness(EP_NAME.getExtensions())) {
+    for (SourcePositionHighlighter provider : dumbService.filterByDumbAwareness(EP_NAME.getExtensionList())) {
       TextRange range = provider.getHighlightRange(sourcePosition);
       if (range != null) {
         return range;

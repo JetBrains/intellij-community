@@ -57,7 +57,7 @@ class ApplyPatchChange {
 
   private boolean myResolved;
 
-  public ApplyPatchChange(@NotNull PatchChangeBuilder.Hunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
+  ApplyPatchChange(@NotNull PatchChangeBuilder.Hunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
     myIndex = index;
     myViewer = viewer;
     myPatchDeletionRange = hunk.getPatchDeletionRange();
@@ -356,7 +356,7 @@ class ApplyPatchChange {
     private final Color myColor;
     private final String myTooltip;
 
-    public MyGutterRenderer(int line1, int line2, Color color, String tooltip) {
+    MyGutterRenderer(int line1, int line2, Color color, String tooltip) {
       myLine1 = line1;
       myLine2 = line2;
       myColor = color;
@@ -381,6 +381,12 @@ class ApplyPatchChange {
     @Override
     public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
       if (getResultRange() != null) myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
+    }
+
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      return "marker: " + getTooltipText();
     }
   }
 }

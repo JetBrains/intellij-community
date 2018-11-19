@@ -42,8 +42,8 @@ public class InspectionTreeHtmlWriter {
   }
 
   private void traverseInspectionTree(final InspectionTreeNode node,
-                                             final Consumer<InspectionTreeNode> preAction,
-                                             final Consumer<InspectionTreeNode> postAction) {
+                                             final Consumer<? super InspectionTreeNode> preAction,
+                                             final Consumer<? super InspectionTreeNode> postAction) {
     if (node.isExcluded()) {
       return;
     }
@@ -167,7 +167,7 @@ public class InspectionTreeHtmlWriter {
       .append(":</h3>");
   }
 
-  private void appendTree(Consumer<StringBuffer> treeRenderer) {
+  private void appendTree(Consumer<? super StringBuffer> treeRenderer) {
     myBuilder.append("<div style=\"width:100%;\"><div style=\"float:left; width:50%;\"><h4>Inspection tree:</h4>");
     treeRenderer.accept(myBuilder);
     myBuilder.append("</div><div style=\"float:left; width:50%;\"><h4>Problem description:</h4>" +
@@ -175,6 +175,6 @@ public class InspectionTreeHtmlWriter {
   }
 
   private static String escapeNonBreakingSymbols(@NotNull Object source) {
-    return StringUtil.replace(StringUtil.escapeXml(source.toString()), Arrays.asList(" ", "-"), Arrays.asList("&nbsp;", "&#8209;"));
+    return StringUtil.replace(StringUtil.escapeXmlEntities(source.toString()), Arrays.asList(" ", "-"), Arrays.asList("&nbsp;", "&#8209;"));
   }
 }

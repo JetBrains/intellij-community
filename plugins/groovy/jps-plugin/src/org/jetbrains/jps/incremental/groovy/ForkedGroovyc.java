@@ -95,6 +95,9 @@ class ForkedGroovyc implements GroovycFlavor {
     if (byteCodeTargetLevel != null) {
       vmParams.add("-D" + GroovyRtConstants.GROOVY_TARGET_BYTECODE + "=" + byteCodeTargetLevel);
     }
+    if ("true".equals(System.getProperty(GroovyRtConstants.GROOVYC_LEGACY_REMOVE_ANNOTATIONS))) {
+      vmParams.add("-D" + GroovyRtConstants.GROOVYC_LEGACY_REMOVE_ANNOTATIONS + "=true");
+    }
 
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
       getJavaExecutable(myChunk),

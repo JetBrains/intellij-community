@@ -51,6 +51,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.io.BaseOutputReader;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +78,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
-                                                    Function<T, String> nameFunction,
+                                                    Function<? super T, String> nameFunction,
                                                     String packageName,
                                                     boolean createTempFile, JavaParameters javaParameters) throws CantRunException {
     try {
@@ -337,7 +338,13 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     appendForkInfo(executor);
     appendRepeatMode();
 
-    final OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine());
+    OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine()) {
+      @NotNull
+      @Override
+      protected BaseOutputReader.Options readerOptions() {
+        return BaseOutputReader.Options.forMostlySilentProcess();
+      }
+    };
     ProcessTerminatedListener.attach(processHandler);
     final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
     if (searchForTestsTask != null) {

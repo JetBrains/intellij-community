@@ -23,7 +23,7 @@ import java.util.List;
 class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
 
-  public VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, @NotNull Disposable disposable) {
+  VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, @NotNull Disposable disposable) {
     super(project, DiffPlaces.VCS_LOG_VIEW);
     myBrowser = browser;
     myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
@@ -73,7 +73,7 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   private class MyChangeWrapper extends Wrapper {
     @NotNull private final Change myChange;
 
-    public MyChangeWrapper(@NotNull Change change) {
+    MyChangeWrapper(@NotNull Change change) {
       myChange = change;
     }
 

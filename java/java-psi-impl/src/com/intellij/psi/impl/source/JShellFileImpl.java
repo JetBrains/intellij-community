@@ -46,7 +46,7 @@ public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile
     return result;
   }
 
-  private static void collectExecutableSnippets(PsiElement container, Collection<PsiElement> result) {
+  private static void collectExecutableSnippets(PsiElement container, Collection<? super PsiElement> result) {
     for (PsiElement child = container.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiJShellRootClass) {
         collectExecutableSnippets(child, result);

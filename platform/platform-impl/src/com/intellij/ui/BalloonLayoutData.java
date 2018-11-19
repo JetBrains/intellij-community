@@ -56,10 +56,9 @@ public class BalloonLayoutData {
 
   public BalloonLayoutConfiguration configuration;
 
-  public Runnable lafHandler;
-
   public long fadeoutTime;
 
+  public Color textColor;
   public Color fillColor;
   public Color borderColor;
 

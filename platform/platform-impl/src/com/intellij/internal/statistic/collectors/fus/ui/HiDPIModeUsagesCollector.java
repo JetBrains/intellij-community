@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,5 +27,11 @@ public class HiDPIModeUsagesCollector extends ApplicationUsagesCollector {
   @Override
   public String getGroupId() {
     return "statistics.ui.hidpi.mode";
+  }
+
+  @NotNull
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
   }
 }

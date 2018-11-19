@@ -5,17 +5,14 @@ import com.intellij.CommonBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.RadioButton
-import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
+import com.intellij.ui.components.*
 import java.awt.Dimension
 import java.awt.GridLayout
 import javax.swing.*
 
 fun labelRowShouldNotGrow(): JPanel {
   return panel {
-    row("Create Android module") { CheckBox("Android module name:")() }
+    row("Create Android module") { CheckBox("FooBar module name foo")() }
     row("Android module name:") { JTextField("input")() }
   }
 }
@@ -157,6 +154,18 @@ fun noteRowInTheDialog(): JPanel {
   }
 }
 
+fun jbTextField(): JPanel {
+  val passwordField = JBPasswordField()
+  return panel {
+    noteRow("Enter credentials for bitbucket.org")
+    row("Username:") { JTextField("develar")() }
+    row("Password:") { passwordField() }
+    row {
+      JBCheckBox(CommonBundle.message("checkbox.remember.password"), true)()
+    }
+  }
+}
+
 fun cellPanel(): JPanel {
   return panel {
     row("Repository:") {
@@ -217,6 +226,48 @@ fun withVerticalButtons(): JPanel {
         button("Accept Yours", growX) {}
         button("Accept Theirs", growX) {}
         button("Merge ...", growX) {}
+      }
+    }
+  }
+}
+
+fun titledRows(): JPanel {
+  return panel {
+    titledRow("Async Profiler") {
+      row { browserLink("Async profiler README.md", "https://github.com/jvm-profiling-tools/async-profiler") }
+      row("Agent path:") { textFieldWithBrowseButton("", comment = "If field is empty bundled agent will be used") }
+      row("Agent options:") { textFieldWithBrowseButton("", comment = "Don't add output format (collapsed is used) or output file options") }
+    }
+    titledRow("Java Flight Recorder") {
+      row("JRE home:") {
+        textFieldWithBrowseButton("", comment = "At least OracleJRE 9 or OpenJRE 11 is required to import dump")
+      }
+    }
+  }
+}
+
+fun spannedCheckbox(): JPanel {
+  return panel {
+    buttonGroup {
+      row {
+        RadioButton("In KeePass")()
+        row("Database:") {
+          // comment can lead to broken layout, so, test it
+          JTextField("test")(comment = "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
+        }
+
+        row {
+          cell {
+            checkBox("Protect master password using PGP key")
+            val comboBox = ComboBox(arrayOf("Foo", "Bar"))
+            comboBox.isVisible = false
+            comboBox(growPolicy = GrowPolicy.MEDIUM_TEXT)
+          }
+        }
+      }
+
+      row {
+        RadioButton("Do not save, forget passwords after restart")()
       }
     }
   }

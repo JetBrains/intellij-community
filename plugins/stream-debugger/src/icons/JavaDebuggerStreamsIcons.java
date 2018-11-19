@@ -9,7 +9,7 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
-public class JavaDebuggerStreamsIcons {
+public final class JavaDebuggerStreamsIcons {
   private static Icon load(String path) {
     return IconLoader.getIcon(path, JavaDebuggerStreamsIcons.class);
   }

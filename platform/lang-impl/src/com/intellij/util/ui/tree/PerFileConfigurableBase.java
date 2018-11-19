@@ -235,7 +235,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     FileChooser.chooseFiles(descriptor, myProject, myTable, toSelect, this::doAddFiles);
   }
 
-  private void doAddFiles(@NotNull List<VirtualFile> files) {
+  private void doAddFiles(@NotNull List<? extends VirtualFile> files) {
     Set<VirtualFile> chosen = ContainerUtil.newHashSet(files);
     if (chosen.isEmpty()) return;
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
@@ -439,8 +439,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
     if (maxValueWidth < 300) {
       myTable.getColumnModel().getColumn(1).setMinWidth(maxValueWidth);
-      myTable.getColumnModel().getColumn(1).setMaxWidth(2 * maxValueWidth);
     }
+    myTable.getColumnModel().getColumn(0).setMinWidth(metrics.stringWidth(myTable.getModel().getColumnName(0)) * 2);
     myTable.getColumnModel().getColumn(0).setCellRenderer(new ColoredTableCellRenderer() {
       @Override
       public void acquireState(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -685,7 +685,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
                                            @Nullable T value,
                                            @Nullable Runnable onDispose,
                                            @NotNull DataContext dataContext,
-                                           @NotNull Consumer<T> onChosen,
+                                           @NotNull Consumer<? super T> onChosen,
                                            @NotNull Runnable onCommit) {
     return createValueEditorActionListPopup(target, onDispose, dataContext, chosen -> {
       onChosen.consume(chosen);
@@ -697,7 +697,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected final JBPopup createValueEditorActionListPopup(@Nullable Object target,
                                                            @Nullable Runnable onDispose,
                                                            @NotNull DataContext dataContext,
-                                                           @NotNull Consumer<T> onChosen) {
+                                                           @NotNull Consumer<? super T> onChosen) {
     ActionGroup group = createActionListGroup(target, onChosen);
     return JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, dataContext, false, false, false,
@@ -726,7 +726,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @NotNull
-  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<T> onChosen) {
+  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super T> onChosen) {
     DefaultActionGroup group = new DefaultActionGroup();
     String clearText = getClearValueText(target);
     Function<T, AnAction> choseAction = t -> {
@@ -765,7 +765,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     final String[] columnNames;
     final List<Pair<Object, T>> data = ContainerUtil.newArrayList();
 
-    public MyModel(String... names) {
+    MyModel(String... names) {
       columnNames = names;
     }
 

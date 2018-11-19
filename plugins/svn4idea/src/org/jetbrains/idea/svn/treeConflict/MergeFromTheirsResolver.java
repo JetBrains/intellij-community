@@ -167,7 +167,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     private final VirtualFile myBaseDir;
     @NotNull private final AsyncPromise<VcsException> myPromise;
 
-    public TreeConflictApplyTheirsPatchExecutor(@NotNull SvnVcs vcs, final VirtualFile baseDir) {
+    TreeConflictApplyTheirsPatchExecutor(@NotNull SvnVcs vcs, final VirtualFile baseDir) {
       myVcs = vcs;
       myBaseDir = baseDir;
       myPromise = new AsyncPromise<>();

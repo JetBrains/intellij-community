@@ -127,7 +127,7 @@ public class AntTasksProvider {
   private static class AntClassLoader extends UrlClassLoader {
     private final Future<Map<String, Class>> myFuture;
 
-    public AntClassLoader(ArrayList<URL> urls) {
+    AntClassLoader(ArrayList<URL> urls) {
       super(getBuilder(urls));
       myFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {

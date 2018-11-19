@@ -147,12 +147,12 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myRecursive;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myRecursive = state;
       myCallback.run();
     }

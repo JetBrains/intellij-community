@@ -84,7 +84,7 @@ public class DTree {
     else if (myChildren.containsKey(name)) {
       node = myChildren.get(name);
     } else {
-      node = new DTree(this, name, element.isContainer());
+      node = new DTree(this, element.getPresentableName(), element.isContainer());
       myChildren.put(name, node);
     }
 

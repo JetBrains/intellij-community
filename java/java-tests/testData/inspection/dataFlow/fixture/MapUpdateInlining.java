@@ -10,17 +10,17 @@ class MapUpdateInlining {
   }
 
   void testValue(Map<String, @NotNull String> map) {
-    System.out.println(map.computeIfAbsent("foo", k -> null).<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(map.computeIfAbsent("foo", k -> null).<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
     System.out.println(map.computeIfAbsent("foo", k -> "bar").trim());
   }
 
   void testNullable(Map<String, @Nullable String> map) {
-    System.out.println(map.computeIfAbsent("foo", k -> null).<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(map.computeIfAbsent("foo", k -> null).<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
     System.out.println(map.computeIfAbsent("foo", k -> "bar").trim());
   }
 
   void testPresent(Map<String, @Nullable String> map, String key) {
-    System.out.println(map.computeIfPresent(key, (k, v) -> v+"xyz").<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    System.out.println(map.computeIfPresent(key, (k, v) -> v+"xyz").<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
     String res1 = map.computeIfPresent("foo", (k, v) -> <warning descr="Condition 'v == null' is always 'false'">v == null</warning> ? "oops" : k);
     String res = map.computeIfPresent(key, (k, v) -> k.isEmpty() ? "foo" : "bar");
     if(<warning descr="Condition 'res != null && res.equals(\"x\")' is always 'false'">res != null && <warning descr="Condition 'res.equals(\"x\")' is always 'false' when reached">res.equals("x")</warning></warning>) {

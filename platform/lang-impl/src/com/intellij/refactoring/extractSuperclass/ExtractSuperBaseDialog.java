@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +15,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.RecentsManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -78,14 +64,11 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract void setDocCommentPolicySetting(int policy);
 
-  @Override
-  protected abstract String getHelpId();
-
   @Nullable
   protected abstract String validateName(String name);
   
   @Nullable
-  protected String validateQualifiedName(String packageName, String extractedSuperName) {
+  protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
     return null;
   }
 
@@ -95,6 +78,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract String getPackageNameLabelText();
 
+  @NotNull
   protected abstract String getEntityName();
 
   protected abstract void preparePackage() throws OperationFailedException;
@@ -215,6 +199,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     getPreviewAction().setEnabled(!isExtractSuperclass());
   }
 
+  @NotNull
   public String getExtractedSuperName() {
     return myExtractedSuperNameField.getText().trim();
   }
@@ -240,7 +225,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     final String packageName = getTargetPackageName();
     RecentsManager.getInstance(myProject).registerRecentEntry(getDestinationPackageRecentKey(), packageName);
 
-    if (extractedSuperName != null && extractedSuperName.isEmpty()) {
+    if (extractedSuperName.isEmpty()) {
       // TODO just disable OK button
       errorString[0] = getExtractedSuperNameNotSpecifiedMessage();
       myExtractedSuperNameField.requestFocusInWindow();
@@ -286,11 +271,6 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     }
   }
 
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(getHelpId());
-  }
-
   protected boolean checkConflicts() {
     return true;
   }
@@ -310,6 +290,4 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     }
     return result;
   }
-
-
 }

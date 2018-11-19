@@ -43,6 +43,8 @@ interface UEvaluator {
 
   fun evaluate(expression: UExpression, state: UEvaluationState? = null): UValue
 
+  fun evaluateVariableByReference(variableReference: UReferenceExpression, state: UEvaluationState? = null): UValue
+
   fun getDependents(dependency: UDependency): Set<UValue>
 }
 

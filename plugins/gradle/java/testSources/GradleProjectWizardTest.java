@@ -67,7 +67,6 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     assertEquals("plugins {\n" +
                  "    id 'java'\n" +
                  "}\n\n" +
-                 "group '" + projectName + "'\n" +
                  "version '1.0-SNAPSHOT'\n" +
                  "\n" +
                  "sourceCompatibility = 1.8\n" +

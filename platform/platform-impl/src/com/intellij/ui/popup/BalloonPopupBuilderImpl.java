@@ -295,7 +295,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
       balloons.add(result);
       result.addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           if (!result.isDisposed()) {
             Disposer.dispose(result);
           }

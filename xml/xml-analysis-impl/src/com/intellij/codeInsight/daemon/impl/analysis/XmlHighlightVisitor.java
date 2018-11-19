@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.BundleBase;
@@ -31,9 +17,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -321,7 +307,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if (highlightInfo != null) {
           PsiFile file = tag.getContainingFile();
           if (file != null) {
-            for (XmlUndefinedElementFixProvider fixProvider : Extensions.getExtensions(XmlUndefinedElementFixProvider.EP_NAME)) {
+            for (XmlUndefinedElementFixProvider fixProvider : XmlUndefinedElementFixProvider.EP_NAME.getExtensionList()) {
               IntentionAction[] fixes = fixProvider.createFixes(attribute);
               if (fixes != null) {
                 for (IntentionAction action : fixes) {
@@ -427,6 +413,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     XmlAttribute attribute = (XmlAttribute)parent;
 
     XmlTag tag = attribute.getParent();
+
+    if (tag == null) {
+      LOG.error("Missing tag for attribute: " + attribute.getName(),
+                new Attachment(myHolder.getContextFile().getName(), myHolder.getContextFile().getText()));
+      return;
+    }
 
     XmlElementDescriptor elementDescriptor = tag.getDescriptor();
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor != null ? elementDescriptor.getAttributeDescriptor(attribute):null;

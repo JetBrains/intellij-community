@@ -105,7 +105,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
   private static final class XmlRpcDelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
     private final Map<String, Object> handlers;
 
-    public XmlRpcDelegatingHttpRequestHandler(Map<String, Object> handlers) {
+    XmlRpcDelegatingHttpRequestHandler(Map<String, Object> handlers) {
       this.handlers = handlers;
     }
 

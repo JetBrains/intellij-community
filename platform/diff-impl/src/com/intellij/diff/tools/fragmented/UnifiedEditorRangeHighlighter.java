@@ -34,7 +34,7 @@ import java.util.List;
 class UnifiedEditorRangeHighlighter {
   @NotNull private final List<Element> myPieces = new ArrayList<>();
 
-  public UnifiedEditorRangeHighlighter(@Nullable Project project, @NotNull Document document) {
+  UnifiedEditorRangeHighlighter(@Nullable Project project, @NotNull Document document) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, false);
@@ -50,7 +50,7 @@ class UnifiedEditorRangeHighlighter {
     });
   }
 
-  public UnifiedEditorRangeHighlighter(@Nullable Project project,
+  UnifiedEditorRangeHighlighter(@Nullable Project project,
                                        @NotNull Document document1,
                                        @NotNull Document document2,
                                        @NotNull List<HighlightRange> ranges) {
@@ -127,7 +127,7 @@ class UnifiedEditorRangeHighlighter {
     private final int myStart;
     private final int myEnd;
 
-    public Element(@NotNull RangeHighlighterEx delegate, int start, int end) {
+    Element(@NotNull RangeHighlighterEx delegate, int start, int end) {
       myDelegate = delegate;
       myStart = start;
       myEnd = end;

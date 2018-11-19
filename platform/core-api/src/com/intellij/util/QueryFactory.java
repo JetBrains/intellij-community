@@ -82,8 +82,8 @@ public class QueryFactory<Result, Parameters> {
    */
   @NotNull
   public final <T> Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
-                                                          @NotNull TObjectHashingStrategy<T> hashingStrategy,
-                                                          @NotNull Function<Result, T> mapper) {
+                                                          @NotNull TObjectHashingStrategy<? super T> hashingStrategy,
+                                                          @NotNull Function<? super Result, ? extends T> mapper) {
     return new UniqueResultsQuery<>(createQuery(parameters), hashingStrategy, mapper);
   }
 }

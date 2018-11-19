@@ -228,7 +228,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @NotNull private final Wrapper myFallback;
     private final boolean myUpdateSelection;
 
-    public ChangesNavigatable(@NotNull List<Wrapper> allChanges, @NotNull Wrapper fallback, boolean updateSelection) {
+    ChangesNavigatable(@NotNull List<Wrapper> allChanges, @NotNull Wrapper fallback, boolean updateSelection) {
       myChanges = allChanges;
       myFallback = fallback;
       myUpdateSelection = updateSelection;
@@ -371,7 +371,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @NotNull private final Change myChange;
     @NotNull private final DiffRequest myRequest;
 
-    public ErrorChangeRequestProducer(@NotNull Change change, @NotNull DiffRequest request) {
+    ErrorChangeRequestProducer(@NotNull Change change, @NotNull DiffRequest request) {
       myChange = change;
       myRequest = request;
     }

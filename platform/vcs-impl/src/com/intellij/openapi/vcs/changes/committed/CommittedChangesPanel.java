@@ -146,16 +146,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          final AsynchConsumer<List<CommittedChangeList>> appender = new AsynchConsumer<List<CommittedChangeList>>() {
-            @Override
-            public void finished() {
-            }
-
-            @Override
-            public void consume(final List<CommittedChangeList> list) {
-              runOrInvokeLaterAboveProgress(() -> myBrowser.append(list), ModalityState.stateForComponent(myBrowser), myProject);
-            }
-          };
+          Consumer<List<CommittedChangeList>> appender = list ->
+            runOrInvokeLaterAboveProgress(() -> myBrowser.append(list), ModalityState.stateForComponent(myBrowser), myProject);
           final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(30, appender, -1);
 
           myProvider.loadCommittedChanges(mySettings, myLocation, myMaxCount, new AsynchConsumer<CommittedChangeList>() {
@@ -298,7 +290,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key.equals(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER)) {
       sink.put(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER, myIfNotCachedReloader);
     } else if (VcsDataKeys.REMOTE_HISTORY_LOCATION.equals(key)) {
@@ -328,7 +320,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private class MyFilterComponent extends FilterComponent implements ChangeListFilteringStrategy {
     private final List<ChangeListener> myList = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    public MyFilterComponent() {
+    MyFilterComponent() {
       super("COMMITTED_CHANGES_FILTER_HISTORY", 20);
     }
 

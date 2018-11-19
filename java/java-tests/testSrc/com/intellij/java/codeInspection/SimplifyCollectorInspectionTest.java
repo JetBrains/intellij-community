@@ -28,10 +28,6 @@ public class SimplifyCollectorInspectionTest extends LightQuickFixParameterizedT
     return new LocalInspectionTool[]{new SimplifyCollectorInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/simplifyCollector";

@@ -196,7 +196,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
    * Synchronizes selection in the tree with selection in the editor
    */
   private final class MySelectionWatcher extends SelectionWatcher{
-    public MySelectionWatcher(final GuiEditor editor) {
+    MySelectionWatcher(final GuiEditor editor) {
       super(editor);
     }
 

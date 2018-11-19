@@ -22,10 +22,10 @@ package com.intellij.util;
 import org.jetbrains.annotations.NotNull;
 
 public class AdapterProcessor<T, S> implements Processor<T> {
-  private final Processor<S> myAdaptee;
-  private final Function<T, S> myConversion;
+  private final Processor<? super S> myAdaptee;
+  private final Function<? super T, ? extends S> myConversion;
 
-  public AdapterProcessor(@NotNull Processor<S> adaptee, @NotNull Function<T, S> conversion) {
+  public AdapterProcessor(@NotNull Processor<? super S> adaptee, @NotNull Function<? super T, ? extends S> conversion) {
     myAdaptee = adaptee;
     myConversion = conversion;
   }

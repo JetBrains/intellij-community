@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -206,19 +202,20 @@ public class FileContentQueue {
   @Nullable
   private FileContent doTake(ProgressIndicator indicator) {
     FileContent result = null;
-
+    boolean waitForContentsToBeLoaded = false;
+ 
     while (result == null) {
       indicator.checkCanceled();
       
-      int remainingContentsToLoad = myContentsToLoad.get();
-      result = myLoadedContents.poll();
-      if (result == null) {
-        if (remainingContentsToLoad == 0) {
-          return null;
-        }
+      final int remainingContentsToLoad = myContentsToLoad.get();
+      result = pollLoadedContent(waitForContentsToBeLoaded && remainingContentsToLoad > 0);
+      
+      if (result == null) {  // no loaded contents by other threads
+        if (remainingContentsToLoad == 0) return null; // no items to load
 
-        if (!loadNextContent()) {
-          TimeoutUtil.sleep(50); // wait a little for loading last content
+        if (!loadNextContent()) { // attempt to eagerly load content failed
+          // last remaining contents are loaded by other threads, use timed poll for results
+          waitForContentsToBeLoaded = true;  
         }
       }
     }
@@ -233,6 +230,17 @@ public class FileContentQueue {
     }
 
     return result;
+  }
+
+  @Nullable
+  private FileContent pollLoadedContent(boolean waitForContentsToBeLoaded) {
+    if (waitForContentsToBeLoaded) {
+      try { 
+        return myLoadedContents.poll(50, TimeUnit.MILLISECONDS);
+      } catch(InterruptedException ex) { throw new RuntimeException(ex); }
+    } else {
+      return myLoadedContents.poll();
+    }
   }
 
   public void release(@NotNull FileContent content) {

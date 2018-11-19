@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
@@ -87,7 +88,7 @@ public class GroovyExpectedTypesProvider {
     private TypeConstraint[] myResult;
     private final GrExpression myExpression;
 
-    public MyCalculator(GrExpression expression) {
+    MyCalculator(GrExpression expression) {
       myExpression = (GrExpression)PsiUtil.skipParentheses(expression, true);
       myResult = TypeConstraint.EMPTY_ARRAY;
     }
@@ -359,7 +360,7 @@ public class GroovyExpectedTypesProvider {
 
       if (otherType == null) return;
 
-      final GroovyResolveResult[] callVariants = expression.multiResolve(true);
+      final GroovyResolveResult[] callVariants = PsiUtilKt.multiResolve(expression);
       if (myExpression == left || callVariants.length == 0) {
         if (type == GroovyTokenTypes.mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           final PsiClassType obj = TypesUtil.getJavaLangObject(expression);

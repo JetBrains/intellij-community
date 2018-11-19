@@ -68,7 +68,7 @@ class XPathSupportImpl extends XPathSupport {
     }
 
     private static class MySimpleNamespaceContext extends SimpleNamespaceContext {
-        public MySimpleNamespaceContext(Map<String, String> map) {
+        MySimpleNamespaceContext(Map<String, String> map) {
             super(map);
         }
 
@@ -93,7 +93,7 @@ class XPathSupportImpl extends XPathSupport {
     }
 
     private static class MyXPathFunctionContext extends XPathFunctionContext {
-        public MyXPathFunctionContext() {
+        MyXPathFunctionContext() {
             final List<Pair<QName,? extends Function>> functions = XPathFunctionProvider.getAvailableFunctions(TYPE);
             for (Pair<QName,? extends Function> function : functions) {
                 final Function f = function.getSecond();

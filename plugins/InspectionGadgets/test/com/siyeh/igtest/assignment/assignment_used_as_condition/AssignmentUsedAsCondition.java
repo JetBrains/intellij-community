@@ -3,9 +3,9 @@ package com.siyeh.igtest.assignment.assignment_used_as_condition;
 public class AssignmentUsedAsCondition {
 
   void foo(boolean b) {
-    if (b = fossa()) {
-
+    if (<warning descr="Assignment 'b = fossa()' used as condition">b = fossa()</warning>) {
     }
+    if ((<warning descr="Assignment 'b = fossa()' used as condition">b = fossa()</warning>)) {}
   }
 
   boolean fossa() {
@@ -14,10 +14,12 @@ public class AssignmentUsedAsCondition {
 
   public static void main(String[] args) {
     boolean b = false;
-    if (b != = true) {
+    if (b !=<error descr="Expression expected"> </error>= true) {
 
     }
+    while (<warning descr="Assignment '((b)) = true' used as condition">((b)) = true</warning>) {}
     int i = 1;
-    if (i = 8);
+    if (<error descr="Incompatible types. Found: 'int', required: 'boolean'">i = 8</error>);
+    if (b &= true);
   }
 }

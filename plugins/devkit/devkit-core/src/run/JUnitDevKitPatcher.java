@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -44,7 +45,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since Mar 4, 2005
  */
 public class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
@@ -64,6 +64,12 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
       if (findLoader(project, module, qualifiedName) != null) {
         vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
       }
+    }
+    
+    if (Registry.is("idea.lazy.classloading.caches") &&
+        vm.hasProperty(SYSTEM_CL_PROPERTY) && 
+        UrlClassLoader.class.getName().equals(vm.getPropertyValue(SYSTEM_CL_PROPERTY))) {
+      vm.addProperty("idea.lazy.classloading.caches", "true");
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);

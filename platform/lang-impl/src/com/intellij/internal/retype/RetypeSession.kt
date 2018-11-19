@@ -23,17 +23,22 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.ui.playback.commands.ActionCommand
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Alarm
+import java.io.File
 
 class RetypeSession(
   private val project: Project,
   private val editor: EditorImpl,
   private val delayMillis: Int,
+  private val scriptBuilder: StringBuilder?,
   private val threadDumpDelay: Int,
   private val threadDumps: MutableList<String> = mutableListOf()
 ) : Disposable {
@@ -51,6 +56,7 @@ class RetypeSession(
   private val oldOptimize = CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly
   var startNextCallback: (() -> Unit)? = null
   private val disposeLock = Any()
+  private var typedRightBefore = false
 
   init {
     if (editor.selectionModel.hasSelection()) {
@@ -69,14 +75,25 @@ class RetypeSession(
     val vFile = FileDocumentManager.getInstance().getFile(document)
     val keyName = "${vFile?.name ?: "Unknown file"} (${document.textLength} chars)"
     currentLatencyRecordKey = LatencyDistributionRecordKey(keyName)
+    scriptBuilder?.let {
+      if (vFile != null) {
+        val contentRoot = ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(vFile) ?: return@let
+        it.append("%openFile ${VfsUtil.getRelativePath(vFile, contentRoot)}\n")
+      }
+      it.append(correctText(originalText.substring(0, pos) + originalText.substring(endPos)))
+      val line = editor.document.getLineNumber(pos)
+      it.append("%goto ${line + 1} ${pos - editor.document.getLineStartOffset(line) + 1}\n")
+    }
     WriteCommandAction.runWriteCommandAction(project) { document.deleteString(pos, endPos) }
     CodeInsightSettings.getInstance().apply {
       SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
     }
     CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = false
-    queueNext()
+    queueNextOrStop()
   }
+
+  private fun correctText(text: String) = "%replaceText ${text.replace('\n', '\u32E1')}\n"
 
   fun stop(startNext: Boolean) {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -112,7 +129,7 @@ class RetypeSession(
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
     var expectedText = originalText.substring(0, pos) + originalText.substring(endPos)
-    if (document.text != expectedText) {
+    if (compareTexts(expectedText)) {
       if (document.textLength >= pos && document.text.substring(0, pos) == originalText.substring(0, pos)) {
         while (pos + 1 < document.textLength - tailLength && originalText[pos] == document.text[pos]) {
           pos++
@@ -121,7 +138,9 @@ class RetypeSession(
         expectedText = originalText.substring(0, pos) + originalText.substring(endPos)
       }
 
-      if (document.text != expectedText) {
+      if (compareTexts(expectedText)) {
+        typedRightBefore = false
+        scriptBuilder?.append(correctText(expectedText))
         WriteCommandAction.runWriteCommandAction(project) {
           document.replaceText(expectedText, document.modificationStamp + 1)
         }
@@ -140,6 +159,8 @@ class RetypeSession(
       val currentLookupElement = lookup.currentItem
       if (currentLookupElement?.shouldAccept(lookup.lookupStart) == true) {
         lookup.focusDegree = LookupImpl.FocusDegree.FOCUSED
+        scriptBuilder?.append("${ActionCommand.PREFIX} ${IdeActions.ACTION_CHOOSE_LOOKUP_ITEM}\n")
+        typedRightBefore = false
         executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)
         queueNextOrStop()
         return
@@ -149,13 +170,40 @@ class RetypeSession(
     val c = originalText[pos++]
     typedChars++
     if (c == '\n') {
+      scriptBuilder?.append("${ActionCommand.PREFIX} ${IdeActions.ACTION_EDITOR_ENTER}\n")
       executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+      typedRightBefore = false
     }
     else {
+      scriptBuilder?.let {
+        if (typedRightBefore) {
+          it.deleteCharAt(it.length - 1)
+          it.append("$c\n")
+        } else {
+          it.append("%delayType $delayMillis|$c\n")
+        }
+      }
       editor.type(c.toString())
+      typedRightBefore = true
     }
     queueNextOrStop()
   }
+
+  private fun compareTexts(expectedText: String): Boolean {
+    val text = document.text
+    var i = 0;
+    var j = 0
+    while (i < text.length && j < expectedText.length) {
+      while (i < text.length && isSkipped(text[i])) i++
+      while (j < expectedText.length && isSkipped(expectedText[j])) j++
+      if (text[i] != originalText[j]) return false
+      i++
+      j++
+    }
+    return i == text.length && j == expectedText.length
+  }
+
+  private fun isSkipped(c: Char) = c == ' ' || c == ')' || c == ']' || c == '}'
 
   private fun queueNextOrStop() {
     if (pos < endPos) {
@@ -165,14 +213,22 @@ class RetypeSession(
       stop(true)
 
       if (startNextCallback == null && !ApplicationManager.getApplication().isUnitTestMode) {
+        if (scriptBuilder != null) {
+          scriptBuilder.append(correctText(originalText))
+          val file = File.createTempFile("perf", ".test")
+          val vFile = VfsUtil.findFileByIoFile(file, false)!!
+          WriteCommandAction.runWriteCommandAction(project) {
+            VfsUtil.saveText(vFile, scriptBuilder.toString())
+          }
+          OpenFileDescriptor(project, vFile).navigate(true)
+        }
         TypingLatencyReportDialog(project, threadDumps).show()
       }
     }
   }
 
   private fun LookupElement.shouldAccept(lookupStartOffset: Int): Boolean {
-    for (retypeFileAssistant in Extensions.getExtensions(
-      RetypeFileAssistant.EP_NAME)) {
+    for (retypeFileAssistant in RetypeFileAssistant.EP_NAME.extensionList) {
       if (!retypeFileAssistant.acceptLookupElement(this)) {
         return false
       }
@@ -210,6 +266,9 @@ class RetypeSession(
   private fun logThreadDump() {
     if (editor.isProcessingTypedAction) {
       threadDumps.add(ThreadDumper.dumpThreadsToString())
+      if (threadDumps.size > 200) {
+        threadDumps.subList(0, 100).clear()
+      }
       synchronized(disposeLock) {
         if (!threadDumpAlarm.isDisposed) {
           threadDumpAlarm.addRequest({ logThreadDump() }, 100)

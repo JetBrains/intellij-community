@@ -104,7 +104,7 @@ public class KeyboardGestureProcessor {
     @Override
     @NotNull
     public AnActionEvent createEvent(final InputEvent inputEvent, @NotNull final DataContext context, @NotNull final String place, @NotNull final Presentation presentation,
-                                     final ActionManager manager) {
+                                     @NotNull final ActionManager manager) {
       myContext.actionPresentation = presentation;
       myContext.actionPlace = place;
       return myState.createActionEvent();

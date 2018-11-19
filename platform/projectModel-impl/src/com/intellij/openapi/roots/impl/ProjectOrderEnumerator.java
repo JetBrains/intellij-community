@@ -40,7 +40,7 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  public void processRootModules(@NotNull Processor<Module> processor) {
+  public void processRootModules(@NotNull Processor<? super Module> processor) {
     Module[] modules = myModulesProvider != null ? myModulesProvider.getModules() : ModuleManager.getInstance(myProject).getSortedModules();
     for (Module each : modules) {
       processor.process(each);
@@ -48,7 +48,7 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  protected void forEach(@NotNull final PairProcessor<OrderEntry, List<OrderEnumerationHandler>> processor) {
+  protected void forEach(@NotNull final PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor) {
     myRecursively = false;
     myWithoutDepModules = true;
     final THashSet<Module> processed = new THashSet<>();

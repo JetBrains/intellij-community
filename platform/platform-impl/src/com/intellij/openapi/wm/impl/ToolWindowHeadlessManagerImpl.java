@@ -29,10 +29,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-@SuppressWarnings("ConstantConditions")
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
@@ -445,6 +444,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public void setTabActions(AnAction... actions) {
+    }
+
+    @Override
     public void setUseLastFocusedOnActivation(boolean focus) {
     }
 
@@ -619,7 +622,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       ContentManagerEvent e = new ContentManagerEvent(this, content, oldIndex, ContentManagerEvent.ContentOperation.remove);
       myDispatcher.getMulticaster().contentRemoved(e);
       Content item = ContainerUtil.getFirstItem(myContents);
-      if (item != null) setSelectedContent(item);
+      if (item != null) {
+        setSelectedContent(item);
+      }
+      else {
+        mySelected = null;
+      }
       return result;
     }
 

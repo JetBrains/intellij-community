@@ -118,7 +118,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, @NotNull Git git,
+    UnstashConflictResolver(@NotNull Project project, @NotNull Git git,
                                    @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
       super(project, git, stashedRoots, makeParamsOrUse(params, project));
       myStashedRoots = stashedRoots;

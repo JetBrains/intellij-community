@@ -1,12 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -23,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author spleaner
  */
-public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBeforeRunSteps {
+public final class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBeforeRunSteps {
   private final ConfigurationFactory myFactory;
   private Element myStoredElement;
   private String myName;
@@ -57,7 +54,7 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
   }
 
   @Override
-  public void setName(final String name) {
+  public void setName(@NotNull final String name) {
     myName = name;
   }
 
@@ -91,12 +88,12 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
     throw new ExecutionException("Unknown run configuration type" + (factoryName.isEmpty() ? "" : " " + factoryName));
   }
 
+  @NotNull
   @Override
   public String getName() {
     if (myName == null) {
       myName = String.format("Unknown%s", myUniqueName.getAndAdd(1));
     }
-
     return myName;
   }
 
@@ -123,7 +120,7 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
     }
   }
 
-  private static class UnknownSettingsEditor extends SettingsEditor<UnknownRunConfiguration> {
+  private static final class UnknownSettingsEditor extends SettingsEditor<UnknownRunConfiguration> {
     private final JPanel myPanel;
 
     private UnknownSettingsEditor() {
@@ -138,7 +135,7 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
     }
 
     @Override
-    protected void applyEditorTo(@NotNull final UnknownRunConfiguration s) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull final UnknownRunConfiguration s) {
     }
 
     @Override

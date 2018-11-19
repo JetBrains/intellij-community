@@ -49,7 +49,7 @@ public class MergePackageAccessibilityStatementsFix
 
   @NotNull
   @Override
-  protected String getReplacementText(@NotNull List<PsiPackageAccessibilityStatement> statementsToMerge) {
+  protected String getReplacementText(@NotNull List<? extends PsiPackageAccessibilityStatement> statementsToMerge) {
     final List<String> moduleNames = getModuleNames(statementsToMerge);
     if (!moduleNames.isEmpty()) {
       return getKeyword() + ' ' + myPackageName + ' ' + PsiKeyword.TO + ' ' + joinUniqueNames(moduleNames);
@@ -60,7 +60,7 @@ public class MergePackageAccessibilityStatementsFix
   }
 
   @NotNull
-  private static List<String> getModuleNames(@NotNull List<PsiPackageAccessibilityStatement> statements) {
+  private static List<String> getModuleNames(@NotNull List<? extends PsiPackageAccessibilityStatement> statements) {
     final List<String> result = new ArrayList<>();
     for (PsiPackageAccessibilityStatement statement : statements) {
       final List<String> moduleNames = statement.getModuleNames();

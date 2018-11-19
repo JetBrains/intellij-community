@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,11 +39,9 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
         }
       }
       else {
-        while (element instanceof PyParenthesizedExpression) {
-          PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();
-          if (expression != null) {
-            element = element.replace(expression);
-          }
+        final PyExpression content = PyPsiUtils.flattenParens((PyParenthesizedExpression)element);
+        if (content != null) {
+          element.replace(content);
         }
       }
     }

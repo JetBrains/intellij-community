@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 class TypeCookViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myElements;
 
-  public TypeCookViewDescriptor(PsiElement[] elements) {
+  TypeCookViewDescriptor(PsiElement[] elements) {
     myElements = elements;
   }
 
@@ -39,6 +39,7 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
     return RefactoringBundle.message("type.cook.elements.header");
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("declaration.s.to.be.generified", UsageViewBundle.getReferencesString(usagesCount, filesCount));

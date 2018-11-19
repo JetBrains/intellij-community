@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
  * author: lesya
  */
 class Undo extends UndoRedo {
-  public Undo(UndoManagerImpl manager, FileEditor editor) {
+  Undo(UndoManagerImpl manager, FileEditor editor) {
     super(manager, editor);
   }
 

@@ -32,7 +32,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * @since 20.11.2012
  */
 class AddModuleDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
@@ -41,7 +40,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   private final boolean myExported;
   private final List<SmartPsiElementPointer<PsiClass>> myClasses;
 
-  public AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<PsiClass> classes) {
+  AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<? extends PsiClass> classes) {
     super(reference);
     myCurrentModule = currentModule;
     myModules = new LinkedHashSet<>();
@@ -65,7 +64,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     return JavaResolveUtil.isAccessible(aClass, aClass.getContainingClass(), aClass.getModifierList(), refElement, aClass, null);
   }
 
-  public AddModuleDependencyFix(PsiJavaModuleReference reference,
+  AddModuleDependencyFix(PsiJavaModuleReference reference,
                                 Module currentModule,
                                 Set<Module> modules,
                                 DependencyScope scope,

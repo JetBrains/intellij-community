@@ -86,7 +86,7 @@ public class IndexCacheManagerImpl implements CacheManager{
                                               final short occurrenceMask,
                                               @NotNull final GlobalSearchScope scope,
                                               final boolean caseSensitively,
-                                              @NotNull final Processor<VirtualFile> fileProcessor) {
+                                              @NotNull final Processor<? super VirtualFile> fileProcessor) {
     if (myProject.isDefault()) {
       return true;
     }

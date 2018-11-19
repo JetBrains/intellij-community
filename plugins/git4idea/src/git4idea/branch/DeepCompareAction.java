@@ -27,14 +27,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,38 +44,40 @@ import java.util.Set;
 public class DeepCompareAction extends ToggleAction implements DumbAware {
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (project == null || ui == null) {
+    VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
+    if (project == null || ui == null || dataProvider == null) {
       return false;
     }
-    return DeepComparator.getInstance(project, ui).hasHighlightingOrInProgress();
+    return DeepComparator.getInstance(project, dataProvider, ui).hasHighlightingOrInProgress();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (project == null || ui == null) {
+    VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
+    if (project == null || ui == null || dataProvider == null) {
       return;
     }
-    final DeepComparator dc = DeepComparator.getInstance(project, ui);
+    final DeepComparator dc = DeepComparator.getInstance(project, dataProvider, ui);
     if (selected) {
-      VcsLogUtil.triggerUsage(e);
+      VcsLogUsageTriggerCollector.triggerUsage(e);
 
       String singleBranchName = VcsLogUtil.getSingleFilteredBranch(ui.getFilterUi().getFilters(), ui.getDataPack().getRefs());
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui, e, selectedBranch -> {
-          ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
-          dc.highlightInBackground(selectedBranch);
+          ui.getFilterUi().setFilter(VcsLogFilterObject.fromBranch(selectedBranch));
+          dc.startTask(selectedBranch);
         }, getGitRoots(project, ui));
         return;
       }
-      dc.highlightInBackground(singleBranchName);
+      dc.startTask(singleBranchName);
     }
     else {
-      dc.stopAndUnhighlight();
+      dc.stopTaskAndUnhighlight();
     }
   }
 

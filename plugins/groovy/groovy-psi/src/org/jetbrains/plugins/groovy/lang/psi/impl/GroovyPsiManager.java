@@ -131,7 +131,7 @@ public class GroovyPsiManager {
   private static final PsiType UNKNOWN_TYPE = new GrPsiTypeStub();
 
   @Nullable
-  public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<T, PsiType> calculator) {
+  public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator) {
     return getTypeWithCaching(element, myCalculatedTypes, calculator);
   }
 
@@ -141,7 +141,7 @@ public class GroovyPsiManager {
   }
 
   @Nullable
-  private static <K extends GroovyPsiElement> PsiType getTypeWithCaching(@NotNull K key, @NotNull ConcurrentMap<? super K, PsiType> map, @NotNull Function<K, PsiType> calculator) {
+  private static <K extends GroovyPsiElement> PsiType getTypeWithCaching(@NotNull K key, @NotNull ConcurrentMap<? super K, PsiType> map, @NotNull Function<? super K, ? extends PsiType> calculator) {
     PsiType type = map.get(key);
     if (type == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
@@ -187,7 +187,7 @@ public class GroovyPsiManager {
   }
 
   @Nullable
-  public static PsiType inferType(@NotNull PsiElement element, @NotNull Computable<PsiType> computable) {
+  public static PsiType inferType(@NotNull PsiElement element, @NotNull Computable<? extends PsiType> computable) {
     List<Object> stack = ourGuard.currentStack();
     if (stack.size() > 7) { //don't end up walking the whole project PSI
       ourGuard.prohibitResultCaching(stack.get(0));

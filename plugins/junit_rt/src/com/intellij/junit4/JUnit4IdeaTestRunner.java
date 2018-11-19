@@ -180,7 +180,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     private final String myDisplayName;
     private boolean mySuccess;
 
-    public MyCustomRunListenerWrapper(IDEAJUnitListener junitListener, String displayName) {
+    MyCustomRunListenerWrapper(IDEAJUnitListener junitListener, String displayName) {
       myJunitListener = junitListener;
       myDisplayName = displayName;
     }

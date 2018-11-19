@@ -74,8 +74,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
@@ -828,6 +828,12 @@ public abstract class InplaceRefactoring {
     if (component == null) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
+
+    Color borderColor = UIManager.getColor("InplaceRefactoringPopup.borderColor");
+    if (borderColor != null) {
+      balloonBuilder.setBorderColor(borderColor);
+    }
+
     myBalloon = balloonBuilder.createBalloon();
     Disposer.register(myProject, myBalloon);
     Disposer.register(myBalloon, new Disposable() {
@@ -873,7 +879,7 @@ public abstract class InplaceRefactoring {
     protected abstract void restoreDaemonUpdateState();
 
     @Override
-    public void beforeTemplateFinished(final TemplateState templateState, Template template) {
+    public void beforeTemplateFinished(@NotNull final TemplateState templateState, Template template) {
       try {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
         myInsertedName = value != null ? value.toString().trim() : null;
@@ -898,7 +904,7 @@ public abstract class InplaceRefactoring {
     }
 
     @Override
-    public void templateFinished(Template template, final boolean brokenOff) {
+    public void templateFinished(@NotNull Template template, final boolean brokenOff) {
       boolean bind = false;
       try {
         if (!brokenOff) {

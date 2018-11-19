@@ -20,7 +20,6 @@ import java.util.Collection;
 
 /**
  * @author Jeka
- * @since Jan 3, 2002
  */
 public class CompilerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");

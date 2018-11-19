@@ -206,7 +206,7 @@ public class ChangeListsIndexes {
     public final AbstractVcs vcs;
     @NotNull public final VcsRevisionNumber revision;
 
-    public Data(@NotNull FileStatus status, AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
+    Data(@NotNull FileStatus status, AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
       this.status = status;
       this.vcs = vcs;
       this.revision = revision;

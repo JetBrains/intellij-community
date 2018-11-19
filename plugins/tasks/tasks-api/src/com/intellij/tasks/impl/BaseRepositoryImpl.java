@@ -20,6 +20,7 @@ import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,10 +28,16 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 /**
- * Base class for HTTP-based repositories.
+ * Base class for HTTP-based repositories functioning over Apache Commons HttpClient 3.1.
+ * <p>
+ * Implementing new integrations using Apache Commons HttpClient 3.1 is not recommended as the library reached its end of life
+ * and is no longer being maintained. It's likely to be removed in future versions of IntelliJ platform.
  *
  * @author Dmitry Avdeev
+ * @deprecated Upgrade your clients to use Apache HttpClient 4.x or other transport libraries.
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+@Deprecated
 public abstract class BaseRepositoryImpl extends BaseRepository {
   private final HttpClient myClient;
 

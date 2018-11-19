@@ -221,7 +221,7 @@ public class EditContextDialog extends DialogWrapper {
     private final List<Variable> myVariables;
     private final List<Expression> myList;
 
-    public VariableTableModel(List<Variable> variables, Project project, LanguageFileType fileType) {
+    VariableTableModel(List<Variable> variables, Project project, LanguageFileType fileType) {
       this.myVariables = variables;
       this.myProject = project;
       this.myFileType = fileType;
@@ -314,7 +314,7 @@ public class EditContextDialog extends DialogWrapper {
   private static class VariableCellRenderer extends DefaultTableCellRenderer {
     private final List<Variable> myVariables;
 
-    public VariableCellRenderer(List<Variable> variables) {
+    VariableCellRenderer(List<Variable> variables) {
       this.myVariables = variables;
     }
 
@@ -343,7 +343,7 @@ public class EditContextDialog extends DialogWrapper {
   private static class NamespaceTableModel extends AbstractTableModel {
     private final List<Namespace> myNamespaces;
 
-    public NamespaceTableModel(List<Namespace> namespaces) {
+    NamespaceTableModel(List<Namespace> namespaces) {
       this.myNamespaces = namespaces;
     }
 
@@ -405,7 +405,7 @@ public class EditContextDialog extends DialogWrapper {
   private static class NamespaceCellRenderer extends DefaultTableCellRenderer {
     private final List<Namespace> myNamespaces;
 
-    public NamespaceCellRenderer(List<Namespace> namespaces) {
+    NamespaceCellRenderer(List<Namespace> namespaces) {
       this.myNamespaces = namespaces;
     }
 
@@ -485,7 +485,7 @@ public class EditContextDialog extends DialogWrapper {
     private final MyVariableContext myVariableContext;
     private final ContextProvider myContextProvider;
 
-    public MyContextProvider(ContextProvider contextProvider) {
+    MyContextProvider(ContextProvider contextProvider) {
       myContextProvider = contextProvider;
       myNamespaceContext = new MyNamespaceContext();
       myVariableContext = new MyVariableContext();

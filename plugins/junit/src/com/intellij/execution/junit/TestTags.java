@@ -17,7 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.Collections;
 
 class TestTags extends TestObject {
-  public TestTags(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  TestTags(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 

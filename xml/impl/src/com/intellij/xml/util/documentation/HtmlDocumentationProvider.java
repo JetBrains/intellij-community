@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -96,6 +97,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     boolean isTag = true;
     PsiElement nameElement = null;
     String key = null;
+
+    if (element instanceof FakePsiElement) {
+      element = element.getNavigationElement();
+    }
 
     if (element instanceof XmlElementDecl) {
       nameElement = ((XmlElementDecl)element).getNameElement();

@@ -26,7 +26,7 @@ public class ExceptionFromCatchWhichDoesntWrap {
                 }
             };
         }
-    }
+    <error descr="Missing return statement">}</error>
 
     private void doStuff() throws SQLException {
     }
@@ -38,7 +38,7 @@ public class ExceptionFromCatchWhichDoesntWrap {
         try {
             System.out.println("");
         } catch (NullPointerException e) {
-            throw new RuntimeException();
+            <warning descr="'throw' inside 'catch' block ignores the caught exception">throw</warning> new RuntimeException();
         }
     }
 

@@ -23,9 +23,9 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.MultiLevelDiffTool");
-  private final List<DiffTool> myTools;
+  private final List<? extends DiffTool> myTools;
 
-  public MultiLevelDiffTool(final List<DiffTool> tools) {
+  public MultiLevelDiffTool(final List<? extends DiffTool> tools) {
     myTools = tools;
   }
 
@@ -113,10 +113,9 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   public static boolean canShowRequest(DiffRequest request) {
     boolean isFile = false;
     DiffContent[] contents = request.getContents();
-    for (int i = 0; i < contents.length; i++) {
-      DiffContent content = contents[i];
+    for (DiffContent content : contents) {
       VirtualFile file = content.getFile();
-      if (file != null && file.isInLocalFileSystem() && ! file.isDirectory()) {
+      if (file != null && file.isInLocalFileSystem() && !file.isDirectory()) {
         isFile = true;
         break;
       }

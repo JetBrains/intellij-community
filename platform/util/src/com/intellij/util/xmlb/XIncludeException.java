@@ -18,18 +18,18 @@ package com.intellij.util.xmlb;
 
 class XIncludeException extends RuntimeException {
 
-  public XIncludeException() {
+  XIncludeException() {
   }
 
-  public XIncludeException(final String message) {
+  XIncludeException(final String message) {
     super(message);
   }
 
-  public XIncludeException(final String message, final Throwable cause) {
+  XIncludeException(final String message, final Throwable cause) {
     super(message, cause);
   }
 
-  public XIncludeException(final Throwable cause) {
+  XIncludeException(final Throwable cause) {
     super(cause);
   }
 }

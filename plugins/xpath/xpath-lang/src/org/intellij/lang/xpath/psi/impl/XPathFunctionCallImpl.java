@@ -137,7 +137,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
   class Reference extends ReferenceBase {
     private volatile Pair<String, XPathFunction> myFunction;
 
-    public Reference(ASTNode node) {
+    Reference(ASTNode node) {
       super(XPathFunctionCallImpl.this, node);
     }
 
@@ -176,7 +176,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     class FunctionImpl extends LightElement implements XPathFunction, ItemPresentation, NavigationItem {
       private final Function myFunctionDecl;
 
-      public FunctionImpl(Function functionDecl) {
+      FunctionImpl(Function functionDecl) {
         super(getElement().getManager(), getElement().getContainingFile().getLanguage());
         myFunctionDecl = functionDecl;
       }
@@ -191,12 +191,12 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         return myFunctionDecl != null ? myFunctionDecl.getName() : getFunctionName();
       }
 
+      @Override
       public String toString() {
         return "Function: " + getName();
       }
 
       @Override
-      @SuppressWarnings({"ConstantConditions"})
       public String getText() {
         return getName();
       }

@@ -288,7 +288,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     return scrollPane;
   }
 
-  @SuppressWarnings("NonStaticInitializer")
   private DialogWrapper createIgnoreExceptionsConfigurationDialog(final Project project, final JTextField specifiedExceptions) {
     return new DialogWrapper(true) {
       private AddDeleteListPanel myPanel;
@@ -378,7 +377,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
 
   private void checkAnnotations(PsiModifierListOwner member,
                                 @NotNull InspectionManager manager,
-                                boolean isOnTheFly, List<ProblemDescriptor> result) {
+                                boolean isOnTheFly, List<? super ProblemDescriptor> result) {
     for (PsiAnnotation annotation : member.getAnnotations()) {
       final ProblemDescriptor[] descriptors = checkElement(annotation, manager, isOnTheFly);
       if (descriptors != null) {
@@ -556,7 +555,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
   private boolean canBeI18ned(@NotNull Project project,
                               @NotNull PsiLiteralExpression expression,
                               @NotNull String value,
-                              @NotNull Set<PsiModifierListOwner> nonNlsTargets) {
+                              @NotNull Set<? super PsiModifierListOwner> nonNlsTargets) {
     if (ignoreForNonAlpha && !StringUtil.containsAlphaCharacters(value)) {
       return false;
     }
@@ -667,7 +666,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
   }
 
   private boolean isPassedToNonNlsVariable(@NotNull PsiLiteralExpression expression,
-                                           final Set<PsiModifierListOwner> nonNlsTargets) {
+                                           final Set<? super PsiModifierListOwner> nonNlsTargets) {
     PsiExpression toplevel = JavaI18nUtil.getTopLevelExpression(expression);
     PsiVariable var = null;
     if (toplevel instanceof PsiAssignmentExpression) {
@@ -685,13 +684,17 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       PsiElement parent = toplevel.getParent();
       if (parent instanceof PsiVariable && toplevel.equals(((PsiVariable)parent).getInitializer())) {
         var = (PsiVariable)parent;
-      } else if (parent instanceof PsiSwitchLabelStatement) {
-        final PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatement)parent).getEnclosingSwitchStatement();
-        if (switchStatement != null) {
-          final PsiExpression switchStatementExpression = switchStatement.getExpression();
-          if (switchStatementExpression instanceof PsiReferenceExpression) {
-            final PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
-            if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+      }
+      else if (parent instanceof PsiExpressionList) {
+        parent = parent.getParent();
+        if (parent instanceof PsiSwitchLabelStatementBase) {
+          PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchStatement();
+          if (switchStatement != null) {
+            PsiExpression switchStatementExpression = switchStatement.getExpression();
+            if (switchStatementExpression instanceof PsiReferenceExpression) {
+              PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
+              if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+            }
           }
         }
       }
@@ -724,7 +727,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, CHECK_EXTERNAL);
   }
 
-  private static boolean isInNonNlsEquals(PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isInNonNlsEquals(PsiExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
     final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
     if (call == null || !MethodCallUtils.isEqualsCall(call)) return false;
     final PsiExpression[] expressions = call.getArgumentList().getExpressions();
@@ -751,7 +754,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
   }
 
   private static boolean isInNonNlsCall(@NotNull PsiExpression expression,
-                                        final Set<PsiModifierListOwner> nonNlsTargets) {
+                                        final Set<? super PsiModifierListOwner> nonNlsTargets) {
     expression = JavaI18nUtil.getTopLevelExpression(expression);
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList) {
@@ -789,7 +792,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isNonNlsCall(PsiMethodCallExpression grParent, Set<PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isNonNlsCall(PsiMethodCallExpression grParent, Set<? super PsiModifierListOwner> nonNlsTargets) {
     final PsiReferenceExpression methodExpression = grParent.getMethodExpression();
     final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
     if (qualifier instanceof PsiReferenceExpression) {
@@ -811,7 +814,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isReturnedFromNonNlsMethod(final PsiLiteralExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isReturnedFromNonNlsMethod(final PsiLiteralExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
     PsiElement parent = expression.getParent();
     PsiMethod method;
     if (parent instanceof PsiNameValuePair) {

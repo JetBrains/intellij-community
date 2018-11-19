@@ -8,6 +8,7 @@ import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -51,14 +52,19 @@ public class IdeaGateway {
   public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
     if (!f.isInLocalFileSystem()) return false;
 
-    if (!f.isDirectory() && StringUtil.endsWith(f.getNameSequence(), ".class")) return false;
-
+    if (!f.isDirectory()) {
+      CharSequence fileName = f.getNameSequence();
+      if (StringUtil.equals(fileName, "workspace.xml") || StringUtil.endsWith(fileName, ".iws")
+          || StringUtil.endsWith(fileName, ".class")) {
+        return false;
+      }
+    }
+    
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
     boolean isInContent = false;
     int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
     for (int i = 0; i < numberOfOpenProjects; ++i) {
-      if (f.equals(versionedFilterData.myWorkspaceFiles.get(i))) return false;
       ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
 
       if (index.isExcluded(f)) return false;
@@ -120,7 +126,6 @@ public class IdeaGateway {
   private static class VersionedFilterData {
     final List<Project> myOpenedProjects = new ArrayList<>();
     final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
-    final List<VirtualFile> myWorkspaceFiles = new ArrayList<>();
 
     VersionedFilterData() {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -129,7 +134,6 @@ public class IdeaGateway {
         if (each.isDefault()) continue;
         if (!each.isInitialized()) continue;
 
-        myWorkspaceFiles.add(each.getWorkspaceFile());
         myOpenedProjects.add(each);
         myProjectFileIndices.add(ProjectRootManager.getInstance(each).getFileIndex());
       }
@@ -137,7 +141,8 @@ public class IdeaGateway {
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
-    return isVersioned(f) && !f.isDirectory() && !f.getFileType().isBinary();
+    return isVersioned(f) && !f.isDirectory() &&
+           (areContentChangesVersioned(f.getName()) || ScratchFileService.isInScratchRoot(f));
   }
 
   public boolean areContentChangesVersioned(@NotNull String fileName) {
@@ -213,7 +218,7 @@ public class IdeaGateway {
   public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
     if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
     NewVirtualFile nf = (NewVirtualFile)f;
-    return nf.iterInDbChildren();
+    return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
   }
 
   @NotNull

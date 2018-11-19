@@ -29,7 +29,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,6 @@ import static com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters
 
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
 
-  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   @Override
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
     // The main idea is to un-escape string/char literals content if necessary.

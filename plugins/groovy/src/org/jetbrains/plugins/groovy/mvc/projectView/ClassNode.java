@@ -35,7 +35,7 @@ import java.util.List;
 public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   public ClassNode(@NotNull final Module module,
                    @NotNull final GrTypeDefinition rClass,
-                   @Nullable final ViewSettings viewSettings) {
+                   final ViewSettings viewSettings) {
     super(module, viewSettings, rClass, CLASS);
   }
 

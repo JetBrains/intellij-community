@@ -14,10 +14,10 @@ import java.util.Collection;
 import java.util.function.Consumer;
 
 public class ProjectLoadingErrorsHeadlessNotifier extends ProjectLoadingErrorsNotifier {
-  private static Consumer<ConfigurationErrorDescription> ourErrorHandler;
+  private static Consumer<? super ConfigurationErrorDescription> ourErrorHandler;
 
   @TestOnly
-  public static void setErrorHandler(Consumer<ConfigurationErrorDescription> errorHandler, Disposable parentDisposable) {
+  public static void setErrorHandler(Consumer<? super ConfigurationErrorDescription> errorHandler, Disposable parentDisposable) {
     ourErrorHandler = errorHandler;
     Disposer.register(parentDisposable, () -> ourErrorHandler = null);
   }

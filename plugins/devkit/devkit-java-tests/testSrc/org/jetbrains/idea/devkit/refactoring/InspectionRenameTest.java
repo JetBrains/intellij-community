@@ -1,11 +1,8 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -70,7 +67,7 @@ public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(inspectionName, inspectionClass);
 
     RenameProcessor processor = new RenameProcessor(getProject(), inspectionClass, "New" + inspectionName, true, true);
-    for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
       processor.addRenamerFactory(factory);
     }
     processor.run();

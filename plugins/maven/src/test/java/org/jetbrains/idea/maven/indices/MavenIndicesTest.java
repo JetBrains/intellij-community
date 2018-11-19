@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
@@ -78,7 +79,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndicesDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myIndexer, myIndicesDir, new MavenIndex.IndexListener() {
       @Override
-      public void indexIsBroken(MavenIndex index) {
+      public void indexIsBroken(@NotNull MavenIndex index) {
         isBroken = true;
       }
     });

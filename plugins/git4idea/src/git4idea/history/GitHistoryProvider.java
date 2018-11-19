@@ -18,12 +18,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.history.browser.SHAHash;
 import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -144,15 +144,15 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     final VirtualFile root = GitUtil.getGitRoot(filePath);
     if (root == null) return false;
 
-    final SHAHash shaHash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, null, "HEAD");
-    if (shaHash == null) {
+    Hash hash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, null, "HEAD");
+    if (hash == null) {
       throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
     }
 
     final ContentRevision content = GitVcs.getInstance(myProject).getDiffProvider()
-                                          .createFileContent(new GitRevisionNumber(shaHash.getValue()), filePath.getVirtualFile());
+      .createFileContent(new GitRevisionNumber(hash.asString()), filePath.getVirtualFile());
     if (content == null) {
-      throw new VcsException("Can not load content of '" + filePath.getPath() + "' for revision '" + shaHash.getValue() + "'");
+      throw new VcsException("Can not load content of '" + filePath.getPath() + "' for revision '" + hash.asString() + "'");
     }
     return !processor.process(content.getContent());
   }

@@ -34,7 +34,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   protected CompilerTester myCompilerTester;
@@ -84,9 +83,9 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
   }
 
-  protected void initCompiler() {
+  protected final void initCompiler() {
     try {
-      myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]));
+      myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]), myProject);
     }
     catch (Throwable e) {
       fail(e.getMessage());
@@ -102,11 +101,6 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   public void tearDown() throws Exception {
     try {
       PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
-
-      if (myCompilerTester != null) {
-        myCompilerTester.tearDown();
-      }
-
       ProjectManager.getInstance().closeProject(myProject);
       WriteAction.run(() -> Disposer.dispose(myProject));
 
@@ -126,8 +120,6 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   }
 
   protected static List<CompilerMessage> filterErrors(List<CompilerMessage> messages) {
-    return messages.stream()
-      .filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
-      .collect(Collectors.toList());
+    return ContainerUtil.filter(messages, message -> message.getCategory() == CompilerMessageCategory.ERROR);
   }
 }

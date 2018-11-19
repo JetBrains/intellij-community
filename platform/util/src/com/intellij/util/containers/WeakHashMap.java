@@ -46,7 +46,7 @@ public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
     DeprecatedMethodException.report("Use ContainerUtil.createWeakMap() instead");
   }
 
-  WeakHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<K> strategy) {
+  WeakHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<? super K> strategy) {
     super(initialCapacity, loadFactor, strategy);
   }
 

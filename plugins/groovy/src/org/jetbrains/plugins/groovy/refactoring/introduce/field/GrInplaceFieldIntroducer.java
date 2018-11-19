@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -316,7 +315,6 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
             if (variable != null) {
               finalListener.perform(myDeclareFinalCB.isSelected(), variable);
             }
-            ;
           });
         }
       });

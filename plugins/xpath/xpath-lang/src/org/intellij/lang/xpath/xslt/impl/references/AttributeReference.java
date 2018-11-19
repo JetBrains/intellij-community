@@ -26,7 +26,7 @@ class AttributeReference extends SimpleAttributeReference {
     private final boolean mySoft;
     final ResolveUtil.Matcher myMatcher;
 
-    public AttributeReference(XmlAttribute source, ResolveUtil.Matcher matcher, boolean soft) {
+    AttributeReference(XmlAttribute source, ResolveUtil.Matcher matcher, boolean soft) {
         super(source);
         myMatcher = matcher;
         mySoft = soft;

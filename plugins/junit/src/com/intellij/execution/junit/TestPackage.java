@@ -32,15 +32,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -49,10 +50,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class TestPackage extends TestObject {
 
@@ -72,7 +74,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
 
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
-      private final THashSet<String> myClassNames = new THashSet<>();
+      private final Set<String> myClassNames = new LinkedHashSet<>();
       @Override
       protected void search() {
         myClassNames.clear();
@@ -84,7 +86,9 @@ public class TestPackage extends TestObject {
             instance.setAlternativeResolveEnabled(true);
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            searchTests(module, classFilter, myClassNames);
+            if (!JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) { //junit 5 process tests automatically
+              searchTests(module, classFilter, myClassNames);
+            }
           }
           catch (CantRunException ignored) {}
           finally {
@@ -97,45 +101,39 @@ public class TestPackage extends TestObject {
       protected void onFound() {
 
         try {
-          addClassesListToJavaParameters(myClassNames, Function.ID, getPackageName(data), createTempFiles(), getJavaParameters());
+          String packageName = getPackageName(data);
+          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && 
+              myClassNames.isEmpty() && getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
+            VirtualFile[] rootPaths = getRootPaths();
+            LOG.assertTrue(rootPaths != null);
+            JUnitStarter.printClassesList(
+              Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "", packageName.isEmpty() ? ".*" : packageName + "\\..*", myTempFile);
+          }
+          else {
+            addClassesListToJavaParameters(myClassNames, Function.ID, packageName, createTempFiles(), getJavaParameters());
+          }
         }
-        catch (ExecutionException ignored) {}
+        catch (Exception ignored) {}
       }
     };
   }
 
 
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<String> names) throws CantRunException {
-     if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
-       //junit 5 process tests automatically
-       return;
-     }
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> names) throws CantRunException {
     Set<PsiClass> classes = new THashSet<>();
-    if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
-      String packageName = getPackageName(getConfiguration().getPersistentData());
-      String[] classNames =
-        TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
-      PsiManager manager = PsiManager.getInstance(getConfiguration().getProject());
-      Arrays.stream(classNames)
-            .filter(className -> acceptClassName(className)) //check patterns
-            .filter(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())) != null)
-            .forEach(className -> names.add(className));
+    if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
+      Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
+      collectClassesRecursively(classFilter, acceptClassCondition, classes);
     }
     else {
-      if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
-        Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
-        collectClassesRecursively(classFilter, acceptClassCondition, classes);
-      }
-      else {
-        ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
-      }
-
-      classes.forEach(psiClass -> names.add(JavaExecutionUtil.getRuntimeQualifiedName(psiClass)));
+      ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
     }
+
+    classes.forEach(psiClass -> names.add(JavaExecutionUtil.getRuntimeQualifiedName(psiClass)));
   }
   
   @Nullable
-  protected Path getRootPath() {
+  protected VirtualFile[] getRootPaths() {
     Module module = getConfiguration().getConfigurationModule().getModule();
     boolean chooseSingleModule = getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
     return TestClassCollector.getRootPath(module, chooseSingleModule);
@@ -149,13 +147,15 @@ public class TestPackage extends TestObject {
     return false;
   }
 
+  @NotNull
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
-    return getPackage(data).getQualifiedName();
+    PsiPackage aPackage = getPackage(data);
+    return aPackage != null ? aPackage.getQualifiedName() : "";
   }
 
   protected void collectClassesRecursively(TestClassFilter classFilter,
-                                           Condition<PsiClass> acceptClassCondition,
-                                           Set<PsiClass> classes) throws CantRunException {
+                                           Condition<? super PsiClass> acceptClassCondition,
+                                           Set<? super PsiClass> classes) throws CantRunException {
     PsiPackage aPackage = getPackage(getConfiguration().getPersistentData());
     if (aPackage != null) {
       GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
@@ -165,8 +165,8 @@ public class TestPackage extends TestObject {
 
   private static void collectClassesRecursively(PsiPackage aPackage,
                                                 GlobalSearchScope scope,
-                                                Condition<PsiClass> acceptAsTest,
-                                                Set<PsiClass> classes) {
+                                                Condition<? super PsiClass> acceptAsTest,
+                                                Set<? super PsiClass> classes) {
     PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
     for (PsiPackage psiPackage : psiPackages) {
       collectClassesRecursively(psiPackage, scope, acceptAsTest, classes);
@@ -177,7 +177,7 @@ public class TestPackage extends TestObject {
     }
   }
 
-  protected static void collectInnerClasses(PsiClass aClass, Condition<PsiClass> acceptAsTest, Set<PsiClass> classes) {
+  protected static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<? super PsiClass> classes) {
     if (Registry.is("junit4.accept.inner.classes", true)) {
       classes
         .addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).filter(acceptAsTest).toList()));

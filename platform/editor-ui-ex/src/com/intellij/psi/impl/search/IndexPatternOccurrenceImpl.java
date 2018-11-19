@@ -20,7 +20,7 @@ class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
   private final IndexPattern myPattern;
   private final List<TextRange> myAdditionalRanges;
 
-  public IndexPatternOccurrenceImpl(@NotNull PsiFile file, int startOffset, int endOffset,
+  IndexPatternOccurrenceImpl(@NotNull PsiFile file, int startOffset, int endOffset,
                                     @NotNull IndexPattern pattern, @NotNull List<TextRange> additionalRanges) {
     myFile = file;
     myStartOffset = startOffset;

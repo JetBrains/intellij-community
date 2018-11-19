@@ -55,7 +55,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
-      int size = consoleFontSize(JBTerminalSystemSettingsProviderBase.this.myColorScheme);
+      int size = consoleFontSize(this.myColorScheme);
 
       if (myColorScheme.getConsoleFontSize() != size) {
         myColorScheme.setConsoleFontSize(size);

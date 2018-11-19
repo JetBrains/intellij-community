@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -48,6 +47,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -403,7 +403,7 @@ public class ScopeEditorPanel {
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       group.add(new FlattenPackagesAction(update));
     }
-    final PatternDialectProvider[] dialectProviders = Extensions.getExtensions(PatternDialectProvider.EP_NAME);
+    final List<PatternDialectProvider> dialectProviders = PatternDialectProvider.EP_NAME.getExtensionList();
     for (PatternDialectProvider provider : dialectProviders) {
       for (AnAction action : provider.createActions(myProject, update)) {
         group.add(action);
@@ -420,7 +420,7 @@ public class ScopeEditorPanel {
     }
     group.add(new FilterLegalsAction(update));
 
-    if (dialectProviders.length > 1) {
+    if (dialectProviders.size() > 1) {
       group.add(new ChooseScopeTypeAction(update));
     }
 
@@ -647,7 +647,7 @@ public class ScopeEditorPanel {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
         setIcon(node.getIcon());
 
-        setForeground(selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
+        setForeground(UIUtil.getTreeForeground(selected, hasFocus));
         if (!(selected && hasFocus) && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }
@@ -663,7 +663,7 @@ public class ScopeEditorPanel {
   private final class ChooseScopeTypeAction extends ComboBoxAction{
     private final Runnable myUpdate;
 
-    public ChooseScopeTypeAction(final Runnable update) {
+    ChooseScopeTypeAction(final Runnable update) {
       myUpdate = update;
     }
 
@@ -671,7 +671,7 @@ public class ScopeEditorPanel {
     @NotNull
     protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
-      for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
+      for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
           public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -695,19 +695,19 @@ public class ScopeEditorPanel {
   private final class FilterLegalsAction extends ToggleAction {
     private final Runnable myUpdate;
 
-    public FilterLegalsAction(final Runnable update) {
+    FilterLegalsAction(final Runnable update) {
       super(IdeBundle.message("action.show.included.only"),
             IdeBundle.message("action.description.show.included.only"), AllIcons.General.Filter);
       myUpdate = update;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_FILTER_LEGALS;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       UIUtil.setEnabled(myLegendPanel, !flag, true);
       myUpdate.run();

@@ -40,8 +40,8 @@ public class JdkScope extends LibraryScopeBase {
   }
 
   @Override
-  public int hashCode() {
-    return 31 * super.hashCode() + myJdkName.hashCode();
+  public int calcHashCode() {
+    return 31 * super.calcHashCode() + myJdkName.hashCode();
   }
 
   @Override

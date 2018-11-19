@@ -90,7 +90,7 @@ public class ImplementationViewComponent extends JPanel {
     public final String myElementPresentation;
     private final String myLocationString;
 
-    public FileDescriptor(PsiFile file, PsiElement element) {
+    FileDescriptor(PsiFile file, PsiElement element) {
       myFile = file;
       final ItemPresentation presentation = element instanceof NavigationItem ? ((NavigationItem)element).getPresentation() : null;
       if (presentation != null) {
@@ -232,7 +232,6 @@ public class ImplementationViewComponent extends JPanel {
         setIcon(getIconForFile(file));
         final VirtualFile vFile = file.getVirtualFile();
         setForeground(FileStatusManager.getInstance(project).getStatus(vFile).getColor());
-        //noinspection ConstantConditions
         setText(value.getPresentableName(vFile));
       }
     });
@@ -303,7 +302,7 @@ public class ImplementationViewComponent extends JPanel {
 
   }
 
-  private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
+  private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], ? super List<FileDescriptor>, Boolean> fun) {
     List<PsiElement> candidates = new ArrayList<>(elements.length);
     List<FileDescriptor> files = new ArrayList<>(elements.length);
     final Set<String> names = new HashSet<>();
@@ -504,7 +503,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    public BackAction() {
+    BackAction() {
       super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
     }
 
@@ -522,7 +521,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    public ForwardAction() {
+    ForwardAction() {
       super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
     }
 
@@ -539,7 +538,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private class EditSourceAction extends EditSourceActionBase {
-    public EditSourceAction() {
+    EditSourceAction() {
       super(true, AllIcons.Actions.EditSource, CodeInsightBundle.message("quick.definition.edit.source"));
     }
 
@@ -552,7 +551,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private class ShowSourceAction extends EditSourceActionBase implements HintManagerImpl.ActionToIgnore {
-    public ShowSourceAction() {
+    ShowSourceAction() {
       super(false, AllIcons.Actions.Preview, CodeInsightBundle.message("quick.definition.show.source"));
     }
   }
@@ -560,7 +559,7 @@ public class ImplementationViewComponent extends JPanel {
   private class EditSourceActionBase extends AnAction {
     private final boolean myFocusEditor;
 
-    public EditSourceActionBase(boolean focusEditor, Icon icon, String text) {
+    EditSourceActionBase(boolean focusEditor, Icon icon, String text) {
       super(text, null, icon);
       myFocusEditor = focusEditor;
     }

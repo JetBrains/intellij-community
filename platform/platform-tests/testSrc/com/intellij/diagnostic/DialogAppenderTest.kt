@@ -7,7 +7,6 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.spi.LoggingEvent
-import org.junit.Assert.*
 import org.junit.Test
 
 /**

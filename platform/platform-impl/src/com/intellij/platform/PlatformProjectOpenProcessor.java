@@ -8,7 +8,6 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -43,7 +42,7 @@ import java.util.EnumSet;
 /**
  * @author max
  */
-public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
+public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
 
   public enum Option {
@@ -58,8 +57,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   public static PlatformProjectOpenProcessor getInstanceIfItExists() {
-    ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for (ProjectOpenProcessor processor : processors) {
+    for (ProjectOpenProcessor processor : EXTENSION_POINT_NAME.getExtensionList()) {
       if (processor instanceof PlatformProjectOpenProcessor) {
         return (PlatformProjectOpenProcessor)processor;
       }
@@ -90,9 +88,16 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
   }
 
+  @Override
   @Nullable
-  public Project doOpenProject(@NotNull VirtualFile file, @Nullable Project projectToClose, int line, @NotNull EnumSet<Option> options) {
-    return doOpenProject(file, projectToClose, line, null, options);
+  public Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject) {
+    EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+    if (tempProject) {
+      options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
+      options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+    }
+
+    return doOpenProject(file, null, line, null, options);
   }
 
   /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
@@ -158,17 +163,19 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK && !isReopen) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, false, "Open Project");
-        if (!dialog.showAndGet()) {
+      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
+
+        final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
+
+        if (exitCode == -1) {
           return null;
         }
-        if (dialog.isReplace()) {
+        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
           if (!ProjectUtil.closeAndDispose(projectToClose)) {
             return null;
           }
         }
-        else if (dialog.isAttach()) {
+        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
           if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
             return null;
           }
@@ -258,7 +265,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
     final Ref<Module> moduleRef = new Ref<>();
-    for (DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
+    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getExtensionList()) {
       try {
         configurator.configureProject(project, baseDir, moduleRef);
       }
@@ -270,7 +277,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
       if (processor.attachToProject(project, projectDir, callback)) {
         return true;
       }

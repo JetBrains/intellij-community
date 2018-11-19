@@ -16,7 +16,7 @@ class IdeaJHelpContentViewer extends JHelpContentViewer{
    *
    * @param model The TextHelpModel. A null model is valid.
    */
-  public IdeaJHelpContentViewer(TextHelpModel model){
+  IdeaJHelpContentViewer(TextHelpModel model){
     super(model);
   }
 

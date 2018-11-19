@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.ant;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
@@ -27,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Chunk;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -174,15 +161,14 @@ public class GenerationOptionsImpl extends GenerationOptions {
     return myOutputUrlToPropertyRefMap.get(url);
   }
 
+  @NotNull
   private static ReplacePathToMacroMap createReplacementMap() {
-    final PathMacros pathMacros = PathMacros.getInstance();
-    final Set<String> macroNames = pathMacros.getUserMacroNames();
-    final ReplacePathToMacroMap map = new ReplacePathToMacroMap();
-    for (final String macroName : macroNames) {
-      map.put(GenerationUtils.normalizePath(pathMacros.getValue(macroName)),
-              BuildProperties.propertyRef(BuildProperties.getPathMacroProperty(macroName)));
+    Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
+    ReplacePathToMacroMap map = new ReplacePathToMacroMap();
+    for (String macroName : pathMacros.keySet()) {
+      map.put(FileUtilRt.toSystemIndependentName(pathMacros.get(macroName)), BuildProperties.propertyRef(BuildProperties.getPathMacroProperty(macroName)));
     }
-    map.put(GenerationUtils.normalizePath(PathManager.getHomePath()), BuildProperties.propertyRef(BuildProperties.PROPERTY_IDEA_HOME));
+    map.put(FileUtilRt.toSystemIndependentName(PathManager.getHomePath()), BuildProperties.propertyRef(BuildProperties.PROPERTY_IDEA_HOME));
     return map;
   }
 

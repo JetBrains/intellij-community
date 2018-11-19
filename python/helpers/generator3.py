@@ -87,8 +87,19 @@ def is_mac_skipped_module(path, f):
     return 0
 
 
-def is_skipped_module(path, f):
-    return is_mac_skipped_module(path, f) or is_posix_skipped_module(path, f[:f.rindex('.')]) or 'pynestkernel' in f
+def is_tensorflow_contrib_ops_module(qname):
+    # These modules cannot be imported directly. Instead tensorflow uses special
+    # tensorflow.contrib.util.loader.load_op_library() to load them and create
+    # Python modules at runtime. Their names in sys.modules are then md5 sums
+    # of the list of exported Python definitions.
+    return TENSORFLOW_CONTRIB_OPS_MODULE_PATTERN.match(qname)
+
+
+def is_skipped_module(path, f, qname):
+    return (is_mac_skipped_module(path, f) or
+            is_posix_skipped_module(path, f[:f.rindex('.')]) or
+            'pynestkernel' in f or
+            is_tensorflow_contrib_ops_module(qname))
 
 
 def is_module(d, root):
@@ -139,7 +150,11 @@ def list_binaries(paths):
             note("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
             for f in files:
                 name = cut_binary_lib_suffix(root, f)
-                if name and not is_skipped_module(root, f):
+                if name:
+                    the_name = prefix + name
+                    if is_skipped_module(root, f, the_name):
+                        note('skipping module %s' % the_name)
+                        continue
                     note("cutout: %s", name)
                     if preprefix:
                         note("prefixes: %s %s", prefix, preprefix)
@@ -147,7 +162,6 @@ def list_binaries(paths):
                         if pre_name in res:
                             res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
                         note("done with %s", name)
-                    the_name = prefix + name
                     file_path = os.path.join(root, f)
 
                     res[the_name.upper()] = (the_name, file_path, os.path.getsize(file_path), int(os.stat(file_path).st_mtime))
@@ -297,13 +311,13 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
         fname = build_output_name(subdir, name)
         action("opening %r", fname)
         old_modules = list(sys.modules.keys())
-        imported_module_names = []
+        imported_module_names = set()
 
         class MyFinder:
             # noinspection PyMethodMayBeStatic
             def find_module(self, fullname, path=None):
                 if fullname != name:
-                    imported_module_names.append(fullname)
+                    imported_module_names.add(fullname)
                 return None
 
         my_finder = None
@@ -319,7 +333,7 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
         if my_finder:
             sys.meta_path.remove(my_finder)
         if imported_module_names is None:
-            imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
+            imported_module_names = set(sys.modules.keys()) - set(old_modules)
 
         redo_module(name, fname, mod_file_name, doing_builtins)
         # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
@@ -391,6 +405,14 @@ def get_help_text():
 
 
 if __name__ == "__main__":
+    try:
+        # Get traces after segmentation faults
+        import faulthandler
+
+        faulthandler.enable()
+    except ImportError:
+        pass
+
     from getopt import getopt
 
     helptext = get_help_text()
@@ -398,7 +420,7 @@ if __name__ == "__main__":
     opts = dict(opts)
 
     quiet = '-q' in opts
-    _is_verbose = '-v' in opts
+    set_verbose('-v' in opts)
     subdir = opts.get('-d', '')
 
     if not opts or '-h' in opts:

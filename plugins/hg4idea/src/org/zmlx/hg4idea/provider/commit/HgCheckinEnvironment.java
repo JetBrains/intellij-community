@@ -375,7 +375,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      public MyAmendComponent(@NotNull Project project,
+      MyAmendComponent(@NotNull Project project,
                               @NotNull HgRepositoryManager repoManager,
                               @NotNull CheckinProjectPanel panel,
                               @NotNull String title) {
@@ -405,7 +405,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     private class MySelectionListener implements ActionListener {
       private final JCheckBox myUnselectedComponent;
 
-      public MySelectionListener(JCheckBox unselectedComponent) {
+      MySelectionListener(JCheckBox unselectedComponent) {
         myUnselectedComponent = unselectedComponent;
       }
 

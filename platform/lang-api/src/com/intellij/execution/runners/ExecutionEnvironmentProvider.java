@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 6/2/2016
  */
 public interface ExecutionEnvironmentProvider {
 

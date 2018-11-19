@@ -70,7 +70,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
   private static class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredNames;
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, @NotNull Collection<String> ignoredNames) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, @NotNull Collection<String> ignoredNames) {
       super(holder, session);
       myIgnoredNames = ImmutableSet.copyOf(ignoredNames);
     }

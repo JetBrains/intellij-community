@@ -31,7 +31,6 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.xmlb.JDOMXIncluder
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -80,7 +79,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   open val loadPolicy: StateLoadPolicy
     get() = StateLoadPolicy.LOAD
 
-  override abstract val storageManager: StateStorageManager
+  abstract override val storageManager: StateStorageManager
 
   internal fun getComponents(): Map<String, ComponentInfo> {
     return components
@@ -129,7 +128,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  override final fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+  final override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     val errors: MutableList<Throwable> = SmartList<Throwable>()
 
     beforeSaveComponents(errors)
@@ -169,14 +168,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val names = ArrayUtilRt.toStringArray(components.keys)
     Arrays.sort(names)
-    val timeLogPrefix = "Saving"
-    val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
+    var timeLog: StringBuilder? = null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
     val nowInSeconds: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
     for (name in names) {
-      val start = if (timeLog == null) 0 else System.currentTimeMillis()
-
+      val start = System.currentTimeMillis()
       try {
         val info = components.get(name)!!
         var currentModificationCount = -1L
@@ -208,17 +205,20 @@ abstract class ComponentStoreImpl : IComponentStore {
         errors.add(Exception("Cannot get $name component state", e))
       }
 
-      timeLog?.let {
-        val duration = System.currentTimeMillis() - start
-        if (duration > 10) {
-          it.append("\n").append(name).append(" took ").append(duration).append(" ms: ").append((duration / 60000)).append(" min ").append(
-            ((duration % 60000) / 1000)).append("sec")
+      val duration = System.currentTimeMillis() - start
+      if (duration > 10) {
+        if (timeLog == null) {
+          timeLog = StringBuilder("Saving " + toString())
         }
+        else {
+          timeLog.append(", ")
+        }
+        timeLog.append(name).append(" took ").append(duration).append(" ms")
       }
     }
 
-    if (timeLog != null && timeLog.length > timeLogPrefix.length) {
-      LOG.debug(timeLog.toString())
+    if (timeLog != null) {
+      LOG.info(timeLog.toString())
     }
     return errors
   }
@@ -418,9 +418,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
     val url = DecodeDefaultsUtil.getDefaults(component, componentName) ?: return null
     try {
-      val documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement()
-      getPathMacroManagerForDefaults()?.expandPaths(documentElement)
-      return deserializeState(documentElement, stateClass, null)
+      val element = JDOMUtil.load(url)
+      getPathMacroManagerForDefaults()?.expandPaths(element)
+      return deserializeState(element, stateClass, null)
     }
     catch (e: Throwable) {
       throw IOException("Error loading default state from $url", e)
@@ -465,13 +465,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet()
   }
 
-  override final fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+  final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
     runBatchUpdate(messageBus) {
       reinitComponents(componentNames)
     }
   }
 
-  override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
+  final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
@@ -539,6 +539,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   fun removeComponent(name: String) {
     components.remove(name)
   }
+
+  override fun toString() = storageManager.componentManager.toString()
 }
 
 internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
@@ -577,7 +579,7 @@ internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
-  val substitutor = store.storageManager.macroSubstitutor ?: return
+  val substitutor = store.storageManager.macroSubstitutor as? TrackingPathMacroSubstitutor ?: return
 
   val immutableMacros = substitutor.getUnknownMacros(componentName)
   if (immutableMacros.isEmpty()) {

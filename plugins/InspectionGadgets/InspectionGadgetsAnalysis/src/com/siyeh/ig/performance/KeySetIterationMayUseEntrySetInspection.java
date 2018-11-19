@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
 
@@ -134,12 +135,13 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         }
       }
       oldParameter.replace(newParameter);
+      PsiStatement body = Objects.requireNonNull(foreachStatement.getBody());
       if (insertCast) {
         replaceParameterAccess(oldParameterName, oldParameterTypeText,
-                               "((Map.Entry)" + variableName + ')', mapReference, foreachStatement.getBody());
+                               "((Map.Entry)" + variableName + ')', mapReference, body);
       }
       else {
-        replaceParameterAccess(oldParameterName, oldParameterTypeText, variableName, mapReference, foreachStatement.getBody());
+        replaceParameterAccess(oldParameterName, oldParameterTypeText, variableName, mapReference, body);
       }
       if (toRemove != null && ReferencesSearch.search(toRemove).findFirst() == null) {
         final PsiElement statement = toRemove.getParent();
@@ -184,7 +186,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     private static String createNewVariableName(@NotNull PsiElement scope, @NotNull PsiType type) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(scope.getProject());
       final SuggestedNameInfo suggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type);
-      @NonNls String baseName = (suggestions.names != null && suggestions.names.length > 0) ? suggestions.names[0] : "entry";
+      @NonNls String baseName = suggestions.names.length > 0 ? suggestions.names[0] : "entry";
       if (baseName == null || baseName.isEmpty()) {
         baseName = "entry";
       }

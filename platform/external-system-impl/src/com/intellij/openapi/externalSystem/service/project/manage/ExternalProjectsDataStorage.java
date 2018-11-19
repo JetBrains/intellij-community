@@ -48,7 +48,6 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/18/2014
  */
 @State(name = "ExternalProjectsData", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class ExternalProjectsDataStorage implements SettingsSavingComponent, PersistentStateComponent<ExternalProjectsDataStorage.State> {
@@ -156,7 +155,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   public synchronized void saveAndWait() throws Exception {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "This method is available for tests only");
     save();
-    myAlarm.waitForAllExecuted(1, TimeUnit.SECONDS);
+    myAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
   synchronized void update(@NotNull ExternalProjectInfo externalProjectInfo) {
@@ -303,7 +302,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static DataNode<ProjectData> convert(@NotNull ProjectSystemId systemId,
                                                @NotNull ExternalProjectPojo rootProject,
-                                               @NotNull Collection<ExternalProjectPojo> childProjects) {
+                                               @NotNull Collection<? extends ExternalProjectPojo> childProjects) {
     ProjectData projectData = new ProjectData(systemId, rootProject.getName(), rootProject.getPath(), rootProject.getPath());
     DataNode<ProjectData> projectDataNode = new DataNode<>(PROJECT, projectData, null);
 
@@ -376,8 +375,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   @NotNull
   private static Collection<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     SmartList<InternalExternalProjectInfo> projects = new SmartList<>();
-    @SuppressWarnings("unchecked") final Path configurationFile = getProjectConfigurationFile(project);
-    if (!Files.isRegularFile(configurationFile)) return projects;
+    final Path configurationFile = getProjectConfigurationFile(project);
+    if (!configurationFile.toFile().isFile()) return projects;
 
     DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
 
@@ -389,7 +388,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       ObjectInputStream os = new ObjectInputStream(in);
       try {
         for (int i = 0; i < size; i++) {
-          //noinspection unchecked
           InternalExternalProjectInfo projectDataDataNode = (InternalExternalProjectInfo)os.readObject();
           projects.add(projectDataDataNode);
         }
@@ -472,10 +470,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     @XCollection(elementName = "id")
     public final Set<String> set = ContainerUtil.newConcurrentSet();
 
-    public ModuleState() {
+    ModuleState() {
     }
 
-    public ModuleState(Collection<String> values) {
+    ModuleState(Collection<String> values) {
       set.addAll(values);
     }
   }
@@ -484,7 +482,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     private final Project myProject;
     private final Collection<InternalExternalProjectInfo> myExternalProjects;
 
-    public MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
+    MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
       myProject = project;
       myExternalProjects = ContainerUtil.map(externalProjects, info -> (InternalExternalProjectInfo)info.copy());
     }

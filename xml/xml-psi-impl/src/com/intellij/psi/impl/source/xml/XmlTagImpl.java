@@ -6,7 +6,6 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ImplicitNamespaceDescriptorProvider;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,8 +24,8 @@ import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -67,18 +66,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
   private static final Key<ParameterizedCachedValue<XmlTag[], XmlTagImpl>> SUBTAGS_KEY = Key.create("subtags");
   private static final ParameterizedCachedValueProvider<XmlTag[],XmlTagImpl> CACHED_VALUE_PROVIDER =
-    new ParameterizedCachedValueProvider<XmlTag[], XmlTagImpl>() {
-      @Override
-      public Result<XmlTag[]> compute(XmlTagImpl tag) {
-        final List<XmlTag> result = new ArrayList<>();
-
-        tag.fillSubTags(result);
-
-        final int s = result.size();
-        XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
-        return Result
-          .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
-      }
+    tag -> {
+      List<XmlTag> result = new ArrayList<>();
+      tag.fillSubTags(result);
+      XmlTag[] tags = result.toArray(EMPTY);
+      return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
     };
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
   private final int myHC = ourHC++;
@@ -200,7 +192,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       Collections.addAll(refs, ReferenceProvidersRegistry.getReferencesFromProviders(this, hints));
     }
 
-    return ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
+    return refs.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   private static boolean childContainsOffset(PsiElement child, int offsetInTag) {
@@ -228,14 +220,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
           list.add(TextRange.from(psi.getStartOffsetInParent(), psi.getTextLength()));
         }
       }
-      myTextElements = elements = list.toArray(new TextRange[0]);
+      myTextElements = elements = list.toArray(TextRange.EMPTY_ARRAY);
     }
     return elements;
   }
 
   @NotNull
-  protected Collection<PsiReference> createPrefixReferences(@NotNull ASTNode startTagName, 
-                                                            @NotNull String prefix, 
+  protected Collection<PsiReference> createPrefixReferences(@NotNull ASTNode startTagName,
+                                                            @NotNull String prefix,
                                                             @NotNull TagNameReference tagRef) {
     return Collections.singleton(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix,
                                      tagRef));
@@ -384,7 +376,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         descriptor = descriptors.get(0);
       }
       else if (descriptors.size() > 1) {
-        descriptor = new MultiFileNsDescriptor(descriptors.stream().map(descriptor1 -> (XmlNSDescriptorImpl)descriptor1).collect(Collectors.toList()));
+        descriptor = new MultiFileNsDescriptor(ContainerUtil.map(descriptors, descriptor1 -> (XmlNSDescriptorImpl)descriptor1));
       }
       if (descriptor == null) {
         return new Result<>(null, this, file[0] == null ? this : file[0],
@@ -440,7 +432,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     if (file == null) return null;
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
-      for (ImplicitNamespaceDescriptorProvider provider : Extensions.getExtensions(ImplicitNamespaceDescriptorProvider.EP_NAME)) {
+      for (ImplicitNamespaceDescriptorProvider provider : ImplicitNamespaceDescriptorProvider.EP_NAME.getExtensionList()) {
         XmlNSDescriptor nsDescriptor = provider.getNamespaceDescriptor(module, ns, file);
         if (nsDescriptor != null) return nsDescriptor;
       }
@@ -470,7 +462,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     if (file == null) {
       return namespace.equals(XmlUtil.getTargetSchemaNsFromTag(this)) ? this : null;
     }
-    return file.getDocument();
+    return AstLoadingFilter.forceAllowTreeLoading(file, () -> file.getDocument());
   }
 
   @Override
@@ -499,7 +491,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Nullable
   protected XmlElementDescriptor computeElementDescriptor() {
-    for (XmlElementDescriptorProvider provider : Extensions.getExtensions(XmlElementDescriptorProvider.EP_NAME)) {
+    for (XmlElementDescriptorProvider provider : XmlElementDescriptorProvider.EP_NAME.getExtensionList()) {
       XmlElementDescriptor elementDescriptor = provider.getDescriptor(this);
       if (elementDescriptor != null) {
         return elementDescriptor;
@@ -630,12 +622,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         return true;
       }
     });
-    if (result.isEmpty()) {
-      return XmlAttribute.EMPTY_ARRAY;
-    }
-    else {
-      return ContainerUtil.toArray(result, new XmlAttribute[result.size()]);
-    }
+    return result.toArray(XmlAttribute.EMPTY_ARRAY);
   }
 
   protected void cacheOneAttributeValue(String name, String value, final Map<String, String> attributesValueMap) {
@@ -696,7 +683,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return CachedValuesManager.getManager(getProject()).getParameterizedCachedValue(this, SUBTAGS_KEY, CACHED_VALUE_PROVIDER, false, this);
   }
 
-  protected void fillSubTags(final List<XmlTag> result) {
+  protected void fillSubTags(final List<? super XmlTag> result) {
     processElements(new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
@@ -728,7 +715,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         result.add(subTag);
       }
     }
-    return ContainerUtil.toArray(result, new XmlTag[result.size()]);
+    return result.toArray(XmlTag.EMPTY);
   }
 
   @Override
@@ -788,7 +775,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   public String getNamespacePrefix() {
     return getNamespacePrefix(getName());
   }
-  
+
   @NotNull
   protected String getNamespacePrefix(@NotNull String name) {
     return XmlUtil.findPrefixByQualifiedName(name);
@@ -1052,6 +1039,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     }
   }
 
+  @Override
   public String toString() {
     return "XmlTag:" + getName();
   }
@@ -1079,8 +1067,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         }
       }
       while (first != last && (first = next) != null);
-    }
-    catch (IncorrectOperationException ignored) {
     }
     finally {
       clearCaches();
@@ -1159,8 +1145,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       if (treePrev != null &&
           treeNext != null &&
           treePrev.getElementType() == XmlElementType.XML_TEXT &&
-          treeNext.getElementType() == XmlElementType.XML_TEXT && 
-          !TreeUtil.containsOuterLanguageElements(treePrev) && 
+          treeNext.getElementType() == XmlElementType.XML_TEXT &&
+          !TreeUtil.containsOuterLanguageElements(treePrev) &&
           !TreeUtil.containsOuterLanguageElements(treeNext)) {
         final XmlText prevText = (XmlText)treePrev.getPsi();
         final XmlText nextText = (XmlText)treeNext.getPsi();
@@ -1170,7 +1156,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         // merging two XmlText-s should be done in one transaction to preserve smart pointers
         ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction() {
           @Override
-          public void makeChange(TreeChangeEvent destinationTreeChange) {
+          public void makeChange(@NotNull TreeChangeEvent destinationTreeChange) {
             PsiElement anchor = prevText.getPrevSibling();
             prevText.delete();
             nextText.delete();

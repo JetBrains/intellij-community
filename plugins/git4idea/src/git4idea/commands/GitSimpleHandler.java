@@ -213,7 +213,7 @@ public class GitSimpleHandler extends GitTextHandler {
       }
 
       @Override
-      public void startFailed(final Throwable exception) {
+      public void startFailed(@NotNull final Throwable exception) {
         exRef.set(
           new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
       }

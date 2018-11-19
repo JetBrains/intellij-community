@@ -23,7 +23,6 @@ import java.util.Collections;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/13/2016
  */
 public abstract class AbstractProjectTask implements ProjectTask {
   @NotNull

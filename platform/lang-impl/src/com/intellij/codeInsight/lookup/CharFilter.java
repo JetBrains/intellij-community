@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class CharFilter {
   public static final ExtensionPointName<CharFilter> EP_NAME = ExtensionPointName.create("com.intellij.lookup.charFilter");
 
-  public static enum Result {
+  public enum Result {
     ADD_TO_PREFIX, SELECT_ITEM_AND_FINISH_LOOKUP, HIDE_LOOKUP
   }
 

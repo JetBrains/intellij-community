@@ -37,7 +37,7 @@ interface GroovyOutputConsumer {
 class DefaultOutputConsumer implements GroovyOutputConsumer {
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
 
-  public DefaultOutputConsumer(ModuleLevelBuilder.OutputConsumer outputConsumer) {
+  DefaultOutputConsumer(ModuleLevelBuilder.OutputConsumer outputConsumer) {
     myOutputConsumer = outputConsumer;
   }
 

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IndexSink;
@@ -38,12 +23,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExpressionStub, PyTargetExpression> {
-  private CustomTargetExpressionStubType[] myCustomStubTypes;
+  private List<CustomTargetExpressionStubType> myCustomStubTypes;
 
   public PyTargetExpressionElementType() {
     super("TARGET_EXPRESSION");
@@ -53,9 +39,9 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     super(debugName);
   }
 
-  private CustomTargetExpressionStubType[] getCustomStubTypes() {
+  private List<CustomTargetExpressionStubType> getCustomStubTypes() {
     if (myCustomStubTypes == null) {
-      myCustomStubTypes = Extensions.getExtensions(CustomTargetExpressionStubType.EP_NAME);
+      myCustomStubTypes = CustomTargetExpressionStubType.EP_NAME.getExtensionList();
     }
     return myCustomStubTypes;
   }
@@ -79,7 +65,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     final String docString = DocStringUtil.getDocStringValue(psi);
     final String typeComment = psi.getTypeCommentAnnotation();
     final String annotation = psi.getAnnotationValue();
-    
+
     for (CustomTargetExpressionStubType customStubType : getCustomStubTypes()) {
       CustomTargetExpressionStub customStub = customStubType.createStub(psi);
       if (customStub != null) {

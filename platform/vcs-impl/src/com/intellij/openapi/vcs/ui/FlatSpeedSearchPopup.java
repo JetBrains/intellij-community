@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.Condition;
@@ -27,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
 
   public FlatSpeedSearchPopup(String title,
-                              @NotNull DefaultActionGroup actionGroup,
+                              @NotNull ActionGroup actionGroup,
                               @NotNull DataContext dataContext,
                               @Nullable Condition<AnAction> preselectActionCondition, boolean showDisableActions) {
     super(title, actionGroup, dataContext, false, false, showDisableActions, false,
@@ -86,13 +89,13 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
 
   private static class MySpeedSearchAction extends EmptyAction.MyDelegatingAction implements SpeedsearchAction, DumbAware {
 
-    public MySpeedSearchAction(@NotNull AnAction action) {
+    MySpeedSearchAction(@NotNull AnAction action) {
       super(action);
     }
   }
 
   private static class MySpeedSearchActionGroup extends EmptyAction.MyDelegatingActionGroup implements SpeedsearchAction, DumbAware {
-    public MySpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
+    MySpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
       super(actionGroup);
     }
   }

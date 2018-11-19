@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
 
 import java.io.File;
@@ -59,7 +59,6 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
            "}}}", "{ \"prop\": 14}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testEnum() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"enum\": [1,2,3,\"18\"]}}}";
     doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: 1, 2, 3, \\\"18\\\"\">18</warning>}");
@@ -68,7 +67,6 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: 1, 2, 3, \\\"18\\\"\">\"2\"</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testSimpleString() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 3}}}";
     doTest(schema, "{\"prop\": <warning descr=\"String is shorter than 2\">\"s\"</warning>}");
@@ -202,7 +200,6 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "<warning descr=\"Number of properties is greater than 2\">{\"a\": 1, \"b\": 22, \"c\": 33}</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\"}");
@@ -213,7 +210,6 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "{\"prop\": <warning descr=\"Type is not allowed. Expected one of: boolean, string.\">11</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOfForTwoMatches() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -224,7 +220,6 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "{\"prop\": <warning descr=\"Validates to more than one variant\">\"a\"</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOfSelectError() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\",\n" +
@@ -238,7 +233,6 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: \\\"off\\\", \\\"warn\\\", \\\"error\\\"\">\"wrong\"</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testAnyOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -250,7 +244,6 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: \\\"a\\\", \\\"b\\\", \\\"c\\\"\">\"d\"</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testAllOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"integer\", \"multipleOf\": 2}");
@@ -945,5 +938,114 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schemaText, "<warning descr=\"One of the following property sets is required: properties 'type' = record, 'fields', 'name', or properties 'type' = enum, 'name', 'symbols', or properties 'type' = array, 'items', or properties 'type' = map, 'values', or properties 'type' = fixed, 'name', 'size'\">{\n" +
                        "  \n" +
                        "}</warning>");
+  }
+
+  public void testValidateEnumVsPattern() throws Exception {
+    doTest("{\n" +
+           "  \"oneOf\": [\n" +
+           "        {\n" +
+           "            \"properties\": {\n" +
+           "                \"type\": {\n" +
+           "                    \"enum\": [\"library\"],\n" +
+           "                    \"pattern\": \".*\"\n" +
+           "                }\n" +
+           "            },\n" +
+           "            \"required\": [\"type\", \"name\", \"description\"]\n" +
+           "        },\n" +
+           "        {\n" +
+           "            \"properties\": {\n" +
+           "                \"type\": {\n" +
+           "                    \"not\": {\n" +
+           "                        \"enum\": [\"library\"]\n" +
+           "                    }\n" +
+           "                }\n" +
+           "            }\n" +
+           "        }\n" +
+           "    ]\n" +
+           "}", "{\n" +
+                "  \"type\": \"project\",\n" +
+                "  \"name\": \"asd\",\n" +
+                "  \"description\": \"asdasdqwdqw\"\n" +
+                "}");
+  }
+
+  public void testJsonPointerEscapes() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"q~q/q\": {\n" +
+           "      \"type\": \"string\"\n" +
+           "    },\n" +
+           "    \"a\": {\n" +
+           "      \"$ref\": \"#/properties/q~0q~1q\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"a\": <warning>1</warning>\n" +
+                "}");
+  }
+
+  public void testOneOfMultipleBranches() throws Exception {
+    doTest("{\n" +
+           "\t\"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+           "\n" +
+           "\t\"type\": \"object\",\n" +
+           "\t\"oneOf\": [\n" +
+           "\t\t{\n" +
+           "\t\t\t\"properties\": {\n" +
+           "\t\t\t\t\"startTime\": {\n" +
+           "\t\t\t\t\t\"type\": \"string\"\n" +
+           "\t\t\t\t}\n" +
+           "\t\t\t}\n" +
+           "\t\t},\n" +
+           "\t\t{\n" +
+           "\t\t\t\"properties\": {\n" +
+           "\t\t\t\t\"startTime\": {\n" +
+           "\t\t\t\t\t\"type\": \"number\"\n" +
+           "\t\t\t\t}\n" +
+           "\t\t\t}\n" +
+           "\t\t}\n" +
+           "\t]\n" +
+           "}", "{\n" +
+                "  \"startTime\": <warning descr=\"Type is not allowed. Expected one of: number, string.\">null</warning>\n" +
+                "}");
+  }
+
+  public void testReferenceById() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"a\": {\n" +
+           "      \"$id\": \"#aa\",\n" +
+           "      \"type\": \"object\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"patternProperties\": {\n" +
+           "    \"aa\": {\n" +
+           "      \"type\": \"object\"\n" +
+           "    },\n" +
+           "    \"bb\": {\n" +
+           "      \"$ref\": \"#aa\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"aa\": {\n" +
+                "    \"type\": \"string\"\n" +
+                "  },\n" +
+                "  \"bb\": <warning>578</warning>\n" +
+                "}\n" +
+                "\n");
+  }
+
+  public void testComplicatedConditions() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions_schema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions.json"));
+    doTest(schemaText, inputText);
+  }
+
+  public void testExoticProps() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticPropsSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticProps.json"));
+    doTest(schemaText, inputText);
   }
 }

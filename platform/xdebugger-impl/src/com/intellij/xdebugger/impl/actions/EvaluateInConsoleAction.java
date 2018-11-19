@@ -19,7 +19,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 final class EvaluateInConsoleAction extends XDebuggerActionBase {
-  public EvaluateInConsoleAction() {
+  EvaluateInConsoleAction() {
     super(true);
   }
 

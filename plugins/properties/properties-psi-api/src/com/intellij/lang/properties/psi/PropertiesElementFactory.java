@@ -70,7 +70,7 @@ public class PropertiesElementFactory {
     if (delimiter == null) {
       delimiter = project == null ? '=' : PropertiesCodeStyleSettings.getInstance(project).getDelimiter();
     }
-    return (escape ? escape(name) : name) + String.valueOf(delimiter) + (escape ? escapeValue(value, delimiter) : value);
+    return (escape ? escape(name) : name) + delimiter + (escape ? escapeValue(value, delimiter) : value);
   }
 
   @NotNull

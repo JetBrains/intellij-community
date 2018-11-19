@@ -36,7 +36,6 @@ import java.util.Map;
 
 /**
  * @author anna
- * @since 10-Aug-2007
  */
 public class PluginDownloader {
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);

@@ -411,7 +411,7 @@ public class RegExpLexerTest extends LexerTestCase {
                           "QUOTE_END ('\\E')\n" +
                           "CLASS_END (']')\n" +
                           "CHARACTER (']')", lexer);
-    final RegExpLexer lexer2 = new RegExpLexer(EnumSet.of(COMMENT_MODE));
+    final RegExpLexer lexer2 = new RegExpLexer(EnumSet.of(COMMENT_MODE, WHITESPACE_IN_CLASS));
     doTest("[ \t\n]]", "CLASS_BEGIN ('[')\n" +
                        "WHITE_SPACE (' ')\n" +
                        "WHITE_SPACE ('\t')\n" +
@@ -421,6 +421,20 @@ public class RegExpLexerTest extends LexerTestCase {
     doTest("[\\ ]", "CLASS_BEGIN ('[')\n" +
                     "ESC_CTRL_CHARACTER ('\\ ')\n" +
                     "CLASS_END (']')", lexer2);
+    doTest("[#comment\nabc]", "CLASS_BEGIN ('[')\n" +
+                              "COMMENT ('#comment')\n" +
+                              "WHITE_SPACE ('\\n')\n" +
+                              "CHARACTER ('a')\n" +
+                              "CHARACTER ('b')\n" +
+                              "CHARACTER ('c')\n" +
+                              "CLASS_END (']')", lexer2);
+    doTest("[ ^]]", "CLASS_BEGIN ('[')\n" +
+                    "WHITE_SPACE (' ')\n" +
+                    "CHARACTER ('^')\n" +
+                    "CLASS_END (']')\n" +
+                    "CHARACTER (']')", lexer2);
+    doTest("[\\", "CLASS_BEGIN ('[')\n" +
+                  "INVALID_CHARACTER_ESCAPE_TOKEN ('\\')", lexer2);
     final RegExpLexer lexer3 = new RegExpLexer(EnumSet.of(ALLOW_EMPTY_CHARACTER_CLASS));
     doTest("[]]", "CLASS_BEGIN ('[')\n" +
                   "CLASS_END (']')\n" +
@@ -437,6 +451,16 @@ public class RegExpLexerTest extends LexerTestCase {
                      "CHARACTER (' ')\n" +
                      "ESC_CHARACTER ('\\]')\n" +
                      "CLASS_END (']')", lexer3);
+    final RegExpLexer lexer4 = new RegExpLexer(EnumSet.of(COMMENT_MODE));
+    doTest("[ ]", "CLASS_BEGIN ('[')\n" +
+                  "CHARACTER (' ')\n" +
+                  "CLASS_END (']')", lexer4);
+    doTest("[#]", "CLASS_BEGIN ('[')\n" +
+                  "CHARACTER ('#')\n" +
+                  "CLASS_END (']')", lexer4);
+    doTest("[\\ ]", "CLASS_BEGIN ('[')\n" +
+                    "REDUNDANT_ESCAPE ('\\ ')\n" +
+                    "CLASS_END (']')", lexer4);
   }
 
   public void testBoundaries() {

@@ -10,16 +10,20 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall;
 
 public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
@@ -45,7 +49,7 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
   @NotNull
   public static List<PsiType[]> findFittingSignatures(GrClosableBlock closure) {
-    GrCall call = findCall(closure);
+    GrMethodCall call = findCall(closure);
     if (call == null) return Collections.emptyList();
 
     GroovyResolveResult variant = call.advancedResolve();
@@ -56,7 +60,9 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     return ContainerUtil.findAll(expectedSignatures, types -> types.length == parameters.length);
   }
 
-  private static List<PsiType[]> inferExpectedSignatures(@NotNull GroovyResolveResult variant, @NotNull GrCall call, @NotNull GrClosableBlock closure) {
+  private static List<PsiType[]> inferExpectedSignatures(@NotNull GroovyResolveResult variant,
+                                                         @NotNull GrMethodCall call,
+                                                         @NotNull GrClosableBlock closure) {
     PsiElement element = variant.getElement();
 
     while (element instanceof PsiMirrorElement) element = ((PsiMirrorElement)element).getPrototype();
@@ -66,7 +72,7 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     if (variant instanceof GroovyMethodResult) {
       MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
-        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new Argument(null, closure));
+        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new ExpressionArgument(closure));
         if (pair != null) {
           param = pair.first;
         }
@@ -100,8 +106,20 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     SignatureHintProcessor signatureHintProcessor = SignatureHintProcessor.getHintProcessor(qnameOfClosureSignatureHint);
     if (signatureHintProcessor == null) return Collections.emptyList();
 
-    PsiSubstitutor substitutor =
-      variant instanceof GroovyMethodResult ? ((GroovyMethodResult)variant).getSubstitutor(false) : variant.getSubstitutor();
+    PsiSubstitutor substitutor = null;
+    if (variant instanceof GroovyMethodResult) {
+      MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+      if (candidate != null) {
+        substitutor =
+          new GroovyInferenceSessionBuilder((GrReferenceExpression)call.getInvokedExpression(), candidate)
+            .skipClosureIn(call)
+            .resolveMode(false)
+            .build().inferSubst();
+      }
+    }
+    if (substitutor == null ) {
+      substitutor = variant.getSubstitutor();
+    }
 
     return signatureHintProcessor.inferExpectedSignatures((PsiMethod)element, substitutor, SignatureHintProcessor.buildOptions(anno));
   }

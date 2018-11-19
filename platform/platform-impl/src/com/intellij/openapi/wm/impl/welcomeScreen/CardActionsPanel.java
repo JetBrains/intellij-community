@@ -204,7 +204,7 @@ public class CardActionsPanel extends JPanel {
       }
     }
 
-    public Button(AnAction action, Presentation presentation) {
+    Button(AnAction action, Presentation presentation) {
       super(action,
             wrapIcon(presentation),
             ActionPlaces.WELCOME_SCREEN,
@@ -238,7 +238,7 @@ public class CardActionsPanel extends JPanel {
   private class ActivateCard extends AnAction {
     private final String myId;
 
-    public ActivateCard(String id) {
+    ActivateCard(String id) {
       myId = id;
     }
 

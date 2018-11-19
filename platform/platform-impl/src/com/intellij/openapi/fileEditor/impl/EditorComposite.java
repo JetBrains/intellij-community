@@ -429,7 +429,7 @@ public abstract class EditorComposite implements Disposable {
     @Nullable
     private JComponent myFocusComponent;
 
-    public MyComponent(@NotNull JComponent realComponent, @Nullable JComponent focusComponent){
+    MyComponent(@NotNull JComponent realComponent, @Nullable JComponent focusComponent){
       super(new BorderLayout());
       myFocusComponent = focusComponent;
       add(realComponent, BorderLayout.CENTER);

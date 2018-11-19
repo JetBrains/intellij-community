@@ -45,12 +45,8 @@ import java.util.List;
 
 public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
-  public LibraryGroupNode(Project project, LibraryGroupElement value, ViewSettings viewSettings) {
+  public LibraryGroupNode(Project project, @NotNull LibraryGroupElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public LibraryGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (LibraryGroupElement)value, viewSettings);
   }
 
   @Override
@@ -86,7 +82,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     return children;
   }
 
-  public static void addLibraryChildren(final LibraryOrSdkOrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
+  public static void addLibraryChildren(final LibraryOrSdkOrderEntry entry, final List<? super AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     VirtualFile[] files =
       entry instanceof LibraryOrderEntry ? getLibraryRoots((LibraryOrderEntry)entry) : entry.getRootFiles(OrderRootType.CLASSES);
@@ -124,7 +120,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }

@@ -34,5 +34,5 @@ interface FileNameIndexService {
   @NotNull
   Collection<VirtualFile> getFilesWithFileType(@NotNull FileType type, @NotNull GlobalSearchScope scope);
 
-  boolean processFilesWithFileType(@NotNull FileType type, @NotNull Processor<VirtualFile> processor, @NotNull GlobalSearchScope scope);
+  boolean processFilesWithFileType(@NotNull FileType type, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope);
 }

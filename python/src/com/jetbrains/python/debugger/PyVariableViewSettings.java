@@ -54,12 +54,12 @@ public class PyVariableViewSettings {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySimplifiedView;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean hide) {
+    public void setSelected(@NotNull AnActionEvent e, boolean hide) {
       mySimplifiedView = hide;
       PyDebuggerSettings.getInstance().setSimplifiedView(hide);
       if (myProcess != null) {
@@ -158,12 +158,12 @@ public class PyVariableViewSettings {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return isEnabled;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean hide) {
+    public void setSelected(@NotNull AnActionEvent e, boolean hide) {
       isEnabled = hide;
       if (hide) {
         PyDebuggerSettings.getInstance().setValuesPolicy(myPolicy);

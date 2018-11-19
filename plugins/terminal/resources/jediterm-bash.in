@@ -47,7 +47,7 @@ function override_jb_variables {
   done
 }
 
-if [ -n $LOGIN_SHELL ]; then
+if [ -n "$LOGIN_SHELL" ]; then
   load_login_configs
   unset LOGIN_SHELL
 fi
@@ -80,6 +80,20 @@ fi
 
 if [ -n "$JEDITERM_SOURCE" ]
 then
-  source "$JEDITERM_SOURCE"
+  source "$JEDITERM_SOURCE" $JEDITERM_SOURCE_ARGS
   unset JEDITERM_SOURCE
+  unset JEDITERM_SOURCE_ARGS
 fi
+
+function configureCommandHistory {
+  local commandHistoryFile="$__INTELLIJ_COMMAND_HISTFILE__"
+  if [ -n "$commandHistoryFile" ]
+  then
+    if ! [ -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
+    then
+      cp "$HISTFILE" "$commandHistoryFile"
+    fi
+    export HISTFILE="$commandHistoryFile"
+  fi
+}
+configureCommandHistory

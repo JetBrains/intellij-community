@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
@@ -69,7 +69,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
         }
       }
 
-      private void addAffectedJavaSdk(VFileEvent event, Set<Sdk> affected) {
+      private void addAffectedJavaSdk(VFileEvent event, Set<? super Sdk> affected) {
         final VirtualFile file = event.getFile();
         CharSequence fileName = null;
         if (file != null && file.isValid()) {
@@ -85,7 +85,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
         if (fileName != null) {
           // avoid calling getFileType() because it will try to detect file type from content for unknown/text file types
           // consider only archive files that may contain libraries
-          if (!FileTypes.ARCHIVE.equals(myFileTypeManager.getFileTypeByFileName(fileName))) {
+          if (!ArchiveFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(fileName))) {
             return;
           }
         }

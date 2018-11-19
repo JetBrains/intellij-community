@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.ui.GroupedElementsRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 10/24/12 4:25 PM
  */
 public class ArrangementColorsProviderImpl implements ArrangementColorsProvider {
 
@@ -51,14 +50,14 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
     myColorsAware = colorsAware;
 
     // Default settings.
-    myDefaultNormalAttributes.setForegroundColor(UIUtil.getTreeTextForeground());
+    myDefaultNormalAttributes.setForegroundColor(UIUtil.getTreeForeground());
     myDefaultNormalAttributes.setBackgroundColor(UIUtil.getPanelBackground());
     myDefaultSelectedAttributes.setForegroundColor(UIUtil.getTreeSelectionForeground());
     myDefaultSelectedAttributes.setBackgroundColor(UIUtil.getTreeSelectionBackground());
     myDefaultNormalBorderColor = UIUtil.getBorderColor();
     Color selectionBorderColor = UIUtil.getTreeSelectionBorderColor();
     if (selectionBorderColor == null) {
-      selectionBorderColor = GroupedElementsRenderer.SELECTED_FRAME_FOREGROUND;
+      selectionBorderColor = JBColor.black;
     }
     myDefaultSelectedBorderColor = selectionBorderColor;
   }

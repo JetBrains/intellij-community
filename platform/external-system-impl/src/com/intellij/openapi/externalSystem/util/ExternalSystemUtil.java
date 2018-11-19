@@ -39,7 +39,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -96,6 +95,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,14 +109,15 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.list;
 
 /**
  * @author Denis Zhdanov
- * @since 4/22/13 9:36 AM
  */
 public class ExternalSystemUtil {
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @NotNull public static final Key<ExternalSystemTaskId> EXTERNAL_SYSTEM_TASK_ID_KEY =
     Key.create("com.intellij.openapi.externalSystem.util.taskId");
 
@@ -179,8 +180,7 @@ public class ExternalSystemUtil {
       if (window != null) {
         return;
       }
-      ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-      for (final ToolWindowEP bean : beans) {
+      for (final ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
         if (id.equals(bean.id)) {
           managerEx.initToolWindow(bean);
         }
@@ -292,7 +292,6 @@ public class ExternalSystemUtil {
     }
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   @Nullable
   private static String extractDetails(@NotNull Throwable e) {
     final Throwable unwrapped = RemoteUtil.unwrap(e);
@@ -392,7 +391,7 @@ public class ExternalSystemUtil {
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 
-      @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+      @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;
@@ -605,7 +604,7 @@ public class ExternalSystemUtil {
         }
       }
 
-      private void sendSyncFinishEvent(@NotNull Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
+      private void sendSyncFinishEvent(@NotNull Ref<? extends Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
         Exception exception = null;
         FinishBuildEvent finishBuildEvent = null;
         Supplier<FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
@@ -980,26 +979,19 @@ public class ExternalSystemUtil {
                                                                                                   @NotNull Project project,
                                                                                                   @NotNull ProjectSystemId externalSystemId) {
     AbstractExternalSystemTaskConfigurationType configurationType = findConfigurationType(externalSystemId);
-    if (configurationType == null) return null;
+    if (configurationType == null) {
+      return null;
+    }
 
     String name = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(name, configurationType.getFactory());
-    ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)settings.getConfiguration();
-    runConfiguration.getSettings().setExternalProjectPath(taskSettings.getExternalProjectPath());
-    runConfiguration.getSettings().setTaskNames(newArrayList(taskSettings.getTaskNames()));
-    runConfiguration.getSettings().setTaskDescriptions(newArrayList(taskSettings.getTaskDescriptions()));
-    runConfiguration.getSettings().setVmOptions(taskSettings.getVmOptions());
-    runConfiguration.getSettings().setScriptParameters(taskSettings.getScriptParameters());
-    runConfiguration.getSettings().setPassParentEnvs(taskSettings.isPassParentEnvs());
-    runConfiguration.getSettings().setEnv(newHashMap(taskSettings.getEnv()));
-    runConfiguration.getSettings().setExecutionName(taskSettings.getExecutionName());
-
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(name, configurationType.getFactory());
+    ((ExternalSystemRunConfiguration)settings.getConfiguration()).getSettings().setFrom(taskSettings);
     return settings;
   }
 
   @Nullable
   public static AbstractExternalSystemTaskConfigurationType findConfigurationType(@NotNull ProjectSystemId externalSystemId) {
-    for (ConfigurationType type : Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP)) {
+    for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
       if (type instanceof AbstractExternalSystemTaskConfigurationType) {
         AbstractExternalSystemTaskConfigurationType candidate = (AbstractExternalSystemTaskConfigurationType)type;
         if (externalSystemId.equals(candidate.getExternalSystemId())) {
@@ -1033,7 +1025,7 @@ public class ExternalSystemUtil {
   public static void linkExternalProject(@NotNull final ProjectSystemId externalSystemId,
                                          @NotNull final ExternalProjectSettings projectSettings,
                                          @NotNull final Project project,
-                                         @Nullable final Consumer<Boolean> executionResultCallback,
+                                         @Nullable final Consumer<? super Boolean> executionResultCallback,
                                          boolean isPreviewMode,
                                          @NotNull final ProgressExecutionMode progressExecutionMode) {
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
@@ -1154,7 +1146,7 @@ public class ExternalSystemUtil {
   private static class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
     private final Project myProject;
 
-    public MyMultiExternalProjectRefreshCallback(Project project) {
+    MyMultiExternalProjectRefreshCallback(Project project) {
       myProject = project;
     }
 

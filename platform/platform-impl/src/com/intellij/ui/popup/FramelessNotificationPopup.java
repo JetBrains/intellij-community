@@ -11,6 +11,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -74,7 +75,7 @@ public class FramelessNotificationPopup {
       .setLocateWithinScreenBounds(false)
       .setAlpha(0.2f).addListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         if (myFadeInTimer.isRunning()) {
           myFadeInTimer.stop();
         }
@@ -101,7 +102,7 @@ public class FramelessNotificationPopup {
   private class ContentComponent extends JPanel {
     private final MouseAdapter myMouseListener;
 
-    public ContentComponent(JComponent content) {
+    ContentComponent(JComponent content) {
       super(new BorderLayout());
       add(content, BorderLayout.CENTER);
       setBackground(myBackgroud);

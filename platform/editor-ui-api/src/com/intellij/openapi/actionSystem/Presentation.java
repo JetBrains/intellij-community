@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Objects;
 
 /**
  * The presentation of an action in a specific place in the user interface.
@@ -163,13 +164,9 @@ public final class Presentation implements Cloneable {
       myText = null;
     }
 
-    myChangeSupport.firePropertyChange(PROP_TEXT, oldText, myText);
-    if (myMnemonic != oldMnemonic) {
-      myChangeSupport.firePropertyChange(PROP_MNEMONIC_KEY, new Integer(oldMnemonic), new Integer(myMnemonic));
-    }
-    if (myDisplayedMnemonicIndex != oldDisplayedMnemonicIndex) {
-      myChangeSupport.firePropertyChange(PROP_MNEMONIC_INDEX, new Integer(oldDisplayedMnemonicIndex), new Integer(myDisplayedMnemonicIndex));
-    }
+    fireObjectPropertyChange(PROP_TEXT, oldText, myText);
+    fireObjectPropertyChange(PROP_MNEMONIC_KEY, oldMnemonic, myMnemonic);
+    fireObjectPropertyChange(PROP_MNEMONIC_INDEX, oldDisplayedMnemonicIndex, myDisplayedMnemonicIndex);
   }
 
   public void setText(String text) {
@@ -206,7 +203,7 @@ public final class Presentation implements Cloneable {
   public void setDescription(String description) {
     String oldDescription = myDescription;
     myDescription = description;
-    myChangeSupport.firePropertyChange(PROP_DESCRIPTION, oldDescription, myDescription);
+    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription, myDescription);
   }
 
   public Icon getIcon() {
@@ -215,10 +212,8 @@ public final class Presentation implements Cloneable {
 
   public void setIcon(@Nullable Icon icon) {
     Icon oldIcon = myIcon;
-    if (oldIcon == icon) return;
-
     myIcon = icon;
-    myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, myIcon);
+    fireObjectPropertyChange(PROP_ICON, oldIcon, myIcon);
   }
 
   public Icon getDisabledIcon() {
@@ -228,7 +223,7 @@ public final class Presentation implements Cloneable {
   public void setDisabledIcon(@Nullable Icon icon) {
     Icon oldDisabledIcon = myDisabledIcon;
     myDisabledIcon = icon;
-    myChangeSupport.firePropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, myDisabledIcon);
+    fireObjectPropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, myDisabledIcon);
   }
 
   public Icon getHoveredIcon() {
@@ -238,7 +233,7 @@ public final class Presentation implements Cloneable {
   public void setHoveredIcon(@Nullable final Icon hoveredIcon) {
     Icon old = myHoveredIcon;
     myHoveredIcon = hoveredIcon;
-    myChangeSupport.firePropertyChange(PROP_HOVERED_ICON, old, myHoveredIcon);
+    fireObjectPropertyChange(PROP_HOVERED_ICON, old, myHoveredIcon);
   }
 
   public Icon getSelectedIcon() {
@@ -248,7 +243,7 @@ public final class Presentation implements Cloneable {
   public void setSelectedIcon(Icon selectedIcon) {
     Icon old = mySelectedIcon;
     mySelectedIcon = selectedIcon;
-    myChangeSupport.firePropertyChange(PROP_SELECTED_ICON, old, mySelectedIcon);
+    fireObjectPropertyChange(PROP_SELECTED_ICON, old, mySelectedIcon);
   }
 
   public int getMnemonic() {
@@ -266,7 +261,7 @@ public final class Presentation implements Cloneable {
   public void setVisible(boolean visible) {
     boolean oldVisible = myVisible;
     myVisible = visible;
-    firePropertyChange(PROP_VISIBLE, oldVisible, myVisible);
+    fireBooleanPropertyChange(PROP_VISIBLE, oldVisible, myVisible);
   }
 
   /**
@@ -288,7 +283,7 @@ public final class Presentation implements Cloneable {
   public void setEnabled(boolean enabled) {
     boolean oldEnabled = myEnabled;
     myEnabled = enabled;
-    firePropertyChange(PROP_ENABLED, oldEnabled, myEnabled);
+    fireBooleanPropertyChange(PROP_ENABLED, oldEnabled, myEnabled);
   }
 
   public final void setEnabledAndVisible(boolean enabled) {
@@ -296,12 +291,19 @@ public final class Presentation implements Cloneable {
     setVisible(enabled);
   }
 
-  private void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+  private void fireBooleanPropertyChange(String propertyName, boolean oldValue, boolean newValue) {
     if (oldValue != newValue) {
       myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 
+  private void fireObjectPropertyChange(String propertyName, Object oldValue, Object newValue) {
+    if (!Objects.equals(oldValue, newValue)) {
+      myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
+  }
+
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public Presentation clone() {
     Presentation presentation = new Presentation();
@@ -318,6 +320,7 @@ public final class Presentation implements Cloneable {
     setHoveredIcon(presentation.getHoveredIcon());
     setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled());
+    setWeight(presentation.getWeight());
   }
 
   @Nullable

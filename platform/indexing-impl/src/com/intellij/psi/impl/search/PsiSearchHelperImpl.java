@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -98,7 +99,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @Override
   public boolean processCommentsContainingIdentifier(@NotNull String identifier,
                                                      @NotNull SearchScope searchScope,
-                                                     @NotNull final Processor<PsiElement> processor) {
+                                                     @NotNull final Processor<? super PsiElement> processor) {
     TextOccurenceProcessor occurrenceProcessor = (element, offsetInElement) -> {
       if (CommentUtilCore.isCommentTextElement(element) && element.findReferenceAt(offsetInElement) == null) {
         return processor.process(element);
@@ -211,7 +212,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return progress;
   }
 
-  static boolean shouldProcessInjectedPsi(@NotNull SearchScope scope) {
+  public static boolean shouldProcessInjectedPsi(@NotNull SearchScope scope) {
     return !(scope instanceof LocalSearchScope) || !((LocalSearchScope)scope).isIgnoreInjectedPsi();
   }
 
@@ -301,7 +302,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, stopped, vfile -> {
         TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
-        processVirtualFile(vfile, localProcessor, stopped);
+        try {
+          processVirtualFile(vfile, localProcessor, stopped);
+        }
+        catch (ProcessCanceledException | IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error("Error during processing of: " + vfile.getName(), e);
+          throw e;
+        }
         if (progress.isRunning()) {
           double fraction = (double)counter.incrementAndGet() / totalSize;
           progress.setFraction(fraction);
@@ -777,7 +787,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           throw e;
         }
         catch (Exception | Error e) {
-          LOG.error(e);
+          PsiFile file = scope.getContainingFile();
+          LOG.error("Error during processing of: " + (file != null ? file.getName() : scope), e);
           return true;
         }
       }
@@ -878,7 +889,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   private static GlobalSearchScope uniteScopes(@NotNull Collection<RequestWithProcessor> requests) {
     Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, r -> (GlobalSearchScope)r.request.searchScope);
-    return GlobalSearchScope.union(scopes.toArray(new GlobalSearchScope[0]));
+    return GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
   private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors,

@@ -79,14 +79,11 @@ public abstract class CommandProcessor {
 
   public abstract boolean isUndoTransparentActionInProgress();
 
-  public void markCurrentCommandAsGlobal(@Nullable Project project) {
-  }
+  public abstract void markCurrentCommandAsGlobal(@Nullable Project project);
 
-  public void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs) {
-  }
+  public abstract void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs);
 
-  public void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files) {
-  }
+  public abstract void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files);
 
   /**
    * Use {@link CommandListener#TOPIC}

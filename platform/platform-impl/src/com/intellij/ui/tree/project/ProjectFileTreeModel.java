@@ -23,13 +23,13 @@ import javax.swing.tree.TreePath;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.openapi.vfs.VfsUtilCore.isInvalidLink;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
-import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
 import static java.util.Collections.emptyList;
 
 public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
@@ -41,7 +41,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     root = new ProjectNode(project);
     updater = new ProjectFileNodeUpdater(project, invoker) {
       @Override
-      protected void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
+      protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
         boolean filtered = root.filter != null;
         SmartHashSet<Node> nodes = fromRoot || filtered ? null : new SmartHashSet<>();
         root.children.forEach(child -> child.invalidateChildren(node -> {
@@ -135,18 +135,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return visible;
   }
 
-  @NotNull
-  private static Module[] getModules(@NotNull Project project) {
-    ModuleManager manager = ModuleManager.getInstance(project);
-    return manager == null ? Module.EMPTY_ARRAY : manager.getModules();
-  }
-
-  @NotNull
-  private static VirtualFile[] getContentRoots(@NotNull Module module) {
-    ModuleRootManager manager = module.isDisposed() ? null : ModuleRootManager.getInstance(module);
-    return manager == null ? VirtualFile.EMPTY_ARRAY : manager.getContentRoots();
-  }
-
   public void setFilter(@Nullable VirtualFileFilter filter) {
     onValidThread(() -> {
       if (root.filter == null && filter == null) return;
@@ -178,7 +166,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   private static final class Mapper implements BiFunction<VirtualFile, Object, FileNode> {
     private final HashMap<VirtualFile, FileNode> map = new HashMap<>();
 
-    Mapper(@NotNull List<FileNode> list) {
+    Mapper(@NotNull List<? extends FileNode> list) {
       list.forEach(node -> map.put(node.file, node));
     }
 
@@ -252,28 +240,31 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     List<FileNode> getChildren(@NotNull List<FileNode> oldList) {
       List<FileNode> list = new SmartList<>();
       Mapper mapper = new Mapper(oldList);
-      TreeCollector<VirtualFile> collector = showModules ? null : TreeCollector.createFileRootsCollector();
-      VirtualFile ancestor = project.getBaseDir();
-      if (ancestor != null && project == findArea(ancestor, project)) {
-        if (collector != null) {
-          collector.add(ancestor);
-        }
-        else {
-          list.add(mapper.apply(ancestor, project));
-        }
+      if (showModules) {
+        visitContentRoots(project, (file, area) -> list.add(mapper.apply(file, area)));
       }
-      for (Module module : getModules(project)) {
-        for (VirtualFile file : getContentRoots(module)) {
-          if (collector != null) {
-            collector.add(file);
-          }
-          else {
-            list.add(mapper.apply(file, module));
-          }
-        }
+      else {
+        TreeCollector<VirtualFile> collector = TreeCollector.createFileRootsCollector();
+        visitContentRoots(project, (file, area) -> collector.add(file));
+        collector.get().forEach(file -> list.add(mapper.apply(file, file)));
       }
-      if (collector != null) collector.get().forEach(file -> list.add(mapper.apply(file, file)));
       return list;
+    }
+
+    private static void visitContentRoots(@Nullable Project project, @NotNull BiConsumer<? super VirtualFile, ? super AreaInstance> consumer) {
+      VirtualFile ancestor = ProjectFileNode.findBaseDir(project);
+      if (ancestor != null && project == ProjectFileNode.findArea(ancestor, project)) {
+        consumer.accept(ancestor, project);
+      }
+      if (project != null && !project.isDisposed()) {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          if (!module.isDisposed()) {
+            for (VirtualFile file : ModuleRootManager.getInstance(module).getContentRoots()) {
+              consumer.accept(file, module);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -329,7 +320,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
           continue; // ignore invalid symlink
         }
         Object id = getRootID();
-        AreaInstance area = findArea(child, parent.project);
+        AreaInstance area = ProjectFileNode.findArea(child, parent.project);
         if (area != null && (id instanceof VirtualFile || area.equals(id))) {
           list.add(mapper.apply(child, id));
         }

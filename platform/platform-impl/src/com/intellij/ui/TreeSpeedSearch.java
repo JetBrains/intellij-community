@@ -29,14 +29,14 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   protected boolean myCanExpand;
 
   private static final Convertor<TreePath, String> TO_STRING = path -> path.getLastPathComponent().toString();
-  private final Convertor<TreePath, String> myToStringConvertor;
+  private final Convertor<? super TreePath, String> myToStringConvertor;
   public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = path -> {
-    NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, path.getLastPathComponent());
+    NodeDescriptor descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
     if (descriptor != null) return descriptor.toString();
     return TO_STRING.convert(path);
   };
 
-  public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toStringConvertor) {
+  public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toStringConvertor) {
     this(tree, toStringConvertor, false);
   }
 
@@ -44,15 +44,15 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     this(tree, TO_STRING);
   }
 
-  public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString) {
+  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString) {
     this(tree, toString, false);
   }
 
-  public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString, boolean canExpand) {
+  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
     this((JTree)tree, toString, canExpand);
   }
 
-  public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toString, boolean canExpand) {
+  public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
     super(tree);
     setComparator(new SpeedSearchComparator(false, true));
     myToStringConvertor = toString;
@@ -120,7 +120,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     @NotNull private final JTree myTree;
     @NotNull private final TreeSpeedSearch mySearch;
 
-    public MySelectAllAction(@NotNull JTree tree, @NotNull TreeSpeedSearch search) {
+    MySelectAllAction(@NotNull JTree tree, @NotNull TreeSpeedSearch search) {
       myTree = tree;
       mySearch = search;
       copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));

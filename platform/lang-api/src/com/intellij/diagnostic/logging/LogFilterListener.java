@@ -16,11 +16,13 @@
 
 package com.intellij.diagnostic.logging;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
 * @author Eugene.Kudelevsky
 */
 public interface LogFilterListener {
-  void onFilterStateChange(LogFilter filter);
+  void onFilterStateChange(@NotNull LogFilter filter);
 
   void onTextFilterChange();
 }

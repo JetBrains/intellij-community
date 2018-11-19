@@ -33,7 +33,7 @@ abstract class TaskListItem {
   private final boolean myTemp;
   private final LocalTask myTask;
 
-  public TaskListItem(String text, Icon icon) {
+  TaskListItem(String text, Icon icon) {
     myText = text;
     myIcon = icon;
     mySeparator = null;

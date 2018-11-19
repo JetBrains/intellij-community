@@ -65,6 +65,10 @@ public class RepositoryUtils {
     return libraryEditor != null && libraryEditor.getUrls(JavadocOrderRootType.getInstance()).length > 0;
   }
 
+  public static boolean libraryHasExternalAnnotations(@Nullable LibraryEditor libraryEditor) {
+    return libraryEditor != null && libraryEditor.getUrls(AnnotationOrderRootType.getInstance()).length > 0;
+  }
+
   public static String getStorageRoot(Library library, Project project) {
     return getStorageRoot(library.getUrls(OrderRootType.CLASSES), project);
   }

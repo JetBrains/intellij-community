@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsHistoryProvider
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
@@ -32,7 +31,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import java.awt.Component
-import java.io.File
 
 class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   @Volatile private var myCommitDialogShown: Boolean = false
@@ -84,6 +82,10 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
+  override fun showChangesListBrowser(changelist: CommittedChangeList?, toSelect: VirtualFile?, title: String?) {
+    throw UnsupportedOperationException()
+  }
+
   override fun showChangesBrowser(changelists: List<CommittedChangeList>) {
     throw UnsupportedOperationException()
   }
@@ -105,6 +107,10 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   }
 
   override fun selectFilePathsToProcess(files: List<FilePath>, title: String, prompt: String?, singleFileTitle: String?, singleFilePromptTemplate: String?, confirmationOption: VcsShowConfirmationOption): Collection<FilePath>? {
+    throw UnsupportedOperationException()
+  }
+
+  override fun selectFilePathsToProcess(files: MutableList<FilePath>, title: String?, prompt: String?, singleFileTitle: String?, singleFilePromptTemplate: String?, confirmationOption: VcsShowConfirmationOption, okActionName: String?, cancelActionName: String?): MutableCollection<FilePath> {
     throw UnsupportedOperationException()
   }
 

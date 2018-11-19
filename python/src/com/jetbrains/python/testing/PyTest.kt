@@ -16,10 +16,14 @@
 package com.jetbrains.python.testing
 
 import com.intellij.execution.Executor
+import com.intellij.execution.Location
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
+import com.intellij.psi.search.GlobalSearchScope
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
@@ -54,7 +58,12 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     when {
       keywords.isEmpty() -> ""
       else -> "-k $keywords"
-    } + if (forRerun) " --last-failed" else ""
+    }
+
+  override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
+    // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
+    return target.generateArgumentsLine(this) + listOf(rawArgumentsSeparator, "--last-failed")
+  }
 
   override fun isFrameworkInstalled(): Boolean = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)
 

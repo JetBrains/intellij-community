@@ -118,4 +118,9 @@ public class PyCallHierarchyTest extends PyTestCase {
   public void testParentheses() {
     doTestCallHierarchy("main.py", "file_1.py");
   }
+
+  // PY-29841
+  public void testSuper() {
+    doTestCallHierarchy("main.py");
+  }
 }

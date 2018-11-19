@@ -4,7 +4,7 @@ class X {
     new Runnable() {
       public void run() { }
     };
-    Intf a = (<warning descr="Casting 'result' to 'Intf' may produce 'java.lang.ClassCastException'">Intf</warning>)result;
+    Intf a = (<warning descr="Casting 'result' to 'Intf' may produce 'ClassCastException'">Intf</warning>)result;
   }
 
   public static void main2(Object result) {

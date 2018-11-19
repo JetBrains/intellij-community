@@ -21,7 +21,7 @@ public class QuickFixManagerImpl extends QuickFixManager<GlassLayer> {
     super(editor, component, viewPort);
     editor.addComponentSelectionListener(new ComponentSelectionListener() {
       @Override
-      public void selectedComponentChanged(GuiEditor source) {
+      public void selectedComponentChanged(@NotNull GuiEditor source) {
         hideIntentionHint();
         updateIntentionHintVisibility();
       }

@@ -52,7 +52,7 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
     private static final String SANDBOX_HOME_FIELD = "mySandboxHome";
     private static final String JDK_NAME_ATTRIBUTE = "sdk";
 
-    public JpsIdeaSdkPropertiesSerializer() {
+    JpsIdeaSdkPropertiesSerializer() {
       super("IDEA JDK", JpsIdeaSdkType.INSTANCE);
     }
 

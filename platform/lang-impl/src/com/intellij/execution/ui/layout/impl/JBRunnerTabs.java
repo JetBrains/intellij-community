@@ -26,12 +26,12 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Map;
 
@@ -101,13 +101,13 @@ public class JBRunnerTabs extends JBEditorTabs {
   }
 
   private static class MyTabLabel extends TabLabel {
-    public MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
+    MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
       super(tabs, info);
     }
 
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
-      setBorder(new EmptyBorder(5, 5, 7, 5));//Don't use JBUI here, it clips tab text in case of HiDPI
+      setBorder(JBUI.Borders.empty(4));
     }
 
     @Override
@@ -124,13 +124,6 @@ public class JBRunnerTabs extends JBEditorTabs {
         wrapper.remove(0);
         wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
       }
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension result = super.getPreferredSize();
-      result.height += myTabs.getActiveTabUnderlineHeight() - 1;
-      return result;
     }
   }
 }

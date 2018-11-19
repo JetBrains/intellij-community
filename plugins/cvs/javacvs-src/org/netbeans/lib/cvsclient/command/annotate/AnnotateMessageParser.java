@@ -51,7 +51,7 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 
 	// Setup ==================================================================
 
-	public AnnotateMessageParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
+	AnnotateMessageParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
 		this.eventManager = eventManager;
 		this.cvsFileSystem = cvsFileSystem;
 	}

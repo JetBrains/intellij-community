@@ -52,7 +52,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final VcsLogModifiableIndex myIndex;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
-  @NotNull private final Consumer<Exception> myExceptionHandler;
+  @NotNull private final Consumer<? super Exception> myExceptionHandler;
   @NotNull private final VcsLogProgress myProgress;
 
   private final int myRecentCommitCount;
@@ -68,8 +68,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
                              @NotNull VcsLogModifiableIndex index,
                              @NotNull VcsLogProgress progress,
                              @NotNull TopCommitsCache topCommitsDetailsCache,
-                             @NotNull Consumer<DataPack> dataPackUpdateHandler,
-                             @NotNull Consumer<Exception> exceptionHandler,
+                             @NotNull Consumer<? super DataPack> dataPackUpdateHandler,
+                             @NotNull Consumer<? super Exception> exceptionHandler,
                              int recentCommitsCount) {
     myProject = project;
     myStorage = storage;
@@ -403,7 +403,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private static class CommitCountRequirements implements VcsLogProvider.Requirements {
     private final int myCommitCount;
 
-    public CommitCountRequirements(int commitCount) {
+    CommitCountRequirements(int commitCount) {
       myCommitCount = commitCount;
     }
 
@@ -419,13 +419,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
   }
 
-  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   private static class LogInfo {
     private final VcsLogStorage myStorage;
     private final Map<VirtualFile, CompressedRefs> myRefs = ContainerUtil.newHashMap();
     private final Map<VirtualFile, List<GraphCommit<Integer>>> myCommits = ContainerUtil.newHashMap();
 
-    public LogInfo(VcsLogStorage storage) {
+    LogInfo(VcsLogStorage storage) {
       myStorage = storage;
     }
 

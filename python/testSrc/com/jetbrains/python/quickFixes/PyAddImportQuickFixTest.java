@@ -109,7 +109,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   public void testExistingImportsAlwaysSuggestedFirstEvenIfNonProject() {
     doMultiFileAutoImportTest("Import", quickfix -> {
       final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText("datetime"));
-      assertOrderedEquals(candidates, "datetime from datetime", "mod.datetime");
+      assertOrderedEquals(candidates, "datetime(date) from datetime", "mod.datetime");
       return false;
     });
   }
@@ -127,6 +127,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   // PY-24450
   public void testUnavailableForUnqualifiedDecoratorWithArguments() {
     doMultiFileNegativeTest("Import 'pytest'");
+  }
+
+  // PY-20100
+  public void testAlwaysSplitFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import 'mod.bar()'");
   }
 
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {

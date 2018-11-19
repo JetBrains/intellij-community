@@ -32,9 +32,9 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
   };
   private final Class[] ourColumnClasses=new Class[]{Icon.class,Boolean.class,String.class};
 
-  private final List<TodoPattern> myPatterns;
+  private final List<? extends TodoPattern> myPatterns;
 
-  public PatternsTableModel(List<TodoPattern> patterns){
+  PatternsTableModel(List<? extends TodoPattern> patterns){
     myPatterns=patterns;
   }
 

@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 public class PathUtil {
 
   private PathUtil() { }
@@ -115,11 +113,8 @@ public class PathUtil {
 
   @NotNull
   public static String driveLetterToLowerCase(@NotNull String path) {
-    if (SystemInfo.isWindows && path.length() >= 2 && Character.isUpperCase(path.charAt(0)) && path.charAt(1) == ':') {
-      File file = new File(path);
-      if (file.isAbsolute()) {
-        return Character.toLowerCase(path.charAt(0)) + path.substring(1);
-      }
+    if (SystemInfo.isWindows && FileUtil.isWindowsAbsolutePath(path)) {
+      return Character.toLowerCase(path.charAt(0)) + path.substring(1);
     }
     return path;
   }

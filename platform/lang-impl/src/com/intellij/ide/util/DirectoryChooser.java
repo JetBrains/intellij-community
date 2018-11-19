@@ -238,7 +238,7 @@ public class DirectoryChooser extends DialogWrapper {
   @Nullable
   private static String concat(String[] strings, int headLimit, int tailLimit) {
     if (strings.length <= headLimit + tailLimit) return null;
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     String separator = "";
     for (int i = headLimit; i < strings.length - tailLimit; i++) {
       buffer.append(separator);
@@ -268,7 +268,7 @@ public class DirectoryChooser extends DialogWrapper {
     private int myIndex;
     protected String mySeparator = "";
 
-    public FragmentBuilder(ArrayList<String[]> pathes) {
+    FragmentBuilder(ArrayList<String[]> pathes) {
       myPaths = pathes;
       myIndex = 0;
     }
@@ -525,19 +525,19 @@ public class DirectoryChooser extends DialogWrapper {
 
 
   private class FilterExistentAction extends ToggleAction {
-    public FilterExistentAction() {
+    FilterExistentAction() {
       super(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
             UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
             AllIcons.General.Filter);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myFilterExisting;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myFilterExisting = state;
       final ItemWrapper selectedItem = myView.getSelectedItem();
       PsiDirectory directory = selectedItem != null ? selectedItem.getDirectory() : null;

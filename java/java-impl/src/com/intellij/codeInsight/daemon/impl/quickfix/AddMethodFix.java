@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @NotNull
   private static PsiMethod createMethod(final String methodText, final PsiClass implClass) {
-    return JavaPsiFacade.getInstance(implClass.getProject()).getElementFactory().createMethodFromText(methodText, implClass);
+    return JavaPsiFacade.getElementFactory(implClass.getProject()).createMethodFromText(methodText, implClass);
   }
 
   private static PsiMethod reformat(Project project, PsiMethod result) throws IncorrectOperationException {
@@ -77,7 +78,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
     return methodPrototype != null &&
            methodPrototype.isValid() &&
-           myClass.getManager().isInProject(myClass) &&
+           BaseIntentionAction.canModify(myClass) &&
            myText != null &&
            MethodSignatureUtil.findMethodBySignature(myClass, methodPrototype, false) == null
       ;

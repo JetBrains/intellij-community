@@ -113,12 +113,6 @@ public class CreateClassDialog extends DialogWrapper {
     return false;
   }
 
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
-  }
-
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myClassNameEditable ? myTfClassName : myPackageComponent.getChildComponent();

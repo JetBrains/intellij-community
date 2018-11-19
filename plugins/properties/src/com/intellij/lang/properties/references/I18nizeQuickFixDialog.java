@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -446,16 +445,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  protected String getHelpId() {
+    return "editing.propertyFile.i18nInspection";
   }
-
-  @Override
-  public void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("editing.propertyFile.i18nInspection");
-  }
-
 
   public JComponent getValueComponent() {
     return myValue;

@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class EclipseProjectFinder implements EclipseXml {
-  public static void findModuleRoots(final List<String> paths, final String rootPath, @Nullable Processor<String> progressUpdater) {
+  public static void findModuleRoots(final List<? super String> paths, final String rootPath, @Nullable Processor<? super String> progressUpdater) {
     if (progressUpdater != null) {
       progressUpdater.process(rootPath);
     }

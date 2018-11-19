@@ -177,7 +177,6 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
     }
 
     @Override
-    @SuppressWarnings({ "EqualsWhichDoesntCheckParameterClass" })
     public boolean equals(Object obj) {
         return obj == this;
     }

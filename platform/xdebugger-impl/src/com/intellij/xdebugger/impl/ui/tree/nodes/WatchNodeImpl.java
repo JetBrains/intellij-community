@@ -57,7 +57,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     private final XStackFrame myStackFrame;
     private volatile XValue myValue;
 
-    public XWatchValue(XExpression expression, XDebuggerTree tree, XStackFrame stackFrame) {
+    XWatchValue(XExpression expression, XDebuggerTree tree, XStackFrame stackFrame) {
       super(expression.getExpression());
       myExpression = expression;
       myTree = tree;
@@ -93,7 +93,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
       @NotNull private final XValueNode myNode;
       @NotNull private final XValuePlace myPlace;
 
-      public MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
         myNode = node;
         myPlace = place;
       }

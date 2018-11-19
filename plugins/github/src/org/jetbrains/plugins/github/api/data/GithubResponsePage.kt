@@ -9,6 +9,8 @@ class GithubResponsePage<T> constructor(val items: List<T>,
                                         val nextLink: String? = null,
                                         val lastLink: String? = null) {
 
+  val hasNext = nextLink != null
+
   companion object {
     const val HEADER_NAME = "Link"
 
@@ -42,6 +44,8 @@ class GithubResponsePage<T> constructor(val items: List<T>,
 
       return GithubResponsePage(items, firstLink, prevLink, nextLink, lastLink)
     }
+
+    fun <T> empty(nextLink: String? = null) = GithubResponsePage<T>(emptyList(), nextLink = nextLink)
   }
 }
 

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
+import com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -45,7 +45,7 @@ import com.intellij.psi.search.*;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
@@ -90,7 +90,7 @@ public class FindUsagesManager {
   }
 
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
+    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
       try {
         if (factory.canFindUsages(element)) {
           return true;
@@ -156,9 +156,14 @@ public class FindUsagesManager {
 
   @Nullable
   public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages) {
-    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
+    return getFindUsagesHandler(element, forHighlightUsages ? OperationMode.HIGHLIGHT_USAGES : OperationMode.DEFAULT);
+  }
+
+  @Nullable
+  public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, OperationMode operationMode) {
+    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
       if (factory.canFindUsages(element)) {
-        final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
+        final FindUsagesHandler handler = factory.createFindUsagesHandler(element, operationMode);
         if (handler == FindUsagesHandler.NULL_HANDLER) return null;
         if (handler != null) {
           return handler;
@@ -170,7 +175,7 @@ public class FindUsagesManager {
 
   @Nullable
   public FindUsagesHandler getNewFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages) {
-    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
+    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
       if (factory.canFindUsages(element)) {
         Class<? extends FindUsagesHandlerFactory> aClass = factory.getClass();
         FindUsagesHandlerFactory copy = (FindUsagesHandlerFactory)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass)
@@ -186,7 +191,7 @@ public class FindUsagesManager {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, final FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
-    FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
+    FindUsagesHandler handler = getFindUsagesHandler(psiElement, showDialog ? OperationMode.DEFAULT : OperationMode.USAGES_WITH_DEFAULT_OPTIONS);
     if (handler == null) return;
 
     boolean singleFile = scopeFile != null;
@@ -304,7 +309,7 @@ public class FindUsagesManager {
   }
 
   private boolean mustOpenInNewTab() {
-    Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
+    Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
     return selectedContent != null && selectedContent.isPinned();
   }
 
@@ -354,7 +359,7 @@ public class FindUsagesManager {
       try {
         for (final PsiElement element : elements) {
           handler.processElementUsages(element, usageInfoProcessor, optionsClone);
-          for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
+          for (CustomUsageSearcher searcher : CustomUsageSearcher.EP_NAME.getExtensionList()) {
             try {
               searcher.processElementUsages(element, processor, optionsClone);
             }
@@ -386,7 +391,7 @@ public class FindUsagesManager {
   }
 
   @NotNull
-  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<PsiElement> elementsToSearch,
+  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<? extends PsiElement> elementsToSearch,
                                                                        @NotNull final FindUsagesOptions findUsagesOptions) {
     final List<PsiElement2UsageTargetAdapter> targets = ContainerUtil.map(elementsToSearch,
                                                                           element -> convertToUsageTarget(element, findUsagesOptions));
@@ -615,7 +620,7 @@ public class FindUsagesManager {
   }
 
   public static String getHelpID(@NotNull PsiElement element) {
-    return LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getHelpId(element);
+    return LanguageFindUsages.getHelpId(element);
   }
 
   public void rerunAndRecallFromHistory(@NotNull ConfigurableUsageTarget usageTarget) {

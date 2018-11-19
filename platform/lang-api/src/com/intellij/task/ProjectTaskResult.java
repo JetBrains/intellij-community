@@ -17,7 +17,6 @@ package com.intellij.task;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2016
  */
 public class ProjectTaskResult {
   private final boolean aborted;

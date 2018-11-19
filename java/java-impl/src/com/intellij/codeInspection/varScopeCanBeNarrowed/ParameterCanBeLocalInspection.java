@@ -108,7 +108,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     return result;
   }
 
-  private static Collection<PsiParameter> getWriteBeforeRead(@NotNull Collection<PsiParameter> parameters,
+  private static Collection<PsiParameter> getWriteBeforeRead(@NotNull Collection<? extends PsiParameter> parameters,
                                                              @NotNull PsiCodeBlock body) {
     final ControlFlow controlFlow = getControlFlow(body);
     if (controlFlow == null) return Collections.emptyList();
@@ -125,7 +125,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     return result;
   }
 
-  private static Set<PsiParameter> filterParameters(@NotNull ControlFlow controlFlow, @NotNull Collection<PsiParameter> parameters) {
+  private static Set<PsiParameter> filterParameters(@NotNull ControlFlow controlFlow, @NotNull Collection<? extends PsiParameter> parameters) {
     final Set<PsiVariable> usedVars = new HashSet<>(ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize()));
 
     final Set<PsiParameter> result = new HashSet<>();
@@ -163,9 +163,9 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
                                       @NotNull final String localName,
                                       @Nullable final PsiExpression initializer,
                                       @NotNull final PsiParameter parameter,
-                                      @NotNull final Collection<PsiReference> references,
+                                      @NotNull final Collection<? extends PsiReference> references,
                                       boolean delete, 
-                                      @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
+                                      @NotNull final NotNullFunction<? super PsiDeclarationStatement, ? extends PsiElement> action) {
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;

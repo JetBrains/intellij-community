@@ -93,7 +93,7 @@ public class RpcBinaryRequestHandler extends BinaryRequestHandler implements Exc
 
     private final SocketClient client;
 
-    public MyDecoder(@NotNull SocketClient client) {
+    MyDecoder(@NotNull SocketClient client) {
       this.client = client;
     }
 

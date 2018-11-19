@@ -9,10 +9,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.ResourcesTarget;
-import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -24,7 +21,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since 6.10.2011
  */
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resources.ResourcesBuilder");
@@ -51,25 +47,26 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     }
 
     try {
-      Map<ResourceRootDescriptor, Boolean> skippedRoots = new HashMap<>();
-      holder.processDirtyFiles((target_, file, sourceRoot) -> {
-        Boolean isSkipped = skippedRoots.get(sourceRoot);
+      final Map<ResourceRootDescriptor, Boolean> skippedRoots = new HashMap<>();
+      holder.processDirtyFiles((t, f, srcRoot) -> {
+        Boolean isSkipped = skippedRoots.get(srcRoot);
         if (isSkipped == null) {
-          File outputDir = target_.getOutputDir();
-          isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, sourceRoot.getRootFile()));
-          skippedRoots.put(sourceRoot, isSkipped);
+          File outputDir = t.getOutputDir();
+          isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, srcRoot.getRootFile()));
+          skippedRoots.put(srcRoot, isSkipped);
         }
         if (isSkipped.booleanValue()) {
           return true;
         }
         try {
-          copyResource(context, sourceRoot, file, outputConsumer);
+          copyResource(context, srcRoot, f, outputConsumer);
           return !context.getCancelStatus().isCanceled();
         }
         catch (IOException e) {
           LOG.info(e);
-          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
-          context.processMessage(new CompilerMessage("resources", BuildMessage.Kind.ERROR, e.getMessage(), sourcePath));
+          context.processMessage(
+            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(f.getPath()))
+          );
           return false;
         }
       });
@@ -114,21 +111,19 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     targetPath.append('/').append(relativePath);
 
     context.processMessage(new ProgressMessage("Copying resources... [" + rd.getTarget().getModule().getName() + "]"));
-
-    final String outputPath = targetPath.toString();
-    final File targetFile = new File(outputPath);
-    FileUtil.copyContent(file, targetFile);
     try {
+      final File targetFile = new File(targetPath.toString());
+      FSOperations.copy(file, targetFile);
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
     }
     catch (Exception e) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
     }
   }
 
   @Override
   @NotNull
   public String getPresentableName() {
-    return "Resource Compiler";
+    return BUILDER_NAME;
   }
 }

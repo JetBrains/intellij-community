@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
@@ -51,26 +49,6 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
   @Override
   public void loadState(@NotNull State state) {
     XmlSerializerUtil.copyBean(state, mySettings);
-  }
-
-  static boolean canRunRbenv() {
-    return canRunCommand("rbenv");
-  }
-
-  static boolean canRunRVM() {
-    return canRunCommand("rvm");
-  }
-
-  private static boolean canRunCommand(@NotNull String command) {
-    GeneralCommandLine generalCommandLine = new GeneralCommandLine(command);
-    generalCommandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    try {
-      generalCommandLine.createProcess();
-    }
-    catch (ExecutionException e) {
-      return false;
-    }
-    return true;
   }
 
   public static class State {

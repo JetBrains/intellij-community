@@ -581,6 +581,21 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-31862
+  public void testEscapedSummaryOfFunctionDocstringInQuickNavigationInfo() {
+    checkHover();    
+  }
+
+  // PY-31862
+  public void testEscapedSummaryOfClassDocstringInQuickNavigationInfo() {
+    checkHover();
+  }
+
+  // PY-31862
+  public void testEscapedSummaryOfConstructorDocstringInQuickNavigationInfo() {
+    checkHover();
+  }
+  
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";

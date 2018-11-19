@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.Nullability;
@@ -63,13 +49,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-
 /**
  * @author Konstantin Bulenkov
  */
 public class ExtractMethodDialog extends RefactoringDialog implements AbstractExtractDialog {
-  private static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
-  public static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
+  static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
+  static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
+
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
@@ -101,14 +87,10 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private TypeSelector mySelector;
   private final Supplier<Integer> myDuplicatesCountSupplier;
 
-  public ExtractMethodDialog(Project project,
-                             PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
-                             PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
-                             final boolean canBeChainedConstructor,
-                             String title,
-                             String helpId,
-                             @Nullable Nullability nullability,
-                             final PsiElement[] elementsToExtract,
+  public ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
+                             PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
+                             boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
+                             String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
                              @Nullable Supplier<Integer> duplicatesCountSupplier) {
     super(project, true);
     myProject = project;
@@ -151,8 +133,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   @Override
   public boolean isMakeStatic() {
-    if (myStaticFlag) return true;
-    return myCanBeStatic && myMakeStatic.isSelected();
+    return myStaticFlag || myCanBeStatic && myMakeStatic.isSelected();
   }
 
   @Override
@@ -161,16 +142,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    if (isPreviewSupported()) {
-      return super.createActions();
-    }
-    if (hasHelpAction()) {
-      return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-    } else {
-      return new Action[]{getOKAction(), getCancelAction()};
-    }
+  protected boolean hasPreviewButton() {
+    return false;
   }
 
   @Override
@@ -178,10 +151,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return getHelpId() != null;
   }
 
-  protected boolean isPreviewSupported() {
-    return false;
-  }
-
+  @NotNull
   @Override
   public String getChosenMethodName() {
     return myNameField.getEnteredName().trim();
@@ -484,7 +454,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     JPanel secondPanel = new JPanel(new BorderLayout(0, 5));
     secondPanel.add(createSignaturePanel(), BorderLayout.CENTER);
 
-    if (isPreviewSupported()) {
+    if (hasPreviewButton()) {
       JBLabel duplicatesCount = createDuplicatesCountLabel();
       secondPanel.add(duplicatesCount, BorderLayout.SOUTH);
     }
@@ -684,7 +654,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     checkParametersConflicts(conflicts);
     PsiMethod prototype;
     try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
       prototype = factory.createMethod(getChosenMethodName(), myReturnType);
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
       for (VariableData data : myInputVariables) {

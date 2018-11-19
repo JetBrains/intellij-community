@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/25/2014
  */
 public class GradleArgumentsCompletionProvider extends TaskCompletionProvider {
 

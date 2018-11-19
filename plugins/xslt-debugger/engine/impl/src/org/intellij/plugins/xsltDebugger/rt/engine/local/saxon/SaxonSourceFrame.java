@@ -21,7 +21,7 @@ import com.icl.saxon.om.NodeInfo;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 
 class SaxonSourceFrame extends AbstractSaxonFrame<Debugger.SourceFrame, NodeInfo> implements Debugger.SourceFrame {
-  public SaxonSourceFrame(Debugger.SourceFrame prev, NodeInfo element) {
+  SaxonSourceFrame(Debugger.SourceFrame prev, NodeInfo element) {
     super(prev, element);
   }
 

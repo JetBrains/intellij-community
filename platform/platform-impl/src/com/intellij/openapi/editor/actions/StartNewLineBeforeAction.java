@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/19/11 10:42 AM
  */
 public class StartNewLineBeforeAction extends EditorAction {
 
@@ -37,7 +36,7 @@ public class StartNewLineBeforeAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
-    public Handler() {
+    Handler() {
       super(true);
     }
 

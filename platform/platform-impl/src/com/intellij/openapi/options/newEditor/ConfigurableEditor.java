@@ -141,15 +141,15 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Override
-  public final void beforeEditorTyping(char ch, DataContext context) {
+  public final void beforeEditorTyping(char ch, @NotNull DataContext context) {
   }
 
   @Override
-  public final void beforeActionPerformed(@NotNull AnAction action, DataContext context, AnActionEvent event) {
+  public final void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext context, AnActionEvent event) {
   }
 
   @Override
-  public final void afterActionPerformed(AnAction action, DataContext context, AnActionEvent event) {
+  public final void afterActionPerformed(AnAction action, @NotNull DataContext context, AnActionEvent event) {
     requestUpdate();
   }
 

@@ -17,6 +17,7 @@ import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import com.intellij.vcs.commit.SubjectLimitInspection;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,26 @@ public class CommitPresentationUtil {
   private static final String ELLIPSIS = "...";
   private static final int BIG_CUT_SIZE = 10;
   private static final double EPSILON = 1.5;
+
+  @NotNull
+  public static String getShortSummary(@NotNull VcsShortCommitDetails details) {
+    return getShortSummary(details, true, 50);
+  }
+
+  @NotNull
+  public static String getShortSummary(@NotNull VcsShortCommitDetails details, boolean useHtml, int maxMessageLength) {
+    return (useHtml ? "<b>" : "") + "\"" +
+           StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "...") +
+           "\"" + (useHtml ? "</b>" : "") + " by " +
+           getAuthorPresentation(details) +
+           formatDateTime(details.getAuthorTime());
+  }
+
+  @NotNull
+  public static String getAuthorPresentation(@NotNull VcsShortCommitDetails details) {
+    String authorString = VcsUserUtil.getShortPresentation(details.getAuthor());
+    return authorString + (VcsUserUtil.isSamePerson(details.getAuthor(), details.getCommitter()) ? "" : "*");
+  }
 
   @NotNull
   private static String escapeMultipleSpaces(@NotNull String text) {
@@ -277,7 +298,7 @@ public class CommitPresentationUtil {
   @NotNull
   public static CommitPresentation buildPresentation(@NotNull Project project,
                                                      @NotNull VcsCommitMetadata commit,
-                                                     @NotNull Set<String> unresolvedHashes) {
+                                                     @NotNull Set<? super String> unresolvedHashes) {
     String rawMessage = commit.getFullMessage();
     String hashAndAuthor = formatCommitHashAndAuthor(commit);
 
@@ -291,10 +312,10 @@ public class CommitPresentationUtil {
   }
 
   private static class UnresolvedPresentation extends CommitPresentation {
-    public UnresolvedPresentation(@NotNull Project project,
-                                  @NotNull VirtualFile root,
-                                  @NotNull String rawMessage,
-                                  @NotNull String hashAndAuthor) {
+    UnresolvedPresentation(@NotNull Project project,
+                           @NotNull VirtualFile root,
+                           @NotNull String rawMessage,
+                           @NotNull String hashAndAuthor) {
       super(project, root, rawMessage, hashAndAuthor, MultiMap.empty());
     }
 

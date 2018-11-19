@@ -4,11 +4,11 @@ package com.intellij.facet.impl.ui;
 import com.intellij.facet.*;
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -32,14 +32,14 @@ public class FacetDependentToolWindowManager implements ProjectComponent {
   public void projectOpened() {
     myFacetListenersRegistry.registerListener(new ProjectWideFacetAdapter<Facet>() {
       @Override
-      public void facetAdded(Facet facet) {
+      public void facetAdded(@NotNull Facet facet) {
         for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
           ensureToolWindowExists(extension);
         }
       }
 
       @Override
-      public void facetRemoved(Facet facet) {
+      public void facetRemoved(@NotNull Facet facet) {
         if (!myFacetManager.hasFacets(facet.getTypeId())) {
           for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
             ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
@@ -56,8 +56,7 @@ public class FacetDependentToolWindowManager implements ProjectComponent {
       }
     }, myProject);
 
-    FacetDependentToolWindow[] extensions = Extensions.getExtensions(FacetDependentToolWindow.EXTENSION_POINT_NAME);
-    loop: for (FacetDependentToolWindow extension : extensions) {
+    loop: for (FacetDependentToolWindow extension : FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList()) {
       for (FacetType type : extension.getFacetTypes()) {
         if (myFacetManager.hasFacets(type.getId())) {
           ensureToolWindowExists(extension);
@@ -75,8 +74,7 @@ public class FacetDependentToolWindowManager implements ProjectComponent {
   }
 
   private static List<FacetDependentToolWindow> getDependentExtensions(final Facet facet) {
-    FacetDependentToolWindow[] extensions = Extensions.getExtensions(FacetDependentToolWindow.EXTENSION_POINT_NAME);
-    return ContainerUtil.filter(extensions, toolWindowEP -> {
+    return ContainerUtil.filter(FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList(), toolWindowEP -> {
       for (String id : toolWindowEP.getFacetIds()) {
         if (facet.getType().getStringId().equals(id)) return true;
       }

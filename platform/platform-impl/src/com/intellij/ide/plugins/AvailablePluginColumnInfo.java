@@ -22,7 +22,7 @@ import javax.swing.table.TableCellRenderer;
  * @author Konstantin Bulenkov
  */
 class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
-  public AvailablePluginColumnInfo(AvailablePluginsTableModel model) {
+  AvailablePluginColumnInfo(AvailablePluginsTableModel model) {
     super(PluginManagerColumnInfo.COLUMN_NAME, model);
   }
 

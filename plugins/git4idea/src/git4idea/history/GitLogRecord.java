@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
@@ -46,13 +47,13 @@ class GitLogRecord {
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
   @NotNull private final Map<GitLogParser.GitLogOption, String> myOptions;
-  @NotNull private final List<GitLogStatusInfo> myStatusInfo;
+  @NotNull private final List<VcsFileStatusInfo> myStatusInfo;
   private final boolean mySupportsRawBody;
 
   private GitHandler myHandler;
 
   GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
-               @NotNull List<GitLogStatusInfo> statusInfo,
+               @NotNull List<VcsFileStatusInfo> statusInfo,
                boolean supportsRawBody) {
     myOptions = options;
     myStatusInfo = statusInfo;
@@ -62,7 +63,7 @@ class GitLogRecord {
   @NotNull
   private Collection<String> getPaths() {
     LinkedHashSet<String> result = ContainerUtil.newLinkedHashSet();
-    for (GitLogStatusInfo info : myStatusInfo) {
+    for (VcsFileStatusInfo info : myStatusInfo) {
       result.add(info.getFirstPath());
       if (info.getSecondPath() != null) result.add(info.getSecondPath());
     }
@@ -70,18 +71,16 @@ class GitLogRecord {
   }
 
   @NotNull
-  List<GitLogStatusInfo> getStatusInfos() {
+  List<VcsFileStatusInfo> getStatusInfos() {
     return myStatusInfo;
   }
 
   @NotNull
-  public List<FilePath> getFilePaths(@NotNull VirtualFile root) throws VcsException {
+  public List<FilePath> getFilePaths(@NotNull VirtualFile root) {
     List<FilePath> res = new ArrayList<>();
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
-      final String subPath = GitUtil.unescapePath(strPath);
-      final FilePath revisionPath = VcsUtil.getFilePath(prefix + subPath, false);
-      res.add(revisionPath);
+      res.add(VcsUtil.getFilePath(prefix + strPath, false));
     }
     return res;
   }
@@ -90,7 +89,7 @@ class GitLogRecord {
   private String lookup(@NotNull GitLogParser.GitLogOption key) {
     String value = myOptions.get(key);
     if (value == null) {
-      LOG.error("Missing value for option " + key);
+      LOG.error("Missing value for option " + key + ", while executing " + myHandler);
       return "";
     }
     return shortBuffer(value);

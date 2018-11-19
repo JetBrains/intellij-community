@@ -17,6 +17,8 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.IntIntFunction;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -318,7 +320,7 @@ public class IntToIntBtree {
     protected boolean myHasFullPagesAlongPath;
     protected boolean myIsDirty;
 
-    public BtreePage(IntToIntBtree btree) {
+    BtreePage(IntToIntBtree btree) {
       this.btree = btree;
       myChildrenCount = -1;
     }
@@ -329,7 +331,7 @@ public class IntToIntBtree {
       syncWithStore();
     }
 
-    private final void setAddressInternal(int _address) {
+    private void setAddressInternal(int _address) {
       if (doSanityCheck) myAssert(_address % btree.pageSize == 0);
       address = _address;
     }
@@ -426,28 +428,17 @@ public class IntToIntBtree {
 
     private static final int HASH_FREE = 0;
 
-    private int search(int value) {
+    private int search(final int value) {
       if (isIndexLeaf() && isHashedLeaf()) {
         return hashIndex(value);
       }
-      else {
-        int hi = getChildrenCount() - 1;
-        int lo = 0;
-
-        while(lo <= hi) {
-          int mid = lo + (hi - lo) / 2;
-          int keyAtMid = keyAt(mid);
-
-          if (value > keyAtMid) {
-            lo = mid + 1;
-          } else if (value < keyAtMid) {
-            hi = mid - 1;
-          } else {
-            return mid;
-          }
+      return ObjectUtils.binarySearch(0, getChildrenCount(), new IntIntFunction() {
+        @Override
+        public int fun(int mid) {
+          int midValue = keyAt(mid);
+          return midValue < value ? -1 : midValue == value ? 0 : 1;
         }
-        return -(lo + 1);
-      }
+      });
     }
 
     final int addressAt(int i) {

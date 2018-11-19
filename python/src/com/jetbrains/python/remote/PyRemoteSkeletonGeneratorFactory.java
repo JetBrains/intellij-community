@@ -37,7 +37,7 @@ public abstract class PyRemoteSkeletonGeneratorFactory {
   public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
                                                                     @Nullable Component ownerComponent,
                                                                     @NotNull Sdk sdk,
-                                                                    String skeletonPath) throws ExecutionException;
+                                                                    @NotNull String skeletonPath) throws ExecutionException;
 
   @NotNull
   public static PyRemoteSkeletonGeneratorFactory getInstance(@NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData) {

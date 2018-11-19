@@ -24,9 +24,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
   private final ObjectIntHashMap<VirtualFile> myEntries = new ObjectIntHashMap<>();
 
-  private int myCachedHashCode;
-
-  public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Collection<Module> modules) {
+  public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Set<Sdk> processedSdk = new THashSet<>();
@@ -51,14 +49,12 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     addAll(myEntries, entry.getRootFiles(OrderRootType.SOURCES));
   }
 
-  public int hashCode() {
-    if (myCachedHashCode == 0) {
-      myCachedHashCode = myEntries.hashCode();
-    }
-
-    return myCachedHashCode;
+  @Override
+  public int calcHashCode() {
+    return myEntries.hashCode();
   }
 
+  @Override
   public boolean equals(Object object) {
     if (object == this) return true;
     if (object == null || object.getClass() != LibraryRuntimeClasspathScope.class) return false;
@@ -68,9 +64,9 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   }
 
   private void buildEntries(@NotNull final Module module,
-                            @NotNull final Set<Module> processedModules,
-                            @NotNull final Set<Library> processedLibraries,
-                            @NotNull final Set<Sdk> processedSdk,
+                            @NotNull final Set<? super Module> processedModules,
+                            @NotNull final Set<? super Library> processedLibraries,
+                            @NotNull final Set<? super Sdk> processedSdk,
                             @NotNull Condition<OrderEntry> condition) {
     if (!processedModules.add(module)) return;
 
@@ -168,7 +164,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return true;
   }
 
-  private static void addAll(ObjectIntHashMap<VirtualFile> entries, VirtualFile[] files) {
+  private static void addAll(ObjectIntHashMap<? super VirtualFile> entries, VirtualFile[] files) {
     for (VirtualFile file : files) {
       if (!entries.contains(file)) {
         entries.put(file, entries.size());

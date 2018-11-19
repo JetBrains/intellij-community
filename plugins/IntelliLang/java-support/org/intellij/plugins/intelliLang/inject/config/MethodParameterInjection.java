@@ -54,7 +54,7 @@ public class MethodParameterInjection extends BaseInjection {
     myClassName = className;
   }
 
-  public void setMethodInfos(final Collection<MethodInfo> newInfos) {
+  public void setMethodInfos(final Collection<? extends MethodInfo> newInfos) {
     myParameterMap.clear();
     for (MethodInfo methodInfo : newInfos) {
       myParameterMap.put(methodInfo.getMethodSignature(), methodInfo);

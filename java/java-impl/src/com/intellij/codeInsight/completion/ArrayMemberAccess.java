@@ -19,7 +19,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
  */
 class ArrayMemberAccess {
   static void addMemberAccessors(final PsiElement element, final String prefix, final PsiType itemType,
-                                 final PsiElement qualifier, final Consumer<LookupElement> result, PsiModifierListOwner object,
+                                 final PsiElement qualifier, final Consumer<? super LookupElement> result, PsiModifierListOwner object,
                                  final PsiType expectedType)
     throws IncorrectOperationException {
     if (itemType instanceof PsiArrayType && expectedType.isAssignableFrom(((PsiArrayType)itemType).getComponentType())) {

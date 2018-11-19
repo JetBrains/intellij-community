@@ -18,15 +18,18 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
@@ -139,7 +142,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       }
       if (!alreadyImported) {
         PsiImportStaticStatement importStaticStatement =
-          JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
+          JavaPsiFacade.getElementFactory(file.getProject()).createImportStaticStatement(aClass, "*");
         importList.add(importStaticStatement);
       }
     }
@@ -198,16 +201,28 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
         new CommentTracker().deleteAndRestoreComments(Objects.requireNonNull(expression.getQualifier()));
       }
       if (editor != null) {
-        for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
-          HighlightManager.getInstance(project)
-                          .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
-                                             EditorColorsManager.getInstance().getGlobalScheme()
-                                                                .getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
-                                             false, null);
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (collectChangedPlaces(project, editor, expressionsToDequalify)) {
+            WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+          }
+        }, project.getDisposed());
       }
     }
     return conflict.get();
+  }
+
+  private static boolean collectChangedPlaces(Project project, Editor editor, List<PsiJavaCodeReferenceElement> expressionsToDequalify) {
+    boolean found = false;
+    for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
+      if (!expression.isValid()) continue;
+      found = true;
+      HighlightManager.getInstance(project)
+        .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
+                           EditorColorsManager.getInstance().getGlobalScheme()
+                             .getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
+                           true, null);
+    }
+    return found;
   }
 
   @Override

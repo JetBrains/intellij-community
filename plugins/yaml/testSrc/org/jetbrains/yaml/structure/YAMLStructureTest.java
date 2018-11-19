@@ -7,6 +7,8 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.yaml.structureView.YAMLAliasResolveNodeProvider;
 
+import javax.swing.tree.TreePath;
+
 public class YAMLStructureTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
@@ -30,9 +32,12 @@ public class YAMLStructureTest extends LightPlatformCodeInsightFixtureTestCase {
       svc.setActionActive(YAMLAliasResolveNodeProvider.ID, resolveAliases);
       TreeUtil.expandAll(svc.getTree());
       PlatformTestUtil.waitForPromise(svc.select(svc.getTreeModel().getCurrentEditorElement(), false));
+      TreePath leadPath = svc.getTree().getLeadSelectionPath();
+      String print = PlatformTestUtil.print(svc.getTree(), false);
+
       String suffix = resolveAliases ? "resolved" : "unresolved";
       assertSameLinesWithFile(getTestDataPath() + testName + "." + suffix + ".txt",
-                              PlatformTestUtil.print(svc.getTree(), false));
+                              print + "\n\nLeadPath: " + leadPath);
     });
   }
 }

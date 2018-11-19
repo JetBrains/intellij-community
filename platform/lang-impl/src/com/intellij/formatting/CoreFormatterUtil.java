@@ -94,10 +94,8 @@ public class CoreFormatterUtil {
     int result = 0;
     while (true) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
-      if (whiteSpace != null) {
-        result += whiteSpace.getTotalSpaces();
-        if (whiteSpace.containsLineFeeds()) return result;
-      }
+      result += whiteSpace.getTotalSpaces();
+      if (whiteSpace.containsLineFeeds()) return result;
       block = block.getPreviousBlock();
       if (result > CodeStyleConstraints.MAX_RIGHT_MARGIN || block == null) return result;
       result += block.getSymbolsAtTheLastLine();

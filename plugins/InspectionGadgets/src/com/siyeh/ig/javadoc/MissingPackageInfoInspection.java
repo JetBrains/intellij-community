@@ -100,7 +100,7 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
   private static class LocalMissingPackageInfoInspection extends
                                                          BaseSharedLocalInspection<MissingPackageInfoInspection> {
 
-    public LocalMissingPackageInfoInspection(MissingPackageInfoInspection settingsDelegate) {
+    LocalMissingPackageInfoInspection(MissingPackageInfoInspection settingsDelegate) {
       super(settingsDelegate);
     }
 

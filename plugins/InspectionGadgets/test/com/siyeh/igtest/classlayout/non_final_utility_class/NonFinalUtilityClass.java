@@ -1,7 +1,7 @@
 package com.siyeh.igtest.classlayout.non_final_utility_class;
 
 
-class NonFinalUtilityClass {
+class <warning descr="Utility class 'NonFinalUtilityClass' is not 'final'">NonFinalUtilityClass</warning> {
 
   public static void foo() {}
 }

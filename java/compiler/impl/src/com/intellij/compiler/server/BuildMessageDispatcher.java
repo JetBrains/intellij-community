@@ -39,7 +39,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
       }
 
       @Override
-      public void sessionTerminated(UUID sessionId) {
+      public void sessionTerminated(@NotNull UUID sessionId) {
         try {
           super.sessionTerminated(sessionId);
         }
@@ -77,13 +77,13 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   }
 
   @Nullable
-  public Channel getConnectedChannel(final UUID sessionId) {
+  public Channel getConnectedChannel(@NotNull UUID sessionId) {
     final Channel channel = getAssociatedChannel(sessionId);
     return channel != null && channel.isActive()? channel : null;
   }
 
   @Nullable
-  public Channel getAssociatedChannel(final UUID sessionId) {
+  public Channel getAssociatedChannel(@NotNull UUID sessionId) {
     final SessionData data = mySessionDescriptors.get(sessionId);
     return data != null? data.channel : null;
   }

@@ -32,27 +32,27 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
-  private final Namer<T> myNamer;
-  private final Factory<T> myFactory;
+  private final Namer<? super T> myNamer;
+  private final Factory<? extends T> myFactory;
   private final Cloner<T> myCloner;
   private final List<T> myItems = new ArrayList<>();
-  private final Equality<T> myComparer;
+  private final Equality<? super T> myComparer;
   private List<T> myResultItems;
   private final List<T> myOriginalItems;
   private boolean myShowIcons;
 
-  protected NamedItemsListEditor(Namer<T> namer,
-                                 Factory<T> factory,
+  protected NamedItemsListEditor(Namer<? super T> namer,
+                                 Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<T> comparer,
+                                 Equality<? super T> comparer,
                                  List<T> items) {
     this(namer, factory, cloner, comparer, items, true);
   }
 
-  protected NamedItemsListEditor(Namer<T> namer,
-                                 Factory<T> factory,
+  protected NamedItemsListEditor(Namer<? super T> namer,
+                                 Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<T> comparer,
+                                 Equality<? super T> comparer,
                                  List<T> items,
                                  boolean initInConstructor) {
     myNamer = namer;
@@ -171,7 +171,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     private final T myItem;
     private final UnnamedConfigurable myConfigurable;
 
-    public ItemConfigurable(T item) {
+    ItemConfigurable(T item) {
       super(myNamer.canRename(item), TREE_UPDATER);
       myItem = item;
       myConfigurable = createConfigurable(item);
@@ -268,7 +268,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
 
   private class CopyAction extends DumbAwareAction {
-    public CopyAction() {
+    CopyAction() {
       super("Copy", "Copy", MasterDetailsComponent.COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
@@ -297,7 +297,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   private class AddAction extends DumbAwareAction {
-    public AddAction() {
+    AddAction() {
       super("Add", "Add", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }

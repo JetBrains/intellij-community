@@ -15,9 +15,9 @@ import com.intellij.openapi.util.text.StringUtil.contains
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
-import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS
-import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.EQUALITY_OPERATORS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*
 import org.jetbrains.plugins.groovy.util.get
 import org.jetbrains.plugins.groovy.util.set
 import org.jetbrains.plugins.groovy.util.withKey
@@ -284,9 +284,11 @@ fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Pa
   }
 }
 
+fun parseKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(KEYWORDS)
+
 fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(primitiveTypes)
 
-fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENT_OPERATORS)
+fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENTS)
 
 fun equalityOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(EQUALITY_OPERATORS)
 
@@ -463,4 +465,38 @@ fun choice(builder: PsiBuilder, level: Int, vararg parsers: Parser): Boolean {
     if (parser.parse(builder, level)) return true
   }
   return false
+}
+
+fun isBlockParseable(text: CharSequence): Boolean {
+  val lexer = GroovyLexer().apply {
+    start(text)
+  }
+  if (lexer.tokenType !== T_LBRACE) return false
+  lexer.advance()
+
+  val leftStack = LinkedList<IElementType>().apply {
+    push(T_LBRACE)
+  }
+
+  while (true) {
+    val type = lexer.tokenType ?: return leftStack.isEmpty()
+    if (leftStack.isEmpty()) {
+      return false
+    }
+    when (type) {
+      T_LBRACE,
+      T_LPAREN -> leftStack.push(type)
+      T_RBRACE -> {
+        if (leftStack.isEmpty() || leftStack.pop() != T_LBRACE) {
+          return false
+        }
+      }
+      T_RPAREN -> {
+        if (leftStack.isEmpty() || leftStack.pop() != T_LPAREN) {
+          return false
+        }
+      }
+    }
+    lexer.advance()
+  }
 }

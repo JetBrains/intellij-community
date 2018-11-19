@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,14 +47,8 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
-    for (Element child : new ArrayList<>(node.getChildren())) {
-      final String name = child.getAttributeValue("name");
-      final String value = child.getAttributeValue("value");
-      if ("ignoreStaticFields".equals(name) && "true".equals(value)) {
-        node.removeContent(child);
-      }
-    }
+    defaultWriteSettings(node, "ignoreStaticFields");
+    writeBooleanOption(node, "ignoreStaticFields", true);
   }
 
   @Override

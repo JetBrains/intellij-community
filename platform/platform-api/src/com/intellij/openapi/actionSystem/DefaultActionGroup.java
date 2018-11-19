@@ -67,25 +67,19 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions) {
-    this(name, actions, true);
-  }
-
-  public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions, boolean validate) {
     this(name, false);
-    addActions(actions, validate);
+    addActions(actions);
   }
 
   public DefaultActionGroup(@Nullable String shortName, boolean popup) {
     super(shortName, popup);
   }
 
-  private void addActions(@NotNull List<? extends AnAction> actions, boolean validate) {
-    if (validate) {
-      HashSet<Object> actionSet = new HashSet<>();
-      for (AnAction action : actions) {
-        if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
-        if (!(action instanceof Separator) && !actionSet.add(action)) throw new ActionDuplicationException(action);
-      }
+  private void addActions(@NotNull List<? extends AnAction> actions) {
+    HashSet<Object> actionSet = new HashSet<>();
+    for (AnAction action : actions) {
+      if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
+      if (!(action instanceof Separator) && !actionSet.add(action)) throw new ActionDuplicationException(action);
     }
     mySortedChildren.addAll(actions);
   }
@@ -230,7 +224,7 @@ public class DefaultActionGroup extends ActionGroup {
     remove(action, id);
   }
 
-  public final void remove(@NotNull AnAction action, String id) {
+  public final void remove(@NotNull AnAction action, @Nullable String id) {
     if (!mySortedChildren.remove(action) &&
         !mySortedChildren.removeIf(oldAction ->
                                      oldAction instanceof ActionStub && ((ActionStub) oldAction).getId().equals(id))) {

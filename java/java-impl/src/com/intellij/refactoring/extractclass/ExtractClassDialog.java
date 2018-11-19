@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractclass;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -37,7 +36,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
-@SuppressWarnings({"OverridableMethodCallInConstructor"})
 class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener<PsiMember, MemberInfo> {
   private final Map<MemberInfoBase<PsiMember>, PsiMember> myMember2CauseMap = new HashMap<>();
   private final PsiClass sourceClass;
@@ -394,13 +392,12 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   }
 
   @Override
-  protected void doHelpAction() {
-    final HelpManager helpManager = HelpManager.getInstance();
-    helpManager.invokeHelp(HelpID.ExtractClass);
+  protected String getHelpId() {
+    return HelpID.ExtractClass;
   }
 
   @Override
-  public void memberInfoChanged(MemberInfoChange memberInfoChange) {
+  public void memberInfoChanged(@NotNull MemberInfoChange memberInfoChange) {
     validateButtons();
     myMember2CauseMap.clear();
     if (extractAsEnum.isVisible()) {

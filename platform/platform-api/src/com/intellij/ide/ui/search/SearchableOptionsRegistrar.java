@@ -36,7 +36,7 @@ public abstract class SearchableOptionsRegistrar{
   @NotNull
   public abstract ConfigurableHit getConfigurables(final ConfigurableGroup[] groups,
                                                      final DocumentEvent.EventType type,
-                                                     final Set<Configurable> configurables,
+                                                     final Set<? extends Configurable> configurables,
                                                      final String option,
                                                      final Project project);
 

@@ -13,7 +13,7 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.processVirtualFilesBy
 import static com.intellij.ui.SimpleTextAttributes.*;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
+public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<Object> implements TreeLinkMouseListener.HaveTooltip {
 
   @NotNull private static final SimpleTextAttributes CLEANUP_LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBColor.RED);
 

@@ -14,7 +14,6 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,8 +28,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
@@ -124,12 +121,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           editRunConfiguration();
         }
       })
-      .setEditActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return myTable.getSelectedRow() >= 0;
-        }
-      })
+      .setEditActionUpdater(e -> myTable.getSelectedRow() >= 0)
       .disableUpAction().disableDownAction();
 
     final JPanel tasksPanel = myDecorator.createPanel();
@@ -204,15 +196,12 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        final Condition<ConfigurationType> filter = new Condition<ConfigurationType>() {
-          @Override
-          public boolean value(ConfigurationType configurationType) {
-            ConfigurationFactory factory;
-            return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
-                   ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
-          }
-        };
-        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(runManager.getConfigurationFactoriesWithoutUnknown(), filter), "",
+        List<ConfigurationType> typesToShow = ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {
+          ConfigurationFactory factory = runManager.getFactory(configurationType, null);
+          return factory != null &&
+                 ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
+        });
+        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(typesToShow, "",
                                                                         factory -> ApplicationManager.getApplication().invokeLater(() -> {
                                                                           final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
                                                                           if (dialog.showAndGet()) {
@@ -223,7 +212,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
                                                                               }
                                                                             }, project.getDisposed());
                                                                           }
-                                                                        }, project.getDisposed()), null, EmptyRunnable.getInstance(), false);
+                                                                        }, project.getDisposed()), null, null, false);
         showPopup(button, popup);
       }
 

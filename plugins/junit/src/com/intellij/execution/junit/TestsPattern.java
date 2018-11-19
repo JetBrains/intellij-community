@@ -32,6 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
@@ -47,13 +48,14 @@ public class TestsPattern extends TestPackage {
     return TestClassFilter.create(getSourceScope(), getConfiguration().getConfigurationModule().getModule(), data.getPatternPresentation());
   }
 
+  @NotNull
   @Override
   protected String getPackageName(JUnitConfiguration.Data data) {
     return "";
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<String> classNames) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> classNames) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {

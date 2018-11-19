@@ -39,7 +39,7 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
   private static final int MAX_SIZE = 20;
   private final JList myList;
 
-  public NavBarListWrapper(final JList list) {
+  NavBarListWrapper(final JList list) {
     super(list);
     list.addMouseMotionListener(new MouseMotionAdapter() {
       boolean myIsEngaged = false;

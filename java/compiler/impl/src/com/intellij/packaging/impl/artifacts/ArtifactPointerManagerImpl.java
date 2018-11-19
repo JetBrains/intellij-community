@@ -111,7 +111,7 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
     return createPointer(artifactModel.getOriginalArtifact(artifact));
   }
 
-  public void disposePointers(List<Artifact> artifacts) {
+  public void disposePointers(List<? extends Artifact> artifacts) {
     for (Artifact artifact : artifacts) {
       disposePointer(artifact);
     }

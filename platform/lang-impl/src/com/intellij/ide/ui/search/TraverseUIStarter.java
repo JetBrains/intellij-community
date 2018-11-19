@@ -48,7 +48,7 @@ import java.util.*;
  * In order to run locally, use "TraverseUi" run configuration (pass corresponding "idea.platform.prefix" property via VM options,
  * and choose correct main module).
  */
-@SuppressWarnings({"CallToPrintStackTrace", "SynchronizeOnThis", "UseOfSystemOutOrSystemErr"})
+@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TraverseUIStarter extends ApplicationStarterEx {
   private static final String OPTIONS = "options";
   private static final String CONFIGURABLE = "configurable";
@@ -155,13 +155,13 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     writeOptions(configurableElement, options);
   }
 
-  private static void processTemplates(SearchableOptionsRegistrar registrar, Set<OptionDescription> options, FileTemplate[] templates) {
+  private static void processTemplates(SearchableOptionsRegistrar registrar, Set<? super OptionDescription> options, FileTemplate[] templates) {
     for (FileTemplate template : templates) {
       collectOptions(registrar, options, template.getName(), null);
     }
   }
 
-  private static void collectOptions(SearchableOptionsRegistrar registrar, Set<OptionDescription> options, @NotNull String text, String path) {
+  private static void collectOptions(SearchableOptionsRegistrar registrar, Set<? super OptionDescription> options, @NotNull String text, String path) {
     for (String word : registrar.getProcessedWordsWithoutStemming(text)) {
       options.add(new OptionDescription(word, text, path));
     }
@@ -206,7 +206,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     writeOptions(configurableElement, options);
   }
 
-  private static void writeOptions(Element configurableElement, Set<OptionDescription> options) {
+  private static void writeOptions(Element configurableElement, Set<? extends OptionDescription> options) {
     for (OptionDescription opt : options) {
       append(opt.getPath(), opt.getHit(), opt.getOption(), configurableElement);
     }

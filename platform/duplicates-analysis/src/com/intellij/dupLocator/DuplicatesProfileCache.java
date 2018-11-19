@@ -2,7 +2,6 @@ package com.intellij.dupLocator;
 
 import com.intellij.dupLocator.treeHash.FragmentsCollector;
 import com.intellij.lang.Language;
-import com.intellij.openapi.extensions.Extensions;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +28,8 @@ public class DuplicatesProfileCache {
     }
     DuplicatesProfile result = patternCache.get(index);
     if (result == null) {
-      DuplicatesProfile[] profiles = Extensions.getExtensions(DuplicatesProfile.EP_NAME);
       DuplicatesProfile theProfile = null;
-      for (DuplicatesProfile profile : profiles) {
+      for (DuplicatesProfile profile : DuplicatesProfile.EP_NAME.getExtensionList()) {
         if (profile.isMyDuplicate(dupInfo, index)) {
           theProfile = profile;
           break;

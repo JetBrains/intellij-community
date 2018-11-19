@@ -71,7 +71,7 @@ public class XsltReferenceContributor {
   }
 
   static class NamespacePrefixReference extends PrefixReference implements LocalQuickFixProvider {
-    public NamespacePrefixReference(PsiElement element) {
+    NamespacePrefixReference(PsiElement element) {
       super((XmlAttribute)element.getParent());
     }
 

@@ -40,7 +40,7 @@ class UndoableGroup implements Dumpable {
 
   private boolean myValid;
 
-  public UndoableGroup(String commandName,
+  UndoableGroup(String commandName,
                        boolean isGlobal,
                        UndoManagerImpl manager,
                        EditorAndState stateBefore,

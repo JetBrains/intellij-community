@@ -54,13 +54,14 @@ import java.util.List;
 
 /**
  * @author max
- * @since Apr 11, 2002
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public abstract class InspectionTestCase extends PsiTestCase {
+  private static final boolean MIGRATE_TEST = false;
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.InspectionTestCase");
   private EntryPoint myUnusedCodeExtension;
   private VirtualFile ext_src;
+  private LightTestMigration myMigration;
 
   public static GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
     InspectionEP ep = new InspectionEP();
@@ -118,20 +119,24 @@ public abstract class InspectionTestCase extends PsiTestCase {
                      boolean runDeadCodeFirst,
                      @NotNull InspectionToolWrapper... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
-    GlobalInspectionContextImpl context = runTool(testDir, jdkName, runDeadCodeFirst, toolWrapper, additional);
+    final List<InspectionToolWrapper<?, ?>> tools = getTools(runDeadCodeFirst, toolWrapper, additional);
+    GlobalInspectionContextImpl context = runTool(testDir, jdkName, toolWrapper, tools);
 
     InspectionTestUtil.compareToolResults(context, checkRange, testDir, ContainerUtil.append(Collections.singletonList(toolWrapper), additional));
+
+    if (MIGRATE_TEST) {
+      myMigration = new LightTestMigration(getTestName(false), getClass(), testDir, tools, getTestProjectSdk());
+    }
   }
 
-  protected void runTool(@NonNls @NotNull String testDir, @NonNls final String jdkName, @NotNull InspectionToolWrapper tool) {
-    runTool(testDir, jdkName, false, tool);
+  protected void runTool(@NonNls @NotNull String testDir, @NonNls final String jdkName, @NotNull InspectionToolWrapper<?, ?> tool) {
+    runTool(testDir, jdkName, tool, Collections.singletonList(tool));
   }
 
   protected GlobalInspectionContextImpl runTool(@NotNull final String testDir,
                                                 final String jdkName,
-                                                boolean runDeadCodeFirst,
                                                 @NotNull InspectionToolWrapper toolWrapper,
-                                                @NotNull InspectionToolWrapper... additional) {
+                                                List<InspectionToolWrapper<?, ?>> tools) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -144,16 +149,23 @@ public abstract class InspectionTestCase extends PsiTestCase {
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
     AnalysisScope scope = createAnalysisScope(sourceDir[0].equals(projectDir) ? projectDir : sourceDir[0].getParent());
 
+    GlobalInspectionContextForTests globalContext = InspectionsKt.createGlobalContextForTool(scope, getProject(), tools);
+
+    InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
+    return globalContext;
+  }
+
+  @NotNull
+  private static List<InspectionToolWrapper<?, ?>> getTools(boolean runDeadCodeFirst,
+                                                            @NotNull InspectionToolWrapper toolWrapper,
+                                                            @NotNull InspectionToolWrapper[] additional) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = new ArrayList<>();
     if (runDeadCodeFirst) {
       toolWrappers.add(getUnusedDeclarationWrapper());
     }
     toolWrappers.add(toolWrapper);
     ContainerUtil.addAll(toolWrappers, additional);
-    GlobalInspectionContextForTests globalContext = InspectionsKt.createGlobalContextForTool(scope, getProject(), toolWrappers);
-
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
-    return globalContext;
+    return toolWrappers;
   }
 
   @NotNull
@@ -240,6 +252,9 @@ public abstract class InspectionTestCase extends PsiTestCase {
     }
     finally {
       super.tearDown();
+    }
+    if (myMigration != null) {
+      myMigration.tryMigrate();
     }
   }
 

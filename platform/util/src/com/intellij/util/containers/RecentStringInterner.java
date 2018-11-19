@@ -42,7 +42,7 @@ public class RecentStringInterner {
         }
 
         @Override
-        protected void putToProtectedQueue(String key, String value) {
+        protected void putToProtectedQueue(String key, @NotNull String value) {
           super.putToProtectedQueue(value, value);
         }
       };
@@ -65,7 +65,8 @@ public class RecentStringInterner {
     try {
       myStripeLocks[stripe].lock();
       return myInterns[stripe].get(s);
-    } finally {
+    }
+    finally {
       myStripeLocks[stripe].unlock();
     }
   }

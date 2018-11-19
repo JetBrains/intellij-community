@@ -1,11 +1,11 @@
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.StringBufferReplaceableByStringInspection;
 
@@ -25,7 +25,7 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   }
 
   private void doTestFor(String builderClassName) {
-    doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix", builderClassName));
+    doTest(CommonQuickFixBundle.message("fix.replace.x.with.y", builderClassName, "String"));
   }
 
   public void testSimpleStringBuffer() { doTestFor("StringBuffer"); }

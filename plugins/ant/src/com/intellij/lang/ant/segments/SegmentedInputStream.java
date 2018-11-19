@@ -18,7 +18,6 @@ package com.intellij.lang.ant.segments;
 import com.intellij.rt.ant.execution.Packet;
 import com.intellij.rt.ant.execution.PacketProcessor;
 import com.intellij.rt.ant.execution.SegmentedStream;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -88,19 +87,14 @@ public class SegmentedInputStream extends InputStream {
   }
 
   private char[] readMarker() throws IOException {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      int nextRead = '0';
-      while (nextRead != ' ' && nextRead != SegmentedStream.SPECIAL_SYMBOL) {
-        buffer.append((char)nextRead);
-        nextRead = readNext();
-        if (nextRead == -1) return new char[0];
-      }
-      return readNext(Integer.valueOf(buffer.toString()).intValue());
+    final StringBuilder buffer = new StringBuilder();
+    int nextRead = '0';
+    while (nextRead != ' ' && nextRead != SegmentedStream.SPECIAL_SYMBOL) {
+      buffer.append((char)nextRead);
+      nextRead = readNext();
+      if (nextRead == -1) return new char[0];
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    return readNext(Integer.valueOf(buffer.toString()).intValue());
   }
 
   private char[] readNext(final int charCount) throws IOException {
@@ -122,31 +116,26 @@ public class SegmentedInputStream extends InputStream {
   }
 
   public static String decode(final char[] chars) {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      for (int i = 0; i < chars.length; i++) {
-        char chr = chars[i];
-        final char decodedChar;
-        if (chr == Packet.ourSpecialSymbol) {
-          i++;
-          chr = chars[i];
-          if (chr != Packet.ourSpecialSymbol) {
-            final StringBuilder codeBuffer = new StringBuilder(Packet.CODE_LENGTH);
-            codeBuffer.append(chr);
-            for (int j = 1; j < Packet.CODE_LENGTH; j++) {
-              codeBuffer.append(chars[i + j]);
-            }
-            i += Packet.CODE_LENGTH - 1;
-            decodedChar = (char)Integer.parseInt(codeBuffer.toString());
+    final StringBuilder buffer = new StringBuilder();
+    for (int i = 0; i < chars.length; i++) {
+      char chr = chars[i];
+      final char decodedChar;
+      if (chr == Packet.ourSpecialSymbol) {
+        i++;
+        chr = chars[i];
+        if (chr != Packet.ourSpecialSymbol) {
+          final StringBuilder codeBuffer = new StringBuilder(Packet.CODE_LENGTH);
+          codeBuffer.append(chr);
+          for (int j = 1; j < Packet.CODE_LENGTH; j++) {
+            codeBuffer.append(chars[i + j]);
           }
-          else decodedChar = chr;
-        } else decodedChar = chr;
-        buffer.append(decodedChar);
-      }
-      return buffer.toString();
+          i += Packet.CODE_LENGTH - 1;
+          decodedChar = (char)Integer.parseInt(codeBuffer.toString());
+        }
+        else decodedChar = chr;
+      } else decodedChar = chr;
+      buffer.append(decodedChar);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    return buffer.toString();
   }
 }

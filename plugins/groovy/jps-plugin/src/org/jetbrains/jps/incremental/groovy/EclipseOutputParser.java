@@ -38,7 +38,7 @@ class EclipseOutputParser {
   private final String myBuilderName;
   private final ModuleChunk myChunk;
 
-  public EclipseOutputParser(String builderName, ModuleChunk chunk) {
+  EclipseOutputParser(String builderName, ModuleChunk chunk) {
     myBuilderName = builderName;
     myChunk = chunk;
   }

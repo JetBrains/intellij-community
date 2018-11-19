@@ -8,7 +8,7 @@ import java.util.Map;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class ToolboxUpdaterUI extends ConsoleUpdaterUI {
   @Override
-  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+  public Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException {
     System.out.println("Validation info:");
     for (ValidationResult item : validationResults) {
       System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));

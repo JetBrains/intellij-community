@@ -17,8 +17,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiExtensibleClass
-import com.intellij.psi.util.PsiFormatUtil
-import com.intellij.psi.util.PsiFormatUtilBase
+import com.intellij.psi.util.PsiFormatUtil.*
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
@@ -30,10 +29,10 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
     private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
     private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
 
-    private const val FIELD = PsiFormatUtil.SHOW_NAME or PsiFormatUtil.SHOW_TYPE or PsiFormatUtil.SHOW_FQ_CLASS_NAMES
-    private const val METHOD = PsiFormatUtil.SHOW_NAME or PsiFormatUtilBase.SHOW_PARAMETERS
-    private const val PARAMETER = PsiFormatUtilBase.SHOW_TYPE or PsiFormatUtil.SHOW_FQ_CLASS_NAMES
-    private const val CLASS = PsiFormatUtil.SHOW_NAME or PsiFormatUtil.SHOW_FQ_CLASS_NAMES or PsiFormatUtil.SHOW_EXTENDS_IMPLEMENTS
+    private const val FIELD = SHOW_NAME or SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
+    private const val METHOD = SHOW_NAME or SHOW_PARAMETERS or SHOW_RAW_TYPE
+    private const val PARAMETER = SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
+    private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLEMENTS or SHOW_RAW_TYPE
   }
 
   init {
@@ -91,7 +90,7 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
   private fun defaultInit(it: PsiMethod) = it.isConstructor && it.parameterList.parametersCount == 0
   private fun inners(c: PsiClass) = if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
 
-  private fun format(f: PsiField) = PsiFormatUtil.formatVariable(f, FIELD, PsiSubstitutor.EMPTY)
-  private fun format(m: PsiMethod) = PsiFormatUtil.formatMethod(m, PsiSubstitutor.EMPTY, METHOD, PARAMETER)
-  private fun format(c: PsiClass) = PsiFormatUtil.formatClass(c, CLASS)
+  private fun format(f: PsiField) = formatVariable(f, FIELD, PsiSubstitutor.EMPTY)
+  private fun format(m: PsiMethod) = formatMethod(m, PsiSubstitutor.EMPTY, METHOD, PARAMETER)
+  private fun format(c: PsiClass) = formatClass(c, CLASS).removeSuffix(" extends java.lang.Object")
 }

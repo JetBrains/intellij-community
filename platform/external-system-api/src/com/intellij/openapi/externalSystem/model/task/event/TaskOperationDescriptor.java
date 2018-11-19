@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.model.task.event;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/16/2015
  */
 public interface TaskOperationDescriptor extends OperationDescriptor {
   String getTaskName();

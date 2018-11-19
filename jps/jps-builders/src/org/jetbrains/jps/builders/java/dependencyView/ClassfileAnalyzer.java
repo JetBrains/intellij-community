@@ -224,7 +224,7 @@ class ClassfileAnalyzer {
     }
 
     private class ModuleCrawler extends ModuleVisitor {
-      public ModuleCrawler() {
+      ModuleCrawler() {
         super(ASM_API_VERSION);
       }
 
@@ -334,7 +334,7 @@ class ClassfileAnalyzer {
     private final Set<ModuleRequiresRepr> myModuleRequires = new THashSet<>();
     private final Set<ModulePackageRepr> myModuleExports = new THashSet<>();
 
-    public ClassCrawler(final int fn) {
+    ClassCrawler(final int fn) {
       super(ASM_API_VERSION);
       myFileName = fn;
     }
@@ -475,17 +475,15 @@ class ClassfileAnalyzer {
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-          final TypeRepr.ClassType annotType = (TypeRepr.ClassType)TypeRepr.getType(myContext, desc);
-          annotations.add(annotType);
-          return new AnnotationCrawler(annotType, "<init>".equals(n) ? ElemType.CONSTRUCTOR : ElemType.METHOD);
+          final TypeRepr.ClassType annoType = (TypeRepr.ClassType)TypeRepr.getType(myContext, desc);
+          annotations.add(annoType);
+          return new AnnotationCrawler(annoType, "<init>".equals(n) ? ElemType.CONSTRUCTOR : ElemType.METHOD);
         }
 
         @Override
         public AnnotationVisitor visitAnnotationDefault() {
           return new AnnotationVisitor(ASM_API_VERSION) {
-
-            @Nullable
-            private List myAcc;
+            private @Nullable List<Object> myAcc;
 
             @Override
             public void visit(String name, Object value) {
@@ -499,7 +497,7 @@ class ClassfileAnalyzer {
 
             @Override
             public AnnotationVisitor visitArray(String name) {
-              myAcc = new SmartList();
+              myAcc = new SmartList<>();
               return this;
             }
 
@@ -530,9 +528,9 @@ class ClassfileAnalyzer {
 
         @Override
         public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-          final TypeRepr.ClassType annotType = (TypeRepr.ClassType)TypeRepr.getType(myContext, desc);
-          paramAnnotations.add(new ParamAnnotation(parameter, annotType));
-          return new AnnotationCrawler(annotType, ElemType.PARAMETER);
+          final TypeRepr.ClassType annoType = (TypeRepr.ClassType)TypeRepr.getType(myContext, desc);
+          paramAnnotations.add(new ParamAnnotation(parameter, annoType));
+          return new AnnotationCrawler(annoType, ElemType.PARAMETER);
         }
 
         @Override
@@ -753,7 +751,7 @@ class ClassfileAnalyzer {
     }
 
     private class BaseSignatureVisitor extends SignatureVisitor {
-      public BaseSignatureVisitor() {
+      BaseSignatureVisitor() {
         super(ASM_API_VERSION);
       }
 

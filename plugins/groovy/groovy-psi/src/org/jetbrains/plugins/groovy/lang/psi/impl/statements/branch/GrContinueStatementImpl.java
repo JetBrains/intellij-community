@@ -24,6 +24,7 @@ public class GrContinueStatementImpl extends GrFlowInterruptingStatementImpl imp
     visitor.visitContinueStatement(this);
   }
 
+  @Override
   public String toString() {
     return "CONTINUE statement";
   }

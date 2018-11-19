@@ -18,6 +18,7 @@ package com.intellij.openapi.options.binding;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -45,7 +46,11 @@ public class ControlBinder {
     }
     else if (control instanceof JTextField){
       controlAccessor = ValueAccessor.textFieldAccessor((JTextField)control);
-    } else {
+    }
+    else if (control instanceof EditorTextField) {
+      controlAccessor = ValueAccessor.editorTextFieldAccessor((EditorTextField)control);
+    }
+    else {
       throw new IllegalArgumentException("Cannot bind control of type " + control.getClass() + ".\n" +
                                          "Use bindControl(ControlValueAccessor, String) instead.");
     }

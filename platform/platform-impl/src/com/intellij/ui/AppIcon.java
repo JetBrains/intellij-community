@@ -149,7 +149,7 @@ public abstract class AppIcon {
       if (app != null && myAppListener == null) {
         myAppListener = new ApplicationActivationListener() {
           @Override
-          public void applicationActivated(IdeFrame ideFrame) {
+          public void applicationActivated(@NotNull IdeFrame ideFrame) {
             hideProgress(ideFrame.getProject(), myCurrentProcessId);
             _setOkBadge(ideFrame, false);
             _setTextBadge(ideFrame, null);

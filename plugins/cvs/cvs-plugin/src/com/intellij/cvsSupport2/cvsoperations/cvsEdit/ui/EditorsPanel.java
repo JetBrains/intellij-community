@@ -32,6 +32,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -123,7 +124,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key.equals(CommonDataKeys.PROJECT)) {
       sink.put(CommonDataKeys.PROJECT, myProject);
     }

@@ -2,6 +2,7 @@
 
 package com.intellij.ide.customize
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.ide.projectView.impl.ProjectViewSharedSettings
@@ -10,7 +11,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.lang.Language
 import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
 class WelcomeWizardHelper : BaseComponent {
   override fun initComponent() {
@@ -34,7 +34,7 @@ class WelcomeWizardHelper : BaseComponent {
     //Code style settings
     WelcomeWizardUtil.getContinuationIndent()?.let {
       Language.getRegisteredLanguages()
-        .map { CodeStyleSettingsManager.getInstance().currentSettings.getIndentOptions(it.associatedFileType) }
+        .map { CodeStyle.getDefaultSettings().getIndentOptions(it.associatedFileType) }
         .filter { it.CONTINUATION_INDENT_SIZE > WelcomeWizardUtil.getContinuationIndent() }
         .forEach { it.CONTINUATION_INDENT_SIZE = WelcomeWizardUtil.getContinuationIndent() }
     }
@@ -43,12 +43,14 @@ class WelcomeWizardHelper : BaseComponent {
       UISettings.instance.editorTabPlacement = it
     }
     WelcomeWizardUtil.getAppearanceFontSize()?.let {
-      UISettings.instance.overrideLafFonts = true
-      UISettings.instance.fontSize = it
+      val settings = UISettings.instance.state
+      settings.overrideLafFonts = true
+      UISettings.instance.state.fontSize = it
     }
     WelcomeWizardUtil.getAppearanceFontFace()?.let {
-      UISettings.instance.overrideLafFonts = true
-      UISettings.instance.fontFace = it
+      val settings = UISettings.instance.state
+      settings.overrideLafFonts = true
+      settings.fontFace = it
     }
     LafManager.getInstance().updateUI()
   }

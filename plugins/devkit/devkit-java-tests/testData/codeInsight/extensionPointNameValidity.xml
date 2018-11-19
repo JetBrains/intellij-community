@@ -1,5 +1,8 @@
 <idea-plugin>
   <id>foo</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
   <extensionPoints>
     <extensionPoint interface="java.lang.Runnable" name="<weak_warning descr="Invalid EP name 'Smth', must contain only latin characters, digits and dots, must not start/end with dot, each fragment must start with lowercase character, last fragment words must not repeat any previous fragment">Smth</weak_warning>"/>
     <extensionPoint interface="java.lang.Runnable" name="<weak_warning descr="Invalid EP name '.smth', must contain only latin characters, digits and dots, must not start/end with dot, each fragment must start with lowercase character, last fragment words must not repeat any previous fragment">.smth</weak_warning>"/>

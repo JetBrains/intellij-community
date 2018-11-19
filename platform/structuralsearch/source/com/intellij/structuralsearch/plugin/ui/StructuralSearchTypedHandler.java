@@ -46,7 +46,7 @@ public class StructuralSearchTypedHandler extends TypedHandlerDelegate {
           });
         }
 
-        final String newText = String.valueOf(c) + selectedText + c;
+        final String newText = c + selectedText + c;
         final boolean ltrSelection = selectionModel.getLeadSelectionOffset() != selectionModel.getSelectionEnd();
         for (RangeMarker marker : rangeMarkers) {
           if (marker.isValid()) {

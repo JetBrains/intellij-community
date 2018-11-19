@@ -37,9 +37,9 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  public void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  public void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> input, final AnActionEvent e) {
     // the action is also reused as quickfix for NoScrollPaneInspection, so this code should be kept here
-    FormEditingUtil.remapToActionTargets(selection);
+    List<RadComponent> selection = FormEditingUtil.remapToActionTargets(input);
     if (!editor.ensureEditable()) {
       return;
     }
@@ -161,8 +161,8 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    FormEditingUtil.remapToActionTargets(selection);
+  protected void update(@NotNull final GuiEditor editor, final ArrayList<? extends RadComponent> input, final AnActionEvent e) {
+    List<RadComponent> selection = FormEditingUtil.remapToActionTargets(input);
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     Palette palette = Palette.getInstance(editor.getProject());
     e.getPresentation().setEnabled(palette.getItem(myComponentClass) != null &&
@@ -172,7 +172,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
                                    canWrapSelection(selection)));
   }
 
-  private boolean canWrapSelection(final ArrayList<RadComponent> selection) {
+  private boolean canWrapSelection(final List<? extends RadComponent> selection) {
     if (myComponentClass.equals(JScrollPane.class.getName())) {
       if (selection.size() > 1) return false;
       RadComponent component = selection.get(0);
@@ -182,7 +182,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   private static boolean isSelectionContiguous(RadContainer selectionParent,
-                                               ArrayList<RadComponent> selection) {
+                                               List<? extends RadComponent> selection) {
     if (!selectionParent.getLayoutManager().isGrid()) {
       return false;
     }

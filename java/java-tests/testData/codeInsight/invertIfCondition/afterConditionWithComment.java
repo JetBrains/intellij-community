@@ -4,9 +4,8 @@ class A {
     public void foo() {
         String value ="not-null";
 
-        // Another comment
         if (value == null) {
-            return;
+            return; // Another comment
         }
         System.out.println(value);
         // Comment gets deleted.

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,7 @@ public interface RefJavaModule extends RefElement {
   Key<RefJavaModule> JAVA_MODULE = Key.create("JAVA_MODULE");
 
   @Override
-  PsiJavaModule getElement();
+  PsiJavaModule getPsiElement();
 
   @NotNull
   Map<String, List<String>> getExportedPackageNames();

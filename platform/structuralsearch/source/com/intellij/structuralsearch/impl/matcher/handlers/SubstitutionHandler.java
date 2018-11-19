@@ -136,7 +136,7 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   public boolean validate(final PsiElement match, int start, int end, MatchContext context) {
-    if (predicate != null && !predicate.match(match, start, end, context)) {
+    if (match == null || predicate != null && !predicate.match(match, start, end, context)) {
       return false;
     }
 

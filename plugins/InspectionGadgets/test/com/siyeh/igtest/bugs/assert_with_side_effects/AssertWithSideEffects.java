@@ -1,20 +1,20 @@
 package com.siyeh.igtest.bugs.assert_with_side_effects;
 import java.sql.*;
-public class AssertWithSideEffects {
+import java.util.*;
 
+public class AssertWithSideEffects {
     private int sideEffect = 0;
     private boolean noEffect = false;
-
     void foo(boolean b) {
         assert !b && hasNoSideEffects();
     }
 
     void bar(int i) {
-        assert i++ < 10;
+        <warning descr="'assert' has side effects">assert</warning> i++ < 10;
     }
 
     void abc() {
-        assert isSideEffect();
+        <warning descr="'assert' has side effects">assert</warning> isSideEffect();
     }
 
     boolean isSideEffect() {
@@ -28,6 +28,6 @@ public class AssertWithSideEffects {
     }
 
     void jdbc(ResultSet rs) throws SQLException {
-      assert rs.last();
+      <warning descr="'assert' has side effects">assert</warning> rs.last();
     }
 }

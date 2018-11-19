@@ -162,7 +162,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (value instanceof PsiClassObjectAccessExpression) {
           PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
           if (psiClass != null && !hasStringConstructor(psiClass)) {
-            //noinspection DialogTitleCapitalization
             holder.registerProblem(value,
                                    "Custom exception class should have a constructor with a single message parameter of String type",
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -686,7 +685,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void checkSupers(PsiMethod method,
                            ProblemsHolder holder,
                            Annotated annotated,
-                           List<PsiMethod> superMethods) {
+                           List<? extends PsiMethod> superMethods) {
     for (PsiMethod superMethod : superMethods) {
       if (isNullableOverridingNotNull(annotated, superMethod)) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, getNullityManager(method).getNullables(), true);
@@ -740,7 +739,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private void checkParameters(PsiMethod method,
                                ProblemsHolder holder,
-                               List<PsiMethod> superMethods,
+                               List<? extends PsiMethod> superMethods,
                                NullableNotNullManager nullableManager,
                                boolean isOnFly) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -793,7 +792,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @Nullable
   private PsiParameter findNotNullSuperForNonAnnotatedParameter(NullableNotNullManager nullableManager,
                                                                 PsiParameter parameter,
-                                                                List<PsiParameter> superParameters) {
+                                                                List<? extends PsiParameter> superParameters) {
     return REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL && !nullableManager.hasNullability(parameter) 
            ? ContainerUtil.find(superParameters, 
                                 sp -> isNotNullNotInferred(sp, false, IGNORE_EXTERNAL_SUPER_NOTNULL) && !hasInheritableNotNull(sp)) 
@@ -801,7 +800,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   @Nullable
-  private PsiParameter findNullableSuperForNotNullParameter(PsiParameter parameter, List<PsiParameter> superParameters) {
+  private PsiParameter findNullableSuperForNotNullParameter(PsiParameter parameter, List<? extends PsiParameter> superParameters) {
     return REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE && isNotNullNotInferred(parameter, false, false) 
            ? ContainerUtil.find(superParameters, sp -> isNullableNotInferred(sp, false)) 
            : null;
@@ -809,7 +808,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private boolean isNotNullParameterOverridingNonAnnotated(NullableNotNullManager nullableManager,
                                                            PsiParameter parameter,
-                                                           List<PsiParameter> superParameters) {
+                                                           List<? extends PsiParameter> superParameters) {
     if (!REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED) return false;
     NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
     return info != null && info.getNullability() == Nullability.NOT_NULL && !info.isInferred() &&
@@ -990,7 +989,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private static class MyAnnotateMethodFix extends AnnotateMethodFix {
-    public MyAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
+    MyAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
       super(defaultNotNull, annotationsToRemove);
     }
 

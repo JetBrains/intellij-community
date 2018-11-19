@@ -105,7 +105,7 @@ public class DFSTBuilder<Node> {
     private final boolean[] isOnStack = new boolean[index.length];
 
     private class Frame {
-      public Frame(int nodeI) {
+      Frame(int nodeI) {
         this.nodeI = nodeI;
         Iterator<Node> outNodes = myGraph.getOut(myAllNodes[nodeI]);
         TIntArrayList list = new TIntArrayList();
@@ -183,7 +183,7 @@ public class DFSTBuilder<Node> {
       mySCCs.reverse(); // have to place SCCs in topological order too
     }
 
-    private void strongConnect(@NotNull List<List<Node>> sccs) {
+    private void strongConnect(@NotNull List<? super List<Node>> sccs) {
       int successor = -1;
       nextNode:
       while (!frames.isEmpty()) {

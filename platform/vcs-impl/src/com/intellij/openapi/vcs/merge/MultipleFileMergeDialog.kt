@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -55,7 +56,7 @@ import javax.swing.tree.TreeNode
  * @author yole
  */
 open class MultipleFileMergeDialog(
-  private val project: Project,
+  private val project: Project?,
   files: List<VirtualFile>,
   private val mergeProvider: MergeProvider,
   private val mergeDialogCustomizer: MergeDialogCustomizer
@@ -70,7 +71,16 @@ open class MultipleFileMergeDialog(
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
   private val projectManager = ProjectManagerEx.getInstanceEx()
-  private var groupByDirectory = VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
+
+  private var groupByDirectory: Boolean = false
+    get() = when {
+      project != null -> VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
+      else -> field
+    }
+    set(value) = when {
+      project != null -> VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY = value
+      else -> field = value
+    }
 
   private val virtualFileRenderer = object : ChangesBrowserNodeRenderer(project, { !groupByDirectory }, false) {
     override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog.peer.window, IdeFocusManager.getInstance(project).focusOwner)
@@ -148,9 +158,11 @@ open class MultipleFileMergeDialog(
         }
       }
 
-      row {
-        checkBox("Group files by directory", groupByDirectory) { _, component ->
-          toggleGroupByDirectory(component.isSelected)
+      if (project != null) {
+        row {
+          checkBox("Group files by directory", groupByDirectory) { _, component ->
+            toggleGroupByDirectory(component.isSelected)
+          }
         }
       }
     }
@@ -225,7 +237,6 @@ open class MultipleFileMergeDialog(
 
   private fun toggleGroupByDirectory(state: Boolean) {
     groupByDirectory = state
-    VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY = groupByDirectory
     val firstSelectedFile = getSelectedFiles().firstOrNull()
     updateTree()
     if (firstSelectedFile != null) {
@@ -235,8 +246,8 @@ open class MultipleFileMergeDialog(
   }
 
   private fun updateTree() {
-    val factory = if (groupByDirectory)
-      ChangesGroupingSupport.collectFactories(project).getByKey(ChangesGroupingSupport.DIRECTORY_GROUPING)
+    val factory = if (project != null && groupByDirectory)
+      ChangesGroupingSupport.getFactory(project, ChangesGroupingSupport.DIRECTORY_GROUPING)
     else
       NoneChangesGroupingFactory
     val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)
@@ -248,9 +259,10 @@ open class MultipleFileMergeDialog(
     val selectedFiles = getSelectedFiles()
     val haveSelection = selectedFiles.any()
     val haveUnmergeableFiles = selectedFiles.any { mergeSession?.canMerge(it) == false }
+    val haveUnacceptableFiles = selectedFiles.any { mergeSession != null && mergeSession !is MergeSessionEx && !mergeSession.canMerge(it)}
 
-    acceptYoursButton.isEnabled = haveSelection
-    acceptTheirsButton.isEnabled = haveSelection
+    acceptYoursButton.isEnabled = haveSelection && !haveUnacceptableFiles
+    acceptTheirsButton.isEnabled = haveSelection && !haveUnacceptableFiles
     mergeButton.isEnabled = haveSelection && !haveUnmergeableFiles
   }
 
@@ -298,7 +310,7 @@ open class MultipleFileMergeDialog(
       }
       else {
         for (file in files) {
-          acceptFileRevision(file, resolution)
+          resolveFileViaContent(file, resolution)
           checkMarkModifiedProject(file)
           markFileProcessed(file, resolution)
         }
@@ -312,7 +324,7 @@ open class MultipleFileMergeDialog(
     updateModelFromFiles()
   }
 
-  private fun acceptFileRevision(file: VirtualFile, resolution: MergeSession.Resolution) {
+  private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution) {
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException("File is read-only: " + file.presentableName)
     }
@@ -346,7 +358,8 @@ open class MultipleFileMergeDialog(
       }
     }
     processedFiles.addAll(files)
-    VcsDirtyScopeManager.getInstance(project).filesDirty(files, emptyList())
+
+    if (project != null) VcsDirtyScopeManager.getInstance(project).filesDirty(files, emptyList())
   }
 
   private fun markFileProcessed(file: VirtualFile, resolution: MergeSession.Resolution) {
@@ -420,8 +433,13 @@ open class MultipleFileMergeDialog(
         MergeUtil.putRevisionInfos(request, mergeData)
       }
       catch (e: InvalidDiffRequestException) {
-        LOG.error(e)
-        Messages.showErrorDialog(contentPanel, "Can't show merge dialog")
+        if (e.cause is FileTooBigException) {
+          Messages.showErrorDialog(contentPanel, "File is too big to be loaded.", "Can't Show Merge Dialog")
+        }
+        else {
+          LOG.error(e)
+          Messages.showErrorDialog(contentPanel, e.message, "Can't Show Merge Dialog")
+        }
         break
       }
 

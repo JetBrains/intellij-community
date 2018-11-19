@@ -6,7 +6,6 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtil
@@ -20,18 +19,18 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
+import com.intellij.testGuiFramework.framework.GuiTestPaths.failedTestVideoDirPath
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.IdeTestApplication.getFailedTestVideoDirPath
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
-import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.screenRecorderJarDirPath
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.testsToRecord
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.Splash
+import com.intellij.ui.components.labels.ActionLink
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.lang.UrlClassLoader
 import org.fest.swing.core.Robot
@@ -51,6 +50,7 @@ import org.junit.rules.Timeout
 import org.junit.runner.Description
 import org.junit.runners.model.MultipleFailureException
 import org.junit.runners.model.Statement
+import java.awt.Container
 import java.awt.Dialog
 import java.awt.Frame
 import java.awt.KeyboardFocusManager
@@ -61,14 +61,12 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 
-class GuiTestRule : TestRule {
+class GuiTestRule(private val projectsFolder: File) : TestRule {
 
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
-  private var myProjectPath: File? = null
-    set
   private var myTestName: String = "undefined"
   private var myTestShortName: String = "undefined"
   private var currentTestDateStart: Date = Date()
@@ -102,13 +100,12 @@ class GuiTestRule : TestRule {
       if (screenRecorderJarUrl == null) return null
 
       val testsToRecord: List<String> = testsToRecord
-      if (testsToRecord.isEmpty()) return null
 
       val classLoader: ClassLoader = UrlClassLoader.build().urls(screenRecorderJarUrl).parent(javaClass.classLoader).get()
       return Class.forName("org.jetbrains.intellij.deps.screenrecorder.ScreenRecorderRule", true, classLoader)
         .constructors
         .singleOrNull { it.parameterCount == 3 }
-        ?.newInstance(Duration.ofMinutes(videoDuration), getFailedTestVideoDirPath().absolutePath, testsToRecord) as TestRule?
+        ?.newInstance(Duration.ofMinutes(videoDuration), failedTestVideoDirPath.absolutePath, testsToRecord) as TestRule?
     }
     catch (e: Exception) {
       return null
@@ -158,7 +155,7 @@ class GuiTestRule : TestRule {
     }
 
     fun setUp() {
-      GuiTestUtil.setUpDefaultProjectCreationLocationPath()
+      GuiTestUtil.setUpDefaultProjectCreationLocationPath(projectsFolder)
       GeneralSettings.getInstance().isShowTipsOnStartup = false
       currentTestDateStart = Date()
     }
@@ -174,25 +171,13 @@ class GuiTestRule : TestRule {
     }
 
     private fun tearDownProject() {
-      if (myProjectPath != null) {
-        val ideFrameFixture = IdeFrameFixture.find(robot(), myProjectPath, null)
-        ideFrameFixture.waitForStartingIndexing()
-        if (ideFrameFixture.target().isShowing) {
-          DumbService.getInstance(ideFrameFixture.project).repeatUntilPassesInSmartMode { ideFrameFixture.closeProject() }
-        }
-        FileUtilRt.delete(myProjectPath!!)
+      try {
+        val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, Timeouts.seconds02)
+        if (ideFrameFixture.target().isShowing)
+            ideFrameFixture.closeProject()
       }
-      else {
-        try {
-          val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, 2)
-          if (ideFrameFixture.target().isShowing)
-            DumbService.getInstance(ideFrameFixture.project).repeatUntilPassesInSmartMode {
-              ideFrameFixture.closeProject()
-            }
-        }
-        catch (e: ComponentLookupException) {
-          // do nothing because ideFixture is already closed
-        }
+      catch (e: ComponentLookupException) {
+        // do nothing because ideFixture is already closed
       }
     }
 
@@ -201,10 +186,10 @@ class GuiTestRule : TestRule {
 
       fun isFirstStep(): Boolean {
         return try {
-          val actionLinkFixture = with(welcomeFrameFixture) {
-            actionLink(CREATE_NEW_PROJECT_ACTION_NAME, Timeouts.defaultTimeout)
+          val actionLink = with(welcomeFrameFixture) {
+            robot().finder().find(this@with.target() as Container) { it is ActionLink && it.text.contains("New Project") }
           }
-          actionLinkFixture.target().isShowing
+          actionLink?.isShowing ?: false
         }
         catch (componentLookupException: ComponentLookupException) {
           false
@@ -307,8 +292,8 @@ class GuiTestRule : TestRule {
     }
   }
 
-  fun findWelcomeFrame(): WelcomeFrameFixture {
-    return WelcomeFrameFixture.find(robot())
+  fun findWelcomeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.minutes05): WelcomeFrameFixture {
+    return WelcomeFrameFixture.find(robot(), timeout)
   }
 
   fun findNewProjectWizard(): NewProjectWizardFixture {
@@ -442,7 +427,7 @@ class GuiTestRule : TestRule {
   }
 
   private fun getTestProjectDirPath(projectDirName: String): File {
-    return File(GuiTestOptions.projectDirPath, projectDirName)
+    return File(projectsFolder, projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {
@@ -479,13 +464,13 @@ class GuiTestRule : TestRule {
     }
   }
 
-  fun findIdeFrame(projectPath: File): IdeFrameFixture {
-    return IdeFrameFixture.find(robot(), projectPath, null)
+  fun findIdeFrame(projectPath: File, timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
+    return IdeFrameFixture.find(robot(), projectPath, null, timeout)
   }
 
 
-  fun findIdeFrame(): IdeFrameFixture {
-    return IdeFrameFixture.find(robot(), null, null)
+  fun findIdeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
+    return IdeFrameFixture.find(robot(), null, null, timeout)
   }
 
   fun getTestName(): String {

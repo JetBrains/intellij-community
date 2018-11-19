@@ -20,6 +20,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class JavaRefactoringListenerManagerImpl extends JavaRefactoringListenerM
     myMoveMemberListeners.remove(moveMembersListener);
   }
 
-  public void fireMemberMoved(final PsiClass sourceClass, final PsiMember member) {
+  public void fireMemberMoved(@NotNull PsiClass sourceClass, @NotNull PsiMember member) {
     for (final MoveMemberListener listener : myMoveMemberListeners) {
       listener.memberMoved(sourceClass, member);
     }

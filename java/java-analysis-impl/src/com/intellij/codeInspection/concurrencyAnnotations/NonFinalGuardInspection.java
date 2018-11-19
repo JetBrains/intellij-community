@@ -41,7 +41,7 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
   private static class Visitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
-    public Visitor(ProblemsHolder holder) {
+    Visitor(ProblemsHolder holder) {
 
       myHolder = holder;
     }

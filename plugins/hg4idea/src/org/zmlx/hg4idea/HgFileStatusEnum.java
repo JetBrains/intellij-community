@@ -27,7 +27,7 @@ public enum HgFileStatusEnum {
 
   private final char id;
 
-  private HgFileStatusEnum(char id) {
+  HgFileStatusEnum(char id) {
     this.id = id;
   }
 

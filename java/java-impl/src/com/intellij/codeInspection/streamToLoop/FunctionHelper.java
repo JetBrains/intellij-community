@@ -14,10 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -87,7 +84,7 @@ abstract class FunctionHelper {
    */
   void rename(String oldName, String newName, StreamToLoopReplacementContext context) {}
 
-  void registerReusedElements(Consumer<PsiElement> consumer) {}
+  void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
   @Nullable
   String getParameterName(int index) {
@@ -153,7 +150,7 @@ abstract class FunctionHelper {
       if (lambdaExpression == null) {
         if (PsiType.VOID.equals(returnType) && body instanceof PsiCodeBlock) {
           List<PsiReturnStatement> returns = getReturns(body);
-          if (!allowReturns && !returns.isEmpty()) return null;
+          if (!allowReturns && (!returns.isEmpty() || !ControlFlowUtils.codeBlockMayCompleteNormally((PsiCodeBlock)body))) return null;
           // Return inside loop is not supported yet
           for (PsiReturnStatement ret : returns) {
             if (PsiTreeUtil.getParentOfType(ret, PsiLoopStatement.class, true, PsiLambdaExpression.class) != null) {
@@ -316,7 +313,7 @@ abstract class FunctionHelper {
     private PsiMethodReferenceExpression myMethodRef;
     private PsiExpression myExpression;
 
-    public MethodReferenceFunctionHelper(PsiType returnType, PsiType functionalInterfaceType, PsiMethodReferenceExpression methodRef) {
+    MethodReferenceFunctionHelper(PsiType returnType, PsiType functionalInterfaceType, PsiMethodReferenceExpression methodRef) {
       super(returnType);
       myMethodRef = methodRef;
       myType = functionalInterfaceType;
@@ -347,8 +344,8 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
-      consumer.accept(myMethodRef);
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
+      consumer.accept(myMethodRef.getQualifier());
     }
 
     @Override
@@ -465,7 +462,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myExpression);
     }
 
@@ -481,7 +478,7 @@ abstract class FunctionHelper {
     private final String myName;
     private PsiExpression myExpression;
 
-    public SimpleReferenceFunctionHelper(PsiType returnType, PsiExpression reference, String methodName) {
+    SimpleReferenceFunctionHelper(PsiType returnType, PsiExpression reference, String methodName) {
       super(returnType);
       myReference = reference;
       myName = methodName;
@@ -504,7 +501,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myReference);
     }
   }
@@ -514,7 +511,7 @@ abstract class FunctionHelper {
     private final String myTemplate;
     private PsiExpression myExpression;
 
-    public InlinedFunctionHelper(PsiType type, int argCount, String template) {
+    InlinedFunctionHelper(PsiType type, int argCount, String template) {
       super(type);
       myArgCount = argCount;
       myTemplate = template;
@@ -580,7 +577,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myBody);
     }
 
@@ -600,7 +597,7 @@ abstract class FunctionHelper {
         PsiElement body = lambda.getBody();
         LOG.assertTrue(body != null);
         boolean mayBeNotFinal = ReferencesSearch.search(parameter, new LocalSearchScope(body))
-          .forEach(e -> PsiTreeUtil.getParentOfType(e.getElement(), PsiLambdaExpression.class, PsiClass.class) == lambda);
+          .allMatch(e -> PsiTreeUtil.getParentOfType(e.getElement(), PsiLambdaExpression.class, PsiClass.class) == lambda);
         if (!mayBeNotFinal) {
           var.markFinal();
         }

@@ -44,7 +44,7 @@ public class ChangeSignaturePassFactory implements TextEditorHighlightingPassFac
     private final PsiFile myFile;
     private final Editor myEditor;
 
-    public ChangeSignaturePass(Project project, PsiFile file, Editor editor) {
+    ChangeSignaturePass(Project project, PsiFile file, Editor editor) {
       super(project, editor.getDocument(), true);
       myProject = project;
       myFile = file;

@@ -3,12 +3,15 @@ package com.intellij.internal.retype
 
 import com.intellij.JavaTestUtil
 import com.intellij.ide.IdeEventQueue
+import com.intellij.idea.Bombed
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import java.util.*
 
 /**
  * @author yole
  */
+@Bombed(user = "yole", day = 20, month = Calendar.NOVEMBER)
 class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
 
@@ -23,7 +26,7 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   private fun doTest() {
     val filePath = "/retype/${getTestName(false)}.java"
     myFixture.configureByFile(filePath)
-    RetypeSession(project, myFixture.editor as EditorImpl, 0, 0).start()
+    RetypeSession(project, myFixture.editor as EditorImpl, 0, null, 0).start()
     while (editor.getUserData(RETYPE_SESSION_KEY) != null) {
       IdeEventQueue.getInstance().flushQueue()
     }

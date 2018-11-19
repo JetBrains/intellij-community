@@ -46,7 +46,7 @@ public abstract class VolatileNotNullLazyValue<T> extends NotNullLazyValue<T> {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
-  public static <T> VolatileNotNullLazyValue<T> createValue(@NotNull final NotNullFactory<T> value) {
+  public static <T> VolatileNotNullLazyValue<T> createValue(@NotNull final NotNullFactory<? extends T> value) {
     return new VolatileNotNullLazyValue<T>() {
       @NotNull
       @Override

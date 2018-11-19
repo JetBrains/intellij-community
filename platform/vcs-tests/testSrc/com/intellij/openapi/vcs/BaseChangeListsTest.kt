@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
-import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
@@ -21,11 +20,14 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
-import java.lang.IllegalStateException
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 abstract class BaseChangeListsTest : LightPlatformTestCase() {
+  companion object {
+    val DEFAULT = LocalChangeList.DEFAULT_NAME
+  }
+
   protected lateinit var vcs: MyMockVcs
   protected lateinit var changeProvider: MyMockChangeProvider
 
@@ -160,6 +162,8 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   protected val String.toFilePath: FilePath get() = VcsUtil.getFilePath(testRoot, this)
+  protected fun Array<out String>.toFilePaths() = this.asList().toFilePaths()
+  protected fun List<String>.toFilePaths() = this.map { it.toFilePath }
   protected val VirtualFile.change: Change? get() = clm.getChange(this)
   protected val VirtualFile.document: Document get() = FileDocumentManager.getInstance().getDocument(this)!!
 
@@ -183,12 +187,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   fun runBatchFileChangeOperation(task: () -> Unit) {
-    BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(ourProject, "Update")
+    BackgroundTaskUtil.syncPublisher(ourProject, VcsFreezingProcess.Listener.TOPIC).onFreeze()
     try {
       task()
     }
     finally {
-      BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(ourProject)
+      BackgroundTaskUtil.syncPublisher(ourProject, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
     }
   }
 

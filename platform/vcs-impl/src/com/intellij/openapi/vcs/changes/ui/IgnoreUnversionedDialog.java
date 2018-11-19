@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -74,15 +73,9 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     updateControls();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("ignoreUnversionedFilesDialog");
+  protected String getHelpId() {
+    return "ignoreUnversionedFilesDialog";
   }
 
   private void updateControls() {

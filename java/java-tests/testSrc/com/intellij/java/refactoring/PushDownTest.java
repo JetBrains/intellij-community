@@ -35,7 +35,6 @@ import java.util.function.Consumer;
 
 /**
  * @author anna
- * @since 13-Mar-2008
  */
 public class PushDownTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/pushDown/";

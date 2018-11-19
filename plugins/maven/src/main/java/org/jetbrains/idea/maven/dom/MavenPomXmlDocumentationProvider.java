@@ -34,7 +34,7 @@ public class MavenPomXmlDocumentationProvider implements DocumentationProvider {
     @Override
     protected String generateDoc(String str, String name, String typeName, String version) {
       if (str != null) {
-        str = StringUtil.unescapeXml(str);
+        str = StringUtil.unescapeXmlEntities(str);
       }
 
       return super.generateDoc(str, name, typeName, version);

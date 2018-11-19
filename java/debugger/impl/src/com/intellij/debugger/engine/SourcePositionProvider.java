@@ -43,7 +43,7 @@ public abstract class SourcePositionProvider {
                                                  boolean nearest
   ) {
     try {
-      return StreamEx.of(EP_NAME.getExtensions())
+      return StreamEx.of(EP_NAME.getExtensionList())
         .map(provider -> provider.computeSourcePosition(descriptor, project, context, nearest))
         .nonNull()
         .findFirst().orElse(null);

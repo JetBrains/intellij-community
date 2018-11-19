@@ -3,9 +3,12 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.framework.toSec
+import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.util.FinderPredicate
+import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
@@ -201,7 +204,9 @@ object GuiTestUtilKt {
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
-  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will", timeout: Timeout = Timeouts.defaultTimeout, functionProbeToNull: () -> ReturnType?): ReturnType {
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
+                                            timeout: Timeout = Timeouts.defaultTimeout,
+                                            functionProbeToNull: () -> ReturnType?): ReturnType {
     var result: ReturnType? = null
     waitUntil("$conditionText will be not null", timeout) {
       result = functionProbeToNull()
@@ -211,9 +216,33 @@ object GuiTestUtilKt {
   }
 
   fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, conditionalFunction: () -> Boolean) {
-    Pause.pause(object : Condition("${timeout.toSec()} second(s) until $condition") {
+    Pause.pause(object : Condition("${timeout.toPrintable()} until $condition") {
       override fun test() = conditionalFunction()
     }, timeout)
+  }
+
+  fun <R> tryWithPause(exceptionClass: Class<out Exception>,
+                   condition: String = "try block will not throw ${exceptionClass.name} exception",
+                   timeout: Timeout,
+                   tryBlock: () -> R): R {
+    val exceptionRef: Ref<Exception> = Ref.create()
+    try {
+      return withPauseWhenNull (condition, timeout) {
+        try {
+          tryBlock()
+        }
+        catch (e: Exception) {
+          if (exceptionClass.isInstance(e)) {
+            exceptionRef.set(e)
+            return@withPauseWhenNull null
+          }
+          throw e
+        }
+      }
+    }
+    catch (e: WaitTimedOutError) {
+      throw Exception("Timeout for $condition exceeded ${timeout.toPrintable()}", exceptionRef.get())
+    }
   }
 
   fun silentWaitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
@@ -222,7 +251,8 @@ object GuiTestUtilKt {
         override fun test() = conditionalFunction()
       }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
     }
-    catch (ignore: WaitTimedOutError) { }
+    catch (ignore: WaitTimedOutError) {
+    }
   }
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
@@ -253,19 +283,23 @@ object GuiTestUtilKt {
     return GuiTestUtil.waitUntilGone(root, timeout, matcher)
   }
 
-  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppear: Timeout = Timeouts.seconds05, timeoutToGone: Timeout = Timeouts.defaultTimeout) {
-    waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppear, timeoutToGone)
+  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String,
+                                              predicate: FinderPredicate = Predicate.equality,
+                                              timeoutToAppear: Timeout = Timeouts.seconds05,
+                                              timeoutToGone: Timeout = Timeouts.defaultTimeout) {
+    waitProgressDialogUntilGone(this.robot(), dialogTitle, predicate, timeoutToAppear, timeoutToGone)
   }
 
   fun waitProgressDialogUntilGone(robot: Robot,
                                   progressTitle: String,
+                                  predicate: FinderPredicate = Predicate.equality,
                                   timeoutToAppear: Timeout = Timeouts.seconds30,
                                   timeoutToGone: Timeout = Timeouts.defaultTimeout) {
     //wait dialog appearance. In a bad case we could pass dialog appearance.
     var dialog: JDialog? = null
     try {
       waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppear) {
-        dialog = findProgressDialog(robot, progressTitle)
+        dialog = findProgressDialog(robot, progressTitle, predicate)
         dialog != null
       }
     }
@@ -275,9 +309,9 @@ object GuiTestUtilKt {
     waitUntil("progress dialog with title $progressTitle will gone", timeoutToGone) { dialog == null || !dialog!!.isShowing }
   }
 
-  fun findProgressDialog(robot: Robot, progressTitle: String): JDialog? {
-    return robot.finder().findAll(typeMatcher(JDialog::class.java) {
-      findAllWithBFS(it, EngravedLabel::class.java).filter { it.isShowing && it.text == progressTitle }.any()
+  fun findProgressDialog(robot: Robot, progressTitle: String, predicate: FinderPredicate = Predicate.equality): JDialog? {
+    return robot.finder().findAll(typeMatcher(JDialog::class.java) { dialog: JDialog ->
+      findAllWithBFS(dialog, EngravedLabel::class.java).filter { it.isShowing && predicate(it.text, progressTitle) }.any()
     }).firstOrNull()
   }
 
@@ -308,10 +342,12 @@ object GuiTestUtilKt {
     return result?.first
   }
 
-  inline fun ignoreComponentLookupException(action: () -> Unit) = try {
+  inline fun <T> ignoreComponentLookupException(action: () -> T): T? = try {
     action()
   }
-  catch (ignore: ComponentLookupException) { }
+  catch (ignore: ComponentLookupException) {
+    null
+  }
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {
     try {

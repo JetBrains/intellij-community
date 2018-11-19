@@ -93,7 +93,6 @@ import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
 /**
  * @author Denis Zhdanov
- * @since 4/10/13 1:19 PM
  */
 public class GradleManager
   implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
@@ -121,7 +120,7 @@ public class GradleManager
         // It's possible usecase when 'java' subsystem dependent plugins bundled with the non-java IDE using fat plugin distribution.
         // This approach can lead to unwanted/incompatible extensions to be loaded.
         // The workaround extensionsFilter should be removed when the IntelliJ java subsystem will become a regular plugin
-        // or those plugins will be fixed using the optional plugin dependency on 'org.jetbrains.plugins.gradle.java'
+        // or those plugins will be fixed using the optional plugin dependency on 'com.intellij.modules.gradle.java'
         boolean isJavaIde = ExternalSystemApiUtil.isJavaCompatibleIde();
         if (!isJavaIde) {
           ExtensionPoint<GradleProjectResolverExtension> point =

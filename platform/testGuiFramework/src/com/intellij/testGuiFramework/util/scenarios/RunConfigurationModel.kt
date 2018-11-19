@@ -10,6 +10,8 @@ import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
+import javax.swing.JDialog
+import javax.swing.JLabel
 
 class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<RunConfigurationModel>(
@@ -51,6 +53,36 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
         actionGetValue = { model, title: String ->
           with(model.connectDialog()) {
             textfield(title).text()
+          }
+        }
+      )
+
+      val beforeLaunchField = CustomConfigurationField(
+        actionIsPresent = { model: RunConfigurationModel, title: String ->
+          with(model.connectDialog()) {
+            try {
+              findComponentWithTimeout<JLabel, JDialog>(Timeouts.noTimeout) {
+                it.isShowing && it.isVisible && (it.text?.startsWith(title) ?: false)
+              }.isEnabled
+            }
+            catch (e: ComponentLookupException) {
+              false
+            }
+          }
+        },
+        actionSetValue = { _, _: String, _: String ->
+          //TODO: support adding of build step
+        },
+        actionGetValue = { model, title: String ->
+          with(model.connectDialog()) {
+            try {
+              findComponentWithTimeout<JLabel, JDialog>(Timeouts.noTimeout) {
+                it.isShowing && it.isVisible && (it.text?.startsWith(title) ?: false)
+              }.text.removePrefix(title).trim()
+            }
+            catch (e: ComponentLookupException) {
+              ""
+            }
           }
         }
       )
@@ -137,7 +169,7 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
     ShortenCmdLine(ConfigurationField("Shorten command line:", FieldKind.Combo,
                                       predicate = Predicate.startWith)),
     CapturingSnapshots(ConfigurationField("Enable capturing form snapshots", FieldKind.Check)),
-    BeforeLaunch(ConfigurationField("Before launch:", FieldKind.List))
+    BeforeLaunch(ConfigurationField("Before launch:", FieldKind.Custom, custom = CustomConfigurationField.beforeLaunchField)),
   }
 
   enum class GlassfishFields(val conf: ConfigurationField) {
@@ -162,12 +194,12 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
 val GuiTestCase.runConfigModel by RunConfigurationModel
 
 fun RunConfigurationModel.connectDialog(): JDialogFixture =
-  guiTestCase.dialog(RunConfigurationModel.Constants.runConfigTitle, true, Timeouts.defaultTimeout)
+  guiTestCase.dialog(RunConfigurationModel.Constants.runConfigTitle, true)
 
 fun RunConfigurationModel.checkConfigurationExistsAndSelect(vararg configuration: String) {
   with(connectDialog()) {
     guiTestCase.logTestStep("Going to check that configuration '${configuration.joinToString()}' exists")
-    assert(guiTestCase.exists { jTree(*configuration) })
+    assert(guiTestCase.exists { jTree(*configuration) }){"Cannot find configuration '${configuration.joinToString()}'"}
     jTree(*configuration).clickPath()
   }
 }

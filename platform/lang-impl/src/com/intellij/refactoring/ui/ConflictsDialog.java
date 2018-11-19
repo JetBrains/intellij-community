@@ -71,11 +71,8 @@ public class ConflictsDialog extends DialogWrapper{
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
     myCanShowConflictsInView = canShowConflictsInView;
-    final LinkedHashSet<String> conflicts = new LinkedHashSet<>();
 
-    for (String conflict : conflictDescriptions.values()) {
-      conflicts.add(conflict);
-    }
+    final LinkedHashSet<String> conflicts = new LinkedHashSet<>(conflictDescriptions.values());
     myConflictDescriptions = ArrayUtil.toStringArray(conflicts);
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
@@ -148,7 +145,7 @@ public class ConflictsDialog extends DialogWrapper{
   }
 
   private class CancelAction extends AbstractAction {
-    public CancelAction() {
+    CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
       putValue(DEFAULT_ACTION,Boolean.TRUE);
     }
@@ -166,7 +163,7 @@ public class ConflictsDialog extends DialogWrapper{
   private class MyShowConflictsInUsageViewAction extends AbstractAction {
 
 
-    public MyShowConflictsInUsageViewAction() {
+    MyShowConflictsInUsageViewAction() {
       super("Show Conflicts in View");
     }
 
@@ -227,15 +224,15 @@ public class ConflictsDialog extends DialogWrapper{
     private class DescriptionOnlyUsage implements Usage {
       private final String myConflictDescription;
 
-      public DescriptionOnlyUsage(String conflictDescription) {
-        myConflictDescription = StringUtil.unescapeXml(conflictDescription)
+      DescriptionOnlyUsage(@NotNull String conflictDescription) {
+        myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription)
           .replaceAll("<code>", "")
           .replaceAll("</code>", "")
           .replaceAll("<b>", "")
           .replaceAll("</b>", "");
       }
 
-      public DescriptionOnlyUsage() {
+      DescriptionOnlyUsage() {
         myConflictDescription =
           Pattern.compile("<[^<>]*>").matcher(StringUtil.join(new LinkedHashSet<>(myElementConflictDescription.get(null)), "\n")).replaceAll("");
       }

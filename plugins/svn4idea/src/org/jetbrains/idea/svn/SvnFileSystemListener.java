@@ -57,7 +57,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     @Nullable private final File myCopyFrom;
     private final boolean myRecursive;
 
-    public AddedFileInfo(final VirtualFile dir, final String name, @Nullable final File copyFrom, boolean recursive) {
+    AddedFileInfo(final VirtualFile dir, final String name, @Nullable final File copyFrom, boolean recursive) {
       myDir = dir;
       myName = name;
       myCopyFrom = copyFrom;
@@ -185,7 +185,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
             myT = myVcs.getInfo(virtualToIoFile(dir));
           }
         }.compute();
-        if (info1 == null || info1.getRepositoryUUID() == null) {
+        if (info1 == null || info1.getRepositoryId() == null) {
           // go deeper if current parent was added (if parent was added, it theoretically could NOT know its repo UUID)
           final VirtualFile parent = dir.getParent();
           if (parent == null) {
@@ -195,7 +195,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
             return getRepositoryUUID(project, parent);
           }
         } else {
-          return info1.getRepositoryUUID();
+          return info1.getRepositoryId();
         }
       }
       catch (VcsException e) {

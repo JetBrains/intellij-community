@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ExecutionEnvironmentBuilder {
-  @NotNull private RunProfile myRunProfile;
+  private RunProfile myRunProfile;
   @NotNull private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;
 
   @NotNull private final Project myProject;
@@ -24,7 +24,6 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
-  @Nullable private String myRunnerId;
   private ProgramRunner<?> myRunner;
   private boolean myAssignNewId;
   @Nullable private Long myExecutionId = null;
@@ -57,8 +56,17 @@ public final class ExecutionEnvironmentBuilder {
 
   @Nullable
   public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
-    ExecutionEnvironmentBuilder builder = createOrNull(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
+    ExecutionEnvironmentBuilder builder = createOrNull(executor, settings.getConfiguration());
     return builder == null ? null : builder.runnerAndSettings(builder.myRunner, settings);
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    ExecutionEnvironmentBuilder builder = createOrNull(configuration.getProject(), executor, configuration);
+    if (builder != null) {
+      builder.runProfile(configuration);
+    }
+    return builder;
   }
 
   @NotNull
@@ -108,6 +116,7 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @NotNull
   public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner runner,
                                                        @NotNull RunnerAndConfigurationSettings settings) {
     myRunnerAndConfigurationSettings = settings;
@@ -133,6 +142,7 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @NotNull
   public ExecutionEnvironmentBuilder runner(@NotNull ProgramRunner<?> runner) {
     myRunner = runner;
     return this;
@@ -164,12 +174,7 @@ public final class ExecutionEnvironmentBuilder {
     }
 
     if (environment == null && myRunner == null) {
-      if (myRunnerId == null) {
-        myRunner = ProgramRunner.getRunner(myExecutor.getId(), myRunProfile);
-      }
-      else {
-        myRunner = ProgramRunner.findRunnerById(myRunnerId);
-      }
+      myRunner = ProgramRunner.getRunner(myExecutor.getId(), myRunProfile);
     }
 
     if (environment == null && myRunner == null) {

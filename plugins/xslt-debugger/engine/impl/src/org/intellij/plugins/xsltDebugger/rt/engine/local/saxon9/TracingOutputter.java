@@ -14,7 +14,7 @@ final class TracingOutputter extends Emitter {
   private final OutputEventQueueImpl myEventQueue;
   private final Emitter myEmitter;
 
-  public TracingOutputter(OutputEventQueueImpl queue, Emitter emitter) {
+  TracingOutputter(OutputEventQueueImpl queue, Emitter emitter) {
     myEmitter = emitter;
     myEventQueue = queue;
   }

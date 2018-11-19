@@ -242,7 +242,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     private final boolean myTypoAware;
     private final boolean myAllowTypos;
 
-    public Session(@NotNull String name, boolean typoAware) {
+    Session(@NotNull String name, boolean typoAware) {
       myName = name;
 
       int length = name.length();
@@ -744,7 +744,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
       myDeriveIndex = deriveIndex;
     }
 
-    public ErrorState() {
+    ErrorState() {
       this(null, 0);
     }
 
@@ -891,7 +891,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
   private static class TypoError implements Error {
     private final char myCorrectChar;
 
-    public TypoError(char correctChar) {
+    TypoError(char correctChar) {
       myCorrectChar = correctChar;
     }
   }
@@ -903,7 +903,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
   private static class MissError implements Error {
     private final char myMissedChar;
 
-    public MissError(char missedChar) {
+    MissError(char missedChar) {
       myMissedChar = missedChar;
     }
   }
@@ -912,7 +912,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     private final int myLength;
     private final ErrorState myErrorState;
 
-    public Fragment(int length, @NotNull ErrorState errorState) {
+    Fragment(int length, @NotNull ErrorState errorState) {
       myLength = length;
       myErrorState = errorState;
     }
@@ -926,7 +926,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
   private static class Range extends TextRange {
     private final int myErrorCount;
 
-    public Range(int startOffset, int endOffset, int errorCount) {
+    Range(int startOffset, int endOffset, int errorCount) {
       super(startOffset, endOffset);
       myErrorCount = errorCount;
     }

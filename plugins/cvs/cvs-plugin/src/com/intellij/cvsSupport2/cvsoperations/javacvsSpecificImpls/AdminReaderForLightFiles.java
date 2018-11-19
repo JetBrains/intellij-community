@@ -44,9 +44,8 @@ public class AdminReaderForLightFiles implements IAdminReader{
   }
 
   private Collection collectEntriesForPath(File parent) {
-    HashSet result = new HashSet();
-    for (Iterator iterator = myFileToEntryMap.keySet().iterator(); iterator.hasNext();) {
-      File file = (File) iterator.next();
+    HashSet<Entry> result = new HashSet<>();
+    for (File file : myFileToEntryMap.keySet()) {
       if (file.getParentFile().equals(parent)) result.add(myFileToEntryMap.get(file));
     }
     return result;
@@ -70,8 +69,7 @@ public class AdminReaderForLightFiles implements IAdminReader{
   }
 
   private Entry getEntryForPath(File requested) {
-    for (Iterator iterator = myFileToEntryMap.keySet().iterator(); iterator.hasNext();) {
-      File file = (File) iterator.next();
+    for (File file : myFileToEntryMap.keySet()) {
       if (file.equals(requested)) return myFileToEntryMap.get(file);
     }
     return null;

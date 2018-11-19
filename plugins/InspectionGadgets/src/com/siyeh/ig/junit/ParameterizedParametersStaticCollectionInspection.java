@@ -166,7 +166,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
     private final String myErrorString;
     PsiType myReturnType;
 
-    public MethodCandidate(PsiMethod method, String problem, String errorString, PsiType returnType) {
+    MethodCandidate(PsiMethod method, String problem, String errorString, PsiType returnType) {
       myMethod = method;
       myProblem = problem;
       myErrorString = errorString;

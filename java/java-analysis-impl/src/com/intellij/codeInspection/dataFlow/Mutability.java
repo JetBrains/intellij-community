@@ -4,7 +4,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -70,7 +69,7 @@ public enum Mutability {
   }
 
   @NotNull
-  public Mutability union(Mutability other) {
+  public Mutability unite(Mutability other) {
     if (this == other) return this;
     if (this == MUTABLE || other == MUTABLE) return MUTABLE;
     if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
@@ -83,7 +82,6 @@ public enum Mutability {
     if (myAnnotation == null) return null;
     return CachedValuesManager.getManager(project).getCachedValue(project, myKey, () -> {
       PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + myAnnotation, null);
-      InferredAnnotationsManagerImpl.markInferred(annotation);
       ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
       return CachedValueProvider.Result.create(annotation, ModificationTracker.NEVER_CHANGED);
     }, false);
@@ -146,7 +144,7 @@ public enum Mutability {
           PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
           newMutability = method == null ? UNKNOWN : getMutability(method);
         }
-        mutability = mutability.union(newMutability);
+        mutability = mutability.unite(newMutability);
         if (!mutability.isUnmodifiable()) break;
       }
       return mutability;

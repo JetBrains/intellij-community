@@ -60,7 +60,7 @@ public class IncrementalSearchHandler {
     RangeHighlighter segmentHighlighter;
     boolean ignoreCaretMove = false;
 
-    public PerHintSearchData(Project project, JLabel label) {
+    PerHintSearchData(Project project, JLabel label) {
       this.project = project;
       this.label = label;
     }
@@ -186,7 +186,7 @@ public class IncrementalSearchHandler {
     data.hint = hint;
     editor.putUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY, data);
 
-    if (hintData.label.getText().length() > 0) {
+    if (!hintData.label.getText().isEmpty()) {
       updatePosition(editor, hintData, true, false);
     }
   }
@@ -195,8 +195,8 @@ public class IncrementalSearchHandler {
     final int len = pattern.length();
 
     for(int i=0;i<len;++i) {
-      switch(pattern.charAt(i)) {
-        case '*': return true;
+      if (pattern.charAt(i) == '*') {
+        return true;
       }
     }
 
@@ -218,7 +218,7 @@ public class IncrementalSearchHandler {
       final boolean caseSensitive = detectSmartCaseSensitive(prefix);
 
       if (acceptableRegExp(prefix)) {
-        @NonNls final StringBuffer buf = new StringBuffer(prefix.length());
+        @NonNls final StringBuilder buf = new StringBuilder(prefix.length());
         final int len = prefix.length();
 
         for (int i = 0; i < len; ++i) {
@@ -315,7 +315,7 @@ public class IncrementalSearchHandler {
   }
 
   private static class MyLabel extends JLabel {
-    public MyLabel(String text) {
+    MyLabel(String text) {
       super(text);
       this.setBackground(HintUtil.getInformationColor());
       this.setForeground(JBColor.foreground());
@@ -326,7 +326,7 @@ public class IncrementalSearchHandler {
   private static class MyPanel extends JPanel{
     private final Component myLeft;
 
-    public MyPanel(Component left) {
+    MyPanel(Component left) {
       super(new BorderLayout());
       myLeft = left;
     }
@@ -388,7 +388,7 @@ public class IncrementalSearchHandler {
         LightweightHint hint = data.hint;
         PerHintSearchData hintData = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         String text = hintData.label.getText();
-        if (text.length() > 0){
+        if (!text.isEmpty()){
           text = text.substring(0, text.length() - 1);
         }
         hintData.label.setText(text);

@@ -34,12 +34,16 @@ public class ShowHideAspectAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    return isSelected();
+  }
+
+  boolean isSelected() {
     return myGutter.isAvailable();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     VcsUtil.setAspectAvailability(myGutter.getID(), state);
 
     AnnotateActionGroup.revalidateMarkupInAllEditors();

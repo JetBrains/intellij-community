@@ -48,6 +48,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -58,7 +59,7 @@ import java.net.ServerSocket;
 import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
-  ModuleBasedConfiguration<JavaRunConfigurationModule>
+  ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   & CommonJavaRunConfigurationParameters
   & ConfigurationWithCommandLineShortener
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
@@ -220,7 +221,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
 
     // Append coverage parameters if appropriate
-    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
       ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
     }
 
@@ -317,7 +318,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final Object[] listeners = Extensions.getExtensions(epName);
     for (final Object listener : listeners) {
       boolean enabled = true;
-      for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
         if (ext.isListenerDisabled(configuration, listener, getRunnerSettings())) {
           enabled = false;
           break;
@@ -394,7 +395,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
            PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory) ||
            ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory);
   }
-  
+
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
       myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
@@ -415,8 +416,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
                                ? null : javaParameters.getClassPath().getPathsString();
 
       String workingDirectory = getConfiguration().getWorkingDirectory();
-      //when only classpath should be changed, e.g. for starting tests in IDEA's project when some modules can never appear on the same classpath, 
-      //like plugin and corresponding IDE register the same components twice 
+      //when only classpath should be changed, e.g. for starting tests in IDEA's project when some modules can never appear on the same classpath,
+      //like plugin and corresponding IDE register the same components twice
       boolean toChangeWorkingDirectory = toChangeWorkingDirectory(workingDirectory);
 
       try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8)) {

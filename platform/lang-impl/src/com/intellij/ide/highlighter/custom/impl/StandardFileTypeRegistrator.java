@@ -52,7 +52,7 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
   private static class MyCommenter implements Commenter {
     private final CustomSyntaxTableFileType myAbstractFileType;
 
-    public MyCommenter(final CustomSyntaxTableFileType abstractFileType) {
+    MyCommenter(final CustomSyntaxTableFileType abstractFileType) {
 
       myAbstractFileType = abstractFileType;
     }

@@ -66,7 +66,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
 
   @Override
   @NotNull
-  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception {
     return doCreate(newName, directory);
   }
 

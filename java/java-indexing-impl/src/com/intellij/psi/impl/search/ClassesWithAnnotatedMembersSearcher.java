@@ -3,7 +3,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -25,7 +24,7 @@ public class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase<PsiCl
   public void processQuery(@NotNull ClassesWithAnnotatedMembersSearch.Parameters queryParameters,
                            @NotNull final Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
-    for (QueryExecutor executor : Extensions.getExtensions(ClassesWithAnnotatedMembersSearch.EP_NAME)) {
+    for (QueryExecutor executor : ClassesWithAnnotatedMembersSearch.EP_NAME.getExtensionList()) {
       if (executor instanceof ScopedQueryExecutor) {
         scope = scope.intersectWith(GlobalSearchScope.notScope(((ScopedQueryExecutor) executor).getScope(queryParameters)));
       }

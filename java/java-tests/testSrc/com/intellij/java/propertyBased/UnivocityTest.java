@@ -15,7 +15,6 @@
  */
 package com.intellij.java.propertyBased;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaFile;
@@ -29,12 +28,10 @@ import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
 public class UnivocityTest extends AbstractApplyAndRevertTestCase {
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -42,25 +39,28 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
     MadTestingUtil.enableAllInspections(myProject, myProject);
   }
 
-  @Bombed(user = "ann", month = Calendar.AUGUST, day = 31)
   public void testCompilabilityAfterIntentions() {
     initCompiler();
     PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
 
     AtomicLong rebuildStamp = new AtomicLong();
 
-    Generator<MadTestingAction> genIntention = psiJavaFiles().flatMap(
-      file -> Generator.frequency(5, Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())),
-                                  1, Generator.constant(new InvalidateAllPsi(myProject)),
-                                  10, Generator.constant(new FilePropertiesChanged(file))));
-    PropertyChecker.customized().withIterationCount(30).checkScenarios(() -> env -> {
+    PropertyChecker.customized()
+      .withIterationCount(30).checkScenarios(() -> env -> {
       long startModCount = tracker.getModificationCount();
       if (rebuildStamp.getAndSet(startModCount) != startModCount) {
         checkCompiles(myCompilerTester.rebuild());
       }
 
       MadTestingUtil.changeAndRevert(myProject, () -> {
-        env.executeCommands(genIntention);
+        env.executeCommands(Generator.constant(env1 -> {
+          PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Working with %s");
+          Generator<MadTestingAction> cmd =
+            Generator.frequency(5, Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())),
+                                1, Generator.constant(new InvalidateAllPsi(myProject)),
+                                10, Generator.constant(new FilePropertiesChanged(file)));
+          env1.executeCommands(IntDistribution.uniform(1, 5), cmd);
+        }));
 
         if (tracker.getModificationCount() != startModCount) {
           checkCompiles(myCompilerTester.make());
@@ -70,10 +70,12 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
   }
 
   public void testRandomActivity() {
-    PropertyChecker.customized().withIterationCount(30).checkScenarios(() -> env ->
+    Generator<PsiJavaFile> javaFiles = psiJavaFiles();
+    PropertyChecker.customized()
+      .withIterationCount(30).checkScenarios(() -> env ->
       MadTestingUtil.changeAndRevert(myProject, () ->
         env.executeCommands(Generator.constant(env1 -> {
-          PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Working with %s");
+          PsiJavaFile file = env1.generateValue(javaFiles, "Working with %s");
           Generator<MadTestingAction> mutations = Generator.sampledFrom(new DeleteRange(file),
                                                                         new AddNullArgument(file),
                                                                         new DeleteForeachInitializers(file),
@@ -85,13 +87,17 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
                                                                        1, Generator.constant(new RehighlightAllEditors(myProject)),
                                                                        1, mutations);
 
-          env1.executeCommands(IntDistribution.uniform(1, 5), allActions.noShrink());
+          env1.executeCommands(IntDistribution.uniform(1, 5), allActions);
         }))));
   }
 
   @Override
   protected String getTestDataPath() {
-    return new File(PathManager.getHomePath(), "univocity-parsers").getAbsolutePath();
+    File file = new File(PathManager.getHomePath(), "univocity-parsers");
+    if (!file.exists()) {
+      fail("Cannot find univocity project, execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git");
+    }
+    return file.getAbsolutePath();
   }
 
 }

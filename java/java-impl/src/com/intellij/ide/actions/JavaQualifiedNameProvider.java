@@ -217,7 +217,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
           suffix = " ";
         }
       }
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression expression;
       try {
         expression = factory.createExpressionFromText(toInsert + suffix, elementAtCaret);

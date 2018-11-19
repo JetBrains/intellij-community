@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.THashSet;
@@ -289,19 +289,19 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected Color getVisited() {
-    return JBColor.linkVisited();
+    return JBUI.CurrentTheme.Link.linkVisitedColor();
   }
 
   protected Color getActive() {
-    return JBColor.linkPressed();
+    return JBUI.CurrentTheme.Link.linkPressedColor();
   }
 
   protected Color getNormal() {
-    return JBColor.link();
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
   protected Color getHover() {
-    return JBColor.linkHover();
+    return JBUI.CurrentTheme.Link.linkHoverColor();
   }
 
   public void entered(MouseEvent e) {

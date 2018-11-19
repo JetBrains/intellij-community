@@ -26,7 +26,6 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -45,6 +44,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
@@ -53,6 +53,7 @@ import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
@@ -188,7 +189,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static Set<String> myCharOrIntegers;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isCharOrIntegerArray(Value value) {
     if (value == null) return false;
     if (myCharOrIntegers == null) {
@@ -233,7 +233,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return isFiltered(qName, Arrays.asList(classFilters));
   }
 
-  public static boolean isFiltered(@NotNull String qName, List<ClassFilter> classFilters) {
+  public static boolean isFiltered(@NotNull String qName, List<? extends ClassFilter> classFilters) {
     if (qName.indexOf('[') != -1) {
       return false; //is array
     }
@@ -245,7 +245,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
   }
 
-  public static ClassFilter[] readFilters(List<Element> children) {
+  public static ClassFilter[] readFilters(List<? extends Element> children) {
     if (ContainerUtil.isEmpty(children)) {
       return ClassFilter.EMPTY_ARRAY;
     }
@@ -281,13 +281,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return f2.equals(f1);
   }
 
-  private static boolean elementListsEqual(List<Element> l1, List<Element> l2) {
+  private static boolean elementListsEqual(List<? extends Element> l1, List<? extends Element> l2) {
     if (l1 == null) return l2 == null;
     if (l2 == null) return false;
 
     if (l1.size() != l2.size()) return false;
 
-    Iterator<Element> i1 = l1.iterator();
+    Iterator<? extends Element> i1 = l1.iterator();
 
     for (Element aL2 : l2) {
       Element elem1 = i1.next();
@@ -297,13 +297,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return true;
   }
 
-  private static boolean attributeListsEqual(List<Attribute> l1, List<Attribute> l2) {
+  private static boolean attributeListsEqual(List<? extends Attribute> l1, List<? extends Attribute> l2) {
     if (l1 == null) return l2 == null;
     if (l2 == null) return false;
 
     if (l1.size() != l2.size()) return false;
 
-    Iterator<Attribute> i1 = l1.iterator();
+    Iterator<? extends Attribute> i1 = l1.iterator();
 
     for (Attribute aL2 : l2) {
       Attribute attr1 = i1.next();
@@ -331,7 +331,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return true;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean externalizableEqual(JDOMExternalizable e1, JDOMExternalizable e2) {
     Element root1 = new Element("root");
     Element root2 = new Element("root");
@@ -399,36 +398,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   private static int myThreadDumpsCount = 0;
-  private static int myCurrentThreadDumpId = 1;
 
-  private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
-
-  public static void addThreadDump(Project project, List<ThreadState> threads, final RunnerLayoutUi ui, DebuggerSession session) {
+  public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    consoleBuilder.filters(ExceptionFilters.getFilters(session.getSearchScope()));
+    consoleBuilder.filters(ExceptionFilters.getFilters(searchScope));
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     consoleView.allowHeavyFilters();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
-    final String id = THREAD_DUMP_CONTENT_PREFIX + " #" + myCurrentThreadDumpId;
-    final Content content = ui.createContent(id, panel, id, null, null);
+    String id = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+    final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
     ui.addContent(content);
     ui.selectAndFocus(content, true, true);
     myThreadDumpsCount++;
-    myCurrentThreadDumpId++;
-    Disposer.register(content, new Disposable() {
-      @Override
-      public void dispose() {
-        myThreadDumpsCount--;
-        if (myThreadDumpsCount == 0) {
-          myCurrentThreadDumpId = 1;
-        }
-      }
-    });
     Disposer.register(content, consoleView);
     ui.selectAndFocus(content, true, false);
     if (threads.size() > 0) {
@@ -630,7 +616,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  public static String getSourceName(Location location, Function<Throwable, String> defaultName) {
+  public static String getSourceName(Location location, Function<? super Throwable, String> defaultName) {
     try {
       return location.sourceName();
     }
@@ -824,7 +810,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     private final SourcePosition mySourcePosition;
     @NotNull private final VirtualFile myFile;
 
-    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
+    JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
       mySourcePosition = sourcePosition;
       myFile = file;
     }

@@ -59,7 +59,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else if (WideSelectionTreeUI.isWideSelection(tree)) {
       setPaintFocusBorder(false);
       if (selected) {
-        setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
+        setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
+      }
+      else {
+        setBackground(null);
       }
     }
     else if (selected) {
@@ -84,11 +87,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIcon(null);
     }
 
-    if (UIUtil.isUnderGTKLookAndFeel()){
-      super.setOpaque(false);  // avoid nasty background
-      super.setIconOpaque(false);
-    }
-    else if (WideSelectionTreeUI.isWideSelection(tree)) {
+    if (WideSelectionTreeUI.isWideSelection(tree)) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
@@ -143,10 +142,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   @Override
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
     if (mySelected && isFocused()) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
-    }
-    else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeForeground()), isMainText);
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground(true)), isMainText);
     }
     else {
       super.append(fragment, attributes, isMainText);

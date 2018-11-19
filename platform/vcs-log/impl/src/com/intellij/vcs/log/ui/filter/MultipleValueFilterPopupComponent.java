@@ -152,7 +152,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           if (event.isOk()) {
             List<String> selectedValues = popupBuilder.getSelectedValues();
             if (selectedValues.isEmpty()) {

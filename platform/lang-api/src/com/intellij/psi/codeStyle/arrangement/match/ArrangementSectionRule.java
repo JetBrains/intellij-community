@@ -56,7 +56,7 @@ public class ArrangementSectionRule implements Cloneable {
     return create(start, end, rules.length == 0 ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(rules));
   }
 
-  public static ArrangementSectionRule create(@Nullable String start, @Nullable String end, @NotNull List<StdArrangementMatchRule> rules) {
+  public static ArrangementSectionRule create(@Nullable String start, @Nullable String end, @NotNull List<? extends StdArrangementMatchRule> rules) {
     final List<StdArrangementMatchRule> matchRules = ContainerUtil.newArrayList();
     if (StringUtil.isNotEmpty(start)) {
       matchRules.add(createSectionRule(start, START_SECTION));

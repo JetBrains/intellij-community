@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -31,7 +32,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
+public class FoldingModelImpl extends InlayModel.SimpleAdapter
+  implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
 
   public static final Key<Boolean> SELECT_REGION_ON_CARET_NEARBY = Key.create("select.region.on.caret.nearby");
@@ -60,36 +62,21 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
-    myRegionTree = new RangeMarkerTree<FoldRegionImpl>(editor.getDocument()) {
-      @NotNull
-      @Override
-      protected RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
-                                                     int start,
-                                                     int end,
-                                                     boolean greedyToLeft,
-                                                     boolean greedyToRight,
-                                                     boolean stickingToRight,
-                                                     int layer) {
-        return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
-          @Override
-          protected Getter<FoldRegionImpl> createGetter(@NotNull FoldRegionImpl region) {
-            // Fold region shouldn't disappear even if no one holds a reference to it, so folding tree needs a strong reference to a region
-            return region;
-          }
-
-          @Override
-          void onRemoved() {
-            for (Getter<FoldRegionImpl> getter: intervals) {
-              removeRegionFromGroup(getter.get());
-            }
-          }
-        };
-      }
-    };
+    myRegionTree = new MyMarkerTree(editor.getDocument());
     myFoldTree = new FoldRegionsTree(myRegionTree) {
       @Override
       protected boolean isFoldingEnabled() {
         return FoldingModelImpl.this.isFoldingEnabled();
+      }
+
+      @Override
+      protected boolean hasBlockInlays() {
+        return myEditor.getInlayModel().hasBlockElements();
+      }
+
+      @Override
+      protected int getBlockInlaysHeight(int startOffset, int endOffset) {
+        return EditorUtil.getTotalInlaysHeight(myEditor.getInlayModel().getBlockElementsInRange(startOffset, endOffset));
       }
     };
     myFoldRegionsProcessed = false;
@@ -205,7 +192,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
     if (!oldBatchFlag) {
       ((ScrollingModelImpl)myEditor.getScrollingModel()).finishAnimation();
-      mySavedCaretShift = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
+      mySavedCaretShift = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
     }
 
     myIsBatchFoldingProcessing = true;
@@ -362,12 +349,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     }
 
     List<Caret> carets = myEditor.getCaretModel().getAllCarets();
-    for (Caret caret : carets) {
-      LogicalPosition caretPosition = caret.getLogicalPosition();
-      int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
+    if (myDoNotCollapseCaret) {
+      for (Caret caret : carets) {
+        LogicalPosition caretPosition = caret.getLogicalPosition();
+        int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
 
-      if (FoldRegionsTree.containsStrict(region, caretOffset)) {
-        if (myDoNotCollapseCaret) return;
+        if (FoldRegionsTree.containsStrict(region, caretOffset)) return;
       }
     }
     for (Caret caret : carets) {
@@ -454,7 +441,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     if (mySavedCaretShift > 0) {
       final ScrollingModel scrollingModel = myEditor.getScrollingModel();
       scrollingModel.disableAnimation();
-      scrollingModel.scrollVertically(myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift);
+      scrollingModel.scrollVertically(myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift);
       scrollingModel.enableAnimation();
     }
   }
@@ -490,6 +477,14 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       return 0;
     }
     return myFoldTree.getTotalNumberOfFoldedLines();
+  }
+
+  int getHeightOfFoldedBlockInlaysBefore(int offset) {
+    return myFoldTree.getHeightOfFoldedBlockInlaysBefore(offset);
+  }
+
+  int getTotalHeightOfFoldedBlockInlays() {
+    return myFoldTree.getTotalHeightOfFoldedBlockInlays();
   }
 
   @Override
@@ -567,6 +562,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public int getPriority() {
     return EditorDocumentPriorities.FOLD_MODEL;
+  }
+
+  @Override
+  public void onUpdated(@NotNull Inlay inlay) {
+    if (inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) myFoldTree.clearCachedInlayValues();
   }
 
   @Nullable
@@ -699,6 +699,82 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
     private boolean isUpToDate(Editor editor) {
       return docStamp == editor.getDocument().getModificationStamp();
+    }
+  }
+
+  private class MyMarkerTree extends HardReferencingRangeMarkerTree<FoldRegionImpl> {
+    private boolean inCollectCall;
+
+    private MyMarkerTree(Document document) {
+      super(document);
+    }
+
+    @NotNull
+    private FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
+      assert node.intervals.size() == 1;
+      FoldRegionImpl region = node.intervals.get(0).get();
+      assert region != null;
+      return region;
+    }
+
+    @NotNull
+    @Override
+    protected Node<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
+                                                 int start,
+                                                 int end,
+                                                 boolean greedyToLeft,
+                                                 boolean greedyToRight,
+                                                 boolean stickingToRight,
+                                                 int layer) {
+      return new Node<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+        @Override
+        void onRemoved() {
+          for (Getter<FoldRegionImpl> getter : intervals) {
+            removeRegionFromGroup(getter.get());
+          }
+        }
+
+        @Override
+        void addIntervalsFrom(@NotNull IntervalNode<FoldRegionImpl> otherNode) {
+          FoldRegionImpl region = getRegion(this);
+          FoldRegionImpl otherRegion = getRegion(otherNode);
+          if (otherRegion.mySizeBeforeUpdate > region.mySizeBeforeUpdate) {
+            setNode(region, null);
+            removeIntervalInternal(0);
+            super.addIntervalsFrom(otherNode);
+          }
+          else {
+            otherNode.setValid(false);
+            ((RMNode)otherNode).onRemoved();
+          }
+        }
+      };
+    }
+
+    @Override
+    boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
+                                                   @NotNull DocumentEvent e,
+                                                   @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
+      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+      inCollectCall = true;
+      boolean result;
+      try {
+        result = super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+      }
+      finally {
+        inCollectCall = false;
+      }
+      if (e.getOldLength() > 0 /* document change can cause regions to become equal*/) {
+        for (Object o : affected) {
+          //noinspection unchecked
+          Node<FoldRegionImpl> node = (Node<FoldRegionImpl>)o;
+          FoldRegionImpl region = getRegion(node);
+          // region with the largest metric value is kept when several regions become identical after document change
+          // we want the largest collapsed region to survive
+          region.mySizeBeforeUpdate = region.isExpanded() ? 0 : node.intervalEnd() - node.intervalStart();
+        }
+      }
+      return result;
     }
   }
 }

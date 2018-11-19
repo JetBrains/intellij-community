@@ -18,13 +18,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyFrameAccessor;
 import icons.PythonIcons;
-import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class PyDataView implements DumbAware {
   public static final String DATA_VIEWER_ID = "SciView";
@@ -147,12 +146,7 @@ public class PyDataView implements DumbAware {
   }
 
   private static boolean isConnected(PydevConsoleCommunication accessor){
-    try {
-      return accessor.handshake();
-    }
-    catch (XmlRpcException ignored) {
-      return false;
-    }
+    return accessor.handshake();
   }
 
   public static PyDataView getInstance(@NotNull final Project project) {
@@ -218,14 +212,14 @@ public class PyDataView implements DumbAware {
   }
 
   public List<TabInfo> getVisibleTabs() {
-    return myTabs.getTabs().stream().filter(tabInfo -> !tabInfo.isHidden()).collect(Collectors.toList());
+    return ContainerUtil.filter(myTabs.getTabs(), tabInfo -> !tabInfo.isHidden());
   }
 
 
   private class NewViewerAction extends AnAction {
     private final PyFrameAccessor myFrameAccessor;
 
-    public NewViewerAction(PyFrameAccessor frameAccessor) {
+    NewViewerAction(PyFrameAccessor frameAccessor) {
       super("View New Container", "Open new container viewer", AllIcons.General.Add);
       myFrameAccessor = frameAccessor;
     }
@@ -241,7 +235,7 @@ public class PyDataView implements DumbAware {
     private final TabInfo myInfo;
     private final PyFrameAccessor myFrameAccessor;
 
-    public CloseViewerAction(TabInfo info, PyFrameAccessor frameAccessor) {
+    CloseViewerAction(TabInfo info, PyFrameAccessor frameAccessor) {
       super("Close Viewer", "Close selected viewer", AllIcons.Actions.Close);
       myInfo = info;
       myFrameAccessor = frameAccessor;
@@ -257,12 +251,12 @@ public class PyDataView implements DumbAware {
   }
 
   private class ColoredAction extends ToggleAction {
-    public ColoredAction() {
+    ColoredAction() {
       super("Colored");
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       PyDataViewerPanel panel = getPanel();
       if (panel == null) {
         return true;
@@ -280,7 +274,7 @@ public class PyDataView implements DumbAware {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       PyDataViewerPanel panel = getPanel();
       if (panel != null) {
         panel.setColored(state);

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -21,16 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
 public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "DialogTitleCapitalization";
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -98,7 +88,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   }
 
   @Nullable
-  private static String getTitleValue(@Nullable PsiExpression arg, Set<PsiElement> processed) {
+  private static String getTitleValue(@Nullable PsiExpression arg, Set<? super PsiElement> processed) {
     if (arg instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)arg).getValue();
       if (value instanceof String) {
@@ -187,7 +177,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     private final String myTitleValue;
     private final Nls.Capitalization myCapitalization;
 
-    public TitleCapitalizationFix(String titleValue, Nls.Capitalization capitalization) {
+    TitleCapitalizationFix(String titleValue, Nls.Capitalization capitalization) {
       myTitleValue = titleValue;
       myCapitalization = capitalization;
     }
@@ -201,18 +191,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @Override
     public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement problemElement = descriptor.getPsiElement();
-      if (problemElement == null || !problemElement.isValid()) {
-        return;
-      }
-      try {
-        doFix(project, problemElement);
-      }
-      catch (IncorrectOperationException e) {
-        final Class<? extends TitleCapitalizationFix> aClass = getClass();
-        final String className = aClass.getName();
-        final Logger logger = Logger.getInstance(className);
-        logger.error(e);
-      }
+      if (problemElement == null) return;
+      doFix(project, problemElement);
     }
 
     protected void doFix(Project project, PsiElement element) throws IncorrectOperationException {

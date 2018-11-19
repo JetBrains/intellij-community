@@ -37,9 +37,13 @@ public class GroovyRtConstants {
   public static final String OPTIMIZE = "optimize";
   public static final String GROOVYC_STUB_GENERATION_FAILED = "Groovyc stub generation failed";
 
-  public static final String STUBS_GENERATED = "Stubs generated";
   public static final String JAVAC_COMPLETED = "Javac completed";
   public static final String BUILD_ABORTED = "Build aborted";
+
+  /**
+   * Older version of groovyc generated malformed annotations in stubs, so give a possibility to skip those
+   */
+  public static final String GROOVYC_LEGACY_REMOVE_ANNOTATIONS = "groovyc.remove.annotations.for.stub.generation";
 
   public static final String GROOVYC_ASM_RESOLVING_ONLY = "groovyc.asm.resolving.only";
   public static final String GROOVYC_CONFIG_SCRIPT = "groovyc.config.script";

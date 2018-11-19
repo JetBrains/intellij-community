@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.progress.util.ProgressIndicatorStacked;
 import org.jetbrains.annotations.NotNull;
 
-public interface ProgressIndicatorEx extends ProgressIndicatorStacked {
+public interface ProgressIndicatorEx extends ProgressIndicator {
   void addStateDelegate(@NotNull ProgressIndicatorEx delegate);
 
   void finish(@NotNull TaskInfo task);
@@ -29,4 +29,6 @@ public interface ProgressIndicatorEx extends ProgressIndicatorStacked {
   boolean wasStarted();
 
   void processFinish();
+
+  void initStateFrom(@NotNull ProgressIndicator indicator);
 }

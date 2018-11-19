@@ -69,6 +69,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
@@ -96,8 +99,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
@@ -621,7 +624,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static JComponent createStackedComponents(@NotNull List<JComponent> components, int gap) {
+  public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, int gap) {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -711,7 +714,7 @@ public class DiffUtil {
   }
 
   @Nullable
-  public static MergeInnerDifferences compareThreesideInner(@NotNull List<CharSequence> chunks,
+  public static MergeInnerDifferences compareThreesideInner(@NotNull List<? extends CharSequence> chunks,
                                                             @NotNull ComparisonPolicy comparisonPolicy,
                                                             @NotNull ProgressIndicator indicator) {
     if (chunks.get(0) == null && chunks.get(1) == null && chunks.get(2) == null) return null; // ---
@@ -781,7 +784,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static <T> int[] getSortedIndexes(@NotNull List<T> values, @NotNull Comparator<T> comparator) {
+  public static <T> int[] getSortedIndexes(@NotNull List<? extends T> values, @NotNull Comparator<? super T> comparator) {
     final List<Integer> indexes = new ArrayList<>(values.size());
     for (int i = 0; i < values.size(); i++) {
       indexes.add(i);
@@ -863,7 +866,7 @@ public class DiffUtil {
       }
 
       Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
-      lines.set(pair.first.line, pair.second.line);
+      lines.set(pair.first.line, Math.max(pair.second.line, pair.first.line + 1));
       if (offset == document.getTextLength()) lines.set(totalLines);
     }
   }
@@ -957,7 +960,7 @@ public class DiffUtil {
                                          @NotNull LineOffsets lineOffsets,
                                          @NotNull CharSequence otherText,
                                          @NotNull LineOffsets otherLineOffsets,
-                                         @NotNull List<Range> ranges) {
+                                         @NotNull List<? extends Range> ranges) {
     return new Object() {
       private final StringBuilder stringBuilder = new StringBuilder();
       private boolean isEmpty = true;
@@ -1200,9 +1203,9 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static MergeConflictType getMergeType(@NotNull Condition<ThreeSide> emptiness,
-                                               @NotNull Equality<ThreeSide> equality,
-                                               @Nullable Equality<ThreeSide> trueEquality,
+  public static MergeConflictType getMergeType(@NotNull Condition<? super ThreeSide> emptiness,
+                                               @NotNull Equality<? super ThreeSide> equality,
+                                               @Nullable Equality<? super ThreeSide> trueEquality,
                                                @NotNull BooleanGetter conflictResolver) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
@@ -1260,7 +1263,7 @@ public class DiffUtil {
   @NotNull
   public static MergeConflictType getLineThreeWayDiffType(@NotNull MergeLineFragment fragment,
                                                           @NotNull List<? extends CharSequence> sequences,
-                                                          @NotNull List<LineOffsets> lineOffsets,
+                                                          @NotNull List<? extends LineOffsets> lineOffsets,
                                                           @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
@@ -1271,7 +1274,7 @@ public class DiffUtil {
   @NotNull
   public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
                                                    @NotNull List<? extends CharSequence> sequences,
-                                                   @NotNull List<LineOffsets> lineOffsets,
+                                                   @NotNull List<? extends LineOffsets> lineOffsets,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
@@ -1281,7 +1284,7 @@ public class DiffUtil {
 
   private static boolean canResolveLineConflict(@NotNull MergeLineFragment fragment,
                                                 @NotNull List<? extends CharSequence> sequences,
-                                                @NotNull List<LineOffsets> lineOffsets) {
+                                                @NotNull List<? extends LineOffsets> lineOffsets) {
     List<? extends CharSequence> contents = ThreeSide.map(side -> {
       return getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side), fragment.getEndLine(side));
     });
@@ -1290,7 +1293,7 @@ public class DiffUtil {
 
   private static boolean compareLineMergeContents(@NotNull MergeLineFragment fragment,
                                                   @NotNull List<? extends CharSequence> sequences,
-                                                  @NotNull List<LineOffsets> lineOffsets,
+                                                  @NotNull List<? extends LineOffsets> lineOffsets,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ThreeSide side1,
                                                   @NotNull ThreeSide side2) {
@@ -1487,7 +1490,7 @@ public class DiffUtil {
    */
   private static boolean closeWindow(@NotNull Window window, boolean modalOnly) {
     if (window instanceof IdeFrameImpl) return false;
-    if (modalOnly && window instanceof Frame) return false;
+    if (modalOnly && canBeHiddenBehind(window)) return false;
 
     if (window instanceof DialogWrapperDialog) {
       ((DialogWrapperDialog)window).getDialogWrapper().doCancelAction();
@@ -1496,6 +1499,21 @@ public class DiffUtil {
 
     window.setVisible(false);
     window.dispose();
+    return true;
+  }
+
+  private static boolean canBeHiddenBehind(@NotNull Window window) {
+    if (!(window instanceof Frame)) return false;
+    if (SystemInfo.isMac) {
+      if (window instanceof IdeFrame) {
+        // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
+        Project project = ((IdeFrame)window).getProject();
+        IdeFrame projectFrame = WindowManager.getInstance().getIdeFrame(project);
+        if (projectFrame instanceof IdeFrameEx) {
+          return !((IdeFrameEx)projectFrame).isInFullScreen();
+        }
+      }
+    }
     return true;
   }
 
@@ -1553,7 +1571,7 @@ public class DiffUtil {
   //
 
   @Nullable
-  public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NonNls String dataId) {
+  public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NotNull @NonNls String dataId) {
     if (provider != null) {
       Object data = provider.getData(dataId);
       if (data != null) return data;
@@ -1585,7 +1603,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static <K, V> TreeMap<K, V> trimDefaultValues(@NotNull TreeMap<K, V> map, @NotNull Convertor<K, V> defaultValue) {
+  public static <K, V> TreeMap<K, V> trimDefaultValues(@NotNull TreeMap<K, V> map, @NotNull Convertor<? super K, V> defaultValue) {
     TreeMap<K, V> result = new TreeMap<>();
     for (Map.Entry<K, V> it : map.entrySet()) {
       K key = it.getKey();
@@ -1644,7 +1662,7 @@ public class DiffUtil {
   private static class SyncHeightComponent extends JPanel {
     @NotNull private final List<JComponent> myComponents;
 
-    public SyncHeightComponent(@NotNull List<JComponent> components, int index) {
+    SyncHeightComponent(@NotNull List<JComponent> components, int index) {
       super(new BorderLayout());
       myComponents = components;
       JComponent delegate = components.get(index);

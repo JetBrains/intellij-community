@@ -26,6 +26,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibrarySupport;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
@@ -61,7 +63,7 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
     addLibraryToModule(libraryDescription, module);
   }
 
-  public static void addLibraryToModule(RepositoryLibraryDescription libraryDescription, Module module) {
+  public static Promise<Void> addLibraryToModule(RepositoryLibraryDescription libraryDescription, Module module) {
     RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
       RepositoryLibraryDescription.DefaultVersionId,
       false,
@@ -72,7 +74,7 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
       libraryDescription,
       false, true);
     if (!dialog.showAndGet()) {
-      return;
+      return Promises.rejectedPromise();
     }
     IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
     final ModifiableRootModel modifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
@@ -83,5 +85,6 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
       modifiableModel,
       modifiableModelsProvider);
     ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
+    return Promise.resolve(null);
   }
 }

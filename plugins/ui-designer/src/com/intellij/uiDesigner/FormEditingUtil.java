@@ -313,7 +313,7 @@ public final class FormEditingUtil {
     return result;
   }
 
-  private static void calcSelectedComponentsImpl(final ArrayList<RadComponent> result, final RadContainer container) {
+  private static void calcSelectedComponentsImpl(final ArrayList<? super RadComponent> result, final RadContainer container) {
     if (container.isSelected()) {
       if (container.getParent() != null) { // ignore RadRootContainer
         result.add(container);
@@ -627,7 +627,7 @@ public final class FormEditingUtil {
   }
 
   @Nullable
-  public static RadContainer getSelectionParent(final List<RadComponent> selection) {
+  public static RadContainer getSelectionParent(final List<? extends RadComponent> selection) {
     RadContainer parent = null;
     for (RadComponent c : selection) {
       if (parent == null) {
@@ -641,7 +641,7 @@ public final class FormEditingUtil {
     return parent;
   }
 
-  public static Rectangle getSelectionBounds(List<RadComponent> selection) {
+  public static Rectangle getSelectionBounds(List<? extends RadComponent> selection) {
     int minRow = Integer.MAX_VALUE;
     int minCol = Integer.MAX_VALUE;
     int maxRow = 0;
@@ -710,7 +710,7 @@ public final class FormEditingUtil {
     }
   }
 
-  public static void selectComponents(final GuiEditor editor, List<RadComponent> components) {
+  public static void selectComponents(final GuiEditor editor, List<? extends RadComponent> components) {
     if (components.size() > 0) {
       RadComponent component = components.get(0);
       ComponentTreeBuilder builder = DesignerToolWindowManager.getInstance(editor).getComponentTreeBuilder();
@@ -808,13 +808,15 @@ public final class FormEditingUtil {
     return null;
   }
 
-  public static void remapToActionTargets(final List<RadComponent> selection) {
+  public static List<RadComponent> remapToActionTargets(final List<? extends RadComponent> selection) {
+    ArrayList<RadComponent> result = new ArrayList<>(selection.size());
     for (int i = 0; i < selection.size(); i++) {
       final RadComponent c = selection.get(i);
       if (c.getParent() != null) {
-        selection.set(i, c.getParent().getActionTargetComponent(c));
+        result.add(c.getParent().getActionTargetComponent(c));
       }
     }
+    return result;
   }
 
   public static void showPopupUnderComponent(final JBPopup popup, final RadComponent selectedComponent) {
@@ -830,7 +832,7 @@ public final class FormEditingUtil {
 
 
   public static void iterateStringDescriptors(final IComponent component,
-                                              final StringDescriptorVisitor<IComponent> visitor) {
+                                              final StringDescriptorVisitor<? super IComponent> visitor) {
     iterate(component, new ComponentVisitor<IComponent>() {
 
       @Override

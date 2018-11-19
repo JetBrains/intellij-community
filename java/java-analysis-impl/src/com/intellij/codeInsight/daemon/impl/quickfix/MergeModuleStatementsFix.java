@@ -45,7 +45,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends L
       LOG.assertTrue(!statementsToMerge.isEmpty());
 
       final String text = getReplacementText(statementsToMerge);
-      final PsiStatement replacement = JavaPsiFacade.getInstance(project).getElementFactory().createModuleStatementFromText(text);
+      final PsiStatement replacement = JavaPsiFacade.getElementFactory(project).createModuleStatementFromText(text);
 
       final T firstStatement = statementsToMerge.get(0);
       final CommentTracker commentTracker = new CommentTracker();
@@ -66,7 +66,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends L
   }
 
   @NotNull
-  protected abstract String getReplacementText(List<T> statementsToMerge);
+  protected abstract String getReplacementText(List<? extends T> statementsToMerge);
 
   @NotNull
   protected abstract List<T> getStatementsToMerge(@NotNull PsiJavaModule javaModule);

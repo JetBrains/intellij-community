@@ -77,7 +77,7 @@ public class VcsCommitStyleFactory {
    * @return a combination of styles from the list.
    */
   @NotNull
-  public static VcsLogHighlighter.VcsCommitStyle combine(@NotNull Collection<VcsLogHighlighter.VcsCommitStyle> styles) {
+  public static VcsLogHighlighter.VcsCommitStyle combine(@NotNull Collection<? extends VcsLogHighlighter.VcsCommitStyle> styles) {
     Color foreground = null;
     Color background = null;
     VcsLogHighlighter.TextStyle textStyle = null;
@@ -113,7 +113,7 @@ public class VcsCommitStyleFactory {
      * @param background background color or null if unspecified.
      * @param textStyle  text style or null if unspecified
      */
-    public VcsCommitStyleImpl(@Nullable Color foreground, @Nullable Color background, @Nullable VcsLogHighlighter.TextStyle textStyle) {
+    VcsCommitStyleImpl(@Nullable Color foreground, @Nullable Color background, @Nullable VcsLogHighlighter.TextStyle textStyle) {
       myForeground = foreground;
       myBackground = background;
       myTextStyle = textStyle;

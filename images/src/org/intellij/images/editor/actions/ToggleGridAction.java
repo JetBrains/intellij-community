@@ -31,13 +31,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ToggleGridAction extends ToggleAction implements DumbAware {
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     return decorator != null && decorator.isGridVisible();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     if (decorator != null) {
       decorator.setGridVisible(state);

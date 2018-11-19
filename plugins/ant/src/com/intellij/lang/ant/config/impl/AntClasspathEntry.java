@@ -60,11 +60,11 @@ public interface AntClasspathEntry {
   abstract class AddEntriesFactory implements NullableFactory<List<AntClasspathEntry>> {
     private final JComponent myParentComponent;
     private final FileChooserDescriptor myDescriptor;
-    private final Function<VirtualFile, AntClasspathEntry> myMapper;
+    private final Function<? super VirtualFile, ? extends AntClasspathEntry> myMapper;
 
     public AddEntriesFactory(final JComponent parentComponent,
                              final FileChooserDescriptor descriptor,
-                             final Function<VirtualFile, AntClasspathEntry> mapper) {
+                             final Function<? super VirtualFile, ? extends AntClasspathEntry> mapper) {
       myParentComponent = parentComponent;
       myDescriptor = descriptor;
       myMapper = mapper;

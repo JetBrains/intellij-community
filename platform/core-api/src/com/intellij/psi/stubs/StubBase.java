@@ -29,8 +29,8 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   protected StubBase(StubElement parent, IStubElementType elementType) {
     super(parent);
-    StubList stubList = parent == null ? new StubList(10) : ((StubBase)parent).myStubList;
-    stubList.addStub(this, (StubBase<?>)parent, elementType);
+    myStubList = parent == null ? new MaterialStubList(10) : ((StubBase)parent).myStubList;
+    myStubList.addStub(this, (StubBase<?>)parent, elementType);
   }
 
   @Override
@@ -109,7 +109,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return result;
   }
 
-  private static int countChildren(IElementType elementType, List<StubElement> childrenStubs) {
+  private static int countChildren(IElementType elementType, List<? extends StubElement> childrenStubs) {
     int count = 0;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
@@ -120,7 +120,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return count;
   }
 
-  private static int countChildren(TokenSet types, List<StubElement> childrenStubs) {
+  private static int countChildren(TokenSet types, List<? extends StubElement> childrenStubs) {
     int count = 0;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
@@ -131,7 +131,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return count;
   }
 
-  private static <E extends PsiElement> void fillFilteredChildren(IElementType type, E[] result, List<StubElement> childrenStubs) {
+  private static <E extends PsiElement> void fillFilteredChildren(IElementType type, E[] result, List<? extends StubElement> childrenStubs) {
     int count = 0;
     for (StubElement childStub : childrenStubs) {
       if (childStub.getStubType() == type) {
@@ -143,7 +143,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     assert count == result.length;
   }
 
-  private static <E extends PsiElement> void fillFilteredChildren(TokenSet set, E[] result, List<StubElement> childrenStubs) {
+  private static <E extends PsiElement> void fillFilteredChildren(TokenSet set, E[] result, List<? extends StubElement> childrenStubs) {
     int count = 0;
     for (StubElement childStub : childrenStubs) {
       if (set.contains(childStub.getStubType())) {

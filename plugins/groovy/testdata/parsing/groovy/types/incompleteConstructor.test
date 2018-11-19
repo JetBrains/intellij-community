@@ -21,8 +21,8 @@ Groovy script
         Modifiers
           <empty list>
         PsiElement(identifier)('Foo')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Modifiers
             <empty list>
           Built in type

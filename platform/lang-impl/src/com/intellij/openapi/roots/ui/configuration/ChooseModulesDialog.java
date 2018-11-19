@@ -28,11 +28,11 @@ import java.util.List;
 
 public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
 
-  public ChooseModulesDialog(Component parent, final List<Module> items, final String title) {
+  public ChooseModulesDialog(Component parent, final List<? extends Module> items, final String title) {
     super(parent, items, title, null, true);
   }
 
-  public ChooseModulesDialog(Component parent, List<Module> items, String title, @Nullable String description) {
+  public ChooseModulesDialog(Component parent, List<? extends Module> items, String title, @Nullable String description) {
     super(parent, items, title, description, true);
   }
 

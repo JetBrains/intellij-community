@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Set;
 
 /**
  * @author peter
@@ -42,7 +41,7 @@ public final class CompletionServiceImpl extends CompletionService {
   public CompletionServiceImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
         if (indicator != null && indicator.getProject() == project) {
           indicator.closeAndFinish(true);
@@ -55,16 +54,10 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @Override
-  public void performCompletion(final CompletionParameters parameters, final Consumer<CompletionResult> consumer) {
+  public void performCompletion(final CompletionParameters parameters, final Consumer<? super CompletionResult> consumer) {
     myApiCompletionProcess = parameters.getProcess();
     try {
-      final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
-
-      getVariantsFromContributors(parameters, null, result -> {
-        if (lookupSet.add(result.getLookupElement())) {
-          consumer.consume(result);
-        }
-      });
+      super.performCompletion(parameters, consumer);
     }
     finally {
       myApiCompletionProcess = null;

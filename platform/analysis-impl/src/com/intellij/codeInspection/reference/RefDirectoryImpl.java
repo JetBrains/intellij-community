@@ -79,7 +79,7 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
 
   @Override
   public String getExternalName() {
-    final PsiElement element = getElement();
+    final PsiElement element = getPsiElement();
     assert element != null;
     return ((PsiDirectory)element).getVirtualFile().getPath();
   }

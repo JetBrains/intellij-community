@@ -96,7 +96,7 @@ public class ChangeProjectIconForm {
   private class ChangeProjectIcon extends AnAction {
     private final boolean myDarcula;
 
-    public ChangeProjectIcon(boolean darcula) {
+    ChangeProjectIcon(boolean darcula) {
       myDarcula = darcula;
     }
 
@@ -127,7 +127,7 @@ public class ChangeProjectIconForm {
   private class ResetProjectIcon extends AnAction {
     private final boolean myDarcula;
 
-    public ResetProjectIcon(boolean darcula) {
+    ResetProjectIcon(boolean darcula) {
       myDarcula = darcula;
     }
 

@@ -15,7 +15,7 @@ import org.jetbrains.idea.svn.api.Revision;
 */
 class SvnBinaryContentRevision extends SvnContentRevision implements BinaryContentRevision {
 
-  public SvnBinaryContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision, boolean useBaseRevision) {
+  SvnBinaryContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision, boolean useBaseRevision) {
     super(vcs, file, revision, useBaseRevision);
   }
 

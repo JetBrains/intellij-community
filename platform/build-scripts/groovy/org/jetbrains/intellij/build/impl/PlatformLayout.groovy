@@ -11,7 +11,8 @@ import java.util.function.Consumer
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory). By default it includes all modules specified in {@link org.jetbrains.intellij.build.ProductModulesLayout},
  * all libraries these modules depend on with scope 'Compile' or 'Runtime', and all project libraries from dependencies (with scope 'Compile'
- * or 'Runtime') of plugin modules for plugins which are {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundled}
+ * or 'Runtime') of plugin modules for plugins which are {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundled},
+ * {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledOsPluginModules bundled for different OSes}
  * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish}  published}) with the product.
  *
  * @author nik

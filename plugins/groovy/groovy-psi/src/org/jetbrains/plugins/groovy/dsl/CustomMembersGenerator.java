@@ -169,7 +169,6 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     method(args);
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public ParameterDescriptor parameter(Map args) {
     return new ParameterDescriptor(args, myDescriptor.justGetPlaceFile());
   }
@@ -229,7 +228,6 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       args.put("params", newParams);
     }
 
-    //noinspection unchecked
     Object params = args.get("params");
     if (params instanceof Map) {
       boolean first = true;

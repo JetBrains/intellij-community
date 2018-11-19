@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.highlighter
 
 import com.intellij.lang.annotation.AnnotationHolder
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 
 /**
  * Groovy allows keywords to appear in various places such as FQNs, reference names, labels, etc.
- * Syntax highlighter highlihgts all of them since it's based on lexer, which has no clue which keyword is really a keyword.
+ * Syntax highlighter highlights all of them since it's based on lexer, which has no clue which keyword is really a keyword.
  * This knowledge becomes available only after parsing.
  *
  * This annotator clears text attributes for elements which are not really keywords.

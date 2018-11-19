@@ -42,7 +42,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     PsiReference[] myReferences;
     Map<String, Pair<PsiType, TextRange>> myFieldNameToTypeMap;
 
-    public CachedFormData(final PsiReference[] refs, final Map<String, Pair<PsiType, TextRange>> map) {
+    CachedFormData(final PsiReference[] refs, final Map<String, Pair<PsiType, TextRange>> map) {
       myReferences = refs;
       myFieldNameToTypeMap = map;
     }
@@ -314,7 +314,6 @@ public class FormReferenceProvider extends PsiReferenceProvider {
       packageName = aPackage.getQualifiedName();
     }
 
-    //noinspection NonConstantStringShouldBeStringBuffer
     String bundleName = propertiesFile.getResourceBundle().getBaseName();
 
     if (packageName.length() > 0) {

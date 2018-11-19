@@ -22,6 +22,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -74,7 +75,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
       String minVersion = dependency.getMinVersion();
       String maxVersion = dependency.getMaxVersion();
       String pluginVersion = plugin.getVersion();
-      BuildNumber currentIdeVersion = BuildNumber.currentVersion();
+      BuildNumber currentIdeVersion = ApplicationInfo.getInstance().getBuild();
       if (plugin.isBundled() && !plugin.allowBundledUpdate() && currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
         String pluginFromString = PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId().getIdString()) ? "" : "plugin '" + plugin.getName() + "' from ";
         if (minVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(minVersion)) < 0) {

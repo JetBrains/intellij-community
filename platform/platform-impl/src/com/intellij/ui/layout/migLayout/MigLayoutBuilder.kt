@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
@@ -58,21 +59,29 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   // it doesn't lead to any issue.
   val columnConstraints = AC()
 
-  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
-    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, separated = separated)
+  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean): Row {
+    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, isSeparated = isSeparated)
+  }
+
+  override fun newTitledRow(title: String): Row {
+    return rootRow.createChildRow(isSeparated = true, title = title)
   }
 
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
+    addNoteOrComment(noteComponent(text, linkHandler))
+  }
+
+  override fun commentRow(text: String) {
+    addNoteOrComment(ComponentPanelBuilder.createCommentComponent(text, true))
+  }
+
+  private fun addNoteOrComment(component: JComponent) {
     val cc = CC()
     cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
-    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
 
     val row = rootRow.createChildRow(label = null, noGrid = true)
-    row.apply {
-      val noteComponent = noteComponent(text, linkHandler)
-      componentConstraints.put(noteComponent, cc)
-      noteComponent()
-    }
+    row.addComponent(component, lazyOf(cc))
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
@@ -87,12 +96,10 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     }
 
     lc.isVisualPadding = spacing.isCompensateVisualPaddings
-    lc.hideMode = 3
+    // if 3, invisible component will be disregarded completely and it means that if it is last component, it's "wrap" constraint will be not taken in account
+    lc.hideMode = 2
 
-    // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
-    rowConstraints.align(if (isUseMagic) "baseline" else "top")
-
     (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
@@ -133,21 +140,24 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
         }
 
         // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
-        // in any case MigLayout is smart enough and unnecessary spanX/wrap doesn't harm
+        // in any case MigLayout is smart enough and unnecessary spanX doesn't harm
         if (component === lastComponent) {
           cc.spanX()
-          cc.wrap()
+          cc.isWrap = true
         }
 
-        if (row.noGrid) {
-          if (component === row.components.first()) {
+        if (index == 0) {
+          if (row.noGrid) {
             rowConstraints.noGrid(rowIndex)
           }
-        }
-        else if (component === row.components.first()) {
-          row.gapAfter?.let {
-            rowConstraints.gap(it, rowIndex)
+          else {
+            row.gapAfter?.let {
+              rowConstraints.gap(it, rowIndex)
+            }
           }
+          // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
+          // so, we set for each row to make sure that constraints from previous row will be not applied
+          rowConstraints.align(if (isUseMagic) "baseline" else "top", rowIndex)
         }
 
         if (index >= row.rightIndex) {

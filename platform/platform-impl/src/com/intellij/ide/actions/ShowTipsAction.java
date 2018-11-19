@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.ide.util.TipDialog;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -15,6 +17,7 @@ public class ShowTipsAction extends AnAction implements DumbAware {
     if (ourTipDialog != null && ourTipDialog.isVisible()) {
       ourTipDialog.dispose();
     }
+    FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "shown.manually");
     ourTipDialog = new TipDialog();
     ourTipDialog.show();
   }

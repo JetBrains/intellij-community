@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.ui.GradleProjectCompositeSelectorDialog;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/12/2015
  */
 public class GradleOpenProjectCompositeConfigurationAction extends ExternalSystemAction {
 
@@ -68,6 +68,7 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getProject(e);
     if (project == null) return;
+    GradleActionsUsagesCollector.trigger(project, this, e);
     final ProjectNode projectNode = ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext());
     if (projectNode == null || projectNode.getData() == null) return;
     new GradleProjectCompositeSelectorDialog(project, projectNode.getData().getLinkedExternalProjectPath()).showAndGet();

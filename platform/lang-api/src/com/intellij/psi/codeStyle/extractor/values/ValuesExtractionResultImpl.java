@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * @author Roman.Shein
- * @since 04.08.2015.
  */
 public class ValuesExtractionResultImpl implements ValuesExtractionResult {
   @NotNull
@@ -51,7 +50,7 @@ public class ValuesExtractionResultImpl implements ValuesExtractionResult {
   }
 
   @Override
-  public void applyConditioned(Condition<Value> c, Map<Value, Object> backup) {
+  public void applyConditioned(Condition<? super Value> c, Map<Value, Object> backup) {
     for (Value value: myValues) {
       if (c.value(value)) {
         value.write(false);

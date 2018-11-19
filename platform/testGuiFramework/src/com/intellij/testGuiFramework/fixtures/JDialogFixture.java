@@ -15,6 +15,8 @@
  */
 package com.intellij.testGuiFramework.fixtures;
 
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.framework.Timeouts;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -24,6 +26,7 @@ import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.util.Collection;
 
@@ -85,6 +88,17 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
 
     JDialog dialog = robot.finder().find(matcher);
     return new JDialogFixture(robot, dialog);
+  }
+
+  public EditorFixture getEditor() {
+    EditorComponentImpl editor = GuiTestUtil.INSTANCE
+      .waitUntilFound(robot(), this.target(), new GenericTypeMatcher<EditorComponentImpl>(EditorComponentImpl.class, true) {
+        @Override
+        protected boolean isMatching(@Nonnull EditorComponentImpl component) {
+          return true;
+        }
+      });
+    return new EditorFixture(robot(), editor.getEditor());
   }
 
   private static GenericTypeMatcher<JDialog> getMatcher(String title) {

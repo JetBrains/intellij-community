@@ -3,6 +3,8 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -18,7 +20,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -33,6 +38,8 @@ import java.util.concurrent.TimeoutException;
  * @author Vladimir Kondratyev
  */
 public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
+  private static final Logger LOG = Logger.getInstance(TextEditorImpl.class);
+
   private static final Key<TransientEditorState> TRANSIENT_EDITOR_STATE_KEY = Key.create("transientState");
 
   protected final Project myProject;
@@ -59,13 +66,37 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myLoadingFinished = myAsyncLoader.start();
   }
 
+  /**
+   * @return a continuation to be called in EDT
+   */
   @NotNull
   protected Runnable loadEditorInBackground() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, myProject);
     EditorEx editor = (EditorEx)getEditor();
     highlighter.setText(editor.getDocument().getImmutableCharSequence());
-    return () -> editor.setHighlighter(highlighter);
+    long stamp = editor.getDocument().getModificationStamp();
+    Language language = getDocumentLanguage(editor);
+    return () -> {
+      LOG.assertTrue(stamp == editor.getDocument().getModificationStamp());
+      editor.getSettings().setLanguage(language);
+      editor.setHighlighter(highlighter);
+    };
+  }
+
+  @Nullable
+  public static Language getDocumentLanguage(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    LOG.assertTrue(project != null);
+    if (!project.isDisposed()) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      PsiFile file = documentManager.getPsiFile(editor.getDocument());
+      if (file != null) return file.getLanguage();
+    }
+    else {
+      LOG.warn("Attempting to get a language for document on a disposed project: " + project.getName());
+    }
+    return null;
   }
 
   @NotNull
@@ -131,7 +162,9 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public void setState(@NotNull final FileEditorState state, boolean exactState) {
-    myAsyncLoader.setEditorState((TextEditorState)state, exactState);
+    if (state instanceof TextEditorState) {
+      myAsyncLoader.setEditorState((TextEditorState)state, exactState);
+    }
   }
 
   @Override

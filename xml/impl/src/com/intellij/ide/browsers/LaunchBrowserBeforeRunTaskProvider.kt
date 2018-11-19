@@ -82,7 +82,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     return Promise.resolve(modificationCount != state.modificationCount)
   }
 
-  override fun executeTask(context: DataContext?, configuration: RunConfiguration, env: ExecutionEnvironment, task: LaunchBrowserBeforeRunTask): Boolean {
+  override fun executeTask(context: DataContext, configuration: RunConfiguration, env: ExecutionEnvironment, task: LaunchBrowserBeforeRunTask): Boolean {
     val disposable = Disposer.newDisposable()
     Disposer.register(env.project, disposable)
     val executionId = env.executionId
@@ -112,7 +112,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
 internal class LaunchBrowserBeforeRunTaskState : BaseState() {
   @get:Attribute(value = "browser", converter = WebBrowserReferenceConverter::class)
-  var browser by property<WebBrowser>()
+  var browser by property<WebBrowser?>(null) { it == null }
   @get:Attribute()
   var url by string()
   @get:Attribute()

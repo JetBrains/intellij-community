@@ -259,14 +259,14 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
                  "a\n" +
                  "Expected :expected1\n" +
                  "Actual   :actual1\n" +
-                 " <Click to see difference>\n" +
+                 "<Click to see difference>\n" +
                  "\n" +
                  "stacktrace\n" +
                  "\n" +
                  "b\n" +
                  "Expected :expected2\n" +
                  "Actual   :actual2\n" +
-                 " <Click to see difference>\n" +
+                 "<Click to see difference>\n" +
                  "\n" +
                  "stacktrace\n" +
                  "\n" +
@@ -1088,7 +1088,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     private final Location myLocation;
     private final List<GlobalSearchScope> myCalledSearchScopes = ContainerUtil.newArrayList();
 
-    public MockTestLocator(@NotNull Location location) {
+    MockTestLocator(@NotNull Location location) {
       myLocation = location;
     }
 

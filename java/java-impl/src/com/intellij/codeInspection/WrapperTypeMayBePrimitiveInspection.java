@@ -290,7 +290,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     private static class UnboxingVisitor extends JavaRecursiveElementVisitor {
       private final PsiLocalVariable myVariable;
 
-      public UnboxingVisitor(PsiLocalVariable variable) {myVariable = variable;}
+      UnboxingVisitor(PsiLocalVariable variable) {myVariable = variable;}
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {

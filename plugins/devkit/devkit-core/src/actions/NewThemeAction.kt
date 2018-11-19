@@ -75,8 +75,7 @@ class NewThemeAction: AnAction() {
   }
 
   private fun registerTheme(dir: PsiDirectory, file: PsiFile, module: Module) {
-    val relativeLocation = getRootRelativeLocation(module, file)
-    if (relativeLocation == null) return
+    val relativeLocation = getRootRelativeLocation(module, file) ?: return
 
     val pluginXml = DevkitActionsUtil.choosePluginModuleDescriptor(dir) ?: return
     DescriptorUtil.checkPluginXmlsWritable(module.project, pluginXml)

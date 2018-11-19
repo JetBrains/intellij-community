@@ -43,7 +43,6 @@ public class FinishElementInstruction extends Instruction {
         state.flushVariable(value);
       }
     }
-    state.cleanUpTempVariables();
     return nextInstruction(runner, state);
   }
 

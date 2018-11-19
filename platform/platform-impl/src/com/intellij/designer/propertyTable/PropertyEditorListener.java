@@ -15,6 +15,8 @@
  */
 package com.intellij.designer.propertyTable;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -29,18 +31,18 @@ public interface PropertyEditorListener extends EventListener {
    * is cancelled. PropertyInspector, for example, applies
    * new value and continue editing.
    */
-  void valueCommitted(PropertyEditor source, boolean continueEditing, boolean closeEditorOnError);
+  void valueCommitted(@NotNull PropertyEditor source, boolean continueEditing, boolean closeEditorOnError);
 
   /**
    * This method is invoked when user cancelled editing.
    * Foe example, user pressed "Esc" in the text field.
    */
-  void editingCanceled(PropertyEditor source);
+  void editingCanceled(@NotNull PropertyEditor source);
 
   /**
    * Editor can notify listeners that its preferred size changed.
    * In some cases (for example, during inplace editing) it's possible
    * to adjust size of the editor component.
    */
-  void preferredSizeChanged(PropertyEditor source);
+  void preferredSizeChanged(@NotNull PropertyEditor source);
 }

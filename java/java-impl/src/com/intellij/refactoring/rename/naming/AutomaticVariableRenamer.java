@@ -37,7 +37,7 @@ import java.util.*;
 public class AutomaticVariableRenamer extends AutomaticRenamer {
   private final Set<PsiNamedElement> myToUnpluralize = new HashSet<>();
 
-  public AutomaticVariableRenamer(PsiClass aClass, String newClassName, Collection<UsageInfo> usages) {
+  public AutomaticVariableRenamer(PsiClass aClass, String newClassName, Collection<? extends UsageInfo> usages) {
     final String oldClassName = aClass.getName();
     final Set<PsiFile> files = new HashSet<>();
     for (final UsageInfo info : usages) {
@@ -119,7 +119,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
       }
     }
     else {
-      PsiType collectionType = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory()
+      PsiType collectionType = JavaPsiFacade.getElementFactory(variable.getProject())
         .createTypeByFQClassName("java.util.Collection", variable.getResolveScope());
       if (!collectionType.isAssignableFrom(variable.getType())) return;
       final PsiTypeElement[] typeParameterElements = ref.getParameterList().getTypeParameterElements();

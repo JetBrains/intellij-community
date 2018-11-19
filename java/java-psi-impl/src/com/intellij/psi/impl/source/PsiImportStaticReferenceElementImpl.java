@@ -30,7 +30,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -205,6 +204,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     }
   }
 
+  @Override
   public String toString() {
     return "PsiImportStaticReferenceElement:" + getText();
   }
@@ -274,7 +274,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -307,14 +307,14 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       throw new IncorrectOperationException();
     }
 
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(((PsiNamedElement)element).getName());
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(((PsiNamedElement)element).getName());
     oldIdentifier.replace(identifier);
     return this;
   }
 
   private PsiElement replaceWithRegularImport(final PsiClass psiClass) throws IncorrectOperationException {
     PsiImportStaticStatement baseStatement = PsiTreeUtil.getParentOfType(getElement(), PsiImportStaticStatement.class);
-    PsiImportStatement statement = JavaPsiFacade.getInstance(getProject()).getElementFactory().createImportStatement(psiClass);
+    PsiImportStatement statement = JavaPsiFacade.getElementFactory(getProject()).createImportStatement(psiClass);
     statement = (PsiImportStatement) baseStatement.replace(statement);
     final PsiJavaCodeReferenceElement reference = statement.getImportReference();
     assert reference != null;
@@ -325,13 +325,6 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   public void processVariants(@NotNull PsiScopeProcessor processor) {
     FilterScopeProcessor proc = new FilterScopeProcessor(new ClassFilter(PsiModifierListOwner.class), processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    // IMPLEMENT[dsl]
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

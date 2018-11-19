@@ -55,7 +55,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     this(new IconButton(tooltip, icon, icon), listener, null);
   }
 
-  public InplaceButton(String tooltip, final Icon icon, final ActionListener listener, final Pass<MouseEvent> me) {
+  public InplaceButton(String tooltip, final Icon icon, final ActionListener listener, final Pass<? super MouseEvent> me) {
     this(new IconButton(tooltip, icon, icon), listener, me);
   }
 
@@ -63,11 +63,11 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     this(source, listener, null);
   }
 
-  public InplaceButton(IconButton source, final ActionListener listener, final Pass<MouseEvent> me) {
+  public InplaceButton(IconButton source, final ActionListener listener, final Pass<? super MouseEvent> me) {
     this(source, listener, me, TimedDeadzone.DEFAULT);
   }
 
-  public InplaceButton(IconButton source, final ActionListener listener, final Pass<MouseEvent> me, TimedDeadzone.Length mouseDeadzone) {
+  public InplaceButton(IconButton source, final ActionListener listener, final Pass<? super MouseEvent> me, TimedDeadzone.Length mouseDeadzone) {
     myListener = listener;
     myBehavior = new BaseButtonBehavior(this, mouseDeadzone) {
       @Override

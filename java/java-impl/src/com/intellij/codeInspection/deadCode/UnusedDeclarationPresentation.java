@@ -62,6 +62,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -154,9 +155,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Element parentNode,
+  public void exportResults(@NotNull Consumer<Element> resultConsumer,
                             @NotNull RefEntity refEntity,
-                            @NotNull Predicate<CommonProblemDescriptor> excludedDescriptions) {
+                            @NotNull Predicate<? super CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final RefFilter filter = getFilter();
     if (!myFixedElements.containsKey(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
@@ -166,7 +167,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return;
       if (skipEntryPoints(refElement)) return;
 
-      Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
+      Element element = refEntity.getRefManager().export(refEntity, -1);
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
@@ -193,8 +194,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
       descriptionElement.addContent(buf.toString());
       element.addContent(descriptionElement);
+      resultConsumer.accept(element);
     }
-    super.exportResults(parentNode, refEntity, excludedDescriptions);
+    super.exportResults(resultConsumer, refEntity, excludedDescriptions);
   }
 
   @NotNull
@@ -242,7 +244,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
             return false;
           }
           return true;
-        }).map(e -> e.getElement())
+        }).map(e -> e.getPsiElement())
           .filter(e -> e != null)
           .toArray(PsiElement[]::new);
         SafeDeleteHandler.invoke(project, elements, false,
@@ -306,7 +308,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       List<RefElement> deletedRefs = new ArrayList<>(1);
       final RefFilter filter = getFilter();
       for (RefEntity refElement : refElements) {
-        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
+        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
         if (psiElement == null) continue;
         if (filter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
 
@@ -490,8 +492,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (methodVisibility != null &&
           //todo store in the graph
           tool.isIgnoreAccessors()) {
-        final PsiModifierListOwner listOwner = ((RefMethod)element).getElement();
-        if (listOwner instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)listOwner)) {
+        final PsiElement psi = element.getPsiElement();
+        if (psi instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)psi)) {
           return null;
         }
       }
@@ -528,28 +530,29 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public void ignoreElement(@NotNull RefEntity refEntity) {
-    if (refEntity instanceof RefElement) {
-      final CommonProblemDescriptor[] descriptors = getProblemElements().get(refEntity);
-      if (descriptors != null) {
-        final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getElement());
-        List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
-        for (CommonProblemDescriptor descriptor : descriptors) {
-          if (descriptor instanceof ProblemDescriptor) {
-            PsiElement problemElement = ReadAction.compute(() -> {
-              PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
-              if (element instanceof PsiIdentifier) element = element.getParent();
-              return element;
-            });
-            if (problemElement == psiElement ||
-                problemElement instanceof PsiParameter &&
-                ReadAction.compute(() -> ((PsiParameter)problemElement).getDeclarationScope()) == psiElement) continue;
-          }
-          foreignDescriptors.add(descriptor);
-        }
-        if (foreignDescriptors.size() == descriptors.length) return;
-      }
+    RefEntity owner = refEntity;
+    if (refEntity instanceof RefParameter) {
+      owner = refEntity.getOwner();
     }
-    super.ignoreElement(refEntity);
+
+    final CommonProblemDescriptor[] descriptors = getProblemElements().get(owner);
+    if (descriptors != null) {
+      final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getPsiElement());
+      List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
+      for (CommonProblemDescriptor descriptor : descriptors) {
+        if (descriptor instanceof ProblemDescriptor) {
+          PsiElement problemElement = ReadAction.compute(() -> {
+            PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+            if (element instanceof PsiIdentifier) element = element.getParent();
+            return element;
+          });
+          if (problemElement == psiElement) continue;
+        }
+        foreignDescriptors.add(descriptor);
+      }
+      if (foreignDescriptors.size() == descriptors.length) return;
+    }
+    super.ignoreElement(owner);
   }
 
   @Override

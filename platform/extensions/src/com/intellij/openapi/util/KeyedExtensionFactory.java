@@ -2,9 +2,9 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.util.ExceptionUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
@@ -13,10 +13,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.Set;
-
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * @author yole
@@ -35,7 +33,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
 
   @NotNull
   public T get() {
-    final KeyedFactoryEPBean[] epBeans = Extensions.getExtensions(myEpName);
+    final List<KeyedFactoryEPBean> epBeans = myEpName.getExtensionList();
     InvocationHandler handler = new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -54,7 +52,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
   }
 
   public T getByKey(@NotNull KeyT key) {
-    final KeyedFactoryEPBean[] epBeans = Extensions.getExtensions(myEpName);
+    final List<KeyedFactoryEPBean> epBeans = myEpName.getExtensionList();
     for (KeyedFactoryEPBean epBean : epBeans) {
       if (Comparing.strEqual(getKey(key), epBean.key)) {
         try {
@@ -72,10 +70,15 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
 
   @NotNull
   public Set<String> getAllKeys() {
-    return stream(Extensions.getExtensions(myEpName)).map(epBean -> epBean.key).collect(toSet());
+    List<KeyedFactoryEPBean> list = myEpName.getExtensionList();
+    Set<String> set = new THashSet<>();
+    for (KeyedFactoryEPBean epBean : list) {
+      set.add(epBean.key);
+    }
+    return set;
   }
 
-  private T getByKey(final KeyedFactoryEPBean[] epBeans, final String key, final Method method, final Object[] args) {
+  private T getByKey(final List<KeyedFactoryEPBean> epBeans, final String key, final Method method, final Object[] args) {
     Object result = null;
     for(KeyedFactoryEPBean epBean: epBeans) {
       if (Comparing.strEqual(epBean.key, key, true)) {
@@ -103,7 +106,6 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
         }
       }
     }
-    //noinspection ConstantConditions
     return (T)result;
   }
 

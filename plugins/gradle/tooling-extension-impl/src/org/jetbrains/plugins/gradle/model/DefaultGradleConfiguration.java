@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/7/2016
  */
 public class DefaultGradleConfiguration implements GradleConfiguration {
   private static final long serialVersionUID = 1L;

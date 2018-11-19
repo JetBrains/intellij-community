@@ -132,7 +132,7 @@ public class LineNumberConvertor {
     public final int otherStart;
     public final int otherLength;
 
-    public Data(int length, int otherStart, int otherLength) {
+    Data(int length, int otherStart, int otherLength) {
       this.length = length;
       this.otherStart = otherStart;
       this.otherLength = otherLength;
@@ -186,7 +186,6 @@ public class LineNumberConvertor {
   private class Corrector {
     private final List<CorrectedChange> myChanges = new SmartList<>();
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
     public void handleMasterChange(int startLine, int endLine, int shift, boolean synchronous) {
       int oldLength = endLine - startLine;
       int newLength = oldLength + shift;
@@ -304,7 +303,7 @@ public class LineNumberConvertor {
     public final int oldLength;
     public final int newLength;
 
-    public CorrectedChange(int startMaster, int oldLength, int newLength) {
+    CorrectedChange(int startMaster, int oldLength, int newLength) {
       this.synchronous = false;
       this.startSlave = -1;
 
@@ -313,7 +312,7 @@ public class LineNumberConvertor {
       this.newLength = newLength;
     }
 
-    public CorrectedChange(int startMaster, int startSlave, int oldLength, int newLength) {
+    CorrectedChange(int startMaster, int startSlave, int oldLength, int newLength) {
       this.synchronous = true;
 
       this.startMaster = startMaster;

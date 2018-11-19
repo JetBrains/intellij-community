@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -112,7 +113,7 @@ public class ProcessPopup  {
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myRootContent, toFocus);
     builder.addListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myProgressPanel.hideProcessPopup();
       }
     });
@@ -162,7 +163,7 @@ public class ProcessPopup  {
 
     myActiveFocusedContent.add(wrapper, BorderLayout.CENTER);
 
-    final JScrollPane scrolls = new JBScrollPane(myActiveFocusedContent) {
+    myActiveContentComponent = new JBScrollPane(myActiveFocusedContent) {
       @Override
       public Dimension getPreferredSize() {
         if (myProcessBox.getComponentCount() > 0) {
@@ -172,7 +173,6 @@ public class ProcessPopup  {
         }
       }
     };
-    myActiveContentComponent = scrolls;
     updateContentUI();
   }
 
@@ -210,7 +210,7 @@ public class ProcessPopup  {
 
     private final JLabel myLabel = new JLabel("XXX");
 
-    public ActiveContent() {
+    ActiveContent() {
       super(new BorderLayout());
       setBorder(DialogWrapper.ourDefaultBorder);
       setFocusable(true);

@@ -2,29 +2,40 @@
 package com.intellij.psi.codeStyle.statusbar;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.CodeStyleConfigurableWrapper;
+import com.intellij.application.options.CodeStyleSchemesConfigurable;
+import com.intellij.application.options.codeStyle.OtherFileTypesCodeStyleConfigurable;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
-import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
@@ -41,13 +52,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     PsiFile psiFile = getPsiFile();
     if (psiFile == null || !psiFile.isWritable()) return WidgetState.HIDDEN;
     IndentOptions indentOptions = CodeStyle.getIndentOptions(psiFile);
-    IndentOptions projectIndentOptions = CodeStyle.getSettings(myProject).getLanguageIndentOptions(psiFile.getLanguage());
     FileIndentOptionsProvider provider = findProvider(file, indentOptions);
-    if (projectIndentOptions.equals(indentOptions)) {
-      if (provider == null || !provider.areActionsAvailable(file, indentOptions)) {
-        return WidgetState.HIDDEN;
-      }
-    }
     return createWidgetState(psiFile, indentOptions, provider);
   }
 
@@ -66,11 +71,28 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   private static WidgetState createWidgetState(@NotNull PsiFile psiFile,
                                                @NotNull IndentOptions indentOptions,
                                                @Nullable FileIndentOptionsProvider provider) {
-    String indentInfo = (provider != null
-                         ? provider.getTooltip(indentOptions)
-                         : FileIndentOptionsProvider.getTooltip(indentOptions, null));
-    String tooltip = "Current indent: " + indentInfo;
-    return new MyWidgetState(tooltip, indentInfo, psiFile, indentOptions, provider);
+    String indentInfo = FileIndentOptionsProvider.getTooltip(indentOptions, null);
+    String hint = provider != null ? provider.getHint(indentOptions) : null;
+    String tooltip = createTooltip(indentInfo, hint);
+    StringBuilder widgetText = new StringBuilder();
+    widgetText.append(indentInfo);
+    IndentOptions projectIndentOptions = CodeStyle.getSettings(psiFile.getProject()).getLanguageIndentOptions(psiFile.getLanguage());
+    if (!projectIndentOptions.equals(indentOptions)) {
+      widgetText.append("*");
+    }
+    return new MyWidgetState(tooltip, widgetText.toString(), psiFile, indentOptions, provider);
+  }
+
+  @NotNull
+  private static String createTooltip(String indentInfo, String hint) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<html>").append("Indent: ").append(indentInfo);
+    if (hint != null) {
+      sb.append("&nbsp;&nbsp;").append("<span style=\"color:#").append(ColorUtil.toHex(JBColor.GRAY)).append("\">");
+      sb.append(StringUtil.capitalize(hint));
+      sb.append("</span>");
+    }
+    return sb.toString();
   }
 
   @Nullable
@@ -92,24 +114,58 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     Editor editor = getEditor();
     PsiFile psiFile = getPsiFile();
     if (state != WidgetState.HIDDEN && editor != null && psiFile != null) {
-      FileIndentOptionsProvider provider = state.getProvider();
-      if (provider != null) {
-        AnAction[] actions = provider.getActions(psiFile, state.getIndentOptions());
-        if (actions != null) {
-          ActionGroup actionGroup = new ActionGroup() {
-            @NotNull
-            @Override
-            public AnAction[] getChildren(@Nullable AnActionEvent e) {
-              return actions;
-            }
-          };
-          return JBPopupFactory.getInstance().createActionGroupPopup(
-            "Indent", actionGroup, context,
-            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+      AnAction[] actions = getActions(state.getProvider(), psiFile, state);
+      ActionGroup actionGroup = new ActionGroup() {
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          return actions;
+        }
+      };
+      return JBPopupFactory.getInstance().createActionGroupPopup(
+        null, actionGroup, context,
+        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+    }
+    return null;
+  }
+
+  @NotNull
+  private static AnAction[] getActions(@Nullable FileIndentOptionsProvider provider,
+                                       @NotNull PsiFile psiFile,
+                                       @NotNull MyWidgetState state) {
+    List<AnAction> allActions = ContainerUtilRt.newArrayList();
+    if (provider != null) {
+      AnAction[] actions = provider.getActions(psiFile, state.getIndentOptions());
+      if (actions != null) {
+        allActions.addAll(Arrays.asList(actions));
+      }
+    }
+    if (provider == null || provider.isShowFileIndentOptionsEnabled()) {
+      allActions.add(
+        DumbAwareAction.create(
+          ApplicationBundle.message("code.style.widget.configure.indents", psiFile.getLanguage().getDisplayName()),
+          event -> {
+            String id = findCodeStyleConfigurableId(psiFile);
+            ShowSettingsUtilImpl.showSettingsDialog(psiFile.getProject(), id, "Tab,Indent");
+          }
+        )
+      );
+    }
+    if (provider != null) {
+      AnAction disabledAction = provider.createDisableAction(psiFile.getProject());
+      if (disabledAction != null) {
+        allActions.add(disabledAction);
+      }
+    }
+    else {
+      for (FileIndentOptionsProvider each : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
+        AnAction defaultAction = each.createDefaultAction(psiFile.getProject());
+        if (defaultAction != null) {
+          allActions.add(defaultAction);
         }
       }
     }
-    return null;
+    return allActions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @Override
@@ -146,7 +202,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
                             @NotNull PsiFile psiFile,
                             @NotNull IndentOptions indentOptions,
                             @Nullable FileIndentOptionsProvider provider) {
-      super(toolTip, text, provider != null && provider.areActionsAvailable(psiFile.getVirtualFile(), indentOptions));
+      super(toolTip, text, true);
       myIndentOptions = indentOptions;
       myProvider = provider;
       myPsiFile = psiFile;
@@ -170,9 +226,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Override
   public void dispose() {
-    if (!myProject.isDisposed()) {
-      CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
-    }
+    CodeStyleSettingsManager.removeListener(myProject, this);
     super.dispose();
   }
 
@@ -204,4 +258,21 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     }, 500, ModalityState.NON_MODAL);
   }
 
+  @NotNull
+  private static String findCodeStyleConfigurableId(@NotNull PsiFile file) {
+    final Project project = file.getProject();
+    final Language language = file.getLanguage();
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(language);
+    if (provider != null && provider.getIndentOptionsEditor() != null) {
+      String name = provider.getConfigurableDisplayName();
+      if (name != null) {
+        CodeStyleSchemesConfigurable topConfigurable = new CodeStyleSchemesConfigurable(project);
+        SearchableConfigurable result = topConfigurable.findSubConfigurable(name);
+        if (result != null) {
+          return result.getId();
+        }
+      }
+    }
+    return CodeStyleConfigurableWrapper.getConfigurableId(OtherFileTypesCodeStyleConfigurable.DISPLAY_NAME);
+  }
 }

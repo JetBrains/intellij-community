@@ -59,7 +59,7 @@ public class ActionGroupLink extends JPanel {
   }
 
   private static class MyLinkLabel extends LinkLabel implements DataProvider {
-    public MyLinkLabel(String text, @Nullable Icon icon) {
+    MyLinkLabel(String text, @Nullable Icon icon) {
       super(text, icon);
     }
 

@@ -19,7 +19,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TS
 class GroovyWordsScanner extends VersionedWordsScanner
 {
   private final Lexer myLexer;
-  public GroovyWordsScanner()
+  GroovyWordsScanner()
   {
     myLexer = new GroovyLexer();
   }
@@ -62,7 +62,7 @@ class GroovyWordsScanner extends VersionedWordsScanner
     return 2;
   }
 
-  private static boolean stripWords(final Processor<WordOccurrence> processor,
+  private static boolean stripWords(final Processor<? super WordOccurrence> processor,
                                     final CharSequence tokenText,
                                     int from,
                                     int to,

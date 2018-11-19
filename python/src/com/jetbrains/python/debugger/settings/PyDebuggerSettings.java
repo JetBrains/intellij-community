@@ -117,13 +117,11 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
   @NotNull
   @Override
   public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
-    switch (category) {
-      case STEPPING:
-        return singletonList(SimpleConfigurable.create("python.debug.configurable", "Python",
-                                                       PyDebuggerSteppingConfigurableUi.class, this));
-      default:
-        return Collections.emptyList();
+    if (category == DebuggerSettingsCategory.STEPPING) {
+      return singletonList(SimpleConfigurable.create("python.debug.configurable", "Python",
+                                                     PyDebuggerSteppingConfigurableUi.class, this));
     }
+    return Collections.emptyList();
   }
 
   @Override

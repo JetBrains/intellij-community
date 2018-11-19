@@ -40,7 +40,7 @@ class OutputTabAdapter extends ProcessAdapter {
     private final ProcessHandler myStartedProcess;
     private final HighlightingOutputConsole myConsole;
 
-  public OutputTabAdapter(ProcessHandler startedProcess, HighlightingOutputConsole console) {
+  OutputTabAdapter(ProcessHandler startedProcess, HighlightingOutputConsole console) {
         myStartedProcess = startedProcess;
         myConsole = console;
     }

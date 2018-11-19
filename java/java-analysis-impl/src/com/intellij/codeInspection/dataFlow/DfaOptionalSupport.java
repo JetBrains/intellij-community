@@ -17,6 +17,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -83,11 +85,23 @@ public class DfaOptionalSupport {
     return "get".equals(name) || "getAsDouble".equals(name) || "getAsInt".equals(name) || "getAsLong".equals(name);
   }
 
+  /**
+   * Creates a DfaValue which represents present or absent optional (non-null)
+   * @param factory a value factory to use
+   * @param present whether the value should be present
+   * @return a DfaValue representing an Optional
+   */
+  @NotNull
+  public static DfaValue getOptionalValue(DfaValueFactory factory, boolean present) {
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.OPTIONAL_PRESENCE, present).with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+    return factory.getFactFactory().createValue(facts);
+  }
+
   private static class ReplaceOptionalCallFix implements LocalQuickFix {
     private final String myTargetMethodName;
     private final boolean myClearArguments;
 
-    public ReplaceOptionalCallFix(final String targetMethodName, boolean clearArguments) {
+    ReplaceOptionalCallFix(final String targetMethodName, boolean clearArguments) {
       myTargetMethodName = targetMethodName;
       myClearArguments = clearArguments;
     }

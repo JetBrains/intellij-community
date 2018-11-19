@@ -3,7 +3,6 @@ package com.intellij.execution.actions
 
 import com.intellij.execution.Location
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 
 /**
  * Allows to provide provide alternative locations that context run configurations will be created from.
@@ -44,7 +43,7 @@ abstract class MultipleRunLocationsProvider {
      */
     @JvmStatic
     fun findAlternativeLocations(originalLocation: Location<*>): AlternativeLocationsInfo? {
-      for (extension in Extensions.getExtensions(EP_NAME)) {
+      for (extension in EP_NAME.extensionList) {
         val alternativeLocations = extension.getAlternativeLocations(originalLocation)
         if (alternativeLocations.isNotEmpty()) return AlternativeLocationsInfo(extension, alternativeLocations)
       }

@@ -22,7 +22,7 @@ final class OneElementFMap implements KeyFMap {
   private final Key myKey;
   private final Object myValue;
 
-  public <V> OneElementFMap(@NotNull Key<V> key, @NotNull V value) {
+  <V> OneElementFMap(@NotNull Key<V> key, @NotNull V value) {
     myKey = key;
     myValue = value;
   }

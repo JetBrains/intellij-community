@@ -275,7 +275,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
   private class MyContentManagerListener extends ContentManagerAdapter {
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();
       myTabbedPaneWrapper.insertTab(content.getTabName(),
                                     content.getIcon(),
@@ -286,13 +286,13 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       event.getContent().removePropertyChangeListener(TabbedPaneContentUI.this);
       myTabbedPaneWrapper.removeTabAt(event.getIndex());
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       int index = event.getIndex();
       if (index != -1 && event.getOperation() != ContentManagerEvent.ContentOperation.remove) {
         myTabbedPaneWrapper.setSelectedIndex(index);

@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.impl.DomTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -41,7 +42,7 @@ public abstract class DomHardCoreTestCase extends CodeInsightTestCase {
     myCallRegistry = new CallRegistry<>();
     getDomManager().addDomEventListener(new DomEventListener() {
       @Override
-      public void eventOccured(DomEvent event) {
+      public void eventOccured(@NotNull DomEvent event) {
         myCallRegistry.putActual(event);
       }
     }, myProject);

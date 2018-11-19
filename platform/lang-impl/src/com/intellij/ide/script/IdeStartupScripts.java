@@ -47,7 +47,7 @@ class IdeStartupScripts implements ApplicationInitializedListener {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       Future<List<Pair<File, IdeScriptEngine>>> future;
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         if (future == null) {
           future = PooledThreadExecutor.INSTANCE.submit(() -> prepareScriptsAndEngines());
         }
@@ -118,7 +118,7 @@ class IdeStartupScripts implements ApplicationInitializedListener {
     return null;
   }
 
-  private static void runAllScriptsImpl(@NotNull Project project, @NotNull Future<List<Pair<File, IdeScriptEngine>>> future) {
+  private static void runAllScriptsImpl(@NotNull Project project, @NotNull Future<? extends List<Pair<File, IdeScriptEngine>>> future) {
     try {
       for (Pair<File, IdeScriptEngine> pair : future.get()) {
         try {

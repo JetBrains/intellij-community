@@ -111,7 +111,7 @@ public class EclipseFormatterOptionsHandler implements EclipseFormatterOptions {
   private static class AlignmentAndWrapValueDecoder {
     int myEncodedValue;
 
-    public AlignmentAndWrapValueDecoder(int encodedValue) {
+    AlignmentAndWrapValueDecoder(int encodedValue) {
       myEncodedValue = encodedValue;
     }
 

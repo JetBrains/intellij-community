@@ -45,7 +45,7 @@ public class CommandLineApplication {
     ApplicationManagerEx.createApplication(isInternal, isUnitTestMode, isHeadless, true, appName, null);
   }
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return null;
   }
 

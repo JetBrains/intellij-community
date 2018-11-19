@@ -367,6 +367,9 @@
   <action id="ShelvedChanges.Rename">
     <keyboard-shortcut first-keystroke="shift alt R"/>
   </action>
+  <action id="ChangesView.Rename">
+    <keyboard-shortcut first-keystroke="shift alt R"/>
+  </action>
   <action id="RunDashboard.ShowConfigurations">
     <keyboard-shortcut first-keystroke="shift alt H"/>
   </action>

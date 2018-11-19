@@ -181,7 +181,7 @@ public class XmlMover extends LineMover {
 
   @Nullable
   protected static XmlElement getMeaningfulElementAtOffset(@NotNull PsiFile file, int offset, boolean forward,
-                                                           @NotNull Condition<PsiElement> condition) {
+                                                           @NotNull Condition<? super PsiElement> condition) {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) {
       element = forward ? PsiTreeUtil.nextLeaf(element) : PsiTreeUtil.prevLeaf(element);

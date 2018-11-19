@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
+import com.intellij.application.Topics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,7 +38,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     session.addSessionListener(debugSessionListener, this);
     final XValueMarkers<?, ?> markers = getValueMarkers(session);
     if (markers != null) {
-      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new MyActionListener(markers));
+      Topics.subscribe(AnActionListener.TOPIC, this, new MyActionListener(markers));
     }
   }
 
@@ -84,7 +85,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     }
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
       if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == getInstancesTree() &&
         (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
         XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);

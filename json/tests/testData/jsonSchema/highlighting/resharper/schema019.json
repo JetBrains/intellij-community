@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "not": {
+    "properties": {
+      "a": {
+        "type": "number"
+      },
+      "b": {
+        "type": "number"
+      }
+    }
+  }
+}
+

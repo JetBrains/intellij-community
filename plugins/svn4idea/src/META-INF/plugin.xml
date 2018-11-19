@@ -12,6 +12,7 @@
 
     <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
     <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction">
       <add-to-group group-id="Vcs.Browse"/>
@@ -147,6 +148,8 @@
 
     <changesViewContent tabName="Subversion Working Copies Information" className="org.jetbrains.idea.svn.WorkingCopiesContent"
                         predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"/>
+
+    <vcs.branchStateProvider implementation="org.jetbrains.idea.svn.branchConfig.SvnBranchStateProvider"/>
 
     <openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider
         implementation="org.jetbrains.idea.svn.difftool.SvnChangeDiffViewerProvider"/>

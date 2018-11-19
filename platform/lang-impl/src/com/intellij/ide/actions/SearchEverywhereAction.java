@@ -17,6 +17,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -32,6 +33,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -115,6 +117,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -123,7 +126,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider, RightAlignedToolbarAction {
+public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
   public static final String SE_HISTORY_KEY = "SearchEverywhereHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private static final int MAX_CLASSES = 6;
@@ -385,7 +388,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private ActionCallback onFocusLost() {
     final ActionCallback result = new ActionCallback();
-    //noinspection SSBasedInspection
     UIUtil.invokeLaterIfNeeded(() -> {
       try {
         if (myCalcThread != null) {
@@ -393,8 +395,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           //myCalcThread = null;
         }
         myAlarm.cancelAllRequests();
-        if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
+        if (myBalloon != null && !myBalloon.isDisposed()) {
           myBalloon.cancel();
+        }
+
+        if (myPopup != null && !myPopup.isDisposed()) {
           myPopup.cancel();
         }
 
@@ -464,7 +469,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     if (value instanceof OptionsTopHitProvider) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> getField().setText("#" + ((OptionsTopHitProvider)value).getId() + " "));
+      SwingUtilities.invokeLater(() -> getField().setText(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId() + " "));
       return;
     }
     Runnable onDone =
@@ -564,10 +569,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere") && e.getProject() != null) {
-      //todo[mikhail.sokolov] show new UI
       String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
-
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
 
       SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(e.getProject());
@@ -577,10 +579,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         else {
           seManager.setShownContributor(searchProviderID);
+          FUSUsageContext context = Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(e))
+            .map(shortcut -> FUSUsageContext.create(searchProviderID, shortcut))
+            .orElseGet(() -> FUSUsageContext.create(searchProviderID));
+          SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
         }
         return;
       }
 
+      SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, FUSUsageContext.create(searchProviderID));
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
       seManager.show(searchProviderID, text, e);
@@ -791,7 +798,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   static class SEOption extends BooleanOptionDescription {
     private final String myKey;
 
-    public SEOption(String option, String registryKey) {
+    SEOption(String option, String registryKey) {
       super(option, null);
       myKey = registryKey;
     }
@@ -965,7 +972,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
-    public MySearchTextField() {
+    MySearchTextField() {
       super(false, "SearchEveryWhereHistory");
       JTextField editor = getTextEditor();
       editor.setOpaque(false);
@@ -1037,7 +1044,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private class MyAccessibleComponent extends JPanel {
       private Accessible myAccessible;
-      public MyAccessibleComponent(LayoutManager layout) {
+      MyAccessibleComponent(LayoutManager layout) {
         super(layout);
         setOpaque(false);
       }
@@ -1240,7 +1247,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }
         else if (value instanceof OptionsTopHitProvider) {
-          append("#" + ((OptionsTopHitProvider)value).getId());
+          append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId());
         }
         else {
           ItemPresentation presentation = null;
@@ -1287,7 +1294,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (hit == null) {
       hit = value.getOption();
     }
-    hit = StringUtil.unescapeXml(hit);
+    hit = StringUtil.unescapeXmlEntities(hit);
     if (hit.length() > 60) {
       hit = hit.substring(0, 60) + "...";
     }
@@ -1319,7 +1326,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   enum WidgetID {CLASSES, FILES, ACTIONS, SETTINGS, SYMBOLS, RUN_CONFIGURATIONS}
 
-  @SuppressWarnings({"SSBasedInspection", "unchecked", "Duplicates"})
+  @SuppressWarnings({"SSBasedInspection", "Duplicates"})
   private class CalcThread implements Runnable {
     private final Project project;
     private final String pattern;
@@ -1330,7 +1337,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<>();
 
 
-    public CalcThread(Project project, String pattern, boolean reuseModel) {
+    CalcThread(Project project, String pattern, boolean reuseModel) {
       this.project = project;
       this.pattern = pattern;
       myListModel = reuseModel ? (SearchListModel)myList.getModel() : new SearchListModel();
@@ -1347,7 +1354,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myList.getEmptyText().setText("Searching...");
 
           if (myList.getModel() instanceof SearchListModel) {
-            //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
               if (!myDone.isRejected()) {
@@ -1369,7 +1375,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         checkModelsUpToDate();              check();
         buildTopHit(pattern);               check();
 
-        if (!pattern.startsWith("#")) {
+        if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) {
           buildRecentFiles(pattern);
           check();
           runReadAction(() -> buildStructure(pattern), true);
@@ -1552,7 +1558,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private void fillStructure(StructureViewTreeElement element, List<StructureViewTreeElement> elements, Matcher matcher) {
+    private void fillStructure(StructureViewTreeElement element, List<? super StructureViewTreeElement> elements, Matcher matcher) {
       final TreeElement[] children = element.getChildren();
       check();
       for (TreeElement child : children) {
@@ -1889,7 +1895,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       };
 
-      if (pattern.startsWith("#") && !pattern.contains(" ")) {
+      if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
         String id = pattern.substring(1);
         final HashSet<String> ids = new HashSet<>();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
@@ -1941,15 +1947,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     protected boolean isEnabled(final AnAction action) {
       AnActionEvent event = myActionEvent;
       if (myDisabledActions.contains(action) || event == null) return false;
-      final AnActionEvent e = new AnActionEvent(event.getInputEvent(),
-                                                event.getDataContext(),
-                                                event.getPlace(),
-                                                action.getTemplatePresentation().clone(),
-                                                event.getActionManager(),
-                                                event.getModifiers());
 
-      ApplicationManager.getApplication().invokeAndWait(() -> ActionUtil.performDumbAwareUpdate(action, e, false), ModalityState.NON_MODAL);
-      final Presentation presentation = e.getPresentation();
+      AtomicReference<Presentation> presentationReference= new AtomicReference<>();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        AnActionEvent e = new AnActionEvent(event.getInputEvent(),
+                                            DataManager.getInstance().getDataContext(myContextComponent),
+                                            event.getPlace(),
+                                            action.getTemplatePresentation().clone(),
+                                            event.getActionManager(),
+                                            event.getModifiers());
+        ActionUtil.performDumbAwareUpdate(action, e, false);
+        presentationReference.set(e.getPresentation());
+      }, ModalityState.NON_MODAL);
+      final Presentation presentation = presentationReference.get();
       final boolean enabled = presentation.isEnabled() && presentation.isVisible() && !StringUtil.isEmpty(presentation.getText());
       if (!enabled) {
         myDisabledActions.add(action);
@@ -2093,7 +2103,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
             ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }

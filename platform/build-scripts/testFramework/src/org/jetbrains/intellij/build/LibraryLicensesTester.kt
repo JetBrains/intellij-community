@@ -8,7 +8,6 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.junit.rules.ErrorCollector
 
@@ -23,10 +22,6 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     }
 
     val librariesWithLicenses = licenses.flatMapTo(THashSet()) { it.libraryNames }
-    val unusedLibrariesWithLicenses = licenses.filter { it.libraryName != null }.mapNotNullTo(THashSet()) { it.libraryName }
-
-    // what for?
-    unusedLibrariesWithLicenses.remove("Servlets")
 
     for ((jpsLibrary, jpsModule) in libraries) {
       for (libName in LibraryLicensesListGenerator.getLibraryNames(jpsLibrary)) {
@@ -38,20 +33,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
                   |If a library is used for compilation only change its scope to 'Provided'
         """.trimMargin()))
         }
-        unusedLibrariesWithLicenses.remove(libName)
-        // transitive deps
-        val files = jpsLibrary.getFiles(JpsOrderRootType.COMPILED)
-        for (file in files) {
-          val nameWithoutExtension = file.nameWithoutExtension
-          unusedLibrariesWithLicenses.remove(nameWithoutExtension.substringBefore('-'))
-          unusedLibrariesWithLicenses.remove(nameWithoutExtension)
-          unusedLibrariesWithLicenses.remove(file.name)
-        }
       }
-    }
-
-    if (unusedLibrariesWithLicenses.isNotEmpty()) {
-      collector.addError(AssertionFailedError("License specified for unknown libraries:\n\n${unusedLibrariesWithLicenses.joinToString("\n")}"))
     }
   }
 }

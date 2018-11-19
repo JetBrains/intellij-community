@@ -14,13 +14,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -183,11 +181,6 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   private static class MyCellRenderer extends ColoredListCellRenderer<IgnoredFileBean> {
     @Override
     protected void customizeCellRenderer(@NotNull JList list, IgnoredFileBean bean, int index, boolean selected, boolean hasFocus) {
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        UIUtil.changeBackGround(this, background);
-      }
-
       String text = getBeanTextPresentation(bean);
       if (text != null) {
         append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);

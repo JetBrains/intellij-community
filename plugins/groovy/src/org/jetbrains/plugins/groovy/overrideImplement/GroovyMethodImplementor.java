@@ -66,7 +66,7 @@ public class GroovyMethodImplementor implements MethodImplementor {
     private final PsiMethod myBaseMethod;
     private final boolean myInsertOverrideIfPossible;
 
-    public PsiMethodConsumer(PsiClass targetClass, boolean toCopyJavaDoc, PsiMethod baseMethod, boolean insertOverrideIfPossible) {
+    PsiMethodConsumer(PsiClass targetClass, boolean toCopyJavaDoc, PsiMethod baseMethod, boolean insertOverrideIfPossible) {
       myTargetClass = targetClass;
       myToCopyJavaDoc = toCopyJavaDoc;
       myBaseMethod = baseMethod;

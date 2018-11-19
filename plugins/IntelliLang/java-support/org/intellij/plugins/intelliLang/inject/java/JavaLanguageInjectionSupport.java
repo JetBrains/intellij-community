@@ -248,7 +248,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                                 @Nullable final PsiModifierListOwner modifierListOwner,
                                                 @NotNull final PsiLanguageInjectionHost host,
                                                 final String languageId,
-                                                Processor<PsiLanguageInjectionHost> annotationFixer) {
+                                                Processor<? super PsiLanguageInjectionHost> annotationFixer) {
     final boolean addAnnotation = isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
                                   && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
                                   && modifierListOwner.getModifierList() != null;
@@ -421,7 +421,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                         Configuration configuration,
                                         JavaLanguageInjectionSupport support,
                                         final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
-                                        final ArrayList<PsiElement> annotations) {
+                                        final ArrayList<? super PsiElement> annotations) {
     new ConcatenationInjector.InjectionProcessor(configuration, support, host) {
 
       @Override
@@ -539,7 +539,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   @Override
-  public AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer) {
+  public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
       new AnAction("Java Parameter", null, PlatformIcons.PARAMETER_ICON) {
         @Override
@@ -552,7 +552,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   @Override
-  public AnAction createEditAction(final Project project, final Factory<BaseInjection> producer) {
+  public AnAction createEditAction(final Project project, final Factory<? extends BaseInjection> producer) {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -580,7 +580,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final Matcher matcher = ourPresentationPattern.matcher(injection.getDisplayName());
     if (matcher.matches()) {
       presentation.append(matcher.group(1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      presentation.append(matcher.group(2), isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentation.append(matcher.group(2), isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else {
       super.setupPresentation(injection, presentation, isSelected);

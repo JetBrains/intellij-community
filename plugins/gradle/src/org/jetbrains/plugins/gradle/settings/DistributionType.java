@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.settings;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/23/13
  */
 public enum DistributionType {
   /**

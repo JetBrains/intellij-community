@@ -17,7 +17,17 @@
             <val name="to" val="12"/>
         </annotation>
     </item>
-    <item name='java.time.LocalDateTime int getDayOfMonth()'>
+  <item name='java.time.LocalDate java.time.LocalDate of(int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;_,_,_-&gt;new&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDate java.time.LocalDate of(int, java.time.Month, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;_,_,_ -&gt; new&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime int getDayOfMonth()'>
         <annotation name='org.jetbrains.annotations.Range'>
             <val name="from" val="1"/>
             <val name="to" val="31"/>
@@ -67,22 +77,25 @@
     <item name='java.time.LocalDateTime java.time.LocalDateTime from(java.time.temporal.TemporalAccessor)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int)'>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_ -&gt; new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, int, int, int, int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.time.LocalDateTime java.time.LocalDateTime of(int, java.time.Month, int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

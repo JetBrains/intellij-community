@@ -100,7 +100,7 @@ final class BindToExistingBeanStep extends StepAdapter{
   private final class MyTableModel extends AbstractTableModel{
     private final String[] myColumnNames;
 
-    public MyTableModel() {
+    MyTableModel() {
       myColumnNames = new String[]{
         UIDesignerBundle.message("column.form.field"),
         UIDesignerBundle.message("column.bean.property")};
@@ -152,7 +152,7 @@ final class BindToExistingBeanStep extends StepAdapter{
     /* -1 if not defined*/
     private int myEditingRow;
 
-    public MyTableCellEditor() {
+    MyTableCellEditor() {
       myCbx = new ComboBox();
       myCbx.setEditable(true);
       myCbx.setRenderer(new BeanPropertyListCellRenderer());

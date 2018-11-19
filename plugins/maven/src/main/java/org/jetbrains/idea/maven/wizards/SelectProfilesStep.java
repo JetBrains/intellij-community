@@ -193,7 +193,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
   }
 
   private static class CheckboxTableCellRenderer extends JCheckBox implements TableCellRenderer {
-    public CheckboxTableCellRenderer() {
+    CheckboxTableCellRenderer() {
       setHorizontalAlignment(SwingConstants.CENTER);
       setBorder(null);
     }

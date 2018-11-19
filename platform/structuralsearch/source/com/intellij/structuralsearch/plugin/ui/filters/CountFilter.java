@@ -38,6 +38,13 @@ public class CountFilter extends FilterAction {
   }
 
   @Override
+  public void initFilter() {
+    final MatchVariableConstraint constraint = myTable.getConstraint();
+    constraint.setMinCount(myMinZero ? 0 : 1);
+    constraint.setMaxCount(myMaxUnlimited ? Integer.MAX_VALUE : 1);
+  }
+
+  @Override
   public boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target) {
     final StructuralSearchProfile profile = myTable.getProfile();
     myMinZero = profile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
@@ -55,7 +62,7 @@ public class CountFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();
@@ -100,15 +107,36 @@ public class CountFilter extends FilterAction {
         myMinField.setMaxValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
         myMinField.setDefaultValue(myMinZero ? 0 : 1);
         myMinField.setDefaultValueText(myMinZero ? "0" : "1");
-        myMinField.setValue(myConstraint.getMinCount());
+        final int minCount = myConstraint.getMinCount();
+        if (!isDefaultValue(minCount)) {
+          myMinField.setValue(minCount);
+        }
+        myMinField.setCanBeEmpty(true);
         myMinField.selectAll();
 
         myMaxField.setMinValue(myMinZero ? 0 : 1);
         myMaxField.setMaxValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
         myMaxField.setDefaultValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
         myMaxField.setDefaultValueText(myMaxUnlimited ? SSRBundle.message("editvarcontraints.unlimited") : "1");
-        myMaxField.setValue(myConstraint.getMaxCount());
+        final int maxCount = myConstraint.getMaxCount();
+        if (!isDefaultValue(maxCount)) {
+          myMaxField.setValue(maxCount);
+        }
+        myMaxField.setCanBeEmpty(true);
         myMaxField.selectAll();
+      }
+
+      private boolean isDefaultValue(int count) {
+        if (count == 0) {
+          return myMinZero;
+        }
+        else if (count == 1) {
+          return !myMinZero || !myMaxUnlimited;
+        }
+        else if (count == Integer.MAX_VALUE) {
+          return myMaxUnlimited;
+        }
+        return false;
       }
 
       @Override

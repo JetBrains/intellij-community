@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/4/2015
  */
 public class ModuleComponentIdentifierImpl implements ModuleComponentIdentifier {
   @NotNull
@@ -100,7 +99,7 @@ class ModuleIdentifierImpl implements ModuleIdentifier {
   @NotNull private final String myGroup;
   @NotNull private final String myModule;
 
-  public ModuleIdentifierImpl(@NotNull String group, @NotNull String module) {
+  ModuleIdentifierImpl(@NotNull String group, @NotNull String module) {
     myGroup = group;
     myModule = module;
   }

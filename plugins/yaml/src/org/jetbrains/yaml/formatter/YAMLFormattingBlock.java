@@ -5,6 +5,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
@@ -25,6 +26,9 @@ class YAMLFormattingBlock extends AbstractBlock {
 
   private final boolean myIsIncomplete;
 
+  @NotNull
+  private final TextRange myTextRange;
+
   YAMLFormattingBlock(@NotNull YAMLFormattingContext context, @NotNull ASTNode node) {
     super(node, null, context.computeAlignment(node));
     myContext = context;
@@ -32,6 +36,7 @@ class YAMLFormattingBlock extends AbstractBlock {
     myIndent = myContext.computeBlockIndent(myNode);
     myIsIncomplete = myContext.isIncomplete(myNode);
     myNewChildIndent = myContext.computeNewChildIndent(myNode);
+    myTextRange = excludeTrailingEOLs(myNode);
   }
 
   @Nullable
@@ -54,6 +59,12 @@ class YAMLFormattingBlock extends AbstractBlock {
   @Nullable
   public Indent getIndent() {
     return myIndent;
+  }
+
+  @NotNull
+  @Override
+  public TextRange getTextRange() {
+    return myTextRange;
   }
 
   @Nullable
@@ -83,5 +94,21 @@ class YAMLFormattingBlock extends AbstractBlock {
       }
     }
     return res;
+  }
+
+  private static TextRange excludeTrailingEOLs(@NotNull ASTNode node) {
+    CharSequence text = node.getChars();
+    int last = text.length() - 1;
+    if (last == -1 || text.charAt(last) != '\n') {
+      return node.getTextRange();
+    }
+    for (int i = last; i >= 0; i--) {
+      if (text.charAt(i) != '\n') {
+        int start = node.getTextRange().getStartOffset();
+        return new TextRange(start, start + i + 1);
+      }
+    }
+    // It seems this node is a file and this file consists of only empty lines
+    return node.getTextRange();
   }
 }

@@ -26,12 +26,11 @@ import java.nio.charset.CoderResult;
 
 class Native2AsciiCharsetEncoder extends CharsetEncoder {
 
-  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   private static final char ANCHOR = Boolean.getBoolean("idea.native2ascii.lowercase") ? 'a' : 'A';
   
   private final Charset myBaseCharset;
 
-  public Native2AsciiCharsetEncoder(Native2AsciiCharset charset) {
+  Native2AsciiCharsetEncoder(Native2AsciiCharset charset) {
     super(charset, 1, 6);
     myBaseCharset = charset.getBaseCharset();
   }

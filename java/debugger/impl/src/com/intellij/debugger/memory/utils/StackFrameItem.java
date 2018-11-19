@@ -97,7 +97,7 @@ public class StackFrameItem {
             if (!DebuggerSettings.getInstance().CAPTURE_VARIABLES) {
               vars = VARS_CAPTURE_DISABLED;
             }
-            else if (method.isNative() || method.isBridge() || DefaultSyntheticProvider.checkIsSynthetic(method)) {
+            else if (method.isNative() || method.isBridge() || DebuggerUtils.isSynthetic(method)) {
               vars = VARS_NOT_CAPTURED;
             }
             else {
@@ -189,7 +189,7 @@ public class StackFrameItem {
     private final String myValue;
     private final VarType myVarType;
 
-    public VariableItem(String name, String type, String value, VarType varType) {
+    VariableItem(String name, String type, String value, VarType varType) {
       super(name);
       myType = type;
       myValue = value;

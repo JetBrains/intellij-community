@@ -12,21 +12,24 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PyBraceMatcher implements PairedBraceMatcher {
-  private final BracePair[] PAIRS;
-
-  public PyBraceMatcher() {
-    PAIRS = new BracePair[]{new BracePair(PyTokenTypes.LPAR, PyTokenTypes.RPAR, false),
-      new BracePair(PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET, false), new BracePair(PyTokenTypes.LBRACE, PyTokenTypes.RBRACE, false)};
-  }
+  private static final BracePair[] ourBraces = {
+    new BracePair(PyTokenTypes.LPAR, PyTokenTypes.RPAR, false),
+    new BracePair(PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET, false),
+    new BracePair(PyTokenTypes.LBRACE, PyTokenTypes.RBRACE, false),
+    new BracePair(PyTokenTypes.FSTRING_FRAGMENT_START, PyTokenTypes.FSTRING_FRAGMENT_END, true)
+  };
 
   @Override
   @NotNull
   public BracePair[] getPairs() {
-    return PAIRS;
+    return ourBraces;
   }
 
   @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
+    if (lbraceType == PyTokenTypes.FSTRING_FRAGMENT_START) {
+      return true;
+    }
     return
       PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(contextType) ||
       contextType == PyTokenTypes.END_OF_LINE_COMMENT ||

@@ -22,8 +22,8 @@ open class SystemPropertiesTestCase : GuiTestCase() {
    * @setUpBlock block which is executed before test running. Using of ideFrame in this block is deprecated. Used for files manipulating or
    * setting up environment.
    */
-  fun restartIdeWithSystemProperties(systemProperties: Array<Pair<String, String>>,
-                                     setUpBlock: (Array<Pair<String, String>>) -> Unit = { }) {
+  fun restartIdeWithSystemProperties(systemProperties: List<Pair<String, String>>,
+                                     setUpBlock: (List<Pair<String, String>>) -> Unit = { }) {
     if (guiTestRule.getTestName() == GuiTestOptions.resumeTestName && GuiTestOptions.resumeInfo == SYSTEM_PROPERTIES) return
     setUpBlock(systemProperties)
     GuiTestThread.client?.send(createTransportMessage(systemProperties)) ?: throw Exception(
@@ -31,7 +31,7 @@ open class SystemPropertiesTestCase : GuiTestCase() {
     GuiTestUtilKt.waitUntil("IDE will be closed", timeout = Timeouts.minutes02) { false }
   }
 
-  private fun createTransportMessage(systemProperties: Array<Pair<String, String>>) =
+  private fun createTransportMessage(systemProperties: List<Pair<String, String>>) =
     TransportMessage(MessageType.RESTART_IDE_AND_RESUME, RunWithSystemPropertiesContainer(systemProperties))
 
   companion object {

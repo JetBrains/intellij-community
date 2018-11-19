@@ -222,7 +222,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
       CreateFromUsageBaseFix.startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(() -> {
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
@@ -279,7 +279,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   @Nullable
   private static PsiDeclarationStatement createLocalVariableDeclaration(final PsiInstanceOfExpression instanceOfExpression,
                                                                         final PsiStatement statementInside) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(instanceOfExpression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfExpression.getProject());
     PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", instanceOfExpression);
     PsiType castType = instanceOfExpression.getCheckType().getType();
     cast.getCastType().replace(factory.createTypeElement(castType));
@@ -305,7 +305,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   static PsiElement insertAtAnchor(final PsiInstanceOfExpression instanceOfExpression, PsiElement toInsert) throws IncorrectOperationException {
     boolean negated = isNegated(instanceOfExpression);
     PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(toInsert.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(toInsert.getProject());
     PsiElement anchorAfter = null;
     PsiBlockStatement emptyBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", instanceOfExpression);
     if (statement instanceof PsiIfStatement) {

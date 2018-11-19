@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon;
 
@@ -47,11 +33,15 @@ public interface LineMarkerProvider {
    * <p/>
    * So imagine a {@code LineMarkerProvider} which (incorrectly) written like this:
    * <pre>
-   * {@code class MyBadLineMarkerProvider implements LineMarkerProvider {
+   * {@code
+   *   class MyBadLineMarkerProvider implements LineMarkerProvider {
    *     public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
-   *       if (element instanceof PsiMethod) return // ACTUALLY DONT!
-   *            new LineMarkerInfo(element, element.getTextRange(), icon, null,null, alignment);
-   *       else return null;
+   *       if (element instanceof PsiMethod) { // ACTUALLY DONT!
+   *          return new LineMarkerInfo(element, element.getTextRange(), icon, null,null, alignment);
+   *       }
+   *       else {
+   *         return null;
+   *       }
    *     }
    *     ...
    *   }
@@ -66,13 +56,17 @@ public interface LineMarkerProvider {
    * As a result, line marker icon will blink annoyingly.
    * Instead, write this:
    * <pre>
-   * {@code class MyGoodLineMarkerProvider implements LineMarkerProvider {
+   * {@code
+   *   class MyGoodLineMarkerProvider implements LineMarkerProvider {
    *     public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
    *       if (element instanceof PsiIdentifier &&
    *           (parent = element.getParent()) instanceof PsiMethod &&
-   *           ((PsiMethod)parent).getMethodIdentifier() == element)) // aha, we are at method name
+   *           ((PsiMethod)parent).getMethodIdentifier() == element)) { // aha, we are at method name
    *            return new LineMarkerInfo(element, element.getTextRange(), icon, null,null, alignment);
-   *       else return null;
+   *       }
+   *       else {
+   *         return null;
+   *       }
    *     }
    *     ...
    *   }
@@ -82,5 +76,6 @@ public interface LineMarkerProvider {
   @Nullable
   LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element);
 
-  void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result);
+  default void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  }
 }

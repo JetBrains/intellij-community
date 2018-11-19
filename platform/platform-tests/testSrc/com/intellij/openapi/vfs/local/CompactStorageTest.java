@@ -115,7 +115,7 @@ public class CompactStorageTest extends StorageTestBase {
   }
 
   static class CompactStorage extends Storage {
-    public CompactStorage(String fileName) throws IOException {
+    CompactStorage(String fileName) throws IOException {
       super(fileName);
     }
 

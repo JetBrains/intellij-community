@@ -29,7 +29,7 @@ public class MoveComponentAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     if (myColumnDelta != 0) {
       // sort the selection so that move in indexed layout will handle components in correct order
       Collections.sort(selection, (o1, o2) -> {
@@ -44,7 +44,7 @@ public class MoveComponentAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     e.getPresentation().setEnabled(true);
     for(RadComponent c: selection) {
       if (!c.getParent().getLayoutManager().canMoveComponent(c, myRowDelta, myColumnDelta, myRowSpanDelta, myColSpanDelta)) {

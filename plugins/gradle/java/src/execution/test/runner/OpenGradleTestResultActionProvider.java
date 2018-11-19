@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import icons.GradleIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -22,7 +23,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/26/14
  */
 public class OpenGradleTestResultActionProvider implements ToggleModelActionProvider {
   public static final BooleanProperty OPEN_GRADLE_REPORT = new BooleanProperty("openGradleReport", false);
@@ -36,7 +36,7 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
     @Nullable
     private ProjectSystemId mySystemId;
 
-    public MyToggleModelAction(TestConsoleProperties properties) {
+    MyToggleModelAction(TestConsoleProperties properties) {
       super(GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.text"),
             GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.desc"),
                                  GradleIcons.GradleNavigate, properties, OPEN_GRADLE_REPORT);
@@ -51,7 +51,7 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       final String reportFilePath = getReportFilePath();
       if (reportFilePath != null) {
         BrowserUtil.browse(reportFilePath);

@@ -45,11 +45,11 @@ public class StreamLoader implements Loader {
     doLoad(stream, consumer);
   }
 
-  static void doLoad(@NotNull InputStream stream, @NotNull Consumer<String> consumer) {
+  static void doLoad(@NotNull InputStream stream, @NotNull Consumer<? super String> consumer) {
     doLoad(stream, consumer, StandardCharsets.UTF_8);
   }
 
-  static void doLoad(@NotNull InputStream stream, @NotNull Consumer<String> consumer, Charset charset) {
+  static void doLoad(@NotNull InputStream stream, @NotNull Consumer<? super String> consumer, Charset charset) {
     try (BufferedReader br = new BufferedReader(new InputStreamReader(stream, charset))) {
       br.lines().forEach(consumer::consume);
     }

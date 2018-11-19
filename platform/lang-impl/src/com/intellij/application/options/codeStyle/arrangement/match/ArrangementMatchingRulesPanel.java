@@ -41,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 10/30/12 5:28 PM
  */
 public class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
 

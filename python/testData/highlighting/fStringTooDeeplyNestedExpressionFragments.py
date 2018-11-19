@@ -1,7 +1,7 @@
-f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{}</error>}}'
-f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{# foo}</error>}}'
-f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z!z}</error>}}'
-f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z:{42}}</error>}}'
-f'<error descr="Empty expression fragments are not allowed inside f-strings">{:</error><error descr="Empty expression fragments are not allowed inside f-strings">{:</error><error descr="Expression fragment inside f-string is nested too deeply">{:{}}</error>}}'
-f'<error descr="'}' is expected">{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z</error></error>'
-<error descr="Missing closing quote [']">f'<error descr="'}' is expected">{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z</error></error></error>
+f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{<error descr="expression expected">}</error></error>}}'
+f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{<error descr="Expression fragments inside f-strings cannot include line comments"><error descr="expression expected"># foo}}}'</error></error></error><EOLError descr="type conversion, : or } expected"></EOLError><EOLError descr="' expected"></EOLError>
+f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z<error descr="Illegal conversion character 'z': should be one of 's', 'r', 'a'">!z</error>}</error>}}'
+f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z:<error descr="Expression fragment inside f-string is nested too deeply">{42}</error>}</error>}}'
+f'{<error descr="expression expected">:</error>{<error descr="expression expected">:</error><error descr="Expression fragment inside f-string is nested too deeply">{<error descr="expression expected">:</error><error descr="Expression fragment inside f-string is nested too deeply">{<error descr="expression expected">}</error></error>}</error>}}'
+f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z</error><error descr="} expected">'</error>
+f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z</error><EOLError descr="type conversion, : or } expected"></EOLError><EOLError descr="' expected"></EOLError>

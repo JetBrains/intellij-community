@@ -53,7 +53,7 @@ public abstract class XmlFormattingPolicy {
     return myRootToBlockMap.get(root);
   }
 
-  private Block createBlockFor(final Pair<PsiElement,Language> root) {
+  private Block createBlockFor(final Pair<? extends PsiElement, ? extends Language> root) {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(root.getSecond(), root.getFirst());
     if (builder != null) {
       final Block result = builder.createModel(root.getFirst(), getSettings()).getRootBlock();

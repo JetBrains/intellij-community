@@ -29,7 +29,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -518,7 +517,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return height;
   }
 
-  private void calculateBoundsNowrapImpl(List<Rectangle> bounds) {
+  private void calculateBoundsNowrapImpl(List<? extends Rectangle> bounds) {
     final int componentCount = getComponentCount();
     LOG.assertTrue(componentCount <= bounds.size());
 
@@ -572,7 +571,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  private void calculateBoundsAutoImp(Dimension sizeToFit, List<Rectangle> bounds) {
+  private void calculateBoundsAutoImp(Dimension sizeToFit, List<? extends Rectangle> bounds) {
     final int componentCount = getComponentCount();
     LOG.assertTrue(componentCount <= bounds.size());
 
@@ -684,7 +683,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   }
 
-  private void calculateBoundsWrapImpl(Dimension sizeToFit, List<Rectangle> bounds) {
+  private void calculateBoundsWrapImpl(Dimension sizeToFit, List<? extends Rectangle> bounds) {
     // We have to graceful handle case when toolbar was not laid out yet.
     // In this case we calculate bounds as it is a NOWRAP toolbar.
     if (getWidth() == 0 || getHeight() == 0) {
@@ -1038,7 +1037,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         offset = ActionToolbarImpl.this.getWidth() - getMaxButtonWidth() - 1;
       }
 
-      g.setColor(UIUtil.getSeparatorColor());
+      g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
       if (myOrientation == SwingConstants.HORIZONTAL) {
         int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
         LinePainter2D.paint((Graphics2D)g, center, gap, center, y2);
@@ -1114,11 +1113,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private void updateActionsImpl(boolean transparentOnly, boolean forced) {
-    List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(myVisibleActions.size());
     DataContext dataContext = getDataContext();
-
-    Utils.expandActionGroup(LaterInvocator.isInModalContext(), myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
-                            myPlace, myActionManager, transparentOnly, false, false, true);
+    List<AnAction> newVisibleActions =
+      new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory, dataContext, myPlace,
+                        false, true, transparentOnly)
+        .expandActionGroupWithTimeout(myActionGroup, false);
 
     if (forced || !newVisibleActions.equals(myVisibleActions)) {
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
@@ -1276,14 +1275,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     builder.addListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         processClosed();
       }
     });
     myPopup = builder.createPopup();
     ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void afterActionPerformed(AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         final JBPopup popup = myPopup;
         if (popup != null && !popup.isDisposed() && popup.isVisible()) {
           popup.cancel();
@@ -1356,7 +1355,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
     private final JComponent myParent;
 
-    public PopupToolbar(final String place,
+    PopupToolbar(final String place,
                         final ActionGroup actionGroup,
                         final boolean horizontal,
                         final DataManager dataManager,
@@ -1382,11 +1381,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     @Override
-    public void beforeActionPerformed(@NotNull final AnAction action, final DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull final AnAction action, @NotNull final DataContext dataContext, AnActionEvent event) {
     }
 
     @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
+    public void afterActionPerformed(final AnAction action, @NotNull final DataContext dataContext, AnActionEvent event) {
       if (!myVisibleActions.contains(action)) {
         onOtherActionPerformed();
       }

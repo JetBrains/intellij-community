@@ -30,7 +30,6 @@ import javax.swing.*;
 
 /**
  * @author anna
- * @since 26-Dec-2007
  */
 public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
@@ -49,7 +48,7 @@ public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   }
 
   private static class MySdkPathEditor extends SdkPathEditor {
-    public MySdkPathEditor(FileChooserDescriptor descriptor) {
+    MySdkPathEditor(FileChooserDescriptor descriptor) {
       super(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, descriptor);
     }
 

@@ -8,7 +8,7 @@
       <option name="WHITESPACES" value="c5c5c5"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
       <option name="GUTTER_BACKGROUND" value="f0f0f0" />
-      <option name="NOTIFICATION_BACKGROUND" value="ffffcc" />
+      <option name="NOTIFICATION_BACKGROUND" value="fff8d1" />
       <option name="SELECTED_INDENT_GUIDE" value="c8c8c8"/>
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
       <option name="LINE_NUMBERS_COLOR" value="999999"/>
@@ -60,6 +60,19 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="d9e4f9"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="fffbcf"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="ffbfc3"/>
+
+      <option name="ScrollBar.foreground" value="E6E6E6"/>
+      <option name="ScrollBar.background" value="F5F5F5"/>
+      <option name="ScrollBar.Thumb.foreground" value="59595933" mac="00000033"/>
+      <option name="ScrollBar.Thumb.background" value="73737333" mac="00000033"/>
+      <option name="ScrollBar.Thumb.Hovered.foreground" value="59595947" mac="00000080"/>
+      <option name="ScrollBar.Thumb.Hovered.background" value="73737347" mac="00000080"/>
+      <option name="ScrollBar.Thumb.NonOpaque.foreground" value="59595933" mac="00000000"/>
+      <option name="ScrollBar.Thumb.NonOpaque.background" value="73737333" mac="00000000"/>
+      <option name="ScrollBar.Thumb.NonOpaque.Hovered.foreground" value="59595947" mac="00000080"/>
+      <option name="ScrollBar.Thumb.NonOpaque.Hovered.background" value="73737347" mac="00000080"/>
+      <option name="ScrollBar.NonOpaque.background" value="80808000"/>
+      <option name="ScrollBar.NonOpaque.Hovered.background" value="8080801A"/>
     </colors>
 
     <attributes>
@@ -1169,8 +1182,9 @@
       <option name="GUTTER_BACKGROUND" value="313335" />
       <option name="INDENT_GUIDE" value="373737" />
       <option name="LINE_NUMBERS_COLOR" value="606366" />
+      <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="a4a3a3" />
       <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
-      <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
+      <option name="NOTIFICATION_BACKGROUND" value="1d3857" />
       <option name="READONLY_FRAGMENT_BACKGROUND" value="" />
       <option name="RECURSIVE_CALL_ATTRIBUTES" value="574300" />
       <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
@@ -1191,6 +1205,19 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="41444a"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="484248"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="4c393a"/>
+
+      <option name="ScrollBar.foreground" value="3F4244"/>
+      <option name="ScrollBar.background" value="3F4244"/>
+      <option name="ScrollBar.Thumb.foreground" value="38383847" mac="26262659"/>
+      <option name="ScrollBar.Thumb.background" value="A6A6A647" mac="80808059"/>
+      <option name="ScrollBar.Thumb.Hovered.foreground" value="38383859" mac="2626268C"/>
+      <option name="ScrollBar.Thumb.Hovered.background" value="A6A6A659" mac="8080808C"/>
+      <option name="ScrollBar.Thumb.NonOpaque.foreground" value="38383847" mac="26262600"/>
+      <option name="ScrollBar.Thumb.NonOpaque.background" value="A6A6A647" mac="80808000"/>
+      <option name="ScrollBar.Thumb.NonOpaque.Hovered.foreground" value="38383859" mac="2626268C"/>
+      <option name="ScrollBar.Thumb.NonOpaque.Hovered.background" value="A6A6A659" mac="8080808C"/>
+      <option name="ScrollBar.NonOpaque.background" value="80808000"/>
+      <option name="ScrollBar.NonOpaque.Hovered.background" value="8080801A"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

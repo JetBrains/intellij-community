@@ -29,22 +29,14 @@ public interface IdeaPlugin extends DomElement {
   @Nullable
   String getPluginId();
 
+  @SubTag("product-descriptor")
+  @Nullable
+  ProductDescriptor getProductDescriptor();
+
   @NotNull
   @NameValue
   @Stubbed
   GenericDomValue<String> getId();
-
-  @NotNull
-  @SubTag("productCode")
-  GenericDomValue<String> getProductCode();
-
-  @NotNull
-  @SubTag("releaseDate")
-  GenericDomValue<String> getReleaseDate();
-
-  @NotNull
-  @SubTag("releaseVersion")
-  GenericDomValue<Integer> getReleaseVersion();
 
   /**
    * @deprecated Unused.
@@ -68,6 +60,7 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @Stubbed
+  @Required(false)
   GenericDomValue<String> getName();
 
 
@@ -76,6 +69,7 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
+  @Required(false)
   GenericDomValue<String> getVersion();
 
 

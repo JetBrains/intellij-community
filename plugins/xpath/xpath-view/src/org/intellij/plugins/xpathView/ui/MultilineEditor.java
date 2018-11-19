@@ -51,7 +51,7 @@ public class MultilineEditor extends JPanel {
     }
 
     private static abstract class ItemAction extends AnAction {
-        public ItemAction(String id, JComponent component) {
+        ItemAction(String id, JComponent component) {
             copyFrom(ActionManager.getInstance().getAction(id));
             registerCustomShortcutSet(getShortcutSet(), component);
         }

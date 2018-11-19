@@ -48,6 +48,7 @@ public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsC
     visitor.visitThrowsClause(this);
   }
 
+  @Override
   public String toString() {
     return "Throw clause";
   }

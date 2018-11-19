@@ -367,7 +367,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   private static class ShortcutTextField extends JTextField {
     private KeyStroke myKeyStroke;
 
-    public ShortcutTextField() {
+    ShortcutTextField() {
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       setFocusTraversalKeysEnabled(false);
     }

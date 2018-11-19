@@ -31,6 +31,8 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
@@ -120,30 +122,6 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   @Override
-  protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    Icon icon = UIManager.getIcon(clickable ? "TextField.darcula.searchWithHistory.icon" : "TextField.darcula.search.icon");
-    if (icon != null && clickable) {
-      return new Icon() {
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-          icon.paintIcon(c, g, x, y + JBUI.scale(1));
-        }
-
-        @Override
-        public int getIconWidth() {
-          return icon.getIconWidth() + JBUI.scale(4);
-        }
-
-        @Override
-        public int getIconHeight() {
-          return icon.getIconHeight();
-        }
-      };
-    }
-    return icon != null ? icon : IconLoader.findLafIcon("search", DarculaTextFieldUI.class);
-  }
-
-  @Override
   protected int getSearchIconGap() {
     return 0;
   }
@@ -157,7 +135,8 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected Insets getDefaultMargins() {
-    return JBUI.insets(2, 5);
+    Component c = getComponent();
+    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(2, 5);
   }
 
   @Override

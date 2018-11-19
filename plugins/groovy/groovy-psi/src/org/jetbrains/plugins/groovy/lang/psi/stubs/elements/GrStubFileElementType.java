@@ -27,7 +27,7 @@ import java.io.IOException;
  */
 public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
-  public static final int STUB_VERSION = 44;
+  public static final int STUB_VERSION = 49;
 
   public GrStubFileElementType(Language language) {
     super(language);
@@ -110,5 +110,4 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       sink.occurrence(GrAnnotatedMemberIndex.KEY, anno);
     }
   }
-
 }

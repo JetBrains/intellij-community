@@ -84,7 +84,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   }
 
   @NotNull
-  public static <T> Query<T> wrapInReadAction(@NotNull final Query<T> query) {
+  public static <T> Query<T> wrapInReadAction(@NotNull final Query<? extends T> query) {
     return new AbstractQuery<T>() {
       @Override
       protected boolean processResults(@NotNull Processor<? super T> consumer) {

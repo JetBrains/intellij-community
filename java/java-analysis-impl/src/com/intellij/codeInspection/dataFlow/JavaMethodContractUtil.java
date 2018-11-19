@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
+import com.intellij.codeInsight.DefaultInferredAnnotationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -96,7 +96,7 @@ public class JavaMethodContractUtil {
     String mutates = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES));
     String resultValue = StreamEx.of(contracts).joining("; ");
     Project project = annotation.getProject();
-    return InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, resultValue, mutates);
+    return DefaultInferredAnnotationProvider.createContractAnnotation(project, pure, resultValue, mutates);
   }
 
   static class ContractInfo {

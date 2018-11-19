@@ -31,7 +31,7 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
     
     myCanonicalText = type.getCanonicalText();
     myPresentableText = type.getPresentableText();
-    myExpr = JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createExpressionFromText(myCanonicalText + DOT_CLASS, context);
+    myExpr = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(myCanonicalText + DOT_CLASS, context);
   }
 
   @NotNull

@@ -139,7 +139,7 @@ public class LineFragment extends LineBlock implements Fragment {
   }
 
   @Override
-  public Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
+  public Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition) {
     Fragment childFragment = myChildren.getFragmentAt(offset, side, condition);
     return childFragment != null ? childFragment : this;
   }
@@ -182,7 +182,7 @@ public class LineFragment extends LineBlock implements Fragment {
     checkChildren(myChildren.iterator());
   }
 
-  private void checkChildren(Iterator<Fragment> iterator) {
+  private void checkChildren(Iterator<? extends Fragment> iterator) {
     if (myChildren.isEmpty()) {
       myHasLineChildren = false;
       return;

@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
@@ -82,21 +83,10 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
   @Override
   public int getLongIndex(int shortIndex) {
     checkShortIndex(shortIndex);
+    int i = ObjectUtils.binarySearch(0, mySubSumOfBlocks.length, middle -> mySubSumOfBlocks[middle] <= shortIndex ? -1 : 1);
+    i = Math.min(mySubSumOfBlocks.length, -i-1);
 
-    int a = 0;
-    int b = mySubSumOfBlocks.length - 1;
-    while (b > a) {
-      int middle = (a + b) / 2;
-      if (mySubSumOfBlocks[middle] <= shortIndex) {
-        a = middle + 1;
-      }
-      else {
-        b = middle;
-      }
-    }
-    assert a == b;
-
-    int blockIndex = a;
+    int blockIndex = i;
     int prefVisibleCount = 0;
     if (blockIndex > 0) prefVisibleCount = mySubSumOfBlocks[blockIndex - 1];
 

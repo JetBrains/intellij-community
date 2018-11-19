@@ -61,7 +61,6 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   private final Consumer<TaskRepository> myChangeListener;
   private int count;
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<TaskRepository, String> myRepoNames = ConcurrentFactoryMap.createMap(repository->
       Integer.toString(count++)
 
@@ -282,11 +281,11 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   private abstract class AddServerAction extends IconWithTextAction implements DumbAware {
 
-    public AddServerAction(TaskRepositorySubtype subtype) {
+    AddServerAction(TaskRepositorySubtype subtype) {
       super(subtype.getName(), "New " + subtype.getName() + " server", subtype.getIcon());
     }
 
-    public AddServerAction(TaskRepository repository) {
+    AddServerAction(TaskRepository repository) {
       super(repository.getUrl(), repository.getUrl(), repository.getIcon());
     }
 

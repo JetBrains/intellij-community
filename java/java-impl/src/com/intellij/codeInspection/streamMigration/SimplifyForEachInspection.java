@@ -81,7 +81,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       PsiReferenceExpression methodExpression = call.getMethodExpression();
       return new TextRange(methodExpression.getTextOffset(), call.getArgumentList().getTextOffset());
     }
-    return new TextRange(call.getTextOffset(), call.getNextSibling().getTextOffset());
+    return call.getTextRange();
   }
 
   @Nullable
@@ -217,7 +217,6 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       return myCustomName;
     }
 
-    @SuppressWarnings("DialogTitleCapitalization")
     @NotNull
     @Override
     public String getFamilyName() {

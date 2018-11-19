@@ -10,7 +10,6 @@ import javax.swing.*;
 
 /**
  * @author Irina.Chernushina
- * @since 4.08.2011
  */
 public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   public VcsContentAnnotationConfigurable(Project project) {

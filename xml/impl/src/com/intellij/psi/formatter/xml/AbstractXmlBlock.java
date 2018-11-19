@@ -99,7 +99,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   protected Alignment chooseAlignment(final ASTNode child, final Alignment attrAlignment, final Alignment textAlignment) {
     if (myNode.getElementType() == XmlElementType.XML_TEXT) return getAlignment();
     final IElementType elementType = child.getElementType();
-    if (elementType == XmlElementType.XML_ATTRIBUTE && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
+    if (isAttributeElementType(elementType) && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
     if (elementType == XmlElementType.XML_TEXT && myXmlFormattingPolicy.getShouldAlignText()) return textAlignment;
     return null;
   }
@@ -111,7 +111,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   protected Wrap chooseWrap(final ASTNode child, final Wrap tagBeginWrap, final Wrap attrWrap, final Wrap textWrap) {
     if (myNode.getElementType() == XmlElementType.XML_TEXT) return textWrap;
     final IElementType elementType = child.getElementType();
-    if (elementType == XmlElementType.XML_ATTRIBUTE) return attrWrap;
+    if (isAttributeElementType(elementType)) return attrWrap;
     if (elementType == XmlTokenType.XML_START_TAG_START) return tagBeginWrap;
     if (elementType == XmlTokenType.XML_END_TAG_START) {
       final PsiElement parent = SourceTreeToPsiMap.treeElementToPsi(child.getTreeParent());
@@ -280,7 +280,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected void processSimpleChild(final ASTNode child,
                                   final Indent indent,
-                                  final List<Block> result,
+                                  final List<? super Block> result,
                                   final Wrap wrap,
                                   final Alignment alignment) {
     if (isXmlTag(child)) {
@@ -317,7 +317,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   @Nullable
-  protected ASTNode createAnotherTreeNode(final List<Block> result,
+  protected ASTNode createAnotherTreeNode(final List<? super Block> result,
                                             final ASTNode child,
                                             PsiElement tag,
                                             final Indent indent,
@@ -339,6 +339,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return null;
 
   }
+
+  protected boolean isAttributeElementType(final IElementType elementType) {
+    return elementType == XmlElementType.XML_ATTRIBUTE;
+  }
+
   protected boolean isXmlTag(final ASTNode child) {
     return isXmlTag(child.getPsi());
   }
@@ -357,7 +362,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final FormattingModelBuilder childFormatter = LanguageFormatting.INSTANCE.forLanguage(childLanguage);
     return childFormatter == null ||
            childFormatter instanceof DelegatingFormattingModelBuilder &&
-           ((DelegatingFormattingModelBuilder)childFormatter).dontFormatMyModel();
+           ((DelegatingFormattingModelBuilder)childFormatter).dontFormatMyModel(childPsi);
   }
 
   protected boolean isJspxJavaContainingNode(final ASTNode child) {
@@ -394,7 +399,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractXmlBlock");
 
-  protected void createJspTextNode(final List<Block> localResult, final ASTNode child, final Indent indent) {
+  protected void createJspTextNode(final List<? super Block> localResult, final ASTNode child, final Indent indent) {
   }
 
   @Nullable

@@ -194,7 +194,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     private boolean myUseRename;
     private int myOffset;
 
-    public MyTokenConsumer(SpellCheckerManager manager, ProblemsHolder holder, NamesValidator namesValidator) {
+    MyTokenConsumer(SpellCheckerManager manager, ProblemsHolder holder, NamesValidator namesValidator) {
       myManager = manager;
       myHolder = holder;
       myNamesValidator = namesValidator;

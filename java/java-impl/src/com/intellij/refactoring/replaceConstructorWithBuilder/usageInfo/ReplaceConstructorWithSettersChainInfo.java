@@ -41,10 +41,10 @@ public class ReplaceConstructorWithSettersChainInfo extends FixableUsageInfo {
   public void fixUsage() throws IncorrectOperationException {
     final PsiNewExpression expr = (PsiNewExpression)getElement();
     if (expr != null) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expr.getProject());
       final PsiMethod constructor = expr.resolveConstructor();
       if (constructor != null) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         final PsiExpressionList argumentList = expr.getArgumentList();
         if (argumentList != null) {
           final PsiExpression[] args = argumentList.getExpressions();

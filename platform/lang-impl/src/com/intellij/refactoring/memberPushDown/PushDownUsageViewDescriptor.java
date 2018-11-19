@@ -22,7 +22,7 @@ public class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Membe
     this(aClass, null);
   }
 
-  public PushDownUsageViewDescriptor(Klass aClass, List<MemberInfo> memberInfos) {
+  public PushDownUsageViewDescriptor(Klass aClass, List<? extends MemberInfo> memberInfos) {
     myMembers = memberInfos != null ? ContainerUtil.map2Array(memberInfos, PsiElement.class, MemberInfoBase::getMember) : new PsiElement[]{aClass};
     myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header",
                                                           memberInfos != null ? DescriptiveNameUtil.getDescriptiveName(aClass) : "");
@@ -39,6 +39,7 @@ public class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Membe
     return myMembers;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("classes.to.push.down.members.to", UsageViewBundle.getReferencesString(usagesCount, filesCount));

@@ -36,7 +36,7 @@ import java.util.List;
  * @author max
  */
 public class PsiClassReferenceType extends PsiClassType.Stub {
-  private final Computable<PsiJavaCodeReferenceElement> myReference;
+  private final Computable<? extends PsiJavaCodeReferenceElement> myReference;
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level) {
     this(reference, level, collectAnnotations(reference));
@@ -51,7 +51,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     this(new Computable.PredefinedValueComputable<>(reference), level, provider);
   }
 
-  public PsiClassReferenceType(@NotNull Computable<PsiJavaCodeReferenceElement> reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
+  public PsiClassReferenceType(@NotNull Computable<? extends PsiJavaCodeReferenceElement> reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
     super(level, provider);
     myReference = reference;
   }
@@ -201,7 +201,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       PsiClass aClass = (PsiClass)resolved;
       if (!PsiUtil.typeParametersIterable(aClass).iterator().hasNext()) return this;
       PsiManager manager = reference.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
       final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
       return new PsiImmediateClassType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotationProvider());
     }

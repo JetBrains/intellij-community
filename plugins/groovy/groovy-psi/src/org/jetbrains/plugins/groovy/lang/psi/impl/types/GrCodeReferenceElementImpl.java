@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -39,6 +40,22 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     super(node);
   }
 
+  private volatile String myCachedTextSkipWhiteSpaceAndComments;
+
+  @Override
+  public void subtreeChanged() {
+    myCachedTextSkipWhiteSpaceAndComments = null;
+    super.subtreeChanged();
+  }
+
+  private String getTextSkipWhiteSpaceAndComments() {
+    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
+    if (whiteSpaceAndComments == null) {
+      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = PsiImplUtil.getTextSkipWhiteSpaceAndComments(getNode());
+    }
+    return whiteSpaceAndComments;
+  }  
+  
   @Override
   public PsiReference getReference() {
     return this;
@@ -54,15 +71,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
   }
 
+  @NotNull
   @Override
-  protected GrCodeReferenceElement bindWithQualifiedRef(@NotNull String qName) {
-    final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
-    final PsiElement list = getTypeArgumentList();
-    if (list != null) {
-      qualifiedRef.getNode().addChild(list.copy().getNode());
-    }
-    getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
-    return qualifiedRef;
+  protected GrReferenceElement<GrCodeReferenceElement> createQualifiedRef(@NotNull String qName) {
+    return GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
   }
 
   @Override
@@ -70,6 +82,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     visitor.visitCodeReferenceElement(this);
   }
 
+  @Override
   public String toString() {
     return "Reference element";
   }

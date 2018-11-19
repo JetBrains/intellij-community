@@ -16,6 +16,7 @@
 <idea-plugin>
   <actions>
     <action id="QuickActionPopup" text="Show Quick Actions Popup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
+    <action id="RunConfigurationTemplatesForNewProjects" class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction"/>
 
     <group id="Other.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Others -->
     <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
@@ -62,7 +63,6 @@
             class="com.intellij.ui.ExpandableActions$Expand"/>
 
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
-    <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
     <action id="ShowColorPicker" class="com.intellij.ui.ShowColorPickerAction" text="Show Color Picker" icon="AllIcons.Ide.Pipette"/>
 
@@ -75,7 +75,7 @@
     <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction" />
     <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction" text="Open In New Editor Window">
       <keyboard-shortcut first-keystroke="shift ENTER" keymap="$default"/>
-    </action>>
+    </action>
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything"
@@ -193,6 +193,9 @@
       <!-- e.g. Cmd + Backspace on OS X should work as Delete in lists, and as 'Delete to Line Start' in the editor -->
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction" use-shortcut-of="$Delete"/>
       <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction"/>
+
+      <action id="EditorFocusGutter" class="com.intellij.openapi.editor.actions.FocusGutterAction"/>
+      <action id="EditorShowGutterIconTooltip" class="com.intellij.openapi.editor.actions.ShowGutterIconTooltipAction"/>
     </group>
 
     <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="AllIcons.Actions.Expandall"/>
@@ -216,7 +219,7 @@
       <action id="Diff.FocusOppositePaneAndScroll" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
       <action id="Diff.ShowSettingsPopup" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show Diff Settings Popup..."/>
-      <action id="Diff.ShowInExternalTool" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.ExternalToolsSmall"
+      <action id="Diff.ShowInExternalTool" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.ExternalTools"
               text="Show Diff in External Tool"/>
       <separator/>
 
@@ -290,8 +293,9 @@
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
           <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
-             <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
-             <group id="FileSettingsGroup"/>
+            <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
+            <reference ref="RunConfigurationTemplatesForNewProjects"/>
+            <group id="FileSettingsGroup"/>
           </group>
           <separator/>
           <group id="ExportImportGroup">
@@ -564,7 +568,12 @@
         <separator/>
         <action id="ProductivityGuide" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
         <separator/>
+        <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"
+                text="Activity Monitor..." description="A tool to check which plugins and subsystems consume most resources">
+        </action>
+
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
+        <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
         <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
         <action id="CollectSettings" class="com.intellij.ide.actions.CollectSettingsAction" text="Settings Summary"/>
@@ -670,10 +679,11 @@
 
     <group id="WelcomeScreen.Configure">
       <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
-      <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.General.PluginManager"/>
+      <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction"/>
+      <reference ref="RunConfigurationTemplatesForNewProjects"/>
 
-      <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
-      <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
+      <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.ToolbarDecorator.Import"/>
+      <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.ToolbarDecorator.Export"/>
 
       <action id="WelcomeScreen.Configure.Properties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
       <action id="WelcomeScreen.Configure.VMOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
@@ -759,10 +769,10 @@
     <group id="Console.HistoryActions">
       <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-      <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.MessageHistory"/>
+      <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Vcs.History"/>
     </group>
 
-    <group id="Internal" text="&amp;Internal Actions" internal="true" popup="true">
+    <group id="Internal" text="&amp;Internal Actions" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true" text="Exceptions">
         <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
         <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"/>
@@ -773,14 +783,18 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb Mode"/>
-      <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
-      <action internal="true" id="TestTransferToEDT" text="Test TransferToEDTQueue performance" class="com.intellij.diagnostic.TransferToEDTQueueTestAction"/>
+      <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction" text="Disable ProcessCanceledException"
+              description="Disable ProcessCanceledException thrown in a background thread during read action, to simplify debugging"/>
+      <group id="Internal.Performance" text="Performance" popup="true">
+        <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
+      </group>
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
                 text="Add Test Notification"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
-        <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction" text="Show standard panels"/>
+        <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"
+                text="Show Standard Panels"/>
         <separator/>
         <action id="EditorRenderingBenchmarkAction" internal="true" class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"
                 text="Editor Rendering Benchmark"/>
@@ -803,6 +817,10 @@
 
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI &amp;Inspector">
           <abbreviation value="uii"/>
+        </action>
+        <action id="ShowHeatMap" internal="true" description="Paints tool bar buttons and menus based on statistics" text="Show HeatMap"
+                class="com.intellij.internal.heatmap.actions.ShowHeatMapAction">
+          <abbreviation value="shm"/>
         </action>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="HidpiInfo" internal="true" class="com.intellij.internal.HidpiInfo" text="Show &amp;HiDPI Info"/>
@@ -842,8 +860,10 @@
       <separator/>
       <reference ref="MaintenanceGroup"/>
 
-      <action internal="true" id="SendFUStatistics" class="com.intellij.internal.statistic.actions.SendFUStatisticsAction" text="Collect And Send Statistics"/>
-      <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction" text="Send Feature Usage Event Log"/>
+      <group id="FeatureUsage.Internal" popup="true" compact="true" text="Feature Usages Statistics">
+        <action internal="true" id="SendFUStatistics" class="com.intellij.internal.statistic.actions.SendFUStatisticsAction" text="Collect And Send Statistics"/>
+        <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction" text="Send Feature Usage Event Log"/>
+      </group>
 
       <action internal="true" id="ShowEditorHighlighterTokens" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"
               text="Show Editor Highlighter Tokens"/>
@@ -904,5 +924,48 @@
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
 
     <action id="CopySettingsPath" class="com.intellij.openapi.options.newEditor.CopySettingsPathAction"/>
+
+    <action id="ShowFilterPopup" class="com.intellij.find.editorHeaderActions.ShowMoreOptions" text="Show Filter Popup"/>
+
+    <group id="TabsActions" text="Tabs">
+      <action id="GoToTab1" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab1Action"/>
+      <action id="GoToTab2" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab2Action"/>
+      <action id="GoToTab3" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab3Action"/>
+      <action id="GoToTab4" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab4Action"/>
+      <action id="GoToTab5" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab5Action"/>
+      <action id="GoToTab6" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab6Action"/>
+      <action id="GoToTab7" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab7Action"/>
+      <action id="GoToTab8" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab8Action"/>
+      <action id="GoToTab9" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab9Action"/>
+      <action id="GoToLastTab" class="com.intellij.ide.actions.TabNavigationActionBase$GoToLastTabAction"/>
+
+      <reference id="NextEditorTab"/>
+      <reference id="PreviousEditorTab"/>
+      <reference id="ReopenClosedTab"/>
+      <reference id="PinActiveTab"/>
+
+      <reference id="MoveEditorToOppositeTabGroup"/>
+      <reference id="OpenEditorInOppositeTabGroup"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+    <group id="ToolWindowContextMenu"/>
+
+    <group id="SearchEverywhereActions" text="Search Everywhere">
+      <action id="SearchEverywhere.NextTab" class="com.intellij.ide.actions.searcheverywhere.SEActionStub" text="Next tab"
+              description="Switch to next tab in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.PrevTab" class="com.intellij.ide.actions.searcheverywhere.SEActionStub" text="Prev tab"
+              description="Switch to previous tab in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.CompleteCommand" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"
+              text="Complete Command" description="Autocomplete command in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.SelectItem" class="com.intellij.ide.actions.searcheverywhere.SEActionStub" text="Select item"
+              description="Select item in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.NavigateToNextGroup" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"
+              text="Next group element" description="Navigate to next group in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.NavigateToPrevGroup" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"
+              text="Prev group element" description="Navigate to prev group in Search Everywhere dialog"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
   </actions>
 </idea-plugin>

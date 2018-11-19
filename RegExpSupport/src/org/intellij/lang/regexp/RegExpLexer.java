@@ -50,7 +50,7 @@ public class RegExpLexer extends LookAheadLexer {
     private static final int CAPTURING_GROUPS = 1 << 16;
     private final EnumSet<RegExpCapability> myCapabilities;
 
-    public FlexRegExpLexer(EnumSet<RegExpCapability> capabilities) {
+    FlexRegExpLexer(EnumSet<RegExpCapability> capabilities) {
       super(new _RegExLexer(capabilities));
       myCapabilities = capabilities;
     }

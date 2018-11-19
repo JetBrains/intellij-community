@@ -17,26 +17,25 @@ package com.intellij.util.concurrency
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.PlatformTestCase
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
 private const val TIMEOUT_MS = 1000L
 
-class QueueProcessorTest : PlatformTestCase() {
-
+class QueueProcessorTest : LightPlatformTestCase() {
   fun `test waiting for returns on finish condition`() {
-    var stop = false;
+    var stop = false
     val semaphore = Semaphore(0)
     val processor = QueueProcessor<Any>({ semaphore.down() }, { stop })
-    
+
     processor.add(1)
-    stop = true;
+    stop = true
     semaphore.up()
 
-    assertTrue(processor.waitFor(TIMEOUT_MS));
-    processor.waitFor(); // just in case let's check this method as well - hopefully, it won't hang since waitFor(timeout) works
+    assertTrue(processor.waitFor(TIMEOUT_MS))
+    processor.waitFor() // just in case let's check this method as well - hopefully, it won't hang since waitFor(timeout) works
   }
 
   fun `test works fine after thrown exception`() {
@@ -58,6 +57,7 @@ class QueueProcessorTest : PlatformTestCase() {
       assertEquals(expectedResult, resultQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
       assertEmpty(resultQueue)
     }
+
     fun check(expectedResult: Number) = check(expectedResult) { expectedResult }
     fun check(expectedException: Throwable) = check(expectedException) {
       throw expectedException.also {

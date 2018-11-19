@@ -145,7 +145,7 @@ public class ChainCompletionContext {
 
   public Stream<PsiNamedElement> getQualifiers(@Nullable PsiClass targetClass) {
     if (targetClass == null) return Stream.empty();
-    return getQualifiers(JavaPsiFacade.getInstance(myProject).getElementFactory().createType(targetClass));
+    return getQualifiers(JavaPsiFacade.getElementFactory(myProject).createType(targetClass));
   }
 
   public Stream<PsiNamedElement> getQualifiers(@NotNull PsiType targetType) {
@@ -232,7 +232,7 @@ public class ChainCompletionContext {
     }
 
     @Override
-    public boolean shouldProcess(DeclarationKind kind) {
+    public boolean shouldProcess(@NotNull DeclarationKind kind) {
       return kind == DeclarationKind.ENUM_CONST ||
              kind == DeclarationKind.FIELD ||
              kind == DeclarationKind.METHOD ||

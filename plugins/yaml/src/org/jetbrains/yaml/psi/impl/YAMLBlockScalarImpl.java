@@ -57,7 +57,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
 
     final int indent = locateIndent();
 
-    final ASTNode firstEol = TreeUtil.findSibling(firstContentChild, YAMLTokenTypes.EOL);
+    final ASTNode firstEol = TreeUtil.findSibling(firstContentChild, YAMLElementTypes.EOL_ELEMENTS);
     if (firstEol == null) {
       return Collections.emptyList();
     }
@@ -87,7 +87,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
         }
       }
     }
-    if (thisLineStart != -1 && thisLineStart != getTextRange().getEndOffset()) {
+    if (thisLineStart != -1) {
        result.add(TextRange.create(thisLineStart, getTextRange().getEndOffset()).shiftRight(-myStart));
     }
 

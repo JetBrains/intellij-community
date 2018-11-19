@@ -51,7 +51,7 @@ public final class SoftValueHashMap<K,V> extends RefValueHashMap<K,V>{
   }
 
   @Override
-  protected MyReference<K, V> createReference(@NotNull K key, V value, @NotNull ReferenceQueue<V> queue) {
+  protected MyReference<K, V> createReference(@NotNull K key, V value, @NotNull ReferenceQueue<? super V> queue) {
     return new MySoftReference<K, V>(key, value, queue);
   }
 }

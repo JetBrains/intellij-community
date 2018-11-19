@@ -68,6 +68,7 @@ import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,8 +77,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -256,7 +259,8 @@ public final class PythonSdkType extends SdkType {
     return isVirtualEnv(path);
   }
 
-  public static boolean isVirtualEnv(String path) {
+  @Contract("null -> false")
+  public static boolean isVirtualEnv(@Nullable String path) {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
@@ -266,8 +270,12 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-    final String path = sdk.getHomePath();
-    return path != null && PyCondaPackageManagerImpl.isCondaVEnv(sdk);
+    return isCondaEnv(sdk.getHomePath());
+  }
+
+  @Contract("null -> false")
+  public static boolean isCondaEnv(@Nullable String sdkPath) {
+    return sdkPath != null && PyCondaPackageManagerImpl.isCondaEnv(sdkPath);
   }
 
   @Nullable
@@ -361,11 +369,11 @@ public final class PythonSdkType extends SdkType {
       Map<String, String> env = commandLine.getEnvironment();
       String pathValue;
       if (env.containsKey(PATH)) {
-        pathValue = PythonEnvUtil.appendToPathEnvVar(env.get(PATH), virtualenvBin);
+        pathValue = PythonEnvUtil.addToPathEnvVar(env.get(PATH), virtualenvBin, true);
       }
       else if (passParentEnvironment) {
         // append to PATH
-        pathValue = PythonEnvUtil.appendToPathEnvVar(System.getenv(PATH), virtualenvBin);
+        pathValue = PythonEnvUtil.addToPathEnvVar(System.getenv(PATH), virtualenvBin, true);
       }
       else {
         pathValue = virtualenvBin;
@@ -374,6 +382,7 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     final String name = StringUtil.notNullize(suggestBaseSdkName(sdkHome), "Unknown");
@@ -492,7 +501,6 @@ public final class PythonSdkType extends SdkType {
       notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
     }
     else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
       notificationListener =
         (notification, event) -> {
@@ -660,7 +668,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findSdkByPath(List<Sdk> sdkList, @Nullable String path) {
+  public static Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
     if (path != null) {
       for (Sdk sdk : sdkList) {
         if (sdk != null && FileUtil.pathsEqual(path, sdk.getHomePath())) {
@@ -761,7 +769,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findPython2Sdk(@NotNull List<Sdk> sdks) {
+  public static Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
     for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
       if (getLanguageLevelForSdk(sdk).isPython2()) {
         return sdk;

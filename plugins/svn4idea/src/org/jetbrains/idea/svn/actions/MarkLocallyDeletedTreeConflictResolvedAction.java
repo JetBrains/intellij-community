@@ -88,7 +88,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareActio
     private final FilePath myPath;
     private final Project myProject;
 
-    public MyLocallyDeletedChecker(final AnActionEvent e) {
+    MyLocallyDeletedChecker(final AnActionEvent e) {
       final DataContext dc = e.getDataContext();
       myProject = CommonDataKeys.PROJECT.getData(dc);
       if (myProject == null) {

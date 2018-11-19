@@ -109,7 +109,7 @@ public class PydevXmlUtils {
   static class XMLToCompletionsInfo extends DefaultHandler {
     private final List<Object[]> completions;
 
-    public XMLToCompletionsInfo() {
+    XMLToCompletionsInfo() {
       completions = new ArrayList<>();
     }
 

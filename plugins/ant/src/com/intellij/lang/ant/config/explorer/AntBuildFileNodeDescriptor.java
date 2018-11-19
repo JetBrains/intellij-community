@@ -33,7 +33,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
   private final AntBuildFileBase myBuildFile;
   private CompositeAppearance myAppearance;
 
-  public AntBuildFileNodeDescriptor(Project project, NodeDescriptor parentDescriptor, AntBuildFileBase buildFile) {
+  AntBuildFileNodeDescriptor(Project project, NodeDescriptor parentDescriptor, AntBuildFileBase buildFile) {
     super(project, parentDescriptor);
     myBuildFile = buildFile;
   }

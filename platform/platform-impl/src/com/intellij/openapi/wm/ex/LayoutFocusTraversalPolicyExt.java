@@ -150,7 +150,7 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
     return super.getComponentBefore(focusCycleRoot, aComponent);
   }
 
-  public Component queryImpl(Computable<Component> runnable) {
+  public Component queryImpl(Computable<? extends Component> runnable) {
     try {
       myQueryImpl = true;
       return runnable.compute();

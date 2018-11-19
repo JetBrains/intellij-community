@@ -40,6 +40,7 @@ public abstract class ImplicitVariableImpl extends LightVariableBase implements 
     }
   }
 
+  @Override
   public String toString() {
     return "Implicit variable:" + getName();
   }

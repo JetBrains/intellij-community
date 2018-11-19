@@ -73,7 +73,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private Editor myEditor;
   private final boolean myIsEditor;
   private int myLineHeight;
-  private List<UsageInfo> myCachedSelectedUsageInfos;
+  private List<? extends UsageInfo> myCachedSelectedUsageInfos;
   private Pattern myCachedSearchPattern = null;
   private Pattern myCachedReplacePattern = null;
 
@@ -122,7 +122,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
-  private void resetEditor(@NotNull final List<UsageInfo> infos) {
+  private void resetEditor(@NotNull final List<? extends UsageInfo> infos) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiElement psiElement = infos.get(0).getElement();
     if (psiElement == null) return;
@@ -168,7 +168,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
 
-  public static void highlight(@NotNull final List<UsageInfo> infos,
+  public static void highlight(@NotNull final List<? extends UsageInfo> infos,
                                @NotNull final Editor editor,
                                @NotNull final Project project,
                                boolean highlightOnlyNameElements,
@@ -341,21 +341,25 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Nullable
-  public final String getCannotPreviewMessage(@Nullable final List<UsageInfo> infos) {
+  public final String getCannotPreviewMessage(@Nullable final List<? extends UsageInfo> infos) {
+    return cannotPreviewMessage(infos);
+  }
+
+  @Nullable
+  private String cannotPreviewMessage(@Nullable List<? extends UsageInfo> infos) {
     if (infos == null || infos.isEmpty()) {
       return UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord());
-    } else {
-      PsiFile psiFile = null;
-      for (UsageInfo info : infos) {
-        PsiElement element = info.getElement();
-        if (element == null) continue;
-        PsiFile file = element.getContainingFile();
-        if (psiFile == null) {
-          psiFile = file;
-        } else {
-          if (psiFile != file) {
-            return UsageViewBundle.message("several.occurrences.selected");
-          }
+    }
+    PsiFile psiFile = null;
+    for (UsageInfo info : infos) {
+      PsiElement element = info.getElement();
+      if (element == null) continue;
+      PsiFile file = element.getContainingFile();
+      if (psiFile == null) {
+        psiFile = file;
+      } else {
+        if (psiFile != file) {
+          return UsageViewBundle.message("several.occurrences.selected");
         }
       }
     }
@@ -363,8 +367,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Override
-  public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {
-    String cannotPreviewMessage = getCannotPreviewMessage(infos);
+  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
+    String cannotPreviewMessage = cannotPreviewMessage(infos);
     if (cannotPreviewMessage != null) {
       releaseEditor();
       removeAll();
@@ -390,7 +394,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     protected void paintComponent(@NotNull Graphics graphics) {
     }
 
-    public ReplacementView(@Nullable String replacement) {
+    ReplacementView(@Nullable String replacement) {
       String textToShow = replacement;
       if (replacement == null) {
         textToShow = MALFORMED_REPLACEMENT_STRING;
@@ -427,7 +431,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
         VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
           @Override
-          public void visibleAreaChanged(VisibleAreaEvent e) {
+          public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
             if (insideVisibleArea(myEditor, myRange)) {
               showBalloon(myProject, myEditor, myRange, myFindModel);
               final VisibleAreaListener visibleAreaListener = this;

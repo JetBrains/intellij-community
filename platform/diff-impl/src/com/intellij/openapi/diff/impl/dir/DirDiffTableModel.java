@@ -496,7 +496,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       final String name = getColumnName(columnIndex);
       boolean isSrc = columnIndex < getColumnCount() / 2;
       if (name.equals(COLUMN_NAME)) {
-        return isSrc ? element.getSourceName() : element.getTargetName();
+        return isSrc ? element.getSourcePresentableName() : element.getTargetPresentableName();
       } else if (name.equals(COLUMN_SIZE)) {
         return isSrc ? element.getSourceSize() : element.getTargetSize();
       } else  if (name.equals(COLUMN_DATE)) {

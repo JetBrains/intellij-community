@@ -49,7 +49,8 @@ class WSLDistributionService implements PersistentStateComponent<WSLDistribution
     new WslDistributionDescriptor("SLES12", "SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
     new WslDistributionDescriptor("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu"),
     new WslDistributionDescriptor("UBUNTU1604", "Ubuntu-16.04", "ubuntu1604.exe", "Ubuntu 16.04"),
-    new WslDistributionDescriptor("UBUNTU1804", "Ubuntu-18.04", "ubuntu1804.exe", "Ubuntu 18.04")
+    new WslDistributionDescriptor("UBUNTU1804", "Ubuntu-18.04", "ubuntu1804.exe", "Ubuntu 18.04"),
+    new WslDistributionDescriptor("WLINUX", "WLinux", "wlinux.exe", "WLinux")
   );
 
   /**

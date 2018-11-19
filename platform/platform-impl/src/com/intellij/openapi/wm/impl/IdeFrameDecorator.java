@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
@@ -30,6 +31,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public abstract class IdeFrameDecorator implements Disposable {
   protected IdeFrameImpl myFrame;
@@ -140,6 +143,25 @@ public abstract class IdeFrameDecorator implements Disposable {
           }
         }
       });
+
+      if (SystemInfo.isKDE && Registry.is("suppress.focus.stealing")) {
+        // KDE sends an unexpected MapNotify event if a window is deiconified.
+        // suppress.focus.stealing fix handles the MapNotify event differently
+        // if the application is not active
+        final WindowAdapter deiconifyListener = new WindowAdapter() {
+          @Override
+          public void windowDeiconified(WindowEvent event) {
+            frame.toFront();
+          }
+        };
+        frame.addWindowListener(deiconifyListener);
+        Disposer.register(this, new Disposable() {
+          @Override
+          public void dispose() {
+            frame.removeWindowListener(deiconifyListener);
+          }
+        });
+      }
     }
 
     @Override
@@ -152,6 +174,11 @@ public abstract class IdeFrameDecorator implements Disposable {
       if (myFrame != null) {
         myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(myFrame);
+
+        if (myFrame.getJMenuBar() instanceof IdeMenuBar) {
+          final IdeMenuBar frameMenuBar = (IdeMenuBar)myFrame.getJMenuBar();
+          frameMenuBar.onToggleFullScreen(state);
+        }
       }
       return ActionCallback.DONE;
     }

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class VcsChangesSelectionRule implements GetDataRule {
   @Nullable
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     return getChangesSelection(dataProvider);
   }
 

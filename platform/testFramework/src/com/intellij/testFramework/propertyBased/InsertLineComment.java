@@ -13,7 +13,7 @@ public class InsertLineComment extends ActionOnFile {
 
   private final String myToInsert;
 
-  public InsertLineComment(PsiFile file, String toInsert) {
+  public InsertLineComment(@NotNull PsiFile file, @NotNull String toInsert) {
     super(file);
     myToInsert = toInsert;
   }

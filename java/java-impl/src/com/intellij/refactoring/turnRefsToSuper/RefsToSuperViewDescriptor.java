@@ -27,7 +27,7 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
   private final PsiClass myClass;
   private final PsiClass mySuper;
 
-  public RefsToSuperViewDescriptor(
+  RefsToSuperViewDescriptor(
     PsiClass aClass,
     PsiClass anInterface
   ) {
@@ -46,6 +46,7 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
     return null;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     StringBuilder buffer = new StringBuilder();

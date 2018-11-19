@@ -171,7 +171,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   private static class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
     final String myText;
 
-    public ChangeParameterTypeQuickFix(@NotNull XmlAttribute attribute, @NotNull PsiMethod method,
+    ChangeParameterTypeQuickFix(@NotNull XmlAttribute attribute, @NotNull PsiMethod method,
                                        @NotNull PsiType suggestedParameterType) {
       super(attribute);
       myText = "Change parameter type of '" + JavaHighlightUtil.formatMethod(method) +

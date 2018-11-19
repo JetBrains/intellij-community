@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * @since 8/5/11
  */
 public final class ShowModulesAction extends ToggleAction implements DumbAware {
   private final Project myProject;
@@ -36,7 +35,7 @@ public final class ShowModulesAction extends ToggleAction implements DumbAware {
   @Override
   public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     ProjectView view = getProjectView();
-    if (view != null) view.setShowModules(flag, myId);
+    if (view != null) view.setShowModules(myId, flag);
   }
 
   @Override

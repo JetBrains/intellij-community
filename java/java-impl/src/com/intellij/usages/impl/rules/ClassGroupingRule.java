@@ -111,7 +111,7 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
     private final String myQName;
     private final Icon myIcon;
 
-    public ClassUsageGroup(@NotNull PsiClass aClass) {
+    ClassUsageGroup(@NotNull PsiClass aClass) {
       myQName = aClass.getQualifiedName();
       myText = createText(aClass);
       myClassPointer = SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(aClass);
@@ -189,7 +189,7 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
       if (CommonDataKeys.PSI_ELEMENT == key) {
         sink.put(CommonDataKeys.PSI_ELEMENT, getPsiClass());

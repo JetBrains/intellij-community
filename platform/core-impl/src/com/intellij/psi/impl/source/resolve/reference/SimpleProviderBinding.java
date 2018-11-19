@@ -36,7 +36,7 @@ class SimpleProviderBinding implements ProviderBinding {
 
   @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position,
-                                              @NotNull List<ProviderInfo<ProcessingContext>> list,
+                                              @NotNull List<? super ProviderInfo<ProcessingContext>> list,
                                               @NotNull PsiReferenceService.Hints hints) {
     NamedObjectProviderBinding.addMatchingProviders(position, myProviderPairs, list, hints);
   }

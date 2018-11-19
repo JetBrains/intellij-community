@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.CollectUsagesException
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -19,8 +20,8 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
     var usages = setOf(
-      UsageDescriptor("UI.font.size[${ui.fontSize}]"),
-      UsageDescriptor(ensureProperKey("UI.font.name[${ui.fontFace}]")),
+      UsageDescriptor("UI.font.size[${ui.state.fontSize}]"),
+      UsageDescriptor(ensureProperKey("UI.font.name[${ui.state.fontFace}]")),
       UsageDescriptor("Presentation.mode.font.size[${ui.presentationModeFontSize}]")
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {
@@ -45,7 +46,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val quickDocFontSize = PropertiesComponent.getInstance().getValue("quick.doc.font.size")
     if (quickDocFontSize != null) {
       usages += setOf(
-        UsageDescriptor("QuickDoc.font.size[" + quickDocFontSize +"]")
+        UsageDescriptor("QuickDoc.font.size[$quickDocFontSize]")
       )
     }
     return usages
@@ -53,5 +54,9 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
 
   override fun getGroupId(): String {
     return "statistics.ui.fonts"
+  }
+
+  override fun getContext(): FUSUsageContext? {
+    return FUSUsageContext.OS_CONTEXT
   }
 }

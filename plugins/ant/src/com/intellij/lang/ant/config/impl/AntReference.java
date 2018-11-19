@@ -140,7 +140,7 @@ public abstract class AntReference {
   }
 
   @Nullable
-  public static AntInstallation findAnt(AbstractProperty<AntReference> property, AbstractProperty.AbstractPropertyContainer container) {
+  public static AntInstallation findAnt(AbstractProperty<? extends AntReference> property, AbstractProperty.AbstractPropertyContainer container) {
     GlobalAntConfiguration antConfiguration = GlobalAntConfiguration.INSTANCE.get(container);
     LOG.assertTrue(antConfiguration != null);
     AntReference antReference = property.get(container);
@@ -151,7 +151,7 @@ public abstract class AntReference {
     return antReference.find(antConfiguration);
   }
 
-  public static AntInstallation findNotNullAnt(AbstractProperty<AntReference> property,
+  public static AntInstallation findNotNullAnt(AbstractProperty<? extends AntReference> property,
                                                AbstractProperty.AbstractPropertyContainer container,
                                                GlobalAntConfiguration antConfiguration) throws CantRunException {
     AntReference antReference = property.get(container);
@@ -174,7 +174,7 @@ public abstract class AntReference {
   static class MissingAntReference extends AntReference {
     private final String myName;
 
-    public MissingAntReference(String name) {
+    MissingAntReference(String name) {
       myName = name;
     }
 
@@ -204,7 +204,7 @@ public abstract class AntReference {
   static class BindedReference extends AntReference {
     private final AntInstallation myAnt;
 
-    public BindedReference(AntInstallation ant) {
+    BindedReference(AntInstallation ant) {
       myAnt = ant;
     }
 

@@ -553,8 +553,13 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   // should not be used in production code
   @NotNull
-  public DirtyScopeHolder getDirtyScopeHolder() {
+  DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;
+  }
+
+  @TestOnly
+  public Set<Module> getAllDirtyModulesForTest() {
+    return myDirtyScopeHolder.getAllDirtyModulesForTest();
   }
 
   @Nullable
@@ -615,9 +620,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   protected static boolean requireIndexRebuild(@Nullable Throwable exception) {
-    return exception instanceof PersistentEnumeratorBase.CorruptedException ||
-           exception instanceof StorageException ||
-           exception instanceof IOException;
+    return exception instanceof StorageException || exception instanceof IOException;
   }
 
   protected enum IndexCloseReason {

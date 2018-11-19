@@ -18,17 +18,18 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
+
+import java.util.Objects;
 
 public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImplicitConstructor {
-
-  private final RefClass myOwnerClass;
   RefImplicitConstructorImpl(@NotNull RefClass ownerClass) {
     super(InspectionsBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName()), ownerClass);
-    myOwnerClass = ownerClass;
   }
 
   @Override
@@ -70,17 +71,24 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
 
   @Override
   public PsiModifierListOwner getElement() {
-    return getOwnerClass().getElement();
+    return Objects.requireNonNull(getOwnerClass()).getElement();
+  }
+
+  @Override
+  public UClass getUastElement() {
+    return (UClass)super.getUastElement();
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPsiElement() {
+    RefClass ownerClass = getOwnerClass();
+    return ownerClass == null ? null : ownerClass.getPsiElement();
   }
 
   @Override
   @Nullable
   public PsiFile getContainingFile() {
     return ((RefClassImpl)getOwnerClass()).getContainingFile();
-  }
-
-  @Override
-  public RefClass getOwnerClass() {
-    return myOwnerClass;
   }
 }

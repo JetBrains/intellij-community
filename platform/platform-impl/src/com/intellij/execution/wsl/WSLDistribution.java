@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
  * @see WSLUtil
+ * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
   static final String WSL_MNT_ROOT = "/mnt/";
@@ -98,7 +99,7 @@ public class WSLDistribution {
    * @param args                   linux args, eg {@code gem env}
    */
   public ProcessOutput executeOnWsl(int timeout,
-                                    @Nullable Consumer<ProcessHandler> processHandlerConsumer,
+                                    @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
                                     @NotNull String... args) throws ExecutionException {
     GeneralCommandLine commandLine = createWslCommandLine(args);
     CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
@@ -112,7 +113,7 @@ public class WSLDistribution {
     return executeOnWsl(timeout, null, args);
   }
 
-  public ProcessOutput executeOnWsl(@Nullable Consumer<ProcessHandler> processHandlerConsumer, @NotNull String... args)
+  public ProcessOutput executeOnWsl(@Nullable Consumer<? super ProcessHandler> processHandlerConsumer, @NotNull String... args)
     throws ExecutionException {
     return executeOnWsl(-1, processHandlerConsumer, args);
   }
@@ -131,7 +132,7 @@ public class WSLDistribution {
   public ProcessOutput copyFromWsl(@NotNull String wslPath,
                                    @NotNull String windowsPath,
                                    @Nullable List<String> additionalOptions,
-                                   @Nullable Consumer<ProcessHandler> handlerConsumer
+                                   @Nullable Consumer<? super ProcessHandler> handlerConsumer
   )
     throws ExecutionException {
     //noinspection ResultOfMethodCallIgnored
@@ -293,7 +294,7 @@ public class WSLDistribution {
    * @return passed processHandler, patched with sudo listener if any
    */
   @NotNull
-  public ProcessHandler patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull ProcessHandler processHandler) {
+  public <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
     ProcessListener listener = SUDO_LISTENER_KEY.get(commandLine);
     if (listener != null) {
       processHandler.addProcessListener(listener);

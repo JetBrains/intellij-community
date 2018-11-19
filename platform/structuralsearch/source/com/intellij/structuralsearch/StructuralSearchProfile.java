@@ -24,7 +24,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -160,7 +159,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Nullable
-  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
+  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     return null;
   }
 
@@ -196,6 +195,10 @@ public abstract class StructuralSearchProfile {
   
   public String getMeaningfulText(PsiElement element) {
     return getTypedVarString(element);
+  }
+
+  public String getAlternativeText(PsiElement element, String previousText) {
+    return null;
   }
 
   public PsiElement updateCurrentNode(PsiElement node) {
@@ -318,7 +321,7 @@ public abstract class StructuralSearchProfile {
     return false;
   }
 
-  public final boolean isApplicableConstraint(String constraintName, List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public final boolean isApplicableConstraint(String constraintName, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (nodes.isEmpty()) {
       return isApplicableConstraint(constraintName, (PsiElement)null, completePattern, target);
     }

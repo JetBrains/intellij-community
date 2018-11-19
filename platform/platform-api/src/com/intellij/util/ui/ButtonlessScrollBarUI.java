@@ -98,6 +98,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private double myMacScrollbarFadeLevel;
   private boolean myMacScrollbarHidden;
 
+  @SuppressWarnings("deprecation")
+  private final RegionPainter<Float> myThumbPainter = JBScrollPane.getThumbPainter(() -> scrollbar);
   private ScrollbarRepaintCallback myRepaintCallback;
   private boolean myDisposed;
 
@@ -735,13 +737,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           bounds.height = max;
         }
         float value = (float)myThumbFadeColorShift / getAnimationColorShift();
-        RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+        myThumbPainter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
       }
       else {
         float value = (float)myThumbFadeColorShift / getAnimationColorShift();
-        RegionPainter<Float> painter = isDark() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
-        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+        myThumbPainter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
       }
     }
   }
@@ -778,8 +778,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       Graphics2D g2d = (Graphics2D)g;
 
       float value = (float)(1 - myMacScrollbarFadeLevel);
-      RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-      painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
+      myThumbPainter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
     }
   }
   

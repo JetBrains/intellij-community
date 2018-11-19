@@ -34,10 +34,10 @@ import java.util.Set;
  */
 class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
   private final JList myList;
-  private PopupChooserBuilder myBuilder;
+  private final PopupChooserBuilder myBuilder;
   private ListWithFilter myListWithFilter;
 
-  public PopupListAdapter(PopupChooserBuilder builder, JList list) {
+  PopupListAdapter(PopupChooserBuilder builder, JList list) {
     myBuilder = builder;
     myList = list;
   }
@@ -53,7 +53,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemChosenCallback(Consumer<T> callback) {
+  public void setItemChosenCallback(Consumer<? super T> callback) {
     myBuilder.setItemChoosenCallback(() -> {
       Object selectedValue = myList.getSelectedValue();
       if (selectedValue != null) {
@@ -63,9 +63,9 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+  public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
     myBuilder.setItemChoosenCallback(() -> {
-      List list = myList.getSelectedValuesList();
+      List<T> list = myList.getSelectedValuesList();
       callback.consume(list != null ? ContainerUtil.newHashSet(list) : Collections.emptySet());
     });
   }
@@ -117,7 +117,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemSelectedCallback(Consumer<T> c) {
+  public void setItemSelectedCallback(Consumer<? super T> c) {
     myList.addListSelectionListener(e -> {
       Object selectedValue = myList.getSelectedValue();
       c.consume((T)selectedValue);
@@ -135,7 +135,6 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   private class MyListWrapper extends JBScrollPane implements DataProvider {
-    @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private final JList myList;
 
     private MyListWrapper(final JList list) {

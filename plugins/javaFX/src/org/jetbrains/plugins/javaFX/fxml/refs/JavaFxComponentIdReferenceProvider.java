@@ -236,7 +236,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
   private static class JavaFxExpressionReferenceBase extends JavaFxPropertyReference<XmlAttributeValue> {
     private final String myFieldName;
 
-    public JavaFxExpressionReferenceBase(@NotNull XmlAttributeValue xmlAttributeValue, PsiClass tagClass, @NotNull String fieldName) {
+    JavaFxExpressionReferenceBase(@NotNull XmlAttributeValue xmlAttributeValue, PsiClass tagClass, @NotNull String fieldName) {
       super(xmlAttributeValue, tagClass);
       myFieldName = fieldName;
     }
