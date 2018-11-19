@@ -29,8 +29,6 @@ class GroovyInferenceSessionBuilder(private val ref: PsiElement, private val can
 
   private var closureSkipList = mutableListOf<GrMethodCall>()
 
-  private var left: PsiType? = null
-
   private var skipClosureBlock = true
 
   private var startFromTop = false
@@ -60,16 +58,12 @@ class GroovyInferenceSessionBuilder(private val ref: PsiElement, private val can
       return session
     }
     else {
-      val session = GroovyInferenceSession(candidate.method.typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
+      val session = GroovyInferenceSession(
+        candidate.method.typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock
+      )
       if (ref is GrReferenceExpression) {
         session.addConstraint(ArgumentsConstraint(candidate, ref))
       }
-      val left = left ?: return session
-
-      val returnType = PsiUtil.getSmartReturnType(candidate.method)
-      if (returnType == null || PsiType.VOID == returnType) return session
-      session.repeatInferencePhases()
-      session.addConstraint(TypeConstraint(left, returnType, ref))
       return session
     }
   }
