@@ -54,7 +54,7 @@ fun findStubPackage(dir: PsiDirectory,
 
     // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
     if (stubPackage?.name == stubPackageName && (!checkForPackage || PyUtil.isPackage(stubPackage, dir))) {
-      stubPackage.putUserData(STUB_PACKAGE_KEY, true)
+      doTransferStubPackageMarker(stubPackage)
       return stubPackage
     }
   }
@@ -74,8 +74,13 @@ fun transferStubPackageMarker(dir: PsiDirectory, resolvedSubmodule: PsiFile): Ps
  * Puts special mark to dir resolved in stub package.
  */
 fun transferStubPackageMarker(dir: PsiDirectory, resolvedSubdir: PsiDirectory): PsiDirectory {
-  if (dir.getUserData(STUB_PACKAGE_KEY) == true) resolvedSubdir.putUserData(STUB_PACKAGE_KEY, true)
+  if (dir.getUserData(STUB_PACKAGE_KEY) == true) doTransferStubPackageMarker(resolvedSubdir)
   return resolvedSubdir
+}
+
+private fun doTransferStubPackageMarker(resolvedSubdir: PsiDirectory) {
+  resolvedSubdir.putUserData(STUB_PACKAGE_KEY, true)
+  PyUtil.turnDirIntoInit(resolvedSubdir)?.putUserData(STUB_PACKAGE_KEY, true)
 }
 
 /**
