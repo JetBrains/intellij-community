@@ -527,7 +527,7 @@ public final class IconLoader {
 
   public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     private volatile Object myRealIcon;
-    private String myOriginalPath;
+    @Nullable private String myOriginalPath;
     private ClassLoader myClassLoader;
     @NotNull
     private URL myUrl;
@@ -612,16 +612,18 @@ public final class IconLoader {
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
           numberOfPatchers = ourPatchers.size();
-          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, myClassLoader);
-          String path = myOriginalPath == null ? null : patchedPath.first;
-          if (patchedPath.second != null) {
-            myClassLoader = patchedPath.second;
-          }
-          if (myClassLoader != null && path != null && path.startsWith("/")) {
-            path = path.substring(1);
-            URL url = findURL(path, myClassLoader);
-            if (url != null) {
-              myUrl = url;
+          if (myOriginalPath != null) {
+            Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, myClassLoader);
+            String path = myOriginalPath == null ? null : patchedPath.first;
+            if (patchedPath.second != null) {
+              myClassLoader = patchedPath.second;
+            }
+            if (myClassLoader != null && path != null && path.startsWith("/")) {
+              path = path.substring(1);
+              URL url = findURL(path, myClassLoader);
+              if (url != null) {
+                myUrl = url;
+              }
             }
           }
         }
