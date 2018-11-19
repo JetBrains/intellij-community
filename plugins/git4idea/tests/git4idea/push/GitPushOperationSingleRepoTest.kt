@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.update.FileGroup
@@ -188,19 +189,61 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertFalse("Unexpected merge commits when rebase method is selected", mergeCommitsInTheLog)
   }
 
-  fun `test force push`() {
-    val lostHash = pushCommitFromBro()
+  fun `test force push without lease`() {
+    Registry.get("git.use.push.force.with.lease").setValue(false, testRootDisposable)
+
+    val broHash = pushCommitFromBro()
+
     cd(repository)
-    val hash = makeCommit("anyfile.txt")
+    val myHash = makeCommit("anyfile.txt")
 
     val result = push("master", "origin/master", true)
-
     assertResult(FORCED, -1, "master", "origin/master", result)
 
     cd(parentRepo.path)
-    val history = git("log --all --pretty=%H ")
-    assertFalse(history.contains(lostHash))
-    assertEquals(hash, StringUtil.splitByLines(history)[0])
+    val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
+    assertFalse(parentHistory.contains(broHash))
+    assertEquals(myHash, parentHistory[0])
+  }
+
+  fun `test force push with lease succeeds if remote is on expected position`() {
+    val version = vcs.version
+    assumeTrue("Skipping this version of Git since it doesn't support --force-with-lease and calls --force: $version",
+                GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(version))
+
+    val broHash = pushCommitFromBro()
+
+    cd(repository)
+    val myHash = makeCommit("anyfile.txt")
+
+    git("fetch")
+
+    val result = push("master", "origin/master", true)
+    assertResult(FORCED, -1, "master", "origin/master", result)
+
+    cd(parentRepo.path)
+    val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
+    assertFalse(parentHistory.contains(broHash))
+    assertEquals(myHash, parentHistory[0])
+  }
+
+  fun `test force push with lease is rejected if remote has changed`() {
+    val version = vcs.version
+    assumeTrue("Skipping this version of Git since it doesn't support --force-with-lease and calls --force: $version",
+                GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(version))
+
+    val broHash = pushCommitFromBro()
+
+    cd(repository)
+    val myHash = makeCommit("anyfile.txt")
+
+    val result = push("master", "origin/master", true)
+    assertResult(REJECTED_OTHER, -1, "master", "origin/master", result)
+
+    cd(parentRepo.path)
+    val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
+    assertFalse(parentHistory.contains(myHash))
+    assertEquals(broHash, parentHistory[0])
   }
 
   fun `test dont propose to update if force push is rejected`() {
@@ -211,7 +254,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     })
 
     val remoteTipAndPushResult = forcePushWithReject()
-    assertResult(REJECTED_NO_FF, -1, "master", "origin/master", remoteTipAndPushResult.second)
+    assertResult(REJECTED_OTHER, -1, "master", "origin/master", remoteTipAndPushResult.second)
     assertFalse("Rejected push dialog should not be shown", dialogShown)
     cd(parentRepo.path)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
@@ -223,7 +266,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     val remoteTipAndPushResult = forcePushWithReject()
 
-    assertResult(REJECTED_NO_FF, -1, "master", "origin/master", remoteTipAndPushResult.second)
+    assertResult(REJECTED_OTHER, -1, "master", "origin/master", remoteTipAndPushResult.second)
     cd(parentRepo.path)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
   }

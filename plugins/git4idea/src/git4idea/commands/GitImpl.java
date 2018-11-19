@@ -448,10 +448,8 @@ public class GitImpl extends GitImplBase {
       if (updateTracking) {
         h.addParameters("--set-upstream");
       }
-      if (force) {
-        h.addParameters("--force");
-      }
-      if (GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(repository)) {
+      if (GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(repository) &&
+          !forceWithLease.isEmpty()) {
         for (GitPushParams.ForceWithLease lease : forceWithLease) {
           String parameter = lease.getParameter();
           if (parameter != null) {
@@ -461,6 +459,9 @@ public class GitImpl extends GitImplBase {
             h.addParameters("--force-with-lease");
           }
         }
+      }
+      else if (force) {
+        h.addParameters("--force");
       }
       if (tagMode != null) {
         h.addParameters(tagMode);
