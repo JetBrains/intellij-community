@@ -7,6 +7,8 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
@@ -24,10 +26,15 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.*
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.fileTypes.NativeFileType
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -38,11 +45,15 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
@@ -69,9 +80,12 @@ class CompletionQualityStatsAction : AnAction() {
 
     val task = object : Task.Backgroundable(project, "Emulating completion", true) {
       override fun run(indicator: ProgressIndicator) {
-        val files = if (dialog.scope is GlobalSearchScope) { ReadAction.compute<Collection<VirtualFile>, Exception> {
-          FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
-        }} else {
+        val files = if (dialog.scope is GlobalSearchScope) {
+          ReadAction.compute<Collection<VirtualFile>, Exception> {
+            FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
+          }
+        }
+        else {
           (dialog.scope as LocalSearchScope).virtualFiles.asList()
         }
 
@@ -98,10 +112,8 @@ class CompletionQualityStatsAction : AnAction() {
             val application = ApplicationManager.getApplication()
             application.invokeAndWait(Runnable {
               val newEditor = WriteAction.compute<Editor, Exception> {
-                val newPsiFile = PsiFileFactory.getInstance(project).createFileFromText(file.path, (fileType as LanguageFileType).language,
-                                                                                        "", true, false)
-                val newDocument = PsiDocumentManager.getInstance(project).getDocument(newPsiFile)
-                EditorFactory.getInstance().createEditor(newDocument!!, project, fileType, false)
+                val descriptor = OpenFileDescriptor(project, file)
+                FileEditorManager.getInstance(project).openTextEditor(descriptor, true)
               }
 
               val text = document.text
@@ -117,6 +129,12 @@ class CompletionQualityStatsAction : AnAction() {
                 }
                 finally {
                   semaphore.up()
+                  application.invokeAndWait(Runnable {
+                    WriteAction.run<Exception> {
+                      document.setText(text)
+                      FileDocumentManager.getInstance().saveDocument(document)
+                    }
+                  })
                 }
               }
             }, ModalityState.NON_MODAL)
@@ -158,7 +176,7 @@ class CompletionQualityStatsAction : AnAction() {
 
         if (el != null && el !is PsiComment && el.text == ".") {
           val word = existingCompletion(startIndex, text)
-          if (word !in wordSet) {
+          if (!word.isEmpty() && word !in wordSet) {
             res.add(Pair(startIndex, word))
             wordSet.add(word)
           }
@@ -211,7 +229,8 @@ class CompletionQualityStatsAction : AnAction() {
       }
     }
 
-    stats.completions.add(Completion(file.path, startIndex, existingCompletion, rank0, rank1, rank3, charsToWin, completionTime.cnt, completionTime.time))
+    stats.completions.add(
+      Completion(file.path, startIndex, existingCompletion, rank0, rank1, rank3, charsToWin, completionTime.cnt, completionTime.time))
   }
 
   private fun findNumberOfCharsToWin(editor: Editor,
@@ -225,22 +244,25 @@ class CompletionQualityStatsAction : AnAction() {
                                      to: Int,
                                      timeStats: CompletionTime): Int {
     if (from < to) {
-      val mid = (from + to)/2
+      val mid = (from + to) / 2
       if (indicator.isCanceled) {
         return -1
       }
       val rank = findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)
 
       if (rank == 0 || rank == -2) {
-        if (from>=mid-1) {
+        if (from >= mid - 1) {
           return mid
-        } else {
+        }
+        else {
           return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, from, mid - 1, timeStats)
         }
-      } else {
-        return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, mid+1, to, timeStats)
       }
-    } else {
+      else {
+        return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, mid + 1, to, timeStats)
+      }
+    }
+    else {
       return -1
     }
   }
@@ -266,27 +288,41 @@ class CompletionQualityStatsAction : AnAction() {
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       WriteAction.run<Exception> {
         editor.document.setText(newText)
+        FileDocumentManager.getInstance().saveDocument(editor.document)
         editor.caretModel.moveToOffset(startIndex + 1 + charsTyped)
+        editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
       }
 
       val ref: Ref<List<LookupElement>> = Ref.create()
 
       val start = System.currentTimeMillis()
       CommandProcessor.getInstance().executeCommand(project, {
-        val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC) {
+        val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
           override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
-            ref.set(indicator.lookup!!.items)
             super.completionFinished(indicator, hasModifiers)
+            ref.set(indicator.lookup!!.items)
           }
+          override fun isExecutedProgrammatically() = true
         }
         handler.invokeCompletion(project, editor, 1)
+
       }, null, null, editor.document)
+
+      val lookup = LookupManager.getActiveLookup(editor)
+      if (lookup != null && lookup is LookupImpl) {
+        ScrollingUtil.moveUp(lookup.list, 0)
+        lookup.refreshUi(false, false)
+        ref.set(lookup.items)
+        lookup.hideLookup(true)
+      }
 
       if (!ref.isNull) {
         result.set(ref.get().indexOfFirst { it.lookupString == existingCompletion })
       }
+
       timeStats.cnt += 1
       timeStats.time += System.currentTimeMillis() - start
+
     }, ModalityState.NON_MODAL)
 
     return result.get()
@@ -302,7 +338,7 @@ class CompletionQualityStatsAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null
-    e.presentation.text = "Completion Quality Stats"
+    e.presentation.text = "Completion Quality Statistics"
   }
 }
 

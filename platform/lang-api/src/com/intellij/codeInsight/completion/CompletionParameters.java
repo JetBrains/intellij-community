@@ -19,6 +19,7 @@ public final class CompletionParameters {
   private final int myOffset;
   private final int myInvocationCount;
   private final CompletionProcess myProcess;
+  private boolean isExecutedProgrammatically = false;
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
                        @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
@@ -107,5 +108,13 @@ public final class CompletionParameters {
   @NotNull
   public CompletionProcess getProcess() {
     return myProcess;
+  }
+
+  public boolean isExecutedProgrammatically() {
+    return isExecutedProgrammatically;
+  }
+
+  public void setExecutedProgrammatically(boolean runProgrammatically) {
+    isExecutedProgrammatically = runProgrammatically;
   }
 }
