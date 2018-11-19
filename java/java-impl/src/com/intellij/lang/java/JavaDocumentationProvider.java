@@ -24,8 +24,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -791,15 +789,10 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       }
     }
 
-    for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
-      String altRelPath = null;
-      if (orderEntry instanceof JdkOrderEntry && JavaSdkVersionUtil.isAtLeast(((JdkOrderEntry)orderEntry).getJdk(), JavaSdkVersion.JDK_11)) {
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByFile(virtualFile, project);
-        if (javaModule != null) {
-          altRelPath = javaModule.getName() + '/' + relPath;
-        }
-      }
+    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByFile(virtualFile, project);
+    String altRelPath = javaModule != null ? javaModule.getName() + '/' + relPath : null;
 
+    for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
       for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
         if (root.getFileSystem() == JarFileSystem.getInstance()) {
           VirtualFile file = root.findFileByRelativePath(relPath);
