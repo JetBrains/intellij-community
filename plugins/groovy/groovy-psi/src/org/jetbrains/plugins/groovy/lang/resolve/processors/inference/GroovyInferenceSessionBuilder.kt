@@ -50,17 +50,13 @@ class GroovyInferenceSessionBuilder(private val ref: PsiElement, private val can
     return this
   }
 
-  fun addReturnConstraint(): GroovyInferenceSessionBuilder {
-    val methodCall = ref.parent as? GrMethodCall ?: return this
-    left = getReturnConstraintType(getMostTopLevelCall(methodCall))
-    return this
-  }
-
   fun build(): GroovyInferenceSession {
     if (startFromTop) {
       val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
       val methodCall = ref.parent as? GrMethodCall ?: return session
-      session.addConstraint(ExpressionConstraint(left, getMostTopLevelCall(methodCall)))
+      val mostTopLevelCall = getMostTopLevelCall(methodCall)
+      val left = getReturnConstraintType(mostTopLevelCall)
+      session.addConstraint(ExpressionConstraint(left, mostTopLevelCall))
       return session
     }
     else {
