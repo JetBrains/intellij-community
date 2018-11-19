@@ -22,6 +22,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * @author Alexander Lobas
@@ -263,6 +264,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
       if (success) {
         appendOrUpdateDescriptor(descriptor);
+        appendDependsAfterInstall();
       }
     }
     else if (success) {
@@ -335,6 +337,27 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public void setUpdateGroup(@NotNull PluginsGroup group) {
     myUpdates = group;
+  }
+
+  private void appendDependsAfterInstall() {
+    for (IdeaPluginDescriptor descriptor : InstalledPluginsState.getInstance().getInstalledPlugins()) {
+      if (myDownloaded.ui.findComponent(descriptor) != null) {
+        continue;
+      }
+
+      appendOrUpdateDescriptor(descriptor);
+
+      String id = descriptor.getPluginId().getIdString();
+
+      for (Entry<IdeaPluginDescriptor, List<GridCellPluginComponent>> entry : myGridMap.entrySet()) {
+        if (id.equals(entry.getKey().getPluginId().getIdString())) {
+          for (GridCellPluginComponent component : entry.getValue()) {
+            component.hideProgress(true);
+          }
+          break;
+        }
+      }
+    }
   }
 
   @Override
