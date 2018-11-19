@@ -204,7 +204,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       doSetUseNonProjectItems(false, true);
     }
 
-    if (mySearchField != null) {
+    if (mySearchField instanceof ExtendableTextField) {
       ExtendableTextField textField = (ExtendableTextField)mySearchField;
       Boolean commandsSupported = mySelectedTab.getContributor()
         .map(contributor -> !contributor.getSupportedCommands().isEmpty())
