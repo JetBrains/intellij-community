@@ -85,7 +85,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testPydevMonkey() {
     unittests("tests_pydevd_python/test_pydev_monkey.py", null);
   }
