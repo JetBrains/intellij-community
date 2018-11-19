@@ -12,11 +12,9 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 class ActionUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionUpdater");
@@ -28,6 +26,9 @@ class ActionUpdater {
   private final boolean myContextMenuAction;
   private final boolean myToolbarAction;
   private final boolean myTransparentOnly;
+
+  private final Map<AnAction, Presentation> myUpdatedPresentations = ContainerUtil.newIdentityTroveMap();
+  private final Map<ActionGroup, List<AnAction>> myGroupChildren = ContainerUtil.newIdentityTroveMap();
 
   ActionUpdater(boolean isInModalContext,
                 PresentationFactory presentationFactory,
@@ -51,34 +52,32 @@ class ActionUpdater {
   }
 
   private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled) {
-    AnActionEvent e = createActionEvent(group);
-    if (!doUpdate(myModalContext, group, e)) return Collections.emptyList();
-
-    if (!e.getPresentation().isVisible()) { // don't process invisible groups
+    Presentation presentation = update(group);
+    if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
       return Collections.emptyList();
     }
 
-    return ContainerUtil.concat(getGroupChildren(group, e), child -> expandGroupChild(child, hideDisabled));
+    return ContainerUtil.concat(getGroupChildren(group), child -> expandGroupChild(child, hideDisabled));
   }
 
-  private static List<AnAction> getGroupChildren(ActionGroup group, AnActionEvent e) {
-    AnAction[] children = group.getChildren(e);
-    int nullIndex = ArrayUtil.indexOf(children, null);
-    if (nullIndex < 0) return Arrays.asList(children);
+  private List<AnAction> getGroupChildren(ActionGroup group) {
+    return myGroupChildren.computeIfAbsent(group, __ -> {
+      AnAction[] children = group.getChildren(createActionEvent(group));
+      int nullIndex = ArrayUtil.indexOf(children, null);
+      if (nullIndex < 0) return Arrays.asList(children);
 
-    LOG.error("action is null: i=" + nullIndex + " group=" + group + " group id=" + ActionManager.getInstance().getId(group));
-    return ContainerUtil.filter(children, Conditions.notNull());
+      LOG.error("action is null: i=" + nullIndex + " group=" + group + " group id=" + ActionManager.getInstance().getId(group));
+      return ContainerUtil.filter(children, Conditions.notNull());
+    });
   }
 
   private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabled) {
-    AnActionEvent e = createActionEvent(child);
-
     if (!myTransparentOnly || child.isTransparentUpdate()) {
-      if (!doUpdate(myModalContext, child, e)) return Collections.emptyList();
+      if (update(child) == null) return Collections.emptyList();
     }
+    Presentation presentation = orDefault(child, myUpdatedPresentations.get(child));
 
-    Presentation childPresentation = e.getPresentation();
-    if (!childPresentation.isVisible() || (!childPresentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
+    if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
       return Collections.emptyList();
     }
     if (child instanceof ActionGroup) {
@@ -92,7 +91,7 @@ class ActionUpdater {
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
             return Collections.emptyList();
           }
-          childPresentation.setEnabled(actionGroup.canBePerformed(myDataContext) || visibleChildren);
+          presentation.setEnabled(actionGroup.canBePerformed(myDataContext) || visibleChildren);
         }
 
         return Collections.singletonList(child);
@@ -102,6 +101,10 @@ class ActionUpdater {
     }
 
     return Collections.singletonList(child);
+  }
+
+  private Presentation orDefault(AnAction action, Presentation presentation) {
+    return presentation != null ? presentation : myFactory.getPresentation(action);
   }
 
   private static List<AnAction> removeUnnecessarySeparators(List<AnAction> visible) {
@@ -119,7 +122,7 @@ class ActionUpdater {
   }
 
   private AnActionEvent createActionEvent(AnAction action) {
-    AnActionEvent event = new AnActionEvent(null, myDataContext, myPlace, myFactory.getPresentation(action),
+    AnActionEvent event = new AnActionEvent(null, myDataContext, myPlace, orDefault(action, myUpdatedPresentations.get(action)),
                                             ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
     event.setInjectedContext(action.isInInjectedContext());
     return event;
@@ -138,8 +141,7 @@ class ActionUpdater {
       return true;
     }
 
-    AnActionEvent event = createActionEvent(group);
-    for (AnAction anAction : getGroupChildren(group, event)) {
+    for (AnAction anAction : getGroupChildren(group)) {
       if (anAction instanceof Separator) {
         continue;
       }
@@ -148,9 +150,7 @@ class ActionUpdater {
         continue;
       }
 
-      AnActionEvent childEvent = createActionEvent(anAction);
-      doUpdate(false, anAction, childEvent);
-      Presentation presentation = childEvent.getPresentation();
+      Presentation presentation = orDefault(anAction, update(anAction));
       if (anAction instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)anAction;
 
@@ -181,6 +181,18 @@ class ActionUpdater {
     else {
       LOG.error("update failed for ActionGroup: " + action + "[" + presentation.getText() + "]", exc);
     }
+  }
+
+  @Nullable
+  private Presentation update(AnAction action) {
+    if (myUpdatedPresentations.containsKey(action)) {
+      return myUpdatedPresentations.get(action);
+    }
+
+    AnActionEvent event = createActionEvent(action);
+    Presentation presentation = doUpdate(myModalContext, action, event) ? event.getPresentation(): null;
+    myUpdatedPresentations.put(action, presentation);
+    return presentation;
   }
 
   // returns false if exception was thrown and handled
