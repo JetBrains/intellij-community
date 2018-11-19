@@ -60,15 +60,15 @@ private fun createReviewForDev(devRepoRoot: File, context: Context, user: String
   }
   else emptyList()
   if (changes.isEmpty()) return null
+  val changesMap = changes.associate {
+    val path = devRepoRoot.resolve(it).absolutePath
+    it to findGitRepoRoot(path, silent = true)
+  }
   val commits = findCommitsByRepo(UPSOURCE_DEV_PROJECT_ID, File(context.iconsRepoDir), changes) {
-    context.devIcons[it]!!
+    context.devIcons[it] ?: guessGitObject(changesMap[it]!!, devRepoRoot.resolve(it))
   }
   if (commits.isEmpty()) return null
-  val repos = changes.asSequence()
-    .map { File(devRepoRoot, it).absolutePath }
-    .map { findGitRepoRoot(it, silent = true) }
-    .distinct()
-    .toList()
+  val repos = changesMap.values.distinct()
   val verificationPassed = verifyDevIcons(context, repos)
   return withTmpBranch(repos) { branch ->
     val commitsForReview = commitAndPush(branch, user, email, commits.commitMessage(), repos)
@@ -113,12 +113,15 @@ private fun postVerificationResultToReview(success: Boolean, review: Review) {
   postComment(UPSOURCE_DEV_PROJECT_ID, review, "$comment ${runConfigurations.joinToString()}, see build log ${thisBuildReportableLink()}")
 }
 
+// TODO: refactor it
+private fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
+
 private fun createReviewForIcons(devRepoRoot: File, context: Context, user: String, email: String): Review? {
   if (!context.doSyncIconsAndCreateReview) return null
   val changes = context.addedByDev + context.removedByDev + context.modifiedByDev
   if (changes.isEmpty()) return null
   val commits = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, devRepoRoot, changes) {
-    context.icons[it]!!
+    context.icons[it] ?: guessGitObject(context.iconsRepo, File(context.iconsRepoDir).resolve(it))
   }
   if (commits.isEmpty()) return null
   val repos = listOf(context.iconsRepo)
