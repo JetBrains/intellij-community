@@ -23,7 +23,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
 
   private static final Predicate<ScopeToolState> BUNDLED = state -> {
     final IdeaPluginDescriptor descriptor = getIdeaPluginDescriptor(state);
-    return descriptor != null && descriptor.isBundled();
+    return descriptor != null && descriptor.isBundled() && StatisticsUtilKt.isDevelopedByJetBrains(descriptor.getPluginId());
   };
 
   private static final Predicate<ScopeToolState> LISTED = state -> {
