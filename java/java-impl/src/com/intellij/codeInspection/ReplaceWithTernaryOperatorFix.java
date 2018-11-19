@@ -18,6 +18,8 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -83,10 +85,14 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
       Project project = file.getProject();
       Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       if (editor != null) {
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-        TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(elseExpression);
-        builder.replaceElement(elseExpression, new ConstantNode(elseExpression.getText()));
-        builder.run(editor, true);
+        Document document = editor.getDocument();
+        PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+        if (topLevelFile != null && document == topLevelFile.getViewProvider().getDocument()) {
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+          TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(elseExpression);
+          builder.replaceElement(elseExpression, new ConstantNode(elseExpression.getText()));
+          builder.run(editor, true);
+        }
       }
     }
   }
