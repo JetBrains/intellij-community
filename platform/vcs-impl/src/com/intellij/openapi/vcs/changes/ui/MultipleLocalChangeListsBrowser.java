@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -56,7 +57,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FI
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
-public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
+class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
   @NotNull private final MergingUpdateQueue myUpdateQueue =
     new MergingUpdateQueue("MultipleLocalChangeListsBrowser", 300, true, ANY_COMPONENT, this);
 
@@ -74,8 +75,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull private LocalChangeList myChangeList;
 
   @Nullable private Runnable mySelectedListChangeListener;
+  private final RollbackDialogAction myRollbackDialogAction;
 
-  public MultipleLocalChangeListsBrowser(@NotNull Project project,
+  MultipleLocalChangeListsBrowser(@NotNull Project project,
                                          boolean showCheckboxes,
                                          boolean highlightProblems,
                                          boolean enableUnversioned,
@@ -86,6 +88,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
+
+    myRollbackDialogAction = new RollbackDialogAction();
+    myRollbackDialogAction.registerCustomShortcutSet(this, null);
 
     if (Registry.is("vcs.skip.single.default.changelist")) {
       List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
@@ -118,12 +123,29 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
+    AnAction rollbackGroup = createRollbackGroup(true);
     return ContainerUtil.append(
       super.createToolbarActions(),
-      new RollbackDialogAction(),
+      rollbackGroup,
       ActionManager.getInstance().getAction("ChangesView.Refresh"),
       ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar")
     );
+  }
+
+  private AnAction createRollbackGroup(boolean popup) {
+    List<? extends AnAction> rollbackActions = createAdditionalRollbackActions();
+    if (rollbackActions.isEmpty()) {
+      return myRollbackDialogAction;
+    }
+    DefaultActionGroup group = new DefaultActionGroup(myRollbackDialogAction);
+    group.addAll(rollbackActions);
+    ActionUtil.copyFrom(group, IdeActions.CHANGES_VIEW_ROLLBACK);
+    group.setPopup(popup);
+    return group;
+  }
+
+  protected List<? extends AnAction> createAdditionalRollbackActions() {
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -144,9 +166,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
 
-    RollbackDialogAction rollbackAction = new RollbackDialogAction();
-    rollbackAction.registerCustomShortcutSet(this, null);
-    result.add(rollbackAction);
+    result.add(createRollbackGroup(false));
 
     EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(this);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
