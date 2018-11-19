@@ -135,27 +135,7 @@ public class MethodEvaluator implements Evaluator {
             }
           }
         }
-      }
-      else if (myMustBeVararg && jdiMethod != null && !jdiMethod.isVarArgs() && jdiMethod.isBridge()) {
-        // see IDEA-129869, avoid bridge methods for varargs
-        int retTypePos = signature.lastIndexOf(")");
-        if (retTypePos >= 0) {
-          String signatureNoRetType = signature.substring(0, retTypePos + 1);
-          for (Method method : _refType.visibleMethods()) {
-            if (method.name().equals(myMethodName) &&
-                method.signature().startsWith(signatureNoRetType) &&
-                !method.isBridge() &&
-                !method.isAbstract()) {
-              jdiMethod = method;
-              break;
-            }
-          }
-        }
-      }
-      if (jdiMethod == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
-      }
-      if (myMustBeVararg && !jdiMethod.isVarArgs()) {
+      } else if (myMustBeVararg && jdiMethod != null && !jdiMethod.isVarArgs()) {
         // try to find the correct varargs method
         for (Method m : _refType.allMethods()) {
           if (m.isVarArgs() && m.name().equals(myMethodName) && m.signature().equals(signature)) {
@@ -163,6 +143,9 @@ public class MethodEvaluator implements Evaluator {
             break;
           }
         }
+      }
+      if (jdiMethod == null) {
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
       }
       if (requiresSuperObject) {
         return debugProcess.invokeInstanceMethod(context, objRef, jdiMethod, args, ObjectReference.INVOKE_NONVIRTUAL);
