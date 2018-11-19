@@ -183,16 +183,14 @@ private fun sendNotification(investigator: Investigator?, context: Context) {
 }
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
-private val ICONS_REPO_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
 
 internal fun Context.report(slack: Boolean = false): String {
   val iconsSync = when {
-    !iconsSyncRequired() -> ""
-    iconsReview() != null -> iconsReview()!!.let {
+    iconsSyncRequired() && iconsReview() != null -> iconsReview()!!.let {
       val link = if (slack) slackLink(it.id, it.url) else it.url
       "To sync $iconsRepoName see $link\n"
     }
-    else -> "Use 'Icons processing/*$ICONS_REPO_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n"
+    else -> ""
   }
   val devSync = devReview()?.let {
     val link = if (slack) slackLink(it.id, it.url) else it.url

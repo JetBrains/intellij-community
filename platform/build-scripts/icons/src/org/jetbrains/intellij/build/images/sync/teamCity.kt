@@ -58,7 +58,12 @@ internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
 
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
   try {
+    val assignee = teamCityGet("investigations?locator=buildType:$BUILD_CONF")
     val id = teamCityGet("users/email:${investigator.email}/id")
+    if (assignee.contains(id)) {
+      log("Investigation is already assigned to ${investigator.email}")
+      return investigator
+    }
     val text = context.report().let { if (it.isNotEmpty()) "$it, " else it } +
                (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
                " build: ${thisBuildReportableLink()}," +
