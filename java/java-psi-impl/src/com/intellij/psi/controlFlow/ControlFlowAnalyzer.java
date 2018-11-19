@@ -851,7 +851,47 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    startElement(statement);
+    PsiExpressionList caseValues = statement.getCaseValues();
+
+    if (caseValues != null) {
+      for (PsiExpression caseValue : caseValues.getExpressions()) {
+        myStartStatementStack.pushStatement(caseValue, false);
+        myEndStatementStack.pushStatement(caseValue, false);
+        caseValue.accept(this);
+        myStartStatementStack.popStatement();
+        myEndStatementStack.popStatement();
+      }
+    }
+
+    PsiStatement body = statement.getBody();
+    if (body != null) {
+      body.accept(this);
+    }
+
+    PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
+    if (switchBlock != null) {
+      Instruction instruction =
+        new GoToInstruction(0, BranchingInstruction.Role.END, PsiTreeUtil.isAncestor(switchBlock, myCodeFragment, true));
+      myCurrentFlow.addInstruction(instruction);
+      addElementOffsetLater(switchBlock, false);
+    }
+
+    finishElement(statement);
+  }
+
+  @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
+    generateSwitchBlockInstructions(statement);
+  }
+
+  @Override
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    generateSwitchBlockInstructions(expression);
+  }
+
+  public void generateSwitchBlockInstructions(PsiSwitchBlock statement) {
     startElement(statement);
 
     PsiExpression expr = statement.getExpression();
@@ -862,12 +902,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiCodeBlock body = statement.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
-      PsiSwitchLabelStatement defaultLabel = null;
+      PsiSwitchLabelStatementBase defaultLabel = null;
       for (PsiStatement aStatement : statements) {
         ProgressManager.checkCanceled();
-        if (aStatement instanceof PsiSwitchLabelStatement) {
-          if (((PsiSwitchLabelStatement)aStatement).isDefaultCase()) {
-            defaultLabel = (PsiSwitchLabelStatement)aStatement;
+        if (aStatement instanceof PsiSwitchLabelStatementBase) {
+          if (((PsiSwitchLabelStatementBase)aStatement).isDefaultCase()) {
+            defaultLabel = (PsiSwitchLabelStatementBase)aStatement;
           }
           Instruction instruction = new ConditionalGoToInstruction(0, expr);
           myCurrentFlow.addInstruction(instruction);
