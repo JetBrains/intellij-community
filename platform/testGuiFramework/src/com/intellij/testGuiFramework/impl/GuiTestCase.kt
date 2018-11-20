@@ -65,14 +65,16 @@ import javax.swing.text.JTextComponent
 open class GuiTestCase {
 
   companion object {
+    private val PROJECTS_ROOT_FOLDER: File = File(FileUtil.getTempDirectory())
+
     @ClassRule
     @JvmField
-    val projectsFolder: TemporaryFolder = TemporaryFolder()
+    val projectsFolder: TemporaryFolder = TemporaryFolder(PROJECTS_ROOT_FOLDER)
   }
 
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule(projectsFolder.apply{ create() }.root.canonicalFile)
+  val guiTestRule = GuiTestRule(PROJECTS_ROOT_FOLDER)
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
