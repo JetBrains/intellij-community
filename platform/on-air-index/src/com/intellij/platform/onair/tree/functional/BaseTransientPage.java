@@ -11,13 +11,16 @@ import java.util.Arrays;
 public abstract class BaseTransientPage implements IPage {
 
   protected final byte[] backingArray; // keys only
-  protected final TransientBTree tree;
-  protected int size;
+  protected final TransientBTree tree; // FIXME: this imposes memory overhead 'cause each tree can be a new Object
+  protected final long epoch;
 
-  protected BaseTransientPage(byte[] backingArray, TransientBTree tree, int size) {
+  protected int size; // TODO: allow in-place update only for current epoch nodes
+
+  protected BaseTransientPage(byte[] backingArray, TransientBTree tree, int size, long epoch) {
     this.backingArray = backingArray;
     this.tree = tree;
     this.size = size;
+    this.epoch = epoch;
   }
 
   @Override

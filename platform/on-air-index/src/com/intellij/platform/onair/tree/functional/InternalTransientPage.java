@@ -7,7 +7,6 @@ import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.tree.BTreeCommon;
 import com.intellij.platform.onair.tree.IInternalPage;
 import com.intellij.platform.onair.tree.IPage;
-import com.intellij.platform.onair.tree.InternalPage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +14,8 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
 
   protected final IPage[] children; // Address | IPage
 
-  public InternalTransientPage(byte[] backingArray, TransientBTree tree, int size, IPage[] children) {
-    super(backingArray, tree, size);
+  public InternalTransientPage(byte[] backingArray, TransientBTree tree, int size, long epoch, IPage[] children) {
+    super(backingArray, tree, size, epoch);
     this.children = children;
   }
 
@@ -122,13 +121,18 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   }
 
   @Override
-  public BaseTransientPage getTransientCopy() {
-    throw new UnsupportedOperationException(); // TODO
+  public InternalTransientPage getTransientCopy() {
+    final long treeEpoch = tree.getEpoch();
+    if (this.epoch >= treeEpoch) {
+      return this;
+    } else {
+      return copyOf(this, treeEpoch, 0, size);
+    }
   }
 
   @Override
   public IPage split(@NotNull Novelty.Accessor novelty, int from, int length) {
-    final IPage result = copyOf(this, from, length);
+    final IPage result = copyOf(this, epoch, from, length);
     decrementSize(length);
     return result;
   }
@@ -215,7 +219,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
     );
   }
 
-  private static InternalTransientPage copyOf(InternalTransientPage page, int from, int length) {
+  private static InternalTransientPage copyOf(InternalTransientPage page, long epoch, int from, int length) {
     byte[] bytes = new byte[page.backingArray.length];
 
     final int bytesPerKey = page.tree.getKeySize();
@@ -236,6 +240,6 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
       length
     );
 
-    return new InternalTransientPage(bytes, page.tree, length, children);
+    return new InternalTransientPage(bytes, page.tree, length, epoch, children);
   }
 }

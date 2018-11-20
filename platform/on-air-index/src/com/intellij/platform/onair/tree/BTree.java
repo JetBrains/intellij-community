@@ -41,6 +41,10 @@ public class BTree implements Tree {
     this.startAddress = startAddress;
   }
 
+  public Storage getStorage() {
+    return storage;
+  }
+
   @Override
   public int getKeySize() {
     return keySize;

@@ -7,7 +7,6 @@ import com.intellij.platform.onair.tree.IPage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// TODO: epochs
 public class TransientBTree implements TransientTree {
 
   final BTree storedTree;
@@ -18,11 +17,18 @@ public class TransientBTree implements TransientTree {
 
   private final Storage storage;
 
-  public TransientBTree(BTree storedTree, Object root, int keySize, Storage storage) {
+  private final long epoch;
+
+  public TransientBTree(BTree storedTree, long epoch, Object root, int keySize, Storage storage) {
     this.storedTree = storedTree;
+    this.epoch = epoch;
     this.root = root;
     this.keySize = keySize;
     this.storage = storage;
+  }
+
+  public long getEpoch() {
+    return epoch;
   }
 
   @Override
@@ -62,7 +68,7 @@ public class TransientBTree implements TransientTree {
     final boolean[] result = new boolean[1];
     final IPage updatedPage = page.put(novelty, key, value, overwrite, result);
     if (result[0]) {
-      return new TransientBTree(storedTree, updatedPage, keySize, storage);
+      return new TransientBTree(storedTree, epoch, updatedPage, keySize, storage);
     }
     else {
       return this;
@@ -78,7 +84,7 @@ public class TransientBTree implements TransientTree {
   public TransientTree delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
     final IPage page = root(novelty);
     if (page.delete(novelty, key, value)) {
-      return new TransientBTree(storedTree, page, keySize, storage);
+      return new TransientBTree(storedTree, epoch, page, keySize, storage);
     }
     else {
       return this;
@@ -87,7 +93,13 @@ public class TransientBTree implements TransientTree {
 
   @Override
   public TransientTree flush() {
-    throw new UnsupportedOperationException();
+    if (!(root instanceof IPage)) {
+      return this; // already on disk
+    }
+
+    // TODO: flush pages
+
+    return new TransientBTree(storedTree, epoch + 1, root, keySize, storage);
   }
 
   @NotNull

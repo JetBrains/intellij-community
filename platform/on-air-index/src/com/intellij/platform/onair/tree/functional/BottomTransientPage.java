@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.tree.functional;
 
+import com.intellij.platform.onair.storage.api.Address;
 import com.intellij.platform.onair.storage.api.KeyValueConsumer;
 import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.tree.BTreeCommon;
@@ -8,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BottomTransientPage extends BaseTransientPage {
-  protected final byte[][] values;
+  protected final Object[] values; // Address | byte[]
 
-  public BottomTransientPage(byte[] backingArray, TransientBTree tree, int size, byte[][] values) {
-    super(backingArray, tree, size);
+  public BottomTransientPage(byte[] backingArray, TransientBTree tree, int size, long epoch, Object[] values) {
+    super(backingArray, tree, size, epoch);
     this.values = values;
   }
 
@@ -20,7 +21,7 @@ public class BottomTransientPage extends BaseTransientPage {
   public byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
     final int index = BTreeCommon.binarySearch(backingArray, size, tree.getKeySize(), 0, key);
     if (index >= 0) {
-      return getValue(index);
+      return getValue(novelty, index);
     }
     return null;
   }
@@ -29,7 +30,7 @@ public class BottomTransientPage extends BaseTransientPage {
   public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer) {
     for (int i = 0; i < size; i++) {
       byte[] key = getKey(i);
-      byte[] value = getValue(i);
+      byte[] value = getValue(novelty, i);
       if (!consumer.consume(key, value)) {
         return false;
       }
@@ -41,7 +42,7 @@ public class BottomTransientPage extends BaseTransientPage {
   public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
     for (int i = BTreeCommon.binarySearchRange(backingArray, size, tree.getKeySize(), 0, fromKey); i < size; i++) {
       byte[] key = getKey(i);
-      byte[] value = getValue(i);
+      byte[] value = getValue(novelty, i);
       if (!consumer.consume(key, value)) {
         return false;
       }
@@ -84,15 +85,20 @@ public class BottomTransientPage extends BaseTransientPage {
 
   @Override
   public BottomTransientPage split(@NotNull Novelty.Accessor novelty, int from, int length) {
-    final BottomTransientPage result = copyOf(this, from, length);
+    final BottomTransientPage result = copyOf(this, epoch, from, length);
     decrementSize(length);
     flush(novelty);
     return result;
   }
 
   @Override
-  public BaseTransientPage getTransientCopy() {
-    throw new UnsupportedOperationException(); // TODO
+  public BottomTransientPage getTransientCopy() {
+    final long treeEpoch = tree.getEpoch();
+    if (this.epoch >= treeEpoch) {
+      return this;
+    } else {
+      return copyOf(this, treeEpoch, 0, size);
+    }
   }
 
   @Override
@@ -105,8 +111,14 @@ public class BottomTransientPage extends BaseTransientPage {
     return true;
   }
 
-  private byte[] getValue(int index) {
-    return values[index];
+  private byte[] getValue(@NotNull Novelty.Accessor novelty, int index) {
+    final Object child = values[index];
+    if (child instanceof byte[]) {
+      return (byte[])child;
+    }
+    final Address address = (Address)child;
+    final boolean isNovelty = address.isNovelty();
+    return isNovelty ? novelty.lookup(address.getLowBytes()) : tree.storedTree.getStorage().lookup(address);
   }
 
   private void setTransient(int pos, byte[] key, byte[] child) {
@@ -140,7 +152,7 @@ public class BottomTransientPage extends BaseTransientPage {
     );
   }
 
-  private static BottomTransientPage copyOf(BottomTransientPage page, int from, int length) {
+  private static BottomTransientPage copyOf(BottomTransientPage page, long epoch, int from, int length) {
     byte[] bytes = new byte[page.backingArray.length];
 
     final int bytesPerKey = page.tree.getKeySize();
@@ -152,7 +164,7 @@ public class BottomTransientPage extends BaseTransientPage {
       length * bytesPerKey
     );
 
-    byte[][] values = new byte[page.values.length][];
+    Object[] values = new Object[page.values.length];
 
     // copy values
     System.arraycopy(
@@ -161,6 +173,6 @@ public class BottomTransientPage extends BaseTransientPage {
       length
     );
 
-    return new BottomTransientPage(bytes, page.tree, length, values);
+    return new BottomTransientPage(bytes, page.tree, length, epoch, values);
   }
 }
