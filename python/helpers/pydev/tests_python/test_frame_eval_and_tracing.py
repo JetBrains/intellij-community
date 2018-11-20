@@ -6,7 +6,7 @@ import sys
 
 import time
 
-from tests_pydevd_python import debugger_unittest
+from tests_python import debugger_unittest
 
 IS_CPYTHON = platform.python_implementation() == 'CPython'
 IS_PY36 = sys.version_info[0] == 3 and sys.version_info[1] == 6

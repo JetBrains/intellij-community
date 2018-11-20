@@ -1,4 +1,4 @@
-from tests_pydevd_python import debugger_unittest
+from tests_python import debugger_unittest
 import sys
 import re
 import os
@@ -6,7 +6,7 @@ import os
 CHECK_BASELINE, CHECK_REGULAR, CHECK_CYTHON = 'baseline', 'regular', 'cython'
 
 pytest_plugins = [
-    str('tests_pydevd_python.debugger_fixtures'),
+    str('tests_python.debugger_fixtures'),
 ]
 
 RUNS = 5
