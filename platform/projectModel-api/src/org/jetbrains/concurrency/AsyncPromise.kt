@@ -3,7 +3,7 @@ package org.jetbrains.concurrency
 
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.ExceptionUtil
+import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
@@ -21,9 +21,9 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
     f = w
   }
 
-  override fun isDone(): Boolean = f.isDone
-  override fun get(): T? = nullizeCancelled { f.get() }
-  override fun get(timeout: Long, unit: TimeUnit?): T? = nullizeCancelled { f.get(timeout, unit) }
+  override fun isDone() = f.isDone
+  override fun get() = nullizeCancelled { f.get() }
+  override fun get(timeout: Long, unit: TimeUnit?) = nullizeCancelled { f.get(timeout, unit) }
 
   // because of the unorthodox contract: get() should return null for canceled promise
   private fun nullizeCancelled(value: () -> T?): T? {
@@ -36,16 +36,16 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
     }
   }
 
-  override fun isCancelled(): Boolean = f.isCancelled
+  override fun isCancelled() = f.isCancelled
 
   // because of the unorthodox contract: "double cancel must return false"
-  override fun cancel(mayInterruptIfRunning: Boolean): Boolean = !isCancelled && f.cancel(mayInterruptIfRunning)
+  override fun cancel(mayInterruptIfRunning: Boolean) = !isCancelled && f.cancel(mayInterruptIfRunning)
 
   override fun cancel() {
     cancel(true)
   }
 
-  override fun getState(): State = if (!f.isDone) State.PENDING else if (f.isCompletedExceptionally) State.REJECTED else State.SUCCEEDED
+  override fun getState() = if (!f.isDone) State.PENDING else if (f.isCompletedExceptionally) State.REJECTED else State.SUCCEEDED
 
   override fun onSuccess(handler: Consumer<in T>): Promise<T> {
     val whenComplete = f.whenComplete { value, exception ->
@@ -85,7 +85,7 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
       return get(timeout.toLong(), timeUnit)
     }
     catch (e: ExecutionException) {
-      ExceptionUtil.rethrowUnchecked(e.cause)
+      ExceptionUtilRt.rethrowUnchecked(e.cause)
       throw e
     }
   }
@@ -102,24 +102,25 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
       promise.onSuccess { value -> future.complete(value) }.onError { error -> future.completeExceptionally(error) }
       future
     }
-    val thenCompose = f.thenCompose(convert)
-    return AsyncPromise(thenCompose)
+    return AsyncPromise(f.thenCompose(convert))
   }
 
   override fun processed(child: Promise<in T>): Promise<T> {
     if (child !is AsyncPromise) {
       return this
     }
-    return onSuccess { value -> child.setResult(value) }.onError { error -> child.setError(error) }
+
+    return onSuccess { child.setResult(it) }
+      .onError { child.setError(it) }
   }
 
   override fun setResult(t: T?) {
     f.complete(t)
   }
 
-  override fun setError(error: Throwable): Boolean = f.completeExceptionally(error)
+  override fun setError(error: Throwable) = f.completeExceptionally(error)
 
-  fun setError(error: String): Boolean = setError(createError(error))
+  fun setError(error: String) = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
