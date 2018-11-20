@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 class ActionUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionUpdater");
@@ -54,11 +55,14 @@ class ActionUpdater {
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
     myTransparentOnly = transparentOnly;
-    myRealUpdateStrategy = new UpdateStrategy(action -> {
-      AnActionEvent event = createActionEvent(action);
-      return doUpdate(myModalContext, action, event) ? event.getPresentation() : null;
-    }, group -> group.getChildren(createActionEvent(group)));
-    myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null));
+    myRealUpdateStrategy = new UpdateStrategy(
+      action -> {
+        AnActionEvent event = createActionEvent(action);
+        return doUpdate(myModalContext, action, event) ? event.getPresentation() : null;
+      },
+      group -> group.getChildren(createActionEvent(group)),
+      group -> group.canBePerformed(myDataContext));
+    myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
   }
 
   /**
@@ -162,7 +166,7 @@ class ActionUpdater {
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
             return Collections.emptyList();
           }
-          presentation.setEnabled(actionGroup.canBePerformed(myDataContext) || visibleChildren);
+          presentation.setEnabled(visibleChildren || strategy.canBePerformed.test(actionGroup));
         }
 
         return Collections.singletonList(child);
@@ -296,10 +300,14 @@ class ActionUpdater {
   private static class UpdateStrategy {
     final NullableFunction<AnAction, Presentation> update;
     final NotNullFunction<ActionGroup, AnAction[]> getChildren;
+    final Predicate<ActionGroup> canBePerformed;
 
-    UpdateStrategy(NullableFunction<AnAction, Presentation> update, NotNullFunction<ActionGroup, AnAction[]> getChildren) {
+    UpdateStrategy(NullableFunction<AnAction, Presentation> update,
+                   NotNullFunction<ActionGroup, AnAction[]> getChildren,
+                   Predicate<ActionGroup> canBePerformed) {
       this.update = update;
       this.getChildren = getChildren;
+      this.canBePerformed = canBePerformed;
     }
   }
 
