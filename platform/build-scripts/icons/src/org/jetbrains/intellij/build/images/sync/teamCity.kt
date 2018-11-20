@@ -5,8 +5,6 @@ import org.apache.http.HttpHeaders
 import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.entity.ContentType
 import java.io.File
-import java.net.URLEncoder
-import java.text.SimpleDateFormat
 import java.util.*
 
 internal fun isUnderTeamCity() = BUILD_SERVER != null
@@ -27,26 +25,15 @@ private fun HttpRequestBase.teamCityAuth() {
   basicAuth(System.getProperty("pin.builds.user.name"), System.getProperty("pin.builds.user.password"))
 }
 
-private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
-private val NOTIFICATIONS_MIN_INTERVAL_HOURS = System.getProperty("notifications.min.interval.hours")?.toInt() ?: 12
-
-internal fun isNotificationRequired(context: Context): Boolean {
-  val calendar = Calendar.getInstance()
-  if (calendar.get(Calendar.DAY_OF_WEEK).let {
-      it == Calendar.SATURDAY || it == Calendar.SUNDAY
-    }) return false
-  val request = "builds?locator=buildType:$BUILD_CONF,count:1"
-  val intervalStart = DATE_FORMAT.format(with(calendar) {
-    add(Calendar.HOUR, -NOTIFICATIONS_MIN_INTERVAL_HOURS)
-    time
-  }).let { URLEncoder.encode(it, Charsets.UTF_8.name()) }
-  val noNotificationsSinceIntervalStart = teamCityGet("$request,sinceDate:$intervalStart").contains("count=\"0\"")
-  return noNotificationsSinceIntervalStart &&
-         // remind of failure
-         (context.isFail() ||
-          // or check previous build and notify on fail -> success
-          teamCityGet(request).contains("status=\"FAILURE\""))
-}
+internal fun isNotificationRequired(context: Context) =
+  Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+    // not weekend
+    .let { it != Calendar.SATURDAY && it != Calendar.SUNDAY } &&
+  // remind of failure every day
+  (isScheduled() && context.isFail() ||
+   // or check previous build and notify on fail -> success
+   !context.isFail() && teamCityGet("builds?locator=buildType:$BUILD_CONF,count:1")
+     .contains("status=\"FAILURE\""))
 
 internal val DEFAULT_INVESTIGATOR by lazy {
   System.getProperty("intellij.icons.sync.default.investigator")?.takeIf { it.isNotBlank() } ?: error("Specify default investigator")
@@ -114,3 +101,5 @@ internal fun triggeredBy() = System.getProperty("teamcity.build.triggeredBy.user
   ?.takeIf { it.isNotBlank() }
   ?.let { teamCityGet("users/username:$it/email") }
   ?.removeSuffix(System.lineSeparator())
+
+internal fun isScheduled() = System.getProperty("teamcity.build.triggeredBy")?.contains("Schedule") == true
