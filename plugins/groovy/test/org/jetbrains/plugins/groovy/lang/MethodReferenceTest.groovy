@@ -29,6 +29,7 @@ class MethodReferenceTest extends GroovyResolveTestCase implements TypingTest, R
 class C { 
   C(int a) {}
   static foo() {}
+}
 '''
     def results = multiResolveByText 'C::<caret>foo'
     assert results.size() == 1
