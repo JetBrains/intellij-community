@@ -123,7 +123,11 @@ public class ModuleDeleteProviderTest extends PlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    Messages.setTestDialog(TestDialog.DEFAULT);
-    super.tearDown();
+    try {
+      Messages.setTestDialog(TestDialog.DEFAULT);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }
