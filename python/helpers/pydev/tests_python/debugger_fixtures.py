@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from tests_pydevd_python import debugger_unittest
-from tests_pydevd_python.debugger_unittest import get_free_port, overrides, IS_CPYTHON, IS_JYTHON, IS_IRONPYTHON
+from tests_python import debugger_unittest
+from tests_python.debugger_unittest import get_free_port, overrides, IS_CPYTHON, IS_JYTHON, IS_IRONPYTHON
 
 import sys
 
@@ -32,7 +32,7 @@ def get_jython_jar():
 
 class _WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
 
-    TEST_FILE = 'tests_pydevd_python.resources._debugger_case_m_switch'
+    TEST_FILE = 'tests_python.resources._debugger_case_m_switch'
     IS_MODULE = True
 
     @overrides(debugger_unittest.AbstractWriterThread.get_environ)
@@ -53,7 +53,7 @@ class _WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
 
 class _WriterThreadCaseModuleWithEntryPoint(_WriterThreadCaseMSwitch):
 
-    TEST_FILE = 'tests_pydevd_python.resources._debugger_case_module_entry_point:main'
+    TEST_FILE = 'tests_python.resources._debugger_case_module_entry_point:main'
     IS_MODULE = True
 
     @overrides(_WriterThreadCaseMSwitch.get_main_filename)
