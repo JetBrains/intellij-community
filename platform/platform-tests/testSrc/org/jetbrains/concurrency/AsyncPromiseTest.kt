@@ -51,14 +51,14 @@ class AsyncPromiseTest {
       }
     }
 
-    val setResulter: () -> Promise<String> = {
+    val setResultHandler: () -> Promise<String> = {
       promise.setResult("test")
       promise
     }
 
     val numThreads = 30
     val array = Array(numThreads) {
-      if ((it and 1) == 0) Incrementer("handler $it") else setResulter
+      if ((it and 1) == 0) Incrementer("handler $it") else setResultHandler
     }
     assertConcurrentPromises(*array)
 
@@ -142,7 +142,7 @@ class AsyncPromiseTest {
   }
 
   @Test
-  fun collectResultsMustReturnArrayWithTheSameOrder() {
+  fun `collectResults must return array with the same order`() {
     val promise0 = AsyncPromise<String>()
     val promise1 = AsyncPromise<String>()
     val f0 = JobScheduler.getScheduler().schedule({ promise0.setResult("0") }, 1, TimeUnit.SECONDS)
@@ -156,7 +156,7 @@ class AsyncPromiseTest {
   }
 
   @Test
-  fun `collectResultsMustReturnArrayWithTheSameOrder - ignore errors`() {
+  fun `collectResults must return array with the same order - ignore errors`() {
     val promiseList = listOf<AsyncPromise<String>>(AsyncPromise(), AsyncPromise(), AsyncPromise())
     val toExecute = listOf(
       JobScheduler.getScheduler().schedule({ promiseList[0].setResult("0") }, 5, TimeUnit.MILLISECONDS),

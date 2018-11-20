@@ -10,45 +10,47 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
-class AsyncPromiseTest2 {
+class AsyncPromiseStateTest {
   internal enum class State {
     RESOLVE, REJECT, ERROR
   }
 
   @Test
-  fun testResolveNow() {
+  fun resolveNow() {
     val promise = promise(State.RESOLVE, When.NOW)
-    assert("resolved" == promise.blockingGet(100))
+    assertThat(promise.blockingGet(100)).isEqualTo("resolved")
   }
 
   @Test
-  fun testResolveAfterHandlerSet() {
+  fun resolveAfterHandlerSet() {
     val promise = promise(State.RESOLVE, When.AFTER)
-    assert("resolved" == promise.blockingGet(100))
+    assertThat(promise.blockingGet(100)).isEqualTo("resolved")
   }
 
   @Test
-  fun testResolveBeforeHandlerSet() {
+  fun resolveBeforeHandlerSet() {
     val promise = promise(State.RESOLVE, When.BEFORE)
-    assert("resolved" == promise.blockingGet(100))
+    assertThat(promise.blockingGet(100)).isEqualTo("resolved")
   }
 
   @Test
-  fun testRejectNow() {
+  fun rejectNow() {
     val promise = promise(State.REJECT, When.NOW)
     try {
-      assert(null == promise.blockingGet(100))
+      assertThat(promise.blockingGet(100)).isNull()
     }
     catch (exception: Exception) {
-      if (!isMessageError(exception)) throw exception
+      if (!isMessageError(exception)) {
+        throw exception
+      }
     }
   }
 
   @Test
-  fun testRejectAfterHandlerSet() {
+  fun rejectAfterHandlerSet() {
     val promise = promise(State.REJECT, When.AFTER)
     try {
-      assert(null == promise.blockingGet(100))
+      assertThat(promise.blockingGet(100)).isNull()
     }
     catch (exception: Exception) {
       if (!isMessageError(exception)) throw exception
@@ -56,7 +58,7 @@ class AsyncPromiseTest2 {
   }
 
   @Test
-  fun testRejectBeforeHandlerSet() {
+  fun rejectBeforeHandlerSet() {
     val promise = promise(State.REJECT, When.BEFORE)
     try {
       assertThat(promise.blockingGet(100)).isNull()
@@ -69,7 +71,7 @@ class AsyncPromiseTest2 {
   }
 
   @Test
-  fun testErrorNow() {
+  fun errorNow() {
     val promise = promise(State.ERROR, When.NOW)
     try {
       assertThat(promise.blockingGet(100)).isNull()
@@ -79,7 +81,7 @@ class AsyncPromiseTest2 {
   }
 
   @Test
-  fun testErrorAfterHandlerSet() {
+  fun errorAfterHandlerSet() {
     val promise = promise(State.ERROR, When.AFTER)
     try {
       assertThat(promise.blockingGet(100)).isNull()
@@ -89,7 +91,7 @@ class AsyncPromiseTest2 {
   }
 
   @Test
-  fun testErrorBeforeHandlerSet() {
+  fun errorBeforeHandlerSet() {
     val promise = promise(State.ERROR, When.BEFORE)
     try {
       assertThat(promise.blockingGet(100)).isNull()
@@ -114,7 +116,7 @@ private fun log(message: String) {
   }
 }
 
-private fun promise(state: AsyncPromiseTest2.State, `when`: When): AsyncPromise<String> {
+private fun promise(state: AsyncPromiseStateTest.State, `when`: When): AsyncPromise<String> {
   assert(!isDispatchThread())
 
   val latch = CountDownLatch(1)
@@ -123,15 +125,15 @@ private fun promise(state: AsyncPromiseTest2.State, `when`: When): AsyncPromise<
     try {
       sleep(10)
       when (state) {
-        AsyncPromiseTest2.State.RESOLVE -> {
+        AsyncPromiseStateTest.State.RESOLVE -> {
           log("resolve promise")
           promise.setResult("resolved")
         }
-        AsyncPromiseTest2.State.REJECT -> {
+        AsyncPromiseStateTest.State.REJECT -> {
           log("reject promise")
           promise.setError("rejected")
         }
-        AsyncPromiseTest2.State.ERROR -> {
+        AsyncPromiseStateTest.State.ERROR -> {
           log("notify promise about error to preserve a cause")
           promise.onError { /* add empty error handler to ensure that promise will not call LOG.error */ }
           promise.setError(CheckedException())
