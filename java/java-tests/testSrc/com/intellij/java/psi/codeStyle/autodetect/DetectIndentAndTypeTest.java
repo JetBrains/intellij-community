@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,16 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
 
   @Override
   public void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
-    if (optionsProvider != null) {
-      optionsProvider.setEnabledInTest(false);
+    try {
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+      DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
+      if (optionsProvider != null) {
+        optionsProvider.setEnabledInTest(false);
+      }
     }
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testWhenTabsDetected_SetIndentSizeToTabSize() {
