@@ -94,7 +94,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
 
   protected String loadExpected(@NotNull String ext) throws IOException {
     return FileUtilRt
-      .loadFile(new File(getBasePath() + File.separator + getTestDir() + File.separator + getTestName(true) + "." + ext));
+      .loadFile(new File(getBasePath() + File.separator + getTestDir() + File.separator + getTestName(true) + "." + ext), true);
   }
 
   protected CodeStyleScheme createTestScheme() {
