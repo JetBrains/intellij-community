@@ -63,20 +63,20 @@ import java.util.Map;
 import java.util.Set;
 
 public class ViewOfflineResultsAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
+  private static final Logger LOG = Logger.getInstance(ViewOfflineResultsAction.class);
   @NonNls private static final String XML_EXTENSION = "xml";
 
   @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    final Project project = event.getProject();
     presentation.setEnabled(project != null);
     presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && !PlatformUtils.isCidr());
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    final Project project = event.getProject();
 
     LOG.assertTrue(project != null);
 
@@ -146,9 +146,8 @@ public class ViewOfflineResultsAction extends AnAction {
 
   @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"}) //used in TeamCity
   public static InspectionResultsView showOfflineView(@NotNull Project project,
-                                                      @Nullable
-                                                      final String profileName,
-                                                      @NotNull final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+                                                      @Nullable String profileName,
+                                                      @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       @NotNull String title) {
     InspectionProfileImpl profile;
     if (profileName != null) {
