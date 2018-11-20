@@ -8,13 +8,10 @@ import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
-import org.jetbrains.plugins.groovy.lang.resolve.impl.EmptyArgumentsMapping
-import org.jetbrains.plugins.groovy.lang.resolve.impl.PositionalArgumentMapping
-import org.jetbrains.plugins.groovy.lang.resolve.impl.VarargArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.impl.mapArgumentsToParameters
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
@@ -36,18 +33,9 @@ class MethodResolveResult(
   private fun erasedArguments(arguments: Arguments) = arguments.map(::ErasedArgument)
 
   private val myArgumentMapping by lazyPub {
-    if (arguments == null) {
+    arguments?.let {
       // no arguments => no mapping
-      null
-    }
-    else if (element.isEffectivelyVarArgs) {
-      VarargArgumentMapping(element, contextSubstitutor, arguments, place)
-    }
-    else if (arguments.isEmpty()) {
-      EmptyArgumentsMapping(element)
-    }
-    else {
-      PositionalArgumentMapping(element, contextSubstitutor, arguments, place)
+      mapArgumentsToParameters(element, contextSubstitutor, arguments, place)
     }
   }
 
