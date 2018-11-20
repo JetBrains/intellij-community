@@ -48,8 +48,12 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    UIUtil.dispatchAllInvocationEvents(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
-    super.tearDown();
+    try {
+      UIUtil.dispatchAllInvocationEvents(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testText() throws Exception {
