@@ -55,103 +55,22 @@ public class SwitchExpressionsJava12 {
     if (<warning descr="Condition 'i < 1' is always 'false'">i < 1</warning>) {}
   }
 
-  static void testSwitchInInlinedLambda(int i) {
-    int x = ((IntSupplier)() -> {
-      int j = switch (i) {
-        case 1 -> 2;
-        case 2 -> 3;
-        case 3 -> {
-          System.out.println("hello");
-          return 1; // exit lambda, not switch!
-        }
-        default -> 4;
+  static void testIncomplete(Integer i) {
+    if (i == null) {
+      System.out.println(switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>)<error descr="'{' expected">)</error>;
+    } else {
+      int x = switch(i) {
+        case 1 -><EOLError descr="Expression, block or throw statement expected"></EOLError>
+        case 2 -> {
+          if (<warning descr="Condition 'i == 1' is always 'false'">i == 1</warning>) {}
+          throw new IllegalArgumentException();
+        }  
+        default -> 1;
       };
-      if (<warning descr="Condition 'j < 2' is always 'false'">j < 2</warning>) {}
-      if (<warning descr="Condition 'j == 4 && i == 2' is always 'false'">j == 4 && <warning descr="Condition 'i == 2' is always 'false' when reached">i == 2</warning></warning>) {}
-      if (<warning descr="Condition 'i == 3' is always 'false'">i == 3</warning>) {}
-      return 0;
-    }).getAsInt();
-    if (x == 1 && <warning descr="Condition 'i == 3' is always 'true' when reached">i == 3</warning>) {}
-  }
-
-  static void testSwitchInInlinedLambdaWithInnerFinally(int i) {
-    int x = ((IntSupplier)() -> {
-      int j = switch (i) {
-        case 1 -> 2;
-        case 2 -> 3;
-        case 3 -> {
-          try {
-            System.out.println("hello");
-            return 1;
-          }
-          finally {
-            return 2;
-          }
-        }
-        default -> 4;
-      };
-      if (<warning descr="Condition 'j < 2' is always 'false'">j < 2</warning>) {}
-      if (<warning descr="Condition 'j == 4 && i == 2' is always 'false'">j == 4 && <warning descr="Condition 'i == 2' is always 'false' when reached">i == 2</warning></warning>) {}
-      if (<warning descr="Condition 'i == 3' is always 'false'">i == 3</warning>) {}
-      return 0;
-    }).getAsInt();
-    if (<warning descr="Condition 'x == 1 && i == 3' is always 'false'"><warning descr="Condition 'x == 1' is always 'false'">x == 1</warning> && i == 3</warning>) {}
-    if (x == 2 && <warning descr="Condition 'i == 3' is always 'true' when reached">i == 3</warning>) {}
-  }
-
-  static void testSwitchInInlinedLambdaWithOuterFinally(int i) {
-    int x = ((IntSupplier)() -> {
-      int j = 0;
-      try {
-        j = switch (i) {
-              case 1 -> 2;
-              case 2 -> 3;
-              case 3 -> {
-                System.out.println("hello");
-                return 1;
-              }
-              default -> 4;
-            };
+      if (x != 1) {
+        // the only case where we don't know the returned value is i == 1, so the warning is logical here
+        if (<warning descr="Condition 'i == 1' is always 'true'">i == 1</warning>) {}
       }
-      finally {
-        if (j == 0) {
-          return 2;
-        }
-      }
-      if (<warning descr="Condition 'j < 2' is always 'false'">j < 2</warning>) {}
-      if (<warning descr="Condition 'j == 4 && i == 2' is always 'false'">j == 4 && <warning descr="Condition 'i == 2' is always 'false' when reached">i == 2</warning></warning>) {}
-      if (<warning descr="Condition 'i == 3' is always 'false'">i == 3</warning>) {}
-      return 0;
-    }).getAsInt();
-    if (<warning descr="Condition 'x == 1 && i == 3' is always 'false'"><warning descr="Condition 'x == 1' is always 'false'">x == 1</warning> && i == 3</warning>) {}
-    if (x == 2 && <warning descr="Condition 'i == 3' is always 'true' when reached">i == 3</warning>) {}
-  }
-
-  static int get(int x) {
-    return x;
-  }
-
-  void testStatementInsideExpressionInsideBlockLambda(int x, int y) {
-    int i = ((IntSupplier)() -> {
-      System.out.println();
-      return switch(x) {
-        case 1 -> {
-          switch (y) {
-            default -> get(x);
-          }
-          return 5;
-        }
-        default -> 10;
-      };
-    }).getAsInt();
-    if (i != 10) {}
-  }
-
-  void testSwitchWithReturnInsideExpressionLambda(int x) {
-    int i = ((IntSupplier)() -> x < 0 ? 0 : switch(x) {
-      case 1 -> { return 2; }
-      default -> 3;
-    }).getAsInt();
-    if (i == 2 && <warning descr="Condition 'x == 1' is always 'true' when reached">x == 1</warning>) {}
+    }
   }
 }
