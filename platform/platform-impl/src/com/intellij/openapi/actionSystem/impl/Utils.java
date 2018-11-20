@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +34,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public class Utils{
+  private static final Logger LOG = Logger.getInstance(Utils.class);
   @NonNls public static final String NOTHING_HERE = "Nothing here";
   public static final AnAction EMPTY_MENU_FILLER = new AnAction(NOTHING_HERE) {
 
@@ -83,6 +85,16 @@ public class Utils{
 
     for (int i = 0, size = list.size(); i < size; i++) {
       final AnAction action = list.get(i);
+      Presentation presentation = presentationFactory.getPresentation(action);
+      if (!(action instanceof Separator) && presentation.isVisible() && StringUtil.isEmpty(presentation.getText())) {
+        String message = "Skipping empty menu item for action " + action + " of " + action.getClass();
+        if (action.getTemplatePresentation().getText() == null) {
+          message += ". Please specify some default action text in plugin.xml or action constructor";
+        }
+        LOG.warn(message);
+        continue;
+      }
+
       if (action instanceof Separator) {
         final String text = ((Separator)action).getText();
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
@@ -126,7 +138,7 @@ public class Utils{
       }
       else {
         final ActionMenuItem each =
-          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
+          new ActionMenuItem(action, presentation, place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
         component.add(each);
         children.add(each);
       }
