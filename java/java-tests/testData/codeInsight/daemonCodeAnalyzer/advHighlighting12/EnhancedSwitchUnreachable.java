@@ -101,8 +101,8 @@ class C {
     int n;
     return 2;
     n = <error descr="Unreachable statement">switch</error>(s) {
-      case "a": n= 1;break;
-      default: n= 0;
+      case "a": n = 1; break 1;
+      default: n = 0; break 0;
     };
   }
 
