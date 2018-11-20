@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
@@ -247,6 +248,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters = Collections.emptyList();
       boolean errorHappened = false;
       for (int i = 0; i < adapters.size(); i++) {
+        CHECK_CANCELED.run();
         ExtensionComponentAdapter adapter = adapters.get(i);
         try {
           @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
@@ -547,5 +549,36 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     public LoadingOrder getOrder() {
       return myLoadingOrder;
     }
+  }
+
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private static Runnable CHECK_CANCELED = EmptyRunnable.getInstance();
+
+  public static void setCheckCanceledAction(Runnable checkCanceled) {
+    CHECK_CANCELED = new Runnable() {
+      final Set<Throwable> reported = ContainerUtil.newConcurrentSet();
+
+      @Override
+      public void run() {
+        try {
+          checkCanceled.run();
+        }
+        catch (ProcessCanceledException e) {
+          if (!isInsideClassInitializer(e.getStackTrace())) { // otherwise ExceptionInInitializerError happens and the class is screwed forever
+            throw e;
+          }
+          else {
+            Throwable throwable = new Throwable();
+            if (reported.add(throwable)) {
+              LOG.warn("Don't instantiate extensions from class initializer", throwable);
+            }
+          }
+        }
+      }
+    };
+  }
+
+  private static boolean isInsideClassInitializer(StackTraceElement[] trace) {
+    return Arrays.stream(trace).anyMatch(s -> "<clinit>".equals(s.getMethodName()));
   }
 }
