@@ -362,7 +362,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @NotNull
   public String getFileTooltipText(@NotNull VirtualFile file) {
-    List<EditorTabTitleProvider> availableProviders = DumbService.getInstance(myProject).filterByDumbAwareness(EditorTabTitleProvider.EP_NAME.getExtensionList());
+    List<EditorTabTitleProvider> availableProviders = DumbService.getDumbAwareExtensions(myProject, EditorTabTitleProvider.EP_NAME);
     for (EditorTabTitleProvider provider : availableProviders) {
       String text = provider.getEditorTabTooltipText(myProject, file);
       if (text != null) {
