@@ -64,21 +64,13 @@ fun buildQualifier(ref: GrReferenceExpression, state: ResolveState): Argument {
   }
 }
 
-fun GrCall.buildTopLevelArgumentTypes(): Array<PsiType?>? {
-  return getArguments()?.map { argument ->
-    val type = argument.topLevelType
-    if (type is GrMapType) {
-      TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, this)
-    }
-    else {
-      type
-    }
-  }?.toTypedArray()
-}
-
 fun PsiSubstitutor.putAll(parameters: Array<out PsiTypeParameter>, arguments: Array<out PsiType>): PsiSubstitutor {
   if (arguments.size != parameters.size) return this
   return parameters.zip(arguments).fold(this) { acc, (param, arg) ->
     acc.put(param, arg)
   }
+}
+
+fun PsiClass.type(): PsiClassType {
+  return PsiElementFactory.SERVICE.getInstance(project).createType(this, PsiSubstitutor.EMPTY)
 }

@@ -9,10 +9,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
@@ -20,14 +21,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
-import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
-import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 class GroovyInferenceSessionBuilder(
   private val ref: PsiElement,
@@ -59,10 +59,10 @@ class GroovyInferenceSessionBuilder(
   fun build(): GroovyInferenceSession {
     if (startFromTop) {
       val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
-      val methodCall = ref.parent as? GrMethodCall ?: return session
-      val mostTopLevelCall = getMostTopLevelCall(methodCall)
-      val left = getReturnConstraintType(mostTopLevelCall)
-      session.addConstraint(ExpressionConstraint(left, mostTopLevelCall))
+      val expression = ref.parent as? GrMethodCall ?: ref as? GrExpression ?: return session
+      val mostTopLevelExpression = getMostTopLevelExpression(expression)
+      val left = getExpectedType(mostTopLevelExpression)
+      session.addConstraint(ExpressionConstraint(left, mostTopLevelExpression))
       return session
     }
     else {
@@ -76,62 +76,69 @@ class GroovyInferenceSessionBuilder(
     }
   }
 
-  private fun getMostTopLevelCall(call: GrMethodCall): GrMethodCall {
-    var topLevel: GrMethodCall = call
+  private fun getMostTopLevelExpression(start: GrExpression): GrExpression {
+    var current: GrExpression = start
     while (true) {
-      val parent = topLevel.parent
-      val grandParent = parent?.parent
-      topLevel = if (parent is GrMethodCall) {
+      val parent = current.parent
+      current = if (parent is GrMethodCall && current in parent.expressionArguments) {
         parent
       }
-      else if (parent is GrArgumentList && grandParent is GrMethodCall) {
-        grandParent
+      else if (parent is GrArgumentList) {
+        val grandParent = parent.parent
+        if (grandParent is GrCallExpression) {
+          grandParent
+        }
+        else {
+          return current
+        }
       }
       else {
-        return topLevel
+        return current
       }
     }
   }
 
-  private fun getReturnConstraintType(call: GrMethodCall): PsiType? {
-    val parent = call.parent
-    val grandParent = parent?.parent
+  private fun getExpectedType(expression: GrExpression): PsiType? {
+    val parent = expression.parent
     val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, true, GrClosableBlock::class.java)
 
     if (parent is GrReturnStatement && parentMethod != null) {
       return parentMethod.returnType
     }
-    else if (isExitPoint(call) && parentMethod != null) {
+    else if (isExitPoint(expression) && parentMethod != null) {
       val returnType = parentMethod.returnType
       if (TypeConversionUtil.isVoidType(returnType)) return null
       return returnType
     }
-    else if (parent is GrAssignmentExpression && call == parent.rValue) {
-      val lValue = PsiUtil.skipParentheses(parent.lValue, false)
+    else if (parent is GrAssignmentExpression && expression == parent.rValue) {
+      val lValue = skipParentheses(parent.lValue, false)
       return if (lValue is GrExpression && lValue !is GrIndexProperty) lValue.nominalType else null
-    }
-    else if (parent is GrArgumentList && grandParent is GrNewExpression) { // TODO: fix with moving constructor resolve to new API
-      with(grandParent) {
-        val resolveResult = advancedResolve()
-        if (resolveResult is GroovyMethodResult) {
-          val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.partialSubstitutor,
-                                                grandParent.getArguments(), call)
-          return methodCandidate.argumentMapping[ExpressionArgument(call)]?.second
-        }
-      }
-      return null
     }
     else if (parent is GrVariable) {
       return parent.declaredType
     }
+    else if (parent is GrListOrMap) {
+      val pParent = parent.parent
+      if (pParent is GrVariableDeclaration && pParent.isTuple) {
+        val index = parent.initializers.indexOf(expression)
+        return pParent.variables.getOrNull(index)?.declaredType
+      }
+      else if (pParent is GrTupleAssignmentExpression) {
+        val index = parent.initializers.indexOf(expression)
+        val expressions = pParent.lValue.expressions
+        val lValue = expressions.getOrNull(index)
+        return (lValue?.staticReference?.resolve() as? GrVariable)?.declaredType
+      }
+    }
+
     return null
   }
 
-  private fun isExitPoint(place: GrMethodCall): Boolean {
+  private fun isExitPoint(place: GrExpression): Boolean {
     return collectExitPoints(place).contains(place)
   }
 
-  private fun collectExitPoints(place: GrMethodCall): List<GrStatement> {
+  private fun collectExitPoints(place: GrExpression): List<GrStatement> {
     return if (canBeExitPoint(place)) {
       val flowOwner = ControlFlowUtils.findControlFlowOwner(place)
       ControlFlowUtils.collectReturns(flowOwner)

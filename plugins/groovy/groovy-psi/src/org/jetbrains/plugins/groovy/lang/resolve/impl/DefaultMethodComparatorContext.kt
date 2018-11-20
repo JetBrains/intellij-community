@@ -7,7 +7,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
 
-class DefaultMethodComparatorContext(private val place: PsiElement, arguments: Arguments?) : GrMethodComparator.Context {
+class DefaultMethodComparatorContext(
+  private val place: PsiElement,
+  arguments: Arguments?,
+  private val constructor: Boolean = false
+) : GrMethodComparator.Context {
 
   private val erasedArguments by lazy {
     arguments?.map(::ErasedArgument)
@@ -19,5 +23,5 @@ class DefaultMethodComparatorContext(private val place: PsiElement, arguments: A
 
   override fun getPlace(): PsiElement = place
 
-  override fun isConstructor(): Boolean = false
+  override fun isConstructor(): Boolean = constructor
 }

@@ -824,7 +824,7 @@ def test() {
 
     PsiParameter[] parameters = resolved.parameterList.parameters
     assertTrue parameters.length == 1
-    assertEquals "java.lang.Object", parameters[0].type.canonicalText
+    assertType("java.lang.String", parameters[0].type)
   }
 
   void testScriptMethodsInClass() {

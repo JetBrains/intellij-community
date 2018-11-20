@@ -25,7 +25,7 @@ class MethodResolveResult(
   place: PsiElement,
   state: ResolveState,
   private val arguments: Arguments?,
-  private val typeArguments: Array<out PsiType>
+  private val typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY
 ) : BaseGroovyResolveResult<PsiMethod>(method, place, state), GroovyMethodResult {
 
   override fun getContextSubstitutor(): PsiSubstitutor {

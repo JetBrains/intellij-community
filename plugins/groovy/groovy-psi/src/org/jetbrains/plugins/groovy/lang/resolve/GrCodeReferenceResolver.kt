@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor.Companion.addTypeArguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CollectElementsProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.TypeParameterProcessor
 
@@ -107,12 +108,12 @@ private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveR
   else if (isQualified) {
     val clazz = resolveClassFqn()
     if (clazz != null) {
-      val substitutor = PsiSubstitutor.EMPTY.putAll(clazz, typeArguments)
+      val substitutor = addTypeArguments(PsiSubstitutor.EMPTY, clazz, typeArgumentList?.typeArguments)
       return listOf(ClassResolveResult(clazz, this, null, substitutor))
     }
   }
 
-  val processor = ClassProcessor(name, this, typeArguments, isAnnotationReference())
+  val processor = ClassProcessor(name, this, typeArgumentList?.typeArguments, isAnnotationReference())
   val state = ResolveState.initial()
   processClasses(processor, state)
   val classes = processor.results

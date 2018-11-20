@@ -59,7 +59,9 @@ public class GrClassReferenceType extends PsiClassType {
       @Override
       @NotNull
       public PsiSubstitutor getSubstitutor() {
-        return resolveResult.getSubstitutor();
+        PsiClass clazz = getElement();
+        if (clazz == null) return PsiSubstitutor.EMPTY;
+        return PsiSubstitutor.EMPTY.putAll(clazz, myReferenceElement.getTypeArguments());
       }
 
       @Override
