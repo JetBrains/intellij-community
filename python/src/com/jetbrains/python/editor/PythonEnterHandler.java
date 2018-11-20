@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -122,7 +123,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
     final ASTNode node = element.getNode();
     PsiElement elementParent = element.getParent();
-    if (node.getElementType() == PyTokenTypes.LPAR) elementParent = elementParent.getParent();
+    final IElementType nodeType = node.getElementType();
+    if (nodeType == PyTokenTypes.LPAR) elementParent = elementParent.getParent();
     if (elementParent instanceof PyParenthesizedExpression || elementParent instanceof PyGeneratorExpression) return Result.Continue;
 
     final PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false);
@@ -130,8 +132,11 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
     
-    if (stringElement != null && (!stringElement.isFormatted() || node.getElementType() == PyTokenTypes.FSTRING_TEXT)) {
-      if (stringElement.isTripleQuoted() || node.getElementType() == PyTokenTypes.DOCSTRING) {
+    if (stringElement != null && (!stringElement.isFormatted() ||
+                                  nodeType == PyTokenTypes.FSTRING_TEXT ||
+                                  // Caret should be right before the opening brace of an f-string fragment 
+                                  nodeType == PyTokenTypes.FSTRING_FRAGMENT_START)) {
+      if (stringElement.isTripleQuoted() || nodeType == PyTokenTypes.DOCSTRING) {
         return Result.Continue;
       }
       if (prevElement != null && PsiTreeUtil.isAncestor(stringElement, prevElement, false)) {
