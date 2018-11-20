@@ -227,10 +227,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int getVisualLineByEvent(@NotNull MouseEvent e) {
-    if (e.getSource() == myEditor.getVerticalScrollBar() && e.getY() >= myEditor.getVerticalScrollBar().getHeight() - 1) {
-      return myEditor.getVisibleLineCount() - 1;
+    int y = e.getY();
+    if (e.getSource() == myEditor.getVerticalScrollBar() && y == myEditor.getVerticalScrollBar().getHeight() - 1) {
+      y++;
     }
-    return fitLineToEditor(myEditor.offsetToVisualLine(yPositionToOffset(e.getY() + myWheelAccumulator, true)));
+    return fitLineToEditor(myEditor.offsetToVisualLine(yPositionToOffset(y + myWheelAccumulator, true)));
   }
 
   private int fitLineToEditor(int visualLine) {
