@@ -32,7 +32,9 @@ public class FocusModePassFactory implements TextEditorHighlightingPassFactory {
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    return isEnabled() && EditorUtil.isRealFileEditor(editor) ? new FocusModePass(editor, file) : null;
+    return isEnabled() && EditorUtil.isRealFileEditor(editor) && editor instanceof EditorImpl
+           ? new FocusModePass(editor, file)
+           : null;
   }
 
   private static boolean isEnabled() {
@@ -77,6 +79,7 @@ public class FocusModePassFactory implements TextEditorHighlightingPassFactory {
     public void doApplyInformationToEditor() {
       if (myZones != null) {
         setToEditor(myZones, myEditor);
+        ((EditorImpl)myEditor).applyFocusMode();
       }
     }
   }
