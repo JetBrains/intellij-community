@@ -46,8 +46,12 @@ public class HgAnnotationTest extends HgPlatformTest {
 
   @Override
   protected void tearDown() throws Exception {
-    Clock.reset();
-    super.tearDown();
+    try {
+      Clock.reset();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testAnnotationWithVerboseOption() {
