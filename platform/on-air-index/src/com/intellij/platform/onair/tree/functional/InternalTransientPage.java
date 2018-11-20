@@ -14,7 +14,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
 
   protected final IPage[] children; // Address | IPage
 
-  public InternalTransientPage(byte[] backingArray, TransientBTree tree, int size, long epoch, IPage[] children) {
+  public InternalTransientPage(byte[] backingArray, TransientBTreePrototype tree, int size, long epoch, IPage[] children) {
     super(backingArray, tree, size, epoch);
     this.children = children;
   }
@@ -22,7 +22,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   @Override
   @Nullable
   public byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
-    final int index = BTreeCommon.binarySearch(backingArray, size, tree.getKeySize(), 0, key);
+    final int index = BTreeCommon.binarySearch(backingArray, size, tree.keySize, 0, key);
 
     return index < 0 ? getChild(novelty, Math.max(-index - 2, 0)).get(novelty, key) : getChild(novelty, index).get(novelty, key);
   }
@@ -40,7 +40,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
 
   @Override
   public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
-    final int fromIndex = BTreeCommon.binarySearchGuess(backingArray, size, tree.getKeySize(), 0, fromKey);
+    final int fromIndex = BTreeCommon.binarySearchGuess(backingArray, size, tree.keySize, 0, fromKey);
 
     return BTreeCommon.traverseInternalPage(this, novelty, fromIndex, fromKey, consumer);
   }
@@ -48,11 +48,11 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   @Override
   @Nullable
   public BaseTransientPage put(@NotNull Novelty.Accessor novelty,
-                               @NotNull byte[] key,
+                               long epoch, @NotNull byte[] key,
                                @NotNull byte[] value,
                                boolean overwrite,
                                boolean[] result) {
-    int pos = BTreeCommon.binarySearch(backingArray, size, tree.getKeySize(), 0, key);
+    int pos = BTreeCommon.binarySearch(backingArray, size, tree.keySize, 0, key);
 
     if (pos >= 0 && !overwrite) {
       // key found and overwrite is not possible - error
@@ -65,8 +65,8 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
       if (pos < 0) pos = 0;
     }
 
-    final IPage child = getChild(novelty, pos).getTransientCopy();
-    final IPage newChild = child.put(novelty, key, value, overwrite, result);
+    final BaseTransientPage child = getChild(novelty, pos).getTransientCopy(epoch);
+    final IPage newChild = child.put(novelty, epoch, key, value, overwrite, result);
     // change min key for child
     if (result[0]) {
       setTransient(pos, child.getMinKey(), child);
@@ -74,7 +74,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
         flush(novelty);
       }
       else {
-        return BTreeCommon.insertAt(this, tree.getBase(), novelty, pos + 1, newChild.getMinKey(), newChild);
+        return BTreeCommon.insertAt(this, tree.base, novelty, pos + 1, newChild.getMinKey(), newChild);
       }
     }
 
@@ -82,10 +82,10 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   }
 
   @Override
-  public boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
-    int pos = BTreeCommon.binarySearchGuess(backingArray, size, tree.getKeySize(), 0, key);
-    final BaseTransientPage child = getChild(novelty, pos).getTransientCopy();
-    if (!child.delete(novelty, key, value)) {
+  public boolean delete(@NotNull Novelty.Accessor novelty, long epoch, @NotNull byte[] key, @Nullable byte[] value) {
+    int pos = BTreeCommon.binarySearchGuess(backingArray, size, tree.keySize, 0, key);
+    final BaseTransientPage child = getChild(novelty, pos).getTransientCopy(epoch);
+    if (!child.delete(novelty, epoch, key, value)) {
       return false;
     }
     // if first element was removed in child, then update min key
@@ -95,20 +95,20 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
     }
     if (pos > 0) {
       final IPage left = getChild(novelty, pos - 1);
-      if (BTreeCommon.needMerge(left, child, tree.getBase())) {
+      if (BTreeCommon.needMerge(left, child, tree.base)) {
         // merge child into left sibling
         // re-get mutable left
-        getChild(novelty, pos - 1).getTransientCopy().mergeWith(child);
+        getChild(novelty, pos - 1).getTransientCopy(epoch).mergeWith(child);
         removeChild(pos);
       }
     }
     else if (pos + 1 < size) {
       final IPage right = getChild(novelty, pos + 1);
-      if (BTreeCommon.needMerge(child, right, tree.getBase())) {
+      if (BTreeCommon.needMerge(child, right, tree.base)) {
         // merge child with right sibling
-        final BaseTransientPage mutableChild = child.getTransientCopy();
+        final BaseTransientPage mutableChild = child.getTransientCopy(epoch);
         IPage sibling = getChild(novelty, pos + 1);
-        mutableChild.mergeWith(sibling.getTransientCopy());
+        mutableChild.mergeWith(sibling.getTransientCopy(epoch));
         removeChild(pos);
         // change key for link to right
         setTransient(pos, mutableChild.getMinKey(), mutableChild);
@@ -121,12 +121,12 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   }
 
   @Override
-  public InternalTransientPage getTransientCopy() {
-    final long treeEpoch = tree.getEpoch();
-    if (this.epoch >= treeEpoch) {
+  public InternalTransientPage getTransientCopy(long epoch) {
+    if (this.epoch >= epoch) {
       return this;
-    } else {
-      return copyOf(this, treeEpoch, 0, size);
+    }
+    else {
+      return copyOf(this, epoch, 0, size);
     }
   }
 
@@ -189,7 +189,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   }
 
   private void setTransient(int pos, byte[] key, IPage child) {
-    final int bytesPerKey = tree.getKeySize();
+    final int bytesPerKey = tree.keySize;
     final int offset = bytesPerKey * pos;
 
     // write key
@@ -202,7 +202,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   private void copyChildren(final int from, final int to) {
     if (from >= size) return;
 
-    final int bytesPerKey = tree.getKeySize();
+    final int bytesPerKey = tree.keySize;
 
     // copy keys
     System.arraycopy(
@@ -222,7 +222,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   private static InternalTransientPage copyOf(InternalTransientPage page, long epoch, int from, int length) {
     byte[] bytes = new byte[page.backingArray.length];
 
-    final int bytesPerKey = page.tree.getKeySize();
+    final int bytesPerKey = page.tree.keySize;
 
     // copy keys
     System.arraycopy(

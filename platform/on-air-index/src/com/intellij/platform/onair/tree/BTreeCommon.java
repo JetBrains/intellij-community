@@ -4,7 +4,6 @@ package com.intellij.platform.onair.tree;
 import com.intellij.platform.onair.storage.api.KeyValueConsumer;
 import com.intellij.platform.onair.storage.api.Novelty;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.platform.onair.tree.ByteUtils.compare;
 
@@ -59,22 +58,6 @@ public class BTreeCommon {
       }
       return sibling;
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T extends IPage> T delete(@NotNull Novelty.Accessor novelty,
-                                           @NotNull T root,
-                                           @NotNull byte[] key,
-                                           @Nullable byte[] value,
-                                           boolean[] res) {
-    if (root.delete(novelty, key, value)) {
-      root = (T)root.mergeWithChildren(novelty);
-      res[0] = true;
-      return root;
-    }
-
-    res[0] = false;
-    return root;
   }
 
   // TODO: extract Policy class

@@ -136,7 +136,7 @@ public class InternalPage extends BasePage implements IInternalPage {
   }
 
   @Override
-  public BaseTransientPage getTransientCopy() {
+  public BaseTransientPage getTransientCopy(long epoch) {
     throw new UnsupportedOperationException(); // TODO
   }
 
@@ -163,10 +163,10 @@ public class InternalPage extends BasePage implements IInternalPage {
   }
 
   @Override
-  public IPage mergeWithChildren(@NotNull Novelty.Accessor novelty) {
-    IPage result = this;
+  public BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty) {
+    BasePage result = this;
     while (!result.isBottom() && result.getSize() == 1) {
-      result = ((IInternalPage)result).getChild(novelty, 0);
+      result = ((InternalPage)result).getChild(novelty, 0);
     }
     return result;
   }

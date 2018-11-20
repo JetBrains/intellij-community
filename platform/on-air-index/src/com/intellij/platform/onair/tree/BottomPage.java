@@ -140,7 +140,7 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  public BaseTransientPage getTransientCopy() {
+  public BaseTransientPage getTransientCopy(long epoch) {
     throw new UnsupportedOperationException(); // TODO
   }
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class BottomTransientPage extends BaseTransientPage {
   protected final Object[] values; // Address | byte[]
 
-  public BottomTransientPage(byte[] backingArray, TransientBTree tree, int size, long epoch, Object[] values) {
+  public BottomTransientPage(byte[] backingArray, TransientBTreePrototype tree, int size, long epoch, Object[] values) {
     super(backingArray, tree, size, epoch);
     this.values = values;
   }
@@ -19,7 +19,7 @@ public class BottomTransientPage extends BaseTransientPage {
   @Nullable
   @Override
   public byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
-    final int index = BTreeCommon.binarySearch(backingArray, size, tree.getKeySize(), 0, key);
+    final int index = BTreeCommon.binarySearch(backingArray, size, tree.keySize, 0, key);
     if (index >= 0) {
       return getValue(novelty, index);
     }
@@ -40,7 +40,7 @@ public class BottomTransientPage extends BaseTransientPage {
 
   @Override
   public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
-    for (int i = BTreeCommon.binarySearchRange(backingArray, size, tree.getKeySize(), 0, fromKey); i < size; i++) {
+    for (int i = BTreeCommon.binarySearchRange(backingArray, size, tree.keySize, 0, fromKey); i < size; i++) {
       byte[] key = getKey(i);
       byte[] value = getValue(novelty, i);
       if (!consumer.consume(key, value)) {
@@ -53,7 +53,7 @@ public class BottomTransientPage extends BaseTransientPage {
   @Nullable
   @Override
   public BaseTransientPage put(@NotNull Novelty.Accessor novelty,
-                               @NotNull byte[] key,
+                               long epoch, @NotNull byte[] key,
                                @NotNull byte[] value,
                                boolean overwrite,
                                boolean[] result) {
@@ -61,7 +61,7 @@ public class BottomTransientPage extends BaseTransientPage {
   }
 
   @Override
-  public boolean delete(Novelty.Accessor novelty, byte[] key, byte[] value) {
+  public boolean delete(@NotNull Novelty.Accessor novelty, long epoch, @NotNull byte[] key, byte[] value) {
     throw new UnsupportedOperationException(); // TODO
   }
 
@@ -71,7 +71,7 @@ public class BottomTransientPage extends BaseTransientPage {
       copyChildren(pos, pos + 1);
     }
 
-    final int bytesPerKey = tree.getKeySize();
+    final int bytesPerKey = tree.keySize;
 
     if (key.length != bytesPerKey) {
       throw new IllegalArgumentException("Invalid key length: need " + bytesPerKey + ", got: " + key.length);
@@ -92,12 +92,11 @@ public class BottomTransientPage extends BaseTransientPage {
   }
 
   @Override
-  public BottomTransientPage getTransientCopy() {
-    final long treeEpoch = tree.getEpoch();
-    if (this.epoch >= treeEpoch) {
+  public BottomTransientPage getTransientCopy(long epoch) {
+    if (this.epoch >= epoch) {
       return this;
     } else {
-      return copyOf(this, treeEpoch, 0, size);
+      return copyOf(this, epoch, 0, size);
     }
   }
 
@@ -118,11 +117,11 @@ public class BottomTransientPage extends BaseTransientPage {
     }
     final Address address = (Address)child;
     final boolean isNovelty = address.isNovelty();
-    return isNovelty ? novelty.lookup(address.getLowBytes()) : tree.storedTree.getStorage().lookup(address);
+    return isNovelty ? novelty.lookup(address.getLowBytes()) : tree.storage.lookup(address);
   }
 
   private void setTransient(int pos, byte[] key, byte[] child) {
-    final int bytesPerKey = tree.getKeySize();
+    final int bytesPerKey = tree.keySize;
     final int offset = bytesPerKey * pos;
 
     // write key
@@ -135,7 +134,7 @@ public class BottomTransientPage extends BaseTransientPage {
   private void copyChildren(final int from, final int to) {
     if (from >= size) return;
 
-    final int bytesPerKey = tree.getKeySize();
+    final int bytesPerKey = tree.keySize;
 
     // copy keys
     System.arraycopy(
@@ -155,7 +154,7 @@ public class BottomTransientPage extends BaseTransientPage {
   private static BottomTransientPage copyOf(BottomTransientPage page, long epoch, int from, int length) {
     byte[] bytes = new byte[page.backingArray.length];
 
-    final int bytesPerKey = page.tree.getKeySize();
+    final int bytesPerKey = page.tree.keySize;
 
     // copy keys
     System.arraycopy(

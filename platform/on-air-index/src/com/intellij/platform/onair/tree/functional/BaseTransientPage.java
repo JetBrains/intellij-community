@@ -11,12 +11,12 @@ import java.util.Arrays;
 public abstract class BaseTransientPage implements IPage {
 
   protected final byte[] backingArray; // keys only
-  protected final TransientBTree tree; // FIXME: this imposes memory overhead 'cause each tree can be a new Object
+  protected final TransientBTreePrototype tree;
   protected final long epoch;
 
   protected int size; // TODO: allow in-place update only for current epoch nodes
 
-  protected BaseTransientPage(byte[] backingArray, TransientBTree tree, int size, long epoch) {
+  protected BaseTransientPage(byte[] backingArray, TransientBTreePrototype tree, int size, long epoch) {
     this.backingArray = backingArray;
     this.tree = tree;
     this.size = size;
@@ -27,14 +27,6 @@ public abstract class BaseTransientPage implements IPage {
   public int getSize() {
     return size;
   }
-
-  @Override
-  @Nullable
-  public abstract BaseTransientPage put(@NotNull Novelty.Accessor novelty,
-                                        @NotNull byte[] key,
-                                        @NotNull byte[] value,
-                                        boolean overwrite,
-                                        boolean[] result);
 
   @Override
   public boolean isTransient() {
@@ -51,6 +43,9 @@ public abstract class BaseTransientPage implements IPage {
     throw new UnsupportedOperationException();
   }
 
+  /*@Override
+  public abstract IPage mergeWithChildren(@NotNull Novelty.Accessor novelty);*/
+
   @Override
   @NotNull
   public byte[] getMinKey() {
@@ -58,11 +53,21 @@ public abstract class BaseTransientPage implements IPage {
       throw new ArrayIndexOutOfBoundsException("Page is empty.");
     }
 
-    return Arrays.copyOf(backingArray, tree.getKeySize()); // TODO: optimize
+    return Arrays.copyOf(backingArray, tree.keySize); // TODO: optimize
   }
 
+  @Nullable
+  public abstract BaseTransientPage put(@NotNull Novelty.Accessor novelty,
+                                        long epoch,
+                                        @NotNull byte[] key,
+                                        @NotNull byte[] value,
+                                        boolean overwrite,
+                                        boolean[] result);
+
+  public abstract boolean delete(@NotNull Novelty.Accessor novelty, long epoch, @NotNull byte[] key, @Nullable byte[] value);
+
   protected void incrementSize() {
-    if (size >= tree.getBase()) {
+    if (size >= tree.base) {
       throw new IllegalArgumentException("Can't increase tree page size");
     }
     size += 1;
@@ -77,7 +82,7 @@ public abstract class BaseTransientPage implements IPage {
 
   // WARNING: this method allocates an array
   protected byte[] getKey(int index) {
-    final int bytesPerKey = tree.getKeySize();
+    final int bytesPerKey = tree.keySize;
     byte[] result = new byte[bytesPerKey];
     final int offset = bytesPerKey * index;
     System.arraycopy(backingArray, offset, result, 0, bytesPerKey);
@@ -85,7 +90,7 @@ public abstract class BaseTransientPage implements IPage {
   }
 
   protected void mergeWith(BaseTransientPage page) {
-    final int bytesPerKey = tree.getKeySize();
+    final int bytesPerKey = tree.keySize;
     System.arraycopy(page.backingArray, 0, backingArray, size * bytesPerKey, page.size);
     this.size += page.size;
   }

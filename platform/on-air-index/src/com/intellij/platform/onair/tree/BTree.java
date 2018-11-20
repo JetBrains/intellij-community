@@ -209,7 +209,7 @@ public class BTree implements Tree {
   @Override
   public boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
     final boolean[] res = new boolean[1];
-    rootAddress = BTreeCommon.delete(novelty, loadPage(novelty, rootAddress).getMutableCopy(novelty), key, value, res).address;
+    rootAddress = StoredBTreeUtil.delete(novelty, loadPage(novelty, rootAddress).getMutableCopy(novelty), key, value, res).address;
     return res[0];
   }
 

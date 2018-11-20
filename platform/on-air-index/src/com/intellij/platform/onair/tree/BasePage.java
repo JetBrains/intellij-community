@@ -25,18 +25,14 @@ public abstract class BasePage implements IPage {
     this.size = size;
   }
 
+  public Address getAddress() {
+    return address;
+  }
+
   @Override
   public int getSize() {
     return size;
   }
-
-  @Override
-  @Nullable
-  public abstract BasePage put(@NotNull Novelty.Accessor novelty,
-                               @NotNull byte[] key,
-                               @NotNull byte[] value,
-                               boolean overwrite,
-                               boolean[] result);
 
   @Override
   public void flush(@NotNull Novelty.Accessor novelty) {
@@ -65,6 +61,18 @@ public abstract class BasePage implements IPage {
 
     return Arrays.copyOf(backingArray, tree.getKeySize()); // TODO: optimize
   }
+
+  @Override
+  public abstract BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty);
+
+  @Nullable
+  public abstract BasePage put(@NotNull Novelty.Accessor novelty,
+                                  @NotNull byte[] key,
+                                  @NotNull byte[] value,
+                                  boolean overwrite,
+                                  boolean[] result);
+
+  public abstract boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value);
 
   protected abstract BasePage getMutableCopy(@NotNull Novelty.Accessor novelty);
 

@@ -19,7 +19,7 @@ public interface IPage {
 
   long getMutableAddress();
 
-  BaseTransientPage getTransientCopy();
+  BaseTransientPage getTransientCopy(long epoch);
 
   // crud
 
@@ -31,15 +31,11 @@ public interface IPage {
 
   boolean forEach(Novelty.Accessor novelty, byte[] key, KeyValueConsumer consumer);
 
-  IPage put(Novelty.Accessor novelty, byte[] key, byte[] value, boolean overwrite, boolean[] result);
-
-  boolean delete(Novelty.Accessor novelty, byte[] key, byte[] value);
-
   // tree-specific methods
 
   void insertDirectly(@NotNull Novelty.Accessor novelty, final int pos, @NotNull byte[] key, Object child);
 
-  IPage mergeWithChildren(@NotNull Novelty.Accessor novelty);
+  IPage mergeWithChildren(@NotNull Novelty.Accessor novelty); // del?
 
   IPage split(@NotNull Novelty.Accessor novelty, int from, int length);
 
