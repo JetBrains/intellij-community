@@ -196,7 +196,7 @@ class RetypeSession(
     while (i < text.length && j < expectedText.length) {
       while (i < text.lastIndex && isSkipped(text[i])) i++
       while (j < expectedText.lastIndex && isSkipped(expectedText[j])) j++
-      if (text[i] != originalText[j]) return false
+      if (text[i] != expectedText[j]) return false
       i++
       j++
     }
