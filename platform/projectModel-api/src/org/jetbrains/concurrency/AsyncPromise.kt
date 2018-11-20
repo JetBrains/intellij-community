@@ -7,14 +7,16 @@ import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-open class AsyncPromise<T> private constructor(private val f: CompletableFuture<T>) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
-  constructor() : this(CompletableFuture())
+open class AsyncPromise<T> private constructor(private val f: CompletableFuture<T>, private val hasErrorHandler: AtomicBoolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
+  constructor() : this(CompletableFuture(), AtomicBoolean())
 
   override fun isDone() = f.isDone
 
   override fun get() = nullizeCancelled { f.get() }
+
   override fun get(timeout: Long, unit: TimeUnit) = nullizeCancelled { f.get(timeout, unit) }
 
   // because of the contract: get() should return null for canceled promise
@@ -60,10 +62,11 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
           }
         }
       }
-    })
+    }, hasErrorHandler)
   }
 
   override fun onError(rejected: Consumer<Throwable>): Promise<T> {
+    hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
         val toReport = if (exception is CompletionException && exception.cause != null) exception.cause!! else exception
@@ -71,15 +74,16 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
           rejected.accept(toReport)
         }
       }
-    })
+    }, hasErrorHandler)
   }
 
   override fun onProcessed(processed: Consumer<in T>): Promise<T> {
+    hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { value, _ ->
       if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
         processed.accept(value)
       }
-    })
+    }, hasErrorHandler)
   }
 
   override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
@@ -97,7 +101,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
   }
 
   override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
-    return AsyncPromise(f.thenApply { done.`fun`(it) })
+    return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler)
   }
 
   override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
@@ -109,7 +113,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
         .onError { error -> future.completeExceptionally(error) }
       future
     }
-    return AsyncPromise(f.thenCompose(convert))
+    return AsyncPromise(f.thenCompose(convert), hasErrorHandler)
   }
 
   override fun processed(child: Promise<in T>): Promise<T> {
@@ -125,7 +129,16 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     f.complete(t)
   }
 
-  override fun setError(error: Throwable) = f.completeExceptionally(error)
+  override fun setError(error: Throwable): Boolean {
+    if (!f.completeExceptionally(error)) {
+      return false
+    }
+
+    if (!hasErrorHandler.get()) {
+      logger<AsyncPromise<*>>().errorIfNotMessage(error)
+    }
+    return true
+  }
 
   fun setError(error: String) = setError(createError(error))
 }

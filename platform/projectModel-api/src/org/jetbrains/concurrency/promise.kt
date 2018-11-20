@@ -3,8 +3,8 @@
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
@@ -202,7 +202,7 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
       return true
     }
   }
-  else if (e !is ProcessCanceledException) {
+  else if (e !is ControlFlowException) {
     error(e)
     return true
   }

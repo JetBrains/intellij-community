@@ -168,4 +168,39 @@ class AsyncPromiseTest {
     assertThat(l).containsExactly("0", "1")
     toExecute.forEach { it.get() }
   }
+
+  @Test
+  fun `do not swallow exceptions`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    assertThatThrownBy {
+      promise.setError(error)
+    }
+      .isInstanceOf(AssertionError::class.java)
+      .hasCause(error)
+  }
+
+  // this case quite tested by other tests, but better to have special test
+  @Test
+  fun `do not swallow exceptions - error handler added`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    promise.onError {
+      // ignore
+    }
+    promise.setError(error)
+  }
+
+  // this case quite tested by other tests, but better to have special test
+  @Test
+  fun `do not swallow exceptions - error handler added to nested`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    promise
+      .onSuccess { }
+      .onError {
+        // ignore
+      }
+    promise.setError(error)
+  }
 }
