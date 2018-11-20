@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
@@ -22,19 +8,28 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiBreakStatement extends PsiStatement {
   /**
-   * Returns the identifier representing the label specified on the statement.
+   * Returns the label identifier iff it is present and the statement is not inside a switch expression, {@code null} otherwise.
    *
-   * @return the identifier for the label, or null if the statement has no label.
+   * @see #getExpression()
    */
-  @Nullable
-  PsiIdentifier getLabelIdentifier();
+  @Nullable PsiIdentifier getLabelIdentifier();
 
   /**
-   * Returns the statement instance ({@link PsiForStatement}, {@link PsiSwitchStatement} etc.) representing
-   * the statement out of which {@code break} transfers control.
-   *
-   * @return the statement instance, or null if the statement is not valid in the context where it is located.
+   * Returns the label/value expression, or {@code null} if the statement is empty.
    */
-  @Nullable
-  PsiStatement findExitedStatement();
+  @Nullable PsiExpression getExpression();
+
+  /**
+   * Returns the statement ({@link PsiLoopStatement} or {@link PsiSwitchStatement}) or {@link PsiSwitchExpression switch expression}
+   * representing the element out of which {@code break} transfers control.
+   */
+  @Nullable PsiElement findExitedElement();
+
+  /** @deprecated doesn't support "switch" expressions; use {@link #findExitedElement()} instead */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  default PsiStatement findExitedStatement() {
+    PsiElement enclosingElement = findExitedElement();
+    return enclosingElement instanceof PsiStatement ? (PsiStatement)enclosingElement : null;
+  }
 }

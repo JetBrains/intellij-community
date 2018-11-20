@@ -4,52 +4,40 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiLabelReference;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiContinueStatementImpl extends CompositePsiElement implements PsiContinueStatement, Constants {
+public class PsiContinueStatementImpl extends CompositePsiElement implements PsiContinueStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiContinueStatementImpl");
 
   public PsiContinueStatementImpl() {
-    super(CONTINUE_STATEMENT);
+    super(JavaElementType.CONTINUE_STATEMENT);
   }
 
   @Override
   public PsiIdentifier getLabelIdentifier() {
-    return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.LABEL);
+    return (PsiIdentifier)findPsiChildByType(JavaTokenType.IDENTIFIER);
   }
 
   @Override
   public PsiStatement findContinuedStatement() {
     PsiIdentifier label = getLabelIdentifier();
-    if (label == null){
-      for(ASTNode parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
-        IElementType i = parent.getElementType();
-        if (i == FOR_STATEMENT || i == FOREACH_STATEMENT || i == WHILE_STATEMENT || i == DO_WHILE_STATEMENT) {
-          return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(parent);
-        }
-        if (i == METHOD || i == CLASS_INITIALIZER) {
-          return null;
-        }
-      }
+    if (label == null) {
+      return PsiImplUtil.findEnclosingLoop(this);
     }
-    else{
-      String labelName = label.getText();
-      for(CompositeElement parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
-        if (parent.getElementType() == LABELED_STATEMENT){
-          TreeElement statementLabel = (TreeElement)parent.findChildByRole(ChildRole.LABEL_NAME);
-          if (statementLabel.textMatches(labelName)){
-            return ((PsiLabeledStatement)SourceTreeToPsiMap.treeElementToPsi(parent)).getStatement();
-          }
-        }
-        if (parent.getElementType() == METHOD || parent.getElementType() == CLASS_INITIALIZER || parent.getElementType() == LAMBDA_EXPRESSION) return null; // do not pass through anonymous/local class
-      }
+
+    PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());
+    if (labeled != null) {
+      return labeled.getStatement();
     }
+
     return null;
   }
 

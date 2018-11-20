@@ -4,74 +4,63 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.PsiLabelReference;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement, Constants {
+public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBreakStatementImpl");
 
   public PsiBreakStatementImpl() {
-    super(BREAK_STATEMENT);
+    super(JavaElementType.BREAK_STATEMENT);
   }
 
   @Override
   public PsiIdentifier getLabelIdentifier() {
-    return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.LABEL);
+    PsiIdentifier labelId = labelId();
+    return labelId != null && !(findExitedElement() instanceof PsiSwitchExpression) ? labelId : null;
   }
 
   @Override
-  public PsiStatement findExitedStatement() {
-    PsiIdentifier label = getLabelIdentifier();
+  public PsiExpression getExpression() {
+    return (PsiExpression)findPsiChildByType(ElementType.EXPRESSION_BIT_SET);
+  }
+
+  @Override
+  public PsiElement findExitedElement() {
+    PsiIdentifier label = labelId();
     if (label == null) {
-      for (ASTNode parent = getTreeParent(); parent != null; parent = parent.getTreeParent()) {
-        IElementType i = parent.getElementType();
-        if (i == FOR_STATEMENT || i == WHILE_STATEMENT || i == DO_WHILE_STATEMENT || i == SWITCH_STATEMENT || i == FOREACH_STATEMENT) {
-          return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(parent);
-        }
-        else if (i == METHOD || i == CLASS_INITIALIZER) {
-          return null; // do not pass through anonymous/local class
-        }
-      }
+      return PsiImplUtil.findEnclosingSwitchOrLoop(this);
     }
-    else {
-      String labelName = label.getText();
-      for (CompositeElement parent = getTreeParent(); parent != null; parent = parent.getTreeParent()) {
-        IElementType i = parent.getElementType();
-        if (i == LABELED_STATEMENT) {
-          ASTNode statementLabel = parent.findChildByRole(ChildRole.LABEL_NAME);
-          if (statementLabel != null && statementLabel.getText().equals(labelName)) {
-            return SourceTreeToPsiMap.<PsiLabeledStatement>treeToPsiNotNull(parent).getStatement();
-          }
-        }
-        if (i == METHOD || i == CLASS_INITIALIZER || i == LAMBDA_EXPRESSION) {
-          return null; // do not pass through anonymous/local class
-        }
-      }
+
+    PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());
+    if (labeled != null) {
+      return labeled.getStatement();
     }
+
+    PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(this);
+    if (enclosing instanceof PsiSwitchExpression) {
+      return enclosing;
+    }
+
     return null;
   }
 
-  @Override
-  public PsiReference getReference() {
-    PsiIdentifier label = getLabelIdentifier();
-    return label != null ? new PsiLabelReference(this, label) : null;
+  private PsiIdentifier labelId() {
+    PsiExpression expr = getExpression();
+    return PsiImplUtil.isPlainReference(expr) ? PsiTreeUtil.getChildOfType(expr, PsiIdentifier.class) : null;
   }
 
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      case ChildRole.BREAK_KEYWORD: return findChildByType(BREAK_KEYWORD);
-      case ChildRole.LABEL: return findChildByType(IDENTIFIER);
-      case ChildRole.CLOSING_SEMICOLON: return TreeUtil.findChildBackward(this, SEMICOLON);
+      case ChildRole.BREAK_KEYWORD: return findChildByType(JavaTokenType.BREAK_KEYWORD);
+      case ChildRole.LABEL: return findChildByType(ElementType.EXPRESSION_BIT_SET);
+      case ChildRole.CLOSING_SEMICOLON: return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
       default: return null;
     }
   }
@@ -80,9 +69,9 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == BREAK_KEYWORD) return ChildRole.BREAK_KEYWORD;
-    if (i == IDENTIFIER) return ChildRole.LABEL;
-    if (i == SEMICOLON) return ChildRole.CLOSING_SEMICOLON;
+    if (i == JavaTokenType.BREAK_KEYWORD) return ChildRole.BREAK_KEYWORD;
+    if (ElementType.EXPRESSION_BIT_SET.contains(i)) return ChildRole.LABEL;
+    if (i == JavaTokenType.SEMICOLON) return ChildRole.CLOSING_SEMICOLON;
     return ChildRoleBase.NONE;
   }
 
