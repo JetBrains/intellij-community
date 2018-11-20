@@ -336,9 +336,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
-    System.gc();
-    System.gc();
-    System.gc(); // ?? unlock the file?
+    // wait until unlock the file?
     while (!FileUtil.delete(new File(libDir.getPath(),"lib.jar"))) {
 
     }
