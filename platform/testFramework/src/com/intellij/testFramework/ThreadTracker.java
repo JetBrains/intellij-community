@@ -12,9 +12,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +24,8 @@ import org.junit.Assert;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 public class ThreadTracker {
   private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
-  private final Collection<Thread> before;
+  private final Map<String, Thread> before;
   private final boolean myDefaultProjectInitialized;
 
   @TestOnly
@@ -47,10 +47,10 @@ public class ThreadTracker {
     myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
   }
 
-  private static final Method getThreads = ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads");
+  private static final Method getThreads = ObjectUtils.notNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
 
   @NotNull
-  public static Collection<Thread> getThreads() {
+  public static Map<String, Thread> getThreads() {
     Thread[] threads;
     try {
       // faster than Thread.getAllStackTraces().keySet()
@@ -59,7 +59,7 @@ public class ThreadTracker {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    return ContainerUtilRt.newArrayList(threads);
+    return ContainerUtil.newMapFromValues(ContainerUtil.iterate(threads), Thread::getName);
   }
 
   private static final Set<String> wellKnownOffenders = new THashSet<>();
@@ -133,10 +133,11 @@ public class ThreadTracker {
     try {
       if (myDefaultProjectInitialized != ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) return;
 
-      Collection<Thread> after = new THashSet<>(getThreads());
-      after.removeAll(before);
+      // compare threads by name because BoundedTaskExecutor reuses application thread pool for different bounded pools, leaks of which we want to find
+      Map<String, Thread> after = getThreads();
+      after.keySet().removeAll(before.keySet());
 
-      for (final Thread thread : after) {
+      for (final Thread thread : after.values()) {
         if (thread == Thread.currentThread()) continue;
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
@@ -203,7 +204,7 @@ public class ThreadTracker {
                                                                   @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
-      Thread jdiThread = ContainerUtil.find(getThreads(), thread -> {
+      Thread jdiThread = ContainerUtil.find(getThreads().values(), thread -> {
         ThreadGroup group = thread.getThreadGroup();
         return group != null && group.getParent() != null && grandThreadGroup.equals(group.getParent().getName());
       });
