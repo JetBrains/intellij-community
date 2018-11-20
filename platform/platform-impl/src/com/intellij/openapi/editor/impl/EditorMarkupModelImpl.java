@@ -231,7 +231,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int fitLineToEditor(int visualLine) {
-    return Math.max(0, Math.min(myEditor.getVisibleLineCount() - 1, visualLine));
+    int lineCount = myEditor.getVisibleLineCount();
+    int shift = 0;
+    if (visualLine >= lineCount - 1) {
+      shift = myEditor.getDocument().getLineEndOffset(lineCount - 1) > myEditor.getDocument().getLineStartOffset(lineCount - 1) ? 0 : 1;
+    }
+    return Math.max(0, Math.min(lineCount - shift, visualLine));
   }
 
   private int getOffset(int visualLine, boolean startLine) {
