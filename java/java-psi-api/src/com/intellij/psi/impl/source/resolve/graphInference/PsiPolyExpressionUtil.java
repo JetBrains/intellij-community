@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +125,15 @@ public class PsiPolyExpressionUtil {
     return context instanceof PsiExpressionList ||
            context instanceof PsiArrayInitializerExpression ||
            context instanceof PsiConditionalExpression && (expr instanceof PsiCallExpression || isPolyExpression((PsiExpression)context)) ||
+           isSwitchExpressionAssignmentOrInvocationContext(expr) ||
            isAssignmentContext(expr, context);
+  }
+
+  private static boolean isSwitchExpressionAssignmentOrInvocationContext(PsiExpression expr) {
+    PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(expr, PsiSwitchExpression.class);
+    return switchExpression  != null && 
+           PsiUtil.getSwitchResultExpressions(switchExpression).contains(expr) && 
+           isInAssignmentOrInvocationContext(switchExpression);
   }
 
   private static boolean isAssignmentContext(PsiExpression expr, PsiElement context) {
