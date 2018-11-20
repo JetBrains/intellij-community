@@ -715,23 +715,21 @@ Function uninstallOldVersion
   !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
   ${LogText} ""
   ${LogText} "Uninstall old installation: $3"
+
+  ;do copy for unistall.exe
+  CopyFiles "$3\bin\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+
   ${If} $9 == "1"
-    ExecWait '"$3\bin\Uninstall.exe" /S'
+    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$3\bin'
   ${else}
-    ExecWait '"$3\bin\Uninstall.exe" _?=$3\bin'
+    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$3\bin'
   ${EndIf}
   IfFileExists $3\bin\${PRODUCT_EXE_FILE} 0 uninstall
   goto complete
 uninstall:
   ;previous installation has been removed
   ;customer has decided to keep properties?
-  Delete "$3\bin\Uninstall.exe"
-  IfFileExists $3\bin\idea.properties complete delete_install_dir
-delete_install_dir:
-  StrCpy $0 "$3\bin"
-  Call deleteDirIfEmpty
-  StrCpy $0 $3
-  Call deleteDirIfEmpty
+  Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
 complete:
 FunctionEnd
 
@@ -1426,8 +1424,7 @@ Function un.onInit
   IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" get_reg_key 0
-  goto end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
 get_reg_key:
   SetRegView 32
@@ -1758,6 +1755,8 @@ skip_delete_settings:
     Call un.deleteDirIfEmpty
 no_jre32:
   !include "unidea_win.nsh"
+  StrCpy $0 "$INSTDIR\bin"
+  Call un.deleteDirIfEmpty
   StrCpy $0 "$INSTDIR"
   Call un.deleteDirIfEmpty
 
