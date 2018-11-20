@@ -339,7 +339,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     try {
       paintAnnotations(g, startVisualLine, endVisualLine);
+
+      if (focusModeRange != null) {
+        int startY = myEditor.visualLineToY(startVisualLine);
+        int endY = myEditor.visualLineToY(endVisualLine);
+        g.setClip(clip.x, startY, clip.width, endY - startY);
+      }
+
       paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
+
+      g.setClip(clip);
+
       paintFoldingLines(g, clip);
       paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
       paintLineNumbers(g, startVisualLine, endVisualLine);
