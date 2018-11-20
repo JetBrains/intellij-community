@@ -23,11 +23,14 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
 
   override fun isDone() = f.isDone
   override fun get() = nullizeCancelled { f.get() }
-  override fun get(timeout: Long, unit: TimeUnit?) = nullizeCancelled { f.get(timeout, unit) }
+  override fun get(timeout: Long, unit: TimeUnit) = nullizeCancelled { f.get(timeout, unit) }
 
-  // because of the unorthodox contract: get() should return null for canceled promise
-  private fun nullizeCancelled(value: () -> T?): T? {
-    if (isCancelled) return null
+  // because of the contract: get() should return null for canceled promise
+  private inline fun nullizeCancelled(value: () -> T?): T? {
+    if (isCancelled) {
+      return null
+    }
+
     return try {
       value()
     }
@@ -85,6 +88,10 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
       return get(timeout.toLong(), timeUnit)
     }
     catch (e: ExecutionException) {
+      if (e.cause === InternalPromiseUtil.OBSOLETE_ERROR) {
+        return null
+      }
+
       ExceptionUtilRt.rethrowUnchecked(e.cause)
       throw e
     }

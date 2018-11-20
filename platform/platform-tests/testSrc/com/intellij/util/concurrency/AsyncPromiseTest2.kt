@@ -21,7 +21,10 @@ private fun isMessageError(exception: Exception): Boolean {
 }
 
 private fun log(message: String) {
-  if (PRINT) println(message)
+  @Suppress("ConstantConditionIf")
+  if (PRINT) {
+    println(message)
+  }
 }
 
 private fun promise(state: AsyncPromiseTest2.State, `when`: When): AsyncPromise<String> {
@@ -140,10 +143,12 @@ class AsyncPromiseTest2 {
   fun testRejectBeforeHandlerSet() {
     val promise = promise(State.REJECT, When.BEFORE)
     try {
-      assert(null == promise.blockingGet(100))
+      assertThat(promise.blockingGet(100)).isNull()
     }
     catch (exception: Exception) {
-      if (!isMessageError(exception)) throw exception
+      if (!isMessageError(exception)) {
+        throw exception
+      }
     }
   }
 
