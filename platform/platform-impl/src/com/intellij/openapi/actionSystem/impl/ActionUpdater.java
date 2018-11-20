@@ -57,10 +57,11 @@ class ActionUpdater {
     myTransparentOnly = transparentOnly;
     myRealUpdateStrategy = new UpdateStrategy(
       action -> {
-        AnActionEvent event = createActionEvent(action);
-        return doUpdate(myModalContext, action, event) ? event.getPresentation() : null;
+        // clone the presentation to avoid partially changing the cached one if update is interrupted
+        Presentation presentation = myFactory.getPresentation(action).clone();
+        return doUpdate(myModalContext, action, createActionEvent(action, presentation)) ? presentation : null;
       },
-      group -> group.getChildren(createActionEvent(group)),
+      group -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group)))),
       group -> group.canBePerformed(myDataContext));
     myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
   }
@@ -196,8 +197,8 @@ class ActionUpdater {
     return result;
   }
 
-  private AnActionEvent createActionEvent(AnAction action) {
-    AnActionEvent event = new AnActionEvent(null, myDataContext, myPlace, orDefault(action, myUpdatedPresentations.get(action)),
+  private AnActionEvent createActionEvent(AnAction action, Presentation presentation) {
+    AnActionEvent event = new AnActionEvent(null, myDataContext, myPlace, presentation,
                                             ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
     event.setInjectedContext(action.isInInjectedContext());
     return event;
@@ -271,6 +272,9 @@ class ActionUpdater {
 
     Presentation presentation = strategy.update.fun(action);
     myUpdatedPresentations.put(action, presentation);
+    if (presentation != null) {
+      myFactory.getPresentation(action).copyFrom(presentation);
+    }
     return presentation;
   }
 
