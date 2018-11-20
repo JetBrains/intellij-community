@@ -140,7 +140,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
             if (parent is GrMethodCallExpressionImpl && parent.argumentList.namedArguments.isNotEmpty()) {
               addOptionalParameter("args", JAVA_UTIL_MAP)
             }
-            val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)
+            val closureParam = addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE)
             closureParam.putUserData(DELEGATES_TO_KEY, gradleTask.typeFqn)
             closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.OWNER_FIRST)
           }

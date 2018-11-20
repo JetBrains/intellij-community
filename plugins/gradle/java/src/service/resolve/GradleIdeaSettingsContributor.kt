@@ -48,7 +48,7 @@ class GradleIdeaSettingsContributor : GradleMethodContextContributor {
           val projectSettingsMethodBuilder = GrLightMethodBuilder(place.manager, "settings").apply {
             containingClass = ideaProjectClass
             returnType = projectSettingsType
-            addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, false).apply {
+            addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE).apply {
               putUserData(DELEGATES_TO_KEY, PROJECT_SETTINGS_FQN)
               putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
             }
@@ -65,7 +65,7 @@ class GradleIdeaSettingsContributor : GradleMethodContextContributor {
           val moduleSettingsMethodBuilder = GrLightMethodBuilder(place.manager, "settings").apply {
             containingClass = ideaModuleClass
             returnType = moduleSettingsType
-            addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, false).apply {
+            addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE).apply {
               putUserData(DELEGATES_TO_KEY, MODULE_SETTINGS_FQN)
               putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
             }

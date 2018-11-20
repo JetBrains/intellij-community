@@ -107,7 +107,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       // (clazz, configuration)
       wrappedBase.copy().apply {
         addParameter("clazz", classType)
-        addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true).apply {
+        addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE).apply {
           putUserData(DELEGATES_TO_KEY, componentDelegateFqn)
           putUserData(DELEGATES_TO_STRATEGY_KEY, DELEGATE_FIRST)
         }
