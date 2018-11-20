@@ -62,17 +62,20 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     if (variable !is ObjectProperty || variable.getter == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
-      evaluateContext.evaluate(variable.name)
-        .onSuccess(node) {
-          if (it.wasThrown) {
-            setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
-          }
-          else {
-            value = it.value
-            computePresentation(it.value, node)
-          }
+        context.memberFilter.then {
+          evaluateContext.evaluate(it.sourceNameToRaw(variable.name) ?: variable.name)
+            .onSuccess(node) {
+              if (it.wasThrown) {
+                setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
+              }
+              else {
+                value = it.value
+                computePresentation(it.value, node)
+              }
+            }
+            .onError(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
+
         }
-        .onError(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
       return
     }
 
