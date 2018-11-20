@@ -90,9 +90,9 @@ class KotlinCreateGradleProject
 @Suite.SuiteClasses(
   CreateJavaProjectAndConfigureKotlinGuiTest::class
   , CreateKotlinProjectGuiTest::class
-  , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
   , CreateMavenProjectAndConfigureExactKotlinGuiTest::class
   , CreateGradleProjectAndConfigureExactKotlinGuiTest::class
+  , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
 )
 class KotlinCreateOtherProject
 
