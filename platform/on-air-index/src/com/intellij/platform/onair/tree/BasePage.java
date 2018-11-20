@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.tree;
 
-
 import com.intellij.platform.onair.storage.api.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,11 +9,9 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 import static com.intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
-import static com.intellij.platform.onair.tree.ByteUtils.compare;
 import static com.intellij.platform.onair.tree.ByteUtils.readUnsignedLong;
-import static com.intellij.platform.onair.tree.ByteUtils.writeUnsignedLong;
 
-public abstract class BasePage {
+public abstract class BasePage implements IPage {
   protected final byte[] backingArray;
   protected final BTree tree;
   protected final Address address;
@@ -28,37 +25,54 @@ public abstract class BasePage {
     this.size = size;
   }
 
+  @Override
+  public int getSize() {
+    return size;
+  }
+
+  @Override
   @Nullable
-  protected abstract byte[] get(@NotNull Novelty.Accessor novelty, @NotNull final byte[] key);
+  public abstract BasePage put(@NotNull Novelty.Accessor novelty,
+                               @NotNull byte[] key,
+                               @NotNull byte[] value,
+                               boolean overwrite,
+                               boolean[] result);
 
-  protected abstract BasePage getChild(@NotNull Novelty.Accessor novelty, int index);
+  @Override
+  public void flush(@NotNull Novelty.Accessor novelty) {
+    novelty.update(address.getLowBytes(), backingArray);
+  }
 
-  @Nullable
-  protected abstract BasePage put(@NotNull Novelty.Accessor novelty,
-                                  @NotNull byte[] key,
-                                  @NotNull byte[] value,
-                                  boolean overwrite,
-                                  boolean[] result);
+  @Override
+  public boolean isTransient() {
+    return false;
+  }
 
-  protected abstract boolean delete(@NotNull Novelty.Accessor novelty,
-                                    @NotNull byte[] key,
-                                    @Nullable byte[] value);
+  @Override
+  public long getMutableAddress() {
+    if (!address.isNovelty()) {
+      throw new IllegalStateException("address must be novelty");
+    }
+    return address.getLowBytes();
+  }
 
-  protected abstract BasePage getMutableCopy(@NotNull Novelty.Accessor novelty, BTree tree);
+  @Override
+  @NotNull
+  public byte[] getMinKey() {
+    if (size <= 0) {
+      throw new ArrayIndexOutOfBoundsException("Page is empty.");
+    }
 
-  protected abstract BasePage split(@NotNull Novelty.Accessor novelty, int from, int length);
+    return Arrays.copyOf(backingArray, tree.getKeySize()); // TODO: optimize
+  }
 
-  protected abstract Address save(@NotNull final Novelty.Accessor novelty, @NotNull final Storage storage, @NotNull StorageConsumer consumer);
+  protected abstract BasePage getMutableCopy(@NotNull Novelty.Accessor novelty);
+
+  protected abstract Address save(@NotNull final Novelty.Accessor novelty,
+                                  @NotNull final Storage storage,
+                                  @NotNull StorageConsumer consumer);
 
   protected abstract void dump(@NotNull Novelty.Accessor novelty, @NotNull PrintStream out, int level, BTree.ToString renderer);
-
-  protected abstract boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer);
-
-  protected abstract boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer);
-
-  protected abstract BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty);
-
-  protected abstract boolean isBottom();
 
   // WARNING: this method allocates an array
   protected byte[] getKey(int index) {
@@ -77,10 +91,6 @@ public abstract class BasePage {
     return new Address(highBytes, lowBytes);
   }
 
-  protected byte[] getValue(@NotNull Novelty.Accessor novelty, int index) {
-    return tree.loadLeaf(novelty, getChildAddress(index));
-  }
-
   protected void incrementSize() {
     if (size >= tree.getBase()) {
       throw new IllegalArgumentException("Can't increase tree page size");
@@ -95,115 +105,6 @@ public abstract class BasePage {
     setSize(size - value);
   }
 
-  @NotNull
-  protected byte[] getMinKey() {
-    if (size <= 0) {
-      throw new ArrayIndexOutOfBoundsException("Page is empty.");
-    }
-
-    return Arrays.copyOf(backingArray, tree.getKeySize()); // TODO: optimize
-  }
-
-  protected int binarySearchGuess(byte[] key) {
-    int index = binarySearch(key);
-    if (index < 0) {
-      index = Math.max(0, -index - 2);
-    }
-    return index;
-  }
-
-  protected int binarySearchRange(byte[] key) {
-    int index = binarySearch(key);
-    if (index < 0) {
-      index = Math.max(0, -index - 1);
-    }
-    return index;
-  }
-
-  protected int binarySearch(byte[] key) {
-    final int bytesPerKey = tree.getKeySize();
-    final int bytesPerEntry = bytesPerKey + BYTES_PER_ADDRESS;
-
-    int low = 0;
-    int high = size - 1;
-
-    while (low <= high) {
-      final int mid = (low + high) >>> 1;
-      final int offset = mid * bytesPerEntry;
-
-      final int cmp = compare(backingArray, bytesPerKey, offset, key, bytesPerKey, 0);
-      if (cmp < 0) {
-        low = mid + 1;
-      }
-      else if (cmp > 0) {
-        high = mid - 1;
-      }
-      else {
-        // key found
-        return mid;
-      }
-    }
-    // key not found
-    return -(low + 1);
-  }
-
-  protected void flush(@NotNull Novelty.Accessor novelty) {
-    novelty.update(address.getLowBytes(), backingArray);
-  }
-
-  protected void set(int pos, byte[] key, long lowAddressBytes) {
-    final int bytesPerKey = tree.getKeySize();
-
-    if (key.length != bytesPerKey) {
-      throw new IllegalArgumentException("Invalid key length: need " + bytesPerKey + ", got: " + key.length);
-    }
-
-    set(pos, key, bytesPerKey, backingArray, lowAddressBytes);
-  }
-
-  protected BasePage insertAt(@NotNull Novelty.Accessor novelty, int pos, byte[] key, long childAddress) {
-    if (!needSplit(this)) {
-      insertDirectly(novelty, pos, key, childAddress);
-      return null;
-    }
-    else {
-      int splitPos = getSplitPos(this, pos);
-
-      final BasePage sibling = split(novelty, splitPos, size - splitPos);
-      if (pos >= splitPos) {
-        // insert into right sibling
-        flush(novelty);
-        sibling.insertAt(novelty, pos - splitPos, key, childAddress);
-      }
-      else {
-        // insert into self
-        insertAt(novelty, pos, key, childAddress);
-      }
-      return sibling;
-    }
-  }
-
-  protected void insertDirectly(@NotNull Novelty.Accessor novelty, final int pos, @NotNull byte[] key, long childAddress) {
-    if (pos < size) {
-      copyChildren(pos, pos + 1);
-    }
-    set(pos, key, childAddress);
-    incrementSize();
-    flush(novelty);
-  }
-
-  protected void copyChildren(final int from, final int to) {
-    if (from >= size) return;
-
-    final int bytesPerEntry = tree.getKeySize() + BYTES_PER_ADDRESS;
-
-    System.arraycopy(
-      backingArray, from * bytesPerEntry,
-      backingArray, to * bytesPerEntry,
-      (size - from) * bytesPerEntry
-    );
-  }
-
   protected void mergeWith(BasePage page) {
     final int bytesPerEntry = tree.getKeySize() + BYTES_PER_ADDRESS;
     System.arraycopy(page.backingArray, 0, backingArray, size * bytesPerEntry, page.size);
@@ -213,67 +114,9 @@ public abstract class BasePage {
     backingArray[metadataOffset + 1] = (byte)length;
   }
 
-  private void setSize(int updatedSize) {
+  protected void setSize(int updatedSize) {
     final int sizeOffset = ((tree.getKeySize() + BYTES_PER_ADDRESS) * tree.getBase()) + 1;
     backingArray[sizeOffset] = (byte)updatedSize;
     this.size = updatedSize;
-  }
-
-  // TODO: extract Policy class
-  public boolean needSplit(@NotNull final BasePage page) {
-    return page.size >= tree.getBase();
-  }
-
-  // TODO: extract Policy class
-  public int getSplitPos(@NotNull final BasePage page, final int insertPosition) {
-    // if inserting into the most right position - split as 8/1, otherwise - 1/1
-    final int pageSize = page.size;
-    return insertPosition < pageSize ? pageSize >> 1 : (pageSize * 7) >> 3;
-  }
-
-  // TODO: extract Policy class
-  public boolean needMerge(@NotNull final BasePage left, @NotNull final BasePage right) {
-    final int leftSize = left.size;
-    final int rightSize = right.size;
-    return leftSize == 0 || rightSize == 0 || leftSize + rightSize <= ((tree.getBase() * 7) >> 3);
-  }
-
-  static void set(int pos, byte[] key, int bytesPerKey, byte[] backingArray, long lowAddressBytes) {
-    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
-
-    // write key
-    System.arraycopy(key, 0, backingArray, offset, bytesPerKey);
-    // write address
-    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
-    writeUnsignedLong(0, 8, backingArray, offset + bytesPerKey + 8);
-  }
-
-  static void set(int pos, byte[] key, int bytesPerKey, byte[] backingArray, byte[] inlineValue) {
-    int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
-
-    // write key
-    System.arraycopy(key, 0, backingArray, offset, bytesPerKey);
-    // write value
-    offset += bytesPerKey;
-    System.arraycopy(inlineValue, 0, backingArray, offset, inlineValue.length);
-    backingArray[offset + BYTES_PER_ADDRESS - 1] = (byte)inlineValue.length;
-  }
-
-  static void setChild(int pos, int bytesPerKey, byte[] backingArray, long lowAddressBytes, long highAddressBytes) {
-    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
-    // write address
-    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
-    writeUnsignedLong(highAddressBytes, 8, backingArray, offset + bytesPerKey + 8);
-  }
-
-  static void setChild(int pos, int bytesPerKey, byte[] backingArray, byte[] inlineValue) {
-    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos + bytesPerKey;
-    // write value
-    System.arraycopy(inlineValue, 0, backingArray, offset, inlineValue.length);
-    backingArray[offset + BYTES_PER_ADDRESS - 1] = (byte)inlineValue.length;
-  }
-
-  static void indent(PrintStream out, int level) {
-    for (int i = 0; i < level; i++) out.print(" ");
   }
 }

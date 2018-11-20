@@ -34,6 +34,13 @@ public class BTree implements Tree {
                         Long.MIN_VALUE;
   }
 
+  public BTree(Storage storage, int keySize, Address rootAddress, long startAddress) {
+    this.storage = storage;
+    this.keySize = keySize;
+    this.rootAddress = rootAddress;
+    this.startAddress = startAddress;
+  }
+
   @Override
   public int getKeySize() {
     return keySize;
@@ -173,15 +180,15 @@ public class BTree implements Tree {
   @Override
   public boolean put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite) {
     final boolean[] result = new boolean[1];
-    final BasePage root = loadPage(novelty, rootAddress).getMutableCopy(novelty, this);
+    final BasePage root = loadPage(novelty, rootAddress).getMutableCopy(novelty);
     final BasePage newSibling = root.put(novelty, key, value, overwrite, result);
     if (newSibling != null) {
       final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * DEFAULT_BASE;
       final byte[] bytes = new byte[metadataOffset + 2];
       bytes[metadataOffset] = INTERNAL;
       bytes[metadataOffset + 1] = 2;
-      BasePage.set(0, root.getMinKey(), getKeySize(), bytes, root.address.getLowBytes());
-      BasePage.set(1, newSibling.getMinKey(), getKeySize(), bytes, newSibling.address.getLowBytes());
+      StoredBTreeUtil.set(0, root.getMinKey(), getKeySize(), bytes, root.address.getLowBytes());
+      StoredBTreeUtil.set(1, newSibling.getMinKey(), getKeySize(), bytes, newSibling.address.getLowBytes());
       this.rootAddress = new Address(novelty.alloc(bytes));
     }
     else {
@@ -198,7 +205,7 @@ public class BTree implements Tree {
   @Override
   public boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
     final boolean[] res = new boolean[1];
-    rootAddress = delete(novelty, loadPage(novelty, rootAddress).getMutableCopy(novelty, this), key, value, res).address;
+    rootAddress = BTreeCommon.delete(novelty, loadPage(novelty, rootAddress).getMutableCopy(novelty), key, value, res).address;
     return res[0];
   }
 
@@ -212,6 +219,7 @@ public class BTree implements Tree {
     return loadPage(novelty, rootAddress).save(novelty, storage, consumer);
   }
 
+  @Override
   public BTree snapshot() {
     final Address root = rootAddress;
     if (root.isNovelty()) {
@@ -228,7 +236,7 @@ public class BTree implements Tree {
     return address.isNovelty() && address.getLowBytes() > startAddress;
   }
 
-  /* package */ BasePage loadPage(@NotNull Novelty.Accessor novelty, Address address) {
+  public BasePage loadPage(@NotNull Novelty.Accessor novelty, Address address) {
     final boolean isNovelty = address.isNovelty();
     final byte[] bytes = isNovelty ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
     if (bytes == null) {
@@ -277,21 +285,6 @@ public class BTree implements Tree {
     bytes[metadataOffset + 1] = 0;
     bytes[metadataOffset + 2] = -128; // set mask to signed int = 0
     return new BTree(storage, keySize, new Address(novelty.alloc(bytes)));
-  }
-
-  private static BasePage delete(@NotNull Novelty.Accessor novelty,
-                                 @NotNull BasePage root,
-                                 @NotNull byte[] key,
-                                 @Nullable byte[] value,
-                                 boolean[] res) {
-    if (root.delete(novelty, key, value)) {
-      root = root.mergeWithChildren(novelty);
-      res[0] = true;
-      return root;
-    }
-
-    res[0] = false;
-    return root;
   }
 
   public interface ToString {
