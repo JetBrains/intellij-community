@@ -71,7 +71,8 @@ public class JsonCachedValues {
   @Nullable
   static String fetchSchemaUrl(@Nullable PsiFile psiFile) {
     if (!(psiFile instanceof JsonFile)) return null;
-    return JsonSchemaFileValuesIndex.readTopLevelProps(psiFile.getFileType(), psiFile.getText()).get(URL_CACHE_KEY);
+    final String url = JsonSchemaFileValuesIndex.readTopLevelProps(psiFile.getFileType(), psiFile.getText()).get(URL_CACHE_KEY);
+    return url == null || JsonSchemaFileValuesIndex.NULL.equals(url) ? null : url;
   }
 
   static final String ID_CACHE_KEY = "JsonSchemaIdCache";
@@ -81,14 +82,10 @@ public class JsonCachedValues {
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, ID_CACHE_KEY);
-    if (value != null) {
-      return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : JsonSchemaService.normalizeId(value);
-    }
-
-    value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, OBSOLETE_ID_CACHE_KEY);
-    if (value != null) {
-      return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : JsonSchemaService.normalizeId(value);
-    }
+    if (value != null && !JsonSchemaFileValuesIndex.NULL.equals(value)) return JsonSchemaService.normalizeId(value);
+    String obsoleteValue = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, OBSOLETE_ID_CACHE_KEY);
+    if (obsoleteValue != null && !JsonSchemaFileValuesIndex.NULL.equals(obsoleteValue)) return JsonSchemaService.normalizeId(obsoleteValue);
+    if (JsonSchemaFileValuesIndex.NULL.equals(value) || JsonSchemaFileValuesIndex.NULL.equals(obsoleteValue)) return null;
 
     final String result = computeForFile(schemaFile, project, JsonCachedValues::fetchSchemaId, SCHEMA_ID_CACHE_KEY);
     return result == null ? null : JsonSchemaService.normalizeId(result);
@@ -128,8 +125,9 @@ public class JsonCachedValues {
     if (!(psiFile instanceof JsonFile)) return null;
     final Map<String, String> props = JsonSchemaFileValuesIndex.readTopLevelProps(psiFile.getFileType(), psiFile.getText());
     final String id = props.get(ID_CACHE_KEY);
-    if (id != null) return id;
-    return props.get(OBSOLETE_ID_CACHE_KEY);
+    if (id != null && !JsonSchemaFileValuesIndex.NULL.equals(id)) return id;
+    final String obsoleteId = props.get(OBSOLETE_ID_CACHE_KEY);
+    return obsoleteId == null || JsonSchemaFileValuesIndex.NULL.equals(obsoleteId) ? null : obsoleteId;
   }
 
 

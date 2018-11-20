@@ -22,16 +22,13 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, String> {
   public static final ID<String, String> INDEX_ID = ID.create("json.file.root.values");
-  private static final int VERSION = 1;
+  private static final int VERSION = 5;
   public static final String NULL = "$NULL$";
 
   @NotNull
@@ -64,17 +61,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   @NotNull
   @Override
   public DataExternalizer<String> getValueExternalizer() {
-    return new DataExternalizer<String>() {
-      @Override
-      public void save(@NotNull DataOutput out, String value) throws IOException {
-        out.writeUTF(value);
-      }
-
-      @Override
-      public String read(@NotNull DataInput in) throws IOException {
-        return in.readUTF();
-      }
-    };
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @Override
@@ -85,7 +72,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(JsonFileType.INSTANCE, Json5FileType.INSTANCE);
+    return file -> file.getFileType() instanceof JsonFileType;
   }
 
   @Override
@@ -106,7 +93,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
 
   @NotNull
   static Map<String, String> readTopLevelProps(@NotNull FileType fileType, @NotNull CharSequence content) {
-    if (fileType != JsonFileType.INSTANCE && fileType != Json5FileType.INSTANCE) return ContainerUtil.newHashMap();
+    if (!(fileType instanceof JsonFileType)) return ContainerUtil.newHashMap();
 
     Lexer lexer = fileType == Json5FileType.INSTANCE ? new Json5Lexer() : new JsonLexer();
     final HashMap<String, String> map = ContainerUtil.newHashMap();
@@ -151,6 +138,9 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
       }
       lexer.advance();
     }
+    if (!map.containsKey(JsonCachedValues.ID_CACHE_KEY)) map.put(JsonCachedValues.ID_CACHE_KEY, NULL);
+    if (!map.containsKey(JsonCachedValues.OBSOLETE_ID_CACHE_KEY)) map.put(JsonCachedValues.OBSOLETE_ID_CACHE_KEY, NULL);
+    if (!map.containsKey(JsonCachedValues.URL_CACHE_KEY)) map.put(JsonCachedValues.URL_CACHE_KEY, NULL);
     return map;
   }
 
