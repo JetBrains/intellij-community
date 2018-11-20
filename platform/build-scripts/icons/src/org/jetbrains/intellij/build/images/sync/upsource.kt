@@ -132,6 +132,7 @@ internal fun postComment(projectId: String, review: Review, comment: String) {
   }""")
 }
 
+// TODO: take commit message from revisions
 internal fun getOpenIconsReviewTitles(projectId: String) = upsourceGet("getReviews", """{
     "projectId" : "$projectId",
     "limit": ${Int.MAX_VALUE},

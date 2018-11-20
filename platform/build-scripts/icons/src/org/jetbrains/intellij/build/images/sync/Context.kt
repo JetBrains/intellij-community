@@ -32,6 +32,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var createdReviews: Collection<Review> = emptyList()
   lateinit var icons: Map<String, GitObject>
   lateinit var devIcons: Map<String, GitObject>
+  var devCommitsToSync : Map<File, Collection<CommitInfo>> = emptyMap()
   fun iconsSyncRequired() = addedByDev.isNotEmpty() ||
                             modifiedByDev.isNotEmpty() ||
                             removedByDev.isNotEmpty()

@@ -34,7 +34,7 @@ internal fun report(context: Context, devRepoRoot: File, skipped: Int, consisten
   if (isUnderTeamCity() && context.isFail()) context.doFail(report)
 }
 
-internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToString(System.lineSeparator()) { entry ->
+internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToString { entry ->
   "${getOriginUrl(entry.key)}: ${entry.value.joinToString { it.hash }}"
 }
 
@@ -120,15 +120,15 @@ private fun createReviewForIcons(devRepoRoot: File, context: Context, user: Stri
   if (!context.doSyncIconsAndCreateReview) return null
   val changes = context.addedByDev + context.removedByDev + context.modifiedByDev
   if (changes.isEmpty()) return null
-  val commits = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, devRepoRoot, changes) {
+  context.devCommitsToSync = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, devRepoRoot, changes) {
     context.icons[it] ?: guessGitObject(context.iconsRepo, File(context.iconsRepoDir).resolve(it))
   }
-  if (commits.isEmpty()) return null
+  if (context.devCommitsToSync.isEmpty()) return null
   val repos = listOf(context.iconsRepo)
   return withTmpBranch(repos) { branch ->
-    val commitsForReview = commitAndPush(branch, user, email, commits.commitMessage(), repos)
+    val commitsForReview = commitAndPush(branch, user, email, context.devCommitsToSync.commitMessage(), repos)
     val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
-    commits.values.parallelStream()
+    context.devCommitsToSync.values.parallelStream()
       .flatMap { it.stream() }
       .map { it.committerEmail }
       .distinct()
@@ -150,15 +150,19 @@ private fun createReviews(devRepoRoot: File, context: Context) = callSafely {
 
 private fun assignInvestigation(devRepoRoot: File, context: Context): Investigator? =
   callSafely {
-    assignInvestigation(findInvestigator(devRepoRoot, context.addedByDev.asSequence() +
-                                                      context.removedByDev.asSequence() +
-                                                      context.modifiedByDev.asSequence()), context)
+    assignInvestigation(findInvestigator(devRepoRoot, context), context)
   }
 
-private fun findInvestigator(devRepoRoot: File, changes: Sequence<String>): Investigator {
+private fun findInvestigator(devRepoRoot: File, context: Context): Investigator {
+  val changes = context.addedByDev.asSequence() +
+                context.removedByDev.asSequence() +
+                context.modifiedByDev.asSequence()
   val commits = findCommits(devRepoRoot, changes).keys
+  val commitsToInvestigate = if (context.devCommitsToSync.isNotEmpty())
+    context.devCommitsToSync
+  else commits.groupBy(CommitInfo::repo)
   return commits.maxBy(CommitInfo::timestamp)?.let {
-    Investigator(it.committerEmail, commits.groupBy(CommitInfo::repo))
+    Investigator(it.committerEmail, commitsToInvestigate)
   } ?: Investigator()
 }
 
