@@ -58,6 +58,8 @@ class ImageFlags(val skipped: Boolean,
   constructor() : this(false, false, null)
 }
 
+internal class ImageSyncFlags(val skipSync: Boolean, val forceSync: Boolean)
+
 data class DeprecationData(val comment: String?, val replacement: String?, val replacementContextClazz: String?, val replacementReference: String?)
 
 internal class ImageCollector(private val projectHome: Path, private val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false, private val className: String? = null) {
@@ -202,6 +204,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     private val skip: MutableList<Pattern> = ArrayList()
     private val used: MutableList<Pattern> = ArrayList()
     private val deprecated: MutableList<DeprecatedEntry> = ArrayList()
+    private val skipSync: MutableList<Pattern> = ArrayList()
+    private val forceSync: MutableList<Pattern> = ArrayList()
 
     private val ownDeprecatedIcons: MutableList<OwnDeprecatedIcon> = ArrayList()
 
@@ -213,6 +217,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
       val parentFlags = parent?.getImageFlags(file) ?: return flags
       return mergeImageFlags(flags, parentFlags, file.toString())
     }
+
+    fun getImageSyncFlags(file: Path) = ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
 
     fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> {
       return ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(false, false, it.data)) }
@@ -255,7 +261,9 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
               }
             },
             RobotFileHandler("name:") { _ -> }, // ignore directive for IconsClassGenerator
-            RobotFileHandler("#") { _ -> } // comment
+            RobotFileHandler("#") { _ -> }, // comment
+            RobotFileHandler("forceSync:") { value -> answer.forceSync.add(compilePattern(dir, root, value)) },
+            RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) }
       )
       return answer
     }

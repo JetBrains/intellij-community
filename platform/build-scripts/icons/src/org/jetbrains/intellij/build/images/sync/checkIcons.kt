@@ -96,8 +96,8 @@ private fun readDevRepo(devRepoRoot: File, devRepoDir: String,
   if (skipDirsPattern != null) log("Using pattern $skipDirsPattern to skip dirs")
   val skipDirsRegex = skipDirsPattern?.toRegex()
   val devRepoIconFilter = { file: File, repo: File ->
-    // read icon hashes skipping test roots
-    !doSkip(file, repo, testRoots, skipDirsRegex) && isValidIcon(file.toPath())
+    !doSkip(file, repo, testRoots, skipDirsRegex) &&
+    (isValidIcon(file.toPath()) || IconRobotsDataReader.isSyncForced(file))
   }
   val devIcons = if (devRepoVcsRoots.size == 1
                      && devRepoVcsRoots.contains(devRepoRoot)) {
@@ -171,8 +171,8 @@ private fun doSkip(file: File, repo: File, testRoots: Set<File>, skipDirsRegex: 
     skippedDirs += file
   }
   return skipDir ||
-         // or skipped in icon-robots.txt
-         IconRobotsDataReader.isSkipped(file, repo) ||
+         // or sync skipped in icon-robots.txt
+         IconRobotsDataReader.isSyncSkipped(file) ||
          // or check parent
          file.parentFile != null && doSkip(file.parentFile, repo, testRoots, skipDirsRegex)
 }
