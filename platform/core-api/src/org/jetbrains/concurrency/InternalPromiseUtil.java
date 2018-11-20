@@ -27,10 +27,10 @@ public class InternalPromiseUtil {
     }
   };
 
-  public static final NotNullLazyValue<Promise<Object>> FULFILLED_PROMISE = new NotNullLazyValue<Promise<Object>>() {
+  public static final NotNullLazyValue<CancellablePromise<Object>> FULFILLED_PROMISE = new NotNullLazyValue<CancellablePromise<Object>>() {
     @NotNull
     @Override
-    protected Promise<Object> compute() {
+    protected CancellablePromise<Object> compute() {
       return new DonePromise<>(PromiseValue.createFulfilled(null));
     }
   };

@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -599,7 +600,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public Promise<XExpression> calculateEvaluationExpression() {
     if (evaluationExpression != null) {
-      return Promise.resolve(evaluationExpression);
+      return Promises.resolvedPromise(evaluationExpression);
     }
     else {
       final AsyncPromise<XExpression> res = new AsyncPromise<>();
