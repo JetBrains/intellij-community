@@ -49,9 +49,14 @@ public interface BaseTest {
   }
 
   @NotNull
-  default <T extends PsiElement> T elementUnderCaret(@NotNull String text, @NotNull Class<T> clazz) {
-    GroovyFile file = configureByText(text);
-    T element = getParentOfType(file.findElementAt(getFixture().getCaretOffset()), clazz);
+  default <T extends PsiElement> T elementUnderCaret(@NotNull Class<T> clazz) {
+    T element = getParentOfType(getFixture().getFile().findElementAt(getFixture().getCaretOffset()), clazz);
     return Objects.requireNonNull(element);
+  }
+
+  @NotNull
+  default <T extends PsiElement> T elementUnderCaret(@NotNull String text, @NotNull Class<T> clazz) {
+    configureByText(text);
+    return elementUnderCaret(clazz);
   }
 }
