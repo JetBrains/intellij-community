@@ -124,7 +124,7 @@ if IS_PY3K:
             'tests',
             'tests_mainloop',
             'tests_python',
-            'tests_pydevd_runfiles',
+            'tests_runfiles',
             'test_pydevd_reload',
             'third_party',
             '__pycache__',

@@ -437,7 +437,7 @@ class TestInsertCode(unittest.TestCase):
         sys.stdout = StringIO()
 
         try:
-            from tests_pydevd_python.resources._bytecode_many_names_example import foo
+            from tests_python.resources._bytecode_many_names_example import foo
             self.check_insert_to_line_with_exec(foo, tracing, foo.__code__.co_firstlineno + 2)
 
         finally:
@@ -445,7 +445,7 @@ class TestInsertCode(unittest.TestCase):
 
     def test_extended_arg_overflow(self):
 
-        from tests_pydevd_python.resources._bytecode_overflow_example import Dummy, DummyTracing
+        from tests_python.resources._bytecode_overflow_example import Dummy, DummyTracing
         self.check_insert_to_line_by_symbols(Dummy.fun, call_tracing, Dummy.fun.__code__.co_firstlineno + 3,
                                              DummyTracing.fun.__code__)
 
