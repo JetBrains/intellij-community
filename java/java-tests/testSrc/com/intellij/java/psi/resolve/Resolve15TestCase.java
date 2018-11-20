@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,11 @@ public abstract class Resolve15TestCase extends ResolveTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(myOldLanguageLevel);
-    super.tearDown();
+    try {
+      LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(myOldLanguageLevel);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }
