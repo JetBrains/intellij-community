@@ -2,13 +2,17 @@
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.psi.search.TodoPattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.regex.Matcher;
 
 public class EnterInCommentUtil {
   @Nullable
@@ -19,5 +23,20 @@ public class EnterInCommentUtil {
     Commenter languageCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
     return languageCommenter instanceof CodeDocumentationAwareCommenter
            ? (CodeDocumentationAwareCommenter)languageCommenter : null;
+  }
+
+  public static boolean isTodoText(@NotNull CharSequence text, int startOffset, int endOffset) {
+    return getTodoTextOffset(text, startOffset, endOffset) >= 0;
+  }
+
+  public static int getTodoTextOffset(@NotNull CharSequence text, int startOffset, int endOffset) {
+    CharSequence input = text.subSequence(startOffset, endOffset);
+    for (TodoPattern pattern : TodoConfiguration.getInstance().getTodoPatterns()) {
+      Matcher matcher = pattern.getPattern().matcher(input);
+      if (matcher.find()) {
+        return startOffset + matcher.start();
+      }
+    }
+    return -1;
   }
 }

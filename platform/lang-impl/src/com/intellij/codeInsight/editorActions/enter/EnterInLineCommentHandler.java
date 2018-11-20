@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,8 +75,8 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
         int indentEnd = CharArrayUtil.shiftForward(text, indentStart, WHITESPACE);
         CharSequence currentLineSpacing = text.subSequence(indentStart, indentEnd);
         if (TodoConfiguration.getInstance().isMultiLine() &&
-            isTodoText(text, lineCommentStartOffset, caretOffset) &&
-            isTodoText(text, lineCommentStartOffset, DocumentUtil.getLineEndOffset(lineCommentStartOffset, document))) {
+            EnterInCommentUtil.isTodoText(text, lineCommentStartOffset, caretOffset) &&
+            EnterInCommentUtil.isTodoText(text, lineCommentStartOffset, DocumentUtil.getLineEndOffset(lineCommentStartOffset, document))) {
           spacing = currentLineSpacing + " ";
         }
         else if (currentLineSpacing.length() > 0) {
@@ -105,10 +104,5 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
     String prefix = commenter.getLineCommentPrefix();
     return iterator.getTokenType() == commenter.getLineCommentTokenType() &&
            (iterator.getStart() + (prefix == null ? 0 : prefix.length())) <= offset ? iterator.getStart() : -1;
-  }
-
-  private static boolean isTodoText(@NotNull CharSequence text, int startOffset, int endOffset) {
-    CharSequence input = text.subSequence(startOffset, endOffset);
-    return ContainerUtil.exists(TodoConfiguration.getInstance().getTodoPatterns(), pattern -> pattern.getPattern().matcher(input).find());
   }
 }

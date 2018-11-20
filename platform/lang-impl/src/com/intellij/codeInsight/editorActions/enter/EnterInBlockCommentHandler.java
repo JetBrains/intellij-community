@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +65,22 @@ public class EnterInBlockCommentHandler extends EnterHandlerDelegateAdapter {
       return Result.Default;
     }
 
+    int additionalIndent = 0;
+    if (TodoConfiguration.getInstance().isMultiLine()) {
+      int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset, document);
+      int todoOffset = EnterInCommentUtil.getTodoTextOffset(text, lineStartOffset, caretOffset);
+      if (todoOffset >= 0) {
+        int lineEndOffset = DocumentUtil.getLineEndOffset(caretOffset, document);
+        if (todoOffset == EnterInCommentUtil.getTodoTextOffset(text, lineStartOffset, lineEndOffset)) {
+          int nonWsLineStart = CharArrayUtil.shiftForward(text, lineStartOffset, WHITESPACE);
+          if (todoOffset >= nonWsLineStart) {
+            additionalIndent = todoOffset - nonWsLineStart + 1;
+            document.insertString(caretOffset, StringUtil.repeat(" ", additionalIndent));
+          }
+        }
+      }
+    }
+
     String linePrefix = commenter.getDocumentationCommentLinePrefix();
     if (linePrefix == null) return Result.Continue;
 
@@ -71,8 +89,10 @@ public class EnterInBlockCommentHandler extends EnterHandlerDelegateAdapter {
     if (StringUtil.startsWith(text, CharArrayUtil.shiftForward(text, refOffset, WHITESPACE), linePrefix)) {
       int endOffset = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
       if (endOffset < text.length() && text.charAt(endOffset) != '\n') endOffset = caretOffset;
-      document.replaceString(caretOffset, endOffset, linePrefix + " ");
-      caretAdvance.set(linePrefix.length() + 1);
+      int valueLength = linePrefix.length() + 1;
+      int endOffsetToReplace = endOffset > caretOffset ? endOffset : caretOffset + Math.min(additionalIndent, valueLength);
+      document.replaceString(caretOffset, endOffsetToReplace, linePrefix + " ");
+      caretAdvance.set(Math.max(valueLength, additionalIndent));
       return Result.DefaultForceIndent;
     }
     return Result.Continue;
