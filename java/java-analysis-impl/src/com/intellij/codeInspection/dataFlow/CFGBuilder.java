@@ -493,9 +493,7 @@ public class CFGBuilder {
   public CFGBuilder doTry(@NotNull PsiElement anchor) {
     ControlFlow.DeferredOffset offset = new ControlFlow.DeferredOffset();
     myAnalyzer.pushTrap(new Trap.TryCatchAll(anchor, offset));
-    myBranches.add(() -> {
-      offset.setOffset(myAnalyzer.getInstructionCount());
-    });
+    myBranches.add(() -> offset.setOffset(myAnalyzer.getInstructionCount()));
     return this;
   }
 
@@ -710,6 +708,32 @@ public class CFGBuilder {
   }
 
   /**
+   * Return true if given expression contains return statement (which could be inside switch expression)
+   * @param expression expression to analyze
+   * @return true if it has nested return
+   */
+  private static boolean hasNestedReturn(@NotNull PsiExpression expression) {
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
+      boolean hasReturn;
+      
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+      @Override
+      public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitReturnStatement(PsiReturnStatement statement) {
+        hasReturn = true;
+        stopWalking();
+      }
+    }
+    Visitor visitor = new Visitor();
+    expression.accept(visitor);
+    return visitor.hasReturn;
+  }
+
+  /**
    * Inlines given lambda. Lambda parameters are assumed to be assigned already (if necessary).
    * <p>
    * Stack before: ...
@@ -724,14 +748,20 @@ public class CFGBuilder {
     PsiElement body = lambda.getBody();
     PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
     if (expression != null) {
-      pushExpression(expression);
-      boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
-      if(resultNullability == Nullability.NOT_NULL) {
-        checkNotNull(expression, NullabilityProblemKind.nullableFunctionReturn);
+      if (hasNestedReturn(expression)) {
+        DfaVariableValue variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+        myAnalyzer.inlineExpression(lambda, expression, resultNullability, variable);
+        push(variable);
+      } else {
+        pushExpression(expression);
+        boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+        if (resultNullability == Nullability.NOT_NULL) {
+          checkNotNull(expression, NullabilityProblemKind.nullableFunctionReturn);
+        }
       }
     } else if(body instanceof PsiCodeBlock) {
       DfaVariableValue variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
-      myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullability, variable);
+      myAnalyzer.inlineBlock(lambda, (PsiCodeBlock)body, resultNullability, variable);
       push(variable);
     } else {
       pushUnknown();

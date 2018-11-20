@@ -124,7 +124,7 @@ sealed class Trap(val anchor: PsiElement) {
       return handler.dispatch()
     }
   }
-  class InsideInlinedBlock(block: PsiCodeBlock): Trap(block) {
+  class InsideInlinedBlock(block: PsiElement): Trap(block) {
     override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
       (handler.state.pop() as DfaControlTransferValue).target as ReturnTransfer
       return handler.dispatch()
