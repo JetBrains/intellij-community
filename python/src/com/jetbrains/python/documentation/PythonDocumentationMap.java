@@ -46,6 +46,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("matplotlib", "http://matplotlib.org/api/{module.basename}_api.html#{element.qname}");
       addEntry("pyramid", "http://docs.pylonsproject.org/projects/pyramid/en/latest/api/{module.basename}.html#{element.qname}");
       addEntry("flask", "http://flask.pocoo.org/docs/latest/api/#{element.qname}");
+      addEntry("pandas", "https://pandas.pydata.org/pandas-docs/stable/generated/{element.qname}.html");
     }
 
     public Map<String, String> getEntries() {
