@@ -12,8 +12,8 @@ import time
 
 import pytest
 
-from tests_pydevd_python import debugger_unittest
-from tests_pydevd_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION,
+from tests_python import debugger_unittest
+from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION,
     REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
     CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
     IS_APPVEYOR, wait_for_condition)
@@ -23,10 +23,10 @@ try:
 except ImportError:
     from urllib.parse import unquote
 
-from tests_pydevd_python.debug_constants import TEST_CYTHON
+from tests_python.debug_constants import TEST_CYTHON
 
 pytest_plugins = [
-    str('tests_pydevd_python.debugger_fixtures'),
+    str('tests_python.debugger_fixtures'),
 ]
 
 try:
@@ -1625,11 +1625,11 @@ def test_path_translation(case_setup):
         return env
 
     with case_setup.test_file('_debugger_case_path_translation.py', get_environ=get_environ) as writer:
-        from tests_pydevd_python.debugger_unittest import CMD_LOAD_SOURCE
+        from tests_python.debugger_unittest import CMD_LOAD_SOURCE
         writer.write_start_redirect()
 
         file_in_client = get_file_in_client(writer)
-        assert 'tests_pydevd_python' not in file_in_client
+        assert 'tests_python' not in file_in_client
         writer.write_add_breakpoint(2, 'main', filename=file_in_client)
         writer.write_make_initial_run()
 
@@ -1798,7 +1798,7 @@ def test_case_get_thread_stack(case_setup):
 
 def test_case_dump_threads_to_stderr(case_setup):
 
-    from tests_pydevd_python.debugger_unittest import wait_for_condition
+    from tests_python.debugger_unittest import wait_for_condition
 
     def additional_output_checks(writer, stdout, stderr):
         assert is_stderr_ok(stderr), make_error_msg(stderr)
@@ -2036,7 +2036,7 @@ def test_remote_debugger_multi_proc(case_setup_remote):
             self.sock, addr = self.server_socket.accept()
             print('accepted second process')
 
-            from tests_pydevd_python.debugger_unittest import ReaderThread
+            from tests_python.debugger_unittest import ReaderThread
             self.reader_thread = ReaderThread(self.sock)
             self.reader_thread.start()
 
