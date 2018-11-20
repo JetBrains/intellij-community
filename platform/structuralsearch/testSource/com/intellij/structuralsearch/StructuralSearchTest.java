@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -2987,6 +2989,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find statement label variable", 2, findMatchesCount(s, "'_l : '_s;"));
   }
 
+  @Bombed(user = "roman.shevchenko@jetbrains.com", day = 22, month = Calendar.NOVEMBER)
   public void testFindBreakContinue() {
     final String s = "class X {" +
                      "  void m() {" +
