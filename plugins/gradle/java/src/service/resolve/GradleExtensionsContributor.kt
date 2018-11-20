@@ -102,7 +102,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
           containingClass = taskContainerClass
           returnType = returnClass
         }
-        methodBuilder.addParameter("task", GRADLE_API_TASK, true)
+        methodBuilder.addOptionalParameter("task", GRADLE_API_TASK)
         place.putUserData(RESOLVED_CODE, true)
         if (!processor.execute(methodBuilder, state)) return false
       }
@@ -138,7 +138,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
             containingClass = projectClass
             returnType = returnClass
             if (parent is GrMethodCallExpressionImpl && parent.argumentList.namedArguments.isNotEmpty()) {
-              addParameter("args", JAVA_UTIL_MAP, true)
+              addOptionalParameter("args", JAVA_UTIL_MAP)
             }
             val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)
             closureParam.putUserData(DELEGATES_TO_KEY, gradleTask.typeFqn)
@@ -201,7 +201,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
             val returnClass = groovyPsiManager.createTypeByFQClassName(GROOVY_LANG_CLOSURE, resolveScope) ?: return true
             val methodBuilder = GrLightMethodBuilder(place.manager, name).apply {
               returnType = returnClass
-              addParameter("args", JAVA_LANG_OBJECT, true)
+              addOptionalParameter("args", JAVA_LANG_OBJECT)
             }
             return processor.execute(methodBuilder, state)
           }
@@ -302,7 +302,7 @@ fun processExtension(processor: PsiScopeProcessor,
       returnType = returnClass
     }
     if (shouldProcessMethods) {
-      methodBuilder.addParameter("configuration", GROOVY_LANG_CLOSURE, true)
+      methodBuilder.addOptionalParameter("configuration", GROOVY_LANG_CLOSURE)
     }
     place.putUserData(RESOLVED_CODE, true)
     if (!processor.execute(methodBuilder, state)) return false

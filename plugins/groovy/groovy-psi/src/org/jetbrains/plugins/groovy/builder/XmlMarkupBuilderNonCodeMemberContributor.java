@@ -59,7 +59,7 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsCont
     // (Map, Object, Closure)
     res = createMethod(name, clazz, place);
     res.addParameter("attributes", JAVA_UTIL_MAP);
-    res.addParameter("value", JAVA_LANG_OBJECT, true);
+    res.addOptionalParameter("value", JAVA_LANG_OBJECT);
     res.addAndGetParameter("body", GROOVY_LANG_CLOSURE, true).putUserData(DELEGATES_TO_KEY, FQN);
     for (GrReflectedMethod method : res.getReflectedMethods()) {
       if (!processor.process(method)) return false;
@@ -70,7 +70,7 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsCont
     // (Object, Map, Closure)
     res = createMethod(name, clazz, place);
     res.addParameter("value", JAVA_LANG_OBJECT);
-    res.addParameter("attributes", JAVA_UTIL_MAP, true);
+    res.addOptionalParameter("attributes", JAVA_UTIL_MAP);
     res.addAndGetParameter("body", GROOVY_LANG_CLOSURE, true).putUserData(DELEGATES_TO_KEY, FQN);
     for (GrReflectedMethod method : res.getReflectedMethods()) {
       if (!processor.process(method)) return false;
