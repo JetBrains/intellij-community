@@ -570,7 +570,12 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
 
   @Nullable
   public XBreakpoint restoreLastRemovedBreakpoint() {
-    return myLastRemovedBreakpoint != null ? myLastRemovedBreakpoint.restore() : null;
+    if (myLastRemovedBreakpoint != null) {
+      XBreakpoint breakpoint = myLastRemovedBreakpoint.restore();
+      myLastRemovedBreakpoint = null;
+      return breakpoint;
+    }
+    return null;
   }
 
   public boolean canRestoreLastRemovedBreakpoint() {
@@ -596,19 +601,15 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
         XLineBreakpointImpl<?> lineBreakpoint = (XLineBreakpointImpl)myBreakpoint;
         VirtualFile file = lineBreakpoint.getFile();
         if (file == null) { // file was deleted
-          myLastRemovedBreakpoint = null;
           return null;
         }
-        else {
-          XLineBreakpoint existingBreakpoint = findBreakpointAtLine(lineBreakpoint.getType(), file, lineBreakpoint.getLine());
-          if (existingBreakpoint != null) {
-            removeBreakpoint(existingBreakpoint);
-          }
+        XLineBreakpoint existingBreakpoint = findBreakpointAtLine(lineBreakpoint.getType(), file, lineBreakpoint.getLine());
+        if (existingBreakpoint != null) {
+          removeBreakpoint(existingBreakpoint);
         }
       }
 
       XBreakpointBase<?, ?, ?> breakpoint = createBreakpoint(myBreakpoint.getState());
-      myLastRemovedBreakpoint = null;
       if (breakpoint != null) {
         addBreakpoint(breakpoint, false, true);
         myDependenciesData.restore(breakpoint);
