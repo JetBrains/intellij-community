@@ -28,7 +28,11 @@ class VarargArgumentMapping(
 
   private val varargType: PsiType by lazyPub {
     val parameterType = method.parameterList.parameters.last().type as PsiArrayType
-    TypeConversionUtil.erasure(parameterType.componentType, erasureSubstitutor)
+    parameterType.componentType
+  }
+
+  private val varargTypeErased: PsiType by lazyPub {
+    TypeConversionUtil.erasure(varargType, erasureSubstitutor)
   }
 
   private val mapping: MapWithVarargs? by lazyPub(fun(): MapWithVarargs? {
@@ -52,7 +56,7 @@ class VarargArgumentMapping(
       return Applicability.inapplicable
     }
 
-    val varargApplicability = varargApplicability(varargs, context, varargType)
+    val varargApplicability = varargApplicability(varargs, context)
     if (varargApplicability === Applicability.inapplicable) {
       return Applicability.inapplicable
     }
@@ -60,10 +64,10 @@ class VarargArgumentMapping(
     return min(mapApplicability, varargApplicability)
   })
 
-  private fun varargApplicability(varargs: Arguments, context: PsiElement, varargType: PsiType): Applicability {
+  private fun varargApplicability(varargs: Arguments, context: PsiElement): Applicability {
     for (vararg in varargs) {
       val argumentAssignability = argumentApplicability(vararg, context) {
-        varargType
+        varargTypeErased
       }
       if (argumentAssignability != Applicability.applicable) {
         return argumentAssignability
@@ -71,4 +75,12 @@ class VarargArgumentMapping(
     }
     return Applicability.applicable
   }
+
+  override val expectedTypes: Iterable<Pair<PsiType, Argument>>
+    get() {
+      val (positional, varargs) = mapping ?: return emptyList()
+      val positionalSequence = positional.asSequence().map { (parameter, argument) -> Pair(parameter.type, argument) }
+      val varargsSequence = varargs.asSequence().map { Pair(varargType, it) }
+      return (positionalSequence + varargsSequence).asIterable()
+    }
 }

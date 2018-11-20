@@ -11,11 +11,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
@@ -108,10 +108,11 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
     PsiSubstitutor substitutor = null;
     if (variant instanceof GroovyMethodResult) {
+      ArgumentMapping mapping = ((GroovyMethodResult)variant).getArgumentMapping();
       MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
-      if (candidate != null) {
+      if (candidate != null && mapping != null) {
         substitutor =
-          new GroovyInferenceSessionBuilder((GrReferenceExpression)call.getInvokedExpression(), candidate)
+          new GroovyInferenceSessionBuilder(call.getInvokedExpression(), candidate, mapping)
             .skipClosureIn(call)
             .resolveMode(false)
             .build().inferSubst();

@@ -9,8 +9,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
+import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.impl.mapArgumentsToParameters
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate
@@ -38,6 +40,19 @@ class MethodResolveResult(
       mapArgumentsToParameters(element, contextSubstitutor, arguments, place)
     }
   }
+
+  private val myRealArgumentMapping by lazyPub {
+    myArgumentMapping?.let {
+      if (method is GrGdkMethod && place is GrReferenceExpression) {
+        GdkArgumentMapping(method.staticMethod, buildQualifier(place, state), it)
+      }
+      else {
+        it
+      }
+    }
+  }
+
+  override fun getArgumentMapping(): ArgumentMapping? = myRealArgumentMapping
 
   private val providersApplicability by lazyPub {
     arguments?.let {
@@ -70,7 +85,7 @@ class MethodResolveResult(
       siteSubstitutor
     }
     else {
-      GroovyInferenceSessionBuilder(place, methodCandidate).build().inferSubst()
+      GroovyInferenceSessionBuilder(place, methodCandidate, myArgumentMapping).build().inferSubst()
     }
   }
 
@@ -79,7 +94,7 @@ class MethodResolveResult(
       siteSubstitutor
     }
     else {
-      GroovyInferenceSessionBuilder(place, methodCandidate)
+      GroovyInferenceSessionBuilder(place, methodCandidate, myArgumentMapping)
         .resolveMode(false)
         .startFromTop(true)
         .build().inferSubst(this)

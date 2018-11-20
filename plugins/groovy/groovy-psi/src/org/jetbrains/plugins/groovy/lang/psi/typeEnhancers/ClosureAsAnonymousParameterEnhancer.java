@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
@@ -93,12 +94,13 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
     GroovyResolveResult variant = call.advancedResolve();
     if (variant instanceof GroovyMethodResult) {
       MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
-      if (candidate != null) {
+      ArgumentMapping mapping = ((GroovyMethodResult)variant).getArgumentMapping();
+      if (candidate != null && mapping != null) {
         Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new ExpressionArgument(closure));
         if (pair != null) {
           GrReferenceExpression invokedExpression = (GrReferenceExpression)call.getInvokedExpression();
           PsiSubstitutor substitutor =
-            new GroovyInferenceSessionBuilder(invokedExpression, candidate)
+            new GroovyInferenceSessionBuilder(invokedExpression, candidate, mapping)
               .skipClosureIn(call)
               .resolveMode(false)
               .build()

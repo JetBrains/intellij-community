@@ -3,21 +3,20 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
-class ArgumentsConstraint(private val candidate: MethodCandidate, private val context: PsiElement) : GrConstraintFormula() {
+class ArgumentsConstraint(private val mapping: ArgumentMapping, private val context: PsiElement) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    val mapping = candidate.argumentMapping
-    for ((argument, parameter) in mapping) {
-      val leftType = parameter.second ?: continue
+    for ((expectedType, argument) in mapping.expectedTypes) {
       if (argument is ExpressionArgument) {
-        constraints.add(ExpressionConstraint(leftType, argument.expression))
+        constraints.add(ExpressionConstraint(expectedType, argument.expression))
       }
       else {
         val type = argument.type
         if (type != null) {
-          constraints.add(TypeConstraint(leftType, type, context))
+          constraints.add(TypeConstraint(expectedType, type, context))
         }
       }
     }

@@ -17,15 +17,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
-class GroovyInferenceSessionBuilder(private val ref: PsiElement, private val candidate: MethodCandidate) {
+class GroovyInferenceSessionBuilder(
+  private val ref: PsiElement,
+  private val candidate: MethodCandidate,
+  private val argumentMapping: ArgumentMapping?
+) {
 
   private var closureSkipList = mutableListOf<GrMethodCall>()
 
@@ -61,8 +69,8 @@ class GroovyInferenceSessionBuilder(private val ref: PsiElement, private val can
       val session = GroovyInferenceSession(
         candidate.method.typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock
       )
-      if (ref is GrReferenceExpression) {
-        session.addConstraint(ArgumentsConstraint(candidate, ref))
+      if (argumentMapping != null) {
+        session.addConstraint(ArgumentsConstraint(argumentMapping, ref))
       }
       return session
     }

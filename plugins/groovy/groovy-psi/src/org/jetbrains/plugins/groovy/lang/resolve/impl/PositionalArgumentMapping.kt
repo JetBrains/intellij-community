@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -22,12 +19,24 @@ class PositionalArgumentMapping(
     mapByPosition(arguments, method.parameterList.parameters.toList(), PsiParameter::isOptional, false)
   }
 
+  private val argumentToParameter: Map<Argument, PsiParameter>? by lazy {
+    parameterToArgument?.mapNotNull { (parameter, argument) ->
+      if (argument == null) null else Pair(argument, parameter)
+    }?.toMap()
+  }
+
   override val applicability: Applicability by lazy {
     parameterToArgument?.let {
       mapApplicability(it, erasureSubstitutor, context)
     }
     ?: Applicability.inapplicable
   }
+
+  override val expectedTypes: Iterable<Pair<PsiType, Argument>>
+    get() = argumentToParameter?.asSequence()
+              ?.mapNotNull { (argument, parameter) -> Pair(parameter.type, argument) }
+              ?.asIterable()
+            ?: emptyList()
 }
 
 // foo(a?, b, c?, d?, e)

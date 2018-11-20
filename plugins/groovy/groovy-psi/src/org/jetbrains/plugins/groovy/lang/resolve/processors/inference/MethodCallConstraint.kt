@@ -19,7 +19,9 @@ class MethodCallConstraint(
     val nestedSession = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, context, emptyList(), session.skipClosureBlock)
     session.nestedSessions[result] = nestedSession
     nestedSession.propagateVariables(session)
-    nestedSession.addConstraint(ArgumentsConstraint(candidate, context))
+    result.argumentMapping?.let {
+      nestedSession.addConstraint(ArgumentsConstraint(it, context))
+    }
     nestedSession.repeatInferencePhases()
     val returnType = session.siteSubstitutor.substitute(PsiUtil.getSmartReturnType(candidate.method))
     val substitutedLeft = session.siteSubstitutor.substitute(session.substituteWithInferenceVariables(leftType))
