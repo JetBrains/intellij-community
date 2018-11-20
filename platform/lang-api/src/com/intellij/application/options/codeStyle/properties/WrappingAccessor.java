@@ -12,10 +12,11 @@ import java.util.List;
 class WrappingAccessor extends CodeStylePropertyAccessor<Integer> {
   private final static BidirectionalMap<Integer, String> WRAPPING_MAP = new BidirectionalMap<>();
   static {
-    WRAPPING_MAP.put(CommonCodeStyleSettings.DO_NOT_WRAP, "never");
-    WRAPPING_MAP.put(CommonCodeStyleSettings.WRAP_AS_NEEDED, "if_long");
+    WRAPPING_MAP.put(CommonCodeStyleSettings.DO_NOT_WRAP, "no_wrap");
+    WRAPPING_MAP.put(CommonCodeStyleSettings.WRAP_AS_NEEDED, "normal");
     WRAPPING_MAP.put(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM, "on_every_item");
-    WRAPPING_MAP.put(CommonCodeStyleSettings.WRAP_ALWAYS, "always");
+    WRAPPING_MAP.put(CommonCodeStyleSettings.WRAP_AS_NEEDED | CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM, "on_every_item");
+    WRAPPING_MAP.put(CommonCodeStyleSettings.WRAP_ALWAYS, "split_into_lines");
   }
 
   WrappingAccessor(@NotNull Object object, @NotNull Field field) {

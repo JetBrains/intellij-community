@@ -2,7 +2,8 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyleBean;
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
@@ -365,7 +366,8 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   @ApiStatus.Experimental
-  public CodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
-    return new CodeStylePropertyMapper(settings, getLanguage());
+  @NotNull
+  public AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+    return new LanguageCodeStylePropertyMapper(settings, getLanguage());
   }
 }
