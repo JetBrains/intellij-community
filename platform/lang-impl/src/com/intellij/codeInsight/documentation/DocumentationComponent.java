@@ -1121,7 +1121,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       private Image getImage() {
         if (!myImageLoaded) {
           Image image = ImageLoader.loadFromUrl(imageUrl);
-          myImage = image != null ? ImageUtil.toBufferedImage(image) : null;
+          myImage = ImageUtil.toBufferedImage(image != null ?
+                                              image :
+                                              ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage());
           myImageLoaded = true;
         }
         return myImage;
