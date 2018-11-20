@@ -9,19 +9,11 @@ import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
 import java.util.function.Consumer
 
-open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
-  private val f: CompletableFuture<T>
-
-  constructor() {
-    f = CompletableFuture()
-  }
-
-  // used for chaining builders like thenAsync()
-  private constructor(w: CompletableFuture<T>) {
-    f = w
-  }
+open class AsyncPromise<T> private constructor(private val f: CompletableFuture<T>) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
+  constructor() : this(CompletableFuture())
 
   override fun isDone() = f.isDone
+
   override fun get() = nullizeCancelled { f.get() }
   override fun get(timeout: Long, unit: TimeUnit) = nullizeCancelled { f.get(timeout, unit) }
 
@@ -48,10 +40,16 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
     cancel(true)
   }
 
-  override fun getState() = if (!f.isDone) State.PENDING else if (f.isCompletedExceptionally) State.REJECTED else State.SUCCEEDED
+  override fun getState(): State {
+    return when {
+      !f.isDone -> State.PENDING
+      f.isCompletedExceptionally -> State.REJECTED
+      else -> State.SUCCEEDED
+    }
+  }
 
   override fun onSuccess(handler: Consumer<in T>): Promise<T> {
-    val whenComplete = f.whenComplete { value, exception ->
+    return AsyncPromise(f.whenComplete { value, exception ->
       if (exception == null && !InternalPromiseUtil.isHandlerObsolete(handler)) {
         try {
           handler.accept(value)
@@ -62,25 +60,26 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
           }
         }
       }
-    }
-    return AsyncPromise(whenComplete)
+    })
   }
 
   override fun onError(rejected: Consumer<Throwable>): Promise<T> {
-    val whenComplete = f.whenComplete { _, exception ->
+    return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
         val toReport = if (exception is CompletionException && exception.cause != null) exception.cause!! else exception
         if (!InternalPromiseUtil.isHandlerObsolete(rejected)) {
           rejected.accept(toReport)
         }
       }
-    }
-    return AsyncPromise(whenComplete)
+    })
   }
 
   override fun onProcessed(processed: Consumer<in T>): Promise<T> {
-    val whenComplete = f.whenComplete { value, _ -> if (!InternalPromiseUtil.isHandlerObsolete(processed)) processed.accept(value) }
-    return AsyncPromise(whenComplete)
+    return AsyncPromise(f.whenComplete { value, _ ->
+      if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
+        processed.accept(value)
+      }
+    })
   }
 
   override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
@@ -98,15 +97,16 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
   }
 
   override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
-    val thenApply = f.thenApply { t -> done.`fun`(t) }
-    return AsyncPromise(thenApply)
+    return AsyncPromise(f.thenApply { done.`fun`(it) })
   }
 
   override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
     val convert: (T) -> CompletableFuture<SUB_RESULT> = {
       val promise = doneF.`fun`(it)
       val future = CompletableFuture<SUB_RESULT>()
-      promise.onSuccess { value -> future.complete(value) }.onError { error -> future.completeExceptionally(error) }
+      promise
+        .onSuccess { value -> future.complete(value) }
+        .onError { error -> future.completeExceptionally(error) }
       future
     }
     return AsyncPromise(f.thenCompose(convert))
