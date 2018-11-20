@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsSe
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +59,17 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     if (approvedGroupsServiceUrl == null) {
       return Collections.emptySet();
     }
-    final String productUrl = approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl);
+    final BuildNumber build = ApplicationInfo.getInstance().getBuild();
+    final String productUrl = approvedGroupsServiceUrl + build.getProductCode() + ".json";
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, toReportedBuild(build));
+  }
+
+  @NotNull
+  private static BuildNumber toReportedBuild(@NotNull BuildNumber build) {
+    if (build.isSnapshot()) {
+      final String buildString = build.asStringWithoutProductCodeAndSnapshot();
+      return BuildNumber.fromString(buildString.endsWith(".") ? buildString + "0" : buildString);
+    }
+    return build;
   }
 }
