@@ -43,7 +43,15 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     val ascent = editor.ascent
     val descent = editor.descent
     val g2d = g as Graphics2D
-    val attributes = getTextAttributes(editor)
+
+    val focusModeRange = editor.focusModeRange
+    val attributes = if (focusModeRange != null && (inlay.offset <= focusModeRange.startOffset || focusModeRange.endOffset <= inlay.offset)) {
+      editor.getUserData(EditorImpl.FOCUS_MODE_ATTRIBUTES) ?: getTextAttributes(editor)
+    }
+    else {
+      getTextAttributes(editor)
+    }
+
     if (text != null && attributes != null) {
       val fontMetrics = getFontMetrics(editor)
       val gap = if (r.height < fontMetrics.lineHeight + 2) 1 else 2
