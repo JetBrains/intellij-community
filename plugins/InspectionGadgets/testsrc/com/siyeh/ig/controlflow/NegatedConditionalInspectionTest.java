@@ -11,40 +11,36 @@ import org.jetbrains.annotations.Nullable;
 public class NegatedConditionalInspectionTest extends LightInspectionTestCase {
 
   public void testNegatedConditionalNullAndZeroAllowed() {
+    final NegatedConditionalInspection inspection = new NegatedConditionalInspection();
+    inspection.m_ignoreNegatedNullComparison = true;
+    inspection.m_ignoreNegatedZeroComparison = true;
+    myFixture.enableInspections(inspection);
+
     doTest();
   }
 
   public void testNegatedConditionalNullAndZeroDisallowed() {
+    final NegatedConditionalInspection inspection = new NegatedConditionalInspection();
+    inspection.m_ignoreNegatedNullComparison = false;
+    inspection.m_ignoreNegatedZeroComparison = false;
+    myFixture.enableInspections(inspection);
+
     doTest();
   }
 
   public void testNegatedConditionalNullAllowed() {
+    final NegatedConditionalInspection inspection = new NegatedConditionalInspection();
+    inspection.m_ignoreNegatedNullComparison = true;
+    inspection.m_ignoreNegatedZeroComparison = false;
+    myFixture.enableInspections(inspection);
+
     doTest();
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    final NegatedConditionalInspection inspection = new NegatedConditionalInspection();
-
-    final String testName = getTestName(true);
-    switch (testName) {
-      case "negatedConditionalNullAndZeroAllowed":
-        inspection.m_ignoreNegatedNullComparison = true;
-        inspection.m_ignoreNegatedZeroComparison = true;
-        break;
-      case "negatedConditionalNullAndZeroDisallowed":
-        inspection.m_ignoreNegatedNullComparison = false;
-        inspection.m_ignoreNegatedZeroComparison = false;
-        break;
-      case "negatedConditionalNullAllowed":
-        inspection.m_ignoreNegatedNullComparison = true;
-        inspection.m_ignoreNegatedZeroComparison = false;
-        break;
-      default:
-        throw new IllegalStateException(testName);
-    }
-
-    return inspection;
+    // Only used to determine the path of the test Java files.
+    return new NegatedConditionalInspection();
   }
 }
