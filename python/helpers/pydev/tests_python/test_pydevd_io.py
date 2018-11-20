@@ -1,4 +1,5 @@
 from _pydevd_bundle.pydevd_io import IORedirector
+from _pydevd_bundle.pydevd_comm import NetCommandFactory
 
 
 def test_io_redirector():
@@ -14,7 +15,7 @@ def test_io_redirector():
     IORedirector(MyRedirection1(), MyRedirection2(), wrap_buffer=True)
 
 
-class DummyWriter(object):
+class _DummyWriter(object):
 
     __slots__ = ['commands', 'command_meanings']
 
@@ -28,10 +29,15 @@ class DummyWriter(object):
         self.command_meanings.append(meaning)
         self.commands.append(cmd)
 
+class _DummyPyDb(object):
+    
+    def __init__(self):
+        self.cmd_factory = NetCommandFactory()
+        self.writer = _DummyWriter()
+    
 
 def test_debug_console():
     from _pydev_bundle.pydev_console_utils import DebugConsoleStdIn
-    from pydevd import PyDB
 
     class OriginalStdin(object):
 
@@ -40,8 +46,7 @@ def test_debug_console():
 
     original_stdin = OriginalStdin()
 
-    py_db = PyDB(set_as_global=False)
-    py_db.writer = DummyWriter()
+    py_db = _DummyPyDb()
     debug_console_std_in = DebugConsoleStdIn(py_db, original_stdin)
     assert debug_console_std_in.readline() == 'read'
 
