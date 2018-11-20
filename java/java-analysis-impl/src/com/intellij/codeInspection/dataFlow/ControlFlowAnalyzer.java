@@ -800,10 +800,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiExpression returnValue = statement.getReturnValue();
 
-    InlinedBlockContext context = myInlinedBlockContext;
-    if (context != null) {
+    if (myInlinedBlockContext != null) {
       // We treat return inside switch expression (which is disallowed syntax) as break-with-value
-      context.generateReturn(returnValue, this);
+      myInlinedBlockContext.generateReturn(returnValue, this);
     } else {
 
       if (returnValue != null) {
@@ -2044,9 +2043,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     exitInlinedBlock();
   }
 
-  private void enterInlinedBlock(@NotNull PsiCodeBlock block,
-                                 @NotNull Nullability resultNullability,
-                                 @NotNull DfaVariableValue target) {
+  private void enterInlinedBlock(@NotNull PsiCodeBlock block, @NotNull Nullability resultNullability, @NotNull DfaVariableValue target) {
     // Transfer value is pushed to avoid emptying stack beyond this point
     pushTrap(new Trap.InsideInlinedBlock(block));
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
