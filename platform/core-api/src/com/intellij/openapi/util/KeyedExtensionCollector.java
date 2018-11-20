@@ -94,7 +94,7 @@ public class KeyedExtensionCollector<T, KeyT> {
     Extensions.getRootArea().addAvailabilityListener(epName, myExtensionPointAvailabilityListener);
   }
 
-  public KeyedExtensionCollector(@NonNls @NotNull String epName, Disposable parentDisposable) {
+  public KeyedExtensionCollector(@NonNls @NotNull String epName, @NotNull Disposable parentDisposable) {
     this(epName);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
