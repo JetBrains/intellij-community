@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * The presentation of an action in a specific place in the user interface.
@@ -321,6 +323,12 @@ public final class Presentation implements Cloneable {
     setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled());
     setWeight(presentation.getWeight());
+
+    Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
+    allKeys.addAll(myUserMap.keySet());
+    for (String key : allKeys) {
+      putClientProperty(key, presentation.getClientProperty(key));
+    }
   }
 
   @Nullable
