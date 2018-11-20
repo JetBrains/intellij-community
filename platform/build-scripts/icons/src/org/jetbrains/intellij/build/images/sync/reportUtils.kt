@@ -156,12 +156,16 @@ private fun assignInvestigation(devRepoRoot: File, context: Context): Investigat
 private fun findInvestigator(devRepoRoot: File, context: Context): Investigator {
   // TODO: always filter out commits  already in review
   val commitsToInvestigate = if (context.devCommitsToSync.isEmpty()) {
+    log("Using all commits for investigation")
     val changes = context.addedByDev.asSequence() +
                   context.removedByDev.asSequence() +
                   context.modifiedByDev.asSequence()
     findCommits(devRepoRoot, changes).keys.groupBy(CommitInfo::repo)
   }
-  else context.devCommitsToSync
+  else {
+    log("Using filtered commits for investigation")
+    context.devCommitsToSync
+  }
   return commitsToInvestigate.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let {
     Investigator(it.committerEmail, commitsToInvestigate)
   } ?: Investigator()
