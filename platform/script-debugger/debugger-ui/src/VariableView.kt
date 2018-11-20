@@ -305,7 +305,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       override fun setValue(expression: XExpression, callback: XValueModifier.XModificationCallback) {
         variable.valueModifier!!.setValue(variable, expression.expression, evaluateContext)
-          .doneRun {
+          .onSuccess {
             value = null
             callback.valueModified()
           }

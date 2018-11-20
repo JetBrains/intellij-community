@@ -13,7 +13,6 @@ import io.netty.channel.Channel
 import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.SingleConnectionNetService
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.doneRun
 import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.io.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -73,7 +72,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
       }
 
       promise
-        .doneRun { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
+        .onSuccess { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
         .onError {
           LOG.errorIfNotMessage(it)
           handleError(fastCgiRequest, notEmptyContent)
@@ -189,6 +188,7 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
     }
 
     // skip standard headers
+    @Suppress("SpellCheckingInspection")
     if (key.isNullOrEmpty() || key!!.startsWith("http", ignoreCase = true) || key.startsWith("X-Accel-", ignoreCase = true)) {
       continue
     }
@@ -197,7 +197,7 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
     if (key.equals("status", ignoreCase = true)) {
       val index = value.indexOf(' ')
       if (index == -1) {
-        LOG.warn("Cannot parse status: " + value)
+        LOG.warn("Cannot parse status: $value")
         response.status = HttpResponseStatus.OK
       }
       else {
