@@ -1310,7 +1310,8 @@ public class InferenceSession {
     variables = new ArrayList<>(variables);
     ((ArrayList<InferenceVariable>)variables).sort((v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
     final String variablesEnumeration = StringUtil.join(variables, variable -> variable.getParameter().getName(), ", ");
-    registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + " exist so that " + incompatibleTypesMessage);
+    registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + 
+                                     (variablesEnumeration.isEmpty() ? "" : " ") + "exist so that " + incompatibleTypesMessage);
   }
   
   public void registerIncompatibleErrorMessage(@NotNull String incompatibleBoundsMessage) {
