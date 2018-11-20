@@ -17,6 +17,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 /**
  * @author Vladislav.Soroka
  */
+@Deprecated
 public class NodeProgressAnimator implements Runnable, Disposable {
   private static final int FRAMES_COUNT = 8;
   private static final int MOVIE_TIME = 800;
