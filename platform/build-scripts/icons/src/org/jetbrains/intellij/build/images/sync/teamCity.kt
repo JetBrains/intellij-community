@@ -49,6 +49,7 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
     val id = teamCityGet("users/email:${investigator.email}/id")
     if (assignee.contains(id)) {
       log("Investigation is already assigned to ${investigator.email}")
+      investigator.isAssigned = true
       return investigator
     }
     val text = context.report().let { if (it.isNotEmpty()) "$it, " else it } +
