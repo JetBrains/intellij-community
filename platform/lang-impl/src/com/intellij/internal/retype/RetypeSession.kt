@@ -58,6 +58,9 @@ class RetypeSession(
   private val disposeLock = Any()
   private var typedRightBefore = false
 
+  private var skipLookupSuggestion = false
+  private var textBeforeLookupSelection: String? = null
+
   init {
     if (editor.selectionModel.hasSelection()) {
       pos = editor.selectionModel.selectionStart
@@ -128,8 +131,28 @@ class RetypeSession(
   private fun typeNext() {
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
+    if (document.text.take(pos) != originalText.take(pos)) {
+      // Unexpected changes before current cursor position
+      // (may be unwanted import)
+      if (textBeforeLookupSelection != null) {
+        // Unexpected changes was made by lookup.
+        // Restore previous text state and set flag to skip further suggestions until whitespace will be typed
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.replaceText(textBeforeLookupSelection ?: return@runWriteCommandAction, document.modificationStamp + 1)
+        }
+        skipLookupSuggestion = true
+      }
+      else {
+        // There changes wasn't made by lookup, so we don't know how to handle them
+        // Restore text as it should be at this point without any intelligence
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.replaceText(originalText.substring(0, pos) + originalText.substring(endPos), document.modificationStamp + 1)
+        }
+      }
+    }
+
     if (editor.caretModel.offset > pos) {
-      // Editor movement has been preformed
+      // Caret movement has been preformed
       // Move the caret forward until the characters match
       while (pos < document.textLength - tailLength
              && originalText[pos] == document.text[pos]
@@ -163,12 +186,13 @@ class RetypeSession(
     }
 
     val lookup = LookupManager.getActiveLookup(editor) as LookupImpl?
-    if (lookup != null) {
+    if (lookup != null && !skipLookupSuggestion) {
       val currentLookupElement = lookup.currentItem
       if (currentLookupElement?.shouldAccept(lookup.lookupStart) == true) {
         lookup.focusDegree = LookupImpl.FocusDegree.FOCUSED
         scriptBuilder?.append("${ActionCommand.PREFIX} ${IdeActions.ACTION_CHOOSE_LOOKUP_ITEM}\n")
         typedRightBefore = false
+        textBeforeLookupSelection = document.text
         executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)
         queueNextOrStop()
         return
@@ -177,6 +201,11 @@ class RetypeSession(
 
     val c = originalText[pos++]
     typedChars++
+
+    // Reset lookup related variables
+    textBeforeLookupSelection = null
+    if (c == ' ') skipLookupSuggestion = false // We expecting new lookup suggestions
+
     if (c == '\n') {
       scriptBuilder?.append("${ActionCommand.PREFIX} ${IdeActions.ACTION_EDITOR_ENTER}\n")
       executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
