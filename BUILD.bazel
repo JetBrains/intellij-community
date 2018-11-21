@@ -186,6 +186,7 @@ iml_project(
         "//tools/base/sdklib:studio.android.sdktools.sdklib",
         "//tools/base/testutils:studio.android.sdktools.testutils",
         "//tools/base/testutils:studio.testutils-tests",
+        "//tools/base/tracer:studio.android.sdktools.tracer",
         "//tools/base/usb-devices:studio.usb-devices",
         "//tools/data-binding:studio.baseLibrary",
         "//tools/data-binding:studio.baseLibrarySupport",
