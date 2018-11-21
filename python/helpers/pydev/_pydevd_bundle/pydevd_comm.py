@@ -87,8 +87,8 @@ if IS_IRONPYTHON:
 
 from _pydevd_bundle import pydevd_console_integration
 from _pydevd_bundle import pydevd_vars
+import pydevd_tracing
 from _pydevd_bundle import pydevd_xml
-from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client
 import pydevd_file_utils
@@ -100,7 +100,7 @@ from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 
-from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
+from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
