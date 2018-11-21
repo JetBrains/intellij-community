@@ -1065,6 +1065,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         editorNotifications.updateNotifications(myVirtualFile);
       }
     }
+
+    putUserData(FOCUS_MODE_RANGES, null);
+    clearFocusMode();
   }
 
   /**
