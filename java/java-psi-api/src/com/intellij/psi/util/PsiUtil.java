@@ -348,16 +348,23 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static List<PsiExpression> getSwitchResultExpressions(PsiSwitchExpression switchExpression) {
-     PsiCodeBlock body = switchExpression.getBody();
+    PsiCodeBlock body = switchExpression.getBody();
     if (body != null) {
       List<PsiExpression> result = new ArrayList<>();
       PsiStatement[] statements = body.getStatements();
       for (PsiStatement statement : statements) {
         if (statement instanceof PsiSwitchLabeledRuleStatement) {
           PsiStatement ruleBody = ((PsiSwitchLabeledRuleStatement)statement).getBody();
-          if (ruleBody instanceof PsiExpressionStatement) {//todo break statements
+          if (ruleBody instanceof PsiExpressionStatement) {
             result.add(((PsiExpressionStatement)ruleBody).getExpression());
-            
+          }
+          else if (ruleBody instanceof PsiBlockStatement) {
+            PsiCodeBlock codeBlock = ((PsiBlockStatement)ruleBody).getCodeBlock();
+            ArrayList<PsiBreakStatement> breaks = new ArrayList<>();
+            addStatements(breaks, codeBlock, PsiBreakStatement.class);
+            for (PsiBreakStatement aBreak : breaks) {
+              ContainerUtil.addIfNotNull(result, aBreak.getExpression());
+            }
           }
         }
       }
@@ -1319,19 +1326,20 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiReturnStatement[] findReturnStatements(@Nullable PsiCodeBlock body) {
     ArrayList<PsiReturnStatement> vector = new ArrayList<>();
     if (body != null) {
-      addReturnStatements(vector, body);
+      addStatements(vector, body, PsiReturnStatement.class);
     }
     return vector.toArray(PsiReturnStatement.EMPTY_ARRAY);
   }
 
-  private static void addReturnStatements(List<? super PsiReturnStatement> vector, PsiElement element) {
-    if (element instanceof PsiReturnStatement) {
-      vector.add((PsiReturnStatement)element);
+  private static <T> void addStatements(List<? super T> vector, PsiElement element, Class<? extends T> clazz) {
+    if (PsiTreeUtil.instanceOf(element, clazz)) {
+      //noinspection unchecked
+      vector.add((T)element);
     }
     else if (!(element instanceof PsiClass) && !(element instanceof PsiLambdaExpression)) {
       PsiElement[] children = element.getChildren();
       for (PsiElement child : children) {
-        addReturnStatements(vector, child);
+        addStatements(vector, child, clazz);
       }
     }
   }

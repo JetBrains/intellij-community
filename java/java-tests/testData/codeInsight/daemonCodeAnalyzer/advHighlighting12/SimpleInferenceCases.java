@@ -23,5 +23,13 @@ no instance(s) of type variable(s) exist so that Object conforms to String">foo(
             default -> "str";
         });
     String s3 = foo(() -> switch (i) {default -> bar();});
+    String s4 = foo(() -> switch (i) {default -> { break bar();}});
+    String s5 = foo(<error descr="Incompatible types. Required String but 'foo' was inferred to T:
+no instance(s) of type variable(s) exist so that Integer conforms to String">() -> switch (i) {default -> { break 1;}}</error>);
+    Supplier<String> stringSupplier = switch (i) {
+            default -> {
+                break  () -> <error descr="Bad return type in lambda expression: int cannot be converted to String">1</error>;
+            }
+        };
   }
 }

@@ -1483,7 +1483,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiLocalVariable) {
       return ((PsiLocalVariable)parent).getTypeElement().isInferredType();
     }
-    return parent instanceof PsiExpressionStatement;
+    return parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement);
   }
 
   // 15.13 | 15.27
