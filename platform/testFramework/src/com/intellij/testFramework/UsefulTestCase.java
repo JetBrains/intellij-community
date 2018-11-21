@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -21,6 +22,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.DocumentCommitProcessor;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -145,10 +148,7 @@ public abstract class UsefulTestCase extends TestCase {
       // don't use method references here to make stack trace reading easier
       //noinspection Convert2MethodRef
       new RunAll(
-        () -> EdtTestUtil.runInEdtAndWait(() -> {
-          FileBasedIndexImpl index = ApplicationManager.getApplication() == null ? null : (FileBasedIndexImpl)FileBasedIndex.getInstance();
-          if (index != null) index.waitForVfsEventsExecuted(1, TimeUnit.MINUTES);
-        }),
+        () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
         () -> disposeRootDisposable(),
         () -> cleanupSwingDataStructures(),
         () -> cleanupDeleteOnExitHookList(),
@@ -1058,6 +1058,18 @@ public abstract class UsefulTestCase extends TestCase {
   @Nullable
   public static VirtualFile refreshAndFindFile(@NotNull final File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+  }
+
+  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      FileBasedIndexImpl index = ApplicationManager.getApplication() == null ? null : (FileBasedIndexImpl)FileBasedIndex.getInstance();
+      if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
+
+      DocumentCommitThread commitThread = (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
+      if (commitThread != null) {
+        commitThread.waitForAllCommits(timeout, timeUnit);
+      }
+    });
   }
 
   protected class TestDisposable implements Disposable {

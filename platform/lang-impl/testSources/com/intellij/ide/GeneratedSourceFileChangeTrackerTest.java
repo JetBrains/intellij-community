@@ -24,6 +24,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author nik
  */
@@ -51,33 +53,28 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
     }
   }
 
-  public void testChangeOrdinary() {
+  public void testChangeOrdinary() throws Exception {
     PsiFile file = myFixture.configureByText("Ordinary.txt", "");
     myFixture.type('a');
     assertFalse(isEditedGeneratedFile(file));
   }
 
-  public void testChangeGenerated() {
+  public void testChangeGenerated() throws Exception {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     myFixture.type('a');
     assertTrue(isEditedGeneratedFile(file));
   }
 
-  public void testChangeGeneratedExternally() {
+  public void testChangeGeneratedExternally() throws Exception {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     myFixture.saveText(file.getVirtualFile(), "abc");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertFalse(isEditedGeneratedFile(file));
   }
 
-  private boolean isEditedGeneratedFile(PsiFile file) {
+  private boolean isEditedGeneratedFile(PsiFile file) throws Exception {
     GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)getTracker();
-    try {
-      tracker.waitForAlarm();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    tracker.waitForAlarm(10, TimeUnit.SECONDS);
     return tracker.isEditedGeneratedFile(file.getVirtualFile());
   }
 

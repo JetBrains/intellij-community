@@ -17,13 +17,10 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -52,10 +49,7 @@ public class BaseFixture implements IdeaTestFixture {
   public void tearDown() throws Exception {
     Assert.assertTrue("setUp() has not been called", myInitialized);
     Assert.assertFalse("tearDown() already has been called", myDisposed);
-    EdtTestUtil.runInEdtAndWait(() -> {
-      FileBasedIndexImpl index = ApplicationManager.getApplication() == null ? null : (FileBasedIndexImpl)FileBasedIndex.getInstance();
-      if (index != null) index.waitForVfsEventsExecuted(1, TimeUnit.MINUTES);
-    });
+    UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS);
     disposeRootDisposable();
     myDisposed = true;
     resetClassFields(getClass());
