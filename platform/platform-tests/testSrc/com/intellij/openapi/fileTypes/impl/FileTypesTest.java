@@ -67,10 +67,15 @@ public class FileTypesTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    FileTypeManagerImpl.reDetectAsync(false);
-    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
-    myFileTypeManager = null;
-    super.tearDown();
+    try {
+      FileTypeManagerImpl.reDetectAsync(false);
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
+    }
+    finally {
+      myFileTypeManager = null;
+
+      super.tearDown();
+    }
   }
 
   public void testMaskExclude() {
