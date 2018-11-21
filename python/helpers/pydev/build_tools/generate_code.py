@@ -45,7 +45,8 @@ def get_cython_contents(filename):
                     new_contents.append(line)
                     continue
 
-                assert strip.startswith('# '), 'Line inside # IFDEF CYTHON must start with "# ".'
+                if not strip.startswith('#'): 
+                    raise AssertionError('Line inside # IFDEF CYTHON must start with "# ".\nFound: %s\n' % (line,))
                 new_contents.append(line.replace('# ', '', 1))
 
             elif state == 'nocython':

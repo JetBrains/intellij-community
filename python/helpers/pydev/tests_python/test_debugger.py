@@ -14,9 +14,9 @@ import pytest
 
 from tests_python import debugger_unittest
 from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION,
-    REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
-    CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
-    IS_APPVEYOR, wait_for_condition)
+                                            REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
+                                            CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
+                                            IS_APPVEYOR, wait_for_condition)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 try:
     from urllib import unquote
@@ -1007,6 +1007,15 @@ def test_module_entry_point(case_setup_m_switch_entry_point):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(not IS_CPYTHON or TEST_CYTHON, reason='CPython only test without cython enabled.')
+def test_check_tracer_with_exceptions(case_setup):
+
+    with case_setup.test_file('_debugger_case_check_tracer.py') as writer:
+        writer.write_add_exception_breakpoint_with_policy('IndexError', "1", "1", "1")
+        writer.write_make_initial_run()
+        writer.finished_ok = True
+
+
 @pytest.mark.skipif(IS_JYTHON, reason='Failing on Jython -- needs to be investigated).')
 def test_unhandled_exceptions_basic(case_setup):
 
@@ -1077,23 +1086,10 @@ def test_unhandled_exceptions_basic(case_setup):
 
 
 @pytest.mark.skipif(IS_JYTHON, reason='Failing on Jython -- needs to be investigated).')
-def test_unhandled_exceptions_in_top_level(case_setup):
+def test_unhandled_exceptions_in_top_level(case_setup_unhandled_exceptions):
 
-    # Note: expecting unhandled exception to be printed to stderr.
-    def check_test_suceeded_msg(writer, stdout, stderr):
-        return 'TEST SUCEEDED' in ''.join(stderr)
-
-    def additional_output_checks(writer, stdout, stderr):
-        # Don't call super as we have an expected exception
-        if 'ValueError: TEST SUCEEDED' not in stderr:
-            raise AssertionError('"ValueError: TEST SUCEEDED" not in stderr.\nstdout:\n%s\n\nstderr:\n%s' % (
-                stdout, stderr))
-
-    with case_setup.test_file(
-            '_debugger_case_unhandled_exceptions_on_top_level.py',
-            additional_output_checks=additional_output_checks,
-            check_test_suceeded_msg=check_test_suceeded_msg,
-    ) as writer:
+    with case_setup_unhandled_exceptions.test_file(
+            '_debugger_case_unhandled_exceptions_on_top_level.py') as writer:
 
         writer.write_add_exception_breakpoint_with_policy('Exception', "0", "1", "0")
         writer.write_make_initial_run()
@@ -1107,7 +1103,7 @@ def test_unhandled_exceptions_in_top_level(case_setup):
 
 
 @pytest.mark.skipif(IS_JYTHON, reason='Failing on Jython -- needs to be investigated).')
-def test_unhandled_exceptions_in_top_level2(case_setup):
+def test_unhandled_exceptions_in_top_level2(case_setup_unhandled_exceptions):
     # Note: expecting unhandled exception to be printed to stderr.
 
     def get_environ(writer):
@@ -1120,15 +1116,6 @@ def test_unhandled_exceptions_in_top_level2(case_setup):
         env['PYTHONPATH'] = curr_pythonpath
         return env
 
-    def check_test_suceeded_msg(writer, stdout, stderr):
-        return 'TEST SUCEEDED' in ''.join(stderr)
-
-    def additional_output_checks(writer, stdout, stderr):
-        # Don't call super as we have an expected exception
-        if 'ValueError: TEST SUCEEDED' not in stderr:
-            raise AssertionError('"ValueError: TEST SUCEEDED" not in stderr.\nstdout:\n%s\n\nstderr:\n%s' % (
-                stdout, stderr))
-
     def update_command_line_args(writer, args):
         # Start pydevd with '-m' to see how it deal with being called with
         # runpy at the start.
@@ -1136,11 +1123,9 @@ def test_unhandled_exceptions_in_top_level2(case_setup):
         args = ['-m', 'pydevd'] + args[1:]
         return args
 
-    with case_setup.test_file(
+    with case_setup_unhandled_exceptions.test_file(
             '_debugger_case_unhandled_exceptions_on_top_level.py',
             get_environ=get_environ,
-            additional_output_checks=additional_output_checks,
-            check_test_suceeded_msg=check_test_suceeded_msg,
             update_command_line_args=update_command_line_args,
     ) as writer:
 
@@ -1156,22 +1141,10 @@ def test_unhandled_exceptions_in_top_level2(case_setup):
 
 
 @pytest.mark.skipif(IS_JYTHON, reason='Failing on Jython -- needs to be investigated).')
-def test_unhandled_exceptions_in_top_level3(case_setup):
+def test_unhandled_exceptions_in_top_level3(case_setup_unhandled_exceptions):
 
-    def check_test_suceeded_msg(writer, stdout, stderr):
-        return 'TEST SUCEEDED' in ''.join(stderr)
-
-    def additional_output_checks(writer, stdout, stderr):
-        # Don't call super as we have an expected exception
-        if 'ValueError: TEST SUCEEDED' not in stderr:
-            raise AssertionError('"ValueError: TEST SUCEEDED" not in stderr.\nstdout:\n%s\n\nstderr:\n%s' % (
-                stdout, stderr))
-
-    with case_setup.test_file(
-            '_debugger_case_unhandled_exceptions_on_top_level.py',
-            additional_output_checks=additional_output_checks,
-            check_test_suceeded_msg=check_test_suceeded_msg,
-    ) as writer:
+    with case_setup_unhandled_exceptions.test_file(
+            '_debugger_case_unhandled_exceptions_on_top_level.py') as writer:
 
         # Handled and unhandled
         writer.write_add_exception_breakpoint_with_policy('Exception', "1", "1", "0")
@@ -1190,21 +1163,11 @@ def test_unhandled_exceptions_in_top_level3(case_setup):
 
 
 @pytest.mark.skipif(IS_JYTHON, reason='Failing on Jython -- needs to be investigated).')
-def test_unhandled_exceptions_in_top_level4(case_setup):
-
-    def check_test_suceeded_msg(writer, stdout, stderr):
-        return 'TEST SUCEEDED' in ''.join(stderr)
-
-    def additional_output_checks(writer, stdout, stderr):
-        # Don't call super as we have an expected exception
-        assert 'ValueError: TEST SUCEEDED' in stderr
+def test_unhandled_exceptions_in_top_level4(case_setup_unhandled_exceptions):
 
     # Note: expecting unhandled exception to be printed to stderr.
-    with case_setup.test_file(
-            '_debugger_case_unhandled_exceptions_on_top_level2.py',
-            additional_output_checks=additional_output_checks,
-            check_test_suceeded_msg=check_test_suceeded_msg,
-    ) as writer:
+    with case_setup_unhandled_exceptions.test_file(
+            '_debugger_case_unhandled_exceptions_on_top_level2.py') as writer:
 
         # Handled and unhandled
         writer.write_add_exception_breakpoint_with_policy('Exception', "1", "1", "0")
@@ -1515,7 +1478,7 @@ def test_case_settrace(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skip
+@pytest.mark.skipif(IS_PY26 or IS_JYTHON, reason='scapy only supports 2.7 onwards, not available for jython.')
 def test_case_scapy(case_setup):
     with case_setup.test_file('_debugger_case_scapy.py') as writer:
         writer.FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
@@ -2127,8 +2090,57 @@ def test_remote_unhandled_exceptions(case_setup_remote):
         writer.finished_ok = True
 
 
+def scenario_uncaught(writer):
+    hit = writer.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
+    writer.write_add_exception_breakpoint_with_policy('ValueError', '0', '1', '0')
+    writer.write_run_thread(hit.thread_id)
+
+    hit = writer.wait_for_breakpoint_hit(REASON_UNCAUGHT_EXCEPTION)
+    writer.write_run_thread(hit.thread_id)
+
+
+def scenario_caught(writer):
+    hit = writer.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
+    writer.write_add_exception_breakpoint_with_policy('ValueError', '1', '0', '0')
+    writer.write_run_thread(hit.thread_id)
+
+    for _ in range(2):
+        hit = writer.wait_for_breakpoint_hit(REASON_CAUGHT_EXCEPTION)
+        writer.write_run_thread(hit.thread_id)
+
+    # Note: the one in the top-level will be hit once as caught (but not another time
+    # in postmortem mode).
+    hit = writer.wait_for_breakpoint_hit(REASON_CAUGHT_EXCEPTION)
+    writer.write_run_thread(hit.thread_id)
+
+
+def scenario_caught_and_uncaught(writer):
+    hit = writer.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
+    writer.write_add_exception_breakpoint_with_policy('ValueError', '1', '1', '0')
+    writer.write_run_thread(hit.thread_id)
+
+    for _ in range(2):
+        hit = writer.wait_for_breakpoint_hit(REASON_CAUGHT_EXCEPTION)
+        writer.write_run_thread(hit.thread_id)
+
+    # Note: the one in the top-level will be hit once as caught and another in postmortem mode.
+    hit = writer.wait_for_breakpoint_hit(REASON_CAUGHT_EXCEPTION)
+    writer.write_run_thread(hit.thread_id)
+
+    hit = writer.wait_for_breakpoint_hit(REASON_UNCAUGHT_EXCEPTION)
+    writer.write_run_thread(hit.thread_id)
+
+
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
-def test_remote_unhandled_exceptions2(case_setup_remote):
+@pytest.mark.parametrize(
+    'check_scenario',
+    [
+        scenario_uncaught,
+        scenario_caught,
+        scenario_caught_and_uncaught,
+    ]
+)
+def test_top_level_exceptions_on_attach(case_setup_remote, check_scenario):
 
     def check_test_suceeded_msg(writer, stdout, stderr):
         return 'TEST SUCEEDED' in ''.join(stderr)
@@ -2145,25 +2157,7 @@ def test_remote_unhandled_exceptions2(case_setup_remote):
         writer.log.append('making initial run')
         writer.write_make_initial_run()
 
-        writer.log.append('waiting for breakpoint hit')
-        hit = writer.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
-
-        writer.write_add_exception_breakpoint_with_policy('ValueError', '0', '1', '0')
-
-        writer.log.append('run thread')
-        writer.write_run_thread(hit.thread_id)
-
-        writer.log.append('waiting for uncaught exception')
-        for _ in range(3):
-            # Note: this isn't ideal, but in the remote attach case, if the
-            # exception is raised at the topmost frame, we consider the exception to
-            # be an uncaught exception even if it'll be handled at that point.
-            # See: https://github.com/Microsoft/ptvsd/issues/580
-            # To properly fix this, we'll need to identify that this exception
-            # will be handled later on with the information we have at hand (so,
-            # no back frame but within a try..except block).
-            hit = writer.wait_for_breakpoint_hit(REASON_UNCAUGHT_EXCEPTION)
-            writer.write_run_thread(hit.thread_id)
+        check_scenario(writer)
 
         writer.log.append('finished ok')
         writer.finished_ok = True
@@ -2173,3 +2167,7 @@ def test_remote_unhandled_exceptions2(case_setup_remote):
 # set PATH=%PATH%;C:\bin\jython2.7.0\bin
 # set PATH=%PATH%;%JAVA_HOME%\bin
 # c:\bin\jython2.7.0\bin\jython.exe -m py.test tests_python
+
+
+if __name__ == '__main__':
+    pytest.main(['-k', 'test_top_level_exceptions_on_attach'])
