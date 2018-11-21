@@ -18,6 +18,7 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.*;
@@ -212,15 +213,18 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public List<JsonSchemaInfo> getAllUserVisibleSchemas() {
-    List<String> schemas = myCatalogManager.getAllCatalogSchemas();
+    List<JsonSchemaCatalogEntry> schemas = myCatalogManager.getAllCatalogEntries();
     Collection<? extends JsonSchemaFileProvider> providers = myState.getProviders();
     List<JsonSchemaInfo> results = ContainerUtil.newArrayListWithCapacity(schemas.size() + providers.size());
-    Set<String> processedRemotes = ContainerUtil.newHashSet();
+    Map<String, JsonSchemaInfo> processedRemotes = ContainerUtil.newHashMap();
     for (JsonSchemaFileProvider provider: providers) {
       if (provider.isUserVisible()) {
-        if (provider.getRemoteSource() != null) {
-          if (processedRemotes.add(provider.getRemoteSource())) {
-            results.add(new JsonSchemaInfo(provider));
+        final String remoteSource = provider.getRemoteSource();
+        if (remoteSource != null) {
+          if (!processedRemotes.containsKey(remoteSource)) {
+            final JsonSchemaInfo info = new JsonSchemaInfo(provider);
+            processedRemotes.put(remoteSource, info);
+            results.add(info);
           }
         }
         else {
@@ -229,12 +233,30 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       }
     }
 
-    for (String schema: schemas) {
-      if (processedRemotes.add(schema)) {
-        results.add(new JsonSchemaInfo(schema));
+    for (JsonSchemaCatalogEntry schema: schemas) {
+      final String url = schema.getUrl();
+      if (!processedRemotes.containsKey(url)) {
+        final JsonSchemaInfo info = new JsonSchemaInfo(url);
+        if (schema.getDescription() != null) {
+          info.setDocumentation(getDoc(schema));
+        }
+        results.add(info);
+      }
+      else {
+        // use documentation from schema catalog for bundled schemas if possible
+        // we don't have our own docs, so let's reuse the existing docs from the catalog
+        JsonSchemaInfo info = processedRemotes.get(url);
+        if (info.getDocumentation() == null) {
+          info.setDocumentation(getDoc(schema));
+        }
       }
     }
     return results;
+  }
+
+  @NotNull
+  private static String getDoc(JsonSchemaCatalogEntry schema) {
+    return "<b>" + schema.getName() + "</b><br/>" + schema.getDescription();
   }
 
   @Nullable

@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.widget;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
@@ -27,7 +29,7 @@ import java.util.Objects;
 
 import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.*;
 
-class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
+class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> implements ListPopupStepEx<JsonSchemaInfo> {
   private final Project myProject;
   private final VirtualFile myVirtualFile;
   @NotNull private final JsonSchemaService myService;
@@ -119,6 +121,21 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
   @Override
   public boolean isSpeedSearchEnabled() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  public String getTooltipTextFor(JsonSchemaInfo value) {
+    return value.getDocumentation();
+  }
+
+  @Override
+  public void setEmptyText(@NotNull StatusText emptyText) {
+  }
+
+  @Override
+  public PopupStep onChosen(JsonSchemaInfo selectedValue, boolean finalChoice, int eventModifiers) {
+    return onChosen(selectedValue, finalChoice);
   }
 
   private static void setMapping(@Nullable JsonSchemaInfo selectedValue, @NotNull VirtualFile virtualFile, @NotNull Project project) {
