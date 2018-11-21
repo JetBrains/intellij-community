@@ -92,7 +92,6 @@ public class SearchUtil {
 
   private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path) {
     if (component instanceof SkipSelfSearchComponent) return;
-    if (!component.isVisible()) return;
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {
       final TitledBorder titledBorder = (TitledBorder)border;
