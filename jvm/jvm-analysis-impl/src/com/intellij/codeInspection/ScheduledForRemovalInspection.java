@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +19,11 @@ public class ScheduledForRemovalInspection extends AnnotatedElementInspectionBas
   }
 
   @Override
-  protected void createProblem(@NotNull PsiReference reference, @NotNull ProblemsHolder holder) {
+  protected void createProblem(@NotNull PsiReference reference,
+                               @NotNull PsiModifierListOwner annotatedTarget,
+                               @NotNull ProblemsHolder holder) {
     //TODO determine highlight severity like in MarkedForRemovalInspection (and extend the description)?
-    String message = JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.description", getReferenceText(reference));
+    String message = JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.description", getPresentableText(annotatedTarget));
     holder.registerProblem(reference, message, ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL);
   }
 }
