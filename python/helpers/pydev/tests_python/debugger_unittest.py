@@ -520,10 +520,15 @@ class AbstractWriterThread(threading.Thread):
             self.sock.close()
 
     def write(self, s):
-        self.log.append('write: %s' % (s,))
+        from _pydevd_bundle.pydevd_comm import ID_TO_MEANING
+        meaning = ID_TO_MEANING.get(re.search(r'\d+', s).group(), '')
+        if meaning:
+            meaning += ': '
+            
+        self.log.append('write: %s%s' % (meaning, s,))
 
         if SHOW_WRITES_AND_READS:
-            print('Test Writer Thread Written %s' % (s,))
+            print('Test Writer Thread Written %s%s' % (meaning, s,))
         msg = s + '\n'
         if IS_PY3K:
             msg = msg.encode('utf-8')
