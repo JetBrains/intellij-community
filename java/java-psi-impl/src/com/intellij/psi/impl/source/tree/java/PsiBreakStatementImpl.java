@@ -41,11 +41,11 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(this);
     PsiExpression expression = getExpression();
 
-    if (enclosing == null || enclosing instanceof PsiSwitchExpression || !PsiImplUtil.isPlainReference(expression)) {
+    if (enclosing instanceof PsiSwitchExpression || !PsiImplUtil.isPlainReference(expression)) {
       return enclosing;
     }
 
-    PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(enclosing, expression.getText());
+    PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, expression.getText());
     if (labeled != null) {
       return labeled.getStatement();
     }
