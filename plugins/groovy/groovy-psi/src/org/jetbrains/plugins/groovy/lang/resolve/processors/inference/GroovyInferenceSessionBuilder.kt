@@ -53,9 +53,7 @@ class GroovyInferenceSessionBuilder(
     val session = GroovyInferenceSession(
       candidate.method.typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock
     )
-    if (argumentMapping != null) {
-      session.addConstraint(ArgumentsConstraint(argumentMapping, ref))
-    }
+    session.initArgumentConstraints(argumentMapping)
     return session
   }
 }

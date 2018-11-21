@@ -32,9 +32,7 @@ class MethodCallConstraint(
     val nestedSession = GroovyInferenceSession(typeParameters, siteSubstitutor, context, emptyList(), session.skipClosureBlock)
     session.nestedSessions[result] = nestedSession
     nestedSession.propagateVariables(session)
-    result.argumentMapping?.let {
-      nestedSession.addConstraint(ArgumentsConstraint(it, context))
-    }
+    nestedSession.initArgumentConstraints(result.argumentMapping)
     nestedSession.repeatInferencePhases()
     val rt = if (method.isConstructor) {
       method.containingClass?.type()

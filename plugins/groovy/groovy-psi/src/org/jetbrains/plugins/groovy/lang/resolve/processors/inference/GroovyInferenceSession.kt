@@ -7,6 +7,8 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
 class GroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
@@ -46,5 +48,20 @@ class GroovyInferenceSession(
       }
     }
     return null
+  }
+
+  fun initArgumentConstraints(mapping: ArgumentMapping?) {
+    if (mapping == null) return
+    for ((expectedType, argument) in mapping.expectedTypes) {
+      if (argument is ExpressionArgument) {
+        addConstraint(ExpressionConstraint(expectedType, argument.expression))
+      }
+      else {
+        val type = argument.type
+        if (type != null) {
+          addConstraint(TypeConstraint(expectedType, type, context))
+        }
+      }
+    }
   }
 }
