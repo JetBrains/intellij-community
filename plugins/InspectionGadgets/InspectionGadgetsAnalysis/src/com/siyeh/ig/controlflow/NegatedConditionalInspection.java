@@ -29,6 +29,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -76,6 +77,12 @@ public class NegatedConditionalInspection extends BaseInspection {
     panel.addCheckbox(InspectionGadgetsBundle.message("negated.if.else.ignore.negated.null.option"), "m_ignoreNegatedNullComparison");
     panel.addCheckbox(InspectionGadgetsBundle.message("negated.if.else.ignore.negated.zero.option"), "m_ignoreNegatedZeroComparison");
     return panel;
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "m_ignoreNegatedZeroComparison");
+    writeBooleanOption(node, "m_ignoreNegatedZeroComparison", true);
   }
 
   @Override
