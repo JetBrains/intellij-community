@@ -73,4 +73,102 @@ public class SwitchExpressionsJava12 {
       }
     }
   }
+
+  static void testSimpleBreak(int i) {
+    int j = switch(i) {
+      case 1 -> {
+        System.out.println("Hello");
+        break 10;
+      }
+      case 2 -> {
+        i = i+1;
+        break 20;
+      }
+      case 3 -> {
+        break 33-i;
+      }
+      default -> 0;
+    };
+    if (j == 20 && <warning descr="Condition 'i == 3' is always 'true' when reached">i == 3</warning>) {}
+    if (j == 30 && <warning descr="Condition 'i == 3' is always 'true' when reached">i == 3</warning>) {}
+    if (j == 10 && <warning descr="Condition 'i == 1' is always 'true' when reached">i == 1</warning>) {}
+    if (<warning descr="Condition 'i == 2' is always 'false'">i == 2</warning>) {}
+    if (j == 0 && (<warning descr="Condition 'i < 1 || i > 3' is always 'true' when reached">i < 1 || <warning descr="Condition 'i > 3' is always 'true' when reached">i > 3</warning></warning>)) {}
+  }
+
+  static void testSwitchInInlinedLambda(int i) {
+    int x = ((IntSupplier)() -> {
+      int j = switch (i) {
+        case 1 -> 2;
+        case 2 -> 3;
+        case 3 -> {
+          System.out.println("hello");
+          break 1;
+        }
+        default -> 4;
+      };
+      if (j < 2) {}
+      if (<warning descr="Condition 'j == 4 && i == 2' is always 'false'">j == 4 && <warning descr="Condition 'i == 2' is always 'false' when reached">i == 2</warning></warning>) {}
+      if (i == 3 && <warning descr="Condition 'j == 1' is always 'true' when reached">j == 1</warning>) {}
+      return 0;
+    }).getAsInt();
+    if (<warning descr="Condition 'x == 1 && i == 3' is always 'false'"><warning descr="Condition 'x == 1' is always 'false'">x == 1</warning> && i == 3</warning>) {}
+  }
+
+  static void testSwitchWithInnerFinally(int i) {
+    int j = switch (i) {
+      case 1 -> 2;
+      case 2 -> 3;
+      case 3 -> {
+        try {
+          System.out.println("hello");
+          break 1; // never happens
+        }
+        finally {
+          break 2;
+        }
+      }
+      default -> 4;
+    };
+    if (<warning descr="Condition 'j < 2' is always 'false'">j < 2</warning>) {}
+    if (<warning descr="Condition 'j == 4 && i == 2' is always 'false'">j == 4 && <warning descr="Condition 'i == 2' is always 'false' when reached">i == 2</warning></warning>) {}
+  }
+
+  static int get(int x) {
+    return x;
+  }
+
+  void testStatementInsideExpressionInsideBlockLambda(int x, int y) {
+    int i = ((IntSupplier)() -> {
+      System.out.println();
+      return switch(x) {
+        case 1 -> {
+          switch (y) {
+            default -> get(x);
+          }
+          break 5;
+        }
+        default -> 10;
+      };
+    }).getAsInt();
+    if (i != 10) {}
+  }
+  
+  void testSwitchWithCatch(int x) {
+    int i = switch(x) {
+      case 1, 2:
+        try {
+          if (x % 2 == 1) throw new IllegalArgumentException();
+        }
+        catch (IllegalArgumentException ex) {
+          break 100;
+        }
+      case 3:
+        break 200;
+      default:
+        break 300;
+    };
+    if (i == 100 && <warning descr="Condition 'x == 1' is always 'true' when reached">x == 1</warning>) {}
+    if (i == 200 && (<warning descr="Condition 'x == 2 || x == 3' is always 'true' when reached">x == 2 || <warning descr="Condition 'x == 3' is always 'true' when reached">x == 3</warning></warning>)) {}
+  }
 }

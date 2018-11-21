@@ -173,7 +173,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void finishElement(PsiElement element) {
     myCurrentFlow.finishElement(element);
-    if (element instanceof PsiStatement && !(element instanceof PsiReturnStatement)) {
+    if (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) && 
+        !(element instanceof PsiSwitchLabeledRuleStatement)) {
       List<DfaVariableValue> synthetics = getSynthetics(element);
       FinishElementInstruction instruction = new FinishElementInstruction(element);
       instruction.getVarsToFlush().addAll(synthetics);
@@ -401,7 +402,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitBreakStatement(PsiBreakStatement statement) {
     startElement(statement);
-    jumpOut(statement.findExitedStatement());
+    PsiExpression expression = statement.getExpression();
+    PsiElement exitedElement = statement.findExitedElement();
+    if (expression != null && exitedElement instanceof PsiSwitchExpression &&
+        myInlinedBlockContext != null && myInlinedBlockContext.myCodeBlock == ((PsiSwitchExpression)exitedElement).getBody()) {
+      myInlinedBlockContext.generateReturn(expression, this);
+    } else {
+      jumpOut(exitedElement);
+    }
     finishElement(statement);
   }
 
