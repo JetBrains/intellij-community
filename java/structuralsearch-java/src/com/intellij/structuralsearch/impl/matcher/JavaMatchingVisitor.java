@@ -1280,7 +1280,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitBreakStatement(final PsiBreakStatement break1) {
     final PsiBreakStatement break2 = (PsiBreakStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(break1.getLabelIdentifier(), break2.getLabelIdentifier()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(break1.getExpression(), break2.getExpression()));
   }
 
   @Override

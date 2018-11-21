@@ -1,13 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -18,7 +16,6 @@ import java.util.stream.Stream;
  * @author Bas Leijdekkers
  */
 public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
-  @Bombed(user = "roman.shevchenko@jetbrains.com", day = 22, month = Calendar.NOVEMBER)
   public void testAll() {
     final Configuration[] templates = JavaPredefinedConfigurations.createPredefinedTemplates();
     final Map<String, Configuration> configurationMap = Stream.of(templates).collect(Collectors.toMap(Configuration::getName, x -> x));
