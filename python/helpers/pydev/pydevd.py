@@ -222,9 +222,11 @@ class PyDB:
     """
 
 
-    def __init__(self):
-        set_global_debugger(self)
-        pydevd_tracing.replace_sys_set_trace_func()
+    def __init__(self, set_as_global=True):
+        if set_as_global:
+            set_global_debugger(self)
+            pydevd_tracing.replace_sys_set_trace_func()
+            
         self.reader = None
         self.writer = None
         self.output_checker = None
@@ -246,7 +248,9 @@ class PyDB:
         self._main_lock = TrackedLock()
         self._lock_running_thread_ids = thread.allocate_lock()
         self._py_db_command_thread_event = threading.Event()
-        CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
+        if set_as_global:
+            CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
+            
         self._finish_debugging_session = False
         self._termination_event_set = False
         self.signature_factory = None
@@ -818,7 +822,7 @@ class PyDB:
                         t.thread_id == thread_id and t.frame_id == frame_id:
                     t.cancel_event.set()
         except:
-            import traceback;traceback.print_exc()
+            traceback.print_exc()
         finally:
             self._main_lock.release()
 
@@ -834,7 +838,7 @@ class PyDB:
         if send_suspend_message:
             message = thread.additional_info.pydev_message
             cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
-            thread_stack_str = cmd.thread_stack_str
+            thread_stack_str = cmd.thread_stack_str  # @UnusedVariable -- `make_get_thread_stack_message` uses it later.
             self.writer.add_command(cmd)
 
         with CustomFramesContainer.custom_frames_lock:  # @UndefinedVariable

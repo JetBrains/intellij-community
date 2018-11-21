@@ -17,7 +17,6 @@ DONT_TRACE = {
     '_weakrefset.py':LIB_FILE,
     'linecache.py':LIB_FILE,
     'threading.py':LIB_FILE,
-    'dis.py':LIB_FILE,
 
     #things from pydev that we don't want to trace
     '_pydev_execfile.py':PYDEV_FILE,
@@ -67,6 +66,7 @@ DONT_TRACE = {
     'pydevd_additional_thread_info.py': PYDEV_FILE,
     'pydevd_additional_thread_info_regular.py': PYDEV_FILE,
     'pydevd_breakpoints.py': PYDEV_FILE,
+    'pydevd_collect_try_except_info.py': PYDEV_FILE,
     'pydevd_comm.py': PYDEV_FILE,
     'pydevd_command_line_handling.py': PYDEV_FILE,
     'pydevd_concurrency_logger.py': PYDEV_FILE,
@@ -93,8 +93,6 @@ DONT_TRACE = {
     'pydevd_kill_all_pydevd_threads.py': PYDEV_FILE,
     'pydevd_modify_bytecode.py': PYDEV_FILE,
     'pydevd_plugin_numpy_types.py': PYDEV_FILE,
-    'pydevd_plugin_test_events.py': PYDEV_FILE,
-    'pydevd_plugin_test_exttype.py': PYDEV_FILE,
     'pydevd_plugin_utils.py': PYDEV_FILE,
     'pydevd_plugins_django_form_str.py': PYDEV_FILE,
     'pydevd_process_net_command.py': PYDEV_FILE,
