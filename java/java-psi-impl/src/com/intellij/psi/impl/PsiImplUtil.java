@@ -454,6 +454,25 @@ public class PsiImplUtil {
     return docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
+  /**
+   * Checks if the given PSI element is deprecated with annotation or JavaDoc tag.
+   * <br>
+   * It is suitable for elements other than {@link PsiDocCommentOwner}.
+   */
+  public static boolean isDeprecated(@NotNull PsiElement psiElement) {
+    if (psiElement instanceof PsiDocCommentOwner) {
+      return ((PsiDocCommentOwner)psiElement).isDeprecated();
+    }
+    if (psiElement instanceof PsiModifierListOwner && isDeprecatedByAnnotation((PsiModifierListOwner) psiElement)) {
+      return true;
+    }
+    if (psiElement instanceof PsiJavaDocumentedElement) {
+      return isDeprecatedByDocTag((PsiJavaDocumentedElement)psiElement);
+    }
+    return false;
+  }
+
+
   @Nullable
   public static PsiJavaDocumentedElement findDocCommentOwner(@NotNull PsiDocComment comment) {
     PsiElement parent = comment.getParent();
