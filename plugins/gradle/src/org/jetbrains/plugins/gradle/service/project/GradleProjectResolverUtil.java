@@ -554,7 +554,7 @@ public class GradleProjectResolverUtil {
           Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
           if (projectPair == null) {
             MultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File> projectPairs =
-              MultiMap.createSet(ContainerUtil.identityStrategy());
+              MultiMap.createLinkedSet();
             for (File file: projectDependency.getProjectDependencyArtifacts()) {
               moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
               if (moduleId == null) continue;
