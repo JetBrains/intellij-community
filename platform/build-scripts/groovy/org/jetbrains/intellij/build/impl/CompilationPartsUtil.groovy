@@ -365,6 +365,10 @@ class CompilationPartsUtil {
                statusCode == HttpStatus.SC_SEE_OTHER)
             && locationHeader != null) {
             urlWithPrefix = locationHeader.getValue()
+            messages.info("Redirected to mirror: " + urlWithPrefix)
+          }
+          else {
+            messages.info("Will use origin server: " + urlWithPrefix)
           }
           StreamUtil.closeStream(response)
         }
@@ -451,7 +455,6 @@ class CompilationPartsUtil {
     executor.close()
 
     executor.reportErrors(messages)
-
   }
 
   private static void unpack(BuildMessages messages, FetchAndUnpackContext ctx) {
