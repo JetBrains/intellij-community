@@ -22,7 +22,7 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-  private final static SwitchInspection[] ourExpressionInspections = new SwitchInspection[]{
+  private final static SwitchInspection[] ourInspections = new SwitchInspection[]{
     new ReturningSwitch(),
     new VariableAssigningSwitch(),
     new StatementSwitch()
@@ -105,7 +105,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     List<SwitchBranch> branches = extractBranches(body);
     if (branches == null) return null;
     boolean isExhaustive = isExhaustiveSwitch(branches, expression);
-    for (SwitchInspection inspection : ourExpressionInspections) {
+    for (SwitchInspection inspection : ourInspections) {
       SwitchReplacer replacer = inspection.suggestReplacer(switchStatement, branches, isExhaustive);
       if (replacer != null) return replacer;
     }
