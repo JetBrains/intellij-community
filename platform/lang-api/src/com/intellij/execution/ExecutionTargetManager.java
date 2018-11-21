@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,11 @@ public abstract class ExecutionTargetManager {
   @NotNull
   public static List<ExecutionTarget> getTargetsToChooseFor(@NotNull Project project, @Nullable RunnerAndConfigurationSettings settings) {
     List<ExecutionTarget> result = getInstance(project).getTargetsFor(settings);
-    if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) return Collections.emptyList();
+    // Android Studio: b/119839260
+    result = Collections.unmodifiableList(result.stream().filter(target -> !target.isExternallyManaged()).collect(Collectors.toList()));
+    if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) {
+      return Collections.emptyList();
+    }
     return result;
   }
 

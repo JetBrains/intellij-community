@@ -74,7 +74,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
       String name = Executor.shortenNameIfNeed(settings.getName());
-      if (target != DefaultExecutionTarget.INSTANCE) {
+      // Android Studio: b/119839260
+      if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
         name += " | " + target.getDisplayName();
       } else {
         if (!ExecutionTargetManager.canRun(settings, target)) {

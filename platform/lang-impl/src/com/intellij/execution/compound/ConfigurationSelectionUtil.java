@@ -21,8 +21,10 @@ import java.util.function.BiConsumer;
 public class ConfigurationSelectionUtil {
   @NotNull
   public static String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
-    return configuration.getType().getDisplayName() + " '" + configuration.getName() + 
-           "'" + (target != null && target != DefaultExecutionTarget.INSTANCE ? " | " + target.getDisplayName() : ""); 
+    // Android Studio: b/119839260
+    return configuration.getType().getDisplayName() + " '" + configuration.getName() + "'" +
+           (target != null && target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged() ?
+            " | " + target.getDisplayName() : "");
   }
 
   // todo merge with ChooseRunConfigurationPopup 
