@@ -511,7 +511,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkReturnOutsideOfSwitchExpr(@NotNull PsiStatement statement) {
+  static HighlightInfo checkReturnFromSwitchExpr(@NotNull PsiStatement statement) {
     if (PsiImplUtil.findEnclosingSwitchOrLoop(statement) instanceof PsiSwitchExpression) {
       String message = JavaErrorMessages.message("return.outside.switch.expr");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();

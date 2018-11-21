@@ -1562,7 +1562,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitReturnStatement(PsiReturnStatement statement) {
     super.visitStatement(statement);
     if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
-      myHolder.add(HighlightUtil.checkReturnOutsideOfSwitchExpr(statement));
+      myHolder.add(HighlightUtil.checkReturnFromSwitchExpr(statement));
     }
     if (!myHolder.hasErrorResults()) {
       try {
