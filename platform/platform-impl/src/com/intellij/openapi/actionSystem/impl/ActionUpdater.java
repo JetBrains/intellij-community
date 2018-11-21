@@ -40,6 +40,7 @@ class ActionUpdater {
 
   private final Map<AnAction, Presentation> myUpdatedPresentations = ContainerUtil.newIdentityTroveMap();
   private final Map<ActionGroup, List<AnAction>> myGroupChildren = ContainerUtil.newIdentityTroveMap();
+  private final Map<ActionGroup, Boolean> myCanBePerformedCache = ContainerUtil.newIdentityTroveMap();
   private final UpdateStrategy myRealUpdateStrategy;
   private final UpdateStrategy myCheapStrategy;
 
@@ -167,7 +168,7 @@ class ActionUpdater {
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
             return Collections.emptyList();
           }
-          presentation.setEnabled(visibleChildren || strategy.canBePerformed.test(actionGroup));
+          presentation.setEnabled(visibleChildren || canBePerformed(actionGroup, strategy));
         }
 
         return Collections.singletonList(child);
@@ -177,6 +178,14 @@ class ActionUpdater {
     }
 
     return Collections.singletonList(child);
+  }
+
+  boolean canBePerformedCached(ActionGroup group) {
+    return !Boolean.FALSE.equals(myCanBePerformedCache.get(group));
+  }
+
+  private boolean canBePerformed(ActionGroup group, UpdateStrategy strategy) {
+    return myCanBePerformedCache.computeIfAbsent(group, __ -> strategy.canBePerformed.test(group));
   }
 
   private Presentation orDefault(AnAction action, Presentation presentation) {

@@ -130,7 +130,7 @@ public class Utils{
         }
       }
       else if (action instanceof ActionGroup &&
-               !(((ActionGroup)action).canBePerformed(context) &&
+               !(updater.canBePerformedCached((ActionGroup)action) &&
                  !updater.hasVisibleChildren((ActionGroup)action))) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
