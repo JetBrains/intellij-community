@@ -8,13 +8,13 @@ internal fun syncIcons(context: Context) {
   val icons = context.icons
   if (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) {
     log("Syncing icons repo:")
-    syncAdded(context.addedByDev, devIcons, File(context.iconsRepoDir)) { context.iconsRepo }
+    syncAdded(context.addedByDev, devIcons, context.iconsRepoDir) { context.iconsRepo }
     syncModified(context.modifiedByDev, icons, devIcons)
     syncRemoved(context.removedByDev, icons)
   }
   if (context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) {
     log("Syncing dev repo:")
-    syncAdded(context.addedByDesigners, icons, File(context.devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
+    syncAdded(context.addedByDesigners, icons, context.devRepoDir) { changesToReposMap(it) }
     syncModified(context.modifiedByDesigners, devIcons, icons)
     if (context.doSyncRemovedIconsInDev) syncRemoved(context.removedByDesigners, devIcons)
   }
@@ -26,7 +26,7 @@ internal fun syncAdded(added: Collection<String>,
   callSafely {
     stageFiles { add ->
       added.forEach {
-        val target = File(targetDir, it)
+        val target = targetDir.resolve(it)
         if (target.exists()) log("$it already exists in target repo!")
         val source = sourceRepoMap[it]!!.file
         source.copyTo(target, overwrite = true)

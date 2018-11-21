@@ -27,9 +27,9 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
   context.icons = readIconsRepo(context.iconsRepo, context.iconsRepoDir)
-  val devRepoRoot = findGitRepoRoot(context.devRepoDir)
-  val devRepoVcsRoots = vcsRoots(devRepoRoot)
-  context.devIcons = readDevRepo(devRepoRoot, context.devRepoDir, devRepoVcsRoots, context.skipDirsPattern)
+  context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
+  val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
+  context.devIcons = readDevRepo(context.devRepoRoot, context.devRepoDir, devRepoVcsRoots, context.skipDirsPattern)
   val devIconsTmp = HashMap(context.devIcons)
   val modified = mutableListOf<String>()
   val consistent = mutableListOf<String>()
@@ -49,9 +49,9 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   callWithTimer("Searching for changed icons..") {
     Stream.of(
       { SearchType.MODIFIED to modifiedByDev(context, modified) },
-      { SearchType.REMOVED_BY_DEV to removedByDev(context, context.addedByDesigners, devRepoVcsRoots, File(context.devRepoDir)) },
+      { SearchType.REMOVED_BY_DEV to removedByDev(context, context.addedByDesigners, devRepoVcsRoots, context.devRepoDir) },
       {
-        val iconsDir = File(context.iconsRepoDir).relativeTo(context.iconsRepo).path.let { if (it.isEmpty()) "" else "$it/" }
+        val iconsDir = context.iconsRepoDir.relativeTo(context.iconsRepo).path.let { if (it.isEmpty()) "" else "$it/" }
         SearchType.REMOVED_BY_DESIGNERS to removedByDesigners(context, context.addedByDev, context.iconsRepo, iconsDir)
       }
     ).parallel().map { it() }.toList().forEach {
@@ -75,12 +75,12 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
     }
   }
   syncIcons(context)
-  report(context, devRepoRoot, skippedDirs.size, consistent)
+  report(context, skippedDirs.size, consistent)
 }
 
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
 
-private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) = protectStdErr {
+private fun readIconsRepo(iconsRepo: File, iconsRepoDir: File) = protectStdErr {
   listGitObjects(iconsRepo, iconsRepoDir) { file, _ ->
     // read icon hashes
     isValidIcon(file.toPath())
@@ -89,7 +89,7 @@ private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) = protectStdErr
   }
 }
 
-private fun readDevRepo(devRepoRoot: File, devRepoDir: String,
+private fun readDevRepo(devRepoRoot: File, devRepoDir: File,
                         devRepoVcsRoots: List<File>, skipDirsPattern: String?) = protectStdErr {
   val testRoots = searchTestRoots(devRepoRoot.absolutePath)
   log("Found ${testRoots.size} test roots")

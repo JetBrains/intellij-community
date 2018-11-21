@@ -23,18 +23,16 @@ private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?:
  * @return map of file paths (relative to [dirToList]) to [GitObject]
  */
 internal fun listGitObjects(
-  repo: File, dirToList: String?,
+  repo: File, dirToList: File?,
   fileFilter: (File, File) -> Boolean = { _, _ -> true }
 ): Map<String, GitObject> = listGitTree(repo, dirToList, fileFilter)
   .collect(Collectors.toMap({ it.first }, { it.second }))
 
 private fun listGitTree(
-  repo: File, dirToList: String?,
+  repo: File, dirToList: File?,
   fileFilter: (File, File) -> Boolean
 ): Stream<Pair<String, GitObject>> {
-  val relativeDirToList = dirToList?.let {
-    File(it).relativeTo(repo).path
-  } ?: ""
+  val relativeDirToList = dirToList?.relativeTo(repo)?.path ?: ""
   log("Inspecting $repo")
   if (!isUnderTeamCity()) try {
     execute(repo, GIT, "pull", "--rebase")
@@ -89,23 +87,22 @@ internal data class GitObject(val path: String, val hash: String, val repo: File
 }
 
 /**
- * @param path path in repo
+ * @param dir path in repo
  * @return root of repo
  */
-internal fun findGitRepoRoot(path: String, silent: Boolean = false): File {
-  val dir = File(path)
+internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File {
   return if (dir.isDirectory && dir.listFiles().find { file ->
       file.isDirectory && file.name == ".git"
     } != null) {
-    if (!silent) log("Git repo found in $path")
+    if (!silent) log("Git repo found in $dir")
     dir
   }
-  else if (dir.parent != null) {
-    if (!silent) log("No git repo found in $path")
-    findGitRepoRoot(dir.parent, silent)
+  else if (dir.parentFile != null) {
+    if (!silent) log("No git repo found in $dir")
+    findGitRepoRoot(dir.parentFile, silent)
   }
   else {
-    error("No git repo found in $path")
+    error("No git repo found in $dir")
   }
 }
 
@@ -180,13 +177,15 @@ internal fun getOriginUrl(repo: File): String {
 private var latestChangeCommits = emptyMap<String, CommitInfo>()
 private val latestChangeCommitsGuard = Any()
 
-internal fun latestChangeCommit(path: String, repo: File? = null): CommitInfo? {
-  val foundRepo = repo ?: findGitRepoRoot(path, silent = true)
-  val file = (if (repo == null) File(path) else File(repo, path)).canonicalPath
+/**
+ * @param path path relative to [repo]
+ */
+internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
+  val file = repo.resolve(path).canonicalPath
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {
-        val commitInfo = commitInfo(foundRepo, "--", path)
+        val commitInfo = commitInfo(repo, "--", path)
         if (commitInfo != null) {
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits += file to commitInfo

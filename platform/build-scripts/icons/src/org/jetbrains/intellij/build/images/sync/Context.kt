@@ -9,8 +9,8 @@ import java.util.function.Consumer
 
 internal class Context(private val errorHandler: Consumer<String> = Consumer { error(it) },
                        private val devIconsVerifier: Runnable? = null) {
-  val devRepoDir: String
-  val iconsRepoDir: String
+  val devRepoDir: File
+  val iconsRepoDir: File
   val iconsRepoName: String
   val devRepoName: String
   val skipDirsPattern: String?
@@ -23,6 +23,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val assignInvestigation: Boolean
   val notifySlack: Boolean
   lateinit var iconsRepo: File
+  lateinit var devRepoRoot: File
   var addedByDev: MutableCollection<String> = mutableListOf()
   var removedByDev: MutableCollection<String> = mutableListOf()
   var modifiedByDev: MutableCollection<String> = mutableListOf()
@@ -32,14 +33,14 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var createdReviews: Collection<Review> = emptyList()
   lateinit var icons: Map<String, GitObject>
   lateinit var devIcons: Map<String, GitObject>
-  var devCommitsToSync : Map<File, Collection<CommitInfo>> = emptyMap()
-  fun iconsSyncRequired() = addedByDev.isNotEmpty() ||
-                            modifiedByDev.isNotEmpty() ||
-                            removedByDev.isNotEmpty()
+  var devCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
+  var iconsCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
+  val devChanges by lazy {
+    addedByDev + removedByDev + modifiedByDev
+  }
 
-  private fun devSyncRequired() = addedByDesigners.isNotEmpty() ||
-                                  modifiedByDesigners.isNotEmpty() ||
-                                  doSyncRemovedIconsInDev && removedByDesigners.isNotEmpty()
+  fun iconsSyncRequired() = devChanges.isNotEmpty()
+  fun devSyncRequired() = iconsChanges.isNotEmpty()
 
   fun devReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_DEV_PROJECT_ID }
   fun iconsReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_ICONS_PROJECT_ID }
@@ -56,7 +57,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       .findFirst()
       .get()
       .toAbsolutePath()
-      .toString()
+      .toFile()
 
     val repoArg = "repos"
     val iconsRepoNameArg = "icons.repo.name"
@@ -100,5 +101,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     failIfSyncDevIconsRequired = bool(failIfSyncDevIconsRequiredArg)
     assignInvestigation = bool(assignInvestigationArg)
     notifySlack = bool(notifySlackArg)
+  }
+
+  val iconsChanges by lazy {
+    addedByDesigners + modifiedByDesigners + (if (doSyncRemovedIconsInDev) removedByDesigners else emptyList())
   }
 }

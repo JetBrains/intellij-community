@@ -26,13 +26,13 @@ private fun HttpRequestBase.teamCityAuth() {
 }
 
 internal fun isNotificationRequired(context: Context) =
-  Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+  isScheduled() && Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
     // not weekend
     .let { it != Calendar.SATURDAY && it != Calendar.SUNDAY } &&
   // remind of failure every day
-  (isScheduled() && context.isFail() ||
+  (context.isFail() ||
    // or check previous build and notify on fail -> success
-   !context.isFail() && teamCityGet("builds?locator=buildType:$BUILD_CONF,count:1")
+   teamCityGet("builds?locator=buildType:$BUILD_CONF,count:1")
      .contains("status=\"FAILURE\""))
 
 internal val DEFAULT_INVESTIGATOR by lazy {
