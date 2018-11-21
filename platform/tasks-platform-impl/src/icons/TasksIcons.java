@@ -14,8 +14,8 @@ public final class TasksIcons {
     return IconLoader.getIcon(path, TasksIcons.class);
   }
 
-  public static final Icon Bug = load("/icons/bug.png"); // 16x16
-  public static final Icon Exception = load("/icons/exception.png"); // 16x16
+  public static final Icon Bug = load("/icons/bug.svg"); // 16x16
+  public static final Icon Exception = load("/icons/exception.svg"); // 16x16
   public static final Icon Feature = load("/icons/feature.png"); // 16x16
   public static final Icon Other = load("/icons/other.png"); // 16x16
   public static final Icon Unknown = load("/icons/unknown.png"); // 16x16
