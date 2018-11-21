@@ -24,7 +24,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public class TipOfTheDayManager implements StartupActivity, DumbAware {
+public class TipOfTheDayStartupActivity implements StartupActivity, DumbAware {
   private boolean myVeryFirstProjectOpening = true;
 
   @Override
