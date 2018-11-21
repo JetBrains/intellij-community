@@ -1,0 +1,1 @@
+deprecated: cvs.png -> /nodes/cvs_global.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Cvs_global

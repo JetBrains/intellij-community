@@ -2289,30 +2289,34 @@ public class AllIcons {
   }
 
   public final static class Providers {
-    public static final Icon Apache = IconLoader.getIcon("/providers/apache.png"); // 16x16
-    public static final Icon ApacheDerby = IconLoader.getIcon("/providers/apacheDerby.png"); // 16x16
-    public static final Icon Azure = IconLoader.getIcon("/providers/azure.png"); // 16x16
+    public static final Icon Apache = IconLoader.getIcon("/providers/apache.svg"); // 16x16
+    public static final Icon ApacheDerby = IconLoader.getIcon("/providers/apacheDerby.svg"); // 16x16
+    public static final Icon Azure = IconLoader.getIcon("/providers/azure.svg"); // 16x16
     public static final Icon Bea = IconLoader.getIcon("/providers/bea.png"); // 16x16
     public static final Icon Cassandra = IconLoader.getIcon("/providers/cassandra.svg"); // 16x16
     public static final Icon ClickHouse = IconLoader.getIcon("/providers/clickHouse.svg"); // 16x16
-    public static final Icon Cvs = IconLoader.getIcon("/providers/cvs.png"); // 16x16
-    public static final Icon DB2 = IconLoader.getIcon("/providers/DB2.png"); // 16x16
-    public static final Icon Eclipse = IconLoader.getIcon("/providers/eclipse.png"); // 16x16
-    public static final Icon Exasol = IconLoader.getIcon("/providers/exasol.png"); // 16x16
-    public static final Icon H2 = IconLoader.getIcon("/providers/h2.png"); // 16x16
-    public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png"); // 16x16
-    public static final Icon Hsqldb = IconLoader.getIcon("/providers/hsqldb.png"); // 16x16
-    public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png"); // 16x16
-    public static final Icon Mariadb = IconLoader.getIcon("/providers/mariadb.png"); // 16x16
-    public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.png"); // 16x16
-    public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.png"); // 16x16
-    public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.png"); // 16x16
-    public static final Icon Postgresql = IconLoader.getIcon("/providers/postgresql.png"); // 16x16
-    public static final Icon Redshift = IconLoader.getIcon("/providers/redshift.png"); // 16x16
-    public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.png"); // 16x16
-    public static final Icon SqlServer = IconLoader.getIcon("/providers/sqlServer.png"); // 16x16
-    public static final Icon Sun = IconLoader.getIcon("/providers/sun.png"); // 16x16
-    public static final Icon Sybase = IconLoader.getIcon("/providers/sybase.png"); // 16x16
+    public static final Icon DB2 = IconLoader.getIcon("/providers/DB2.svg"); // 16x16
+    public static final Icon Eclipse = IconLoader.getIcon("/providers/eclipse.svg"); // 16x16
+    public static final Icon Exasol = IconLoader.getIcon("/providers/exasol.svg"); // 16x16
+    public static final Icon H2 = IconLoader.getIcon("/providers/h2.svg"); // 16x16
+    public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.svg"); // 16x16
+    public static final Icon Hsqldb = IconLoader.getIcon("/providers/hsqldb.svg"); // 16x16
+    public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.svg"); // 16x16
+    public static final Icon Mariadb = IconLoader.getIcon("/providers/mariadb.svg"); // 16x16
+    public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.svg"); // 16x16
+    public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.svg"); // 16x16
+    public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.svg"); // 16x16
+    public static final Icon Postgresql = IconLoader.getIcon("/providers/postgresql.svg"); // 16x16
+    public static final Icon Redshift = IconLoader.getIcon("/providers/redshift.svg"); // 16x16
+    public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.svg"); // 16x16
+    public static final Icon SqlServer = IconLoader.getIcon("/providers/sqlServer.svg"); // 16x16
+    public static final Icon Sun = IconLoader.getIcon("/providers/sun.svg"); // 16x16
+    public static final Icon Sybase = IconLoader.getIcon("/providers/sybase.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Cvs_global */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Cvs = AllIcons.Nodes.Cvs_global;
 
   }
 
@@ -2760,21 +2764,21 @@ public class AllIcons {
   public final static class Xml {
 
     public final static class Browsers {
-      public static final Icon Canary16 = IconLoader.getIcon("/xml/browsers/canary16.png"); // 16x16
-      public static final Icon Chrome16 = IconLoader.getIcon("/xml/browsers/chrome16.png"); // 16x16
-      public static final Icon Chromium16 = IconLoader.getIcon("/xml/browsers/chromium16.png"); // 16x16
-      public static final Icon Edge16 = IconLoader.getIcon("/xml/browsers/edge16.png"); // 16x16
-      public static final Icon Explorer16 = IconLoader.getIcon("/xml/browsers/explorer16.png"); // 16x16
-      public static final Icon Firefox16 = IconLoader.getIcon("/xml/browsers/firefox16.png"); // 16x16
-      public static final Icon Nwjs16 = IconLoader.getIcon("/xml/browsers/nwjs16.png"); // 16x16
-      public static final Icon Opera16 = IconLoader.getIcon("/xml/browsers/opera16.png"); // 16x16
-      public static final Icon Safari16 = IconLoader.getIcon("/xml/browsers/safari16.png"); // 16x16
-      public static final Icon Yandex16 = IconLoader.getIcon("/xml/browsers/yandex16.png"); // 16x16
+      public static final Icon Canary16 = IconLoader.getIcon("/xml/browsers/canary16.svg"); // 16x16
+      public static final Icon Chrome16 = IconLoader.getIcon("/xml/browsers/chrome16.svg"); // 16x16
+      public static final Icon Chromium16 = IconLoader.getIcon("/xml/browsers/chromium16.svg"); // 16x16
+      public static final Icon Edge16 = IconLoader.getIcon("/xml/browsers/edge16.svg"); // 16x16
+      public static final Icon Explorer16 = IconLoader.getIcon("/xml/browsers/explorer16.svg"); // 16x16
+      public static final Icon Firefox16 = IconLoader.getIcon("/xml/browsers/firefox16.svg"); // 16x16
+      public static final Icon Nwjs16 = IconLoader.getIcon("/xml/browsers/nwjs16.svg"); // 16x16
+      public static final Icon Opera16 = IconLoader.getIcon("/xml/browsers/opera16.svg"); // 16x16
+      public static final Icon Safari16 = IconLoader.getIcon("/xml/browsers/safari16.svg"); // 16x16
+      public static final Icon Yandex16 = IconLoader.getIcon("/xml/browsers/yandex16.svg"); // 16x16
 
     }
-    public static final Icon Css_class = IconLoader.getIcon("/xml/css_class.png"); // 16x16
-    public static final Icon Html5 = IconLoader.getIcon("/xml/html5.png"); // 16x16
-    public static final Icon Html_id = IconLoader.getIcon("/xml/html_id.png"); // 16x16
+    public static final Icon Css_class = IconLoader.getIcon("/xml/css_class.svg"); // 16x16
+    public static final Icon Html5 = IconLoader.getIcon("/xml/html5.svg"); // 16x16
+    public static final Icon Html_id = IconLoader.getIcon("/xml/html_id.svg"); // 16x16
 
   }
 }
