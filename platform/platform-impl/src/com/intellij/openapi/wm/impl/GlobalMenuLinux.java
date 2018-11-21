@@ -26,7 +26,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
@@ -40,7 +40,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 interface GlobalMenuLib extends Library {
   void startWatchDbus(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
-  void stopWatchDbus();
 
   void runMainLoop(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
 
@@ -56,15 +55,16 @@ interface GlobalMenuLib extends Library {
   void clearMenu(Pointer dbmi);
 
   Pointer addRootMenu(Pointer wi, int uid, String label);
-  Pointer addMenuItem(Pointer parent, int uid, String label, int type);
-  Pointer addSeparator(Pointer wi, int uid);
+  Pointer addMenuItem(Pointer parent, int uid, String label, int type, int position);
+  Pointer addSeparator(Pointer wi, int uid, int position);
 
+  void reorderMenuItem(Pointer parent, Pointer item, int position);
   void removeMenuItem(Pointer parent, Pointer item);
 
   void setItemLabel(Pointer item, String label);
   void setItemEnabled(Pointer item, boolean isEnabled);
   void setItemIcon(Pointer item, byte[] iconBytesPng, int iconBytesCount);
-  void setItemShortcut(Pointer item, int jmodifiers, int jkeycode);
+  void setItemShortcut(Pointer item, int jmodifiers, int x11keycode);
 
   void toggleItemStateChecked(Pointer item, boolean isChecked);
 
@@ -78,7 +78,6 @@ interface GlobalMenuLib extends Library {
     void run();
   }
 
-  int LOG_LEVEL_ERROR = 10;
   int LOG_LEVEL_INFO = 5;
 
   int EVENT_OPENED = 0;
@@ -94,23 +93,18 @@ interface GlobalMenuLib extends Library {
   int ITEM_SUBMENU = 1;
   int ITEM_CHECK = 2;
   int ITEM_RADIO = 3;
-
-  int JMOD_SHIFT = 1;
-  int JMOD_CTRL  = 1 << 1;
-  int JMOD_ALT   = 1 << 2;
-  int JMOD_META  = 1 << 3;
 }
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final SimpleDateFormat ourDtf = new SimpleDateFormat("hhmmss.SSS"); // for debug only
-  private static final boolean TRACE_SYSOUT               = Registry.is("linux.native.menu.debug.trace.sysout", false);
-  private static final boolean TRACE_DISABLED             = Registry.is("linux.native.menu.debug.trace.disabled", true);
-  private static final boolean TRACE_SYNC_STATS           = Registry.is("linux.native.menu.debug.trace.sync-stats", false);
-  private static final boolean TRACE_EVENTS               = Registry.is("linux.native.menu.debug.trace.events", false);
-  private static final boolean TRACE_EVENT_FILTER         = Registry.is("linux.native.menu.debug.trace.event-filter", false);
-  private static final boolean TRACE_CLEARING             = Registry.is("linux.native.menu.debug.trace.clearing", false);
-  private static final boolean TRACE_HIERARCHY_MISMATCHES = Registry.is("linux.native.menu.debug.trace.hierarchy.mismatches", false);
-  private static final boolean SHOW_SWING_MENU            = Registry.is("linux.native.menu.debug.show.frame.menu", false);
+  private static final boolean TRACE_SYSOUT               = System.getProperty("linux.native.menu.debug.trace.sysout",            "false").equals("true");
+  private static final boolean TRACE_DISABLED             = System.getProperty("linux.native.menu.debug.trace.disabled",          "true").equals("true");
+  private static final boolean TRACE_SYNC_STATS           = System.getProperty("linux.native.menu.debug.trace.sync-stats",        "false").equals("true");
+  private static final boolean TRACE_EVENTS               = System.getProperty("linux.native.menu.debug.trace.events",            "false").equals("true");
+  private static final boolean TRACE_EVENT_FILTER         = System.getProperty("linux.native.menu.debug.trace.event-filter",      "false").equals("true");
+  private static final boolean TRACE_CLEARING             = System.getProperty("linux.native.menu.debug.trace.clearing",          "false").equals("true");
+  private static final boolean TRACE_HIERARCHY_MISMATCHES = System.getProperty("linux.native.menu.debug.trace.hierarchy.mismatches","false").equals("true");
+  private static final boolean SHOW_SWING_MENU            = System.getProperty("linux.native.menu.debug.show.frame.menu",         "false").equals("true");
 
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
@@ -174,9 +168,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 /* Android Studio: b/67589184
       // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
       try {
-        PlatformImpl.startup(() -> {
-          ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
-        });
+        PlatformImpl.startup(()->ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
       } catch (Throwable e) {
         LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
         final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
@@ -224,11 +216,6 @@ Android Studio: b/67589184 */
     if (myWindowHandle != null) {
       _trace("bind new window 0x%X", xid);
       ourLib.bindNewWindow(myWindowHandle, xid);
-      if (frame instanceof JFrame) {
-        final JFrame jfr = (JFrame)frame;
-        if (jfr.getJMenuBar() != null)
-          jfr.getJMenuBar().setVisible(false);
-      }
     }
   }
 
@@ -393,22 +380,24 @@ Android Studio: b/67589184 */
     // 1. mark all kids to delete
     mi.clearChildrenSwingRefs();
     for (MenuItemInternal cmi: mi.children)
-      cmi.toDelete = true;
+      cmi.position = -1; // mark item to be deleted
     if (stats != null) stats[STAT_DELETED] += mi.children.size();
 
     // 2. check all children from ActionMenu
+    int itemPos = 0;
     for (Component each : am.getPopupMenu().getComponents()) {
       MenuItemInternal cmi = mi.findCorrespondingChild(each);
       if (cmi == null) {
         cmi = _createInternalFromSwing(each);
         if (cmi != null) {
+          cmi.position = itemPos++;
           mi.children.add(cmi);
           if (stats != null) ++stats[STAT_CREATED];
           if (each instanceof JMenuItem)
             cmi.updateBySwingPeer((JMenuItem)each);
         }
       } else {
-        cmi.toDelete = false;
+        cmi.position = itemPos++;
         if (stats != null) --stats[STAT_DELETED];
         if (each instanceof JMenuItem) {
           final boolean changed = cmi.updateBySwingPeer((JMenuItem)each);
@@ -427,24 +416,40 @@ Android Studio: b/67589184 */
     if (mi.nativePeer == null)
       return;
 
-    for (MenuItemInternal child: mi.children) {
+    // sort
+    mi.children.sort(Comparator.comparingInt(MenuItemInternal::getPosition));
+
+    // remove marked items
+    Iterator<MenuItemInternal> i = mi.children.iterator();
+    while (i.hasNext()) {
+      final MenuItemInternal child = i.next();
+      if (child.position != -1)
+        break;
+
       if (child.nativePeer != null) {
-        if (child.toDelete) {
-          ourLib.removeMenuItem(mi.nativePeer, child.nativePeer);
-          child.nativePeer = null;
-        } else {
-          child.updateNative();
-        }
-      } else {
+        ourLib.removeMenuItem(mi.nativePeer, child.nativePeer);
+        child.nativePeer = null;
+      }
+      i.remove();
+    }
+
+    // update/create and reorder
+    for (int pos = 0; pos < mi.children.size(); ++pos) {
+      final MenuItemInternal child = mi.children.get(pos);
+
+      if (child.nativePeer == null) {
         if (child.action == null) {
-          child.nativePeer = ourLib.addSeparator(mi.nativePeer, child.uid);
+          child.nativePeer = ourLib.addSeparator(mi.nativePeer, child.uid, pos);
           continue;
         }
 
-        child.nativePeer = ourLib.addMenuItem(mi.nativePeer, child.uid, child.txt, child.type);
-        child.updateNative();
+        child.nativePeer = ourLib.addMenuItem(mi.nativePeer, child.uid, child.txt, child.type, child.position);
+      } else if (child.position != pos) {
+        // System.out.printf("reorder: '%s' [%d] -> [%d]\n", child, child.position, pos);
+        ourLib.reorderMenuItem(mi.nativePeer, child.nativePeer, child.position);
       }
 
+      child.updateNative();
       _processChildren(child);
     }
   }
@@ -501,8 +506,9 @@ Android Studio: b/67589184 */
         if (TRACE_SYNC_STATS) _trace("opened %s '%s', spent (in EDT) %d ms, stats: %s", (mi.isRoot() ? "root menu" : "submenu"), String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
 
         _processChildren(mi);
-      } else if (eventType == GlobalMenuLib.EVENT_CLOSED) {
+      } else {
         // glib main-loop thread
+        // process GlobalMenuLib.EVENT_CLOSED
         mi.scheduleClearSwing();
       }
 
@@ -576,9 +582,12 @@ Android Studio: b/67589184 */
     boolean isChecked = false;
     byte[] iconPngBytes;
 
+    int jmodifiers;
+    int jkeycode;
+
     JMenuItem jitem;
     Pointer nativePeer;
-    boolean toDelete = false;
+    int position = -1;
 
     long lastClosedMs = 0;
 
@@ -591,6 +600,7 @@ Android Studio: b/67589184 */
       this.action = action;
     }
 
+    int getPosition() { return position; }
     boolean isRoot() { return rootPos >= 0; }
     boolean isToggleable() { return type == GlobalMenuLib.ITEM_CHECK || type == GlobalMenuLib.ITEM_RADIO; }
 
@@ -618,6 +628,12 @@ Android Studio: b/67589184 */
         res = true;
       }
       iconPngBytes = isToggleable() ? null : _icon2png(peer.getIcon());
+
+      final KeyStroke ks = peer.getAccelerator();
+      if (ks != null) {
+        jkeycode = ks.getKeyCode();
+        jmodifiers = ks.getModifiers();
+      }
       return res;
     }
 
@@ -638,17 +654,22 @@ Android Studio: b/67589184 */
       ourLib.setItemIcon(nativePeer, iconPngBytes, iconPngBytes != null ? iconPngBytes.length : 0);
       if (isToggleable())
         ourLib.toggleItemStateChecked(nativePeer, isChecked);
+      if (jkeycode != 0) {
+        final int x11keycode = X11KeyCodes.jkeycode2X11code(jkeycode, 0);
+        if (x11keycode != 0)
+          ourLib.setItemShortcut(nativePeer, jmodifiers, x11keycode);
+        else if (!TRACE_DISABLED)
+          _trace("unknown x11 keycode for jcode=" + jkeycode);
+      }
     }
 
     MenuItemInternal findCorrespondingChild(@NotNull Component target) {
-      if (target == null)
-        return null;
       if (children.isEmpty())
         return null;
 
       if (target instanceof JSeparator) {
         for (MenuItemInternal child : children)
-          if (child.toDelete && child.action == null)
+          if (child.position == -1 && child.action == null)
             return child;
         return null;
       }
@@ -685,21 +706,7 @@ Android Studio: b/67589184 */
       return null;
     }
 
-    String printKids() {
-      final StringBuilder res = new StringBuilder();
-      printKids(res, 0);
-      return res.toString();
-    }
-
-    void printKids(StringBuilder out, int indent) {
-      for (MenuItemInternal kid: children) {
-        if (out.length() > 0)
-          out.append('\n');
-        for (int c = 0; c < indent; ++c) out.append('\t');
-        out.append(kid.toString());
-      }
-    }
-
+    @SuppressWarnings("unused")
     String printHierarchy() {
       final StringBuilder res = new StringBuilder();
       printHierarchy(res, 0);
@@ -719,15 +726,15 @@ Android Studio: b/67589184 */
     @Override
     public String toString() {
       String res = String.format("'%s' (uid=%d, act=%s)", txt, uid, String.valueOf(action));
-      if (toDelete)
-        res = res + " [toDelele]";
+      if (position == -1)
+        res += " [toDelele]";
       return res;
     }
 
     String toStringShort() {
       String res = String.format("'%s'", txt);
-      if (toDelete)
-        res = res + " [D]";
+      if (position == -1)
+        res += " [D]";
       if (isRoot())
         res = "Root " + res;
       else
@@ -735,22 +742,15 @@ Android Studio: b/67589184 */
       return res;
     }
 
-    synchronized void scheduleClearSwing() {
+    void scheduleClearSwing() {
       // exec at glib main-loop thread
       if (timerClearSwing != null)
         timerClearSwing.stop();
 
-      timerClearSwing = new Timer(300, (e) -> {
-        _clearSwing();
-      });
+      timerClearSwing = new Timer(300, (e)->_clearSwing());
       timerClearSwing.setRepeats(false);
       timerClearSwing.start();
       if (TRACE_CLEARING) _trace("\t scheduled (300 ms later) to clear '%s'", toStringShort());
-    }
-
-    synchronized void cancelClearSwing() {
-      // exec at glib main-loop thread
-      timerClearSwing = null;
     }
 
     private void _clearSwing() {
@@ -777,7 +777,8 @@ Android Studio: b/67589184 */
   private class EventFilter {
     private Timer myTimer;
     private long myLastFirstRootEventMs = 0;
-    private GlobalMenuLib.JRunnable myGlibLoopRunnable;
+    @SuppressWarnings("unused")
+    private GlobalMenuLib.JRunnable myGlibLoopRunnable; // holds runnable object
 
     boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
       final long timeMs = System.currentTimeMillis();
@@ -825,25 +826,6 @@ Android Studio: b/67589184 */
     }
   }
 
-  private static int _calcModifiers(JMenuItem jmenuitem) {
-    if (jmenuitem == null || jmenuitem.getAccelerator() == null)
-      return 0;
-
-    final int modifiers = jmenuitem.getAccelerator().getModifiers();
-    int result = 0;
-    if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_SHIFT;
-    if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_CTRL;
-    if ((modifiers & InputEvent.META_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_META;
-    if ((modifiers & InputEvent.ALT_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_ALT;
-    return result;
-  }
-
-  private static int _calcKeyCode(JMenuItem jmenuitem) {
-    if (jmenuitem == null || jmenuitem.getAccelerator() == null)
-      return 0;
-    return jmenuitem.getAccelerator().getKeyCode();
-  }
-
   private static String _buildMnemonicLabel(JMenuItem jmenuitem) {
     String text = jmenuitem.getText();
     final int mnemonicCode = jmenuitem.getMnemonic();
@@ -865,9 +847,9 @@ Android Studio: b/67589184 */
     return res.toString();
   }
 
-  private static <T> Object _getField(@NotNull Class<T> aClass, @NotNull String name, @NotNull T object) {
+  private static Object _getPeerField(@NotNull Component object) {
     try {
-      Field field = aClass.getDeclaredField(name);
+      Field field = Component.class.getDeclaredField("peer");
       field.setAccessible(true);
       return field.get(object);
     } catch (IllegalAccessException | NoSuchFieldException e) {
@@ -879,7 +861,7 @@ Android Studio: b/67589184 */
   private static long _getX11WindowXid(@NotNull Window frame) {
     try {
       // getPeer method was removed in jdk9, but 'peer' field still exists
-      final ComponentPeer wndPeer = (ComponentPeer)_getField(Component.class, "peer", frame);
+      final ComponentPeer wndPeer = (ComponentPeer)_getPeerField(frame);
       if (wndPeer == null) {
         // wait a little for X11-peer to be connected
         LOG.info("frame peer is null, wait for connection");
@@ -928,7 +910,7 @@ Android Studio: b/67589184 */
         continue;
 
       for (int c = 0; c < indent; ++c) out.append('\t');
-      String txt = each instanceof JSeparator ? "--separ--" : ((JMenuItem)each).getText();
+      String txt = ((JMenuItem)each).getText();
       if (txt == null || txt.isEmpty())
         txt = "null";
       out.append(txt);
@@ -946,10 +928,12 @@ Android Studio: b/67589184 */
     final String msg = String.format(fmt, args);
     _trace(msg);
   }
+
   private static void _trace(String msg) {
     if (TRACE_DISABLED)
       return;
     if (TRACE_SYSOUT)
+      //noinspection UseOfSystemOutOrSystemErr
       System.out.println(ourDtf.format(new Date()) + ": " + msg);
     else
       LOG.info(msg);

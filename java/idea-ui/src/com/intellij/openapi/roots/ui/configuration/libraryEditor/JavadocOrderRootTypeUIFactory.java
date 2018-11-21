@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.AnActionButton;
@@ -22,12 +21,10 @@ import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 /**
  * @author anna
@@ -89,7 +86,6 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     @Override
     protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
       JavadocQuarantineStatusCleaner.cleanIfNeeded(files);
-      List<VirtualFile> docRoots = ContainerUtil.newArrayListWithCapacity(files.length);
 
       for (int i = 0; i < files.length; i++) {
         VirtualFile file = files[i], docRoot = null;
@@ -104,7 +100,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
         if (docRoot != null) files[i] = docRoot;
       }
 
-      return VfsUtilCore.toVirtualFileArray(docRoots);
+      return files;
     }
   }
 }

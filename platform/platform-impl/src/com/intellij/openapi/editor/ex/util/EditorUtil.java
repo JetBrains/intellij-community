@@ -358,10 +358,10 @@ public final class EditorUtil {
     if (tabSize <= 0) {
       return x + plainSpaceWidth;
     }
-    float tabSizePixels = tabSize * plainSpaceWidth;
+    tabSize *= plainSpaceWidth;
 
-    int nTabs = (int) (x / tabSizePixels);
-    return (nTabs + 1) * tabSizePixels;
+    int nTabs = (int) (x / tabSize);
+    return (nTabs + 1) * tabSize;
   }
 
   public static int textWidthInColumns(@NotNull Editor editor, @NotNull CharSequence text, int start, int end, int x) {
