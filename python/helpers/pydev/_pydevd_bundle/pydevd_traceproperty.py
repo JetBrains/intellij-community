@@ -2,7 +2,7 @@
 '''
 from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, IS_PY2
-from _pydevd_bundle import pydevd_tracing
+import pydevd_tracing
 import traceback
 
 #=======================================================================================================================

@@ -3,7 +3,8 @@ import sys
 import traceback
 
 from _pydev_bundle import pydev_log
-from _pydevd_bundle import pydevd_traceproperty, pydevd_tracing, pydevd_dont_trace, pydevd_utils
+from _pydevd_bundle import pydevd_traceproperty, pydevd_dont_trace, pydevd_utils
+import pydevd_tracing
 import pydevd_file_utils
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint
 from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL, InternalTerminateThread, \
