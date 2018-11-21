@@ -143,13 +143,12 @@ class RetypeSession(
       val nextChar = originalText[pos]
       if (document.textLength - pos > tailLength && nextChar in listOf('}', ')', ']')) {
         // Still have something extra characters in front. Probably closing bracket.
-        for (i in (pos) until (document.textLength - tailLength)) {
+        for (i in pos until document.textLength - tailLength) {
           if (document.text[i] == nextChar) {
             // Found brackets character after caret. All characters between caret and matched symbol should be deleted
             // Because we don't expect them (in most cases this is just whitespaces)
-            while (document.text[pos] != nextChar) {
-              // Delete unexpected characters
-              executeEditorAction(IdeActions.ACTION_EDITOR_DELETE)
+            WriteCommandAction.runWriteCommandAction(project) {
+              document.deleteString(pos, i)
             }
             break
           }
