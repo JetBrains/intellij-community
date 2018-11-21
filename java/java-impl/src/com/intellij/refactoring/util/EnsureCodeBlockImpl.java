@@ -81,6 +81,17 @@ class EnsureCodeBlockImpl {
     if (parent instanceof PsiReturnStatement && condition != null) {
       return replace(expression, parent, (oldParent, copy) -> splitReturn((PsiReturnStatement)oldParent, condition, operand));
     }
+    if (parent instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)parent).getBody();
+      if (body instanceof PsiExpressionStatement) {
+        PsiExpression resultExpression = ((PsiExpressionStatement)body).getExpression();
+        return replace(expression, body, (old, copy) -> {
+          PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{break a;}", resultExpression));
+          PsiExpression copyExpression = ((PsiBreakStatement)block.getCodeBlock().getStatements()[0]).getExpression();
+          return Objects.requireNonNull(copyExpression).replace(((PsiExpressionStatement)copy).getExpression());
+        });
+      }
+    }
     return expression;
   }
 

@@ -120,6 +120,12 @@ class VariableExtractor {
     if (myAnchor instanceof PsiExpression) {
       myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpression)myAnchor)), false);
     }
+    else if (myAnchor instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)myAnchor).getBody();
+      if (body instanceof PsiExpressionStatement) {
+        myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpressionStatement)body).getExpression()), false);
+      }
+    }
   }
 
   private void highlight(PsiVariable var) {
