@@ -184,6 +184,30 @@ def case_setup():
 
 
 @pytest.fixture
+def case_setup_unhandled_exceptions(case_setup):
+    
+    original = case_setup.test_file
+
+    def check_test_suceeded_msg(writer, stdout, stderr):
+        return 'TEST SUCEEDED' in ''.join(stderr)
+
+    def additional_output_checks(writer, stdout, stderr):
+        # Don't call super as we have an expected exception
+        if 'ValueError: TEST SUCEEDED' not in stderr:
+            raise AssertionError('"ValueError: TEST SUCEEDED" not in stderr.\nstdout:\n%s\n\nstderr:\n%s' % (
+                stdout, stderr))
+    
+    def test_file(*args, **kwargs):
+        kwargs.setdefault('check_test_suceeded_msg', check_test_suceeded_msg)
+        kwargs.setdefault('additional_output_checks', additional_output_checks)
+        return original(*args, **kwargs)
+
+    case_setup.test_file = test_file
+
+    return case_setup
+
+
+@pytest.fixture
 def case_setup_remote():
 
     runner = DebuggerRunnerRemote()
