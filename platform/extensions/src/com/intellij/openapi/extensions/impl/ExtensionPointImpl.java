@@ -552,27 +552,16 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private static Runnable CHECK_CANCELED = EmptyRunnable.getInstance();
+  static Runnable CHECK_CANCELED = EmptyRunnable.getInstance();
 
   public static void setCheckCanceledAction(Runnable checkCanceled) {
-    CHECK_CANCELED = new Runnable() {
-      final Set<Throwable> reported = ContainerUtil.newConcurrentSet();
-
-      @Override
-      public void run() {
-        try {
-          checkCanceled.run();
-        }
-        catch (ProcessCanceledException e) {
-          if (!isInsideClassInitializer(e.getStackTrace())) { // otherwise ExceptionInInitializerError happens and the class is screwed forever
-            throw e;
-          }
-          else {
-            Throwable throwable = new Throwable();
-            if (reported.add(throwable)) {
-              LOG.warn("Don't instantiate extensions from class initializer", throwable);
-            }
-          }
+    CHECK_CANCELED = () -> {
+      try {
+        checkCanceled.run();
+      }
+      catch (ProcessCanceledException e) {
+        if (!isInsideClassInitializer(e.getStackTrace())) { // otherwise ExceptionInInitializerError happens and the class is screwed forever
+          throw e;
         }
       }
     };
