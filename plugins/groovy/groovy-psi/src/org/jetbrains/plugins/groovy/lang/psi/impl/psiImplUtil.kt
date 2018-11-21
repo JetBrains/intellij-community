@@ -2,12 +2,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.toArray
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -87,4 +90,11 @@ fun getQualifiedReferenceName(reference: GrReferenceElement<*>): String? {
 fun GrMethodCall.isImplicitCall(): Boolean {
   val expression = invokedExpression
   return expression !is GrReferenceExpression || expression.isImplicitCallReceiver
+}
+
+fun GrCodeReferenceElement.getDiamondTypes(): Array<out PsiType?> {
+  val result = advancedResolve()
+  val clazz = result.element as? PsiClass ?: return PsiType.EMPTY_ARRAY
+  val substitutor = result.substitutor // this may start inference session
+  return clazz.typeParameters.map(substitutor::substitute).toArray(PsiType.EMPTY_ARRAY)
 }

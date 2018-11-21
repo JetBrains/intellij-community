@@ -52,16 +52,17 @@ class GroovyInferenceSession(
     return null
   }
 
-  fun initArgumentConstraints(mapping: ArgumentMapping?) {
+  fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY) {
     if (mapping == null) return
+    val substitutor = inferenceSubstitution.putAll(inferenceSubstitutor)
     for ((expectedType, argument) in mapping.expectedTypes) {
       if (argument is ExpressionArgument) {
-        addConstraint(ExpressionConstraint(expectedType, argument.expression))
+        addConstraint(ExpressionConstraint(substitutor.substitute(expectedType), argument.expression))
       }
       else {
         val type = argument.type
         if (type != null) {
-          addConstraint(TypeConstraint(expectedType, type, context))
+          addConstraint(TypeConstraint(substitutor.substitute(expectedType), type, context))
         }
       }
     }

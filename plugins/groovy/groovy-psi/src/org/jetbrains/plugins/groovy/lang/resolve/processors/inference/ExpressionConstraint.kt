@@ -17,13 +17,12 @@ class ExpressionConstraint(private val leftType: PsiType?, private val expressio
         val result = expression.advancedResolve() as? GroovyMethodResult ?: return true
         constraints.add(MethodCallConstraint(leftType, result, expression))
       }
-      is GrNewExpression -> {
-        val result = expression.advancedResolve() as? GroovyMethodResult ?: return true
-        session.addConstraint(MethodCallConstraint(leftType, result, expression))
-      }
+      is GrNewExpression -> constraints.add(ConstructorCallConstraint(leftType, expression))
       is GrClosableBlock -> if (leftType != null) constraints.add(ClosureConstraint(expression, leftType))
       else -> if (leftType != null) constraints.add(TypeConstraint(leftType, expression.type, expression))
     }
     return true
   }
+
+  override fun toString(): String = "${expression.text} -> ${leftType?.presentableText}"
 }

@@ -18,10 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
@@ -60,11 +57,21 @@ class GroovyInferenceSessionBuilder(
 
 fun buildTopLevelSession(place: PsiElement): GroovyInferenceSession {
   val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, emptyList(), false)
-  val expression = place.parent as? GrMethodCall ?: place as? GrExpression ?: return session
+  val expression = findExpression(place) ?: return session
   val mostTopLevelExpression = getMostTopLevelExpression(expression)
   val left = getExpectedType(mostTopLevelExpression)
   session.addConstraint(ExpressionConstraint(left, mostTopLevelExpression))
   return session
+}
+
+private fun findExpression(place: PsiElement): GrExpression? {
+  val parent = place.parent
+  return when {
+    parent is GrMethodCall -> parent
+    parent is GrNewExpression -> parent
+    place is GrExpression -> place
+    else -> null
+  }
 }
 
 fun getMostTopLevelExpression(start: GrExpression): GrExpression {

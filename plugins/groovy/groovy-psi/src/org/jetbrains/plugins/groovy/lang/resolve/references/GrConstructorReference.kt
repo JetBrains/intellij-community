@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil.enclosingClass
+import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -24,9 +25,9 @@ class GrConstructorReference(element: GrNewExpression) : GroovyCachingReference<
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     val ref = element.referenceElement ?: return emptyList()
-    val classCandidate = ref.advancedResolve()
+    val classCandidate = ref.advancedResolve() as? ClassResolveResult ?: return emptyList()
     val constructedClass = classCandidate.element as? PsiClass ?: return emptyList()
-    val substitutor = classCandidate.substitutor
+    val substitutor = classCandidate.contextSubstitutor
 
     val allConstructors = getAllConstructors(constructedClass, element)
     val userArguments = element.getArguments()

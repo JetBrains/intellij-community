@@ -14,9 +14,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -27,8 +25,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferenceResolver;
 
 import java.util.Collection;
 
-import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.getDiamondTypes;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAccessorName;
 
 /**
@@ -237,38 +235,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   public PsiType[] getTypeArguments() {
     GrTypeArgumentList typeArgumentList = getTypeArgumentList();
     if (typeArgumentList != null && typeArgumentList.isDiamond()) {
-      return inferDiamondTypeArguments();
+      return getDiamondTypes(this);
     }
     else {
       return super.getTypeArguments();
     }
-  }
-
-  @NotNull
-  private PsiType[] inferDiamondTypeArguments() {
-    PsiType[] types = doPreventingRecursion(this, false, () -> doInferDiamondTypeArguments());
-    if (types == null) {
-      throw new IllegalStateException("recursion prevented");
-    }
-    return types;
-  }
-
-  @NotNull
-  private PsiType[] doInferDiamondTypeArguments() {
-    PsiElement parent = getParent();
-    if (!(parent instanceof GrNewExpression)) return PsiType.EMPTY_ARRAY;
-    GroovyResolveResult result = ((GrNewExpression)parent).advancedResolve();
-    if (!(result instanceof GroovyMethodResult)) {
-      return PsiType.EMPTY_ARRAY;
-    }
-    PsiMethod element = ((GroovyMethodResult)result).getElement();
-    PsiClass constructedClass = element.getContainingClass();
-    if (constructedClass == null) {
-      return PsiType.EMPTY_ARRAY;
-    }
-    PsiTypeParameter[] typeParameters = constructedClass.getTypeParameters();
-    PsiSubstitutor substitutor = result.getSubstitutor();
-    return ContainerUtil.map2Array(typeParameters, PsiType.class, substitutor::substitute);
   }
 
   @NotNull
