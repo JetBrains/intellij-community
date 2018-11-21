@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -80,26 +79,25 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         return;
       }
 
-      final List<PyTargetExpression> classAttributes = containingClass.getClassAttributes();
-      final Map<String, Property> properties = containingClass.getProperties();
-      final Map<String, PyTargetExpression> attributesInInit = new HashMap<>();
+      final Map<String, Property> localProperties = containingClass.getProperties();
+      final Map<String, PyTargetExpression> declaredAttributes = new HashMap<>();
 
-      StreamEx.of(classAttributes)
-              .filter(attribute -> !properties.containsKey(attribute.getName()))
-              .forEach(attribute -> attributesInInit.put(attribute.getName(), attribute));
+      StreamEx.of(containingClass.getClassAttributes())
+              .filter(attribute -> !localProperties.containsKey(attribute.getName()))
+              .forEach(attribute -> declaredAttributes.put(attribute.getName(), attribute));
 
-      final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false, null);
+      final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false, myTypeEvalContext);
       if (initMethod != null) {
-        PyClassImpl.collectInstanceAttributes(initMethod, attributesInInit);
+        PyClassImpl.collectInstanceAttributes(initMethod, declaredAttributes);
       }
       for (PyClass superClass : containingClass.getAncestorClasses(myTypeEvalContext)) {
-        final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false, null);
+        final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false, myTypeEvalContext);
         if (superInit != null) {
-          PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);
+          PyClassImpl.collectInstanceAttributes(superInit, declaredAttributes);
         }
 
         for (PyTargetExpression classAttr : superClass.getClassAttributes()) {
-          attributesInInit.put(classAttr.getName(), classAttr);
+          declaredAttributes.put(classAttr.getName(), classAttr);
         }
       }
 
@@ -109,8 +107,8 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       for (PyTargetExpression attribute : attributes.values()) {
         final String attributeName = attribute.getName();
         if (attributeName == null) continue;
-        if (!attributesInInit.containsKey(attributeName) &&
-            !isDefinedByProperty(attribute, properties.values(), attributesInInit)) {
+        if (!declaredAttributes.containsKey(attributeName) &&
+            !isDefinedByProperty(attribute, localProperties.values(), declaredAttributes)) {
           registerProblem(attribute, PyBundle.message("INSP.attribute.$0.outside.init", attributeName),
                           new PyMoveAttributeToInitQuickFix());
         }
@@ -155,5 +153,4 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
                    .nonNull()
                    .anyMatch(name -> name.equals(attribute.getName()));
   }
-
 }
