@@ -1437,6 +1437,25 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  static Collection<HighlightInfo> checkSwitchExpressionReturnTypeCompatible(PsiSwitchExpression switchExpression) {
+    if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) return null;
+    List<HighlightInfo> infos = new ArrayList<>();
+    PsiType switchExpressionType = switchExpression.getType();
+    if (switchExpressionType != null) {
+      for (PsiExpression expression : PsiUtil.getSwitchResultExpressions(switchExpression)) {
+        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, expression::getType);
+        if (expressionType != null && !switchExpressionType.isAssignableFrom(expressionType)) {
+          infos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                      .range(expression)
+                      .descriptionAndTooltip("Bad type in switch expression: " + expressionType.getCanonicalText() + " cannot be converted to " + switchExpressionType.getCanonicalText())
+                      .create());
+        }
+      }
+    }
+
+    return infos;
+  }
+
   private enum SelectorKind { INT, ENUM, STRING }
 
   private static SelectorKind getSwitchSelectorKind(@NotNull PsiType type) {

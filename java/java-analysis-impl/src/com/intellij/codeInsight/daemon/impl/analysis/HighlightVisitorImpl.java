@@ -1607,6 +1607,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitSwitchExpression(expression);
     if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(expression, Feature.SWITCH_EXPRESSION));
     checkSwitchBlock(expression);
+    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkSwitchExpressionReturnTypeCompatible(expression));
   }
 
   private void checkSwitchBlock(PsiSwitchBlock switchBlock) {
