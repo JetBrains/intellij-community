@@ -40,7 +40,7 @@ class CompilationPartsUploader implements Closeable {
     myMessages = messages
     CompilationPartsUtil.initLog4J(messages)
     myHttpClient = HttpClientBuilder.create()
-      .setUserAgent(this.class.name)
+      .setUserAgent('Parts Uploader')
       .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
       .setMaxConnTotal(20)
       .setMaxConnPerRoute(10)
