@@ -29,26 +29,21 @@ class MethodCallConstraint(
     else {
       method.typeParameters
     }
-    val nestedSession = GroovyInferenceSession(typeParameters, siteSubstitutor, context, emptyList(), session.skipClosureBlock)
-    session.nestedSessions[result] = nestedSession
-    nestedSession.propagateVariables(session)
-    nestedSession.initArgumentConstraints(result.argumentMapping)
-    nestedSession.repeatInferencePhases()
-    val rt = if (method.isConstructor) {
-      method.containingClass?.type()
-    }
-    else {
-      PsiUtil.getSmartReturnType(candidate.method)
-    }
-    val substitutedRT = session.substituteWithInferenceVariables(siteSubstitutor.substitute(rt))
-    val substitutedLeft = session.substituteWithInferenceVariables(session.siteSubstitutor.substitute(leftType))
-    if (substitutedRT != null && PsiType.VOID != substitutedRT && leftType != null) {
-      nestedSession.addConstraint(TypeConstraint(substitutedLeft, substitutedRT, context))
-      nestedSession.repeatInferencePhases()
-    }
-    session.propagateVariables(nestedSession)
-    for (pair in nestedSession.myIncorporationPhase.captures) {
-      session.myIncorporationPhase.addCapture(pair.first, pair.second)
+    session.startNestedSession(typeParameters, siteSubstitutor, context, result) { nested ->
+      nested.initArgumentConstraints(result.argumentMapping)
+      nested.repeatInferencePhases()
+      val rt = if (method.isConstructor) {
+        method.containingClass?.type()
+      }
+      else {
+        PsiUtil.getSmartReturnType(method)
+      }
+      val substitutedRT = session.substituteWithInferenceVariables(siteSubstitutor.substitute(rt))
+      val substitutedLeft = session.substituteWithInferenceVariables(session.siteSubstitutor.substitute(leftType))
+      if (substitutedRT != null && PsiType.VOID != substitutedRT && leftType != null) {
+        nested.addConstraint(TypeConstraint(substitutedLeft, substitutedRT, context))
+        nested.repeatInferencePhases()
+      }
     }
     return true
   }

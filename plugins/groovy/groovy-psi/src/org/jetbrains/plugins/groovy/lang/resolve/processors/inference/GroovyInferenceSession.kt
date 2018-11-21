@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiTypeParameter
@@ -18,7 +20,7 @@ class GroovyInferenceSession(
   val skipClosureBlock: Boolean = true
 ) : InferenceSession(typeParams, siteSubstitutor, context.manager, context) {
 
-  val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
+  private val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
 
   private fun result(): PsiSubstitutor {
     resolveBounds(myInferenceVariables, siteSubstitutor)
@@ -62,6 +64,21 @@ class GroovyInferenceSession(
           addConstraint(TypeConstraint(expectedType, type, context))
         }
       }
+    }
+  }
+
+  fun startNestedSession(params: Array<PsiTypeParameter>,
+                         siteSubstitutor: PsiSubstitutor,
+                         context: PsiElement,
+                         result: GroovyResolveResult,
+                         f: (GroovyInferenceSession) -> Unit) {
+    val nestedSession = GroovyInferenceSession(params, siteSubstitutor, context, emptyList(), skipClosureBlock)
+    nestedSession.propagateVariables(this)
+    f(nestedSession)
+    nestedSessions[result] = nestedSession
+    this.propagateVariables(nestedSession)
+    for ((vars, rightType) in nestedSession.myIncorporationPhase.captures) {
+      this.myIncorporationPhase.addCapture(vars, rightType)
     }
   }
 }
