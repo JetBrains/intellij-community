@@ -346,7 +346,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<>();
     if (myInternalMode && myProject != null && !myProject.isDefault()) {
-      AnAction action = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
+      AnAction action = ActionManager.getInstance().getAction("Unscramble");
       if (action != null) {
         actions.add(new AnalyzeAction(action));
       }

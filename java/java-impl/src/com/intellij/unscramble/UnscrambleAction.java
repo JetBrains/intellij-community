@@ -15,10 +15,10 @@
  */
 package com.intellij.unscramble;
 
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -60,14 +60,17 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    new UnscrambleDialog(project).show();
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    String message = e.getData(IdeErrorsDialog.CURRENT_TRACE_KEY);
+    if (message != null) {
+      AnalyzeStacktraceUtil.addConsole(project, null, "<Stacktrace>", message);
+    } else {
+      new UnscrambleDialog(project).show();
+    }
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    final Project project = event.getProject();
-    presentation.setEnabled(project != null);
+    event.getPresentation().setEnabled(event.getProject() != null);
   }
 }
