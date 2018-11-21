@@ -39,6 +39,7 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -627,15 +628,16 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                     final IntroduceOperation operation) {
     final PyExpression expression = operation.getInitializer();
     final Project project = operation.getProject();
-    return WriteCommandAction.writeCommandAction(project, expression.getContainingFile()).compute(() -> {
-      PsiElement result;
-      try {
+    final SmartPsiElementPointer<PsiElement> result =
+      WriteCommandAction.writeCommandAction(project, expression.getContainingFile()).compute(() -> {
+        final PsiElement insertedDeclaration;
+        try {
           final RefactoringEventData afterData = new RefactoringEventData();
           afterData.addElement(declaration);
           project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
             .refactoringStarted(getRefactoringId(), afterData);
 
-          result = (addDeclaration(operation, declaration));
+          insertedDeclaration = addDeclaration(operation, declaration);
 
           PyExpression newExpression = createExpression(project, operation.getName(), declaration);
 
@@ -662,8 +664,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
             .refactoringDone(getRefactoringId(), afterData);
         }
-        return result;
+        return ObjectUtils.doIfNotNull(insertedDeclaration, SmartPointerManager::createPointer);
       });
+    return ObjectUtils.doIfNotNull(result, SmartPsiElementPointer::getElement);
   }
 
   protected abstract String getRefactoringId();
