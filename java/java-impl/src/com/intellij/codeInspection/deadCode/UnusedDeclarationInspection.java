@@ -38,10 +38,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UDeclaration;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -254,8 +251,8 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       if (refElement instanceof RefClass) {
         UClass uClass = ((RefClass)refElement).getUastElement();
         if (uClass != null) {
-          for (PsiClassInitializer initializer : uClass.getInitializers()) {
-            findUnusedVariables(initializer.getBody(), refElement, uClass);
+          for (UClassInitializer initializer : uClass.getInitializers()) {
+            findUnusedLocalVariables(initializer.getUastBody(), refElement);
           }
         }
       }
@@ -264,24 +261,25 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
         if (element instanceof UMethod) {
           UExpression body = ((UMethod)element).getUastBody();
           if (body != null) {
-            //TODO resolve
-            findUnusedVariables((PsiCodeBlock)body.getJavaPsi(), refElement, element);
+            findUnusedLocalVariables(body, refElement);
           }
         }
       }
     }
 
-    private void findUnusedVariables(PsiCodeBlock body, RefElement refElement, PsiElement element) {
+    private void findUnusedLocalVariables(UExpression body, RefElement refElement) {
       if (body == null) return;
+      PsiCodeBlock bodySourcePsi = ObjectUtils.tryCast(body.getSourcePsi(), PsiCodeBlock.class);
+      if (bodySourcePsi == null) return;
       Tools tools = myTools.get(getShortName());
-      if (tools.isEnabled(element)) {
-        InspectionToolWrapper toolWrapper = tools.getInspectionTool(element);
+      if (tools.isEnabled(bodySourcePsi)) {
+        InspectionToolWrapper toolWrapper = tools.getInspectionTool(bodySourcePsi);
         InspectionToolPresentation presentation = myContext.getPresentation(toolWrapper);
         if (((UnusedDeclarationInspection)toolWrapper.getTool()).getSharedLocalInspectionTool().LOCAL_VARIABLE) {
           List<CommonProblemDescriptor> descriptors = new ArrayList<>();
 
           final Set<PsiVariable> usedVariables = new THashSet<>();
-          List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
+          List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(bodySourcePsi, usedVariables);
 
           if (unusedDefs != null && !unusedDefs.isEmpty()) {
 
@@ -297,7 +295,8 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
             }
 
           }
-          body.accept(new JavaRecursiveElementWalkingVisitor() {
+
+          bodySourcePsi.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
             public void visitClass(PsiClass aClass) { }
 
