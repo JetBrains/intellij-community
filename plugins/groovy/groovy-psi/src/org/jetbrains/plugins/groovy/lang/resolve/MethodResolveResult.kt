@@ -14,10 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.impl.mapArgumentsToParameters
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 import kotlin.reflect.jvm.isAccessible
 
 class MethodResolveResult(
@@ -94,10 +91,7 @@ class MethodResolveResult(
       siteSubstitutor
     }
     else {
-      GroovyInferenceSessionBuilder(place, methodCandidate, myArgumentMapping)
-        .resolveMode(false)
-        .startFromTop(true)
-        .build().inferSubst(this)
+      buildTopLevelSession(place).inferSubst(this)
     }
   }
 
