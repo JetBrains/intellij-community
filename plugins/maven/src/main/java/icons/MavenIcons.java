@@ -18,19 +18,19 @@ public final class MavenIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  public static final Icon ChildrenProjects = load("/images/childrenProjects.png"); // 12x12
-  public static final Icon ExecuteMavenGoal = load("/images/executeMavenGoal.png"); // 16x16
-  public static final Icon MavenLogo = load("/images/mavenLogo.png"); // 16x16
-  public static final Icon MavenPlugin = load("/images/mavenPlugin.png"); // 16x16
-  public static final Icon MavenProject = load("/images/mavenProject.png"); // 16x16
-  public static final Icon ModulesClosed = load("/images/modulesClosed.png"); // 16x16
-  public static final Icon ParentProject = load("/images/parentProject.png"); // 12x12
+  public static final Icon ChildrenProjects = load("/images/childrenProjects.svg"); // 12x12
+  public static final Icon ExecuteMavenGoal = load("/images/executeMavenGoal.svg"); // 16x16
+  public static final Icon MavenLogo = load("/images/mavenLogo.svg"); // 16x16
+  public static final Icon MavenPlugin = load("/images/mavenPlugin.svg"); // 16x16
+  public static final Icon MavenProject = load("/images/mavenProject.svg"); // 16x16
+  public static final Icon ModulesClosed = load("/images/modulesClosed.svg"); // 16x16
+  public static final Icon ParentProject = load("/images/parentProject.svg"); // 12x12
   public static final Icon Phase = load("/images/phase.png"); // 16x16
   public static final Icon PhasesClosed = load("/images/phasesClosed.png"); // 16x16
-  public static final Icon PluginGoal = load("/images/pluginGoal.png"); // 16x16
-  public static final Icon ProfilesClosed = load("/images/profilesClosed.png"); // 16x16
+  public static final Icon PluginGoal = load("/images/pluginGoal.svg"); // 16x16
+  public static final Icon ProfilesClosed = load("/images/profilesClosed.svg"); // 16x16
   public static final Icon ToolWindowMaven = load("/images/toolWindowMaven.svg"); // 13x13
-  public static final Icon UpdateFolders = load("/images/updateFolders.png"); // 16x16
+  public static final Icon UpdateFolders = load("/images/updateFolders.svg"); // 16x16
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.OfflineMode */
   @SuppressWarnings("unused")
