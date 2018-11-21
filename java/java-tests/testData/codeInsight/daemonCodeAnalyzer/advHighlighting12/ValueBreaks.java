@@ -13,6 +13,7 @@ class ValueBreaks {
       case 1: break <error descr="Undefined label: 'ref'">ref</error>;
       case 2: break <error descr="Undefined label: 'wtf'">wtf</error>;
       case 3: ref: break ref;
+      case 4: ref: <error descr="Value break outside switch expression">break (ref);</error>
     };
 
     sink(switch (0) {
@@ -20,7 +21,8 @@ class ValueBreaks {
       case 1 -> { while (true) break <error descr="Undefined label: 'ref'">ref</error>; }
       case 2 -> { while (true) break <error descr="Undefined label: 'wtf'">wtf</error>; }
       case 3 -> { break ref; }
-      case 4 -> { break <error descr="Cannot resolve symbol 'wtf'">wtf</error>; }
+      case 4 -> { break (ref); }
+      case 5 -> { break <error descr="Cannot resolve symbol 'wtf'">wtf</error>; }
       default -> throw new RuntimeException();
     });
 
