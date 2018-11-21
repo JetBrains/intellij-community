@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
+import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -10,12 +11,13 @@ import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
-import org.jetbrains.plugins.github.api.data.GithubRepoWithPermissions
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
+import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JLabel
 
@@ -40,9 +42,27 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
   }
   private val reopenButton = JButton(reopenAction)
 
+  private val mergeAction = object : AbstractAction("Merge...") {
+    override fun actionPerformed(e: ActionEvent?) {
+      state?.run { stateService.merge(number) }
+    }
+  }
+  private val rebaseMergeAction = object : AbstractAction("Rebase and Merge") {
+    override fun actionPerformed(e: ActionEvent?) {
+      state?.run { stateService.rebaseMerge(number) }
+    }
+  }
+  private val squashMergeAction = object : AbstractAction("Squash and Merge...") {
+    override fun actionPerformed(e: ActionEvent?) {
+      state?.run { stateService.squashMerge(number) }
+    }
+  }
+  private val mergeButton = JBOptionButton(null, null)
+
   private val buttonsPanel = NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
 
+    add(mergeButton)
     add(closeButton)
     add(reopenButton)
   }
@@ -94,6 +114,13 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
 
       closeAction.isEnabled = false
       closeButton.isVisible = false
+
+      mergeAction.isEnabled = false
+      rebaseMergeAction.isEnabled = false
+      squashMergeAction.isEnabled = false
+      mergeButton.action = null
+      mergeButton.options = emptyArray()
+      mergeButton.isVisible = false
     }
     else {
       val busy = stateService.isBusy(state.number)
@@ -103,6 +130,21 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
 
       closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GithubIssueState.open
       closeAction.isEnabled = closeButton.isVisible && !busy
+
+      mergeButton.isVisible = state.editAllowed && state.state == GithubIssueState.open && !state.merged
+      mergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !busy
+      rebaseMergeAction.isEnabled = mergeButton.isVisible && (state.rebaseable ?: false) && !busy
+      squashMergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !busy
+
+      val allowedActions = mutableListOf<Action>()
+      if (state.mergeAllowed) allowedActions.add(mergeAction)
+      if (state.rebaseMergeAllowed) allowedActions.add(rebaseMergeAction)
+      if (state.squashMergeAllowed) allowedActions.add(squashMergeAction)
+
+      val action = allowedActions.firstOrNull()
+      val actions = if (allowedActions.size > 1) Array(allowedActions.size - 1) { allowedActions[it + 1] } else emptyArray()
+      mergeButton.action = action
+      mergeButton.options = actions
     }
   }
 
@@ -114,15 +156,17 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
 
   data class State(val number: Long, val state: GithubIssueState, val merged: Boolean, val mergeable: Boolean?, val rebaseable: Boolean?,
                    val editAllowed: Boolean, val currentUserIsAuthor: Boolean,
-                   val busy: Boolean) {
+                   val busy: Boolean,
+                   val mergeAllowed: Boolean, val rebaseMergeAllowed: Boolean, val squashMergeAllowed: Boolean) {
     companion object {
       fun create(user: GithubAuthenticatedUser,
-                 repo: GithubRepoWithPermissions,
+                 repo: GithubRepoDetailed,
                  details: GithubPullRequestDetailed,
                  busy: Boolean) = details.let {
         State(it.number, it.state, it.merged, it.mergeable, it.rebaseable,
               repo.permissions.isAdmin || repo.permissions.isPush, it.user == user,
-              busy)
+              busy,
+              repo.allowMergeCommit, repo.allowRebaseMerge, repo.allowSquashMerge)
       }
     }
   }

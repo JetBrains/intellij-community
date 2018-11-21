@@ -2,19 +2,26 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
+import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubIssueState
+import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
+import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.GithubNotifications
 import java.util.*
 
@@ -72,6 +79,130 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
       override fun onThrowable(error: Throwable) {
         GithubNotifications.showError(project, "Failed To Reopen Pull Request", error)
+      }
+
+      override fun onFinished() {
+        release(pullRequest)
+        dataLoader.reloadDetails(pullRequest)
+      }
+    })
+  }
+
+  @CalledInAwt
+  override fun merge(pullRequest: Long) {
+    if (!acquire(pullRequest)) return
+
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+      private lateinit var details: GithubPullRequestDetailed
+
+      override fun run(indicator: ProgressIndicator) {
+        indicator.text2 = "Loading details"
+        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        indicator.checkCanceled()
+
+        indicator.text2 = "Acquiring commit message"
+        val commitMessage = invokeAndWaitIfNeed {
+          val dialog = GithubMergeCommitMessageDialog(project,
+                                                      "Merge Pull Request",
+                                                      "Merge pull request #${pullRequest}",
+                                                      details.title)
+          if (dialog.showAndGet()) dialog.message else null
+        } ?: throw ProcessCanceledException()
+
+        indicator.text2 = "Merging"
+        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.merge(details,
+                                                                                      commitMessage.first, commitMessage.second,
+                                                                                      details.head.sha))
+      }
+
+      override fun onSuccess() {
+        GithubNotifications.showInfo(project, "Pull Request Merged", "Successfully merged pull request #${details.number}")
+      }
+
+      override fun onThrowable(error: Throwable) {
+        GithubNotifications.showError(project, "Failed To Merge Pull Request", error)
+      }
+
+      override fun onFinished() {
+        release(pullRequest)
+        dataLoader.reloadDetails(pullRequest)
+      }
+    })
+  }
+
+  @CalledInAwt
+  override fun rebaseMerge(pullRequest: Long) {
+    if (!acquire(pullRequest)) return
+
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+      lateinit var details: GithubPullRequestDetailed
+
+      override fun run(indicator: ProgressIndicator) {
+        indicator.text2 = "Loading details"
+        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        indicator.checkCanceled()
+
+        indicator.text2 = "Merging"
+        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.rebaseMerge(details, details.head.sha))
+      }
+
+      override fun onSuccess() {
+        GithubNotifications.showInfo(project, "Pull Request Rebased and Merged",
+                                     "Successfully rebased and merged pull request #${details.number}")
+      }
+
+      override fun onThrowable(error: Throwable) {
+        GithubNotifications.showError(project, "Failed To Rebase and Merge Pull Request", error)
+      }
+
+      override fun onFinished() {
+        release(pullRequest)
+        dataLoader.reloadDetails(pullRequest)
+      }
+    })
+  }
+
+  @CalledInAwt
+  override fun squashMerge(pullRequest: Long) {
+    if (!acquire(pullRequest)) return
+
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+      lateinit var details: GithubPullRequestDetailed
+      lateinit var commits: List<GitCommit>
+
+
+      override fun run(indicator: ProgressIndicator) {
+        indicator.text2 = "Loading details"
+        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        indicator.checkCanceled()
+
+        indicator.text2 = "Loading commits"
+        commits = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).logCommitsRequest }
+        indicator.checkCanceled()
+
+        indicator.text2 = "Acquiring commit message"
+        val body = "* " + StringUtil.join(commits, { it.subject }, "\n\n* ")
+        val commitMessage = invokeAndWaitIfNeed {
+          val dialog = GithubMergeCommitMessageDialog(project,
+                                                      "Merge Pull Request",
+                                                      "Merge pull request #${pullRequest}",
+                                                      body)
+          if (dialog.showAndGet()) dialog.message else null
+        } ?: throw ProcessCanceledException()
+
+        indicator.text2 = "Merging"
+        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.merge(details,
+                                                                                      commitMessage.first, commitMessage.second,
+                                                                                      details.head.sha))
+      }
+
+      override fun onSuccess() {
+        GithubNotifications.showInfo(project, "Pull Request Squashed and Merged",
+                                     "Successfully squashed amd merged pull request #${details.number}")
+      }
+
+      override fun onThrowable(error: Throwable) {
+        GithubNotifications.showError(project, "Failed To Squash and Merge Pull Request", error)
       }
 
       override fun onFinished() {

@@ -12,6 +12,15 @@ interface GithubPullRequestsStateService {
   fun reopen(pullRequest: Long)
 
   @CalledInAwt
+  fun merge(pullRequest: Long)
+
+  @CalledInAwt
+  fun rebaseMerge(pullRequest: Long)
+
+  @CalledInAwt
+  fun squashMerge(pullRequest: Long)
+
+  @CalledInAwt
   fun isBusy(pullRequest: Long): Boolean
 
   fun addPullRequestBusyStateListener(disposable: Disposable, listener: (Long) -> Unit)
