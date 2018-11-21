@@ -18,7 +18,6 @@ package com.intellij.java.codeInsight.editorActions
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.editorActions.FixDocCommentAction
 import com.intellij.openapi.editor.impl.AbstractEditorTest
-import com.intellij.psi.codeStyle.JavaCodeStyleBean
 import org.jetbrains.annotations.NotNull
 
 /**
@@ -648,10 +647,4 @@ public class Test
     checkResultByText(args.expected)
   }
 
-  @NotNull
-  static JavaCodeStyleBean getCodeStyleBean() {
-    JavaCodeStyleBean codeStyleBean = new JavaCodeStyleBean()
-    codeStyleBean.setRootSettings(CodeStyle.getSettings(getProject()))
-    return codeStyleBean
-  }
 }
