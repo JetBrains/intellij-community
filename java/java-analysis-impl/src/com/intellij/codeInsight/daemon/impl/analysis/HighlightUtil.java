@@ -783,17 +783,19 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkValueBreakExpression(@NotNull PsiBreakStatement statement, @Nullable PsiExpression expression) {
     PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
+    boolean plainRef = PsiImplUtil.isPlainReference(expression);
+
     if (enclosing instanceof PsiSwitchExpression) {
       if (expression == null) {
         String message = JavaErrorMessages.message("value.break.missing");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       }
-      if (PsiTreeUtil.isAncestor(statement.findExitedElement(), enclosing, true)) {
+      if (plainRef && PsiTreeUtil.isAncestor(((PsiReferenceExpression)expression).resolve(), enclosing, true)) {
         String message = JavaErrorMessages.message("break.outside.switch.expr");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       }
     }
-    else if (expression != null && (!PsiImplUtil.isPlainReference(expression) || ((PsiReferenceExpression)expression).resolve() instanceof PsiVariable)) {
+    else if (expression != null && !plainRef) {
       String message = JavaErrorMessages.message("value.break.unexpected");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
@@ -814,6 +816,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkContinueTarget(@NotNull PsiContinueStatement statement, @NotNull PsiIdentifier label, @NotNull LanguageLevel level) {
     PsiStatement continuedStatement = statement.findContinuedStatement();
+
     if (continuedStatement == null) {
       String message = JavaErrorMessages.message("unresolved.label", label.getText());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message).create();
@@ -822,6 +825,7 @@ public class HighlightUtil extends HighlightUtilBase {
       String message = JavaErrorMessages.message("not.loop.label", label.getText());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
+
     if (level.isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
       PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
       if (enclosing instanceof PsiSwitchExpression && PsiTreeUtil.isAncestor(continuedStatement, enclosing, true)) {

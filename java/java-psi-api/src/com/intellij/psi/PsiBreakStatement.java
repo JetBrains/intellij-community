@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -8,14 +9,21 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiBreakStatement extends PsiStatement {
   /**
-   * Returns the label identifier iff it is present and the statement is not inside a switch expression, {@code null} otherwise.
-   *
-   * @see #getExpression()
+   * Returns the label expression iff it is present, is an unqualified reference, and the statement is not inside a switch expression,
+   * {@code null} otherwise.
    */
-  @Nullable PsiIdentifier getLabelIdentifier();
+  @Nullable PsiReferenceExpression getLabelExpression();
 
   /**
-   * Returns the label/value expression, or {@code null} if the statement is empty.
+   * Returns the value expression iff it is present and the statement is inside a switch expression, {@code null} otherwise.
+   */
+  @Nullable PsiExpression getValueExpression();
+
+  /**
+   * Returns the label or value expression, or {@code null} if the statement is empty.
+   *
+   * @see #getLabelExpression()
+   * @see #getValueExpression()
    */
   @Nullable PsiExpression getExpression();
 
@@ -25,7 +33,15 @@ public interface PsiBreakStatement extends PsiStatement {
    */
   @Nullable PsiElement findExitedElement();
 
-  /** @deprecated doesn't support "switch" expressions; use {@link #findExitedElement()} instead */
+  /** @deprecated doesn't support switch expressions; use {@link #getLabelExpression()}} instead */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  default PsiIdentifier getLabelIdentifier() {
+    PsiReferenceExpression expression = getLabelExpression();
+    return expression != null ? PsiTreeUtil.getChildOfType(expression, PsiIdentifier.class) : null;
+  }
+
+  /** @deprecated doesn't support switch expressions; use {@link #findExitedElement()} instead */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   default PsiStatement findExitedStatement() {

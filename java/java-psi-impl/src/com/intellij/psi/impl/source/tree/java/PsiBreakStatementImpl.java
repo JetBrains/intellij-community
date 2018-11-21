@@ -8,7 +8,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement {
@@ -19,9 +18,17 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   }
 
   @Override
-  public PsiIdentifier getLabelIdentifier() {
-    PsiIdentifier labelId = labelId();
-    return labelId != null && !(findExitedElement() instanceof PsiSwitchExpression) ? labelId : null;
+  public PsiReferenceExpression getLabelExpression() {
+    PsiExpression expression = getExpression();
+    boolean isLabel = PsiImplUtil.isPlainReference(expression) && !(PsiImplUtil.findEnclosingSwitchOrLoop(this) instanceof PsiSwitchExpression);
+    return isLabel ? (PsiReferenceExpression)expression : null;
+  }
+
+  @Override
+  public PsiExpression getValueExpression() {
+    PsiExpression expression = getExpression();
+    boolean isValue = expression != null && PsiImplUtil.findEnclosingSwitchOrLoop(this) instanceof PsiSwitchExpression;
+    return isValue ? expression : null;
   }
 
   @Override
@@ -31,27 +38,19 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
 
   @Override
   public PsiElement findExitedElement() {
-    PsiIdentifier label = labelId();
-    if (label == null) {
-      return PsiImplUtil.findEnclosingSwitchOrLoop(this);
+    PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(this);
+    PsiExpression expression = getExpression();
+
+    if (enclosing == null || enclosing instanceof PsiSwitchExpression || !PsiImplUtil.isPlainReference(expression)) {
+      return enclosing;
     }
 
-    PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());
+    PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(enclosing, expression.getText());
     if (labeled != null) {
       return labeled.getStatement();
     }
 
-    PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(this);
-    if (enclosing instanceof PsiSwitchExpression) {
-      return enclosing;
-    }
-
     return null;
-  }
-
-  private PsiIdentifier labelId() {
-    PsiExpression expr = getExpression();
-    return PsiImplUtil.isPlainReference(expr) ? PsiTreeUtil.getChildOfType(expr, PsiIdentifier.class) : null;
   }
 
   @Override
