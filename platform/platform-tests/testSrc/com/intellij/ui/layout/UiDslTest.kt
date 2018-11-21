@@ -105,6 +105,11 @@ class UiDslTest {
     doTest { titledRows() }
   }
 
+  @Test
+  fun `titled row`() {
+    doTest { titledRow() }
+  }
+
   private fun doTest(panelCreator: () -> JPanel) {
     invokeAndWaitIfNeed {
       val panel = panelCreator()
