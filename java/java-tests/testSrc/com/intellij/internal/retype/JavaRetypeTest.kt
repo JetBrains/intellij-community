@@ -2,8 +2,10 @@
 package com.intellij.internal.retype
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -11,6 +13,18 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
+
+  var autopopupOldValue: Boolean? = false
+
+  override fun setUp() {
+    super.setUp()
+    autopopupOldValue = TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true)
+  }
+
+  override fun tearDown() {
+    super.tearDown()
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, autopopupOldValue)
+  }
 
   fun testBraces() {
     doTest()
@@ -39,7 +53,7 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   private fun doTest() {
     val filePath = "/retype/${getTestName(false)}.java"
     myFixture.configureByFile(filePath)
-    RetypeSession(project, myFixture.editor as EditorImpl, 0, null, 0).start()
+    RetypeSession(project, myFixture.editor as EditorImpl, 50, null, 0).start()
     while (editor.getUserData(RETYPE_SESSION_KEY) != null) {
       IdeEventQueue.getInstance().flushQueue()
     }
