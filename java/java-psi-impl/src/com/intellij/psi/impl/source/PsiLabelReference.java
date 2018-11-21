@@ -6,10 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class PsiLabelReference implements PsiReference {
   private final PsiStatement myStatement;
@@ -70,13 +67,7 @@ public class PsiLabelReference implements PsiReference {
   @NotNull
   @Override
   public String[] getVariants() {
-    List<String> result = new SmartList<>();
-    for (PsiElement context = myStatement; context != null; context = context.getContext()) {
-      if (context instanceof PsiLabeledStatement) {
-        result.add(((PsiLabeledStatement)context).getName());
-      }
-    }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtil.toStringArray(PsiImplUtil.findAllEnclosingLabels(myStatement));
   }
 
   @Override

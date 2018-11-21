@@ -253,7 +253,7 @@ public class JavaKeywordCompletion {
     addMethodHeaderKeywords();
 
     addPrimitiveTypes(this::addKeyword, myPosition, mySession);
-    
+
     addVar();
 
     addClassLiteral();
@@ -379,11 +379,10 @@ public class JavaKeywordCompletion {
         !AFTER_DOT.accepts(myPosition)) {
       addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.FINAL), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
-
   }
 
   private void addThisSuper() {
-    if (SUPER_OR_THIS_PATTERN.accepts(myPosition)) {
+    if (SUPER_OR_THIS_PATTERN.accepts(myPosition) && LabelReferenceCompletion.isValueBreakPosition(myPosition) != Boolean.FALSE) {
       final boolean afterDot = AFTER_DOT.accepts(myPosition);
       final boolean insideQualifierClass = isInsideQualifierClass();
       final boolean insideInheritorClass = PsiUtil.isLanguageLevel8OrHigher(myPosition) && isInsideInheritorClass();
@@ -537,7 +536,7 @@ public class JavaKeywordCompletion {
       if (psiElement().insideStarting(psiElement(PsiLocalVariable.class, PsiExpressionStatement.class)).accepts(myPosition)) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
-      if (PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class) == null && 
+      if (PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class) == null &&
           PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -593,7 +592,7 @@ public class JavaKeywordCompletion {
   }
 
   private static boolean isExpressionPosition(PsiElement position) {
-    return EXPR_KEYWORDS.accepts(position) ||
+    return EXPR_KEYWORDS.accepts(position) && LabelReferenceCompletion.isValueBreakPosition(position) != Boolean.FALSE ||
            psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position);
   }
 

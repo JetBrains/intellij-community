@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -660,6 +661,17 @@ public class PsiImplUtil {
       if (e instanceof PsiLabeledStatement && label.equals(((PsiLabeledStatement)e).getName())) return (PsiLabeledStatement)e;
     }
     return null;
+  }
+
+  @NotNull
+  public static List<String> findAllEnclosingLabels(@NotNull PsiElement start) {
+    List<String> result = new SmartList<>();
+    for (PsiElement context = start; !isCodeBoundary(context); context = context.getContext()) {
+      if (context instanceof PsiLabeledStatement) {
+        result.add(((PsiLabeledStatement)context).getName());
+      }
+    }
+    return result;
   }
 
   private static boolean isCodeBoundary(@Nullable PsiElement e) {

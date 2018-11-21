@@ -37,6 +37,7 @@ import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
@@ -136,7 +137,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (CATCH_OR_FINALLY.accepts(position) ||
         JavaKeywordCompletion.START_SWITCH.accepts(position) ||
         JavaKeywordCompletion.isInstanceofPlace(position) ||
-        JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
+        JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position) ||
+        LabelReferenceCompletion.isValueBreakPosition(position) == Boolean.FALSE) {
       return null;
     }
 
@@ -478,8 +480,16 @@ public class JavaCompletionContributor extends CompletionContributor {
             }
           }
         }
+
+        // break <label>
+        if (LabelReferenceCompletion.isValueBreakPosition(position) == Boolean.FALSE) {
+          items.putValues(result1, LabelReferenceCompletion.processLabelVariants(PsiImplUtil.findAllEnclosingLabels(position)));
+        }
+
         return;
       }
+
+      // continue <label>
       if (reference instanceof PsiLabelReference) {
         items.putValues(result1, LabelReferenceCompletion.processLabelReference((PsiLabelReference)reference));
         return;

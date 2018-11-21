@@ -14,7 +14,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.idea.Bombed;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiClass;
@@ -23,8 +22,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-
-import java.util.Calendar;
 
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
@@ -1047,8 +1044,32 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testEnumAsDefaultAnnotationParam() { doTest(); }
-  @Bombed(user = "roman.shevchenko@jetbrains.com", day = 22, month = Calendar.NOVEMBER)
-  public void testBreakLabel() { doTest(); }
+
+  public void testBreakLabel() {
+    myFixture.configureByText(
+      "a.java",
+      "class a{{\n" +
+      "  foo: while (true) break <caret>\n" +
+      "}}");
+    complete();
+    myFixture.checkResult(
+      "class a{{\n" +
+      "  foo: while (true) break foo;<caret>\n" +
+      "}}");
+  }
+
+  public void testContinueLabel() {
+    myFixture.configureByText(
+      "a.java",
+      "class a{{\n" +
+      "  foo: while (true) continue <caret>\n" +
+      "}}");
+    complete();
+    myFixture.checkResult(
+      "class a{{\n" +
+      "  foo: while (true) continue foo;<caret>\n" +
+      "}}");
+  }
 
   public void testNewAbstractInsideAnonymous() { doTest(); }
 
