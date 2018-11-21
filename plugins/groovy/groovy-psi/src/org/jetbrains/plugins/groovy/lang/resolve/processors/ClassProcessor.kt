@@ -29,23 +29,6 @@ internal open class ClassProcessor(
     val elementName = state[importedNameKey] ?: element.name
     if (elementName != name) return null
 
-    val substitutor = state.get(PsiSubstitutor.KEY) ?: PsiSubstitutor.EMPTY
-    return ClassResolveResult(
-      element = clazz,
-      place = place,
-      resolveContext = state.get(ClassHint.RESOLVE_CONTEXT),
-      substitutor = addTypeArguments(substitutor, clazz, typeArguments)
-    )
-  }
-
-  companion object {
-    fun addTypeArguments(contextSubstitutor: PsiSubstitutor, clazz: PsiClass, typeArguments: Array<out PsiType>?): PsiSubstitutor {
-      return if (typeArguments == null || typeArguments.isNotEmpty()) {
-        contextSubstitutor.putAll(clazz, typeArguments)
-      }
-      else {
-        contextSubstitutor
-      }
-    }
+    return ClassResolveResult(clazz, place, state, typeArguments)
   }
 }
