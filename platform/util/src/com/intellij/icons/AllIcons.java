@@ -1919,6 +1919,7 @@ public class AllIcons {
     public static final Icon NewParameter = IconLoader.getIcon("/nodes/newParameter.svg"); // 16x16
     public static final Icon NodePlaceholder = IconLoader.getIcon("/nodes/nodePlaceholder.svg"); // 16x16
     public static final Icon NotFavoriteOnHover = IconLoader.getIcon("/nodes/notFavoriteOnHover.svg"); // 16x16
+    public static final Icon ObjectTypeAttribute = IconLoader.getIcon("/nodes/objectTypeAttribute.svg"); // 16x16
     public static final Icon Package = IconLoader.getIcon("/nodes/package.svg"); // 16x16
     public static final Icon Padlock = IconLoader.getIcon("/nodes/padlock.svg"); // 16x16
     public static final Icon Parameter = IconLoader.getIcon("/nodes/parameter.svg"); // 16x16
