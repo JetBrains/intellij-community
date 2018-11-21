@@ -15,5 +15,5 @@ public final class XsltDebuggerIcons {
   }
 
   public static final Icon FilterWhitespace = load("/icons/filterWhitespace.png"); // 16x16
-  public static final Icon XmlComment = load("/icons/xmlComment.png"); // 18x18
+  public static final Icon XmlComment = load("/icons/xmlComment.svg"); // 16x16
 }
