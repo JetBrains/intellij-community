@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.plugins.PluginManagerMain
-import com.intellij.ide.plugins.RepositoryHelper
+import com.intellij.ide.plugins.*
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.application.ApplicationManager
@@ -261,6 +258,40 @@ fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
  */
 fun isSafeToReport(pluginId: String?): Boolean {
   return pluginId != null && safeToReportPluginIds.contains(pluginId)
+}
+
+/**
+ * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
+ * so API from it may be reported
+ */
+fun getPluginType(clazz: Class<*>): PluginType {
+  val pluginId = PluginManagerCore.getPluginByClassName(clazz.name) ?: return PluginType.PLATFORM
+  val plugin = PluginManager.getPlugin(pluginId) ?: return PluginType.UNKNOWN
+
+  if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
+    return if (plugin.isBundled) PluginType.BUNDLED else PluginType.JB_PLUGIN
+  }
+
+  // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
+  // they are also considered bundled) would be reported
+  val listed = !plugin.isBundled && isSafeToReport(pluginId.idString)
+  return if (listed) PluginType.LISTED else PluginType.NOT_LISTED
+}
+
+enum class PluginType {
+  PLATFORM, BUNDLED, JB_PLUGIN, LISTED, NOT_LISTED, UNKNOWN;
+
+  fun isBundled() : Boolean {
+    return this == PLATFORM || this == BUNDLED
+  }
+
+  fun isJBPlugin() : Boolean {
+    return isBundled() || this == JB_PLUGIN
+  }
+
+  fun isSafeToReport() : Boolean {
+    return isJBPlugin() || this == LISTED;
+  }
 }
 
 private class DelayModificationTracker internal constructor(delay: Long, unit: TimeUnit) : ModificationTracker {
