@@ -1047,6 +1047,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public void unregisterAction(@NotNull String actionId) {
+    unregisterAction(actionId, true);
+  }
+
+  private void unregisterAction(@NotNull String actionId, boolean removeFromGroups) {
     synchronized (myLock) {
       if (!myId2Action.containsKey(actionId)) {
         if (LOG.isDebugEnabled()) {
@@ -1062,6 +1066,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         if (pluginActions != null) {
           pluginActions.remove(actionId);
         }
+      }
+      if (removeFromGroups) {
+        for (String groupId : myId2GroupId.get(actionId)) {
+          DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+          group.remove(oldValue, actionId);
+        }
+      }
+      if (oldValue instanceof ActionGroup) {
+        myId2GroupId.values().remove(actionId);
       }
     }
   }
@@ -1161,10 +1174,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
         group.replaceAction(oldAction, newAction);
       }
-      unregisterAction(actionId);
-      if (isGroup) {
-        myId2GroupId.values().remove(actionId);
-      }
+      unregisterAction(actionId, false);
     }
     registerAction(actionId, newAction, pluginId);
     return oldAction;
