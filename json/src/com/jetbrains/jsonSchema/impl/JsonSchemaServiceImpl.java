@@ -238,7 +238,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       if (!processedRemotes.containsKey(url)) {
         final JsonSchemaInfo info = new JsonSchemaInfo(url);
         if (schema.getDescription() != null) {
-          info.setDocumentation(getDoc(schema));
+          info.setDocumentation(schema.getDescription());
+        }
+        if (schema.getName() != null) {
+          info.setName(schema.getName());
         }
         results.add(info);
       }
@@ -247,16 +250,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         // we don't have our own docs, so let's reuse the existing docs from the catalog
         JsonSchemaInfo info = processedRemotes.get(url);
         if (info.getDocumentation() == null) {
-          info.setDocumentation(getDoc(schema));
+          info.setDocumentation(schema.getDescription());
+        }
+        if (info.getName() == null) {
+          info.setName(schema.getName());
         }
       }
     }
     return results;
-  }
-
-  @NotNull
-  private static String getDoc(JsonSchemaCatalogEntry schema) {
-    return "<b>" + schema.getName() + "</b><br/>" + schema.getDescription();
   }
 
   @Nullable

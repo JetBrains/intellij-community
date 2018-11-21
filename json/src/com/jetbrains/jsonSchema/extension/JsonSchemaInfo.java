@@ -20,6 +20,7 @@ import java.util.Set;
 public class JsonSchemaInfo {
   @Nullable private final JsonSchemaFileProvider myProvider;
   @Nullable private final String myUrl;
+  @Nullable private String myName = null;
   @Nullable private String myDocumentation = null;
   @NotNull  private final static Set<String> myDumbNames = ContainerUtil.set(
     "schema",
@@ -106,6 +107,15 @@ public class JsonSchemaInfo {
 
   public void setDocumentation(@Nullable String documentation) {
     myDocumentation = documentation;
+  }
+
+  @Nullable
+  public String getName() {
+    return myName;
+  }
+
+  public void setName(@Nullable String name) {
+    myName = name;
   }
 
   public static boolean isVeryDumbName(@Nullable String possibleName) {

@@ -68,8 +68,12 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     PsiElement positionParent = position.getParent();
     if (positionParent != null) {
       PsiElement parent = positionParent.getParent();
-      if (parent instanceof JsonProperty && "$ref".equals(((JsonProperty)parent).getName()) && service.isSchemaFile(file)) {
-        return;
+      if (parent instanceof JsonProperty) {
+        final String propName = ((JsonProperty)parent).getName();
+        if ("$schema".equals(propName) && parent.getParent() instanceof JsonObject && parent.getParent().getParent() instanceof JsonFile
+            || "$ref".equals(propName) && service.isSchemaFile(file)) {
+          return;
+        }
       }
     }
 
