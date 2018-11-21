@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -197,7 +198,16 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private void updateFont() {
     if (myTextArea != null) {
-      Utils.setSmallerFont(myTextArea);
+      if (Registry.is("ide.find.use.editor.font", false)) {
+        myTextArea.setFont(EditorUtil.getEditorFont());
+      }
+      else {
+        if (SystemInfo.isMac) {
+          myTextArea.setFont(JBUI.Fonts.smallFont());
+        } else {
+          myTextArea.setFont(UIManager.getFont("TextArea.font"));
+        }
+      }
     }
   }
 
@@ -459,7 +469,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     Icon getShowHistoryIcon() {
-      return LafIconLookup.getIcon("searchFieldWithHistory");
+      return AllIcons.Actions.SearchWithHistory;
     }
 
     @Override
@@ -511,11 +521,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     Icon getShowHistoryIcon() {
-      Icon searchIcon = UIManager.getIcon("TextField.darcula.searchWithHistory.icon");
-      if (searchIcon == null) {
-        searchIcon = LafIconLookup.getIcon("searchWithHistory");
-      }
-      return searchIcon;
+      return AllIcons.Actions.SearchWithHistory;
     }
 
     @Override

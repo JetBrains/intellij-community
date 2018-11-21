@@ -425,17 +425,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (content == null) {
       releaseConsole();
 
-      myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+      ConsoleView console = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+      myConsole = console;
 
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(myConsole.getComponent(), BorderLayout.CENTER);
+      panel.add(console.getComponent(), BorderLayout.CENTER);
 
       ActionToolbar toolbar = ActionManager.getInstance()
-        .createActionToolbar("VcsManager", new DefaultActionGroup(myConsole.createConsoleActions()), false);
+        .createActionToolbar("VcsManager", new DefaultActionGroup(console.createConsoleActions()), false);
       panel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
       content.setDisposer(myConsoleDisposer);
+      content.setPreferredFocusedComponent(() -> console.getPreferredFocusableComponent());
       contentManager.addContent(content);
 
       for (Pair<String, ConsoleViewContentType> pair : myPendingOutput) {

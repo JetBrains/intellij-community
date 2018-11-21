@@ -149,7 +149,10 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   public String getExternalName() {
     return ReadAction.compute(() -> {
       UField uField = getUastElement();
-      return uField != null ? PsiFormatUtil.getExternalName((PsiModifierListOwner)uField.getJavaPsi()) : null;
+      LOG.info("uast field for RefField = " + uField);
+      LOG.info("psi for RefField = " + getPsiElement());
+      if (uField == null) return null;
+      return PsiFormatUtil.getExternalName((PsiModifierListOwner)uField.getJavaPsi());
     });
   }
 

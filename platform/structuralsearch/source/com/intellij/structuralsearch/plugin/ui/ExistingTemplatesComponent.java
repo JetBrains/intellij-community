@@ -62,6 +62,7 @@ public class ExistingTemplatesComponent {
     }
     root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
 
+    TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
@@ -245,7 +246,6 @@ public class ExistingTemplatesComponent {
       }
     );
     tree.setCellRenderer(new ExistingTemplatesTreeCellRenderer(speedSearch));
-    TreeUtil.expandAll(tree);
 
     return tree;
   }

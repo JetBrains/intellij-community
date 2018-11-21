@@ -347,6 +347,25 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
+  public static List<PsiExpression> getSwitchResultExpressions(PsiSwitchExpression switchExpression) {
+     PsiCodeBlock body = switchExpression.getBody();
+    if (body != null) {
+      List<PsiExpression> result = new ArrayList<>();
+      PsiStatement[] statements = body.getStatements();
+      for (PsiStatement statement : statements) {
+        if (statement instanceof PsiSwitchLabeledRuleStatement) {
+          PsiStatement ruleBody = ((PsiSwitchLabeledRuleStatement)statement).getBody();
+          if (ruleBody instanceof PsiExpressionStatement) {//todo break statements
+            result.add(((PsiExpressionStatement)ruleBody).getExpression());
+            
+          }
+        }
+      }
+      return result;
+    }
+    return Collections.emptyList();
+  }
+
   @MagicConstant(intValues = {ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PRIVATE})
   public @interface AccessLevel {}
 

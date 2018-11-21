@@ -722,6 +722,7 @@ public class LambdaUtil {
                                                     PsiExpressionList.class,
                                                     PsiLambdaExpression.class,
                                                     PsiConditionalExpression.class,
+                                                    PsiSwitchExpression.class,
                                                     PsiCodeBlock.class,
                                                     PsiCall.class);
     while (true) {
@@ -750,7 +751,7 @@ public class LambdaUtil {
         }
       }
 
-      if (parent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+      if ((parent instanceof PsiConditionalExpression || parent instanceof PsiSwitchExpression) && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
         break;
       }
 

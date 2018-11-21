@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,12 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
 
   @Override
   protected void tearDown() throws Exception {
-    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
-    super.tearDown();
+    try {
+      Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testChangeOrdinary() {

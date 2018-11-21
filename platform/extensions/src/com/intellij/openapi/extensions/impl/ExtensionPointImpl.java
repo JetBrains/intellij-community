@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
@@ -247,6 +248,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters = Collections.emptyList();
       boolean errorHappened = false;
       for (int i = 0; i < adapters.size(); i++) {
+        CHECK_CANCELED.run();
         ExtensionComponentAdapter adapter = adapters.get(i);
         try {
           @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
@@ -390,14 +392,16 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   public synchronized void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener,
                                                      final boolean invokeForLoadedExtensions,
-                                                     @NotNull Disposable parentDisposable) {
+                                                     @Nullable Disposable parentDisposable) {
     if (invokeForLoadedExtensions) {
       addExtensionPointListener(listener);
     }
     else {
       addListener(listener);
     }
-    Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener, invokeForLoadedExtensions));
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener, invokeForLoadedExtensions));
+    }
   }
 
   // true if added
@@ -545,5 +549,25 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     public LoadingOrder getOrder() {
       return myLoadingOrder;
     }
+  }
+
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  static Runnable CHECK_CANCELED = EmptyRunnable.getInstance();
+
+  public static void setCheckCanceledAction(Runnable checkCanceled) {
+    CHECK_CANCELED = () -> {
+      try {
+        checkCanceled.run();
+      }
+      catch (ProcessCanceledException e) {
+        if (!isInsideClassInitializer(e.getStackTrace())) { // otherwise ExceptionInInitializerError happens and the class is screwed forever
+          throw e;
+        }
+      }
+    };
+  }
+
+  private static boolean isInsideClassInitializer(StackTraceElement[] trace) {
+    return Arrays.stream(trace).anyMatch(s -> "<clinit>".equals(s.getMethodName()));
   }
 }

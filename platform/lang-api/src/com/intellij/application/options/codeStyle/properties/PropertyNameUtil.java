@@ -23,6 +23,9 @@ class PropertyNameUtil {
     addMapping("INSTANCEOF", "instance_of");
     addMapping("DOWHILE", "do_while");
     addMapping("PARM", "param");
+    addMapping("RIGHT_MARGIN", "max_line_length");
+    addMapping("TAB_SIZE", "tab_width");
+    addMapping("WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN", "wrap_on_typing");
   }
 
   private PropertyNameUtil() {
@@ -35,12 +38,23 @@ class PropertyNameUtil {
   static String getPropertyName(@NotNull String fieldName) {
     if (FIELD_TO_PROPERTY_NAME_MAP.containsKey(fieldName)) return FIELD_TO_PROPERTY_NAME_MAP.get(fieldName);
     StringBuilder nameBuilder = new StringBuilder();
-    String[] chunks = fieldName.split("_");
+    String[] chunks = preprocess(fieldName).split("_");
     for (String chunk : chunks) {
       if (nameBuilder.length() > 0) nameBuilder.append('_');
       appendNamePart(nameBuilder, chunk);
     }
     return nameBuilder.toString();
+  }
+
+  @NotNull
+  private static String preprocess(@NotNull String fieldName) {
+    if (fieldName.startsWith("SPACE_WITHIN")) {
+      return fieldName.replace("SPACE_WITHIN", "SPACES_WITHIN");
+    }
+    else if (fieldName.startsWith("SPACE_AROUND")) {
+      return fieldName.replace("SPACE_AROUND", "SPACES_AROUND");
+    }
+    return fieldName;
   }
 
   private static void appendNamePart(@NotNull StringBuilder nameBuilder, @NotNull String chunk) {

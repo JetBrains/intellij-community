@@ -113,11 +113,11 @@ private fun userId(email: String, projectId: String): String {
 }
 
 private fun extract(json: String, regex: Regex) = extractOrNull(json, regex) ?: error(json)
-
-private fun extractOrNull(json: String, regex: Regex) = json
+private fun extractOrNull(json: String, regex: Regex) = extractAll(json, regex).lastOrNull()
+private fun extractAll(json: String, regex: Regex) = json
   .replace(" ", "")
   .replace(System.lineSeparator(), "").let { str ->
-    regex.findAll(str).map { it.groupValues.last() }.lastOrNull()
+    regex.findAll(str).map { it.groupValues.last() }.toList()
   }
 
 internal fun postComment(projectId: String, review: Review, comment: String) {
@@ -129,5 +129,24 @@ internal fun postComment(projectId: String, review: Review, comment: String) {
       },
       "text" : "$comment",
       "anchor" : {}
+  }""")
+}
+
+// TODO: take commit message from revisions
+internal fun getOpenIconsReviewTitles(projectId: String) = upsourceGet("getReviews", """{
+    "projectId" : "$projectId",
+    "limit": ${Int.MAX_VALUE},
+    "query" : "state: open and created-by: {Icons Sync Robot}"
+  }""").run {
+  extractAll(this, Regex(""""title":"([^"]+)""""))
+}
+
+internal fun closeReview(projectId: String, review: Review) {
+  upsourcePost("closeReview", """{
+      "isFlagged" : true,
+      "reviewId": {
+      	"projectId" : "$projectId",
+      	"reviewId": "${review.id}"
+      }
   }""")
 }

@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -159,6 +160,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   public static void doAutodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
+      return;
+    }
+    if (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) != null) {
+      ourPlatformPrefixInitialized = true;
       return;
     }
     for (String candidate : PREFIX_CANDIDATES) {
@@ -496,6 +501,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected void tearDown() throws Exception {
     Project project = myProject;
     if (project != null && !project.isDisposed()) {
+      DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, 10, TimeUnit.SECONDS);
       AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
     }
     // don't use method references here to make stack trace reading easier

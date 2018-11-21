@@ -1097,6 +1097,11 @@ public class JBUI {
      */
     @NotNull
     public static ScaleContext create(@Nullable Component component, @Nullable Graphics2D graphics) {
+      /* [tav] todo: Relying on the component's scale is likely wrong. If a client code manually scales
+       * a graphics and renders a component into it, the component and all its subcomponents should
+       * (and will by default) honor the graphics scale, not the component's scale. So I comment the
+       * code below and in case it won't cause regressions this method should be inlined and removed.
+       *
       // Component is preferable to Graphics as a scale provider, as it lets the context stick
       // to the comp's actual scale via the update method.
       if (component != null) {
@@ -1112,6 +1117,7 @@ public class JBUI {
       if (component != null) {
         return create(component);
       }
+      */
       return create(graphics);
     }
 

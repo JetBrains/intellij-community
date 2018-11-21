@@ -109,10 +109,12 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @NotNull
   @Override
-  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef) {
+  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
-    fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
+    if (onTheFly) {
+      fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
+    }
     return fixes;
   }
 
@@ -153,7 +155,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
           fixes.add(new SurroundWithIfFix(qualifier));
         }
 
-        if (ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
+        if (onTheFly && ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
           fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
         }
       }

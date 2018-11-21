@@ -30,7 +30,10 @@ import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +46,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +55,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,20 +66,19 @@ import java.util.Map;
 import java.util.Set;
 
 public class ViewOfflineResultsAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
-  @NonNls private static final String XML_EXTENSION = "xml";
+  private static final Logger LOG = Logger.getInstance(ViewOfflineResultsAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    final Project project = event.getProject();
     presentation.setEnabled(project != null);
     presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && !PlatformUtils.isCidr());
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    final Project project = event.getProject();
 
     LOG.assertTrue(project != null);
 
@@ -94,10 +96,9 @@ public class ViewOfflineResultsAction extends AnAction {
     descriptor.setTitle("Select Path");
     descriptor.setDescription("Select directory which contains exported inspections results");
     final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
-    if (virtualFile == null || !virtualFile.isDirectory()) return;
+    if (virtualFile == null || !(virtualFile.isDirectory() || StdFileTypes.XML.getDefaultExtension().equals(virtualFile.getExtension()))) return;
 
-    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
-      new HashMap<>();
+    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<>();
     final String [] profileName = new String[1];
     ProgressManager.getInstance().run(new Task.Backgroundable(project,
                                                               InspectionsBundle.message("parsing.inspections.dump.progress.title"),
@@ -107,7 +108,7 @@ public class ViewOfflineResultsAction extends AnAction {
       public void run(@NotNull ProgressIndicator indicator) {
         //for non project directories ensure refreshed directory 
         VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile);
-        final VirtualFile[] files = virtualFile.getChildren();
+        final VirtualFile[] files = virtualFile.isDirectory() ? virtualFile.getChildren() : new VirtualFile[] {virtualFile};
         try {
           for (final VirtualFile inspectionFile : files) {
             if (inspectionFile.isDirectory()) continue;
@@ -118,13 +119,16 @@ public class ViewOfflineResultsAction extends AnAction {
               if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
                 profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(inspectionIoFile));
               }
-              else if (XML_EXTENSION.equals(extension)) {
+              else if (StdFileTypes.XML.getDefaultExtension().equals(extension)) {
                 resMap.put(shortName, ReadAction.compute(() -> OfflineViewParseUtil.parse(inspectionIoFile)));
               }
             }
             catch (Exception e) {
               throw new RuntimeException("Can't read file: " + inspectionFile.getName(), e);
             }
+          }
+          if (profileName[0] == null) {
+            profileName[0] = virtualFile.getNameWithoutExtension();
           }
         }
         catch (final Exception e) {  //all parse exceptions
@@ -136,6 +140,7 @@ public class ViewOfflineResultsAction extends AnAction {
 
       @Override
       public void onSuccess() {
+        if (resMap.isEmpty()) return;
         ApplicationManager.getApplication().invokeLater(() -> {
           final String name = profileName[0];
           showOfflineView(project, name, resMap, InspectionsBundle.message("offline.view.title") + " (" + (name != null ? name : InspectionsBundle.message("offline.view.editor.settings.title")) + ")");
@@ -146,9 +151,8 @@ public class ViewOfflineResultsAction extends AnAction {
 
   @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"}) //used in TeamCity
   public static InspectionResultsView showOfflineView(@NotNull Project project,
-                                                      @Nullable
-                                                      final String profileName,
-                                                      @NotNull final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+                                                      @Nullable String profileName,
+                                                      @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       @NotNull String title) {
     InspectionProfileImpl profile;
     if (profileName != null) {

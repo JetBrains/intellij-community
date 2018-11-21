@@ -91,7 +91,7 @@ public class HighlightControlFlowUtil {
         String description = JavaErrorMessages.message("unreachable.statement");
         PsiElement keyword = null;
         if (unreachableStatement instanceof PsiIfStatement ||
-            unreachableStatement instanceof PsiSwitchStatement ||
+            unreachableStatement instanceof PsiSwitchBlock ||
             unreachableStatement instanceof PsiLoopStatement) {
           keyword = unreachableStatement.getFirstChild();
         }

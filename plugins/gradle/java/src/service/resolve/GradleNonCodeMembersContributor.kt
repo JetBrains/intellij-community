@@ -142,7 +142,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         val wrappedBase = GrLightMethodBuilder(place.manager, propCandidate).apply {
           returnType = domainObjectType
           containingClass = aClass
-          val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)
+          val closureParam = addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE)
           closureParam.putUserData(DELEGATES_TO_KEY, domainObjectFqn)
           closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
 

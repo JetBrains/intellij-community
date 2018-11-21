@@ -838,7 +838,7 @@ public class AbstractTreeUi {
   private Promise<Boolean> update(@NotNull final NodeDescriptor nodeDescriptor, boolean now) {
     Promise<Boolean> promise;
     if (now || isPassthroughMode()) {
-      promise = Promise.resolve(update(nodeDescriptor));
+      promise = Promises.resolvedPromise(update(nodeDescriptor));
     }
     else {
       final AsyncPromise<Boolean> result = new AsyncPromise<>();
@@ -2960,7 +2960,7 @@ public class AbstractTreeUi {
 
     Promise<Boolean> update;
     if (parentPreloadedChildren != null && parentPreloadedChildren.getDescriptor(oldElement) == childDescriptor) {
-      update = Promise.resolve(parentPreloadedChildren.isUpdated(oldElement));
+      update = Promises.resolvedPromise(parentPreloadedChildren.isUpdated(oldElement));
     }
     else {
       update = update(childDescriptor, false);
@@ -2978,7 +2978,7 @@ public class AbstractTreeUi {
         final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getElementFromDescriptor(childDesc.get()));
         Promise<Boolean> promise;
         if (index == null) {
-          promise = Promise.resolve(false);
+          promise = Promises.resolvedPromise(false);
         }
         else {
           final Object elementFromMap = elementToIndexMap.getKey(index);
@@ -3006,11 +3006,11 @@ public class AbstractTreeUi {
               // todo why we don't process promise here?
             }
             else {
-              promise = Promise.resolve(changes.get());
+              promise = Promises.resolvedPromise(changes.get());
             }
           }
           else {
-            promise = Promise.resolve(changes.get());
+            promise = Promises.resolvedPromise(changes.get());
           }
 
           promise

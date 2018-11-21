@@ -3,8 +3,8 @@
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
@@ -31,7 +31,13 @@ fun nullPromise(): Promise<*> = InternalPromiseUtil.FULFILLED_PROMISE.value
 /**
  * Creates a promise that is resolved with the given value.
  */
-fun <T> resolvedPromise(result: T): Promise<T> = Promise.resolve(result)
+fun <T> resolvedPromise(result: T): Promise<T> {
+  @Suppress("UNCHECKED_CAST")
+  return when (result) {
+    null -> InternalPromiseUtil.FULFILLED_PROMISE.value as Promise<T>
+    else -> DonePromise(InternalPromiseUtil.PromiseValue.createFulfilled(result))
+  }
+}
 
 @Suppress("UNCHECKED_CAST")
 /**
@@ -82,9 +88,6 @@ inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Un
       override fun accept(param: Any?) = handler()
     })
 }
-
-@Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.doneRun(crossinline handler: () -> Unit): Promise<out Any> = onSuccess { handler() }
 
 @Suppress("UNCHECKED_CAST")
 inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then { handler() }
@@ -202,7 +205,7 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
       return true
     }
   }
-  else if (e !is ProcessCanceledException) {
+  else if (e !is ControlFlowException) {
     error(e)
     return true
   }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -30,6 +31,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
@@ -52,6 +55,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -141,6 +145,10 @@ public abstract class UsefulTestCase extends TestCase {
       // don't use method references here to make stack trace reading easier
       //noinspection Convert2MethodRef
       new RunAll(
+        () -> EdtTestUtil.runInEdtAndWait(() -> {
+          FileBasedIndexImpl index = ApplicationManager.getApplication() == null ? null : (FileBasedIndexImpl)FileBasedIndex.getInstance();
+          if (index != null) index.waitForVfsEventsExecuted(1, TimeUnit.MINUTES);
+        }),
         () -> disposeRootDisposable(),
         () -> cleanupSwingDataStructures(),
         () -> cleanupDeleteOnExitHookList(),
@@ -749,9 +757,13 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSameLines(@NotNull String expected, @NotNull String actual) {
+    assertSameLines(null, expected, actual);
+  }
+
+  public static void assertSameLines(@Nullable String message, @NotNull String expected, @NotNull String actual) {
     String expectedText = StringUtil.convertLineSeparators(expected.trim());
     String actualText = StringUtil.convertLineSeparators(actual.trim());
-    Assert.assertEquals(expectedText, actualText);
+    Assert.assertEquals(message, expectedText, actualText);
   }
 
   public static void assertExists(@NotNull File file){

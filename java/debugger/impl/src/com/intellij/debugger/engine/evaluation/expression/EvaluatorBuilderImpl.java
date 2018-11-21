@@ -1249,7 +1249,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             PsiClass containingClass = method.getContainingClass();
             if (containingClass != null) {
               String find;
-              String bind = "";
+              boolean bind = false;
               if (method.isConstructor()) {
                 find = "findConstructor(" + containingClass.getQualifiedName() + ".class, mt)";
               }
@@ -1257,7 +1257,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 find = "in(" + containingClass.getQualifiedName() + ".class).findSpecial(" +
                        containingClass.getQualifiedName() + ".class, \"" + method.getName() + "\", mt, " +
                        containingClass.getQualifiedName() + ".class)";
-                bind = "mh = mh.bindTo(" + qualifier.getText() + ");\n";
+                bind = true;
               }
               else {
                 find = containingClass.getQualifiedName() + ".class, \"" + method.getName() + "\", mt)";
@@ -1266,13 +1266,22 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 }
                 else {
                   find = "findVirtual(" + find;
-                  bind = "mh = mh.bindTo(" + qualifier.getText() + ");\n";
+                  if (qualifier instanceof PsiReference) {
+                    PsiElement resolve = ((PsiReference)qualifier).resolve();
+                    if (!(resolve instanceof PsiClass)) {
+                      bind = true;
+                    }
+                  }
+                  else {
+                    bind = true;
+                  }
                 }
               }
+              String bidStr = bind ? "mh = mh.bindTo(" + qualifier.getText() + ");\n" : "";
               code =
                 "MethodType mt = MethodType.fromMethodDescriptorString(\"" + JVMNameUtil.getJVMSignature(method) + "\", null);\n" +
                 "MethodHandle mh = MethodHandles.lookup()." + find + ";\n" +
-                bind +
+                bidStr +
                 "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
             }
           } else if (PsiUtil.isArrayClass(resolved)) {

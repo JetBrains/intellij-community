@@ -101,7 +101,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   private SessionInfo getOrCreateSessionInfo() {
     SessionInfo info = geExistingSessionInfo();
     if (info != null) return info;
-    SessionInfo sessionInfo = SessionInfo.create(getFUSession().getId());
+    SessionInfo sessionInfo = SessionInfo.create(getFUSession());
     myState.sessions.add(sessionInfo);
     return sessionInfo;
   }
@@ -112,7 +112,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   private SessionInfo geExistingSessionInfo() {
     FUSession session = getFUSession();
     for (SessionInfo info : myState.sessions.toArray(new SessionInfo[0])) {
-      if (info.id == session.getId()) {
+      if (info.id == session.getId() && session.getBuildId().equals(info.build)) {
         return info;
       }
     }
@@ -131,6 +131,10 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   public static class SessionInfo {
     @Attribute("id")
     public int id;
+
+    @Attribute("build")
+    public String build;
+
 
     @Property(surroundWithTag = false)
     @XCollection
@@ -155,9 +159,11 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
       return null;
     }
 
-    public static SessionInfo create(int id) {
+    public static SessionInfo create(FUSession fuSession) {
       SessionInfo info = new SessionInfo();
-      info.id = id;
+      info.id = fuSession.getId();
+      info.build = fuSession.getBuildId();
+
       return info;
     }
   }

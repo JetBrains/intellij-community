@@ -25,6 +25,8 @@ public class StatementParserTest extends JavaParsingTestCase {
 
   public void testBreakNormal0() { doParserTest("break;"); }
   public void testBreakNormal1() { doParserTest("break LABEL;"); }
+  public void testBreakIncomplete() { doParserTest("break"); }
+  public void testBreakExpr() { doParserTest("break boo();"); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
   public void testContinueNormal1() { doParserTest("continue LABEL;"); }

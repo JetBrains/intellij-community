@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +34,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public class Utils{
+  private static final Logger LOG = Logger.getInstance(Utils.class);
   @NonNls public static final String NOTHING_HERE = "Nothing here";
   public static final AnAction EMPTY_MENU_FILLER = new AnAction(NOTHING_HERE) {
 
@@ -59,37 +61,10 @@ public class Utils{
                                                  PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
                                                  String place){
-    ArrayList<AnAction> list = new ArrayList<>();
-    expandActionGroup(isInModalContext, group, list, presentationFactory, context,
-                      place, null, false, group instanceof CompactActionGroup, false, false);
-    return list;
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false)
+      .expandActionGroup(group, group instanceof CompactActionGroup);
   }
 
-
-  /**
-   * @param list this list contains expanded actions.
-   * @param actionManager manager
-   */
-  public static void expandActionGroup(boolean isInModalContext,
-                                       @NotNull ActionGroup group,
-                                       List<? super AnAction> list,
-                                       PresentationFactory presentationFactory,
-                                       DataContext context,
-                                       @NotNull String place,
-                                       ActionManager actionManager,
-                                       boolean transparentOnly,
-                                       boolean hideDisabled,
-                                       boolean isContextMenuAction,
-                                       boolean isToolbarAction) {
-    list.addAll(new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, isToolbarAction)
-      .expandActionGroup(group, hideDisabled, transparentOnly));
-  }
-
-  public static void updateGroupChild(DataContext context, String place, AnAction anAction, final Presentation presentation) {
-    AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
-    event1.setInjectedContext(anAction.isInInjectedContext());
-    ActionUpdater.doUpdate(false, anAction, event1);
-  }
 
   static void fillMenu(@NotNull ActionGroup group,
                        JComponent component,
@@ -102,14 +77,24 @@ public class Utils{
                        boolean useDarkIcons) {
     final boolean checked = group instanceof CheckedActionGroup;
 
-    ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false);
-    List<AnAction> list = updater.expandActionGroup(group, group instanceof CompactActionGroup, false);
+    ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false, false);
+    List<AnAction> list = updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
       final AnAction action = list.get(i);
+      Presentation presentation = presentationFactory.getPresentation(action);
+      if (!(action instanceof Separator) && presentation.isVisible() && StringUtil.isEmpty(presentation.getText())) {
+        String message = "Skipping empty menu item for action " + action + " of " + action.getClass();
+        if (action.getTemplatePresentation().getText() == null) {
+          message += ". Please specify some default action text in plugin.xml or action constructor";
+        }
+        LOG.warn(message);
+        continue;
+      }
+
       if (action instanceof Separator) {
         final String text = ((Separator)action).getText();
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
@@ -145,7 +130,7 @@ public class Utils{
         }
       }
       else if (action instanceof ActionGroup &&
-               !(((ActionGroup)action).canBePerformed(context) &&
+               !(updater.canBePerformedCached((ActionGroup)action) &&
                  !updater.hasVisibleChildren((ActionGroup)action))) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
@@ -153,7 +138,7 @@ public class Utils{
       }
       else {
         final ActionMenuItem each =
-          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
+          new ActionMenuItem(action, presentation, place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
         component.add(each);
         children.add(each);
       }

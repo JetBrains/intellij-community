@@ -5,8 +5,6 @@ import org.apache.http.HttpHeaders
 import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.entity.ContentType
 import java.io.File
-import java.net.URLEncoder
-import java.text.SimpleDateFormat
 import java.util.*
 
 internal fun isUnderTeamCity() = BUILD_SERVER != null
@@ -27,26 +25,15 @@ private fun HttpRequestBase.teamCityAuth() {
   basicAuth(System.getProperty("pin.builds.user.name"), System.getProperty("pin.builds.user.password"))
 }
 
-private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
-
-internal fun isNotificationRequired(context: Context): Boolean {
-  val request = "builds?locator=buildType:$BUILD_CONF,count:1"
-  return if (!context.isFail()) {
-    // notify on fail -> success
-    val previousBuild = teamCityGet(request)
-    previousBuild.contains("status=\"FAILURE\"")
-  }
-  else {
-    val dayAgo = DATE_FORMAT.format(Calendar.getInstance().let { calendar ->
-      calendar.add(Calendar.HOUR, -12)
-      calendar.time
-    })
-    // remind of failure once per day
-    val previousBuild = teamCityGet("$request,sinceDate:${URLEncoder.encode(dayAgo, Charsets.UTF_8.name())}")
-    previousBuild.contains("count=\"0\"")
-  }
-}
-
+internal fun isNotificationRequired(context: Context) =
+  Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+    // not weekend
+    .let { it != Calendar.SATURDAY && it != Calendar.SUNDAY } &&
+  // remind of failure every day
+  (isScheduled() && context.isFail() ||
+   // or check previous build and notify on fail -> success
+   !context.isFail() && teamCityGet("builds?locator=buildType:$BUILD_CONF,count:1")
+     .contains("status=\"FAILURE\""))
 
 internal val DEFAULT_INVESTIGATOR by lazy {
   System.getProperty("intellij.icons.sync.default.investigator")?.takeIf { it.isNotBlank() } ?: error("Specify default investigator")
@@ -56,13 +43,15 @@ internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
                             val commits: Map<File, Collection<CommitInfo>> = emptyMap(),
                             var isAssigned: Boolean = false)
 
-internal fun isInvestigationAssigned() = teamCityGet("investigations?locator=buildType:$BUILD_CONF").run {
-  contains("assignee") && !contains("GIVEN_UP")
-}
-
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
   try {
+    val assignee = teamCityGet("investigations?locator=buildType:$BUILD_CONF")
     val id = teamCityGet("users/email:${investigator.email}/id")
+    if (assignee.contains(id)) {
+      log("Investigation is already assigned to ${investigator.email}")
+      investigator.isAssigned = true
+      return investigator
+    }
     val text = context.report().let { if (it.isNotEmpty()) "$it, " else it } +
                (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
                " build: ${thisBuildReportableLink()}," +
@@ -91,11 +80,19 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
     !investigator.isAssigned && investigator.email != investigator.email.toLowerCase() -> {
       assignInvestigation(Investigator(investigator.email.toLowerCase(), investigator.commits), context)
     }
+    !investigator.isAssigned && investigator.email != tryToMapEmailFromGitToTeamCity(investigator.email) -> {
+      assignInvestigation(Investigator(tryToMapEmailFromGitToTeamCity(investigator.email), investigator.commits), context)
+    }
     !investigator.isAssigned && investigator.email != DEFAULT_INVESTIGATOR -> {
       assignInvestigation(Investigator(DEFAULT_INVESTIGATOR, investigator.commits), context)
     }
     else -> investigator
   }
+}
+
+private fun tryToMapEmailFromGitToTeamCity(email: String): String {
+  val (username, domain) = email.split("@")
+  return username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain"
 }
 
 internal fun thisBuildReportableLink() =
@@ -105,3 +102,5 @@ internal fun triggeredBy() = System.getProperty("teamcity.build.triggeredBy.user
   ?.takeIf { it.isNotBlank() }
   ?.let { teamCityGet("users/username:$it/email") }
   ?.removeSuffix(System.lineSeparator())
+
+internal fun isScheduled() = System.getProperty("teamcity.build.triggeredBy")?.contains("Schedule") == true

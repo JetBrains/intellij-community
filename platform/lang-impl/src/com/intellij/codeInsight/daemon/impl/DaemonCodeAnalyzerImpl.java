@@ -323,15 +323,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     FileStatusMap fileStatusMap = getFileStatusMap();
 
     Map<FileEditor, HighlightingPass[]> map = new HashMap<>();
+
+    try {
+      waitForAllEditorsFinallyLoaded(project, 10, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException e) {
+      throw new RuntimeException("editors have not completed loading in 10 seconds");
+    }
     for (TextEditor textEditor : textEditors) {
-      if (textEditor instanceof TextEditorImpl) {
-        try {
-          ((TextEditorImpl)textEditor).waitForLoaded(10, TimeUnit.SECONDS);
-        }
-        catch (TimeoutException e) {
-          throw new RuntimeException(textEditor + " has not completed loading in 10 seconds");
-        }
-      }
       TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
       if (highlighter == null) {
         Editor editor = textEditor.getEditor();
@@ -389,6 +388,28 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       DaemonProgressIndicator.setDebug(false);
       fileStatusMap.allowDirt(true);
       waitForTermination();
+    }
+  }
+
+  @TestOnly
+  public static void waitForAllEditorsFinallyLoaded(@NotNull Project project, long timeout, @NotNull TimeUnit unit) throws TimeoutException {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    long deadline = unit.toMillis(timeout) + System.currentTimeMillis();
+    W:
+    while (true) {
+      UIUtil.dispatchAllInvocationEvents();
+      if (System.currentTimeMillis() > deadline) throw new TimeoutException();
+      for (FileEditor editor : FileEditorManager.getInstance(project).getAllEditors()) {
+        if (editor instanceof TextEditorImpl) {
+          try {
+            ((TextEditorImpl)editor).waitForLoaded(1, TimeUnit.MILLISECONDS);
+          }
+          catch (TimeoutException ignored) {
+            continue W;
+          }
+        }
+      }
+      break;
     }
   }
 

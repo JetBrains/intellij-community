@@ -446,7 +446,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     StringBuilder info = new StringBuilder();
 
     if (pluginId != null) {
-      info.append(DiagnosticBundle.message("error.list.message.blame.plugin", plugin != null ? plugin.getName() : pluginId));
+      String versionText = plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())
+                           ? DiagnosticBundle.message("error.list.message.plugin.version", plugin.getVersion())
+                           : "";
+      info.append(DiagnosticBundle.message("error.list.message.blame.plugin", plugin != null ? plugin.getName() : pluginId, versionText));
     }
     else if (t instanceof AbstractMethodError) {
       info.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
@@ -854,9 +857,17 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   /**
    * @return (plugin name, version)
+   * @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead and take the plugin id, name and version from the returned instance
    */
   @Nullable
+  @Deprecated
   public static Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
+    IdeaPluginDescriptor plugin = getPlugin(event);
+    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
+  }
+
+  @Nullable
+  public static IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = null;
     if (event instanceof IdeaReportingEvent) {
       plugin = ((IdeaReportingEvent)event).getPlugin();
@@ -867,7 +878,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         plugin = PluginManager.getPlugin(findPluginId(t));
       }
     }
-    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
+    return plugin;
   }
 
   @Nullable

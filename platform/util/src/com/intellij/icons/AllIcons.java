@@ -1910,6 +1910,7 @@ public class AllIcons {
     public static final Icon KeymapOther = IconLoader.getIcon("/nodes/keymapOther.svg"); // 16x16
     public static final Icon KeymapTools = IconLoader.getIcon("/nodes/keymapTools.svg"); // 16x16
     public static final Icon Locked = IconLoader.getIcon("/nodes/locked.svg"); // 16x16
+    public static final Icon LogFolder = IconLoader.getIcon("/nodes/logFolder.png"); // 16x16
     public static final Icon Method = IconLoader.getIcon("/nodes/method.svg"); // 16x16
     public static final Icon MethodReference = IconLoader.getIcon("/nodes/methodReference.svg"); // 16x16
     public static final Icon Module = IconLoader.getIcon("/nodes/Module.svg"); // 16x16

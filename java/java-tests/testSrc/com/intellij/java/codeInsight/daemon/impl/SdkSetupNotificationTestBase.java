@@ -34,8 +34,12 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    super.tearDown();
+    try {
+      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected EditorNotificationPanel configureBySdkAndText(@Nullable Sdk sdk,

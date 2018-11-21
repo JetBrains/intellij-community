@@ -227,7 +227,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     return Collections.emptyList();
   }
 
-  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef) {
+  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
     return Collections.emptyList();
   }
 
@@ -482,7 +482,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       });
       NullabilityProblemKind.callMethodRefNPE.ifMyProblem(problem, methodRef ->
         holder.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.npe.methodref.invocation"),
-                               createMethodReferenceNPEFixes(methodRef).toArray(LocalQuickFix.EMPTY_ARRAY)));
+                               createMethodReferenceNPEFixes(methodRef, holder.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY)));
       NullabilityProblemKind.callNPE.ifMyProblem(problem, call -> reportCallMayProduceNpe(holder, problem.getMessage(expressions), call));
       NullabilityProblemKind.passingNullableToNotNullParameter.ifMyProblem(problem, expr -> reportNullableArgument(holder, expr, expressions));
       NullabilityProblemKind.arrayAccessNPE.ifMyProblem(problem, expression -> {
@@ -881,7 +881,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (anchor.getParent() instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)anchor.getParent();
       holder.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.passing.nullable.argument.methodref"),
-                             createMethodReferenceNPEFixes(methodRef).toArray(LocalQuickFix.EMPTY_ARRAY));
+                             createMethodReferenceNPEFixes(methodRef, holder.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY));
     }
     else {
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown((PsiExpression)anchor);

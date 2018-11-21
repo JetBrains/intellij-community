@@ -98,7 +98,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       wrappedBase.copy().apply {
         addParameter("name", JAVA_LANG_STRING)
         addParameter("clazz", classType)
-        addParameter("configuration", GROOVY_LANG_CLOSURE, true)
+        addOptionalParameter("configuration", GROOVY_LANG_CLOSURE)
       }.let {
         if (!delegate.execute(it, state)) return false
       }
@@ -107,7 +107,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       // (clazz, configuration)
       wrappedBase.copy().apply {
         addParameter("clazz", classType)
-        addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true).apply {
+        addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE).apply {
           putUserData(DELEGATES_TO_KEY, componentDelegateFqn)
           putUserData(DELEGATES_TO_STRATEGY_KEY, DELEGATE_FIRST)
         }

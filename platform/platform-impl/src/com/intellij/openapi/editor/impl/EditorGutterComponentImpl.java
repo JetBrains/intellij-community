@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -304,16 +305,33 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return;
     }
 
-    int startVisualLine = myEditor.yToVisualLine(clip.y);
-    int endVisualLine = myEditor.yToVisualLine(clip.y + clip.height);
+    int startVisualLine;
+    int endVisualLine;
+
+    int firstVisibleOffset;
+    int lastVisibleOffset;
+
+    Segment focusModeRange = myEditor.getFocusModeRange();
+    if (focusModeRange == null) {
+      startVisualLine = myEditor.yToVisualLine(clip.y);
+      endVisualLine = myEditor.yToVisualLine(clip.y + clip.height);
+
+      firstVisibleOffset = myEditor.visualLineStartOffset(startVisualLine);
+      lastVisibleOffset = myEditor.visualLineStartOffset(endVisualLine + 1);
+    }
+    else {
+      firstVisibleOffset = focusModeRange.getStartOffset();
+      lastVisibleOffset = focusModeRange.getEndOffset();
+
+      startVisualLine = myEditor.offsetToVisualLine(firstVisibleOffset);
+      endVisualLine = myEditor.offsetToVisualLine(lastVisibleOffset);
+    }
 
     // paint all backgrounds
     int gutterSeparatorX = getWhitespaceSeparatorOffset();
     paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor);
     paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor());
 
-    int firstVisibleOffset = myEditor.visualLineStartOffset(startVisualLine);
-    int lastVisibleOffset = myEditor.visualLineStartOffset(endVisualLine + 1);
     paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
     Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -321,7 +339,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     try {
       paintAnnotations(g, startVisualLine, endVisualLine);
+
+      if (focusModeRange != null) {
+        int startY = myEditor.visualLineToY(startVisualLine);
+        int endY = myEditor.visualLineToY(endVisualLine);
+        g.setClip(clip.x, startY, clip.width, endY - startY);
+      }
+
       paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
+
+      g.setClip(clip);
+
       paintFoldingLines(g, clip);
       paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
       paintLineNumbers(g, startVisualLine, endVisualLine);

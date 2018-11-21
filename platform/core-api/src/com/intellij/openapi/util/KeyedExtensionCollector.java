@@ -9,6 +9,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.KeyedLazyInstance;
@@ -80,7 +81,7 @@ public class KeyedExtensionCollector<T, KeyT> {
       public void extensionPointRegistered(@NotNull ExtensionPoint extensionPoint) {
         if (extensionPoint.getName().equals(epName)) {
           //noinspection unchecked
-          extensionPoint.addExtensionPointListener(myListener);
+          ((ExtensionPointImpl)extensionPoint).addExtensionPointListener(myListener, false, null);
           myCache.clear();
         }
       }
@@ -93,7 +94,7 @@ public class KeyedExtensionCollector<T, KeyT> {
     Extensions.getRootArea().addAvailabilityListener(epName, myExtensionPointAvailabilityListener);
   }
 
-  public KeyedExtensionCollector(@NonNls @NotNull String epName, Disposable parentDisposable) {
+  public KeyedExtensionCollector(@NonNls @NotNull String epName, @NotNull Disposable parentDisposable) {
     this(epName);
     Disposer.register(parentDisposable, new Disposable() {
       @Override

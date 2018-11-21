@@ -451,13 +451,15 @@ public class GitImpl extends GitImplBase {
       if (force) {
         h.addParameters("--force");
       }
-      for (GitPushParams.ForceWithLease lease : forceWithLease) {
-        String parameter = lease.getParameter();
-        if (parameter != null) {
-          h.addParameters("--force-with-lease=" + parameter);
-        }
-        else {
-          h.addParameters("--force-with-lease");
+      if (GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(repository)) {
+        for (GitPushParams.ForceWithLease lease : forceWithLease) {
+          String parameter = lease.getParameter();
+          if (parameter != null) {
+            h.addParameters("--force-with-lease=" + parameter);
+          }
+          else {
+            h.addParameters("--force-with-lease");
+          }
         }
       }
       if (tagMode != null) {

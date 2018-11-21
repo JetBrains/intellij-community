@@ -96,7 +96,7 @@ public class FindUsagesManager {
           return true;
         }
       }
-      catch (IndexNotReadyException e) {
+      catch (IndexNotReadyException | ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {

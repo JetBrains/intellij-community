@@ -364,7 +364,7 @@ public final class EditorUtil {
     }
     float tabSizePixels = tabSize * plainSpaceWidth;
 
-    int nTabs = (int) (x / tabSizePixels);
+    int nTabs = (int) ((x + plainSpaceWidth / 2) / tabSizePixels);
     return (nTabs + 1) * tabSizePixels;
   }
 

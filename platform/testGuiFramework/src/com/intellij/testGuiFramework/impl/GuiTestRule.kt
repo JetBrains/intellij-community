@@ -43,10 +43,7 @@ import org.jdom.xpath.XPath
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.AssumptionViolatedException
-import org.junit.rules.ExternalResource
-import org.junit.rules.RuleChain
-import org.junit.rules.TestRule
-import org.junit.rules.Timeout
+import org.junit.rules.*
 import org.junit.runner.Description
 import org.junit.runners.model.MultipleFailureException
 import org.junit.runners.model.Statement
@@ -61,9 +58,11 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 
-class GuiTestRule(private val projectsFolder: File) : TestRule {
+class GuiTestRule : TestRule {
 
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
+
+  val projectsFolder: TemporaryFolder = TemporaryFolder(File(FileUtil.getTempDirectory()))
 
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
@@ -71,7 +70,7 @@ class GuiTestRule(private val projectsFolder: File) : TestRule {
   private var myTestShortName: String = "undefined"
   private var currentTestDateStart: Date = Date()
 
-  private val myRuleChain = RuleChain.emptyRuleChain()
+  private val myRuleChain = RuleChain.outerRule(projectsFolder)
     .around(myRobotTestRule)
     .around(myFatalErrorsFlusher)
     .around(IdeHandling())
@@ -155,7 +154,7 @@ class GuiTestRule(private val projectsFolder: File) : TestRule {
     }
 
     fun setUp() {
-      GuiTestUtil.setUpDefaultProjectCreationLocationPath(projectsFolder)
+      GuiTestUtil.setUpDefaultProjectCreationLocationPath(projectsFolder.root)
       GeneralSettings.getInstance().isShowTipsOnStartup = false
       currentTestDateStart = Date()
     }
@@ -427,7 +426,7 @@ class GuiTestRule(private val projectsFolder: File) : TestRule {
   }
 
   private fun getTestProjectDirPath(projectDirName: String): File {
-    return File(projectsFolder, projectDirName)
+    return File(projectsFolder.root, projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {

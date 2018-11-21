@@ -3,9 +3,9 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 
-internal fun syncIcons(context: Context,
-                       devIcons: Map<String, GitObject>,
-                       icons: Map<String, GitObject>) {
+internal fun syncIcons(context: Context) {
+  val devIcons = context.devIcons
+  val icons = context.icons
   if (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) {
     log("Syncing icons repo:")
     syncAdded(context.addedByDev, devIcons, File(context.iconsRepoDir)) { context.iconsRepo }
@@ -24,7 +24,7 @@ internal fun syncAdded(added: Collection<String>,
                        sourceRepoMap: Map<String, GitObject>,
                        targetDir: File, targetRepo: (File) -> File) {
   callSafely {
-    addChangesToGit { add ->
+    stageFiles { add ->
       added.forEach {
         val target = File(targetDir, it)
         if (target.exists()) log("$it already exists in target repo!")
@@ -41,7 +41,7 @@ internal fun syncModified(modified: Collection<String>,
                           targetRepoMap: Map<String, GitObject>,
                           sourceRepoMap: Map<String, GitObject>) {
   callSafely {
-    addChangesToGit { add ->
+    stageFiles { add ->
       modified.forEach {
         val target = targetRepoMap[it]!!
         val source = sourceRepoMap[it]!!
@@ -55,7 +55,7 @@ internal fun syncModified(modified: Collection<String>,
 internal fun syncRemoved(removed: Collection<String>,
                          targetRepoMap: Map<String, GitObject>) {
   callSafely {
-    addChangesToGit { add ->
+    stageFiles { add ->
       removed.map { targetRepoMap[it]!! }.forEach { it ->
         val target = it.file
         if (!target.delete()) {
@@ -70,13 +70,13 @@ internal fun syncRemoved(removed: Collection<String>,
   }
 }
 
-private fun addChangesToGit(action: ((File, String) -> Unit) -> Unit) {
+private fun stageFiles(action: ((File, String) -> Unit) -> Unit) {
   val map = mutableMapOf<File, MutableList<String>>()
   action { repo, path ->
     if (!map.containsKey(repo)) map[repo] = mutableListOf()
     map[repo]!!.add(path)
   }
   map.forEach { repo, file ->
-    addChangesToGit(file, repo)
+    stageFiles(file, repo)
   }
 }

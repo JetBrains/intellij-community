@@ -12,7 +12,7 @@ class SwitchExpressions {
 
     System.out.println(switch (new Random().nextInt()) {
       case 0 -> throw new IllegalStateException("no args");
-      <error descr="Different case kinds used in the switch">case 1:</error> break;
+      <error descr="Different case kinds used in the switch">case 1:</error> break "lone";
     });
 
     System.out.println(
@@ -44,5 +44,18 @@ class SwitchExpressions {
       case E1 -> 1;
       case E2 -> 2;
     });
+
+    lab: while (true) {
+      switch (new Random().nextInt()) {
+        case -1: return;
+        case -2: continue lab;
+        default: break lab;
+      }
+      System.out.println(switch (new Random().nextInt()) {
+        case -1: <error descr="Return outside of enclosing switch expression">return;</error>
+        case -2: <error descr="Continue outside of enclosing switch expression">continue lab;</error>
+        default: <error descr="Break outside of enclosing switch expression">break lab;</error>
+      });
+    }
   }
 }

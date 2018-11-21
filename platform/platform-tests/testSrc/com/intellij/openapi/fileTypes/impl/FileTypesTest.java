@@ -67,10 +67,15 @@ public class FileTypesTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    FileTypeManagerImpl.reDetectAsync(false);
-    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
-    myFileTypeManager = null;
-    super.tearDown();
+    try {
+      FileTypeManagerImpl.reDetectAsync(false);
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
+    }
+    finally {
+      myFileTypeManager = null;
+
+      super.tearDown();
+    }
   }
 
   public void testMaskExclude() {
@@ -120,7 +125,7 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testAddNewExtension() {
     FileTypeAssocTable<FileType> associations = new FileTypeAssocTable<>();
-    associations.addAssociation(FileTypeManager.parseFromString("*.java"), FileTypes.ARCHIVE);
+    associations.addAssociation(FileTypeManager.parseFromString("*.java"), ArchiveFileType.INSTANCE);
     associations.addAssociation(FileTypeManager.parseFromString("*.xyz"), StdFileTypes.XML);
     associations.addAssociation(FileTypeManager.parseFromString("SomeSpecial*.java"), StdFileTypes.XML); // patterns should have precedence over extensions
     assertEquals(StdFileTypes.XML, associations.findAssociatedFileType("sample.xyz"));

@@ -118,6 +118,14 @@ import java.util.List;
  * {@link CompletionService#getVariantsFromContributors(CompletionParameters, CompletionContributor, Consumer)},
  * to the 'return false' line.<p>
  *
+ * Q: My completion contributor has to get its results from far away (e.g. blocking I/O or internet). How do I do that?<br>
+ * A: To avoid UI freezes, your completion thread should be cancellable at all times.
+ * So it's a bad idea to do blocking requests from it directly, since it runs in a read action,
+ * and if it can't do {@link ProgressManager#checkCanceled()} and therefore any attempt to type in a document will freeze the UI.
+ * A common solution is to start another thread, without read action, for such blocking requests,
+ * and wait for their results in completion thread. You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.
+ * <p></p>
+ *
  * @author peter
  */
 public abstract class CompletionContributor {

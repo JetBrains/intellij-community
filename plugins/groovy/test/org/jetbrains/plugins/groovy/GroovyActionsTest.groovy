@@ -170,7 +170,7 @@ class A {
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
     assert myFixture.editor.document.text.contains('** longName\n')
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
-    assert myFixture.editor.document.text == text.replace("<caret>", "")
+    myFixture.checkResult(text)
   }
 
   void "test hippie completion with hyphenated match"() {

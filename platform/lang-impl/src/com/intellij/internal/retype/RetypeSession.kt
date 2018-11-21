@@ -129,7 +129,7 @@ class RetypeSession(
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
     var expectedText = originalText.substring(0, pos) + originalText.substring(endPos)
-    if (compareTexts(expectedText)) {
+    if (!compareTexts(expectedText)) {
       if (document.textLength >= pos && document.text.substring(0, pos) == originalText.substring(0, pos)) {
         while (pos + 1 < document.textLength - tailLength && originalText[pos] == document.text[pos]) {
           pos++
@@ -138,7 +138,7 @@ class RetypeSession(
         expectedText = originalText.substring(0, pos) + originalText.substring(endPos)
       }
 
-      if (compareTexts(expectedText)) {
+      if (!compareTexts(expectedText)) {
         typedRightBefore = false
         scriptBuilder?.append(correctText(expectedText))
         WriteCommandAction.runWriteCommandAction(project) {
@@ -189,9 +189,21 @@ class RetypeSession(
     queueNextOrStop()
   }
 
-  private fun compareTexts(expectedText: String) =
-    document.text.replace(" ","").replace(")","").replace("]","").replace("}", "") !=
-     expectedText.replace(" ","").replace(")","").replace("]","").replace("}", "")
+  private fun compareTexts(expectedText: String): Boolean {
+    val text = document.text
+    var i = 0;
+    var j = 0
+    while (i < text.length && j < expectedText.length) {
+      while (i < text.lastIndex && isSkipped(text[i])) i++
+      while (j < expectedText.lastIndex && isSkipped(expectedText[j])) j++
+      if (text[i] != expectedText[j]) return false
+      i++
+      j++
+    }
+    return i == text.length && j == expectedText.length
+  }
+
+  private fun isSkipped(c: Char) = c == ' ' || c == ')' || c == ']' || c == '}'
 
   private fun queueNextOrStop() {
     if (pos < endPos) {

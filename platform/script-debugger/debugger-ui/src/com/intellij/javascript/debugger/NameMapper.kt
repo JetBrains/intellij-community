@@ -9,6 +9,7 @@ import com.intellij.psi.PsiNamedElement
 import gnu.trove.THashMap
 import org.jetbrains.debugger.sourcemap.MappingEntry
 import org.jetbrains.debugger.sourcemap.Mappings
+import org.jetbrains.debugger.sourcemap.MappingsProcessorInLine
 import org.jetbrains.debugger.sourcemap.SourceMap
 import org.jetbrains.rpc.LOG
 
@@ -44,10 +45,31 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       warnSeveralMapping(identifierOrNamedElement)
       return null
     }
+    val elementColumn = offset - document.getLineStartOffset(line)
+    val elementEndColumn = elementColumn + identifierOrNamedElement.textLength - 1
 
     val generatedName: String?
     try {
-      generatedName = extractName(getGeneratedName(transpiledDocument, sourceMap, sourceEntry))
+      val mappings = mutableListOf<MappingEntry>()
+      val processor = object : MappingsProcessorInLine {
+        override fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean {
+          val entryColumn = entry.sourceColumn
+          // next entry column could be equal to prev, see https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
+          val isSuitable = if (nextEntry == null || (entryColumn == 0 && nextEntry.sourceColumn == 0)) {
+            entryColumn <= elementColumn
+          }
+          else {
+            entryColumn in elementColumn..elementEndColumn
+          }
+          if (isSuitable) {
+            mappings.add(entry)
+          }
+          return true
+        }
+      }
+      sourceMap.processSourceMappingsInLine(sourceEntry.source, sourceEntry.sourceLine, processor)
+
+      generatedName = extractName(getGeneratedName(identifierOrNamedElement, transpiledDocument, sourceMap, mappings), identifierOrNamedElement)
     }
     catch (e: IndexOutOfBoundsException) {
       LOG.warn("Cannot get generated name: source entry (${sourceEntry.generatedLine},  ${sourceEntry.generatedColumn}). Transpiled File: " + transpiledFile?.path)
@@ -73,11 +95,28 @@ open class NameMapper(private val document: Document, private val transpiledDocu
     rawNameToSource!!.put(generatedName, sourceName)
   }
 
-  protected open fun extractName(rawGeneratedName: CharSequence):String? = NAME_TRIMMER.trimFrom(rawGeneratedName)
+  protected open fun extractName(rawGeneratedName: CharSequence?, context: PsiElement? = null):String? = rawGeneratedName?.let {
+    NAME_TRIMMER.trimFrom(it)
+  }
 
   companion object {
     fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean): String? = (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
   }
+
+  protected open fun getGeneratedName(element: PsiElement, document: Document, sourceMap: SourceMap, mappings: List<MappingEntry>): CharSequence? {
+    val sourceEntry = mappings[0]
+    val lineStartOffset = document.getLineStartOffset(sourceEntry.generatedLine)
+    val nextGeneratedMapping = sourceMap.generatedMappings.getNextOnTheSameLine(sourceEntry)
+    val endOffset: Int
+    if (nextGeneratedMapping == null) {
+      endOffset = document.getLineEndOffset(sourceEntry.generatedLine)
+    }
+    else {
+      endOffset = lineStartOffset + nextGeneratedMapping.generatedColumn
+    }
+    return document.immutableCharSequence.subSequence(lineStartOffset + sourceEntry.generatedColumn, endOffset)
+  }
+
 }
 
 fun warnSeveralMapping(element: PsiElement) {
@@ -86,15 +125,3 @@ fun warnSeveralMapping(element: PsiElement) {
   LOG.warn("incorrect sourcemap, several mappings for named element ${element.text}")
 }
 
-private fun getGeneratedName(document: Document, sourceMap: SourceMap, sourceEntry: MappingEntry): CharSequence {
-  val lineStartOffset = document.getLineStartOffset(sourceEntry.generatedLine)
-  val nextGeneratedMapping = sourceMap.generatedMappings.getNextOnTheSameLine(sourceEntry)
-  val endOffset: Int
-  if (nextGeneratedMapping == null) {
-    endOffset = document.getLineEndOffset(sourceEntry.generatedLine)
-  }
-  else {
-    endOffset = lineStartOffset + nextGeneratedMapping.generatedColumn
-  }
-  return document.immutableCharSequence.subSequence(lineStartOffset + sourceEntry.generatedColumn, endOffset)
-}

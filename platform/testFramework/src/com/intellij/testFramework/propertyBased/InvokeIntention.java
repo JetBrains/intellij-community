@@ -80,7 +80,7 @@ public class InvokeIntention extends ActionOnFile {
     return result;
   }
 
-  private void doInvokeIntention(int offset, Environment env) {
+  protected void doInvokeIntention(int offset, Environment env) {
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
     assert editor != null;

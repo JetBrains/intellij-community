@@ -1221,7 +1221,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
 
-      if (!myLock.isWriteLocked() && !myLock.tryWriteLock()) {
+      if (!myLock.isWriteLocked()) {
         Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
                                     JobScheduler.getScheduler()
                                       .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),

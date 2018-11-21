@@ -493,9 +493,7 @@ public class CFGBuilder {
   public CFGBuilder doTry(@NotNull PsiElement anchor) {
     ControlFlow.DeferredOffset offset = new ControlFlow.DeferredOffset();
     myAnalyzer.pushTrap(new Trap.TryCatchAll(anchor, offset));
-    myBranches.add(() -> {
-      offset.setOffset(myAnalyzer.getInstructionCount());
-    });
+    myBranches.add(() -> offset.setOffset(myAnalyzer.getInstructionCount()));
     return this;
   }
 
@@ -726,7 +724,7 @@ public class CFGBuilder {
     if (expression != null) {
       pushExpression(expression);
       boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
-      if(resultNullability == Nullability.NOT_NULL) {
+      if (resultNullability == Nullability.NOT_NULL) {
         checkNotNull(expression, NullabilityProblemKind.nullableFunctionReturn);
       }
     } else if(body instanceof PsiCodeBlock) {

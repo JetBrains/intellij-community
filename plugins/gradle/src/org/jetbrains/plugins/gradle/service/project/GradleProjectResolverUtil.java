@@ -33,7 +33,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
@@ -554,7 +556,14 @@ public class GradleProjectResolverUtil {
           Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
           if (projectPair == null) {
             MultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File> projectPairs =
-              MultiMap.createSet(ContainerUtil.identityStrategy());
+              new LinkedMultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File>() {
+                @Override
+                protected EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> getEqualityPolicy() {
+                  //noinspection unchecked
+                  return (EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>)EqualityPolicy.IDENTITY;
+                }
+              };
+
             for (File file: projectDependency.getProjectDependencyArtifacts()) {
               moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
               if (moduleId == null) continue;

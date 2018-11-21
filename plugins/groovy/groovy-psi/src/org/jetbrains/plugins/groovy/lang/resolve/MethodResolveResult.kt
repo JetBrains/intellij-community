@@ -55,7 +55,6 @@ class MethodResolveResult(
     }
     else {
       GroovyInferenceSessionBuilder(place, methodCandidate)
-        .addReturnConstraint()
         .resolveMode(false)
         .startFromTop(true)
         .build().inferSubst(this)

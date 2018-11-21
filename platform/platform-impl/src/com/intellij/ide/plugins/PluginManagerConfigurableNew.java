@@ -120,7 +120,12 @@ public class PluginManagerConfigurableNew
   private SearchResultPanel myUpdatesSearchPanel;
   private SearchResultPanel myCurrentSearchPanel;
 
-  private final MyPluginModel myPluginsModel = new MyPluginModel();
+  private final MyPluginModel myPluginsModel = new MyPluginModel() {
+    @Override
+    public List<IdeaPluginDescriptor> getAllRepoPlugins() {
+      return getPluginRepositories();
+    }
+  };
 
   private Runnable myShutdownCallback;
 

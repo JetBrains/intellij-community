@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.find.FindBundle;
@@ -59,10 +60,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +75,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Bas Leijdekkers
@@ -646,6 +646,12 @@ public class StructuralSearchDialog extends DialogWrapper {
         setSize(otherSize.width, getSize().height);
       }
     }
+
+    Document document = mySearchCriteriaEdit.getDocument();
+    PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+    assert psiFile != null;
+    TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
 
   @Override
@@ -966,7 +972,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private static Icon getShowHistoryIcon() {
-    return ObjectUtils.coalesce(UIManager.getIcon("TextField.darcula.searchWithHistory.icon"), LafIconLookup.getIcon("searchWithHistory"));
+    return AllIcons.Actions.SearchWithHistory;
   }
 
   private class SwitchAction extends AnAction implements DumbAware {

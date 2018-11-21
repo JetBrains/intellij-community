@@ -691,6 +691,7 @@
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInStringLiteralHandler"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInLineCommentHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInBlockCommentHandler" id="blockComment" order="last"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler" id="afterUnmatchedBrace"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesFinalHandler"
                           id="EnterBetweenBracesHandler"/>
@@ -1098,6 +1099,10 @@
       name="Intellij IDEA color scheme (.icls) or settings (.jar)"
       schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
       implementationClass="com.intellij.application.options.colors.ColorSchemeImporter"/>
+    <schemeExporter
+      name="JSON File"
+      schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+      implementationClass="com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter"/>
 
     <schemeExporter
       name="Intellij IDEA inspection profile XML"

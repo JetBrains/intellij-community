@@ -310,27 +310,6 @@ public class CodeStyle {
     codeStyleSettingsManager.USE_PER_PROJECT_SETTINGS = true;
   }
 
-  @ApiStatus.Experimental
-  @NotNull
-  public static CodeStyleBean getBean(@NotNull Project project, @NotNull Language language) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
-    CodeStyleBean codeStyleBean = null;
-    if (provider != null) {
-      codeStyleBean = provider.createBean();
-    }
-    if (codeStyleBean == null) {
-      codeStyleBean = new CodeStyleBean() {
-        @NotNull
-        @Override
-        protected Language getLanguage() {
-          return language;
-        }
-      };
-    }
-    codeStyleBean.setRootSettings(getSettings(project));
-    return codeStyleBean;
-  }
-
   /**
    * Checks if the file can be formatted according to code style settings. If formatting is disabled, all related operations including
    * optimize imports and rearrange code should be blocked (cause no changes).

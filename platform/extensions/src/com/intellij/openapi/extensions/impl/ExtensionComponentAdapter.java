@@ -63,6 +63,9 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     if (instance == null) {
       try {
         Class impl = loadImplementationClass();
+
+        ExtensionPointImpl.CHECK_CANCELED.run();
+
         instance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
 
         if (myExtensionElement != null) {

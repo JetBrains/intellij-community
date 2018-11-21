@@ -159,7 +159,7 @@ public class ActionUtil {
     boolean allowed = (!dumbMode || action.isDumbAware()) &&
                       (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
 
-    String description = presentation.getText() + " action update (" + action.getClass() + ")";
+    String presentationText = presentation.getText();
     if (insidePerformDumbAwareUpdate++ == 0) {
       ActionPauses.STAT.started();
     }
@@ -181,7 +181,7 @@ public class ActionUtil {
     }
     finally {
       if (--insidePerformDumbAwareUpdate == 0) {
-        ActionPauses.STAT.finished(description);
+        ActionPauses.STAT.finished(presentationText + " action update (" + action.getClass() + ")");
       }
       if (!allowed) {
         if (wasEnabledBefore == null) {
