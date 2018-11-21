@@ -75,6 +75,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.application.Preloader</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
