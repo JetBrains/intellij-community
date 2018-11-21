@@ -33,9 +33,8 @@ public interface PsiBreakStatement extends PsiStatement {
    */
   @Nullable PsiElement findExitedElement();
 
-  /** @deprecated doesn't support switch expressions; use {@link #getLabelExpression()}} instead */
+  /** @deprecated the PSI structure has changed since 2019.1; use {@link #getLabelExpression()}} instead */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   default PsiIdentifier getLabelIdentifier() {
     PsiReferenceExpression expression = getLabelExpression();
     return expression != null ? PsiTreeUtil.getChildOfType(expression, PsiIdentifier.class) : null;
@@ -43,7 +42,6 @@ public interface PsiBreakStatement extends PsiStatement {
 
   /** @deprecated doesn't support switch expressions; use {@link #findExitedElement()} instead */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   default PsiStatement findExitedStatement() {
     PsiElement enclosingElement = findExitedElement();
     return enclosingElement instanceof PsiStatement ? (PsiStatement)enclosingElement : null;

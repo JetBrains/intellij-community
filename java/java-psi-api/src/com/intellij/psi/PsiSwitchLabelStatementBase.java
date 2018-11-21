@@ -42,7 +42,6 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
 
   /** @deprecated doesn't support "switch" expressions; use {@link #getEnclosingSwitchBlock()} instead */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   default PsiSwitchStatement getEnclosingSwitchStatement() {
     PsiSwitchBlock block = getEnclosingSwitchBlock();
     return block instanceof PsiSwitchStatement ? (PsiSwitchStatement)block : null;
