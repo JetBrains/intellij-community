@@ -31,9 +31,6 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   private static final ExtensionPointName<ProjectViewNestingRulesProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.projectViewNestingRulesProvider");
 
-  static final Comparator<NestingRule> RULE_COMPARATOR =
-    Comparator.comparing(o -> o.getParentFileSuffix() + " " + o.getChildFileSuffix());
-
   private MyState myState = new MyState();
   private long myModCount;
 
