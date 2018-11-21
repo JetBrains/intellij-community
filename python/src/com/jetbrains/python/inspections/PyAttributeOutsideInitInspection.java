@@ -35,9 +35,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: ktisha
@@ -81,6 +79,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
 
       final Map<String, Property> localProperties = containingClass.getProperties();
       final Map<String, PyTargetExpression> declaredAttributes = new HashMap<>();
+      final Set<String> inheritedProperties = new HashSet<>();
 
       StreamEx.of(containingClass.getClassAttributes())
               .filter(attribute -> !localProperties.containsKey(attribute.getName()))
@@ -99,6 +98,8 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         for (PyTargetExpression classAttr : superClass.getClassAttributes()) {
           declaredAttributes.put(classAttr.getName(), classAttr);
         }
+
+        inheritedProperties.addAll(superClass.getProperties().keySet());
       }
 
       final Map<String, PyTargetExpression> attributes = new HashMap<>();
@@ -108,6 +109,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         final String attributeName = attribute.getName();
         if (attributeName == null) continue;
         if (!declaredAttributes.containsKey(attributeName) &&
+            !inheritedProperties.contains(attributeName) &&
             !isDefinedByProperty(attribute, localProperties.values(), declaredAttributes)) {
           registerProblem(attribute, PyBundle.message("INSP.attribute.$0.outside.init", attributeName),
                           new PyMoveAttributeToInitQuickFix());
