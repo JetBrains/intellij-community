@@ -1675,6 +1675,11 @@ class Bar {
     assert 'Door' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
   }
 
+  void testNoOverrideWithMiddleMatchedName() {
+    configure()
+    assert !('public void removeTemporaryEditorNode' in myFixture.lookupElementStrings)
+  }
+
   void testShowVarInitializers() {
     configure()
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
