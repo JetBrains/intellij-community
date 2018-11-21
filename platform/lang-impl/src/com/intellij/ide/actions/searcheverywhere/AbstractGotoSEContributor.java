@@ -88,7 +88,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-      PsiElement context = psiContext != null && psiContext.isValid() && psiContext.getContainingFile().isValid() ? psiContext : null;
+      PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
       ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
       try {
         popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
