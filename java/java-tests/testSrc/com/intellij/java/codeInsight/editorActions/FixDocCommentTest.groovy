@@ -19,11 +19,13 @@ package com.intellij.java.codeInsight.editorActions
 import com.intellij.codeInsight.editorActions.FixDocCommentAction
 import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import groovy.transform.CompileStatic
 
 /**
  * @author Denis Zhdanov
  * @since 9/20/12 6:17 PM
  */
+@CompileStatic
 class FixDocCommentTest extends AbstractEditorTest {
 
   void testGenerateMethodDoc() {
@@ -641,10 +643,10 @@ public class Test
   }
 
   private def doTest(Map args) {
-    configureFromFileText("${getTestName(false)}.java", args.initial)
+    configureFromFileText("${getTestName(false)}.java", (String)args.initial)
     myEditor.settings.virtualSpace = false
     executeAction(FixDocCommentAction.ACTION_ID)
-    checkResultByText(args.expected)
+    checkResultByText((String)args.expected)
   }
 
 }
