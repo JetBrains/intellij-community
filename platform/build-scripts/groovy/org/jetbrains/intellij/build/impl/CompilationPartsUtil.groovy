@@ -167,6 +167,18 @@ class CompilationPartsUtil {
     // TODO: Remove hardcoded constant
     String uploadPrefix = "intellij-compile/v1/$branch".toString()
 
+    messages.block("Compute archives checksums") {
+      runUnderStatisticsTimer(messages, 'compile-parts:checksum:time') {
+        contexts.each { PackAndUploadContext ctx ->
+          executor.submit {
+            String hash = computeHash(new File(ctx.archive))
+            hashes.put(ctx.name, hash)
+          }
+        }
+        executor.waitForAllComplete(messages)
+      }
+    }
+
     messages.block("Uploading archives") {
       AtomicInteger uploadedCount = new AtomicInteger()
       AtomicLong uploadedBytes = new AtomicLong()
@@ -184,7 +196,7 @@ class CompilationPartsUtil {
           executor.submit {
             def archiveFile = new File(ctx.archive)
 
-            String hash = computeHash(archiveFile)
+            String hash = hashes.get(ctx.name)
             def path = "$uploadPrefix/${ctx.name}/${hash}.jar".toString()
 
             if (uploader.upload(path, archiveFile)) {
@@ -195,8 +207,6 @@ class CompilationPartsUtil {
               reusedCount.getAndIncrement()
               reusedBytes.getAndAdd(archiveFile.size())
             }
-
-            hashes.put(ctx.name, hash)
           }
         }
 
