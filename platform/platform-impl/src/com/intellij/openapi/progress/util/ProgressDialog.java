@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
@@ -85,22 +84,9 @@ class ProgressDialog implements Disposable {
   private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(),this);
   private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(),this);
 
-  ProgressDialog(@NotNull ProgressWindow progressWindow,
-                 boolean shouldShowBackground,
-                 @Nullable Component parent,
-                 @Nullable Project project,
-                 String cancelText) {
+  ProgressDialog(@NotNull ProgressWindow progressWindow, boolean shouldShowBackground, String cancelText, @Nullable Window parentWindow) {
     myProgressWindow = progressWindow;
-    if (parent != null) {
-      myParentWindow = UIUtil.getWindow(parent);
-    }
-    else {
-      Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
-      if (parentWindow == null) {
-        parentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-      }
-      myParentWindow = parentWindow;
-    }
+    myParentWindow = parentWindow;
     initDialog(shouldShowBackground, cancelText);
   }
 
