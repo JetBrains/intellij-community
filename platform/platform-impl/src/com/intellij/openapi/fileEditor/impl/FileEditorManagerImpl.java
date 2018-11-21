@@ -57,6 +57,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -1176,16 +1177,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @Nullable
   public Editor openTextEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
-    final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
-    for (FileEditor fileEditor : fileEditors) {
-      if (fileEditor instanceof TextEditor) {
-        setSelectedEditor(descriptor.getFile(), TextEditorProvider.getInstance().getEditorTypeId());
-        Editor editor = ((TextEditor)fileEditor).getEditor();
-        return getOpenedEditor(editor, focusEditor);
-      }
-    }
-
-    return null;
+    TextEditor textEditor = doOpenTextEditor(descriptor, focusEditor);
+    return textEditor == null ? null : getOpenedEditor(textEditor.getEditor(), focusEditor);
   }
 
   protected Editor getOpenedEditor(@NotNull Editor editor, final boolean focusEditor) {
@@ -1198,14 +1191,36 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   @Override
   public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    assertDispatchThread();
+    doOpenTextEditor(descriptor, focusEditor);
+  }
+
+  @Nullable
+  private TextEditor doOpenTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
-    for (FileEditor fileEditor : fileEditors) {
-      if (fileEditor instanceof TextEditor) {
-        setSelectedEditor(descriptor.getFile(), TextEditorProvider.getInstance().getEditorTypeId());
-        return;
+
+    if (fileEditors.isEmpty()) return null;
+    else if (fileEditors.size() == 1) return ObjectUtils.tryCast((ContainerUtil.getFirstItem(fileEditors)), TextEditor.class);
+
+    List<TextEditor> textEditors = ContainerUtil.mapNotNull(fileEditors, e -> ObjectUtils.tryCast(e, TextEditor.class));
+    if (textEditors.isEmpty()) return null;
+
+    TextEditor target = textEditors.get(0);
+    if (textEditors.size() > 1) {
+      EditorWithProviderComposite composite = getEditorComposite(target);
+      assert composite != null;
+      FileEditor[] editors = composite.getEditors();
+      FileEditorProvider[] providers = composite.getProviders();
+      String textProviderId = TextEditorProvider.getInstance().getEditorTypeId();
+      for (int i = 0; i < editors.length; i++) {
+        FileEditor editor = editors[i];
+        if (editor instanceof TextEditor && providers[i].getEditorTypeId().equals(textProviderId)) {
+          target = (TextEditor)editor;
+          break;
+        }
       }
     }
+    setSelectedEditor(target);
+    return target;
   }
 
   @Override
