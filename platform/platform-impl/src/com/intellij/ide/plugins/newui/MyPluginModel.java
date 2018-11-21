@@ -394,7 +394,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {
-    return isEnabled(plugin.getPluginId());
+    Boolean enabled = getEnabledMap().get(plugin.getPluginId());
+    return enabled == null || enabled;
   }
 
   @NotNull
@@ -403,7 +404,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
-    enableRows(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin.getPluginId()));
+    enableRows(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin));
     updateAfterEnableDisable();
   }
 
