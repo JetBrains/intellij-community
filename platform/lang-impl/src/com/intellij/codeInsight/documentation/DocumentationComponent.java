@@ -85,8 +85,10 @@ import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ImageView;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderContext;
 import java.awt.image.renderable.RenderableImage;
@@ -325,7 +327,39 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                 };
               }
             }
-            return super.create(elem);
+            View view = super.create(elem);
+            if (view instanceof ImageView) {
+              // we have to work with raw image, apply scaling manually
+              return new ImageView(elem) {
+                @Override
+                public float getMaximumSpan(int axis) {
+                  return super.getMaximumSpan(axis) / JBUI.sysScale(myEditorPane);
+                }
+
+                @Override
+                public float getMinimumSpan(int axis) {
+                  return super.getMinimumSpan(axis) / JBUI.sysScale(myEditorPane);
+                }
+
+                @Override
+                public float getPreferredSpan(int axis) {
+                  return super.getPreferredSpan(axis) / JBUI.sysScale(myEditorPane);
+                }
+
+                @Override
+                public void paint(Graphics g, Shape a) {
+                  Rectangle bounds = a.getBounds();
+                  int width = (int)super.getPreferredSpan(View.X_AXIS);
+                  int height = (int)super.getPreferredSpan(View.Y_AXIS);
+                  @SuppressWarnings("UndesirableClassUsage")
+                  BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                  Graphics2D graphics = image.createGraphics();
+                  super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
+                  UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
+                }
+              };
+            }
+            return view;
           }
         };
       }
