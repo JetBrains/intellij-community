@@ -66,10 +66,8 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
     prevAction = actionManager.getAction(ACTION_FIND_PREVIOUS);
 
     if (nextAction != null && prevAction != null) {
-      actionManager.unregisterAction(ACTION_FIND_NEXT);
-      actionManager.unregisterAction(ACTION_FIND_PREVIOUS);
-      actionManager.registerAction(ACTION_FIND_NEXT, new MyFindAction(nextAction, false));
-      actionManager.registerAction(ACTION_FIND_PREVIOUS, new MyFindAction(prevAction, true));
+      actionManager.replaceAction(ACTION_FIND_NEXT, new MyFindAction(nextAction, false));
+      actionManager.replaceAction(ACTION_FIND_PREVIOUS, new MyFindAction(prevAction, true));
     }
   }
 

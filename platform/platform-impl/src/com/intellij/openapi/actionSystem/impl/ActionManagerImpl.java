@@ -1140,6 +1140,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     });
   }
 
+  @Override
+  public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
+    replaceAction(actionId, newAction, pluginId);
+  }
+
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
     if (oldAction != null) {
