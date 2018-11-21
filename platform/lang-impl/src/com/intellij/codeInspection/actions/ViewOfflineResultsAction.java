@@ -141,7 +141,8 @@ public class ViewOfflineResultsAction extends AnAction {
         if (resMap.isEmpty()) return;
         ApplicationManager.getApplication().invokeLater(() -> {
           final String name = profileName[0];
-          showOfflineView(project, name, resMap, InspectionsBundle.message("offline.view.title") + " (" + (name != null ? name : InspectionsBundle.message("offline.view.editor.settings.title")) + ")");
+          LOG.assertTrue(name != null);
+          showOfflineView(project, name, resMap, InspectionsBundle.message("offline.view.title") + " (" + name + ")");
         });
       }
     });
