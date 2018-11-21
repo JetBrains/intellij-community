@@ -46,7 +46,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -82,21 +81,20 @@ public class ViewOfflineResultsAction extends AnAction {
 
     LOG.assertTrue(project != null);
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false){
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false){
       @Override
       public Icon getIcon(VirtualFile file) {
-        if (file.isDirectory()) {
-          if (file.findChild(InspectionApplication.DESCRIPTIONS + "." + StdFileTypes.XML.getDefaultExtension()) != null) {
-            return AllIcons.Nodes.InspectionResults;
-          }
+        if (file.isDirectory() &&
+            file.findChild(InspectionApplication.DESCRIPTIONS + "." + StdFileTypes.XML.getDefaultExtension()) != null) {
+          return AllIcons.Nodes.InspectionResults;
         }
         return super.getIcon(file);
       }
-    };
-    descriptor.setTitle("Select Path");
-    descriptor.setDescription("Select directory which contains exported inspections results");
+    }.withFileFilter(f -> f.isDirectory() || StdFileTypes.XML.getDefaultExtension().equals(f.getExtension()))
+      .withTitle("Select Path")
+      .withDescription("Select directory which contains exported inspections results");
     final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
-    if (virtualFile == null || !(virtualFile.isDirectory() || StdFileTypes.XML.getDefaultExtension().equals(virtualFile.getExtension()))) return;
+    if (virtualFile == null) return;
 
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<>();
     final String [] profileName = new String[1];
