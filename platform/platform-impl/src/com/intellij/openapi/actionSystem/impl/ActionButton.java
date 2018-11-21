@@ -224,6 +224,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     myRollover = false;
     myMouseDown = false;
+    HelpTooltip.dispose(this);
     super.removeNotify();
   }
 
