@@ -16,7 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
@@ -39,6 +39,11 @@ public class NegatedConditionalInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_ignoreNegatedNullComparison = true;
+
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreNegatedZeroComparison = true;
 
   @Override
   @NotNull
@@ -67,8 +72,10 @@ public class NegatedConditionalInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("negated.conditional.ignore.option"), this,
-                                          "m_ignoreNegatedNullComparison");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("negated.if.else.ignore.negated.null.option"), "m_ignoreNegatedNullComparison");
+    panel.addCheckbox(InspectionGadgetsBundle.message("negated.if.else.ignore.negated.zero.option"), "m_ignoreNegatedZeroComparison");
+    return panel;
   }
 
   @Override
@@ -115,7 +122,7 @@ public class NegatedConditionalInspection extends BaseInspection {
         return;
       }
       final PsiExpression condition = expression.getCondition();
-      if (!ExpressionUtils.isNegation(condition, m_ignoreNegatedNullComparison, false)) {
+      if (!ExpressionUtils.isNegation(condition, m_ignoreNegatedNullComparison, m_ignoreNegatedZeroComparison)) {
         return;
       }
       registerError(condition);
