@@ -146,7 +146,7 @@ class RetypeSession(
         // There changes wasn't made by lookup, so we don't know how to handle them
         // Restore text as it should be at this point without any intelligence
         WriteCommandAction.runWriteCommandAction(project) {
-          document.replaceText(originalText.substring(0, pos) + originalText.substring(endPos), document.modificationStamp + 1)
+          document.replaceText(originalText.take(pos) + originalText.takeLast(endPos), document.modificationStamp + 1)
         }
       }
     }
@@ -166,12 +166,12 @@ class RetypeSession(
       val nextChar = originalText[pos]
       if (document.textLength - pos > tailLength && nextChar in listOf('}', ')', ']')) {
         // Still have something extra characters in front. Probably closing bracket.
-        for (i in pos until document.textLength - tailLength) {
-          if (document.text[i] == nextChar) {
+        for (bracketCharacterPos in pos until document.textLength - tailLength) {
+          if (document.text[bracketCharacterPos] == nextChar) {
             // Found brackets character after caret. All characters between caret and matched symbol should be deleted
             // Because we don't expect them (in most cases this is just whitespaces)
             WriteCommandAction.runWriteCommandAction(project) {
-              document.deleteString(pos, i)
+              document.deleteString(pos, bracketCharacterPos)
             }
             break
           }
