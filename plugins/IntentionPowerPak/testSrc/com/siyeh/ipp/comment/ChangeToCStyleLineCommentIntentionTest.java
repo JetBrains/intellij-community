@@ -4,18 +4,17 @@ package com.siyeh.ipp.comment;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
-public class ChangeToEndOfLineCommentIntentionTest extends IPPTestCase {
+public class ChangeToCStyleLineCommentIntentionTest extends IPPTestCase {
 
-  public void testTrimLines() { doTest(); }
   public void testConvertMultiLineTodo() { doTest(); }
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("change.to.end.of.line.comment.intention.name");
+    return IntentionPowerPackBundle.message("change.to.c.style.comment.intention.name");
   }
 
   @Override
   protected String getRelativePath() {
-    return "comment/to_end_of_line";
+    return "comment/to_c_style";
   }
 }
