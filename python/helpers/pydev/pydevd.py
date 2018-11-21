@@ -23,7 +23,8 @@ from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle import pydevd_io, pydevd_vm_type, pydevd_tracing
+from _pydevd_bundle import pydevd_io, pydevd_vm_type
+import pydevd_tracing
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
@@ -1576,7 +1577,7 @@ def settrace_forked():
     '''
     host, port = dispatch()
 
-    from _pydevd_bundle import pydevd_tracing
+    import pydevd_tracing
     pydevd_tracing.restore_sys_set_trace_func()
 
     if port is not None:
