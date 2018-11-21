@@ -20,6 +20,22 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testClosingBracketAfterOpening() {
+    doTest()
+  }
+
+  fun testMultilineFunction() {
+    doTest()
+  }
+
+  fun testSuggestionBeforeNewLine() {
+    doTest()
+  }
+
+  fun testEmptyClass() {
+    doTest()
+  }
+
   private fun doTest() {
     val filePath = "/retype/${getTestName(false)}.java"
     myFixture.configureByFile(filePath)
