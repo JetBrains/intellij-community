@@ -2109,17 +2109,61 @@ public class AllIcons {
   }
 
   public final static class Preferences {
-    public static final Icon Appearance = IconLoader.getIcon("/preferences/Appearance.png"); // 32x32
-    public static final Icon CodeStyle = IconLoader.getIcon("/preferences/CodeStyle.png"); // 32x32
-    public static final Icon Compiler = IconLoader.getIcon("/preferences/Compiler.png"); // 32x32
-    public static final Icon Editor = IconLoader.getIcon("/preferences/Editor.png"); // 32x32
-    public static final Icon FileColors = IconLoader.getIcon("/preferences/FileColors.png"); // 32x32
-    public static final Icon FileTypes = IconLoader.getIcon("/preferences/FileTypes.png"); // 32x32
-    public static final Icon General = IconLoader.getIcon("/preferences/General.png"); // 32x32
-    public static final Icon Keymap = IconLoader.getIcon("/preferences/Keymap.png"); // 32x32
-    public static final Icon Plugins = IconLoader.getIcon("/preferences/Plugins.png"); // 32x32
-    public static final Icon Updates = IconLoader.getIcon("/preferences/Updates.png"); // 32x32
-    public static final Icon VersionControl = IconLoader.getIcon("/preferences/VersionControl.png"); // 32x32
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Appearance = IconLoader.getIcon("/preferences/Appearance.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon CodeStyle = IconLoader.getIcon("/preferences/CodeStyle.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Compiler = IconLoader.getIcon("/preferences/Compiler.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Editor = IconLoader.getIcon("/preferences/Editor.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon FileColors = IconLoader.getIcon("/preferences/FileColors.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon FileTypes = IconLoader.getIcon("/preferences/FileTypes.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon General = IconLoader.getIcon("/preferences/General.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Keymap = IconLoader.getIcon("/preferences/Keymap.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Plugins = IconLoader.getIcon("/preferences/Plugins.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Updates = IconLoader.getIcon("/preferences/Updates.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon VersionControl = IconLoader.getIcon("/preferences/VersionControl.png");
 
   }
 
