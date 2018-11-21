@@ -15,10 +15,10 @@
  */
 package com.intellij.java.codeInsight.editorActions
 
-import com.intellij.application.options.CodeStyle
+
 import com.intellij.codeInsight.editorActions.FixDocCommentAction
 import com.intellij.openapi.editor.impl.AbstractEditorTest
-import org.jetbrains.annotations.NotNull
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 
 /**
  * @author Denis Zhdanov
@@ -604,10 +604,10 @@ interface I {}'''
   }
 
   void testWithEmptyTagsRemovalOption() {
-    codeStyleBean.with {
-      javaDocKeepEmptyParameter = false
-      javaDocKeepEmptyReturn = false
-      javaDocKeepEmptyException = false
+    getCustomSettings(JavaCodeStyleSettings.class).with {
+      JD_KEEP_EMPTY_PARAMETER = false
+      JD_KEEP_EMPTY_RETURN = false
+      JD_KEEP_EMPTY_EXCEPTION = false
     }
     doTest(
       initial: '''package com.company;
