@@ -45,40 +45,12 @@ class C {
     System.out.println();
   }
 
-  /* todo
-  void endlessLoopInBranchWithValue(String arg) {
+  void endlessLoopInBranchWithValueBreak(String arg) {
     int result = switch (arg) {
-      case "one" -> { while(true); break 1;}
+      case "one" -> { while(true); <error descr="Unreachable statement">break 1;</error>}
       default -> 0;
     };
     System.out.println(result);
-  }
-  */
-
-  static class FinalFieldSwitchExpression {
-    final String s = switch ((int)Math.random()) {
-      case 1 -> "a";
-      default -> "?";
-    };
-    {
-      System.out.println(s);
-    }
-  }
-
-  void finalVariableSwitchExpression(String s) {
-    final int n = switch (s) {
-      case "a" -> 1;
-      default -> 0;
-    };
-    System.out.println(n);
-  }
-
-  void notDefinitelyAssigned(String s) {
-    int n;
-    switch (s) {
-      case "a" -> n = 1;
-    }
-    System.out.println(<error descr="Variable 'n' might not have been initialized">n</error>);
   }
 
   int returnBeforeEnhancedSwitchStatement(String s) {
@@ -120,6 +92,21 @@ class C {
         return switch (s) {
           case "a" -> bar(1);
           default -> bar(0);
+        };
+      } finally {
+        System.out.println("b");
+      }
+      <error descr="Unreachable statement">System.out.println("c");</error>
+    }
+    int bar(int i) throws Exception { return i; }
+  }
+
+  static class ValueBreakSwitchExpressionReturnedFromTry {
+    int foo(String s) throws Exception {
+      try {
+        return switch (s) {
+          case "a": break bar(1);
+          default: break bar(0);
         };
       } finally {
         System.out.println("b");
