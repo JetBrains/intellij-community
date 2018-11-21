@@ -826,10 +826,14 @@ class PyDB:
         finally:
             self._main_lock.release()
 
-    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace", send_suspend_message=True): #@UnusedVariable
+    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace", send_suspend_message=True, is_unhandled_exception=False): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
+        
+        :param is_unhandled_exception:
+            If True we should use the line of the exception instead of the current line in the frame
+            as the paused location on the top-level frame (exception info must be passed on 'arg').
         """
         self.process_internal_commands()
         thread_stack_str = ''   # @UnusedVariable -- this is here so that `make_get_thread_stack_message`
@@ -837,7 +841,15 @@ class PyDB:
 
         if send_suspend_message:
             message = thread.additional_info.pydev_message
-            cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
+            frame_to_lineno = {}
+            if is_unhandled_exception:
+                # arg must be the exception info (tuple(exc_type, exc, traceback))
+                tb = arg[2]
+                while tb is not None:
+                    frame_to_lineno[tb.tb_frame] = tb.tb_lineno
+                    tb = tb.tb_next
+            cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type, frame_to_lineno=frame_to_lineno)
+            frame_to_lineno.clear()
             thread_stack_str = cmd.thread_stack_str  # @UnusedVariable -- `make_get_thread_stack_message` uses it later.
             self.writer.add_command(cmd)
 
@@ -969,7 +981,7 @@ class PyDB:
             try:
                 add_exception_to_frame(frame, arg)
                 self.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
-                self.do_wait_suspend(thread, frame, 'exception', arg, "trace")
+                self.do_wait_suspend(thread, frame, 'exception', arg, "trace", is_unhandled_exception=True)
             except KeyboardInterrupt as e:
                 raise e
             except:

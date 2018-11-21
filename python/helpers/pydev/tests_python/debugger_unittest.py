@@ -284,18 +284,6 @@ class DebuggerRunner(object):
         ret = writer.update_command_line_args(ret)  # Provide a hook for the writer
         return args + ret
 
-    def check_case_simple(self, target, test_file):
-
-        class WriterThreadCase(AbstractWriterThread):
-
-            TEST_FILE = _get_debugger_test_file(test_file)
-
-            def run(self):
-                return target(self)
-
-        with self.check_case(WriterThreadCase) as writer:
-            yield writer
-
     @contextmanager
     def check_case(self, writer_class):
         if callable(writer_class):
@@ -503,6 +491,16 @@ class AbstractWriterThread(threading.Thread):
         dirname = os.path.dirname(dirname)
         return os.path.abspath(os.path.join(dirname, 'pydevd.py'))
 
+    def get_line_index_with_content(self, line_content):
+        '''
+        :return the line index which has the given content (1-based).
+        '''
+        with open(self.TEST_FILE, 'r') as stream:
+            for i_line, line in enumerate(stream):
+                if line_content in line:
+                    return i_line + 1
+        raise AssertionError('Did not find: %s in %s' % (line_content, self.TEST_FILE))
+
     def get_cwd(self):
         return os.path.dirname(self.get_pydevd_file())
 
@@ -524,7 +522,7 @@ class AbstractWriterThread(threading.Thread):
         meaning = ID_TO_MEANING.get(re.search(r'\d+', s).group(), '')
         if meaning:
             meaning += ': '
-            
+
         self.log.append('write: %s%s' % (meaning, s,))
 
         if SHOW_WRITES_AND_READS:
@@ -884,6 +882,9 @@ class AbstractWriterThread(threading.Thread):
 
     def wait_for_list_threads(self, seq):
         return self.wait_for_message(lambda msg:msg.startswith('502\t%s' % (seq,)))
+
+    def wait_for_get_thread_stack_message(self):
+        return self.wait_for_message(lambda msg:msg.startswith('%s\t' % (CMD_GET_THREAD_STACK,)))
 
     def wait_for_message(self, accept_message, unquote_msg=True, expect_xml=True):
         import untangle
