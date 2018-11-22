@@ -106,7 +106,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.filter { it.isNotBlank() }
       ?.mapTo(mutableSetOf(), String::trim) ?: emptySet()
     devIconsCommitHashesToSync = System.getProperty("teamcity.build.changedFiles.file")
-      ?.takeIf { isScheduled() }
+      ?.takeIf { !isScheduled() }
       ?.let(::File)
       ?.takeIf(File::exists)
       ?.let(FileUtil::loadFile)
