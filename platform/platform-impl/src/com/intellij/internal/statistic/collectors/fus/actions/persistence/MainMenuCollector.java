@@ -56,7 +56,7 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
   public void record(@NotNull AnAction action) {
     try {
       final PluginType type = StatisticsUtilKt.getPluginType(action.getClass());
-      if (!type.isJBPlugin()) {
+      if (!type.isDevelopedByJetBrains()) {
         return;
       }
 
