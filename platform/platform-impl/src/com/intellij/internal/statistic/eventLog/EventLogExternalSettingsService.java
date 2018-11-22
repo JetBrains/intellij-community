@@ -46,6 +46,11 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     return 0;
   }
 
+  @NotNull
+  public Set<String> getApprovedGroups() {
+    return getWhitelistedGroups();
+  }
+
   @Override
   @NotNull
   public LogEventFilter getEventFilter() {
