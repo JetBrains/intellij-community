@@ -125,6 +125,12 @@ class VariableExtractor {
       if (body instanceof PsiExpressionStatement) {
         myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpressionStatement)body).getExpression()), false);
       }
+      else if (body instanceof PsiThrowStatement) {
+        PsiExpression exception = ((PsiThrowStatement)body).getException();
+        if (exception != null) {
+          myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(exception), false);
+        }
+      }
     }
   }
 
