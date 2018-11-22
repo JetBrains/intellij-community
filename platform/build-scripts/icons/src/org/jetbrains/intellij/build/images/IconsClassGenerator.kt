@@ -47,7 +47,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       customLoad = true
       className = "AndroidArtworkIcons"
 
-      val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath
+      val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath
       outFile = Paths.get(dir, "icons", "AndroidArtworkIcons.java")
     }
     else {
