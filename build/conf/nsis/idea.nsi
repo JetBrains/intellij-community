@@ -756,7 +756,7 @@ FunctionEnd
 
 Function uninstallOldVersionDialog
   StrCpy $control_fields 2
-  StrCpy $max_fields 13
+  StrCpy $max_fields 7
   StrCpy $0 "HKLM"
   StrCpy $4 0
   ReserveFile "UninstallOldVersions.ini"
@@ -1469,11 +1469,13 @@ copy_uninstall:
   ;do copy for unistall.exe
   CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   IfSilent uninstall_silent_mode uninstall_gui_mode
+
 uninstall_silent_mode:
   ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$INSTDIR'
   Goto delete_uninstaller_itself
 uninstall_gui_mode:
   ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+
 delete_uninstaller_itself:
   Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   IfFileExists "$INSTDIR\bin\*.*" 0 delete_install_dir
