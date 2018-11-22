@@ -39,9 +39,10 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, remove_exception_from_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
-from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning
-from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, enable_cache_frames_without_breaks, \
-    dummy_trace_dispatch, show_frame_eval_warning
+from _pydevd_bundle.pydevd_trace_dispatch import (
+    trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning)
+from _pydevd_frame_eval.pydevd_frame_eval_main import (
+    frame_eval_func, enable_cache_frames_without_breaks, dummy_trace_dispatch, show_frame_eval_warning)
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
@@ -226,7 +227,7 @@ class PyDB:
         if set_as_global:
             set_global_debugger(self)
             pydevd_tracing.replace_sys_set_trace_func()
-            
+
         self.reader = None
         self.writer = None
         self.output_checker = None
@@ -250,7 +251,7 @@ class PyDB:
         self._py_db_command_thread_event = threading.Event()
         if set_as_global:
             CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
-            
+
         self._finish_debugging_session = False
         self._termination_event_set = False
         self.signature_factory = None
@@ -482,7 +483,7 @@ class PyDB:
                 frame = additional_info.get_topmost_frame(t)
                 if frame is not None:
                     try:
-                        self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                        self.set_trace_for_frame_and_parents(frame)
                     finally:
                         frame = None
 
@@ -626,12 +627,12 @@ class PyDB:
     def enable_tracing_in_frames_while_running_if_frame_eval(self):
         pydevd_tracing.settrace_while_running_if_frame_eval(self, self.trace_dispatch)
 
-    def set_tracing_for_untraced_contexts_if_not_frame_eval(self, ignore_frame=None, overwrite_prev_trace=False):
+    def set_tracing_for_untraced_contexts_if_not_frame_eval(self, ignore_frame=None):
         if self.frame_eval_func is not None:
             return
-        self.set_tracing_for_untraced_contexts(ignore_frame, overwrite_prev_trace)
+        self.set_tracing_for_untraced_contexts(ignore_frame)
 
-    def set_tracing_for_untraced_contexts(self, ignore_frame=None, overwrite_prev_trace=False):
+    def set_tracing_for_untraced_contexts(self, ignore_frame=None):
         # Enable the tracing for existing threads (because there may be frames being executed that
         # are currently untraced).
         if self.frame_eval_func is not None:
@@ -646,7 +647,7 @@ class PyDB:
                 frame = additional_info.get_topmost_frame(t)
                 try:
                     if frame is not None and frame is not ignore_frame:
-                        self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=overwrite_prev_trace)
+                        self.set_trace_for_frame_and_parents(frame)
                 finally:
                     frame = None
         finally:
@@ -830,7 +831,7 @@ class PyDB:
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
-        
+
         :param is_unhandled_exception:
             If True we should use the line of the exception instead of the current line in the frame
             as the paused location on the top-level frame (exception info must be passed on 'arg').
@@ -953,9 +954,9 @@ class PyDB:
             if info.pydev_step_cmd == -1:
                 if not self.do_not_use_frame_eval:
                     self.SetTrace(self.dummy_trace_dispatch)
-                    self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True, dispatch_func=dummy_trace_dispatch)
+                    self.set_trace_for_frame_and_parents(frame, dispatch_func=dummy_trace_dispatch)
             else:
-                self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                self.set_trace_for_frame_and_parents(frame)
                 # enable old tracing function for stepping
                 self.SetTrace(self.trace_dispatch)
 
@@ -991,35 +992,22 @@ class PyDB:
             pydevd_vars.remove_additional_frame_by_id(thread_id)
             frame = None
 
-
-    def set_trace_for_frame_and_parents(self, frame, also_add_to_passed_frame=True, overwrite_prev_trace=False, dispatch_func=None):
+    def set_trace_for_frame_and_parents(self, frame, also_add_to_passed_frame=True, dispatch_func=None):
         if dispatch_func is None:
             dispatch_func = self.trace_dispatch
 
         if also_add_to_passed_frame:
-            self.update_trace(frame, dispatch_func, overwrite_prev_trace)
+            self._update_trace(frame, dispatch_func)
 
         frame = frame.f_back
-        while frame:
-            self.update_trace(frame, dispatch_func, overwrite_prev_trace)
+        while frame is not None:
+            self._update_trace(frame, dispatch_func)
 
             frame = frame.f_back
         del frame
 
-    def update_trace(self, frame, dispatch_func, overwrite_prev):
-        if frame.f_trace is None:
-            frame.f_trace = dispatch_func
-        else:
-            if overwrite_prev:
-                frame.f_trace = dispatch_func
-            else:
-                try:
-                    #If it's the trace_exception, go back to the frame trace dispatch!
-                    if frame.f_trace.im_func.__name__ == 'trace_exception':
-                        frame.f_trace = frame.f_trace.im_self.trace_dispatch
-                except AttributeError:
-                    pass
-                frame = frame.f_back
+    def _update_trace(self, frame, dispatch_func):
+        frame.f_trace = dispatch_func
         del frame
 
     def prepare_to_run(self):
@@ -1359,7 +1347,7 @@ def settrace(
     @param trace_only_current_thread: determines if only the current thread will be traced or all current and future
         threads will also have the tracing enabled.
 
-    @param overwrite_prev_trace: if True we'll reset the frame.f_trace of frames which are already being traced
+    @param overwrite_prev_trace: deprecated
 
     @param patch_multiprocessing: if True we'll patch the functions which create new processes so that launched
         processes are debugged.
@@ -1376,7 +1364,6 @@ def settrace(
             port,
             suspend,
             trace_only_current_thread,
-            overwrite_prev_trace,
             patch_multiprocessing,
             stop_at_frame,
         )
@@ -1394,7 +1381,6 @@ def _locked_settrace(
         port,
         suspend,
         trace_only_current_thread,
-        overwrite_prev_trace,
         patch_multiprocessing,
         stop_at_frame,
 ):
@@ -1437,7 +1423,7 @@ def _locked_settrace(
             init_stderr_redirect()
 
         patch_stdin(debugger)
-        debugger.set_trace_for_frame_and_parents(get_frame(), False, overwrite_prev_trace=overwrite_prev_trace)
+        debugger.set_trace_for_frame_and_parents(get_frame(), False)
 
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
@@ -1469,7 +1455,7 @@ def _locked_settrace(
             debugger.patch_threads()
 
             # As this is the first connection, also set tracing for any untraced threads
-            debugger.set_tracing_for_untraced_contexts(ignore_frame=get_frame(), overwrite_prev_trace=overwrite_prev_trace)
+            debugger.set_tracing_for_untraced_contexts(ignore_frame=get_frame())
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
@@ -1481,7 +1467,7 @@ def _locked_settrace(
         # ok, we're already in debug mode, with all set, so, let's just set the break
         debugger = get_global_debugger()
 
-        debugger.set_trace_for_frame_and_parents(get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True)
+        debugger.set_trace_for_frame_and_parents(get_frame(), also_add_to_passed_frame=False)
 
         t = threadingCurrentThread()
         additional_info = set_additional_thread_info(t)
@@ -1525,7 +1511,7 @@ def stoptrace():
         if debugger:
 
             debugger.set_trace_for_frame_and_parents(
-                get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
+                get_frame(), also_add_to_passed_frame=True, dispatch_func=lambda *args:None)
             debugger.exiting()
 
             kill_all_pydev_threads()

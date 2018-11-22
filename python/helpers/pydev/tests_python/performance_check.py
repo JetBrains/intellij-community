@@ -210,7 +210,7 @@ if __name__ == '__main__':
     for check in (
             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
             CHECK_REGULAR,
-            CHECK_CYTHON
+            CHECK_CYTHON,
         ):
         PerformanceWriterThread.CHECK = check
         msgs.append('Checking: %s' % (check,))
