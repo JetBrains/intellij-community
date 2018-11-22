@@ -857,7 +857,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
     else {
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-01-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
