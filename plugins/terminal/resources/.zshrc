@@ -70,7 +70,7 @@ function configureCommandHistory {
   then
     if ! [ -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
     then
-      cp "$HISTFILE" "$commandHistoryFile"
+      command cp "$HISTFILE" "$commandHistoryFile"
     fi
     export HISTFILE="$commandHistoryFile"
   fi
