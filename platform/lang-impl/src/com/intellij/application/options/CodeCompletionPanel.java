@@ -33,13 +33,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.util.ui.JBUI;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -69,9 +69,10 @@ public class CodeCompletionPanel {
   private JPanel myCbOnCodeCompletionPanel;
   private JPanel myCbOnSmartTypeCompletionPanel;
 
-  private JPanel myAddonPanel;
+  private JPanel myAddonPanelAfter;
+  private JPanel myAddonPanelBefore;
 
-  public CodeCompletionPanel(List<? extends JComponent> addons) {
+  public CodeCompletionPanel(List<? extends JComponent> optionAddons, List<? extends JComponent> sectionAddons) {
     ChangeListener updateCaseCheckboxes = __ -> {
       myFirstLetterOnly.setEnabled(myCbMatchCase.isSelected());
       myAllLetters.setEnabled(myCbMatchCase.isSelected());
@@ -120,17 +121,28 @@ public class CodeCompletionPanel {
     if(!myCbOnSmartTypeCompletionPanel.isVisible() && !myCbOnCodeCompletionPanel.isVisible())
       myAutoInsertLabel.setVisible(false);
 
-    for (JComponent c : addons) {
-      myAddonPanel
-          .add(c, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-              GridBagConstraints.NONE, JBUI.insetsBottom(15), 0, 0));
-    }
-
-    if (addons.isEmpty()) {
-      myAddonPanel.setVisible(false);
-    }
+    addExtensions(optionAddons, myAddonPanelBefore);
+    addExtensions(sectionAddons, myAddonPanelAfter);
 
     reset();
+  }
+
+  private static void addExtensions(@NotNull List<? extends JComponent> customComponents, @NotNull JPanel addonPanel) {
+    if (customComponents.isEmpty()) {
+      addonPanel.setVisible(false);
+      return;
+    }
+    final GridLayoutManager manager = new GridLayoutManager(customComponents.size(), 1);
+    addonPanel.setLayout(manager);
+    final GridConstraints gc = new GridConstraints();
+    gc.setUseParentLayout(true);
+    gc.setFill(GridConstraints.FILL_BOTH);
+    gc.setVSizePolicy(GridConstraints.SIZEPOLICY_CAN_SHRINK);
+    for (int i = 0; i < customComponents.size(); i++) {
+      JComponent c = customComponents.get(i);
+      gc.setRow(i);
+      addonPanel.add(c, gc);
+    }
   }
 
   private static void hideOption(JComponent component, OptionId id) {
