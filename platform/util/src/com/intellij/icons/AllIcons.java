@@ -2300,7 +2300,6 @@ public class AllIcons {
     public static final Icon Apache = IconLoader.getIcon("/providers/apache.svg"); // 16x16
     public static final Icon ApacheDerby = IconLoader.getIcon("/providers/apacheDerby.svg"); // 16x16
     public static final Icon Azure = IconLoader.getIcon("/providers/azure.svg"); // 16x16
-    public static final Icon Bea = IconLoader.getIcon("/providers/bea.png"); // 16x16
     public static final Icon Cassandra = IconLoader.getIcon("/providers/cassandra.svg"); // 16x16
     public static final Icon ClickHouse = IconLoader.getIcon("/providers/clickHouse.svg"); // 16x16
     public static final Icon DB2 = IconLoader.getIcon("/providers/DB2.svg"); // 16x16
@@ -2320,6 +2319,11 @@ public class AllIcons {
     public static final Icon SqlServer = IconLoader.getIcon("/providers/sqlServer.svg"); // 16x16
     public static final Icon Sun = IconLoader.getIcon("/providers/sun.svg"); // 16x16
     public static final Icon Sybase = IconLoader.getIcon("/providers/sybase.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Bea = IconLoader.getIcon("/providers/bea.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Cvs_global */
     @SuppressWarnings("unused")
