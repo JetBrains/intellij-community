@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -35,7 +36,7 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
 
   @Nullable
   @Override
-  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
+  protected PsiType getClosureParameterType(@NotNull GrClosableBlock closure, int index) {
     List<PsiType> expectedTypes;
 
     if (closure.getParent() instanceof GrSafeCastExpression) {

@@ -29,7 +29,7 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
   @Nullable
   @Override
-  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
+  protected PsiType getClosureParameterType(@NotNull GrClosableBlock closure, int index) {
     if (!GroovyConfigUtils.getInstance().isVersionAtLeast(closure, GroovyConfigUtils.GROOVY2_3)) return null;
 
     final GrParameter[] parameters = closure.getAllParameters();
