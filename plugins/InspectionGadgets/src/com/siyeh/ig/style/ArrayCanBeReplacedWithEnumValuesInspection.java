@@ -14,11 +14,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author okli
@@ -61,58 +61,48 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
         return;
       }
 
-      final PsiType initType = expression.getType().getDeepComponentType();
-      final PsiClass initClass = PsiUtil.resolveClassInClassTypeOnly(initType);
+      final PsiType initExprType = ((PsiArrayType)type).getComponentType();
+      final PsiClass initClass = PsiUtil.resolveClassInClassTypeOnly(initExprType);
 
       if (initClass == null || !initClass.isEnum()) {
         return;
       }
 
       final PsiExpression[] initializers = expression.getInitializers();
-      if (initializers.length < 2) {
-        return;
-      }
+      int initL = initializers.length;
 
-      for (PsiExpression initV : initializers) {
-        PsiType initVType = initV.getType();
-        if (initV instanceof PsiArrayInitializerExpression || initVType == null) {
-          return;
-        }
-        if (!(Objects.requireNonNull(initVType).equals(initType))) {
-          return;
-        }
-      }
-
-      List<String> enumValues = StreamEx.of(initClass.getFields())
-        .select(PsiEnumConstant.class)
+      List<String> enumValues = Stream.of(initClass.getFields())
+        .filter(ev -> ev instanceof PsiEnumConstant)
+        .map(ev -> (PsiEnumConstant) ev)
         .map(PsiEnumConstant::getName)
-        .toCollection(LinkedList::new);
+        .collect(Collectors.toList());
 
-      if (enumValues == null) {
+
+      if (enumValues.size() != initL) {
         return;
       }
 
-      int nValues = enumValues.size();
-      if (nValues != initializers.length) {
-        return;
-      }
-
-      int i = 0;
-      for (String value : enumValues) {
-        String referenceName = ((PsiReferenceExpressionImpl)initializers[i]).getReferenceName();
-        if (referenceName != null && (referenceName).equals(value)) {
-          i++;
-        }
-        else {
-          return;
+      for (int i = 0; i < initL; i++) {
+          String value = enumValues.get(i);
+          if (initializers[i] instanceof PsiMethodCallExpression && initL == 1) {
+            PsiMethodCallExpression methodExpr = (PsiMethodCallExpression)initializers[i];
+            PsiMethod methodR = methodExpr.resolveMethod();
+            if (methodR != null) {
+              PsiType returnV = methodR.getReturnType();
+              if (!initExprType.equals(returnV)) {
+                return;
+              }
+            }
+          }
+          else if (!(initializers[i] instanceof PsiReferenceExpression && initExprType.equals(initializers[i].getType()) && value.equals(((PsiReferenceExpression)initializers[i]).getReferenceName()))) {
+            return;
         }
       }
 
       final PsiElement parent = expression.getParent();
-      if (i == nValues) {
-        final String enumName = ((PsiClassReferenceType)initType).getReference().getText();
-        registerError(parent, enumName);
-      }
+      final String enumName = ((PsiClassReferenceType)initExprType).getReference().getText();
+      registerError(parent, enumName);
+
     }
 
     private static class ArrayToEnumValueFix extends InspectionGadgetsFix {

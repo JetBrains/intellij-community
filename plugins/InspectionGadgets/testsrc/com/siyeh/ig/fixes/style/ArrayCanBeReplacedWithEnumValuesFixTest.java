@@ -24,6 +24,10 @@ public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCas
 
   public void testInnerEnum() {doTest("TestEnum.Inner");}
 
+  public void testFooInit() {doTest("En");}
+
+  //public void testOuterEnumUse() {doTest("OuterEnum.TestEnum");}
+
 
 
   @Override
@@ -42,6 +46,19 @@ public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCas
     super.setUp();
     myFixture.enableInspections(new ArrayCanBeReplacedWithEnumValuesInspection());
     myRelativePath = "style/array_replaced_enum_values";
+  }
+
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package outer;\n" +
+      "public class OuterEnum {\n" +
+      "    public enum TestEnum {\n" +
+      "        A, B, C\n" +
+      "    }\n" +
+      "}"
+    };
   }
 }
 
