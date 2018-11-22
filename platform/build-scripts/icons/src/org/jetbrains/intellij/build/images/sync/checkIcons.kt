@@ -108,7 +108,7 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
     context.devIconsFilter(repo.resolve(it), repo)
   }
   context.devIconsCommitHashesToSync.forEach { commit ->
-    val repo = devRepoVcsRoots.first {
+    val repo = devRepoVcsRoots.firstOrNull {
       try {
         commitInfo(it, commit)
       }
@@ -116,11 +116,16 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
         null
       } != null
     }
-    changesFromCommit(repo, commit).forEach { type, files ->
-      when (type) {
-        ChangeType.ADDED -> context.addedByDev.addAll(asIcon(files, repo))
-        ChangeType.MODIFIED -> context.modifiedByDev.addAll(asIcon(files, repo))
-        ChangeType.DELETED -> context.removedByDev.addAll(asIcon(files, repo))
+    if (repo == null) {
+      log("No repo is found for $commit, skipping")
+    }
+    else {
+      changesFromCommit(repo, commit).forEach { type, files ->
+        when (type) {
+          ChangeType.ADDED -> context.addedByDev.addAll(asIcon(files, repo))
+          ChangeType.MODIFIED -> context.modifiedByDev.addAll(asIcon(files, repo))
+          ChangeType.DELETED -> context.removedByDev.addAll(asIcon(files, repo))
+        }
       }
     }
   }
