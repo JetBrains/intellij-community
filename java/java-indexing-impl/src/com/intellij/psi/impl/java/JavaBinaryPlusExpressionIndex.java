@@ -4,6 +4,7 @@ package com.intellij.psi.impl.java;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -46,6 +47,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
       LighterAST tree = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
       TIntArrayList result = new TIntArrayList(offsets.length);
       for (int offset : offsets) {
+        ProgressManager.checkCanceled();
         LighterASTNode leaf = LightTreeUtil.findLeafElementAt(tree, offset);
         LighterASTNode element = leaf == null ? null : tree.getParent(leaf);
         if (element == null) continue;
