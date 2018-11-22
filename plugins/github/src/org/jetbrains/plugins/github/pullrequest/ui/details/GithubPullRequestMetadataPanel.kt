@@ -24,20 +24,12 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-internal class GithubPullRequestMetadataPanel(stateService: GithubPullRequestsStateService,
-                                              private val iconsProvider: CachingGithubAvatarIconsProvider) : JPanel() {
+internal class GithubPullRequestMetadataPanel(private val iconsProvider: CachingGithubAvatarIconsProvider) : JPanel() {
   private val directionPanel = DirectionPanel()
   var direction: Pair<GithubPullRequest.Tag, GithubPullRequest.Tag>?
     get() = directionPanel.direction
     set(value) {
       directionPanel.direction = value
-    }
-
-  private val statePanel = GithubPullRequestStatePanel(stateService)
-  var state: GithubPullRequestStatePanel.State?
-    get() = statePanel.state
-    set(value) {
-      statePanel.state = value
     }
 
   private val reviewersHandle = LabeledListPanelHandle.create("No Reviewers", "Reviewers:", ::createUserLabel)
@@ -71,10 +63,6 @@ internal class GithubPullRequestMetadataPanel(stateService: GithubPullRequestsSt
     add(directionPanel, CC()
       .minWidth("0")
       .spanX(2).growX()
-      .wrap())
-    add(statePanel, CC()
-      .minWidth("0")
-      .spanX(2)
       .wrap())
     addListPanel(reviewersHandle)
     addListPanel(assigneesHandle)
