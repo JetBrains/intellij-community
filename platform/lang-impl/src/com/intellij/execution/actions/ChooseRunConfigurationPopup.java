@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -190,7 +191,12 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   private static void deleteConfiguration(final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
-    RunManager.getInstance(project).removeConfiguration(configurationSettings);
+    if (Messages.YES == Messages.showYesNoDialog(project,
+                                                    "Are you sure you want to delete " + configurationSettings.getName() + "?",
+                                                    "Confirmation",
+                                                    Messages.getQuestionIcon())) {
+      RunManager.getInstance(project).removeConfiguration(configurationSettings);
+    }
   }
 
   @Override
