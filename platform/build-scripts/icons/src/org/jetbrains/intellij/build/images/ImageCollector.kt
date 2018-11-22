@@ -1,4 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
@@ -12,8 +14,10 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.function.Consumer
 import java.util.regex.Pattern
@@ -90,9 +94,14 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
 
   private fun processRoot(sourceRoot: JpsModuleSourceRoot) {
     val root = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
-    if (!root.toFile().exists()) return
+    val attributes = try {
+      Files.readAttributes(root, BasicFileAttributes::class.java)
+    }
+    catch (ignored: NoSuchFileException) {
+      return
+    }
 
-    val answer = downToRoot(root, root, null, IconRobotsData(), 0)
+    val answer = downToRoot(root, root, attributes.isDirectory, null, IconRobotsData(), 0)
     val iconsRoot = (if (answer == null || Files.isDirectory(answer)) answer else answer.parent) ?: return
 
     val rootRobotData = upToProjectHome(root)
@@ -164,22 +173,22 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     return upToProjectHome(parent).fork(parent, projectHome)
   }
 
-  private fun downToRoot(root: Path, file: Path, common: Path?, robotData: IconRobotsData, level: Int): Path? {
+  private fun downToRoot(root: Path, file: Path, isFileDir: Boolean, common: Path?, robotData: IconRobotsData, level: Int): Path? {
     if (robotData.isSkipped(file)) {
       return common
     }
 
     when {
-      file.toFile().isDirectory() -> {
-        if (level == 1 && file.fileName.toString() == "META-INF") {
+      isFileDir -> {
+        if (level == 1 && (file.fileName.toString() == "META-INF" || file.fileName.toString() == "intentionDescriptions")) {
           return common
         }
 
         val childRobotData = robotData.fork(file, root)
         var childCommon = common
-        Files.list(file).use { stream ->
-          stream.forEachOrdered {
-            childCommon = downToRoot(root, it, childCommon, childRobotData, level + 1)
+        Files.newDirectoryStream(file).use { stream ->
+          stream.forEach {
+            childCommon = downToRoot(root, it, Files.isDirectory(it), childCommon, childRobotData, level + 1)
           }
         }
         return childCommon

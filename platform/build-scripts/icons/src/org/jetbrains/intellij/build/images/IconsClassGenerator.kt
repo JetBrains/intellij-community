@@ -1,4 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -39,6 +41,9 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       outFile = Paths.get(dir, "AllIcons.java")
     }
     else {
+      if (module.name.contains("artwork")) {
+        println("42")
+      }
       customLoad = true
       packageName = "icons"
 
@@ -47,7 +52,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       val firstRootDir = firstRoot.file.toPath().resolve("icons")
       var oldClassName: String?
       // this is added to remove unneeded empty directories created by previous version of this script
-      if (firstRootDir.toFile().isDirectory()) {
+      if (Files.isDirectory(firstRootDir)) {
         try {
           Files.delete(firstRootDir)
           println("deleting empty directory $firstRootDir")
@@ -81,7 +86,12 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       outFile = targetRoot.resolve("$className.java")
     }
 
-    val oldText = if (outFile.toFile().exists()) Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8) else null
+    val oldText = try {
+      Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8)
+    }
+    catch (ignored: NoSuchFileException) {
+      null
+    }
     val newText = generate(module, className, packageName, customLoad, getCopyrightComment(oldText))
 
     val oldLines = oldText?.lines() ?: emptyList()
