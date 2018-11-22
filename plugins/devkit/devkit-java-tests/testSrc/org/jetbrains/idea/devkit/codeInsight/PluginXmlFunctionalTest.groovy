@@ -566,4 +566,9 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   void testPluginIconNotFound() {
     myFixture.testHighlighting(true, true, true, "pluginIconNotFound.xml")
   }
+
+  void testRedundantComponentInterfaceClass() {
+    doHighlightingTest("redundantComponentInterfaceClass.xml")
+    //TODO test fix
+  }
 }

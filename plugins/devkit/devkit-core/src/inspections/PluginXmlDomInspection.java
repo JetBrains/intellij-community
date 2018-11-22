@@ -500,6 +500,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       ComponentModuleRegistrationChecker.checkProperXmlFileForClass(
         component, holder, component.getImplementationClass().getValue(), myRegistrationCheckIgnoreClassList);
     }
+
+    GenericDomValue<PsiClass> interfaceClassElement = component.getInterfaceClass();
+    PsiClass interfaceClass = interfaceClassElement.getValue();
+    if (interfaceClass != null && interfaceClass.equals(component.getImplementationClass().getValue())) {
+      DomElementProblemDescriptor problem = holder.createProblem(
+        interfaceClassElement,
+        ProblemHighlightType.WARNING,
+        DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),
+        null,
+        new RemoveDomElementQuickFix(interfaceClassElement));
+      problem.highlightWholeElement();
+    }
   }
 
   private static void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
