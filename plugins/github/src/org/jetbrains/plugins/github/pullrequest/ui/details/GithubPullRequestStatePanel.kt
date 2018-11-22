@@ -27,6 +27,9 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
   private val stateLabel = JLabel().apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
   }
+  private val accessDeniedPanel = JLabel("Repository write access required to merge pull requests").apply {
+    foreground = UIUtil.getContextHelpForeground()
+  }
 
   private val closeAction = object : AbstractAction("Close") {
     override fun actionPerformed(e: ActionEvent?) {
@@ -73,10 +76,14 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
   }
 
   private fun updateText(state: GithubPullRequestStatePanel.State?) {
-    stateLabel.text = ""
-    stateLabel.icon = null
 
-    if (state != null) {
+    if (state == null) {
+      stateLabel.text = ""
+      stateLabel.icon = null
+
+      accessDeniedPanel.isVisible = false
+    }
+    else {
       if (state.state == GithubIssueState.closed) {
         if (state.merged) {
           stateLabel.icon = GithubIcons.PullRequestClosed
@@ -86,6 +93,7 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
           stateLabel.icon = GithubIcons.PullRequestClosed
           stateLabel.text = "Pull request is closed"
         }
+        accessDeniedPanel.isVisible = false
       }
       else {
         val mergeable = state.mergeable
@@ -103,6 +111,7 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
             stateLabel.text = "Branch has conflicts that must be resolved"
           }
         }
+        accessDeniedPanel.isVisible = !state.editAllowed
       }
     }
   }
@@ -151,6 +160,7 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
   init {
     isOpaque = false
     add(stateLabel)
+    add(accessDeniedPanel)
     add(buttonsPanel)
   }
 
