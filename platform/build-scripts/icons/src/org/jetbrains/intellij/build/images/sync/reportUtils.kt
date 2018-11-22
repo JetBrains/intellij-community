@@ -28,7 +28,7 @@ internal fun report(context: Context, skipped: Int) {
     """.trimMargin()
   }
   else {
-    """"
+    """
       |$devIcons icons are found in ${context.devRepoName}:
       | ${context.addedByDev.logIcons("added")}
       | ${context.removedByDev.logIcons("removed")}
@@ -50,7 +50,7 @@ internal fun report(context: Context, skipped: Int) {
 private fun findCommitsToSync(context: Context) {
   // TODO: refactor it
   fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
-  if (context.devSyncRequired()) {
+  if ((context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) && context.devSyncRequired()) {
     context.iconsCommitsToSync = findCommitsByRepo(UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.iconsChanges) {
       context.devIcons[it] ?: {
         val change = context.devRepoRoot.resolve(it)
@@ -58,7 +58,7 @@ private fun findCommitsToSync(context: Context) {
       }()
     }
   }
-  if (context.iconsSyncRequired()) {
+  if ((context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) && context.iconsSyncRequired()) {
     context.devCommitsToSync = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.devChanges) {
       context.icons[it] ?: guessGitObject(context.iconsRepo, context.iconsRepoDir.resolve(it))
     }
