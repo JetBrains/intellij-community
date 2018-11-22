@@ -44,16 +44,30 @@ internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
                             var isAssigned: Boolean = false)
 
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
+  val report = context.report().let { if (it.isNotEmpty()) "$it, " else it }
+  assignInvestigation(investigator, report)
+  if (!investigator.isAssigned) {
+    listOf(teamCityEmail(investigator.email), investigator.email.toLowerCase(), DEFAULT_INVESTIGATOR).forEach {
+      if (it != investigator.email) {
+        val next = Investigator(it, investigator.commits)
+        assignInvestigation(next, report)
+        if (next.isAssigned) return next
+      }
+    }
+  }
+  return investigator
+}
+
+private fun assignInvestigation(investigator: Investigator, report: String) {
   try {
     val assignee = teamCityGet("investigations?locator=buildType:$BUILD_CONF")
     val id = teamCityGet("users/email:${investigator.email}/id")
     if (assignee.contains(id)) {
       log("Investigation is already assigned to ${investigator.email}")
       investigator.isAssigned = true
-      return investigator
+      return
     }
-    val text = context.report().let { if (it.isNotEmpty()) "$it, " else it } +
-               (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
+    val text = report + (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
                " build: ${thisBuildReportableLink()}," +
                " see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
     teamCityPost("investigations", """
@@ -76,21 +90,9 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
   catch (e: Exception) {
     log("Unable to assign investigation to ${investigator.email}, ${e.message}")
   }
-  return when {
-    !investigator.isAssigned && investigator.email != investigator.email.toLowerCase() -> {
-      assignInvestigation(Investigator(investigator.email.toLowerCase(), investigator.commits), context)
-    }
-    !investigator.isAssigned && investigator.email != tryToMapEmailFromGitToTeamCity(investigator.email) -> {
-      assignInvestigation(Investigator(tryToMapEmailFromGitToTeamCity(investigator.email), investigator.commits), context)
-    }
-    !investigator.isAssigned && investigator.email != DEFAULT_INVESTIGATOR -> {
-      assignInvestigation(Investigator(DEFAULT_INVESTIGATOR, investigator.commits), context)
-    }
-    else -> investigator
-  }
 }
 
-private fun tryToMapEmailFromGitToTeamCity(email: String): String {
+private fun teamCityEmail(email: String): String {
   val (username, domain) = email.split("@")
   return username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain"
 }
