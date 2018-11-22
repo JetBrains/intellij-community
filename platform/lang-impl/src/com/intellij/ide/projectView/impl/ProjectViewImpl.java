@@ -513,9 +513,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void ensurePanesLoaded() {
     if (myExtensionsLoaded) return;
-    myExtensionsLoaded = true;
     AbstractProjectViewPane[] extensions = AbstractProjectViewPane.EP_NAME.getExtensions(myProject);
     Arrays.sort(extensions, PANE_WEIGHT_COMPARATOR);
+    myExtensionsLoaded = true;
     for(AbstractProjectViewPane pane: extensions) {
       if (myUninitializedPaneState.containsKey(pane.getId())) {
         try {
