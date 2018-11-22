@@ -38,7 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 @SuppressWarnings("ConstantConditions")
 public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
