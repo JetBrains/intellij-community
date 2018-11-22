@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -56,7 +57,11 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
     @Override
     public VirtualMachine accept(Map<String, ? extends Argument> map) throws IOException, IllegalConnectorArgumentsException {
       try {
-        startServer(new GeneralCommandLine(myCommands), false);
+        GeneralCommandLine commandLine = new GeneralCommandLine(myCommands);
+        if (Registry.is("debugger.sa.jdwp.debug")) {
+          commandLine.getParametersList().replaceOrPrepend("-agentlib:jdwp", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n");
+        }
+        startServer(commandLine, false);
       } catch (IOException e) {
         throw e;
       } catch (Exception e) {
