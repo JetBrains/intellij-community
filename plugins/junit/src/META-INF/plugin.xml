@@ -80,7 +80,7 @@
     <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
-    <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
+    <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.JUnitReferenceContributor"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedParameterized" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit5.valid.parameterized.configuration.display.name"

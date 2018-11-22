@@ -13,9 +13,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.execution.junit.codeInsight.references.MethodSourceReference
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -25,7 +23,6 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.siyeh.InspectionGadgetsBundle
@@ -115,66 +112,11 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
       }
 
       private fun checkEnumSource(method: PsiMethod, enumSource: PsiAnnotation) {
-        processArrayInAnnotationParameter(enumSource.findAttributeValue("value")) { value ->
-          if (value is PsiClassObjectAccessExpression) {
-            checkSourceTypeAndParameterTypeAgree(method, value, value.operand.type)
-            checkEnumSourceNames(value.operand.type, enumSource)
-          }
-        }
-      }
-
-      private fun checkEnumSourceNames(enumType: PsiType, enumSource: PsiAnnotation) {
-        fun enumConstants(psiClass: PsiClass): Set<String> {
-          return psiClass.fields.asSequence()
-            .filterIsInstance(PsiEnumConstant::class.java)
-            .map { it.name }
-            .toSet()
-        }
-
-        fun findModeDefaultValue(annotation: PsiAnnotation): String? {
-          fun resolveModeValue(annotationMethod: PsiAnnotationMethod): String? {
-            // junit5 5.0+ has default value for mode specified
-            val enumConstant = (annotationMethod.defaultValue as? PsiReferenceExpression)
-                                 ?.resolve() as? PsiEnumConstant ?: return null
-            return enumConstant.name
-          }
-
-          val annotationClass = annotation.nameReferenceElement?.resolve() as? PsiClass ?: return null
-          return annotationClass
-            .methods.asSequence()
-            .filterIsInstance(PsiAnnotationMethod::class.java)
-            .filter { it.name == "mode" }
-            .mapNotNull { resolveModeValue(it) }
-            .firstOrNull()
-        }
-
-        fun annotationContainsIncludeExcludeOrDefaultMode(annotationParameters: PsiAnnotationParameterList,
-                                                                  modeDefaultValue: String): Boolean {
-          fun isSupportedMode(mode: String) = mode == "INCLUDE" || mode == "EXCLUDE"
-
-          val modePair = annotationParameters.attributes.firstOrNull { it != null && it.name == "mode" }
-          if (modePair != null) {
-            val fieldName = (modePair.attributeValue as? JvmAnnotationEnumFieldValue)?.fieldName ?: return false
-            return isSupportedMode(fieldName)
-          }
-          else {
-            // no mode explicitly specified, check default value from annotation class definition
-            return isSupportedMode(modeDefaultValue)
-          }
-        }
-
-
-        val modeDefaultValue = findModeDefaultValue(enumSource) ?: return
-        val enumClass = PsiTypesUtil.getPsiClass(enumType) ?: return
-        val enumConstants = enumConstants(enumClass)
-        val supportedMode = annotationContainsIncludeExcludeOrDefaultMode(enumSource.parameterList, modeDefaultValue)
-
-        processArrayInAnnotationParameter(enumSource.findAttributeValue("names")) { name ->
-          if (name is PsiLiteralExpression) {
-            if (supportedMode && !enumConstants.contains(name.value)) {
-              holder.registerProblem(name, "Can't resolve enum constant reference.")
-            }
-          }
+        // @EnumSource#value type is Class<?>, not a array
+        val value = enumSource.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
+        if (value is PsiClassObjectAccessExpression) {
+          checkSourceTypeAndParameterTypeAgree(method, value, value.operand.type)
+          EnumSourceNamesInsight.checkEnumSourceNames(value.operand.type, enumSource, holder)
         }
       }
 

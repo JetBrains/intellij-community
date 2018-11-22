@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit.codeInsight.references;
+package com.intellij.execution.junit.codeInsight;
 
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
@@ -37,7 +37,7 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
   private static PsiElementPattern.Capture<PsiLiteral> getEnumSourceNamesPattern() {
     return PlatformPatterns.psiElement(PsiLiteral.class)
       .and(new FilterPattern(new TestAnnotationFilter(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE, "names")))
-      .and(new FilterPattern(new EnumSourceNamesElementFilter()));
+      .and(new FilterPattern(EnumSourceNamesInsight.INSTANCE.createEnumSourceNamesElementFilter()));
   }
 
   @Override
@@ -53,7 +53,7 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
       @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new EnumSourceReference[]{new EnumSourceReference((PsiLiteral)element)};
+        return EnumSourceNamesInsight.INSTANCE.createReferencesByElement((PsiLiteral)element);
       }
     });
     registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, "resources"), new PsiReferenceProvider() {
