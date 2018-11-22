@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
@@ -99,9 +98,8 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
       if (candidate != null && mapping != null) {
         Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new ExpressionArgument(closure));
         if (pair != null) {
-          GrReferenceExpression invokedExpression = (GrReferenceExpression)call.getInvokedExpression();
           PsiSubstitutor substitutor =
-            new GroovyInferenceSessionBuilder(invokedExpression, candidate, mapping)
+            new GroovyInferenceSessionBuilder(call, candidate, mapping)
               .skipClosureIn(call)
               .resolveMode(false)
               .build()

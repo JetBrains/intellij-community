@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 
-class GroovyInferenceSessionBuilder(
+class GroovyInferenceSessionBuilder constructor(
   private val ref: PsiElement,
   private val candidate: MethodCandidate,
   private val argumentMapping: ArgumentMapping?

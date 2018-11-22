@@ -6,11 +6,9 @@ import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getQualifierType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -19,14 +17,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
-import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 
 fun getTopLevelType(expression: GrExpression): PsiType? {
   if (expression is GrMethodCall) {
     val resolved = expression.advancedResolve()
     (resolved as? GroovyMethodResult)?.candidate?.let {
-      val session = GroovyInferenceSessionBuilder(expression.invokedExpression as GrReferenceExpression, it, resolved.argumentMapping)
+      val session = GroovyInferenceSessionBuilder(expression, it, resolved.argumentMapping)
         .resolveMode(false)
         .build()
       return session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method))
