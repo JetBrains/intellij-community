@@ -603,11 +603,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
-    public int getPreferredSpace() {
-      return getSearchIconPreferredSpace();
-    }
-
-    @Override
     public boolean isIconBeforeText() {
       return true;
     }
@@ -646,11 +641,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public int getIconGap() {
       return getClearIconGap();
-    }
-
-    @Override
-    public int getPreferredSpace() {
-      return getClearIconPreferredSpace();
     }
 
     @Override

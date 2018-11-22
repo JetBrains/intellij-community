@@ -179,7 +179,6 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Void> {
-
     @NotNull
     @Override
     public SearchEverywhereContributor<Void> createContributor(AnActionEvent initEvent) {
