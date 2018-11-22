@@ -42,8 +42,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   @NotNull
   @Override
   public String getGroupName() {
-    String[] split = GotoClassPresentationUpdater.getActionTitle().split("/");
-    return StringUtil.pluralize(split[0]) + (split.length > 1 ? " +" : "");
+    return GotoClassPresentationUpdater.getTabTitle();
   }
 
   @Override
