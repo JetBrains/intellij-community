@@ -41,7 +41,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
@@ -864,7 +863,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
-        component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
+        component = groupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
       }
 
       return wrap(component, 1, 0);
@@ -1335,7 +1334,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private String getNotFoundText() {
     return mySelectedTab.getContributor()
-                        .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
+                        .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getFullGroupName()))
                         .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
   }
 
