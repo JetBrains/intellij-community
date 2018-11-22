@@ -427,6 +427,7 @@
     <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GStringTypedActionHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GStringBackspaceHandlerDelegate"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyTripleQuoteBackspaceHandlerDelegate"/>
+    <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyStringBackslashHandler"/>
 
     <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyTypedHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyBackspaceHandler"/>
