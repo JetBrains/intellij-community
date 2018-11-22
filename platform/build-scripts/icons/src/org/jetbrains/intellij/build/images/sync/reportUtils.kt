@@ -19,16 +19,21 @@ internal fun report(context: Context, skipped: Int) {
   }
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
-  var report = if (context.iconsCommitHashesToSync.isNotEmpty()) {
-    """
-      |${context.iconsRepoName} commits ${context.iconsCommitHashesToSync.joinToString()} are synced into ${context.devRepoName}:
+  @Suppress("Duplicates")
+  var report = when {
+    context.iconsCommitsToSync.isNotEmpty() -> """
+      |${context.iconsRepoName} commits ${context.iconsCommitsToSync.values.flatten().joinToString { it.hash }} are synced into ${context.devRepoName}:
       | ${context.addedByDesigners.logIcons("added")}
       | ${context.removedByDesigners.logIcons("removed")}
       | ${context.modifiedByDesigners.logIcons("modified")}
     """.trimMargin()
-  }
-  else {
-    """
+    context.devCommitsToSync.isNotEmpty() -> """
+      |${context.devRepoName} commits ${context.devCommitsToSync.values.flatten().joinToString { it.hash }} are synced into ${context.iconsRepoName}:
+      | ${context.addedByDev.logIcons("added")}
+      | ${context.removedByDev.logIcons("removed")}
+      | ${context.modifiedByDev.logIcons("modified")}
+    """.trimMargin()
+    else -> """
       |$devIcons icons are found in ${context.devRepoName}:
       | ${context.addedByDev.logIcons("added")}
       | ${context.removedByDev.logIcons("removed")}
@@ -51,7 +56,7 @@ private fun findCommitsToSync(context: Context) {
   // TODO: refactor it
   fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
   if ((context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) && context.devSyncRequired()) {
-    context.iconsCommitsToSync = findCommitsByRepo(UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.iconsChanges) {
+    context.iconsCommitsToSync = findCommitsByRepo(UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.iconsChanges()) {
       context.devIcons[it] ?: {
         val change = context.devRepoRoot.resolve(it)
         guessGitObject(changesToReposMap(change), change)
@@ -59,7 +64,7 @@ private fun findCommitsToSync(context: Context) {
     }
   }
   if ((context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) && context.iconsSyncRequired()) {
-    context.devCommitsToSync = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.devChanges) {
+    context.devCommitsToSync = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.devChanges()) {
       context.icons[it] ?: guessGitObject(context.iconsRepo, context.iconsRepoDir.resolve(it))
     }
   }
@@ -86,7 +91,7 @@ private fun withTmpBranch(repos: Collection<File>, action: (String) -> Review?):
 
 private fun createReviewForDev(context: Context, user: String, email: String): Review? {
   if (!context.doSyncDevIconsAndCreateReview || context.iconsCommitsToSync.isEmpty()) return null
-  val repos = context.iconsChanges.map {
+  val repos = context.iconsChanges().map {
     changesToReposMap(context.devRepoRoot.resolve(it))
   }.distinct()
   verifyDevIcons(context, repos)
@@ -126,7 +131,8 @@ private fun verifyDevIcons(context: Context, repos: Collection<File>) {
 
 private fun postVerificationResultToReview(review: Review) {
   val runConfigurations = System.getProperty("sync.dev.icons.checks")?.splitNotBlank(";") ?: return
-  postComment(UPSOURCE_DEV_PROJECT_ID, review, "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
+  postComment(UPSOURCE_DEV_PROJECT_ID, review,
+              "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
 }
 
 private fun createReviewForIcons(context: Context, user: String, email: String): Review? {

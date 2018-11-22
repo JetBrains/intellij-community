@@ -38,14 +38,16 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   lateinit var devIcons: Map<String, GitObject>
   var devCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
   var iconsCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
-  val devChanges by lazy {
-    addedByDev + removedByDev + modifiedByDev
-  }
   val iconsCommitHashesToSync: Set<String>
   val devIconsCommitHashesToSync: Set<String>
+  lateinit var devIconsFilter: (File, File) -> Boolean
 
-  fun iconsSyncRequired() = devChanges.isNotEmpty()
-  fun devSyncRequired() = iconsChanges.isNotEmpty()
+  fun devChanges() = addedByDev + removedByDev + modifiedByDev
+  fun iconsChanges() = addedByDesigners + modifiedByDesigners +
+                       (if (doSyncRemovedIconsInDev) removedByDesigners else emptyList())
+
+  fun iconsSyncRequired() = devChanges().isNotEmpty()
+  fun devSyncRequired() = iconsChanges().isNotEmpty()
 
   fun devReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_DEV_PROJECT_ID }
   fun iconsReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_ICONS_PROJECT_ID }
@@ -128,9 +130,5 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     failIfSyncDevIconsRequired = bool(failIfSyncDevIconsRequiredArg)
     assignInvestigation = bool(assignInvestigationArg)
     notifySlack = bool(notifySlackArg)
-  }
-
-  val iconsChanges by lazy {
-    addedByDesigners + modifiedByDesigners + (if (doSyncRemovedIconsInDev) removedByDesigners else emptyList())
   }
 }

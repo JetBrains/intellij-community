@@ -28,7 +28,7 @@ internal fun syncAdded(added: Collection<String>,
       added.forEach {
         val target = targetDir.resolve(it)
         if (target.exists()) log("$it already exists in target repo!")
-        val source = sourceRepoMap[it]!!.file
+        val source = (sourceRepoMap[it] ?: error("$it not found")).file
         source.copyTo(target, overwrite = true)
         val repo = targetRepo(target)
         add(repo, target.relativeTo(repo).path)
