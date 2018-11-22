@@ -128,6 +128,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
   private final AnActionListener messageBusPublisher;
+  private int myAnonymousGroupIdCounter = 0;
 
   ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
@@ -683,9 +684,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         return null;
       }
 
-      if (id != null) {
-        registerOrReplaceActionInner(element, id, group, pluginId);
+      if (id == null) {
+        id = "<anonymous-group-" + (myAnonymousGroupIdCounter++) + ">";
       }
+
+      registerOrReplaceActionInner(element, id, group, pluginId);
       Presentation presentation = group.getTemplatePresentation();
 
       // text
@@ -709,7 +712,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
-      if (id != null && customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
+      if (customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
         myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
       }
 
@@ -1171,7 +1174,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
       }
       for (String groupId : myId2GroupId.get(actionId)) {
-        DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+        DefaultActionGroup group = (DefaultActionGroup) getActionOrStub(groupId);
+        if (group == null) {
+          throw new IllegalStateException("Trying to replace action which has been added to a non-existing group " + groupId);
+        }
         group.replaceAction(oldAction, newAction);
       }
       unregisterAction(actionId, false);
