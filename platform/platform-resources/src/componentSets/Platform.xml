@@ -143,6 +143,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.customize.WelcomeWizardHelper</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
