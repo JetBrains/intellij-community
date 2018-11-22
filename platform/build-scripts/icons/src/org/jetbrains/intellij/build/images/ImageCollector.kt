@@ -190,7 +190,9 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
           return file
         }
         else {
-          return FileUtil.findAncestor(common.toFile(), file.toFile())?.toPath()
+          //todo[nik] remove explicit type when KT-25589 is fixed
+          val ancestor: File? = FileUtil.findAncestor(common.toFile(), file.toFile())
+          return ancestor?.toPath()
         }
       }
       else -> return common
