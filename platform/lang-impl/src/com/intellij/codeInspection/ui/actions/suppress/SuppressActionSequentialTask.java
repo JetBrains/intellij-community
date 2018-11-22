@@ -54,21 +54,22 @@ public class SuppressActionSequentialTask implements SequentialTask {
     myWrapper = wrapper;
   }
 
-
   @Override
   public boolean iteration() {
+    return true;
+  }
+
+  @Override
+  public boolean iteration(@NotNull ProgressIndicator indicator) {
     final SuppressableInspectionTreeNode node = myNodesToSuppress[myCount++];
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.setFraction((double)myCount / myNodesToSuppress.length);
-    }
+    indicator.setFraction((double)myCount / myNodesToSuppress.length);
 
     final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
     if (content.first != null) {
       suppress(content.first, content.second, mySuppressAction, myWrapper, node);
     }
 
-    return false;
+    return isDone();
   }
 
   @Override
