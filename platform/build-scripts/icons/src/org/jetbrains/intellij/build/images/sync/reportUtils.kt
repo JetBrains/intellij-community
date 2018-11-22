@@ -6,7 +6,7 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-internal fun report(context: Context, skipped: Int, consistent: Collection<String>) {
+internal fun report(context: Context, skipped: Int) {
   val (devIcons, icons) = context.devIcons.size to context.icons.size
   if (isUnderTeamCity()) {
     findCommitsToSync(context)
@@ -19,18 +19,30 @@ internal fun report(context: Context, skipped: Int, consistent: Collection<Strin
   }
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
-  val report = """
-    |$devIcons icons are found in dev repo:
-    | ${context.addedByDev.logIcons("added")}
-    | ${context.removedByDev.logIcons("removed")}
-    | ${context.modifiedByDev.logIcons("modified")}
-    |$icons icons are found in icons repo:
-    | ${context.addedByDesigners.logIcons("added")}
-    | ${context.removedByDesigners.logIcons("removed")}
-    | ${context.modifiedByDesigners.logIcons("modified")}
-    |${consistent.size} consistent icons in both repos
-    |${if (context.createdReviews.isNotEmpty()) "Created reviews: ${context.createdReviews.map(Review::url)}" else ""}
-  """.trimMargin()
+  var report = if (context.iconsCommitHashesToSync.isNotEmpty()) {
+    """
+      |${context.iconsRepoName} commits ${context.iconsCommitHashesToSync.joinToString()} are synced into ${context.devRepoName}:
+      | ${context.addedByDesigners.logIcons("added")}
+      | ${context.removedByDesigners.logIcons("removed")}
+      | ${context.modifiedByDesigners.logIcons("modified")}
+    """.trimMargin()
+  }
+  else {
+    """"
+      |$devIcons icons are found in ${context.devRepoName}:
+      | ${context.addedByDev.logIcons("added")}
+      | ${context.removedByDev.logIcons("removed")}
+      | ${context.modifiedByDev.logIcons("modified")}
+      |$icons icons are found in ${context.iconsRepoName}:
+      | ${context.addedByDesigners.logIcons("added")}
+      | ${context.removedByDesigners.logIcons("removed")}
+      | ${context.modifiedByDesigners.logIcons("modified")}
+      |${context.consistent.size} consistent icons in both repos
+    """.trimMargin()
+  }
+  if (context.createdReviews.isNotEmpty()) {
+    report += "\nCreated reviews: ${context.createdReviews.joinToString { it.url }}"
+  }
   log(report)
   if (isUnderTeamCity() && context.isFail()) context.doFail(report)
 }
@@ -77,7 +89,7 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
   val repos = context.iconsChanges.map {
     changesToReposMap(context.devRepoRoot.resolve(it))
   }.distinct()
-  val verificationPassed = verifyDevIcons(context, repos)
+  verifyDevIcons(context, repos)
   return withTmpBranch(repos) { branch ->
     val commitsForReview = commitAndPush(branch, user, email, context.iconsCommitsToSync.commitMessage(), repos)
     val projectId = UPSOURCE_DEV_PROJECT_ID
@@ -89,7 +101,7 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
       val review = createReview(projectId, branch, commitsForReview)
       try {
         addReviewer(projectId, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
-        postVerificationResultToReview(verificationPassed, review)
+        postVerificationResultToReview(review)
         review
       }
       catch (e: Exception) {
@@ -100,25 +112,21 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
   }
 }
 
-private fun verifyDevIcons(context: Context, repos: Collection<File>) = try {
-  context.verifyDevIcons()
+private fun verifyDevIcons(context: Context, repos: Collection<File>) {
+  callSafely {
+    context.verifyDevIcons()
+  }
   repos.forEach { repo ->
     val status = gitStatus(repo)
     if (status.isNotEmpty()) {
       stageFiles(status, repo)
     }
   }
-  true
-}
-catch (e: Exception) {
-  e.printStackTrace()
-  false
 }
 
-private fun postVerificationResultToReview(success: Boolean, review: Review) {
+private fun postVerificationResultToReview(review: Review) {
   val runConfigurations = System.getProperty("sync.dev.icons.checks")?.splitNotBlank(";") ?: return
-  val comment = if (success) "Following checks were successful:" else "Some of the following checks failed:"
-  postComment(UPSOURCE_DEV_PROJECT_ID, review, "$comment ${runConfigurations.joinToString()}, see build log ${thisBuildReportableLink()}")
+  postComment(UPSOURCE_DEV_PROJECT_ID, review, "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
 }
 
 private fun createReviewForIcons(context: Context, user: String, email: String): Review? {
@@ -156,15 +164,15 @@ private fun assignInvestigation(context: Context): Investigator? =
     assignInvestigation(investigator, context)
   }
 
-private fun findCommitsByRepo(projectId: String, root: File,
+private fun findCommitsByRepo(projectId: String?, root: File,
                               changes: Collection<String>,
                               resolveGitObject: (String) -> GitObject
 ): Map<File, Collection<CommitInfo>> {
   var alreadyInReview = emptyList<String>()
   var commits = findCommits(root, changes.asSequence())
   if (commits.isEmpty()) return emptyMap()
-  val titles = getOpenIconsReviewTitles(projectId)
-  var before = commits.size
+  val titles = if (!projectId.isNullOrEmpty()) getOpenIconsReviewTitles(projectId!!) else emptyList()
+  val before = commits.size
   commits = commits.filterNot { entry ->
     val (commit, change) = entry
     val skip = titles.any {
@@ -174,19 +182,6 @@ private fun findCommitsByRepo(projectId: String, root: File,
     skip
   }
   log("$projectId: ${before - commits.size} commits already in review")
-  val commitsToSync = System.getProperty("sync.icons.commits")
-                        ?.takeIf { it.trim() != "*" }
-                        ?.split(",", ";", " ")
-                        ?.filter { it.isNotBlank() }
-                        ?.mapTo(mutableSetOf(), String::trim) ?: emptySet<String>()
-  if (commitsToSync.isNotEmpty()) {
-    log("Commits to sync: $commitsToSync")
-    before = commits.size
-    commits = commits.filter {
-      commitsToSync.contains(it.key.hash)
-    }
-    log("$projectId: skipped ${before - commits.size} commits")
-  }
   alreadyInReview
     .map { resolveGitObject(it) }
     .groupBy({ it.repo }, { it.path })
@@ -195,6 +190,7 @@ private fun findCommitsByRepo(projectId: String, root: File,
       log("Already in review, skipping: $skipped")
       unstageFiles(skipped, repo)
     }
+  log("$projectId: ${commits.size} commits found")
   return commits.map { it.key }.groupBy(CommitInfo::repo)
 }
 

@@ -316,3 +316,22 @@ internal fun gitStatus(repo: File) =
     .map { if (it.contains(" ")) it.split(" ").last() else it }
     .map { it.trim() }
     .toList()
+
+internal enum class ChangeType { MODIFIED, ADDED, DELETED }
+
+internal fun changesFromCommit(repo: File, hash: String) =
+  execute(repo, GIT, "show", "--pretty=format:none", "--name-status", "--no-renames", hash)
+    .lineSequence().map { it.trim() }
+    .filter { it.isNotEmpty() && it != "none" }
+    .map { it.splitWithTab() }
+    .onEach { if (it.size != 2) error(it.joinToString(" ")) }
+    .map {
+      val (type, path) = it
+      when (type) {
+        "A" -> ChangeType.ADDED
+        "D" -> ChangeType.DELETED
+        "M" -> ChangeType.MODIFIED
+        "T" -> ChangeType.MODIFIED
+        else -> return@map null
+      } to path
+    }.filterNotNull().groupBy({ it.first }, { it.second })

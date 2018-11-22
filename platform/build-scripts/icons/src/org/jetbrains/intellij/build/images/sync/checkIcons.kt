@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
+import org.jetbrains.intellij.build.images.ImageExtension
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -30,55 +31,75 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
   context.devIcons = readDevRepo(context.devRepoRoot, context.devRepoDir, devRepoVcsRoots, context.skipDirsPattern)
+  callWithTimer("Searching for changed icons..") {
+    if (context.iconsCommitHashesToSync.isNotEmpty()) {
+      searchForChangedIconsByDesigners(context)
+    }
+    else {
+      searchForAllChangedIcons(context, devRepoVcsRoots)
+    }
+  }
+  syncIcons(context)
+  report(context, skippedDirs.size)
+}
+
+private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
+
+private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collection<File>) {
   val devIconsTmp = HashMap(context.devIcons)
   val modified = mutableListOf<String>()
   val consistent = mutableListOf<String>()
   context.icons.forEach { icon, gitObject ->
-    if (!devIconsTmp.containsKey(icon)) {
-      context.addedByDesigners += icon
-    }
-    else if (gitObject.hash != devIconsTmp[icon]?.hash) {
-      modified += icon
-    }
-    else {
-      consistent += icon
+    when {
+      !devIconsTmp.containsKey(icon) -> context.addedByDesigners += icon
+      gitObject.hash != devIconsTmp[icon]?.hash -> modified += icon
+      else -> consistent += icon
     }
     devIconsTmp.remove(icon)
   }
   context.addedByDev = devIconsTmp.keys
-  callWithTimer("Searching for changed icons..") {
-    Stream.of(
-      { SearchType.MODIFIED to modifiedByDev(context, modified) },
-      { SearchType.REMOVED_BY_DEV to removedByDev(context, context.addedByDesigners, devRepoVcsRoots, context.devRepoDir) },
-      {
-        val iconsDir = context.iconsRepoDir.relativeTo(context.iconsRepo).path.let { if (it.isEmpty()) "" else "$it/" }
-        SearchType.REMOVED_BY_DESIGNERS to removedByDesigners(context, context.addedByDev, context.iconsRepo, iconsDir)
+  Stream.of(
+    { SearchType.MODIFIED to modifiedByDev(context, modified) },
+    { SearchType.REMOVED_BY_DEV to removedByDev(context, context.addedByDesigners, devRepoVcsRoots, context.devRepoDir) },
+    {
+      val iconsDir = context.iconsRepoDir.relativeTo(context.iconsRepo).path.let { if (it.isEmpty()) "" else "$it/" }
+      SearchType.REMOVED_BY_DESIGNERS to removedByDesigners(context, context.addedByDev, context.iconsRepo, iconsDir)
+    }
+  ).parallel().map { it() }.toList().forEach {
+    val (searchType, searchResult) = it
+    when (searchType) {
+      SearchType.MODIFIED -> {
+        context.modifiedByDev = searchResult
+        context.modifiedByDesigners = modified.filter { file ->
+          !context.modifiedByDev.contains(file)
+        }.toMutableList()
       }
-    ).parallel().map { it() }.toList().forEach {
-      val (searchType, searchResult) = it
-      when (searchType) {
-        SearchType.MODIFIED -> {
-          context.modifiedByDev = searchResult
-          context.modifiedByDesigners = modified.filter { file ->
-            !context.modifiedByDev.contains(file)
-          }.toMutableList()
-        }
-        SearchType.REMOVED_BY_DEV -> {
-          context.removedByDev = searchResult
-          context.addedByDesigners.removeAll(searchResult)
-        }
-        SearchType.REMOVED_BY_DESIGNERS -> {
-          context.removedByDesigners = searchResult
-          context.addedByDev.removeAll(searchResult)
-        }
+      SearchType.REMOVED_BY_DEV -> {
+        context.removedByDev = searchResult
+        context.addedByDesigners.removeAll(searchResult)
+      }
+      SearchType.REMOVED_BY_DESIGNERS -> {
+        context.removedByDesigners = searchResult
+        context.addedByDev.removeAll(searchResult)
       }
     }
   }
-  syncIcons(context)
-  report(context, skippedDirs.size, consistent)
 }
 
-private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
+private fun searchForChangedIconsByDesigners(context: Context) {
+  fun check(files: Collection<String>) = files
+    .filter { ImageExtension.fromName(it) != null }
+    .map { context.iconsRepo.resolve(it).toRelativeString(context.iconsRepoDir) }
+  context.iconsCommitHashesToSync.forEach { commit ->
+    changesFromCommit(context.iconsRepo, commit).forEach { type, files ->
+      when (type) {
+        ChangeType.ADDED -> context.addedByDesigners += check(files)
+        ChangeType.MODIFIED -> context.modifiedByDesigners += check(files)
+        ChangeType.DELETED -> context.removedByDesigners += check(files)
+      }
+    }
+  }
+}
 
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: File) = protectStdErr {
   listGitObjects(iconsRepo, iconsRepoDir) { file, _ ->
@@ -184,7 +205,8 @@ private fun removedByDesigners(context: Context, addedByDev: Collection<String>,
   byDesigners > 0 && latestChangeTime(context.devIcons[it]) < byDesigners
 }.toList()
 
-private fun removedByDev(context: Context, addedByDesigners: Collection<String>,
+private fun removedByDev(context: Context,
+                         addedByDesigners: Collection<String>,
                          devRepos: Collection<File>,
                          devRepoDir: File) = addedByDesigners.parallelStream().filter {
   val byDev = latestChangeTime(File(devRepoDir, it).absolutePath, devRepos)

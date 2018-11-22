@@ -7,13 +7,13 @@ internal fun syncIcons(context: Context) {
   val devIcons = context.devIcons
   val icons = context.icons
   if (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) {
-    log("Syncing icons repo:")
+    log("Syncing ${context.iconsRepoName}:")
     syncAdded(context.addedByDev, devIcons, context.iconsRepoDir) { context.iconsRepo }
     syncModified(context.modifiedByDev, icons, devIcons)
     syncRemoved(context.removedByDev, icons)
   }
   if (context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) {
-    log("Syncing dev repo:")
+    log("Syncing ${context.devRepoName}:")
     syncAdded(context.addedByDesigners, icons, context.devRepoDir) { changesToReposMap(it) }
     syncModified(context.modifiedByDesigners, devIcons, icons)
     if (context.doSyncRemovedIconsInDev) syncRemoved(context.removedByDesigners, devIcons)

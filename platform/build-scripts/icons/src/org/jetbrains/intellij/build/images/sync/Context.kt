@@ -28,8 +28,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var removedByDev: MutableCollection<String> = mutableListOf()
   var modifiedByDev: MutableCollection<String> = mutableListOf()
   val addedByDesigners: MutableCollection<String> = mutableListOf()
-  var removedByDesigners: MutableCollection<String> = mutableListOf()
-  var modifiedByDesigners: MutableCollection<String> = mutableListOf()
+  var removedByDesigners: Collection<String> = emptyList()
+  var modifiedByDesigners: Collection<String> = emptyList()
+  var consistent: MutableCollection<String> = mutableListOf()
   var createdReviews: Collection<Review> = emptyList()
   lateinit var icons: Map<String, GitObject>
   lateinit var devIcons: Map<String, GitObject>
@@ -38,6 +39,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val devChanges by lazy {
     addedByDev + removedByDev + modifiedByDev
   }
+  val iconsCommitHashesToSync: Set<String>
 
   fun iconsSyncRequired() = devChanges.isNotEmpty()
   fun devSyncRequired() = iconsChanges.isNotEmpty()
@@ -71,6 +73,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     val syncDevIconsAndCreateReviewArg = "sync.dev.icons.and.create.review"
     val assignInvestigationArg = "assign.investigation"
     val notifySlackArg = "notify.slack"
+    val iconsCommitHashesToSyncArg = "sync.icons.commits"
     val repos = System.getProperty(repoArg)?.split(",") ?: emptyList()
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
@@ -89,13 +92,19 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       |* `$failIfSyncDevIconsRequiredArg` - do fail if icons sync in developers' repo is required
       |* `$assignInvestigationArg` - assign investigation if required
       |* `$notifySlackArg` - notify slack channel if required
+      |* `$iconsCommitHashesToSyncArg` - commit hashes in designers' repo to sync icons from
     """.trimMargin())
     devRepoDir = ignoreCaseInDirName(repos[0])
     iconsRepoDir = ignoreCaseInDirName(repos[1])
     skipDirsPattern = System.getProperty(patternArg)
+    iconsCommitHashesToSync = System.getProperty(iconsCommitHashesToSyncArg)
+      ?.takeIf { it.trim() != "*" }
+      ?.split(",", ";", " ")
+      ?.filter { it.isNotBlank() }
+      ?.mapTo(mutableSetOf(), String::trim) ?: emptySet()
     doSyncIconsRepo = bool(syncIconsArg)
     doSyncDevRepo = bool(syncDevIconsArg)
-    doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg)
+    doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg) || iconsCommitHashesToSync.isNotEmpty()
     doSyncIconsAndCreateReview = bool(syncIconsAndCreateReviewArg)
     doSyncDevIconsAndCreateReview = bool(syncDevIconsAndCreateReviewArg)
     failIfSyncDevIconsRequired = bool(failIfSyncDevIconsRequiredArg)
