@@ -745,7 +745,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
 
-    VirtualFile virtualFile = file.getVirtualFile();
+    VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
     if (virtualFile == null) return null;
 
     String packageName = ((PsiJavaFile)file).getPackageName();
