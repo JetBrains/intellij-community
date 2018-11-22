@@ -122,7 +122,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myModalityStateComponent = modalityStateComponent;
     myName = name;
     Application app = ApplicationManager.getApplication();
-    myPassThrough = app == null || app.isUnitTestMode();
+    myPassThrough = app == null || app.isHeadlessEnvironment();
     myExecuteInDispatchThread = thread == Alarm.ThreadToUse.SWING_THREAD;
 
     if (parent != null) {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighli
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -46,6 +47,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.ui.RelativeFont.SMALL;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
@@ -62,7 +64,12 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private Collection<RangeHighlighter> myHighlighed;
   private final VirtualFile myFile;
   private boolean myUserCaretChange = true;
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, breadcrumbs);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true,
+                                                                    ApplicationManager.getApplication().isHeadlessEnvironment()
+                                                                    ? null
+                                                                    : breadcrumbs);
+
+  private List<BreadcrumbListener> myBreadcrumbListeners = new ArrayList<>();
 
   private final Update myUpdate = new Update(this) {
     @Override
@@ -191,11 +198,13 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myAsyncUpdateProgress, (crumbs) -> {
       if (!progress.isCanceled() && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
         breadcrumbs.setFont(getNewFont(myEditor));
-        if (!breadcrumbs.isShowing()) {
+        if (!breadcrumbs.isShowing() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
           breadcrumbs.setCrumbs(null);
+          notifyListeners(null);
           return;
         }
         breadcrumbs.setCrumbs(crumbs);
+        notifyListeners(crumbs);
       }
     });
   }
@@ -205,6 +214,20 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myQueue.queue(myUpdate);
   }
 
+  public void registerBreadcrumbListener(BreadcrumbListener listener) {
+    myBreadcrumbListeners.add(listener);
+  }
+
+  public void removeBreadcrumbListener(BreadcrumbListener listener) {
+    myBreadcrumbListeners.remove(listener);
+  }
+
+  private void notifyListeners(Iterable<? extends Crumb> breadcrumbs) {
+    for (BreadcrumbListener listener : myBreadcrumbListeners) {
+      listener.breadcrumbsChanged(breadcrumbs, this::navigate);
+    }
+  }
+
   @Deprecated
   public JComponent getComponent() {
     return this;
@@ -212,9 +235,13 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void itemSelected(Crumb crumb, InputEvent event) {
     if (event == null || !(crumb instanceof NavigatableCrumb)) return;
-    NavigatableCrumb navigatableCrumb = (NavigatableCrumb) crumb;
+    NavigatableCrumb navigatableCrumb = (NavigatableCrumb)crumb;
+    navigate(navigatableCrumb, event.isShiftDown() || event.isMetaDown());
+  }
+
+  private void navigate(NavigatableCrumb crumb, boolean withSelection) {
     myUserCaretChange = false;
-    navigatableCrumb.navigate(myEditor, event.isShiftDown() || event.isMetaDown());
+    crumb.navigate(myEditor, withSelection);
   }
 
   private void itemHovered(Crumb crumb, @SuppressWarnings("unused") InputEvent event) {
@@ -230,7 +257,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       myHighlighed = null;
     }
     if (crumb instanceof NavigatableCrumb) {
-      final TextRange range = ((NavigatableCrumb) crumb).getHighlightRange();
+      final TextRange range = ((NavigatableCrumb)crumb).getHighlightRange();
       if (range == null) return;
       final TextAttributes attributes = new TextAttributes();
       final CrumbPresentation p = PsiCrumb.getPresentation(crumb);
@@ -257,6 +284,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     }
     myEditor = null;
     breadcrumbs.setCrumbs(null);
+    notifyListeners(null);
   }
 
   private void updateEditorFont(PropertyChangeEvent event) {
