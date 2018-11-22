@@ -70,10 +70,10 @@ class MethodResolveResult(
   private val methodCandidate by lazyPub {
     if (arguments != null && method is GrGdkMethod && place is GrReferenceExpression) {
       val newArguments = listOf(buildQualifier(place, state)) + arguments
-      MethodCandidate(method.staticMethod, siteSubstitutor, newArguments, place)
+      MethodCandidate(method.staticMethod, contextSubstitutor, newArguments, place)
     }
     else {
-      MethodCandidate(method, siteSubstitutor, arguments, place)
+      MethodCandidate(method, contextSubstitutor, arguments, place)
     }
   }
 
