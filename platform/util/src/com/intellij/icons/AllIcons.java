@@ -1699,10 +1699,10 @@ public class AllIcons {
   }
 
   public final static class Json {
-    public static final Icon Array = IconLoader.getIcon("/json/array.png"); // 16x16
-    public static final Icon Object = IconLoader.getIcon("/json/object.png"); // 16x16
-    public static final Icon Property_braces = IconLoader.getIcon("/json/property_braces.png"); // 16x16
-    public static final Icon Property_brackets = IconLoader.getIcon("/json/property_brackets.png"); // 16x16
+    public static final Icon Array = IconLoader.getIcon("/json/array.svg"); // 16x16
+    public static final Icon Object = IconLoader.getIcon("/json/object.svg"); // 16x16
+    public static final Icon Property_braces = IconLoader.getIcon("/json/property_braces.svg"); // 16x16
+    public static final Icon Property_brackets = IconLoader.getIcon("/json/property_brackets.svg"); // 16x16
 
   }
   public static final Icon Logo_welcomeScreen = IconLoader.getIcon("/Logo_welcomeScreen.png"); // 80x80
