@@ -2,10 +2,13 @@
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.BaseUICollector;
 import com.intellij.internal.statistic.collectors.fus.ui.ToolbarClicksUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -47,6 +50,16 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
   }
 
   public static void record(@NotNull AnAction action, String place) {
+    record(toRecordedId(action), place);
+  }
+
+  @NotNull
+  private static String toRecordedId(@NotNull AnAction action) {
+    final PluginType type = StatisticsUtilKt.getPluginType(action.getClass());
+    if (!type.isJBPlugin()) {
+      return type.name();
+    }
+
     String id = ActionManager.getInstance().getId(action);
     if (id == null) {
       if (action instanceof ActionWithDelegate) {
@@ -55,7 +68,7 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
         id = action.getClass().getName();
       }
     }
-    record(id, place);
+    return id;
   }
 
   public static void record(String actionId, String place) {
