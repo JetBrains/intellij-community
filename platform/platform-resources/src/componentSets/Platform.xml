@@ -126,6 +126,7 @@
 
     <component>
       <implementation-class>com.intellij.internal.DebugAttachDetector</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
