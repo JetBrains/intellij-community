@@ -743,7 +743,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     if (qName != null) {
       PsiFile file = aClass.getContainingFile();
       if (file instanceof PsiJavaFile) {
-        VirtualFile virtualFile = file.getVirtualFile();
+        VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
         if (virtualFile != null) {
           String pkgName = ((PsiJavaFile)file).getPackageName();
           String relPath = (pkgName.isEmpty() ? qName : pkgName.replace('.', '/') + '/' + qName.substring(pkgName.length() + 1)) + HTML_EXTENSION;
