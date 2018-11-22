@@ -142,7 +142,7 @@ def wait_for_condition(condition, msg=None, timeout=TIMEOUT, sleep=.05):
         if condition():
             break
         if time.time() - curtime > timeout:
-            error_msg = 'Condition not reached in %s seconds'
+            error_msg = 'Condition not reached in %s seconds' % (timeout,)
             if msg is not None:
                 error_msg += '\n'
                 if callable(msg):
