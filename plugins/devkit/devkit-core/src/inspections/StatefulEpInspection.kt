@@ -16,7 +16,7 @@ import com.intellij.psi.PsiReference
 import org.jetbrains.idea.devkit.util.ExtensionCandidate
 import org.jetbrains.idea.devkit.util.ExtensionLocator
 
-class StatefulEpInspection2 : DevKitJvmInspection() {
+class StatefulEpInspection : DevKitJvmInspection() {
 
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): DefaultJvmElementVisitor<Boolean?> = object : DefaultJvmElementVisitor<Boolean?> {
 
