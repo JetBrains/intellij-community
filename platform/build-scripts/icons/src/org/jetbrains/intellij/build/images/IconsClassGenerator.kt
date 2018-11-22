@@ -26,6 +26,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   private val processedIcons = AtomicInteger()
   private val processedPhantom = AtomicInteger()
   private val modifiedClasses = ContainerUtil.createConcurrentList<ModifiedClass>()
+  private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
 
   fun processModule(module: JpsModule) {
     val customLoad: Boolean
@@ -39,6 +40,15 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
 
       val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
       outFile = Paths.get(dir, "AllIcons.java")
+    }
+    else if ("intellij.android.artwork" == module.name) {
+      // backward compatibility - AndroidIcons class should be not modified
+      packageName = "icons"
+      customLoad = true
+      className = "AndroidArtworkIcons"
+
+      val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath
+      outFile = Paths.get(dir, "icons", "AndroidArtworkIcons.java")
     }
     else {
       if (module.name.contains("artwork")) {
@@ -125,11 +135,18 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
         }
       }
     }
+    else {
+      if (Files.exists(outFile)) {
+        obsoleteClasses.add(outFile)
+        //Files.delete(outFile)
+      }
+    }
   }
 
   fun printStats() {
     println()
     println("Generated classes: ${processedClasses.get()}. Processed icons: ${processedIcons.get()}. Phantom icons: ${processedPhantom.get()}")
+    println("\nObsolete classes:\n${obsoleteClasses.joinToString("\n") }}")
   }
 
   fun getModifiedClasses(): List<ModifiedClass> = modifiedClasses

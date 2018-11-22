@@ -15,8 +15,7 @@ fun main(args: Array<String>) {
   val util = project.modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
 
   val generator = IconsClassGenerator(home, util)
-//  project.modules.parallelStream().forEach(generator::processModule)
-  project.modules.forEach(generator::processModule)
+  project.modules.parallelStream().forEach(generator::processModule)
   generator.printStats()
 
   val optimizer = ImageSizeOptimizer(home)
