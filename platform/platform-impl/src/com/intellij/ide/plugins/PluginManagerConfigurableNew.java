@@ -1455,19 +1455,23 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private static Url createSearchUrl(@NotNull String query, int count) {
-    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
-    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/search?" + query +
-                               "&build=" + URLUtil.encodeURIComponent(instance.getApiVersion()) +
+    return Urls.newFromEncoded(getPluginManagerUrl() + "/api/search?" + query +
+                               "&build=" + URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getApiVersion()) +
                                "&max=" + count);
   }
 
   @NotNull
   private static Url createSearchSuggestUrl(@NotNull String query) {
-    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
-    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/searchSuggest?term=" +
+    return Urls.newFromEncoded(getPluginManagerUrl() + "/api/searchSuggest?term=" +
                                URLUtil.encodeURIComponent(query) +
                                "&productCode=" +
-                               URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
+                               URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getBuild().getProductCode()));
+  }
+
+  @NotNull
+  private static String getPluginManagerUrl() {
+    String url = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl();
+    return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
   }
 
   private static boolean forceHttps() {
