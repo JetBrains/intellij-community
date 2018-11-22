@@ -36,7 +36,16 @@ import javax.swing.JComponent
 class PyStubPackagesAdvertiser : PyInspection() {
 
   companion object {
-    private val WHITE_LIST = mapOf("django" to "Django", "numpy" to "numpy") // top-level package to package on PyPI
+    // file-level suggestion will be shown for packages below
+    private val FORCED = mapOf("django" to "Django", "numpy" to "numpy") // top-level package to package on PyPI
+
+    // notification will be shown for packages below
+    private val CHECKED = mapOf("pyspark" to "pyspark",
+                                "ordered_set" to "ordered-set",
+                                "docutils" to "docutils",
+                                "coincurve" to "coincurve",
+                                "PyQt5" to "PyQt5",
+                                "gi" to "PyGObject") // top-level package to package on PyPI
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
     private val BALLOON_NOTIFICATIONS = NotificationGroup("Python Stub Packages Advertiser", NotificationDisplayType.STICKY_BALLOON, false)
@@ -104,22 +113,22 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
     val cache = ServiceManager.getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk)
 
-    processWhiteListedPackages(file, sources, module, sdk, availablePackages, installedPackages, cache, problemsHolder)
-    processNotWhiteListedPackages(file, sources, module, sdk, availablePackages, installedPackages, cache)
+    processForcedPackages(file, sources, module, sdk, availablePackages, installedPackages, cache, problemsHolder)
+    processCheckedPackages(file, sources, module, sdk, availablePackages, installedPackages, cache)
   }
 
-  private fun processWhiteListedPackages(file: PyFile,
-                                         sources: Set<String>,
-                                         module: Module,
-                                         sdk: Sdk,
-                                         availablePackages: List<RepoPackage>,
-                                         installedPackages: List<PyPackage>,
-                                         cache: Cache<String, Set<RepoPackage>>,
-                                         problemsHolder: ProblemsHolder) {
-    val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(whiteListedSourcesToProcess(sources), cache)
+  private fun processForcedPackages(file: PyFile,
+                                    sources: Set<String>,
+                                    module: Module,
+                                    sdk: Sdk,
+                                    availablePackages: List<RepoPackage>,
+                                    installedPackages: List<PyPackage>,
+                                    cache: Cache<String, Set<RepoPackage>>,
+                                    problemsHolder: ProblemsHolder) {
+    val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(forcedSourcesToProcess(sources), cache)
 
     val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
-      whiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad, installedPackages),
+      sourceToInstalledRuntimeAndStubPackages(sourcesToLoad, FORCED, installedPackages),
       availablePackages
     )
 
@@ -138,20 +147,20 @@ class PyStubPackagesAdvertiser : PyInspection() {
     }
   }
 
-  private fun processNotWhiteListedPackages(file: PyFile,
-                                            sources: Set<String>,
-                                            module: Module,
-                                            sdk: Sdk,
-                                            availablePackages: List<RepoPackage>,
-                                            installedPackages: List<PyPackage>,
-                                            cache: Cache<String, Set<RepoPackage>>) {
+  private fun processCheckedPackages(file: PyFile,
+                                     sources: Set<String>,
+                                     module: Module,
+                                     sdk: Sdk,
+                                     availablePackages: List<RepoPackage>,
+                                     installedPackages: List<PyPackage>,
+                                     cache: Cache<String, Set<RepoPackage>>) {
     val project = file.project
     if (project.getUserData(BALLOON_SHOWING) == true) return
 
-    val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(notWhiteListedSourcesToProcess(sources), cache)
+    val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(checkedSourcesToProcess(sources), cache)
 
     val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
-      notWhiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad, installedPackages),
+      sourceToInstalledRuntimeAndStubPackages(sourcesToLoad, CHECKED, installedPackages),
       availablePackages
     )
 
@@ -205,9 +214,9 @@ class PyStubPackagesAdvertiser : PyInspection() {
     }
   }
 
-  private fun whiteListedSourcesToProcess(sources: Set<String>) = sources.filterTo(mutableSetOf()) { it in WHITE_LIST }
+  private fun forcedSourcesToProcess(sources: Set<String>) = sources.filterTo(mutableSetOf()) { it in FORCED }
 
-  private fun notWhiteListedSourcesToProcess(sources: Set<String>) = sources.filterNotTo(mutableSetOf()) { it in WHITE_LIST }
+  private fun checkedSourcesToProcess(sources: Set<String>) = sources.filterTo(mutableSetOf()) { it in CHECKED }
 
   private fun splitIntoNotCachedAndCached(sources: Set<String>,
                                           cache: Cache<String, Set<RepoPackage>>): Pair<Set<String>, Set<RepoPackage>> {
@@ -240,31 +249,16 @@ class PyStubPackagesAdvertiser : PyInspection() {
     return notCached to cached
   }
 
-  private fun whiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad: Set<String>,
-                                                                 installedPackages: List<PyPackage>): Map<String, List<Pair<PyPackage, PyPackage?>>> {
+  private fun sourceToInstalledRuntimeAndStubPackages(sourcesToLoad: Set<String>,
+                                                      sourceToPackage: Map<String, String>,
+                                                      installedPackages: List<PyPackage>): Map<String, List<Pair<PyPackage, PyPackage?>>> {
     val result = mutableMapOf<String, List<Pair<PyPackage, PyPackage?>>>()
 
     for (source in sourcesToLoad) {
-      val pkgName = WHITE_LIST[source] ?: continue
+      val pkgName = sourceToPackage[source] ?: continue
       if (ignoredPackages.contains(pkgName)) continue
 
       installedRuntimeAndStubPackages(pkgName, installedPackages)?.let { result.put(source, listOf(it)) }
-    }
-
-    return result
-  }
-
-  private fun notWhiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad: Set<String>,
-                                                                    installedPackages: List<PyPackage>): Map<String, List<Pair<PyPackage, PyPackage?>>> {
-    val result = mutableMapOf<String, List<Pair<PyPackage, PyPackage?>>>()
-
-    for (source in sourcesToLoad) {
-      val packageNames = PyPIPackageUtil.PACKAGES_TOPLEVEL[source] ?: listOf(source)
-
-      result[source] = packageNames.mapNotNull {
-        if (ignoredPackages.contains(it)) null
-        else installedRuntimeAndStubPackages(it, installedPackages)
-      }
     }
 
     return result
