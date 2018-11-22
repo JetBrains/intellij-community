@@ -2,21 +2,31 @@
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 
 class GdkArgumentMapping(
-  private val method: PsiMethod,
+  method: PsiMethod,
   private val receiverArgument: Argument,
   private val original: ArgumentMapping
 ) : ArgumentMapping {
 
-  override val applicability: Applicability get() = original.applicability
+  private val receiverParameter: PsiParameter = method.parameterList.parameters.first()
+
+  override val arguments: Arguments = listOf(receiverArgument) + original.arguments
+
+  override fun targetParameter(argument: Argument): PsiParameter? = original.targetParameter(argument)
+
+  override fun expectedType(argument: Argument): PsiType? = original.expectedType(argument)
 
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() {
-      return (sequenceOf(Pair(method.parameterList.parameters.first().type, receiverArgument)) + original.expectedTypes).asIterable()
+      return (sequenceOf(Pair(receiverParameter.type, receiverArgument)) + original.expectedTypes).asIterable()
     }
+
+  override val applicability: Applicability get() = original.applicability
 }

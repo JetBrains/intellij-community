@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,8 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 import org.jetbrains.plugins.groovy.lang.sam.SamConversionKt;
 
 import java.util.Collections;
@@ -93,23 +92,22 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
     if (call == null) return Collections.emptyList();
     GroovyResolveResult variant = call.advancedResolve();
     if (variant instanceof GroovyMethodResult) {
-      MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
-      ArgumentMapping mapping = ((GroovyMethodResult)variant).getArgumentMapping();
-      if (candidate != null && mapping != null) {
-        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new ExpressionArgument(closure));
-        if (pair != null) {
-          PsiSubstitutor substitutor =
-            new GroovyInferenceSessionBuilder(call, candidate, mapping)
+      GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+      if (candidate != null) {
+        ArgumentMapping mapping = candidate.getArgumentMapping();
+        if (mapping != null) {
+          PsiType expectedType = mapping.expectedType(new ExpressionArgument(closure));
+          if (expectedType != null) {
+            PsiSubstitutor substitutor = new GroovyInferenceSessionBuilder(call, candidate)
               .skipClosureIn(call)
               .resolveMode(false)
               .build()
               .inferSubst();
-
-          return Collections.singletonList(substitutor.substitute(pair.getSecond()));
+            return Collections.singletonList(substitutor.substitute(expectedType));
+          }
         }
       }
     }
     return Collections.emptyList();
-
   }
 }

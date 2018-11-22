@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 class PositionalArgumentMapping(
   method: PsiMethod,
   erasureSubstitutor: PsiSubstitutor,
-  arguments: Arguments,
+  override val arguments: Arguments,
   context: PsiElement
 ) : ArgumentMapping {
 
@@ -25,18 +25,21 @@ class PositionalArgumentMapping(
     }?.toMap()
   }
 
-  override val applicability: Applicability by lazy {
-    parameterToArgument?.let {
-      mapApplicability(it, erasureSubstitutor, context)
-    }
-    ?: Applicability.inapplicable
-  }
+  override fun targetParameter(argument: Argument): PsiParameter? = argumentToParameter?.get(argument)
+
+  override fun expectedType(argument: Argument): PsiType? = targetParameter(argument)?.type
 
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() = argumentToParameter?.asSequence()
               ?.mapNotNull { (argument, parameter) -> Pair(parameter.type, argument) }
               ?.asIterable()
             ?: emptyList()
+
+  override val applicability: Applicability by lazy {
+    argumentToParameter?.let {
+      mapApplicability(it, erasureSubstitutor, context)
+    } ?: Applicability.inapplicable
+  }
 }
 
 // foo(a?, b, c?, d?, e)

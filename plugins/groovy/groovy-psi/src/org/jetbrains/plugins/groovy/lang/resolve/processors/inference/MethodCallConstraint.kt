@@ -14,10 +14,11 @@ class MethodCallConstraint(
 ) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    val method = result.element
-    val contextSubstitutor = result.contextSubstitutor
+    val candidate = result.candidate ?: return true
+    val method = candidate.method
+    val contextSubstitutor = candidate.erasureSubstitutor
     session.startNestedSession(method.typeParameters, contextSubstitutor, context, result) { nested ->
-      nested.initArgumentConstraints(result.argumentMapping, session.inferenceSubstitution)
+      nested.initArgumentConstraints(candidate.argumentMapping, session.inferenceSubstitution)
       nested.repeatInferencePhases()
 
       if (leftType != null) {

@@ -17,8 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 import java.util.Collections;
 import java.util.List;
@@ -70,11 +70,11 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
     PsiParameter param = null;
     if (variant instanceof GroovyMethodResult) {
-      MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+      GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
-        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new ExpressionArgument(closure));
-        if (pair != null) {
-          param = pair.first;
+        ArgumentMapping mapping = candidate.getArgumentMapping();
+        if (mapping != null) {
+          param = mapping.targetParameter(new ExpressionArgument(closure));
         }
       }
     } else {
@@ -108,11 +108,10 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
     PsiSubstitutor substitutor = null;
     if (variant instanceof GroovyMethodResult) {
-      ArgumentMapping mapping = ((GroovyMethodResult)variant).getArgumentMapping();
-      MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
-      if (candidate != null && mapping != null) {
+      GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+      if (candidate != null) {
         substitutor =
-          new GroovyInferenceSessionBuilder(call, candidate, mapping)
+          new GroovyInferenceSessionBuilder(call, candidate)
             .skipClosureIn(call)
             .resolveMode(false)
             .build().inferSubst();

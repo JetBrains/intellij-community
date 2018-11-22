@@ -25,12 +25,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 
-class GroovyInferenceSessionBuilder constructor(
-  private val ref: PsiElement,
-  private val candidate: MethodCandidate,
-  private val argumentMapping: ArgumentMapping?
+class GroovyInferenceSessionBuilder(
+  private val context: PsiElement,
+  private val candidate: GroovyMethodCandidate
 ) {
 
   private var closureSkipList = mutableListOf<GrMethodCall>()
@@ -49,9 +48,9 @@ class GroovyInferenceSessionBuilder constructor(
 
   fun build(): GroovyInferenceSession {
     val session = GroovyInferenceSession(
-      candidate.method.typeParameters, candidate.contextSubstitutor, ref, closureSkipList, skipClosureBlock
+      candidate.method.typeParameters, candidate.erasureSubstitutor, context, closureSkipList, skipClosureBlock
     )
-    session.initArgumentConstraints(argumentMapping)
+    session.initArgumentConstraints(candidate.argumentMapping)
     return session
   }
 }

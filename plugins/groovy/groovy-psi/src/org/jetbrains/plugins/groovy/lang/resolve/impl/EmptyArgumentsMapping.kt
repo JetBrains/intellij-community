@@ -3,14 +3,33 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
-import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
 
 class EmptyArgumentsMapping(method: PsiMethod) : ArgumentMapping {
+
+  override val arguments: Arguments
+
+  override val expectedTypes: List<Pair<PsiType, Argument>>
+
+  init {
+    val parameter = method.parameterList.parameters.singleOrNull()
+    if (parameter == null || parameter.isOptional) {
+      // call `def foo(a = 1) {}` with `foo()`
+      arguments = emptyList()
+      expectedTypes = emptyList()
+    }
+    else {
+      arguments = listOf(singleNullArgument)
+      expectedTypes = listOf(Pair(parameter.type, singleNullArgument))
+    }
+  }
+
+  override fun targetParameter(argument: Argument): PsiParameter? = null
+
+  override fun expectedType(argument: Argument): PsiType? = null
 
   override val applicability: Applicability by lazy(fun(): Applicability {
     val parameters = method.parameterList.parameters
@@ -29,15 +48,6 @@ class EmptyArgumentsMapping(method: PsiMethod) : ArgumentMapping {
       return Applicability.applicable
     }
     return Applicability.inapplicable
-  })
-
-  override val expectedTypes: Iterable<Pair<PsiType, Argument>> by lazy(fun(): List<Pair<PsiType, Argument>> {
-    val parameter = method.parameterList.parameters.singleOrNull() ?: return emptyList()
-    if (parameter.isOptional) {
-      // call `def foo(a = 1) {}` with `foo()`
-      return emptyList()
-    }
-    return listOf(Pair(parameter.type, singleNullArgument))
   })
 
   private companion object {

@@ -6,8 +6,7 @@ import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
 public interface GroovyMethodResult extends GroovyResolveResult {
 
@@ -29,10 +28,7 @@ public interface GroovyMethodResult extends GroovyResolveResult {
   PsiSubstitutor getPartialSubstitutor();
 
   @Nullable
-  default ArgumentMapping getArgumentMapping() {
+  default GroovyMethodCandidate getCandidate() {
     return null;
   }
-
-  @Nullable
-  MethodCandidate getCandidate();
 }

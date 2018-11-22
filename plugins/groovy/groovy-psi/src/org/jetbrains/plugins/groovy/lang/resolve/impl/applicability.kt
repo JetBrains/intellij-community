@@ -9,18 +9,11 @@ import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
-import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 
-fun mapApplicability(map: Map<PsiParameter, Argument?>, erasureSubstitutor: PsiSubstitutor, context: PsiElement): Applicability {
-  for ((parameter, argument) in map) {
-    if (argument == null) {
-      // no argument passed for parameter
-      require(parameter.isOptional)
-      continue
-    }
-
+fun mapApplicability(map: Map<Argument, PsiParameter>, erasureSubstitutor: PsiSubstitutor, context: PsiElement): Applicability {
+  for ((argument, parameter) in map) {
     val argumentAssignability = argumentApplicability(argument, context) {
       TypeConversionUtil.erasure(parameter.type, erasureSubstitutor)
     }
@@ -28,7 +21,6 @@ fun mapApplicability(map: Map<PsiParameter, Argument?>, erasureSubstitutor: PsiS
       return argumentAssignability
     }
   }
-
   return Applicability.applicable
 }
 

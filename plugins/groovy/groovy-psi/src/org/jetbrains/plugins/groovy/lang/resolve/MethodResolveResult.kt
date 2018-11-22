@@ -4,17 +4,20 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.*
 import com.intellij.util.lazyPub
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider
+import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider.checkProviders
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
-import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkArgumentMapping
-import org.jetbrains.plugins.groovy.lang.resolve.impl.mapArgumentsToParameters
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.impl.MethodCandidateImpl
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import kotlin.reflect.jvm.isAccessible
 
 class MethodResolveResult(
@@ -25,56 +28,34 @@ class MethodResolveResult(
   private val typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY
 ) : BaseGroovyResolveResult<PsiMethod>(method, place, state), GroovyMethodResult {
 
-  override fun getContextSubstitutor(): PsiSubstitutor {
-    return super.getSubstitutor()
+  override fun getContextSubstitutor(): PsiSubstitutor = super.getSubstitutor()
+
+  override fun getApplicability(): Applicability = myApplicability
+
+  private val myApplicability by lazyPub {
+    arguments?.let { checkProviders(arguments.map(::ErasedArgument), method) }
+    ?: myCandidate.argumentMapping?.applicability
+    ?: Applicability.canBeApplicable
   }
 
-  private fun erasedArguments(arguments: Arguments) = arguments.map(::ErasedArgument)
+  private val myCandidate: GroovyMethodCandidate by lazyPub {
+    MethodCandidateImpl(method, contextSubstitutor, arguments, place)
+  }
 
-  private val myArgumentMapping by lazyPub {
-    arguments?.let {
-      // no arguments => no mapping
-      mapArgumentsToParameters(element, contextSubstitutor, arguments, place)
+  override fun getCandidate(): GroovyMethodCandidate? = myRealCandidate
+
+  private val myRealCandidate by lazyPub {
+    val mapping = myCandidate.argumentMapping
+    if (mapping != null && method is GrGdkMethod && place is GrReferenceExpression) {
+      GdkMethodCandidate(method.staticMethod, contextSubstitutor, buildQualifier(place, state), mapping)
     }
-  }
-
-  private val myRealArgumentMapping by lazyPub {
-    myArgumentMapping?.let {
-      if (method is GrGdkMethod && place is GrReferenceExpression) {
-        GdkArgumentMapping(method.staticMethod, buildQualifier(place, state), it)
-      }
-      else {
-        it
-      }
+    else {
+      myCandidate
     }
-  }
-
-  override fun getArgumentMapping(): ArgumentMapping? = myRealArgumentMapping
-
-  private val providersApplicability by lazyPub {
-    arguments?.let {
-      GroovyApplicabilityProvider.checkProviders(erasedArguments(arguments), method)
-    }
-  }
-
-  override fun getApplicability(): Applicability {
-    return providersApplicability
-           ?: myArgumentMapping?.applicability
-           ?: Applicability.canBeApplicable
   }
 
   private val siteSubstitutor by lazyPub {
     contextSubstitutor.putAll(method.typeParameters, typeArguments)
-  }
-
-  private val methodCandidate by lazyPub {
-    if (arguments != null && method is GrGdkMethod && place is GrReferenceExpression) {
-      val newArguments = listOf(buildQualifier(place, state)) + arguments
-      MethodCandidate(method.staticMethod, contextSubstitutor, newArguments, place)
-    }
-    else {
-      MethodCandidate(method, contextSubstitutor, arguments, place)
-    }
   }
 
   private val myPartialSubstitutor by lazyPub {
@@ -82,7 +63,7 @@ class MethodResolveResult(
       siteSubstitutor
     }
     else {
-      GroovyInferenceSessionBuilder(place, methodCandidate, myArgumentMapping).build().inferSubst()
+      GroovyInferenceSessionBuilder(place, myCandidate).build().inferSubst()
     }
   }
 
@@ -94,8 +75,6 @@ class MethodResolveResult(
       buildTopLevelSession(place).inferSubst(this)
     }
   }
-
-  override fun getCandidate(): MethodCandidate? = methodCandidate
 
   override fun getPartialSubstitutor(): PsiSubstitutor = myPartialSubstitutor
 

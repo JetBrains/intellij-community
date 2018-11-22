@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements GroovyMethodResult {
@@ -85,11 +84,5 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
     int result = super.hashCode();
     result = 31 * result + mySubstitutorComputer.hashCode();
     return result;
-  }
-
-  @Nullable
-  @Override
-  public MethodCandidate getCandidate() {
-    return null;
   }
 }
