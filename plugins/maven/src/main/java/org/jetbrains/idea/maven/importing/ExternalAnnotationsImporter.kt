@@ -74,6 +74,10 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
     }
 
     val toProcess = librariesMap.filterKeys { myProcessedLibraries.add(it) }
+    if (toProcess.isEmpty()) {
+      return
+    }
+
     val totalSize = toProcess.size
     var count = 0
 
@@ -83,11 +87,10 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
         if (indicator.isCanceled) {
           return@forEach
         }
-        count++
-        indicator.fraction = (count.toDouble() + 1) / totalSize
         indicator.text = "Looking for annotations for '${mavenArtifact.libraryName}'"
         val mavenId = "${mavenArtifact.groupId}:${mavenArtifact.artifactId}:${mavenArtifact.version}"
         resolver.resolve(project, library, mavenId)
+        indicator.fraction = (++count).toDouble() / totalSize
       }
     }
   }
