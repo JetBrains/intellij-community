@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.BaseUICollector;
 import com.intellij.internal.statistic.collectors.fus.ui.ToolbarClicksUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
@@ -56,7 +55,7 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
   @NotNull
   private static String toRecordedId(@NotNull AnAction action) {
     final PluginType type = StatisticsUtilKt.getPluginType(action.getClass());
-    if (!type.isJBPlugin()) {
+    if (!type.isDevelopedByJetBrains()) {
       return type.name();
     }
 
