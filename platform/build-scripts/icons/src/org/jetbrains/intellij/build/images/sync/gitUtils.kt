@@ -274,7 +274,7 @@ private fun head(repo: File): String {
   return heads[repo]!!
 }
 
-private fun commitInfo(repo: File, vararg args: String): CommitInfo? {
+internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {
   val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args)
     .splitNotBlank("/")
   // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.images.sync
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -40,6 +41,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     addedByDev + removedByDev + modifiedByDev
   }
   val iconsCommitHashesToSync: Set<String>
+  val devIconsCommitHashesToSync: Set<String>
 
   fun iconsSyncRequired() = devChanges.isNotEmpty()
   fun devSyncRequired() = iconsChanges.isNotEmpty()
@@ -102,6 +104,15 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.split(",", ";", " ")
       ?.filter { it.isNotBlank() }
       ?.mapTo(mutableSetOf(), String::trim) ?: emptySet()
+    devIconsCommitHashesToSync = System.getProperty("teamcity.build.changedFiles.file")
+      ?.let(::File)
+      ?.takeIf(File::exists)
+      ?.let(FileUtil::loadFile)
+      ?.takeIf { !it.contains("<personal>") }
+      ?.also { log("Changes from TeamCity: $it") }
+      ?.let(StringUtil::splitByLines)
+      ?.map { it.split(':')[2] }
+      ?.toSet() ?: emptySet()
     doSyncIconsRepo = bool(syncIconsArg)
     doSyncDevRepo = bool(syncDevIconsArg)
     doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg) || iconsCommitHashesToSync.isNotEmpty()
