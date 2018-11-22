@@ -80,7 +80,7 @@ class FileTemplatesTest extends IdeaTestCase {
         properties.load(propFile, FileTemplate.ourEncoding)
         properties.put(FileTemplateManager.PROJECT_NAME_VARIABLE, getProject().getName())
 
-        System.out.println(resultFile.getName())
+        LOG.debug(resultFile.getName())
         doTestTemplate(inputText, properties, outputText)
       }
     }

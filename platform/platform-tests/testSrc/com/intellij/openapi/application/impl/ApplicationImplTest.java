@@ -735,7 +735,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
             app.runReadAction(EmptyRunnable.getInstance());
             assertFalse(writeCompleted.get());
             if (exception != null) throw new RuntimeException(exception);
-            System.out.println(ThreadDumper.dumpThreadsToString());
+            System.err.println(ThreadDumper.dumpThreadsToString());
             fail("Must have been failed");
           }
           catch (ApplicationUtil.CannotRunReadActionException ignored) {

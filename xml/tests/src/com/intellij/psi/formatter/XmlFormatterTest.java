@@ -230,8 +230,8 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     long memoryAfter = currentFreeMemory();
     long timeAfter = System.currentTimeMillis();
 
-    System.out.println("\nMEMORY: " + (memoryAfter - memoryBefore));
-    System.out.println("\nTIME: " + (timeAfter - timeBefore));
+    LOG.debug("\nMEMORY: " + (memoryAfter - memoryBefore));
+    LOG.debug("\nTIME: " + (timeAfter - timeBefore));
   }
 
   private void doWrapAlways(String resultNumber, boolean align, int rightMargin) throws Exception {
