@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubIssueState
@@ -22,7 +22,7 @@ import javax.swing.JButton
 import javax.swing.JLabel
 
 internal class GithubPullRequestStatePanel(private val stateService: GithubPullRequestsStateService)
-  : BorderLayoutPanel() {
+  : NonOpaquePanel(VerticalFlowLayout(0, 0)) {
 
   private val stateLabel = JLabel().apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
@@ -150,8 +150,8 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
 
   init {
     isOpaque = false
-    addToTop(stateLabel)
-    addToCenter(buttonsPanel)
+    add(stateLabel)
+    add(buttonsPanel)
   }
 
   data class State(val number: Long, val state: GithubIssueState, val merged: Boolean, val mergeable: Boolean?, val rebaseable: Boolean?,

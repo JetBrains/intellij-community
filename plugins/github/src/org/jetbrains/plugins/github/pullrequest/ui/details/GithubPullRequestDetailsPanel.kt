@@ -3,20 +3,27 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
+import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
-import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.*
+import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.StatusText
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
-import java.awt.BorderLayout
 import java.awt.Graphics
+import java.awt.event.AdjustmentListener
 import javax.swing.BorderFactory
+import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 
@@ -24,7 +31,7 @@ internal class GithubPullRequestDetailsPanel(private val stateService: GithubPul
                                              iconProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                              private val accountDetails: GithubAuthenticatedUser,
                                              private val repoDetails: GithubRepoDetailed)
-  : Wrapper(), ComponentWithEmptyText, Disposable {
+  : JPanel(), ComponentWithEmptyText, Disposable {
 
   private val emptyText = object : StatusText(this) {
     override fun isStatusVisible() = details == null
@@ -41,14 +48,6 @@ internal class GithubPullRequestDetailsPanel(private val stateService: GithubPul
     border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
                                                 JBUI.Borders.empty(8))
   }
-  private val contentPanel = ScrollablePanel(BorderLayout(0, UIUtil.DEFAULT_VGAP)).apply {
-    isOpaque = false
-    add(ScrollPaneFactory.createScrollPane(JBUI.Panels.simplePanel(descriptionPanel).addToTop(metaPanel), true).apply {
-      viewport.isOpaque = false
-      isOpaque = false
-    })
-    add(statePanel, BorderLayout.SOUTH)
-  }
 
   var details: GithubPullRequestDetailedWithHtml?
     by Delegates.observable<GithubPullRequestDetailedWithHtml?>(null) { _, _, newValue ->
@@ -60,19 +59,44 @@ internal class GithubPullRequestDetailsPanel(private val stateService: GithubPul
       statePanel.state = newValue?.let {
         GithubPullRequestStatePanel.State.create(accountDetails, repoDetails, it, stateService.isBusy(it.number))
       }
-
-      contentPanel.validate()
-      contentPanel.isVisible = details != null
+      this@GithubPullRequestDetailsPanel.isVisible = details != null
     }
 
   init {
-    setContent(contentPanel)
-    details = null
+    layout = MigLayout(LC().flowY().fill()
+                         .gridGap("0", "0")
+                         .insets("0", "0", "0", "0"))
+
+    val scrollPane = ScrollPaneFactory.createScrollPane(ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
+      add(metaPanel)
+      add(descriptionPanel)
+      isOpaque = false
+    }, true).apply {
+      viewport.isOpaque = false
+      isOpaque = false
+    }
+    add(scrollPane, CC().minWidth("0").minHeight("0").growX().growY().growPrioY(0).shrinkPrioY(0))
+    add(statePanel, CC().growX().growY().growPrioY(1).shrinkPrioY(1).pushY())
+
+    val verticalScrollBar = scrollPane.verticalScrollBar
+    verticalScrollBar.addAdjustmentListener(AdjustmentListener {
+
+      if (verticalScrollBar.maximum - verticalScrollBar.visibleAmount >= 1) {
+        statePanel.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
+                                                               JBUI.Borders.empty(8))
+      }
+      else {
+        statePanel.border = JBUI.Borders.empty(8)
+      }
+
+    })
 
     stateService.addPullRequestBusyStateListener(this) {
       if (it == statePanel.state?.number)
         statePanel.state = statePanel.state?.copy(busy = stateService.isBusy(it))
     }
+
+    details = null
 
     Disposer.register(this, iconsProvider)
   }
