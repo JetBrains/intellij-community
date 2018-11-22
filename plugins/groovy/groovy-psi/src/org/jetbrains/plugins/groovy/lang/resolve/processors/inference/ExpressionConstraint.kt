@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 
 class ExpressionConstraint(private val leftType: PsiType?, private val expression: GrExpression) : GrConstraintFormula() {
 
@@ -19,6 +20,7 @@ class ExpressionConstraint(private val leftType: PsiType?, private val expressio
       }
       is GrNewExpression -> constraints.add(ConstructorCallConstraint(leftType, expression))
       is GrClosableBlock -> if (leftType != null) constraints.add(ClosureConstraint(expression, leftType))
+      is GrSafeCastExpression -> if (leftType != null) constraints.add(SafeCastConstraint(leftType, expression))
       else -> if (leftType != null) constraints.add(TypeConstraint(leftType, expression.type, expression))
     }
     return true

@@ -14,13 +14,16 @@ import com.intellij.util.toArray
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 
 internal fun getScriptDeclarations(fileImpl: GroovyFileImpl, topLevelOnly: Boolean): Array<out GrVariableDeclaration> {
@@ -97,4 +100,38 @@ fun GrCodeReferenceElement.getDiamondTypes(): Array<out PsiType?> {
   val clazz = result.element as? PsiClass ?: return PsiType.EMPTY_ARRAY
   val substitutor = result.substitutor // this may start inference session
   return clazz.typeParameters.map(substitutor::substitute).toArray(PsiType.EMPTY_ARRAY)
+}
+
+/**
+ * @return array of type arguments:
+ * <ul>
+ * <li>{@code null} means there are no type arguments and result should be raw;</li>
+ * <li>empty array means the reference is a diamond and type arguments should be inferred from the context;</li>
+ * <li>non-empty array means the reference has explicit type arguments and they should be used in substitution.</li>
+ * </ul>
+ */
+val GrCodeReferenceElement.explicitTypeArguments: Array<out PsiType>?
+  get() = if (shouldInferTypeArguments()) {
+    PsiType.EMPTY_ARRAY
+  }
+  else {
+    typeArgumentList?.typeArguments
+  }
+
+fun GrCodeReferenceElement.shouldInferTypeArguments(): Boolean {
+  val typeArgumentList = typeArgumentList
+  return when {
+    typeArgumentList == null -> isInClosureSafeCast() // treat `Function` in `{} as Function` as a diamond
+    typeArgumentList.isDiamond -> true
+    else -> false // explicit type arguments
+  }
+}
+
+/**
+ * @return `true` if this reference is in type element of a safe cast with a closure operand, e.g. `{} as Foo`
+ */
+private fun GrCodeReferenceElement.isInClosureSafeCast(): Boolean {
+  val typeElement = parent as? GrClassTypeElement
+  val safeCast = typeElement?.parent as? GrSafeCastExpression
+  return safeCast?.operand is GrClosableBlock
 }

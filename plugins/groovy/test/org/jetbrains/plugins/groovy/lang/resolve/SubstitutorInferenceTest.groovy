@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.TypingTest
 import org.junit.Before
@@ -103,5 +104,28 @@ I<PG> l = first(theMethod<caret>())
   @Test
   void 'type from argument'() {
     typingTest 'new ArrayList<>(new ArrayList<Integer>())', 'java.util.ArrayList<java.lang.Integer>'
+  }
+
+  @Test
+  void 'closure safe cast as argument of method'() {
+    def expression = elementUnderCaret '''\
+interface F<T,U> { U foo(T arg); }              // T -> U
+interface G<V,X> extends F<List<V>, List<X>> {} // List<V> -> List<X>
+void foo(F<List<String>, List<Integer>> f) {}
+foo({} <caret>as G)
+''', GrSafeCastExpression
+    typingTest(expression, 'G<java.lang.String,java.lang.Integer>')
+  }
+
+  @Test
+  void 'closure safe cast as argument of diamond constructor'() {
+    def expression = elementUnderCaret '''\
+interface F<T,U> { U foo(T arg); }
+abstract class Wrapper<V, X> implements F<V, X> {
+  Wrapper(F<V, X> wrappee) {}
+}
+F<Integer, String> w = new Wrapper<>({} <caret>as F)
+''', GrSafeCastExpression
+    typingTest(expression, 'F<java.lang.Integer,java.lang.String>')
   }
 }

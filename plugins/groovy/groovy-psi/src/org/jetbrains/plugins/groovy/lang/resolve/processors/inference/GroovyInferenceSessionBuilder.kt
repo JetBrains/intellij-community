@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 
@@ -69,6 +70,7 @@ private fun findExpression(place: PsiElement): GrExpression? {
   return when {
     parent is GrMethodCall -> parent
     parent is GrNewExpression -> parent
+    parent is GrClassTypeElement -> parent.parent as? GrSafeCastExpression
     place is GrExpression -> place
     else -> null
   }
