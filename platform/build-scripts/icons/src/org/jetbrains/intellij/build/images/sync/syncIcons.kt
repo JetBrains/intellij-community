@@ -28,7 +28,7 @@ internal fun syncAdded(added: Collection<String>,
       added.forEach {
         val target = targetDir.resolve(it)
         if (target.exists()) log("$it already exists in target repo!")
-        val source = (sourceRepoMap[it] ?: error("$it not found")).file
+        val source = sourceRepoMap[it]!!.file
         source.copyTo(target, overwrite = true)
         val repo = targetRepo(target)
         add(repo, target.relativeTo(repo).path)
@@ -56,7 +56,10 @@ internal fun syncRemoved(removed: Collection<String>,
                          targetRepoMap: Map<String, GitObject>) {
   callSafely {
     stageFiles { add ->
-      removed.map { targetRepoMap[it]!! }.forEach { it ->
+      removed.mapNotNull {
+        if (!targetRepoMap.containsKey(it)) log("$it is already removed")
+        targetRepoMap[it]
+      }.forEach { it ->
         val target = it.file
         if (!target.delete()) {
           log("Failed to delete ${target.absolutePath}")
@@ -74,7 +77,7 @@ private fun stageFiles(action: ((File, String) -> Unit) -> Unit) {
   val map = mutableMapOf<File, MutableList<String>>()
   action { repo, path ->
     if (!map.containsKey(repo)) map[repo] = mutableListOf()
-    map[repo]!!.add(path)
+    map[repo]!! += path
   }
   map.forEach { repo, file ->
     stageFiles(file, repo)

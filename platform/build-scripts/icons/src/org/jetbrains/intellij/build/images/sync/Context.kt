@@ -116,11 +116,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.let(StringUtil::splitByLines)
       ?.mapNotNull {
         val (file, _, commit) = it.split(':')
-        if (ImageExtension.fromName(file) != null) {
-          log("Found $file from $commit")
-          commit
-        }
-        else null
+        if (ImageExtension.fromName(file) != null) commit else null
       }?.toSet() ?: emptySet()
     doSyncIconsRepo = bool(syncIconsArg)
     doSyncDevRepo = bool(syncDevIconsArg)
