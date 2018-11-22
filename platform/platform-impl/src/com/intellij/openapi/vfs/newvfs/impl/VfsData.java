@@ -369,6 +369,7 @@ public class VfsData {
       return adopted;
     }
 
+    /** optimization: faster than call {@link #addAdoptedName(CharSequence, boolean)} one by one */
     void addAdoptedNames(@NotNull Collection<? extends CharSequence> names, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
       synchronized (adopted) {
