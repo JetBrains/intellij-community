@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.images.sync
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.intellij.build.images.ImageExtension
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -109,10 +110,15 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.takeIf(File::exists)
       ?.let(FileUtil::loadFile)
       ?.takeIf { !it.contains("<personal>") }
-      ?.also { log("Changes from TeamCity: $it") }
       ?.let(StringUtil::splitByLines)
-      ?.map { it.split(':')[2] }
-      ?.toSet() ?: emptySet()
+      ?.mapNotNull {
+        val (file, _, commit) = it.split(':')
+        if (ImageExtension.fromName(file) != null) {
+          log("Found $file from $commit")
+          commit
+        }
+        else null
+      }?.toSet() ?: emptySet()
     doSyncIconsRepo = bool(syncIconsArg)
     doSyncDevRepo = bool(syncDevIconsArg)
     doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg) || iconsCommitHashesToSync.isNotEmpty()

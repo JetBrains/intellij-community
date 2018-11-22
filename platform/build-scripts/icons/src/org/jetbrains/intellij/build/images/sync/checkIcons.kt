@@ -105,7 +105,14 @@ private fun searchForChangedIconsByDesigners(context: Context) {
 private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<File>) {
   log("${context.devRepoName} changes from commits ${context.devIconsCommitHashesToSync.joinToString()}")
   context.devIconsCommitHashesToSync.forEach { commit ->
-    val repo = devRepoVcsRoots.first { commitInfo(it, commit) != null }
+    val repo = devRepoVcsRoots.first {
+      try {
+        commitInfo(it, commit)
+      }
+      catch (ignored: Exception) {
+        null
+      } != null
+    }
     changesFromCommit(repo, commit).forEach { type, files ->
       when (type) {
         ChangeType.ADDED -> context.addedByDev.addAll(asIcon(files, repo, context.devRepoRoot))
