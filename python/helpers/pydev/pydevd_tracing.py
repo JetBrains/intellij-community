@@ -125,7 +125,7 @@ def settrace_while_running_if_frame_eval(py_db, trace_func):
             frame = additional_info.get_topmost_frame(t)
             if frame is not None:
                 try:
-                    py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True, dispatch_func=trace_func)
+                    py_db.set_trace_for_frame_and_parents(frame, dispatch_func=trace_func)
                 finally:
                     frame = None
             py_db.enable_cache_frames_without_breaks(False)

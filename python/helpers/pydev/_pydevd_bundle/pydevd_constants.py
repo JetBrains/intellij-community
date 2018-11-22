@@ -245,13 +245,20 @@ except:
             i += 1
         return ret
 
-#=======================================================================================================================
-# StringIO
-#=======================================================================================================================
 try:
     from StringIO import StringIO
 except:
     from io import StringIO
+
+NO_FTRACE = None
+
+if sys.version_info[:2] <= (2, 6):
+
+    def NO_FTRACE(frame, event, arg):
+        # In Python 2.6, if we're tracing a method, frame.f_trace may not be set
+        # to None, it must always be set to a tracing function.
+        # See: tests_python.test_tracing_gotchas.test_tracing_gotchas
+        return None
 
 
 #=======================================================================================================================
@@ -322,10 +329,10 @@ class Null:
 
     def __call__(self, *args, **kwargs):
         return self
-    
+
     def __enter__(self, *args, **kwargs):
         return self
-    
+
     def __exit__(self, *args, **kwargs):
         return self
 
@@ -364,7 +371,8 @@ class Null:
 
     def __iter__(self):
         return iter(())
-    
+
+
 # Default instance
 NULL = Null()
 

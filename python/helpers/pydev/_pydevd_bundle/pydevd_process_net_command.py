@@ -133,7 +133,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                         frame = additional_info.get_topmost_frame(t)
                         if frame is not None:
                             try:
-                                py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                                py_db.set_trace_for_frame_and_parents(frame)
                             finally:
                                 frame = None
     
@@ -398,7 +398,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if py_db.plugin is not None:
                     py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
 
-                py_db.set_tracing_for_untraced_contexts_if_not_frame_eval(overwrite_prev_trace=True)
+                py_db.set_tracing_for_untraced_contexts_if_not_frame_eval()
                 py_db.enable_tracing_in_frames_while_running_if_frame_eval()
 
             elif cmd_id == CMD_REMOVE_BREAK:
