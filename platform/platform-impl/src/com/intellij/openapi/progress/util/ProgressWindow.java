@@ -95,10 +95,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
 
+    Window parentWindow = calcParentWindow(parentComponent);
+
     if (myProject != null) {
       Disposer.register(myProject, this);
     }
-    myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, calcParentWindow(parentComponent));
+    myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, parentWindow);
     Disposer.register(this, myDialog);
 
     setModalityProgress(shouldShowBackground ? null : this);
