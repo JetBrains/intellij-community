@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -1062,12 +1063,15 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
     EdtTestUtil.runInEdtAndWait(() -> {
-      FileBasedIndexImpl index = ApplicationManager.getApplication() == null ? null : (FileBasedIndexImpl)FileBasedIndex.getInstance();
-      if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
+      Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+        if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
 
-      DocumentCommitThread commitThread = (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
-      if (commitThread != null) {
-        commitThread.waitForAllCommits(timeout, timeUnit);
+        DocumentCommitThread commitThread = (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
+        if (commitThread != null) {
+          commitThread.waitForAllCommits(timeout, timeUnit);
+        }
       }
     });
   }
