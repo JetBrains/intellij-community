@@ -37,5 +37,47 @@ no instance(s) of type variable(s) exist so that Integer conforms to String">() 
                 break () -> <error descr="Bad return type in lambda expression: int cannot be converted to String">1</error>;
             }
         };
+    String s7 = switch (i) {
+      case 1: {
+        break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+      }
+      default: {
+        int i1 = switch (0) {
+          default -> {
+            break 1;
+          }
+        };
+        break "";
+      }
+    };
+  }
+
+  void switchChain(final int i) {
+    String s = switch (i) {
+      default -> switch (0) {
+        default -> {
+          break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+        }
+      };
+    };
+    String s1 = switch (i) {
+      default -> {
+        break switch (0) {
+          default -> {
+            break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+          }
+        };
+      }
+    };
+
+    String s2 = switch (i) {
+      default: {
+        break switch (0) {
+          default -> {
+            break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+          }
+        };
+      }
+    };
   }
 }

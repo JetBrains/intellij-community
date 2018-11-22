@@ -857,6 +857,10 @@ public class InferenceSession {
       return getTargetTypeFromParentLambda(PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class),
                                            errorMessage, inferParent);
     }
+    PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(parent, PsiSwitchExpression.class);
+    if (switchExpression  != null && PsiUtil.getSwitchResultExpressions(switchExpression).contains(context)) {
+      return getTargetType(switchExpression);
+    }
     return null;
   }
 
