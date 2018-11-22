@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
@@ -197,7 +198,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                      .orElse(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
     if (checkBoxText.indexOf(UIUtil.MNEMONIC) != -1) {
       DialogUtil.setTextWithMnemonic(myNonProjectCB, checkBoxText);
-    } else {
+    }
+    else {
       myNonProjectCB.setText(checkBoxText);
       myNonProjectCB.setDisplayedMnemonicIndex(-1);
       myNonProjectCB.setMnemonic(0);
@@ -208,6 +210,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     if (mySearchField instanceof ExtendableTextField) {
       ExtendableTextField textField = (ExtendableTextField)mySearchField;
+
       Boolean commandsSupported = mySelectedTab.getContributor()
         .map(contributor -> !contributor.getSupportedCommands().isEmpty())
         .orElse(true);
@@ -217,10 +220,38 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       else {
         textField.removeExtension(hintExtension);
       }
+
+      textField.removeExtension(myAdvertisement);
+      if (!commandsSupported) {
+        tab.getContributor().map(c -> c.getAdvertisement()).
+          ifPresent(s -> textField.addExtension(myAdvertisement.withText(s)));
+      }
     }
 
     repaint();
     rebuildList();
+  }
+
+  private final MyAdvertisement myAdvertisement = new MyAdvertisement();
+
+  private final class MyAdvertisement implements ExtendableTextComponent.Extension {
+    private final TextIcon icon;
+    String message = "";
+
+    {
+      icon = new TextIcon(message, JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), null, 0);
+      icon.setFont(RelativeFont.SMALL.derive(getFont()));
+    }
+
+    MyAdvertisement withText(@NotNull String text) {
+      icon.setText(text);
+      return this;
+    }
+
+    @Override
+    public Icon getIcon(boolean hovered) {
+      return icon;
+    }
   }
 
   public String getSelectedContributorID() {
