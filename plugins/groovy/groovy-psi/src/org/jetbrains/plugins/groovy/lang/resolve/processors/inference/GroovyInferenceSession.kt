@@ -14,16 +14,16 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
 class GroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
-  val siteSubstitutor: PsiSubstitutor,
+  val contextSubstitutor: PsiSubstitutor,
   context: PsiElement,
   val closureSkipList: List<GrMethodCall> = emptyList(),
   val skipClosureBlock: Boolean = true
-) : InferenceSession(typeParams, siteSubstitutor, context.manager, context) {
+) : InferenceSession(typeParams, contextSubstitutor, context.manager, context) {
 
   private val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
 
   private fun result(): PsiSubstitutor {
-    resolveBounds(myInferenceVariables, siteSubstitutor)
+    resolveBounds(myInferenceVariables, contextSubstitutor)
     return prepareSubstitution()
   }
 

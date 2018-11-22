@@ -49,7 +49,7 @@ class GroovyInferenceSessionBuilder(
 
   fun build(): GroovyInferenceSession {
     val session = GroovyInferenceSession(
-      candidate.method.typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock
+      candidate.method.typeParameters, candidate.contextSubstitutor, ref, closureSkipList, skipClosureBlock
     )
     session.initArgumentConstraints(argumentMapping)
     return session

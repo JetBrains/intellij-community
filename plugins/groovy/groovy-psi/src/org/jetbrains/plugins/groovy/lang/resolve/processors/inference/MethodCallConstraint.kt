@@ -14,18 +14,17 @@ class MethodCallConstraint(
 ) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    val candidate = result.candidate ?: return true
-    val method = candidate.method
-    val siteSubstitutor = candidate.siteSubstitutor
-    session.startNestedSession(method.typeParameters, siteSubstitutor, context, result) { nested ->
+    val method = result.element
+    val contextSubstitutor = result.contextSubstitutor
+    session.startNestedSession(method.typeParameters, contextSubstitutor, context, result) { nested ->
       nested.initArgumentConstraints(result.argumentMapping, session.inferenceSubstitution)
       nested.repeatInferencePhases()
 
       if (leftType != null) {
-        val left = session.substituteWithInferenceVariables(session.siteSubstitutor.substitute(leftType))
+        val left = session.substituteWithInferenceVariables(session.contextSubstitutor.substitute(leftType))
         if (left != null) {
-          val rt = PsiUtil.getSmartReturnType(candidate.method)
-          val right = session.substituteWithInferenceVariables(siteSubstitutor.substitute(rt))
+          val rt = PsiUtil.getSmartReturnType(method)
+          val right = session.substituteWithInferenceVariables(contextSubstitutor.substitute(rt))
           if (right != null && right != PsiType.VOID) {
             nested.addConstraint(TypeConstraint(left, right, context))
             nested.repeatInferencePhases()

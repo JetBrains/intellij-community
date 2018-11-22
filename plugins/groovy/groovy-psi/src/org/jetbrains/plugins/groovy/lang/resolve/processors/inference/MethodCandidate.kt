@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import java.util.*
 
 class MethodCandidate(val method: PsiMethod,
-                      val siteSubstitutor: PsiSubstitutor,
+                      val contextSubstitutor: PsiSubstitutor,
                       private val arguments: Arguments?,
                       private val context: PsiElement) {
 
@@ -54,7 +54,7 @@ class MethodCandidate(val method: PsiMethod,
 
   private fun mapArguments(typeComputer: (Argument) -> PsiType?): Map<Argument, Pair<PsiParameter, PsiType?>> {
     if (arguments == null) return emptyMap()
-    val erasedSignature = GrClosureSignatureUtil.createSignature(method, siteSubstitutor, true)
+    val erasedSignature = GrClosureSignatureUtil.createSignature(method, contextSubstitutor, true)
 
     val argInfos = mapParametersToArguments(erasedSignature, arguments.toTypedArray(), typeComputer, context, true) ?: return emptyMap()
 
