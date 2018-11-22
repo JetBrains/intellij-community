@@ -68,6 +68,8 @@ public class SaveAsTemplateAction extends AnAction {
           if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference)reference).getQualifier() == null) {
             String canonicalText = reference.getCanonicalText();
             TextRange referenceRange = reference.getRangeInElement();
+            if (referenceRange.isEmpty()) continue;
+
             final TextRange elementTextRange = element.getTextRange();
             LOG.assertTrue(elementTextRange != null, elementTextRange);
             final TextRange range = elementTextRange.cutOut(referenceRange).shiftRight(-offsetDelta);

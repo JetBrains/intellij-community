@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.EmptyNode
 import com.intellij.codeInsight.template.impl.MacroCallNode
@@ -515,5 +516,14 @@ class A {
   }
 }'''
     assert !myFixture.lookup
+  }
+
+  void "test save as live template for annotation values"() {
+    myFixture.addClass("package foo; public @interface Anno { String value(); }")
+    myFixture.configureByText "a.java", 'import foo.*; <selection>@Anno("")</selection> class T {}'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno("")'
+
+    myFixture.configureByText "b.java", 'import foo.*; <selection>@Anno(value="")</selection> class T {}'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno(value="")'
   }
 }
