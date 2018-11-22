@@ -28,7 +28,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 @State(name = "IntentionsCollector", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
-public class IntentionsCollector extends BaseUICollector implements PersistentStateComponent<IntentionsCollector.State> {
+public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
   private State myState = new State();
 
   @Nullable

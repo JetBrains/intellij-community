@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
     @Storage(value = "statistics.main_menu.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
-public class MainMenuCollector extends BaseUICollector implements PersistentStateComponent<MainMenuCollector.State> {
+public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
   private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
 
   private State myState = new State();
