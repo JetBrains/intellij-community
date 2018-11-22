@@ -1701,8 +1701,16 @@ public class AllIcons {
   public final static class Json {
     public static final Icon Array = IconLoader.getIcon("/json/array.svg"); // 16x16
     public static final Icon Object = IconLoader.getIcon("/json/object.svg"); // 16x16
-    public static final Icon Property_braces = IconLoader.getIcon("/json/property_braces.svg"); // 16x16
-    public static final Icon Property_brackets = IconLoader.getIcon("/json/property_brackets.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Json.Object */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Property_braces = AllIcons.Json.Object;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Json.Array */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Property_brackets = AllIcons.Json.Array;
 
   }
   public static final Icon Logo_welcomeScreen = IconLoader.getIcon("/Logo_welcomeScreen.png"); // 80x80
