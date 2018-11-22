@@ -17,6 +17,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
@@ -158,7 +159,7 @@ public class DirectoryChooser extends DialogWrapper {
         setSelection(element);
       }
     }, ModalityState.stateForComponent(getRootPane()), false);
-    myTabbedPaneWrapper.addTab("Choose By Neighbor Class", myChooseByNamePanel.getPanel());
+    myTabbedPaneWrapper.addTab("Choose By Neighbor " + GotoClassPresentationUpdater.getTabTitle(), myChooseByNamePanel.getPanel());
 
     return myTabbedPaneWrapper.getComponent();
   }
