@@ -3,8 +3,11 @@ package com.intellij.lang.injection
 
 import com.intellij.lang.Language
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.util.text.TextRangeUtil
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Experimental
 class PlaceholdersAwareMultiHostRegistrar(private val multiHostRegistrar: MultiHostRegistrar) : MultiHostRegistrar {
@@ -64,5 +67,60 @@ class PlaceholdersAwareMultiHostRegistrar(private val multiHostRegistrar: MultiH
     multiHostRegistrar.doneInjecting()
   }
 
+
+}
+
+@ApiStatus.Experimental
+class MultiHostRegistrarPlaceholderFacade(private val placeholdersAwareMultiHostRegistrar: PlaceholdersAwareMultiHostRegistrar) {
+
+  constructor(multiHostRegistrar: MultiHostRegistrar) : this(PlaceholdersAwareMultiHostRegistrar(multiHostRegistrar))
+
+  private val globalPlaceholders = mutableListOf<Pair<TextRange, String>>()
+
+  fun addGlobalForeignElements(globalPlaceholders: Iterable<Pair<TextRange, String>>) {
+    this.globalPlaceholders.addAll(globalPlaceholders)
+  }
+
+  fun addWithPlaceholders(host: PsiLanguageInjectionHost, localForeignElements: Map<TextRange, String>) {
+    val valueTextRange = ElementManipulators.getValueTextRange(host)
+
+    val foreignElements = localForeignElements + getGlobalPlaceholdersForHost(host)
+
+    val interpolations = foreignElements.keys.toList()
+
+    val qlRanges = TextRangeUtil.excludeRanges(valueTextRange, interpolations)
+    val rangesMap = TreeMap<TextRange, String?>(TextRangeUtil.RANGE_COMPARATOR).apply {
+      qlRanges.forEach { this[it] = null }
+      this.putAll(foreignElements)
+    }
+
+    for ((range, placeHolder) in rangesMap) {
+      if (placeHolder != null) {
+        placeholdersAwareMultiHostRegistrar.addPlaceholder(placeHolder)
+      }
+      else {
+        placeholdersAwareMultiHostRegistrar.addPlace(host, range)
+      }
+    }
+  }
+
+  private fun getGlobalPlaceholdersForHost(host: PsiLanguageInjectionHost) =
+    globalPlaceholders.asSequence().filter { host.textRange.containsOffset(it.first.startOffset) }
+      .map { (k, v) -> k.shiftLeft(host.textRange.startOffset) to (v) }
+
+
+  fun startInjecting(language: Language): MultiHostRegistrarPlaceholderFacade {
+    placeholdersAwareMultiHostRegistrar.startInjecting(language)
+    return this
+  }
+
+  fun startInjecting(language: Language, extension: String?): MultiHostRegistrarPlaceholderFacade {
+    placeholdersAwareMultiHostRegistrar.startInjecting(language, extension)
+    return this
+  }
+
+  fun doneInjecting() {
+    placeholdersAwareMultiHostRegistrar.doneInjecting()
+  }
 
 }
