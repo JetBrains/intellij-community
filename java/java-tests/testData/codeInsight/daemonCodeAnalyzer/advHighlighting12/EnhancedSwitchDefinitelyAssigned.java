@@ -177,4 +177,43 @@ class C {
     };
     System.out.println(<error descr="Variable 'n' might not have been initialized">n</error>);
   }
+
+  void switchExpressionAssignedInFinally(int n) {
+    String s;
+    try {
+    } finally {
+      s = switch (n) {
+        case -1 -> throw new RuntimeException();
+        case 0 -> "a";
+        default -> "b";
+      };
+    }
+    System.out.println(s);
+  }
+
+  void allSwitchRulesAssignInFinally(int n) {
+    String s;
+    try {
+    } finally {
+      String string = switch (n) {
+        case -1 -> throw new RuntimeException();
+        case 0 -> s = "a";
+        default -> { break s = "b"; }
+      };
+    }
+    System.out.println(s);
+  }
+
+  void notAllSwitchRulesAssignInFinally(int n) {
+    String s;
+    try {
+    } finally {
+      String t = switch (n) {
+        case -1 -> throw new RuntimeException();
+        case 0 -> s = "a";
+        default -> "b";
+      };
+    }
+    System.out.println(<error descr="Variable 's' might not have been initialized">s</error>);
+  }
 }

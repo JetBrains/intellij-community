@@ -51,6 +51,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -2017,6 +2018,36 @@ public class HighlightUtil extends HighlightUtilBase {
     return results;
   }
 
+  @Nullable
+  static Collection<HighlightInfo> checkSwitchExpressionHasResult(@NotNull PsiSwitchExpression switchExpression) {
+    PsiCodeBlock switchBody = switchExpression.getBody();
+    if (switchBody != null) {
+      PsiStatement lastStatement = PsiTreeUtil.getPrevSiblingOfType(switchBody.getRBrace(), PsiStatement.class);
+      if (lastStatement instanceof PsiSwitchLabeledRuleStatement) {
+        Collection<HighlightInfo> results = new ArrayList<>();
+        for (PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)lastStatement;
+             rule != null;
+             rule = PsiTreeUtil.getPrevSiblingOfType(rule, PsiSwitchLabeledRuleStatement.class)) {
+
+          PsiStatement ruleBody = rule.getBody();
+          // the expression and throw statements are fine, only the block statement could be an issue
+          if (ruleBody instanceof PsiBlockStatement && ControlFlowUtils.statementMayCompleteNormally(ruleBody)) {
+            PsiElement target = ObjectUtils.notNull(ObjectUtils.tryCast(rule.getFirstChild(), PsiKeyword.class), rule);
+            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target)
+                          .descriptionAndTooltip(JavaErrorMessages.message("switch.expr.rule.should.produce.result")).create());
+          }
+        }
+        return results;
+      }
+      // previous statements may have no result as well but in that case they fall through to the last one which needs to be checked anyway
+      if (lastStatement != null && ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
+        PsiElement target = ObjectUtils.notNull(ObjectUtils.tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression);
+        return Collections.singletonList(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target)
+                                           .descriptionAndTooltip(JavaErrorMessages.message("switch.expr.should.produce.result")).create());
+      }
+    }
+    return null;
+  }
 
   /**
    * see JLS 8.3.2.3

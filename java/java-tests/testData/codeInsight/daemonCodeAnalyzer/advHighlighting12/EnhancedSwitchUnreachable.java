@@ -86,6 +86,30 @@ class C {
     <error descr="Unreachable statement">System.out.println();</error>
   }
 
+  void switchExpressionUnreachableInFinally(int n) {
+    String s;
+    try {
+    } finally {
+      return;
+      s = <error descr="Unreachable statement">switch</error> (n) {
+        case 0 -> "a";
+        default -> "b";
+      };
+    }
+  }
+
+  void switchExpressionReachableInFinally(int n) {
+    String s;
+    try {
+      return;
+    } finally {
+      s = switch (n) {
+        case 0 -> "a";
+        default -> "b";
+      };
+    }
+  }
+
   static class SwitchExpressionReturnedFromTry {
     int foo(String s) throws Exception {
       try {
