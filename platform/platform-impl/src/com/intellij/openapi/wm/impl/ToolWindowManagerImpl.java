@@ -1988,9 +1988,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           hideToolWindow(Objects.requireNonNull(info.getId()), false);
         }
       });
-
-      final IdeFrame parent = WindowManager.getInstance().getIdeFrame(myProject);
-      IdeMenuBar.bindAppMenuOfParent(window, parent);
     }
 
     @Override
