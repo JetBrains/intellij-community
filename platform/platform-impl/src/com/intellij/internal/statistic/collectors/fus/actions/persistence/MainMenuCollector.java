@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesColl
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -53,7 +55,8 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
 
   public void record(@NotNull AnAction action) {
     try {
-      if (isNotBundledPluginClass(action.getClass())) {
+      final PluginType type = StatisticsUtilKt.getPluginType(action.getClass());
+      if (!type.isJBPlugin()) {
         return;
       }
 
