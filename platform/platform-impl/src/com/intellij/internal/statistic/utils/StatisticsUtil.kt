@@ -269,7 +269,7 @@ fun getPluginType(clazz: Class<*>): PluginType {
   val plugin = PluginManager.getPlugin(pluginId) ?: return PluginType.UNKNOWN
 
   if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
-    return if (plugin.isBundled) PluginType.BUNDLED else PluginType.JB_PLUGIN
+    return if (plugin.isBundled) PluginType.JB_BUNDLED else PluginType.JB_NOT_BUNDLED
   }
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
@@ -279,18 +279,18 @@ fun getPluginType(clazz: Class<*>): PluginType {
 }
 
 enum class PluginType {
-  PLATFORM, BUNDLED, JB_PLUGIN, LISTED, NOT_LISTED, UNKNOWN;
+  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN;
 
-  fun isBundled() : Boolean {
-    return this == PLATFORM || this == BUNDLED
+  fun isPlatformOrJBBundled() : Boolean {
+    return this == PLATFORM || this == JB_BUNDLED
   }
 
-  fun isJBPlugin() : Boolean {
-    return isBundled() || this == JB_PLUGIN
+  fun isDevelopedByJetBrains() : Boolean {
+    return isPlatformOrJBBundled() || this == JB_NOT_BUNDLED
   }
 
   fun isSafeToReport() : Boolean {
-    return isJBPlugin() || this == LISTED;
+    return isDevelopedByJetBrains() || this == LISTED;
   }
 }
 

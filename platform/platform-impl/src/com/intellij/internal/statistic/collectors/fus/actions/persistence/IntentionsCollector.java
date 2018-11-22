@@ -84,7 +84,7 @@ public class IntentionsCollector extends BaseUICollector implements PersistentSt
       fqn = StringUtil.trimStart(fqn, prefix);
     }
 
-    if (!type.isBundled()) {
+    if (!type.isPlatformOrJBBundled()) {
       fqn = "[!]" + fqn;
     }
     return fqn;
