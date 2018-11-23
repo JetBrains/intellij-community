@@ -166,11 +166,13 @@ class RetypeSession(
         pos++
         completedChars++
       }
-      WriteCommandAction.runWriteCommandAction(project) {
-        // Delete symbols not from original text and move caret
-        document.deleteString(pos, editor.caretModel.offset)
-        editor.caretModel.moveToOffset(pos)
+      if (editor.caretModel.offset > pos) {
+        WriteCommandAction.runWriteCommandAction(project) {
+          // Delete symbols not from original text and move caret
+          document.deleteString(pos, editor.caretModel.offset)
+        }
       }
+      editor.caretModel.moveToOffset(pos)
     }
 
     if (document.textLength > pos + tailLength) {
@@ -208,7 +210,8 @@ class RetypeSession(
           return
         }
       }
-    } else if (document.textLength == pos + tailLength && completionStack.isNotEmpty()) {
+    }
+    else if (document.textLength == pos + tailLength && completionStack.isNotEmpty()) {
       // Text is as expected, but we have some extra completions in stack
       completionStack.clear()
     }
@@ -279,9 +282,10 @@ class RetypeSession(
     }
 
     // Add new completion in stack
-    val unstackedCompletion = unexpectedCharsDoc.substring(0, endPosDoc)
-    if (unstackedCompletion.trim().isNotEmpty()) {
-      completionStack.add(unstackedCompletion.trim())
+    unexpectedCharsDoc.substring(0, endPosDoc).trim().split("\\s+".toRegex()).reversed().forEach {
+      if (it.trim().isNotEmpty()) {
+        completionStack.add(it.trim())
+      }
     }
   }
 
