@@ -3720,10 +3720,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         () -> CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable), "", getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument()));
     }
 
+    private boolean hasRelevantCommittedText(@NotNull InputMethodEvent e) {
+      if (e.getCommittedCharacterCount() <= 0) return false;
+      AttributedCharacterIterator text = e.getText();
+      return text == null || text.first() != 0xA5 /* Yen character */;
+    }
+
     private void replaceInputMethodText(@NotNull InputMethodEvent e) {
       if (myNeedToSelectPreviousChar && SystemInfo.isMac &&
           (Registry.is("ide.mac.pressAndHold.brute.workaround") || Registry.is("ide.mac.pressAndHold.workaround") &&
-                                                                   (e.getCommittedCharacterCount() > 0 || e.getCaret() == null))) {
+                                                                   (hasRelevantCommittedText(e) || e.getCaret() == null))) {
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
         // JDK currently properly supports this functionality only for TextComponent/JTextComponent descendants.
         // For our editor component we need this workaround.
