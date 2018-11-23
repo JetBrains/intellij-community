@@ -276,7 +276,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         public void startNotified(@NotNull ProcessEvent event) {
           // 1 second delay to allow jvm to start correctly
           JobScheduler.getScheduler()
-            .schedule(() -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
+            .schedule(() -> myEnabled.set(!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated() &&
+                                          JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
                       1, TimeUnit.SECONDS);
         }
 
