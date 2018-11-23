@@ -43,7 +43,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   @NotNull
   @Override
   public String getGroupName() {
-    return GotoClassPresentationUpdater.getTabTitle();
+    return GotoClassPresentationUpdater.getTabTitle(true);
   }
 
   @NotNull
