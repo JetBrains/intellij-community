@@ -2209,8 +2209,6 @@ public class AllIcons {
       public static final Icon Step_9 = IconLoader.getIcon("/process/big/step_2.svg"); // 32x32
 
     }
-    public static final Icon DisabledDebug = IconLoader.getIcon("/process/disabledDebug.png"); // 13x13
-    public static final Icon DisabledRun = IconLoader.getIcon("/process/disabledRun.png"); // 13x13
 
     public final static class FS {
       public static final Icon Step_1 = IconLoader.getIcon("/process/fs/step_1.png"); // 16x16
@@ -2273,6 +2271,16 @@ public class AllIcons {
     public static final Icon StopHovered = IconLoader.getIcon("/process/stopHovered.svg"); // 14x14
     public static final Icon StopSmall = IconLoader.getIcon("/process/stopSmall.svg"); // 12x12
     public static final Icon StopSmallHovered = IconLoader.getIcon("/process/stopSmallHovered.svg"); // 12x12
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DisabledDebug = IconLoader.getIcon("/process/disabledDebug.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DisabledRun = IconLoader.getIcon("/process/disabledRun.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
