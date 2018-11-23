@@ -20,12 +20,18 @@ public interface GroovyMethodResult extends GroovyResolveResult {
   }
 
   @NotNull
-  default Applicability getApplicability() {
-    return isApplicable() ? Applicability.applicable : Applicability.inapplicable;
+  default PsiSubstitutor getPartialSubstitutor() {
+    return getSubstitutor();
   }
 
   @NotNull
-  PsiSubstitutor getPartialSubstitutor();
+  @Override
+  PsiSubstitutor getSubstitutor();
+
+  @NotNull
+  default Applicability getApplicability() {
+    return isApplicable() ? Applicability.applicable : Applicability.inapplicable;
+  }
 
   @Nullable
   default GroovyMethodCandidate getCandidate() {

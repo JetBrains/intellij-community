@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind
 import com.intellij.psi.scope.JavaScopeProcessorEvent
@@ -15,10 +12,12 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
+import org.jetbrains.plugins.groovy.lang.resolve.BaseMethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.impl.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 class MethodProcessor(
@@ -64,7 +63,14 @@ class MethodProcessor(
       }
     }
     if (name != getName(state, element)) return true
-    myCandidates += MethodResolveResult(element, place, state, arguments, typeArguments)
+
+    if (typeArguments.isNotEmpty()) {
+      val newSub = state[PsiSubstitutor.KEY].putAll(element.typeParameters, typeArguments)
+      myCandidates += BaseMethodResolveResult(element, place, state.put(PsiSubstitutor.KEY, newSub), arguments)
+    }
+    else {
+      myCandidates += MethodResolveResult(element, place, state, arguments)
+    }
     myApplicable = null
     return true
   }
