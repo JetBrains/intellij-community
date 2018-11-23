@@ -390,7 +390,7 @@ idea.fatal.error.notification=disabled
         if (paths.size() == 3) {
           buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
             def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-            crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
+            crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2], ".portable")
           }
         }
         else {
