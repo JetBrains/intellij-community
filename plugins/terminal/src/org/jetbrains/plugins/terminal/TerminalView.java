@@ -217,6 +217,14 @@ public class TerminalView {
       public void onNextTabSelected() {
         toolWindow.getContentManager().selectNextContent();
       }
+
+      @Override
+      public void onSessionClosed() {
+        Content content = toolWindow.getContentManager().getSelectedContent();
+        if (content != null) {
+          removeTab(content, true);
+        }
+      }
     });
 
     content.setCloseable(true);
