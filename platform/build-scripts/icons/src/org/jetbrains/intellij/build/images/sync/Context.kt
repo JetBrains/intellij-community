@@ -30,8 +30,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var removedByDev: MutableCollection<String> = mutableListOf()
   var modifiedByDev: MutableCollection<String> = mutableListOf()
   val addedByDesigners: MutableCollection<String> = mutableListOf()
-  var removedByDesigners: Collection<String> = emptyList()
-  var modifiedByDesigners: Collection<String> = emptyList()
+  val removedByDesigners: MutableCollection<String> = mutableListOf()
+  val modifiedByDesigners: MutableCollection<String> = mutableListOf()
   val consistent: MutableCollection<String> = mutableListOf()
   var createdReviews: Collection<Review> = emptyList()
   lateinit var icons: Map<String, GitObject>
@@ -40,7 +40,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var iconsCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
   val iconsCommitHashesToSync: MutableSet<String>
   val devIconsCommitHashesToSync: MutableSet<String>
-  lateinit var devIconsFilter: (File, File) -> Boolean
+  lateinit var devIconsFilter: (File) -> Boolean
 
   fun devChanges() = addedByDev + removedByDev + modifiedByDev
   fun iconsChanges() = addedByDesigners + modifiedByDesigners +
@@ -66,6 +66,12 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       .toAbsolutePath()
       .toFile()
 
+    fun commits(arg: String) = System.getProperty(arg)
+                                 ?.takeIf { it.trim() != "*" }
+                                 ?.split(",", ";", " ")
+                                 ?.filter { it.isNotBlank() }
+                                 ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf<String>()
+
     val repoArg = "repos"
     val iconsRepoNameArg = "icons.repo.name"
     val devRepoNameArg = "dev.repo.name"
@@ -79,6 +85,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     val assignInvestigationArg = "assign.investigation"
     val notifySlackArg = "notify.slack"
     val iconsCommitHashesToSyncArg = "sync.icons.commits"
+    val devIconsCommitHashesToSyncArg = "sync.dev.icons.commits"
     val repos = System.getProperty(repoArg)?.split(",") ?: emptyList()
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
@@ -98,16 +105,14 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       |* `$assignInvestigationArg` - assign investigation if required
       |* `$notifySlackArg` - notify slack channel if required
       |* `$iconsCommitHashesToSyncArg` - commit hashes in designers' repo to sync icons from
+      |* `$devIconsCommitHashesToSyncArg` - commit hashes in developers' repo to sync icons from
     """.trimMargin())
     devRepoDir = ignoreCaseInDirName(repos[0])
     iconsRepoDir = ignoreCaseInDirName(repos[1])
     skipDirsPattern = System.getProperty(patternArg)
-    iconsCommitHashesToSync = System.getProperty(iconsCommitHashesToSyncArg)
-      ?.takeIf { it.trim() != "*" }
-      ?.split(",", ";", " ")
-      ?.filter { it.isNotBlank() }
-      ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf()
-    devIconsCommitHashesToSync = System.getProperty("teamcity.build.changedFiles.file")
+    iconsCommitHashesToSync = commits(iconsCommitHashesToSyncArg)
+    devIconsCommitHashesToSync = commits(devIconsCommitHashesToSyncArg)
+      .takeIf { it.isNotEmpty() } ?: System.getProperty("teamcity.build.changedFiles.file")
       ?.takeIf { !isScheduled() }
       ?.let(::File)
       ?.takeIf(File::exists)

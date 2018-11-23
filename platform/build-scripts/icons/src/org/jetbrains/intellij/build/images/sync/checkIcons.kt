@@ -11,6 +11,7 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.io.PrintStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Consumer
 import java.util.stream.Collectors
@@ -27,7 +28,7 @@ catch (e: Throwable) {
 internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer { println(it) }) {
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
-  context.icons = readIconsRepo(context.iconsRepo, context.iconsRepoDir)
+  context.icons = readIconsRepo(context)
   context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
   context.devIcons = readDevRepo(context, devRepoVcsRoots)
@@ -52,7 +53,8 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
       val report = report(context, skippedDirs.size)
       if (isUnderTeamCity() && context.isFail()) {
         context.doFail(report)
-      } else {
+      }
+      else {
         log(report)
       }
     }
@@ -86,7 +88,7 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
     when (searchType) {
       SearchType.MODIFIED -> {
         context.modifiedByDev = searchResult
-        context.modifiedByDesigners = modified.filter { file ->
+        context.modifiedByDesigners += modified.filter { file ->
           !context.modifiedByDev.contains(file)
         }.toMutableList()
       }
@@ -95,27 +97,27 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
         context.addedByDesigners.removeAll(searchResult)
       }
       SearchType.REMOVED_BY_DESIGNERS -> {
-        context.removedByDesigners = searchResult
+        context.removedByDesigners += searchResult
         context.addedByDev.removeAll(searchResult)
       }
     }
   }
 }
 
-private fun asIcon(files: Collection<String>, repo: File, root: File) = files
-  .filter { ImageExtension.fromName(it) != null }
-  .map { repo.resolve(it).toRelativeString(root) }
-
 private fun searchForChangedIconsByDesigners(context: Context) {
+  fun asIcons(files: Collection<String>) = files
+    .filter { ImageExtension.fromName(it) != null }
+    .map { context.iconsRepo.resolve(it).toRelativeString(context.iconsRepoDir) }
+
   val iterator = context.iconsCommitHashesToSync.iterator()
   while (iterator.hasNext()) {
     val commit = iterator.next()
     val before = context.iconsChanges().size
     changesFromCommit(context.iconsRepo, commit).forEach { type, files ->
       when (type) {
-        ChangeType.ADDED -> context.addedByDesigners += asIcon(files, context.iconsRepo, context.iconsRepoDir)
-        ChangeType.MODIFIED -> context.modifiedByDesigners += asIcon(files, context.iconsRepo, context.iconsRepoDir)
-        ChangeType.DELETED -> context.removedByDesigners += asIcon(files, context.iconsRepo, context.iconsRepoDir)
+        ChangeType.ADDED -> context.addedByDesigners += asIcons(files)
+        ChangeType.MODIFIED -> context.modifiedByDesigners += asIcons(files)
+        ChangeType.DELETED -> context.removedByDesigners += asIcons(files)
       }
     }
     if (context.iconsChanges().size == before) {
@@ -128,9 +130,11 @@ private fun searchForChangedIconsByDesigners(context: Context) {
 }
 
 private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<File>) {
-  fun asIcon(files: Collection<String>, repo: File) = asIcon(files, repo, context.devRepoRoot).filter {
-    context.devIconsFilter(repo.resolve(it), repo)
-  }
+  fun asIcons(files: Collection<String>, repo: File) = files.asSequence()
+    .filter { ImageExtension.fromName(it) != null }
+    .map { repo.resolve(it) }
+    .filter { context.devIconsFilter(it) }
+    .map { it.toRelativeString(context.devRepoRoot) }.toList()
 
   val iterator = context.devIconsCommitHashesToSync.iterator()
   while (iterator.hasNext()) {
@@ -151,9 +155,9 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
       val before = context.devChanges().size
       changesFromCommit(repo, commit).forEach { type, files ->
         when (type) {
-          ChangeType.ADDED -> context.addedByDev.addAll(asIcon(files, repo))
-          ChangeType.MODIFIED -> context.modifiedByDev.addAll(asIcon(files, repo))
-          ChangeType.DELETED -> context.removedByDev.addAll(asIcon(files, repo))
+          ChangeType.ADDED -> context.addedByDev.addAll(asIcons(files, repo))
+          ChangeType.MODIFIED -> context.modifiedByDev.addAll(asIcons(files, repo))
+          ChangeType.DELETED -> context.removedByDev.addAll(asIcons(files, repo))
         }
       }
       if (context.devChanges().size == before) {
@@ -166,12 +170,13 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
   log(context.devIconsCommitHashesToSync.joinToString())
 }
 
-private fun readIconsRepo(iconsRepo: File, iconsRepoDir: File) = protectStdErr {
-  listGitObjects(iconsRepo, iconsRepoDir) { file, _ ->
+private fun readIconsRepo(context: Context) = protectStdErr {
+  val (iconsRepo, iconsRepoDir) = context.iconsRepo to context.iconsRepoDir
+  listGitObjects(iconsRepo, iconsRepoDir) { file ->
     // read icon hashes
     isValidIcon(file.toPath())
   }.also {
-    if (it.isEmpty()) error("Icons repo doesn't contain icons")
+    if (it.isEmpty()) error("${context.iconsRepoName} repo doesn't contain icons")
   }
 }
 
@@ -182,9 +187,8 @@ private fun readDevRepo(context: Context, devRepoVcsRoots: List<File>) = protect
     log("Using pattern ${context.skipDirsPattern} to skip dirs")
   }
   val skipDirsRegex = context.skipDirsPattern?.toRegex()
-  context.devIconsFilter = { file: File, repo: File ->
-    !doSkip(file, repo, testRoots, skipDirsRegex) &&
-    (isValidIcon(file.toPath()) || IconRobotsDataReader.isSyncForced(file))
+  context.devIconsFilter = { file: File ->
+    filterDevIcon(file, testRoots, skipDirsRegex, context)
   }
   val devIcons = if (devRepoVcsRoots.size == 1
                      && devRepoVcsRoots.contains(context.devRepoRoot)) {
@@ -195,8 +199,17 @@ private fun readDevRepo(context: Context, devRepoVcsRoots: List<File>) = protect
     // read icons from multiple repos in devRepoRoot
     listGitObjects(context.devRepoRoot, devRepoVcsRoots, context.devIconsFilter)
   }
-  if (devIcons.isEmpty()) error("Dev repo doesn't contain icons")
+  if (devIcons.isEmpty()) error("${context.devRepoName} doesn't contain icons")
   devIcons.toMutableMap()
+}
+
+private fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Regex?, context: Context): Boolean {
+  val path = file.toPath()
+  if (doSkip(file, testRoots, skipDirsRegex)) return false
+  return Files.exists(path) && isValidIcon(path) ||
+         // if not exists then check respective icon in icons repo
+         !Files.exists(path) && isValidIcon(context.iconsRepoDir.resolve(file.toRelativeString(context.devRepoRoot)).toPath()) ||
+         IconRobotsDataReader.isSyncForced(file)
 }
 
 private fun searchTestRoots(devRepoDir: String) = try {
@@ -248,7 +261,7 @@ private fun isValidIcon(file: Path) = protectStdErr {
 private var skippedDirs = emptySet<File>()
 private var skippedDirsGuard = Any()
 
-private fun doSkip(file: File, repo: File, testRoots: Set<File>, skipDirsRegex: Regex?): Boolean {
+private fun doSkip(file: File, testRoots: Set<File>, skipDirsRegex: Regex?): Boolean {
   val skipDir = file.isDirectory &&
                 // is test root
                 (testRoots.contains(file) ||
@@ -261,7 +274,7 @@ private fun doSkip(file: File, repo: File, testRoots: Set<File>, skipDirsRegex: 
          // or sync skipped in icon-robots.txt
          IconRobotsDataReader.isSyncSkipped(file) ||
          // or check parent
-         file.parentFile != null && doSkip(file.parentFile, repo, testRoots, skipDirsRegex)
+         file.parentFile != null && doSkip(file.parentFile, testRoots, skipDirsRegex)
 }
 
 private fun removedByDesigners(context: Context, addedByDev: Collection<String>,
