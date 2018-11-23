@@ -154,7 +154,7 @@ class GuiTestRule : TestRule {
     }
 
     fun setUp() {
-      GuiTestUtil.setUpDefaultProjectCreationLocationPath(projectsFolder.root)
+      GuiTestUtil.setUpDefaultProjectCreationLocationPath()
       GeneralSettings.getInstance().isShowTipsOnStartup = false
       currentTestDateStart = Date()
     }
