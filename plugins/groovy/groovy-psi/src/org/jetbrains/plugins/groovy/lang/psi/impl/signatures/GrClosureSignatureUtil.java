@@ -136,7 +136,7 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  public static PsiType getReturnType(@NotNull final List<GrSignature> signatures, @Nullable PsiType[] args, @NotNull GroovyPsiElement context) {
+  public static PsiType getReturnType(@NotNull final List<GrSignature> signatures, @Nullable PsiType[] args, @NotNull PsiElement context) {
     if (signatures.size() == 1) {
       return signatures.get(0).getReturnType();
     }
