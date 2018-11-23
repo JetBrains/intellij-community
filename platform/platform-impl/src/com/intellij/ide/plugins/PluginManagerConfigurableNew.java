@@ -1455,23 +1455,17 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private static Url createSearchUrl(@NotNull String query, int count) {
-    return Urls.newFromEncoded(getPluginManagerUrl() + "/api/search?" + query +
-                               "&build=" + URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getApiVersion()) +
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/search?" + query +
+                               "&build=" + URLUtil.encodeURIComponent(instance.getApiVersion()) +
                                "&max=" + count);
   }
 
   @NotNull
   private static Url createSearchSuggestUrl(@NotNull String query) {
-    return Urls.newFromEncoded(getPluginManagerUrl() + "/api/searchSuggest?term=" +
-                               URLUtil.encodeURIComponent(query) +
-                               "&productCode=" +
-                               URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getBuild().getProductCode()));
-  }
-
-  @NotNull
-  private static String getPluginManagerUrl() {
-    String url = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl();
-    return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/searchSuggest?term=" + URLUtil.encodeURIComponent(query) +
+                               "&productCode=" + URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
   }
 
   private static boolean forceHttps() {

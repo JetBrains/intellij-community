@@ -451,8 +451,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public boolean usesJetBrainsPluginRepository() {
-    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl) ||
-           (DEFAULT_PLUGINS_HOST + "/").equalsIgnoreCase(myPluginManagerUrl);//see ***ApplicationInfo.xml
+    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl);
   }
 
   @Override
@@ -798,39 +797,25 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
+    myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
     Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
-      boolean closed = StringUtil.endsWith(myPluginManagerUrl, "/");
-
-      String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
-      myPluginsListUrl = listUrl != null ? listUrl : myPluginManagerUrl + (closed ? "" : "/") + "plugins/list/";
-
-      String channelListUrl = pluginsElement.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
-      myChannelsListUrl = channelListUrl != null ? channelListUrl  : myPluginManagerUrl + (closed ? "" : "/") + "channels/list/";
-
-      String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
-      myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
+      myPluginManagerUrl = url != null ? StringUtil.trimEnd(url, "/") : DEFAULT_PLUGINS_HOST;
 
       if (!getBuild().isSnapshot()) {
         myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
       }
     }
-    else {
-      myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
-      myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
-      myChannelsListUrl = DEFAULT_PLUGINS_HOST + "/channels/list/";
-      myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
-    }
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
-      myPluginManagerUrl = pluginsHost;
-      myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
+      myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
     }
+
+    myPluginsListUrl = myPluginManagerUrl + "/plugins/list/";
+    myChannelsListUrl = myPluginManagerUrl + "/channels/list/";
+    myPluginsDownloadUrl = myPluginManagerUrl + "/pluginManager/";
 
     Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
