@@ -97,6 +97,12 @@ class ReadMostlyRWLock {
   boolean isReadLockedByThisThread() {
     checkReadThreadAccess();
     Reader status = R.get();
+    return status.readRequested;
+  }
+
+  boolean checkReadLockedByThisThreadAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
+    checkReadThreadAccess();
+    Reader status = R.get();
     throwIfImpatient(status);
     return status.readRequested;
   }
@@ -104,6 +110,7 @@ class ReadMostlyRWLock {
   void readLock() {
     checkReadThreadAccess();
     Reader status = R.get();
+    throwIfImpatient(status);
 
     for (int iter = 0; ; iter++) {
       if (tryReadLock(status, true)) {
@@ -131,7 +138,7 @@ class ReadMostlyRWLock {
     }
   }
 
-  private void throwIfImpatient(Reader status) {
+  private void throwIfImpatient(Reader status) throws ApplicationUtil.CannotRunReadActionException {
     // when client explicitly runs in non-cancelable block do not throw from within nested read actions
     if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection() && CoreProgressManager.ENABLED) {
       throw ApplicationUtil.CannotRunReadActionException.create();
@@ -177,6 +184,7 @@ class ReadMostlyRWLock {
   }
 
   private boolean tryReadLock(Reader status, boolean checkPrivileges) {
+    throwIfImpatient(status);
     if (!writeRequested) {
       if (checkPrivileges && currentSuspension != null && !privilegedReaders.containsKey(Thread.currentThread())) {
         return false;
