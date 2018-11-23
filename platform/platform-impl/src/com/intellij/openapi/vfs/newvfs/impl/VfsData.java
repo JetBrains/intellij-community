@@ -300,8 +300,7 @@ public class VfsData {
     @NotNull
     volatile int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
 
-    private static final AtomicFieldUpdater<DirectoryData, Set> MY_ADOPTED_NAMES_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, Set.class);
-    // assigned under lock(this) only; modified under lock(myAdoptedNames)
+    // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
     private volatile Set<CharSequence> myAdoptedNames;
 
     @NotNull
@@ -332,6 +331,8 @@ public class VfsData {
     /**
      * must call removeAdoptedName() before adding new child with the same name
      * or otherwise {@link VirtualDirectoryImpl#doFindChild(String, boolean, NewVirtualFileSystem, boolean)} would risk finding already non-existing child
+     *
+     * Must be called in synchronized(VfsData)
      */
     void removeAdoptedName(@NotNull CharSequence name) {
       Set<CharSequence> adopted = myAdoptedNames;
@@ -341,12 +342,14 @@ public class VfsData {
       synchronized (adopted) {
         boolean removed = adopted.remove(name);
         if (removed && adopted.isEmpty()) {
-          // if failed then somebody's nulled it already, no need to retry
-          MY_ADOPTED_NAMES_UPDATER.compareAndSet(this, adopted, null);
+          myAdoptedNames = null;
         }
       }
     }
 
+    /**
+     * Must be called in synchronized(VfsData)
+     */
     void addAdoptedName(@NotNull CharSequence name, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
       CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
@@ -355,26 +358,28 @@ public class VfsData {
       }
     }
 
-    @NotNull
-    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
-      Set<CharSequence> adopted;
-      while (true) {
-        adopted = myAdoptedNames;
-        if (adopted != null) break;
-        adopted = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
-        if (MY_ADOPTED_NAMES_UPDATER.compareAndSet(this, null, adopted)) {
-          break;
-        }
-      }
-      return adopted;
-    }
-
-    /** optimization: faster than call {@link #addAdoptedName(CharSequence, boolean)} one by one */
+    /**
+     * Optimization: faster than call {@link #addAdoptedName(CharSequence, boolean)} one by one
+     * Must be called in synchronized(VfsData)
+     */
     void addAdoptedNames(@NotNull Collection<? extends CharSequence> names, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
       synchronized (adopted) {
         adopted.addAll(names);
       }
+    }
+
+    /**
+     * Must be called in synchronized(VfsData)
+     */
+    @NotNull
+    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) {
+        myAdoptedNames = adopted =
+          new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+      }
+      return adopted;
     }
 
     @NotNull
@@ -386,6 +391,9 @@ public class VfsData {
       }
     }
 
+    /**
+     * Must be called in synchronized(VfsData)
+     */
     void clearAdoptedNames() {
       myAdoptedNames = null;
     }
