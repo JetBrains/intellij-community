@@ -4,10 +4,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.GlobalJavaInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
@@ -419,7 +416,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   public void performPreRunActivities(@NotNull final List<Tools> globalTools,
                                       @NotNull final List<Tools> localTools,
                                       @NotNull final GlobalInspectionContext context) {
-    getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
+    if (globalTools.stream().anyMatch(tools -> {
+      InspectionProfileEntry tool = tools.getTool().getTool();
+      return tool instanceof GlobalInspectionTool && ((GlobalInspectionTool)tool).isGraphNeeded();
+    })) {
+      getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
+    }
     // UnusedDeclarationInspection should run first
     for (int i = 0; i < globalTools.size(); i++) {
       InspectionToolWrapper toolWrapper = globalTools.get(i).getTool();

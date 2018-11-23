@@ -408,7 +408,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public void onEntityInitialized(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
-    if (myRefManager.isOfflineView() || !myRefManager.isDeclarationsFound()) return;
+    if (myRefManager.isOfflineView()) return;
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
