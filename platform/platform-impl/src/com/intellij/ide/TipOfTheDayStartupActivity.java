@@ -48,7 +48,7 @@ public class TipOfTheDayStartupActivity implements StartupActivity, DumbAware {
     }
     else {
       FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "shown.automatically");
-      TipDialog.createForProject(project).show();
+      TipDialog.showForProject(project);
     }
   }
 }
