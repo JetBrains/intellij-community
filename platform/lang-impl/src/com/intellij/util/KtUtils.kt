@@ -21,4 +21,4 @@ fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
   return (this as java.util.Collection<E>).toArray(empty)
 }
 
-fun <T> lazyPub(initializer: () -> T) = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
+fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
