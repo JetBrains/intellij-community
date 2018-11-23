@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
@@ -416,6 +417,9 @@ public class ReflectionUtil {
       return constructor.newInstance();
     }
     catch (Exception e) {
+      if (e instanceof InvocationTargetException && ((InvocationTargetException) e).getTargetException() instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException) (((InvocationTargetException) e).getTargetException());
+      }
       T t = createAsDataClass(aClass);
       if (t != null) {
         return t;

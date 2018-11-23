@@ -58,6 +58,7 @@ import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
@@ -145,6 +146,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     try {
       Class<?> aClass = Class.forName(className, true, stub.getLoader());
       obj = ReflectionUtil.newInstance(aClass);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(new PluginException(e, stub.getPluginId()));
