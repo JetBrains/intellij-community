@@ -10,15 +10,10 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowTipsAction extends AnAction implements DumbAware {
-  private static TipDialog ourTipDialog;
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (ourTipDialog != null && ourTipDialog.isVisible()) {
-      ourTipDialog.dispose();
-    }
     FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "shown.manually");
-    ourTipDialog = new TipDialog();
-    ourTipDialog.show();
+    TipDialog.showForProject(e.getProject());
   }
 }
