@@ -44,6 +44,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
@@ -166,26 +167,22 @@ class CompletionQualityStatsAction : AnAction() {
   private fun getCompletionAttempts(file: PsiFile, wordSet: HashSet<String>): List<Pair<Int, String>> {
     val res = Lists.newArrayList<Pair<Int, String>>()
 
-    var startIndex = 0
     val text = file.text
-    do {
-      startIndex = text.indexOf(".", startIndex)
-      if (startIndex != -1) {
 
+    for (range in StringUtil.getWordIndicesIn(text)) {
+      val startIndex = range.startOffset
+      if (startIndex != -1) {
         val el = file.findElementAt(startIndex)
 
-        if (el != null && el !is PsiComment && el.text == ".") {
-          val word = existingCompletion(startIndex, text)
+        if (el != null && el !is PsiComment) {
+          val word = range.substring(text)
           if (!word.isEmpty() && word !in wordSet) {
-            res.add(Pair(startIndex, word))
+            res.add(Pair(startIndex-1, word))
             wordSet.add(word)
           }
         }
-
-        startIndex += 1
       }
     }
-    while (startIndex != -1)
 
     return res
   }
