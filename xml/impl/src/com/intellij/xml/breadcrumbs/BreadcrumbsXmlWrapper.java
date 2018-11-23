@@ -168,6 +168,10 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myQueue.setPassThrough(true);
+    }
+
     queueUpdate();
   }
 
