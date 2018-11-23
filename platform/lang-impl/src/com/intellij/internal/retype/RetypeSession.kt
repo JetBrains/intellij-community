@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Alarm
 import java.io.File
+import java.util.*
 
 class RetypeSession(
   private val project: Project,
@@ -131,53 +132,8 @@ class RetypeSession(
   private fun typeNext() {
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
-    if (document.text.take(pos) != originalText.take(pos)) {
-      // Unexpected changes before current cursor position
-      // (may be unwanted import)
-      if (textBeforeLookupSelection != null) {
-        // Unexpected changes was made by lookup.
-        // Restore previous text state and set flag to skip further suggestions until whitespace will be typed
-        WriteCommandAction.runWriteCommandAction(project) {
-          document.replaceText(textBeforeLookupSelection ?: return@runWriteCommandAction, document.modificationStamp + 1)
-        }
-        skipLookupSuggestion = true
-      }
-      else {
-        // There changes wasn't made by lookup, so we don't know how to handle them
-        // Restore text as it should be at this point without any intelligence
-        WriteCommandAction.runWriteCommandAction(project) {
-          document.replaceText(originalText.take(pos) + originalText.takeLast(endPos), document.modificationStamp + 1)
-        }
-      }
-    }
-
-    if (editor.caretModel.offset > pos) {
-      // Caret movement has been preformed
-      // Move the caret forward until the characters match
-      while (pos < document.textLength - tailLength
-             && originalText[pos] == document.text[pos]
-             && document.text[pos] !in listOf('\n') // Don't count line breakers because we want to enter "enter" explicitly
-      ) {
-        pos++
-        completedChars++
-      }
-      editor.caretModel.moveToOffset(pos)
-
-      val nextChar = originalText[pos]
-      if (document.textLength - pos > tailLength && nextChar in listOf('}', ')', ']')) {
-        // Still have something extra characters in front. Probably closing bracket.
-        for (bracketCharacterPos in pos until document.textLength - tailLength) {
-          if (document.text[bracketCharacterPos] == nextChar) {
-            // Found brackets character after caret. All characters between caret and matched symbol should be deleted
-            // Because we don't expect them (in most cases this is just whitespaces)
-            WriteCommandAction.runWriteCommandAction(project) {
-              document.deleteString(pos, bracketCharacterPos)
-            }
-            break
-          }
-        }
-      }
-    }
+    val processNextEvent = handleIdeaIntelligence()
+    if (processNextEvent) return
 
     if (TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       TemplateManager.getInstance(project).finishTemplate(editor)
@@ -225,6 +181,122 @@ class RetypeSession(
       typedRightBefore = true
     }
     queueNextOrStop()
+  }
+
+  /**
+   * @return if next queue event should be processed
+   */
+  private fun handleIdeaIntelligence(): Boolean {
+    // This stack will contain autocompletion elements
+    // E.g. "}", "]", "*/", "* @return"
+    val completionStack = ArrayDeque<String>()
+
+    if (document.text.take(pos) != originalText.take(pos)) {
+      // Unexpected changes before current cursor position
+      // (may be unwanted import)
+      if (textBeforeLookupSelection != null) {
+        // Unexpected changes was made by lookup.
+        // Restore previous text state and set flag to skip further suggestions until whitespace will be typed
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.replaceText(textBeforeLookupSelection ?: return@runWriteCommandAction, document.modificationStamp + 1)
+        }
+        skipLookupSuggestion = true
+      }
+      else {
+        // There changes wasn't made by lookup, so we don't know how to handle them
+        // Restore text as it should be at this point without any intelligence
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.replaceText(originalText.take(pos) + originalText.takeLast(endPos), document.modificationStamp + 1)
+        }
+      }
+    }
+
+    if (editor.caretModel.offset > pos) {
+      // Caret movement has been preformed
+      // Move the caret forward until the characters match
+      while (pos < document.textLength - tailLength
+             && originalText[pos] == document.text[pos]
+             && document.text[pos] !in listOf('\n') // Don't count line breakers because we want to enter "enter" explicitly
+      ) {
+        pos++
+        completedChars++
+      }
+      if (editor.caretModel.offset > pos) {
+        WriteCommandAction.runWriteCommandAction(project) {
+          // Delete symbols not from original text and move caret
+          document.deleteString(pos, editor.caretModel.offset)
+        }
+      }
+      editor.caretModel.moveToOffset(pos)
+    }
+
+    if (document.textLength > pos + tailLength) {
+      updateStack(completionStack)
+      val firstCompletion = completionStack.peekLast()
+
+      if (firstCompletion != null) {
+        val origIndexOfFirstCompletion = originalText.substring(pos, endPos).trim().indexOf(firstCompletion)
+
+        if (origIndexOfFirstCompletion == 0) {
+          // Next non-whitespace chars from original tests are from complation stack
+          val origIndexOfFirstComp = originalText.substring(pos, endPos).indexOf(firstCompletion)
+          val docIndexOfFirstComp = document.text.indexOf(firstCompletion, startIndex = pos)
+          if (originalText.substring(pos, (pos + origIndexOfFirstComp).coerceAtMost(originalText.length))
+            != document.text.substring(pos, (pos + origIndexOfFirstComp).coerceAtMost(document.textLength))) {
+            // We have some unexpected chars before completion. Remove them
+            WriteCommandAction.runWriteCommandAction(project) {
+              document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos, pos + origIndexOfFirstComp))
+            }
+          }
+          pos += origIndexOfFirstComp + firstCompletion.length
+          editor.caretModel.moveToOffset(pos)
+          completionStack.removeLast()
+          queueNextOrStop()
+          return true
+        }
+        else if (origIndexOfFirstCompletion < 0) {
+          // Completion is wrong and original text doesn't contain it
+          // Remove this completion
+          val docIndexOfFirstComp = document.text.indexOf(firstCompletion, startIndex = pos)
+          WriteCommandAction.runWriteCommandAction(project) {
+            document.replaceString(pos, pos + docIndexOfFirstComp + firstCompletion.length, "")
+          }
+          completionStack.removeLast()
+          queueNextOrStop()
+          return true
+        }
+      }
+    }
+    else if (document.textLength == pos + tailLength && completionStack.isNotEmpty()) {
+      // Text is as expected, but we have some extra completions in stack
+      completionStack.clear()
+    }
+    return false
+  }
+
+  private fun updateStack(completionStack: Deque<String>) {
+    val unexpectedCharsDoc = document.text.substring(pos, document.textLength - tailLength)
+
+    var endPosDoc = unexpectedCharsDoc.length
+
+    val completionIterator = completionStack.iterator()
+    while (completionIterator.hasNext()) {
+      // Validate all existing completions and add new completions if they are
+      val completion = completionIterator.next()
+      val lastIndexOfCompletion = unexpectedCharsDoc.lastIndexOf(completion, startIndex = endPosDoc - 1)
+      if (lastIndexOfCompletion < 0) {
+        completionIterator.remove()
+        continue
+      }
+      endPosDoc = lastIndexOfCompletion
+    }
+
+    // Add new completion in stack
+    unexpectedCharsDoc.substring(0, endPosDoc).trim().split("\\s+".toRegex()).map { it.trim() }.reversed().forEach {
+      if (it.isNotEmpty()) {
+        completionStack.add(it)
+      }
+    }
   }
 
   private fun queueNextOrStop() {
