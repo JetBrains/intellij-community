@@ -399,7 +399,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock != null) {
       if (tryStatement.getCatchSections().length == 0 &&
-          tryStatement.getFinallyBlock() == null) {
+          tryStatement.getFinallyBlock() == null &&
+          tryStatement.getResourceList() == null) {
         PsiElement firstBodyElement = tryBlock.getFirstBodyElement();
         if (firstBodyElement != null) {
           tryStatement.getParent().addRangeAfter(firstBodyElement, tryBlock.getLastBodyElement(), tryStatement);
