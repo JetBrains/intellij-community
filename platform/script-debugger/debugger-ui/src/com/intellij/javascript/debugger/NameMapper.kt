@@ -31,44 +31,11 @@ open class NameMapper(private val document: Document, private val transpiledDocu
   }
 
   protected fun doMap(identifierOrNamedElement: PsiElement, mapBySourceCode: Boolean): String? {
-    val offset = identifierOrNamedElement.textOffset
-    val line = document.getLineNumber(offset)
-
-    val sourceEntryIndex = sourceMappings.indexOf(line, offset - document.getLineStartOffset(line))
-    if (sourceEntryIndex == -1) {
-      return null
-    }
-
-    val sourceEntry = sourceMappings.getByIndex(sourceEntryIndex)
-    val next = sourceMappings.getNextOnTheSameLine(sourceEntryIndex, false)
-    if (next != null && sourceMappings.getColumn(next) == sourceMappings.getColumn(sourceEntry)) {
-      warnSeveralMapping(identifierOrNamedElement)
-      return null
-    }
-    val elementColumn = offset - document.getLineStartOffset(line)
-    val elementEndColumn = elementColumn + identifierOrNamedElement.textLength - 1
-
+    val mappings = getMappingsForElement(identifierOrNamedElement)
+    if (mappings == null) return null
+    val sourceEntry = mappings[0]
     val generatedName: String?
     try {
-      val mappings = mutableListOf<MappingEntry>()
-      val processor = object : MappingsProcessorInLine {
-        override fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean {
-          val entryColumn = entry.sourceColumn
-          // next entry column could be equal to prev, see https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
-          val isSuitable = if (nextEntry == null || (entryColumn == 0 && nextEntry.sourceColumn == 0)) {
-            entryColumn <= elementColumn
-          }
-          else {
-            entryColumn in elementColumn..elementEndColumn
-          }
-          if (isSuitable) {
-            mappings.add(entry)
-          }
-          return true
-        }
-      }
-      sourceMap.processSourceMappingsInLine(sourceEntry.source, sourceEntry.sourceLine, processor)
-
       generatedName = extractName(getGeneratedName(identifierOrNamedElement, transpiledDocument, sourceMap, mappings), identifierOrNamedElement)
     }
     catch (e: IndexOutOfBoundsException) {
@@ -86,6 +53,46 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
     addMapping(generatedName, sourceName)
     return generatedName
+  }
+
+  protected open fun getMappingsForElement(element: PsiElement): List<MappingEntry>? {
+    val mappings = mutableListOf<MappingEntry>()
+
+    val offset = element.textOffset
+    val line = document.getLineNumber(offset)
+    val elementColumn = offset - document.getLineStartOffset(line)
+    val elementEndColumn = elementColumn + element.textLength - 1
+
+    val sourceEntryIndex = sourceMappings.indexOf(line, elementColumn)
+    if (sourceEntryIndex == -1) {
+      return null
+    }
+
+    val sourceEntry = sourceMappings.getByIndex(sourceEntryIndex)
+    val next = sourceMappings.getNextOnTheSameLine(sourceEntryIndex, false)
+    if (next != null && sourceMappings.getColumn(next) == sourceMappings.getColumn(sourceEntry)) {
+      warnSeveralMapping(element)
+      return null
+    }
+
+    val processor = object : MappingsProcessorInLine {
+      override fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean {
+        val entryColumn = entry.sourceColumn
+        // next entry column could be equal to prev, see https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
+        val isSuitable = if (nextEntry == null || (entryColumn == 0 && nextEntry.sourceColumn == 0)) {
+          entryColumn <= elementColumn
+        }
+        else {
+          entryColumn in elementColumn..elementEndColumn
+        }
+        if (isSuitable) {
+          mappings.add(entry)
+        }
+        return true
+      }
+    }
+    sourceMap.processSourceMappingsInLine(sourceEntry.source, sourceEntry.sourceLine, processor)
+    return mappings
   }
 
   fun addMapping(generatedName: String, sourceName: String) {
