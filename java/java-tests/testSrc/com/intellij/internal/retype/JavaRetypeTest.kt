@@ -46,6 +46,10 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
     doTestWithoutLookup()
   }
 
+  fun testBrockenClass() {
+    doTestWithoutLookup()
+  }
+
   private fun doTestWithLookup() {
     val autopopupOldValue = TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true)
     val filePath = "/retype/${getTestName(false)}.java"
