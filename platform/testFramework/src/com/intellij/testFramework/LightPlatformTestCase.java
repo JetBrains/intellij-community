@@ -5,7 +5,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -387,7 +386,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
-      () -> DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, 10, TimeUnit.SECONDS),
       () -> CodeStyle.dropTemporarySettings(project),
       () -> myCodeStyleSettingsTracker.checkForSettingsDamage(),
       () -> doTearDown(project, ourApplication),
@@ -447,6 +445,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
+      append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).

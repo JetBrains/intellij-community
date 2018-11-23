@@ -4,6 +4,8 @@ package com.intellij.testFramework;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.ide.GeneratedSourceFileChangeTracker;
+import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -501,8 +503,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected void tearDown() throws Exception {
     Project project = myProject;
     if (project != null && !project.isDisposed()) {
-      DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, 10, TimeUnit.SECONDS);
       AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+      waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
     }
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
@@ -944,5 +946,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
     FileUtil.ensureExists(moduleDir);
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
+  }
+
+  public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, timeout, timeUnit);
+    GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
+    if (tracker != null) {
+      tracker.waitForAlarm(timeout, timeUnit);
+    }
   }
 }
