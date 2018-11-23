@@ -1,4 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +57,12 @@ public class JDOMUtil {
         factory = XMLInputFactory.newFactory();
       }
 
-      factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+      try {
+        factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+      }
+      catch (Exception e) {
+        getLogger().error("cannot set \"report-cdata-event\" property for XMLInputFactory", e);
+      }
       factory.setProperty(XMLInputFactory.IS_COALESCING, true);
       factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
       factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
