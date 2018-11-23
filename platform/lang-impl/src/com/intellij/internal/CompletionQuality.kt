@@ -199,15 +199,15 @@ class CompletionQualityStatsAction : AnAction() {
                                stats: CompletionStats,
                                indicator: ProgressIndicator) {
     val completionTime = CompletionTime(0, 0)
-    val rank0 = findCorrectElementRank(editor, text, startIndex, 0, project, existingCompletion, completionTime)
+    val (rank0, total0) = findCorrectElementRank(editor, text, startIndex, 0, project, existingCompletion, completionTime)
     if (indicator.isCanceled) {
       return
     }
-    val rank1 = findCorrectElementRank(editor, text, startIndex, 1, project, existingCompletion, completionTime)
+    val (rank1, total1) = findCorrectElementRank(editor, text, startIndex, 1, project, existingCompletion, completionTime)
     if (indicator.isCanceled) {
       return
     }
-    val rank3 = findCorrectElementRank(editor, text, startIndex, 3, project, existingCompletion, completionTime)
+    val (rank3, total3) = findCorrectElementRank(editor, text, startIndex, 3, project, existingCompletion, completionTime)
     if (indicator.isCanceled) {
       return
     }
@@ -221,7 +221,7 @@ class CompletionQualityStatsAction : AnAction() {
 
 
     stats.completions.add(
-      Completion(file.path, startIndex, existingCompletion, rank0, rank1, rank3, charsToFirst, charsToFirst3, completionTime.cnt, completionTime.time))
+      Completion(file.path, startIndex, existingCompletion, rank0, total0, rank1, total1, rank3, total3, charsToFirst, charsToFirst3, completionTime.cnt, completionTime.time))
   }
 
   private fun calcCharsToFirstN(rank0: Int,
@@ -240,7 +240,7 @@ class CompletionQualityStatsAction : AnAction() {
       rank0 in 0 until N -> 0
       rank1 in 0 until N -> 1
       rank3 in 0 until N -> {
-        val rank2 = findCorrectElementRank(editor, text, startIndex, 2, project, existingCompletion, completionTime)
+        val (rank2, _) = findCorrectElementRank(editor, text, startIndex, 2, project, existingCompletion, completionTime)
         if (rank2 in 0 until N) {
           2
         }
@@ -270,7 +270,7 @@ class CompletionQualityStatsAction : AnAction() {
       if (indicator.isCanceled) {
         return -1
       }
-      val rank = findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)
+      val (rank, _) = findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)
 
       if ((rank in 0..(resultInFirstN - 1)) || rank == -2) {
         if (from >= mid - 1) {
@@ -297,16 +297,17 @@ class CompletionQualityStatsAction : AnAction() {
                                      charsTyped: Int,
                                      project: Project,
                                      existingCompletion: String,
-                                     timeStats: CompletionTime): Int {
+                                     timeStats: CompletionTime): Pair<Int, Int> {
     if (charsTyped > existingCompletion.length) {
-      return -2
+      return Pair(-2, 0)
     }
     if (charsTyped == existingCompletion.length) {
-      return 0
+      return Pair(0, 1)
     }
     val newText = text.substring(0, startIndex + 1 + charsTyped) + text.substring(startIndex + existingCompletion.length + 1)
 
     val result = Ref.create(-1)
+    val total = Ref.create(0)
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       WriteAction.run<Exception> {
         editor.document.setText(newText)
@@ -340,6 +341,7 @@ class CompletionQualityStatsAction : AnAction() {
 
       if (!ref.isNull) {
         result.set(ref.get().indexOfFirst { it.lookupString == existingCompletion })
+        total.set(ref.get().size)
       }
 
       timeStats.cnt += 1
@@ -347,7 +349,7 @@ class CompletionQualityStatsAction : AnAction() {
 
     }, ModalityState.NON_MODAL)
 
-    return result.get()
+    return Pair(result.get(), total.get())
   }
 
   private fun existingCompletion(startIndex: Int, text: String): String {
@@ -433,8 +435,11 @@ private data class Completion(val path: String,
                               val offset: Int,
                               val word: String,
                               val rank0: Int,
+                              val total0: Int,
                               val rank1: Int,
+                              val total1: Int,
                               val rank3: Int,
+                              val total3: Int,
                               val charsToFirst: Int,
                               val charsToFirst3: Int,
                               val callsCount: Int,
