@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
@@ -11,6 +12,8 @@ class GdkMethodCandidate(
   receiverArgument: Argument,
   originalMapping: ArgumentMapping
 ) : GroovyMethodCandidate {
+
+  override val receiver: PsiType? get() = null
 
   override val argumentMapping: ArgumentMapping? = GdkArgumentMapping(method, receiverArgument, originalMapping)
 }

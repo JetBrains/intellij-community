@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.groovy.lang.resolve.api
 
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 
 interface GroovyMethodCandidate {
+
+  val receiver: PsiType?
 
   val method: PsiMethod
 
