@@ -33,7 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrReassignedLocalVarsChecker;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
@@ -258,47 +261,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         }
       }
 
-      final PsiType fromMapAccess = getTypeFromMapAccess(this);
-      if (fromMapAccess != null) {
-        return fromMapAccess;
-      }
-
       final PsiType fromSpreadOperator = getTypeFromSpreadOperator(this);
       if (fromSpreadOperator != null) {
         return fromSpreadOperator;
       }
     }
 
-    return null;
-  }
-
-  @Nullable
-  private static PsiType getTypeFromMapAccess(@NotNull GrReferenceExpressionImpl ref) {
-    //map access
-    GrExpression qualifier = ref.getQualifierExpression();
-    if (qualifier instanceof GrReferenceExpression) {
-      if (((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return null;
-    }
-    if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) return null;
-    if (qualifier != null) {
-      PsiType qType = qualifier.getType();
-      if (qType instanceof PsiClassType) {
-        PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
-        PsiClass clazz = qResult.getElement();
-        if (clazz != null) {
-          PsiClass mapClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, ref.getResolveScope());
-          if (mapClass != null && mapClass.getTypeParameters().length == 2) {
-            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
-            if (substitutor != null) {
-              PsiType substituted = substitutor.substitute(mapClass.getTypeParameters()[1]);
-              if (substituted != null) {
-                return PsiImplUtil.normalizeWildcardTypeByPosition(substituted, ref);
-              }
-            }
-          }
-        }
-      }
-    }
     return null;
   }
 
@@ -367,22 +335,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Nullable
   private static PsiType getInferredTypes(@NotNull GrReferenceExpressionImpl refExpr, @Nullable PsiElement resolved) {
     final GrExpression qualifier = refExpr.getQualifier();
-    if (!(resolved instanceof PsiClass) && !(resolved instanceof PsiPackage)) {
-      if (qualifier == null) {
-        return TypeInferenceHelper.getCurrentContext().getVariableType(refExpr);
-      }
-      else {
-        //map access
-        PsiType qType = qualifier.getType();
-        if (qType instanceof PsiClassType && !(qType instanceof GrMapType)) {
-          final PsiType mapValueType = getTypeFromMapAccess(refExpr);
-          if (mapValueType != null) {
-            return mapValueType;
-          }
-        }
-      }
+    if (qualifier != null || resolved instanceof PsiClass || resolved instanceof PsiPackage) {
+      return null;
     }
-    return null;
+    return TypeInferenceHelper.getCurrentContext().getVariableType(refExpr);
   }
 
   @Nullable
