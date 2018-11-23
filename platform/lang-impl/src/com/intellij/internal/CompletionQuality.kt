@@ -212,11 +212,20 @@ class CompletionQualityStatsAction : AnAction() {
       return
     }
 
-    val charsToFirst = calcCharsToFirstN(rank0, rank1, rank3, 1, editor, text, startIndex, project, existingCompletion, completionTime, file,
-                                         indicator)
+    val maxChars = 10
 
-    val charsToFirst3 = calcCharsToFirstN(rank0, rank1, rank3, 3, editor, text, startIndex, project, existingCompletion, completionTime, file,
-                                         indicator)
+    val cache = arrayOfNulls<Pair<Int, Int>>(maxChars)
+
+    val charsToFirst = calcCharsToFirstN(rank0, rank1, rank3, 1, editor, text, startIndex, project, existingCompletion, completionTime,
+                                         file,
+                                         indicator,
+                                         maxChars,
+                                         cache)
+
+    val charsToFirst3 = calcCharsToFirstN(rank0, rank1, rank3, 3, editor, text, startIndex, project, existingCompletion, completionTime,
+                                          file,
+                                          indicator,
+                                          maxChars, cache)
 
 
 
@@ -235,7 +244,9 @@ class CompletionQualityStatsAction : AnAction() {
                                 existingCompletion: String,
                                 completionTime: CompletionTime,
                                 file: VirtualFile,
-                                indicator: ProgressIndicator): Int {
+                                indicator: ProgressIndicator,
+                                max: Int,
+                                cache: Array<Pair<Int, Int>?>): Int {
     return when {
       rank0 in 0 until N -> 0
       rank1 in 0 until N -> 1
@@ -249,7 +260,7 @@ class CompletionQualityStatsAction : AnAction() {
         }
       }
       else -> {
-        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, 4, 10, N, completionTime)
+        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, 4, max, N, cache, completionTime)
       }
     }
   }
@@ -264,24 +275,28 @@ class CompletionQualityStatsAction : AnAction() {
                                      from: Int,
                                      to: Int,
                                      resultInFirstN: Int,
+                                     cache: Array<Pair<Int, Int>?>,
                                      timeStats: CompletionTime): Int {
     if (from < to) {
       val mid = (from + to) / 2
       if (indicator.isCanceled) {
         return -1
       }
-      val (rank, _) = findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)
+      val (rank, total) = if (cache[mid] != null) {cache[mid]!!} else {findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)}
+      if (cache[mid] == null) {
+        cache[mid] = Pair(rank, total)
+      }
 
       if ((rank in 0..(resultInFirstN - 1)) || rank == -2) {
         if (from >= mid - 1) {
           return mid
         }
         else {
-          return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, from, mid - 1, resultInFirstN, timeStats)
+          return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, from, mid - 1, resultInFirstN, cache, timeStats)
         }
       }
       else {
-        return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, mid + 1, to, resultInFirstN, timeStats)
+        return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, mid + 1, to, resultInFirstN, cache, timeStats)
       }
     }
     else {
