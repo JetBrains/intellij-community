@@ -129,92 +129,11 @@ class RetypeSession(
     }
   }
 
-  // This stall will contains autocompletion elements
-  // E.g. "}", "]", "*/"
-  private val completionStack = ArrayDeque<String>()
-
   private fun typeNext() {
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
-    if (document.text.take(pos) != originalText.take(pos)) {
-      // Unexpected changes before current cursor position
-      // (may be unwanted import)
-      if (textBeforeLookupSelection != null) {
-        // Unexpected changes was made by lookup.
-        // Restore previous text state and set flag to skip further suggestions until whitespace will be typed
-        WriteCommandAction.runWriteCommandAction(project) {
-          document.replaceText(textBeforeLookupSelection ?: return@runWriteCommandAction, document.modificationStamp + 1)
-        }
-        skipLookupSuggestion = true
-      }
-      else {
-        // There changes wasn't made by lookup, so we don't know how to handle them
-        // Restore text as it should be at this point without any intelligence
-        WriteCommandAction.runWriteCommandAction(project) {
-          document.replaceText(originalText.take(pos) + originalText.takeLast(endPos), document.modificationStamp + 1)
-        }
-      }
-    }
-
-    if (editor.caretModel.offset > pos) {
-      // Caret movement has been preformed
-      // Move the caret forward until the characters match
-      while (pos < document.textLength - tailLength
-             && originalText[pos] == document.text[pos]
-             && document.text[pos] !in listOf('\n') // Don't count line breakers because we want to enter "enter" explicitly
-      ) {
-        pos++
-        completedChars++
-      }
-      if (editor.caretModel.offset > pos) {
-        WriteCommandAction.runWriteCommandAction(project) {
-          // Delete symbols not from original text and move caret
-          document.deleteString(pos, editor.caretModel.offset)
-        }
-      }
-      editor.caretModel.moveToOffset(pos)
-    }
-
-    if (document.textLength > pos + tailLength) {
-      updateStack()
-      val firstCompletion = completionStack.peekLast()
-
-      if (firstCompletion != null) {
-        val origIndexOfFirstCompletion = originalText.substring(pos, endPos).trim().indexOf(firstCompletion)
-
-        if (origIndexOfFirstCompletion == 0) {
-          // Next non-whitespace chars from original tests are from complation stack
-          val origIndexOfFirstComp = originalText.substring(pos, endPos).indexOf(firstCompletion)
-          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
-          if (originalText.substring(pos).take(origIndexOfFirstComp) != document.text.substring(pos).take(origIndexOfFirstComp)) {
-            // We have some unexpected chars before completion. Remove them
-            WriteCommandAction.runWriteCommandAction(project) {
-              document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos, pos + origIndexOfFirstComp))
-            }
-          }
-          pos += origIndexOfFirstComp + firstCompletion.length
-          editor.caretModel.moveToOffset(pos)
-          completionStack.removeLast()
-          queueNextOrStop()
-          return
-        }
-        else if (origIndexOfFirstCompletion < 0) {
-          // Completion is wrong and original text doesn't contain it
-          // Remove this completion
-          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
-          WriteCommandAction.runWriteCommandAction(project) {
-            document.replaceString(pos, pos + docIndexOfFirstComp + firstCompletion.length, "")
-          }
-          completionStack.removeLast()
-          queueNextOrStop()
-          return
-        }
-      }
-    }
-    else if (document.textLength == pos + tailLength && completionStack.isNotEmpty()) {
-      // Text is as expected, but we have some extra completions in stack
-      completionStack.clear()
-    }
+    val processNextEvent = handleIdeaIntelligence()
+    if (processNextEvent) return
 
     if (TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       TemplateManager.getInstance(project).finishTemplate(editor)
@@ -264,7 +183,97 @@ class RetypeSession(
     queueNextOrStop()
   }
 
-  private fun updateStack() {
+  /**
+   * @return if next queue event should be processed
+   */
+  private fun handleIdeaIntelligence(): Boolean {
+    // This stack will contain autocompletion elements
+    // E.g. "}", "]", "*/", "* @return"
+    val completionStack = ArrayDeque<String>()
+
+    if (document.text.take(pos) != originalText.take(pos)) {
+      // Unexpected changes before current cursor position
+      // (may be unwanted import)
+      if (textBeforeLookupSelection != null) {
+        // Unexpected changes was made by lookup.
+        // Restore previous text state and set flag to skip further suggestions until whitespace will be typed
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.replaceText(textBeforeLookupSelection ?: return@runWriteCommandAction, document.modificationStamp + 1)
+        }
+        skipLookupSuggestion = true
+      }
+      else {
+        // There changes wasn't made by lookup, so we don't know how to handle them
+        // Restore text as it should be at this point without any intelligence
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.replaceText(originalText.take(pos) + originalText.takeLast(endPos), document.modificationStamp + 1)
+        }
+      }
+    }
+
+    if (editor.caretModel.offset > pos) {
+      // Caret movement has been preformed
+      // Move the caret forward until the characters match
+      while (pos < document.textLength - tailLength
+             && originalText[pos] == document.text[pos]
+             && document.text[pos] !in listOf('\n') // Don't count line breakers because we want to enter "enter" explicitly
+      ) {
+        pos++
+        completedChars++
+      }
+      if (editor.caretModel.offset > pos) {
+        WriteCommandAction.runWriteCommandAction(project) {
+          // Delete symbols not from original text and move caret
+          document.deleteString(pos, editor.caretModel.offset)
+        }
+      }
+      editor.caretModel.moveToOffset(pos)
+    }
+
+    if (document.textLength > pos + tailLength) {
+      updateStack(completionStack)
+      val firstCompletion = completionStack.peekLast()
+
+      if (firstCompletion != null) {
+        val origIndexOfFirstCompletion = originalText.substring(pos, endPos).trim().indexOf(firstCompletion)
+
+        if (origIndexOfFirstCompletion == 0) {
+          // Next non-whitespace chars from original tests are from complation stack
+          val origIndexOfFirstComp = originalText.substring(pos, endPos).indexOf(firstCompletion)
+          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
+          if (originalText.substring(pos).take(origIndexOfFirstComp) != document.text.substring(pos).take(origIndexOfFirstComp)) {
+            // We have some unexpected chars before completion. Remove them
+            WriteCommandAction.runWriteCommandAction(project) {
+              document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos, pos + origIndexOfFirstComp))
+            }
+          }
+          pos += origIndexOfFirstComp + firstCompletion.length
+          editor.caretModel.moveToOffset(pos)
+          completionStack.removeLast()
+          queueNextOrStop()
+          return true
+        }
+        else if (origIndexOfFirstCompletion < 0) {
+          // Completion is wrong and original text doesn't contain it
+          // Remove this completion
+          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
+          WriteCommandAction.runWriteCommandAction(project) {
+            document.replaceString(pos, pos + docIndexOfFirstComp + firstCompletion.length, "")
+          }
+          completionStack.removeLast()
+          queueNextOrStop()
+          return true
+        }
+      }
+    }
+    else if (document.textLength == pos + tailLength && completionStack.isNotEmpty()) {
+      // Text is as expected, but we have some extra completions in stack
+      completionStack.clear()
+    }
+    return false
+  }
+
+  private fun updateStack(completionStack: Deque<String>) {
     val unexpectedCharsDoc = document.text.substring(pos, document.textLength - tailLength)
 
     var endPosDoc = unexpectedCharsDoc.length
