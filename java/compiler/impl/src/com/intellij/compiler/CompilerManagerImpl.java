@@ -53,7 +53,6 @@ import java.util.concurrent.TimeUnit;
 
 public class CompilerManagerImpl extends CompilerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerManagerImpl");
-  private static final int IDLE_PROCESSES_CHECK_PERIOD = 10000; // check idle javac processes every 10 second when IDE is idle
 
   private final Project myProject;
 
@@ -468,21 +467,7 @@ public class CompilerManagerImpl extends CompilerManager {
           );
           manager.start(listenPort);
           myExternalJavacManager = manager;
-          IdeEventQueue.getInstance().addIdleListener(new Runnable() {
-            @Override
-            public void run() {
-              final ExternalJavacManager manager;
-              synchronized (CompilerManagerImpl.this) {
-                manager = myExternalJavacManager;
-              }
-              if (manager != null) {
-                manager.shutdownIdleProcesses();
-              }
-              else {
-                IdeEventQueue.getInstance().removeIdleListener(this);
-              }
-            }
-          }, IDLE_PROCESSES_CHECK_PERIOD);
+          IdeEventQueue.getInstance().addIdleListener(new IdleTask(manager), IdleTask.CHECK_PERIOD);
         }
       }
     }
@@ -600,4 +585,22 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
+  private static class IdleTask implements Runnable {
+    private static final int CHECK_PERIOD = 10000; // check idle javac processes every 10 second when IDE is idle
+    private final ExternalJavacManager myManager;
+
+    IdleTask(@NotNull ExternalJavacManager manager) {
+      myManager = manager;
+    }
+
+    @Override
+    public void run() {
+      if (myManager.isRunning()) {
+        myManager.shutdownIdleProcesses();
+      }
+      else {
+        IdeEventQueue.getInstance().removeIdleListener(this);
+      }
+    }
+  }
 }

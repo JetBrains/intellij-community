@@ -239,6 +239,10 @@ public class ExternalJavacManager extends ProcessAdapter {
     return p >= 0 && p < options.size() - 1 ? options.get(p + 1) : null;
   }
 
+  public boolean isRunning() {
+    return !myChannelRegistrar.isEmpty();
+  }
+
   public void stop() {
     synchronized (myConnections) {
       for (Map.Entry<UUID, Channel> entry : myConnections.entrySet()) {
@@ -247,7 +251,13 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
     myChannelRegistrar.close().awaitUninterruptibly();
     if (myOwnExecutor && myExecutor instanceof ExecutorService) {
-      ((ExecutorService)myExecutor).shutdown();
+      final ExecutorService service = (ExecutorService)myExecutor;
+      service.shutdown();
+      try {
+        service.awaitTermination(15, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException ignored) {
+      }
     }
   }
 
