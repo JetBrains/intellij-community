@@ -816,11 +816,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public boolean isFileInContent(@Nullable final VirtualFile vf) {
-    return ReadAction.compute(() ->
-      vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
-                     hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)
-                     || !Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf))
-      && !isIgnored(vf));
+    if (vf == null) return false;
+    return ReadAction.compute(() -> {
+      boolean underProject = isFileInBaseDir(vf) ||
+                             isInDirectoryBasedRoot(vf) ||
+                             hasExplicitMapping(vf) ||
+                             myExcludedIndex.isInContent(vf) ||
+                             !Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf);
+      return underProject && !isIgnored(vf);
+    });
   }
 
   @Override
@@ -837,16 +841,23 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     });
   }
 
-  private boolean isInDirectoryBasedRoot(@Nullable VirtualFile file) {
-    if (file != null && ProjectKt.isDirectoryBased(myProject)) {
+  private boolean isInDirectoryBasedRoot(@NotNull VirtualFile file) {
+    if (ProjectKt.isDirectoryBased(myProject)) {
       return ProjectKt.getStateStore(myProject).isProjectFile(file);
     }
     return false;
   }
 
-  private boolean isFileInBaseDir(final VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    return !file.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
+  private boolean isFileInBaseDir(@NotNull VirtualFile file) {
+    VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir == null) return false;
+
+    if (file.isDirectory()) {
+      return baseDir.equals(file);
+    }
+    else {
+      return baseDir.equals(file.getParent());
+    }
   }
 
   @Override
