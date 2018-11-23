@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -119,8 +120,8 @@ public class MavenRepositoriesHolder {
     notificationManager.showNotification(GradleConstants.SYSTEM_ID, notificationData, NOTIFICATION_KEY);
   }
 
-  public static MavenRepositoriesHolder getInstance(Project p) {
-    return p.getComponent(MavenRepositoriesHolder.class);
+  public static MavenRepositoriesHolder getInstance(@NotNull Project p) {
+    return ServiceManager.getService(p, MavenRepositoriesHolder.class);
   }
 
   public void update(Set<MavenRemoteRepository> remoteRepositories) {
