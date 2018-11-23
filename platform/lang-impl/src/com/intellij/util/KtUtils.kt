@@ -13,4 +13,4 @@ fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): Pair<A, B> {
   return requireNotNull(first) to requireNotNull(second)
 }
 
-fun <T> lazyPub(initializer: () -> T) = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
+fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
