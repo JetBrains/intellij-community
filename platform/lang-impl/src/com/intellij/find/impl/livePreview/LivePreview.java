@@ -276,29 +276,25 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       myReplacementBalloon.hide();
     }
 
-    if (editor != null) {
-
-      for (VisibleAreaListener visibleAreaListener : myVisibleAreaListenersToRemove) {
-        editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
-      }
-      myVisibleAreaListenersToRemove.clear();
-      Project project = mySearchResults.getProject();
-      if (project != null && !project.isDisposed()) {
-        for (RangeHighlighter h : myHighlighters) {
-          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, h);
-        }
-        if (myCursorHighlighter != null) {
-          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, myCursorHighlighter);
-          myCursorHighlighter = null;
-        }
-      }
-      myHighlighters.clear();
-      stopListeningToSelection();
+    for (VisibleAreaListener visibleAreaListener : myVisibleAreaListenersToRemove) {
+      editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
     }
+    myVisibleAreaListenersToRemove.clear();
+    Project project = mySearchResults.getProject();
+    if (project != null && !project.isDisposed()) {
+      for (RangeHighlighter h : myHighlighters) {
+        HighlightManager.getInstance(project).removeSegmentHighlighter(editor, h);
+      }
+      if (myCursorHighlighter != null) {
+        HighlightManager.getInstance(project).removeSegmentHighlighter(editor, myCursorHighlighter);
+        myCursorHighlighter = null;
+      }
+    }
+    myHighlighters.clear();
+    stopListeningToSelection();
   }
 
   private void highlightUsages() {
-    if (mySearchResults.getEditor() == null) return;
     if (mySearchResults.getMatchesCount() >= mySearchResults.getMatchesLimit())
       return;
     for (FindResult range : mySearchResults.getOccurrences()) {
@@ -320,7 +316,6 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   private void updateInSelectionHighlighters() {
-    if (mySearchResults.getEditor() == null) return;
     final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
