@@ -571,12 +571,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
         // Process class's static initializers
-        if (method.isStatic() || method.isConstructor()) {
-          if (method.isConstructor()) {
-            addInstantiatedClass(method.getOwnerClass());
+        if (method.isStatic() || method.isConstructor() || method.isEntry()) {
+          if (method.isStatic()) {
+            ((RefElementImpl)method.getOwner()).setReachable(true);
           }
           else {
-            ((RefElementImpl)method.getOwner()).setReachable(true);
+            addInstantiatedClass(method.getOwnerClass());
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);
