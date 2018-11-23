@@ -7,6 +7,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -48,7 +50,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private static final Object IN_SELECTION2 = ObjectUtils.sentinel("LivePreview.IN_SELECTION2");
   private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
-  private boolean myListeningSelection = false;
+  private Disposable mySelectionListening;
   private boolean mySuppressedUpdate = false;
   private boolean myInSmartUpdate = false;
 
@@ -233,8 +235,21 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     mySearchResults = searchResults;
     searchResultsUpdated(searchResults);
     searchResults.addListener(this);
-    myListeningSelection = true;
-    mySearchResults.getEditor().getSelectionModel().addSelectionListener(this);
+    startListeningToSelection();
+  }
+
+  private void startListeningToSelection() {
+    if (mySelectionListening == null) {
+      mySelectionListening = Disposer.newDisposable();
+      EditorUtil.addBulkSelectionListener(mySearchResults.getEditor(), this, mySelectionListening);
+    }
+  }
+
+  private void stopListeningToSelection() {
+    if (mySelectionListening != null) {
+      Disposer.dispose(mySelectionListening);
+      mySelectionListening = null;
+    }
   }
 
   public Delegate getDelegate() {
@@ -278,10 +293,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
         }
       }
       myHighlighters.clear();
-      if (myListeningSelection) {
-        editor.getSelectionModel().removeSelectionListener(this);
-        myListeningSelection = false;
-      }
+      stopListeningToSelection();
     }
   }
 
@@ -304,11 +316,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       }
     }
     updateInSelectionHighlighters();
-    if (!myListeningSelection) {
-      mySearchResults.getEditor().getSelectionModel().addSelectionListener(this);
-      myListeningSelection = true;
-    }
-
+    startListeningToSelection();
   }
 
   private void updateInSelectionHighlighters() {

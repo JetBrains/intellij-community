@@ -33,6 +33,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private final EditorImpl myEditor;
 
   private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
+  private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);
 
   private TextAttributes myTextAttributes;
 
@@ -338,6 +339,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myCurrentCaret != null) {
       throw new IllegalStateException("Recursive runForEachCaret invocations are not allowed");
     }
+    myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
     doWithCaretMerging(() -> {
       try {
         List<Caret> sortedCarets = getAllCarets();
@@ -353,6 +355,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         myCurrentCaret = null;
       }
     });
+    myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+  }
+
+  @Override
+  public void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable) {
+    myCaretActionListeners.addListener(listener, disposable);
   }
 
   @Override
