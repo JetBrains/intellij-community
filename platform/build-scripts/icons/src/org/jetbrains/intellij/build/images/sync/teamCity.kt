@@ -32,8 +32,7 @@ internal fun isNotificationRequired(context: Context) =
   // remind of failure every day
   (context.isFail() ||
    // or check previous build and notify on fail -> success
-   teamCityGet("builds?locator=buildType:$BUILD_CONF,count:1")
-     .contains("status=\"FAILURE\""))
+   isPreviousBuildFailed())
 
 internal val DEFAULT_INVESTIGATOR by lazy {
   System.getProperty("intellij.icons.sync.default.investigator")?.takeIf { it.isNotBlank() } ?: error("Specify default investigator")
@@ -106,3 +105,5 @@ internal fun triggeredBy() = System.getProperty("teamcity.build.triggeredBy.user
   ?.removeSuffix(System.lineSeparator())
 
 internal fun isScheduled() = System.getProperty("teamcity.build.triggeredBy")?.contains("Schedule") == true
+
+internal fun isPreviousBuildFailed() = teamCityGet("builds?locator=buildType:$BUILD_CONF,count:1").contains("status=\"FAILURE\"")

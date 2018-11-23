@@ -33,17 +33,29 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   context.devIcons = readDevRepo(context, devRepoVcsRoots)
   callWithTimer("Searching for changed icons..") {
     when {
-      context.iconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDesigners(context, devRepoVcsRoots)
+      context.iconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDesigners(context)
       context.devIconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDev(context, devRepoVcsRoots)
       else -> searchForAllChangedIcons(context, devRepoVcsRoots)
     }
   }
-  if (context.devChanges().isEmpty() && context.iconsChanges().isEmpty()) {
-    log("No changes are found")
-  }
-  else {
-    syncIcons(context)
-    report(context, skippedDirs.size)
+  when {
+    !context.iconsSyncRequired() && !context.devSyncRequired() -> {
+      if (isUnderTeamCity() && isPreviousBuildFailed()) {
+        context.doFail("No changes are found")
+      }
+      else {
+        log("No changes are found")
+      }
+    }
+    else -> {
+      syncIcons(context)
+      val report = report(context, skippedDirs.size)
+      if (isUnderTeamCity() && context.isFail()) {
+        context.doFail(report)
+      } else {
+        log(report)
+      }
+    }
   }
 }
 
@@ -94,7 +106,7 @@ private fun asIcon(files: Collection<String>, repo: File, root: File) = files
   .filter { ImageExtension.fromName(it) != null }
   .map { repo.resolve(it).toRelativeString(root) }
 
-private fun searchForChangedIconsByDesigners(context: Context, devRepoVcsRoots: List<File>) {
+private fun searchForChangedIconsByDesigners(context: Context) {
   val iterator = context.iconsCommitHashesToSync.iterator()
   while (iterator.hasNext()) {
     val commit = iterator.next()

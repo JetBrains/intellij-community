@@ -6,7 +6,7 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-internal fun report(context: Context, skipped: Int) {
+internal fun report(context: Context, skipped: Int) : String {
   val (devIcons, icons) = context.devIcons.size to context.icons.size
   if (isUnderTeamCity()) {
     findCommitsToSync(context)
@@ -48,8 +48,7 @@ internal fun report(context: Context, skipped: Int) {
   if (context.createdReviews.isNotEmpty()) {
     report += "\nCreated reviews: ${context.createdReviews.joinToString { it.url }}"
   }
-  log(report)
-  if (isUnderTeamCity() && context.isFail()) context.doFail(report)
+  return report
 }
 
 private fun findCommitsToSync(context: Context) {
