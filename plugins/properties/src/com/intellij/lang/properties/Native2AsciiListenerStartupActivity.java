@@ -2,10 +2,10 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -17,28 +17,18 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 
-public class PropertiesFilesManager implements ProjectComponent {
-  private final Project myProject;
-
-  public static PropertiesFilesManager getInstance(Project project) {
-    return project.getComponent(PropertiesFilesManager.class);
-  }
-
-  public PropertiesFilesManager(Project project) {
-    myProject = project;
-  }
-
+public class Native2AsciiListenerStartupActivity implements StartupActivity {
   @Override
-  public void projectOpened() {
-    final PropertyChangeListener myListener = new PropertyChangeListener() {
+  public void runActivity(@NotNull Project project) {
+    EncodingManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
       @Override
       public void propertyChange(final PropertyChangeEvent evt) {
         String propertyName = evt.getPropertyName();
         if (EncodingManager.PROP_NATIVE2ASCII_SWITCH.equals(propertyName) ||
             EncodingManager.PROP_PROPERTIES_FILES_ENCODING.equals(propertyName)
           ) {
-          DumbService.getInstance(myProject).smartInvokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-            Collection<VirtualFile> filesToRefresh = FileTypeIndex.getFiles(PropertiesFileType.INSTANCE, GlobalSearchScope.allScope(myProject));
+          DumbService.getInstance(project).smartInvokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+            Collection<VirtualFile> filesToRefresh = FileTypeIndex.getFiles(PropertiesFileType.INSTANCE, GlobalSearchScope.allScope(project));
             VirtualFile[] virtualFiles = VfsUtilCore.toVirtualFileArray(filesToRefresh);
             FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -50,13 +40,6 @@ public class PropertiesFilesManager implements ProjectComponent {
           }));
         }
       }
-    };
-    EncodingManager.getInstance().addPropertyChangeListener(myListener,myProject);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "PropertiesFileManager";
+    }, project);
   }
 }
