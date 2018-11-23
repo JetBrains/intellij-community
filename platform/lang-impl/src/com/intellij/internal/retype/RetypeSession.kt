@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Alarm
 import java.io.File
+import java.util.*
 
 class RetypeSession(
   private val project: Project,
@@ -128,6 +129,8 @@ class RetypeSession(
     }
   }
 
+  val completionStack = ArrayDeque<String>()
+
   private fun typeNext() {
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
@@ -161,20 +164,33 @@ class RetypeSession(
         pos++
         completedChars++
       }
-      editor.caretModel.moveToOffset(pos)
+      WriteCommandAction.runWriteCommandAction(project) {
+        document.deleteString(pos, editor.caretModel.offset)
+        editor.caretModel.moveToOffset(pos)
+      }
+    }
 
-      val nextChar = originalText[pos]
-      if (document.textLength - pos > tailLength && nextChar in listOf('}', ')', ']')) {
-        // Still have something extra characters in front. Probably closing bracket.
-        for (bracketCharacterPos in pos until document.textLength - tailLength) {
-          if (document.text[bracketCharacterPos] == nextChar) {
-            // Found brackets character after caret. All characters between caret and matched symbol should be deleted
-            // Because we don't expect them (in most cases this is just whitespaces)
+    if (document.textLength > pos + tailLength) {
+      checkStack()
+      val firstCompletion = completionStack.peekLast()
+
+      if (firstCompletion != null) {
+        val indexOfFirstCompletion = originalText.substring(pos, endPos).trim().indexOf(firstCompletion.trim())
+        // Handle -1
+
+        if (indexOfFirstCompletion == 0) {
+          val origIndexOfFirstComp = originalText.substring(pos, endPos).indexOf(firstCompletion.trim())
+          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion.trim())
+          if (originalText.substring(pos).take(origIndexOfFirstComp) != document.text.substring(pos).take(origIndexOfFirstComp)) {
             WriteCommandAction.runWriteCommandAction(project) {
-              document.deleteString(pos, bracketCharacterPos)
+              document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos).take(origIndexOfFirstComp))
             }
-            break
           }
+          pos += origIndexOfFirstComp + firstCompletion.trim().length
+          editor.caretModel.moveToOffset(pos)
+          completionStack.removeLast()
+          queueNextOrStop()
+          return
         }
       }
     }
@@ -225,6 +241,28 @@ class RetypeSession(
       typedRightBefore = true
     }
     queueNextOrStop()
+  }
+
+  fun checkStack() {
+    val unexpectedCharsDoc = document.text.substring(pos, document.textLength - tailLength)
+
+    var endPosDoc = unexpectedCharsDoc.length
+
+    val completionIterator = completionStack.iterator()
+    while (completionIterator.hasNext()) {
+      val completion = completionIterator.next()
+      val lastIndexOfCompletion = unexpectedCharsDoc.substring(0, endPosDoc).lastIndexOf(completion.trim())
+      if (lastIndexOfCompletion < 0) {
+        completionIterator.remove()
+        continue
+      }
+      endPosDoc = lastIndexOfCompletion
+    }
+
+    val unstackedCompletion = unexpectedCharsDoc.substring(0, endPosDoc)
+    if (unstackedCompletion.trim().isNotEmpty()) {
+      completionStack.add(unstackedCompletion.trim())
+    }
   }
 
   private fun queueNextOrStop() {
