@@ -51,8 +51,8 @@ public interface SearchEverywhereContributor<F> {
     return Collections.emptyList();
   }
 
-  @NotNull
-  default String getAdvertisement() { return ""; }
+  @Nullable
+  default String getAdvertisement() { return null; }
 
   void fetchElements(@NotNull String pattern,
                      boolean everywhere,
