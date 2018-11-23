@@ -4,15 +4,11 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiConsumer;
-
 
 public interface BreadcrumbListener {
   /**
    * Listener for breadcrumbs updates
-   *
-   * @param crumbs             updated collection of breadcrumbs
-   * @param navigationConsumer consumer, that should be called in order to properly navigate by breadcrumb
+   *  @param crumbs             updated collection of breadcrumbs
    */
-  void breadcrumbsChanged(@Nullable Iterable<? extends Crumb> crumbs, BiConsumer<NavigatableCrumb, Boolean> navigationConsumer);
+  void breadcrumbsChanged(@Nullable Iterable<? extends Crumb> crumbs);
 }

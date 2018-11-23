@@ -64,10 +64,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private Collection<RangeHighlighter> myHighlighed;
   private final VirtualFile myFile;
   private boolean myUserCaretChange = true;
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true,
-                                                                    ApplicationManager.getApplication().isHeadlessEnvironment()
-                                                                    ? null
-                                                                    : breadcrumbs);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, breadcrumbs);
 
   private List<BreadcrumbListener> myBreadcrumbListeners = new ArrayList<>();
 
@@ -214,8 +211,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myQueue.queue(myUpdate);
   }
 
-  public void registerBreadcrumbListener(BreadcrumbListener listener) {
+  public void addBreadcrumbListener(BreadcrumbListener listener, Disposable parentDisposable) {
     myBreadcrumbListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myBreadcrumbListeners.remove(listener));
   }
 
   public void removeBreadcrumbListener(BreadcrumbListener listener) {
@@ -224,7 +222,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void notifyListeners(Iterable<? extends Crumb> breadcrumbs) {
     for (BreadcrumbListener listener : myBreadcrumbListeners) {
-      listener.breadcrumbsChanged(breadcrumbs, this::navigate);
+      listener.breadcrumbsChanged(breadcrumbs);
     }
   }
 
@@ -239,7 +237,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     navigate(navigatableCrumb, event.isShiftDown() || event.isMetaDown());
   }
 
-  private void navigate(NavigatableCrumb crumb, boolean withSelection) {
+  public void navigate(NavigatableCrumb crumb, boolean withSelection) {
     myUserCaretChange = false;
     crumb.navigate(myEditor, withSelection);
   }
