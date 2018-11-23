@@ -10,6 +10,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -85,7 +86,8 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   protected final void initCompiler() {
     try {
-      myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]), myProject);
+      Module module = ModuleManager.getInstance(myProject).getModules()[0];
+      myCompilerTester = new CompilerTester(module);
     }
     catch (Throwable e) {
       fail(e.getMessage());
@@ -99,11 +101,13 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
+    if (myCompilerTester != null) {
+      myCompilerTester.tearDown();
+    }
     try {
       PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
       ProjectManager.getInstance().closeProject(myProject);
       WriteAction.run(() -> Disposer.dispose(myProject));
-
       myProject = null;
       InspectionProfileImpl.INIT_INSPECTIONS = false;
     }
