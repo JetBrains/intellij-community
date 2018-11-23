@@ -189,16 +189,14 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @NotNull
   protected Set<String> commit(@NotNull List<Change> changes, @NotNull String message) {
     Set<String> feedback = new HashSet<>();
-    //noinspection unchecked
-    throwIfNotEmpty((List)vcs.getCheckinEnvironment().commit(changes, message, nullConstant(), feedback));
+    throwIfNotEmpty(vcs.getCheckinEnvironment().commit(changes, message, nullConstant(), feedback));
     return feedback;
   }
 
   protected void rollback(@NotNull List<Change> changes) {
     List<VcsException> exceptions = new ArrayList<>();
     vcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
-    //noinspection unchecked
-    throwIfNotEmpty((List)exceptions);
+    throwIfNotEmpty(exceptions);
   }
 
   @Override

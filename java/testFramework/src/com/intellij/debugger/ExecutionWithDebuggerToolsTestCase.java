@@ -344,13 +344,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
-  protected void addException(Throwable e) {
+  protected void addException(@NotNull Throwable e) {
     synchronized (myException) {
       myException.add(e);
     }
   }
 
-  protected void error(Throwable th) {
+  protected void error(@NotNull Throwable th) {
     fail(StringUtil.getThrowableText(th));
   }
 
