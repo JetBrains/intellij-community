@@ -14,54 +14,54 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
 
-  var autopopupOldValue: Boolean? = false
-
-  override fun setUp() {
-    super.setUp()
-    autopopupOldValue = TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true)
-  }
-
-  override fun tearDown() {
-    super.tearDown()
-    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, autopopupOldValue)
-  }
-
   fun testBraces() {
-    doTest()
+    doTestWithoutLookup()
   }
 
   fun testImport() {
-    doTest()
+    doTestWithLookup()
   }
 
   fun testClosingBracketAfterOpening() {
-    doTest()
+    doTestWithoutLookup()
   }
 
   fun testMultilineFunction() {
-    doTest()
+    doTestWithoutLookup()
   }
 
   fun testSuggestionBeforeNewLine() {
-    doTest()
+    doTestWithLookup()
   }
 
   fun testEmptyClass() {
-    doTest()
+    doTestWithLookup()
   }
 
   fun testBlockComment() {
-    doTest()
+    doTestWithoutLookup()
   }
 
   fun testJavaDoc() {
-    doTest()
+    doTestWithoutLookup()
   }
 
-  private fun doTest() {
+  private fun doTestWithLookup() {
+    val autopopupOldValue = TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true)
     val filePath = "/retype/${getTestName(false)}.java"
     myFixture.configureByFile(filePath)
     RetypeSession(project, myFixture.editor as EditorImpl, 50, null, 0).start()
+    while (editor.getUserData(RETYPE_SESSION_KEY) != null) {
+      IdeEventQueue.getInstance().flushQueue()
+    }
+    myFixture.checkResultByFile(filePath)
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, autopopupOldValue)
+  }
+
+  private fun doTestWithoutLookup() {
+    val filePath = "/retype/${getTestName(false)}.java"
+    myFixture.configureByFile(filePath)
+    RetypeSession(project, myFixture.editor as EditorImpl, 0, null, 0).start()
     while (editor.getUserData(RETYPE_SESSION_KEY) != null) {
       IdeEventQueue.getInstance().flushQueue()
     }
