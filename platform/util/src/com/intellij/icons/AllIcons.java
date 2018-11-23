@@ -2391,6 +2391,7 @@ public class AllIcons {
   public final static class RunConfigurations {
     public static final Icon Applet = IconLoader.getIcon("/runConfigurations/applet.svg"); // 16x16
     public static final Icon Application = IconLoader.getIcon("/runConfigurations/application.svg"); // 16x16
+    public static final Icon Compound = IconLoader.getIcon("/runConfigurations/compound.svg"); // 16x16
     public static final Icon HidePassed = IconLoader.getIcon("/runConfigurations/hidePassed.svg"); // 16x16
     public static final Icon IgnoredTest = IconLoader.getIcon("/runConfigurations/ignoredTest.svg"); // 16x16
     public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.svg"); // 16x16
