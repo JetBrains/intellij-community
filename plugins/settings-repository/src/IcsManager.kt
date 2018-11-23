@@ -246,8 +246,8 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
           Pair("$osFolderName/keymaps", "keymaps")
       ), "Move keymaps to root")
 
-      val isBadFilesRemoved = removeBadFiles(repositoryManager)
-      if (migrateSchemes || migrateKeyMaps || isBadFilesRemoved) {
+      val removeOtherXml = repositoryManager.delete("other.xml")
+      if (migrateSchemes || migrateKeyMaps || removeOtherXml) {
         // schedule push to avoid merge conflicts
         application.invokeLater { icsManager.autoSyncManager.autoSync(force = true) }
       }
@@ -255,14 +255,4 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
 
     icsManager.beforeApplicationLoaded(application)
   }
-}
-
-private fun removeBadFiles(repositoryManager: RepositoryManager): Boolean {
-  var removed = false
-  for (file in listOf("other.xml", "webServers.xml")) {
-    if (repositoryManager.delete(file)) {
-      removed = true
-    }
-  }
-  return removed
 }
