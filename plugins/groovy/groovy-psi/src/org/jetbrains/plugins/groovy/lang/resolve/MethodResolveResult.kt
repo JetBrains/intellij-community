@@ -24,8 +24,8 @@ class MethodResolveResult(
   method: PsiMethod,
   place: PsiElement,
   state: ResolveState,
-  private val arguments: Arguments?,
-  private val typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY
+  arguments: Arguments?,
+  typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY
 ) : BaseGroovyResolveResult<PsiMethod>(method, place, state), GroovyMethodResult {
 
   override fun getContextSubstitutor(): PsiSubstitutor = super.getSubstitutor()
@@ -47,7 +47,7 @@ class MethodResolveResult(
   private val myRealCandidate by lazyPub {
     val mapping = myCandidate.argumentMapping
     if (mapping != null && method is GrGdkMethod && place is GrReferenceExpression) {
-      GdkMethodCandidate(method.staticMethod, contextSubstitutor, buildQualifier(place, state), mapping)
+      GdkMethodCandidate(method.staticMethod, buildQualifier(place, state), mapping)
     }
     else {
       myCandidate
@@ -63,7 +63,7 @@ class MethodResolveResult(
       siteSubstitutor
     }
     else {
-      GroovyInferenceSessionBuilder(place, myCandidate).build().inferSubst()
+      GroovyInferenceSessionBuilder(place, myCandidate, contextSubstitutor).build().inferSubst()
     }
   }
 

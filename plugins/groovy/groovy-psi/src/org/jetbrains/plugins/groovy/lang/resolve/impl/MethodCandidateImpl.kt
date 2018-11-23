@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 
 class MethodCandidateImpl(
   override val method: PsiMethod,
-  override val erasureSubstitutor: PsiSubstitutor,
+  erasureSubstitutor: PsiSubstitutor,
   arguments: Arguments?,
   context: PsiElement
 ) : GroovyMethodCandidate {
@@ -20,8 +20,7 @@ class MethodCandidateImpl(
   override val argumentMapping: ArgumentMapping? by lazyPub {
     when {
       arguments == null -> null
-      method.isEffectivelyVarArgs -> VarargArgumentMapping(method, erasureSubstitutor,
-                                                                                                          arguments, context)
+      method.isEffectivelyVarArgs -> VarargArgumentMapping(method, erasureSubstitutor, arguments, context)
       arguments.isEmpty() -> EmptyArgumentsMapping(method)
       else -> PositionalArgumentMapping(method, erasureSubstitutor, arguments, context)
     }

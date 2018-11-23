@@ -2,14 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiSubstitutor
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 
 class GdkMethodCandidate(
   override val method: PsiMethod,
-  override val erasureSubstitutor: PsiSubstitutor,
   receiverArgument: Argument,
   originalMapping: ArgumentMapping
 ) : GroovyMethodCandidate {

@@ -39,7 +39,7 @@ open class ClosureAsAnonymousParameterEnhancer : AbstractClosureParameterEnhance
     val candidate = variant.candidate ?: return null
     val mapping = candidate.argumentMapping ?: return null
     val expectedType = mapping.expectedType(ExpressionArgument(closure)) ?: return null
-    val substitutor = GroovyInferenceSessionBuilder(call, candidate)
+    val substitutor = GroovyInferenceSessionBuilder(call, candidate, variant.contextSubstitutor)
       .skipClosureIn(call)
       .resolveMode(false)
       .build()

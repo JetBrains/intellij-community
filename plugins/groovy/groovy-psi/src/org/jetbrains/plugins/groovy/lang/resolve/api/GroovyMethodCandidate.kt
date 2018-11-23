@@ -2,13 +2,10 @@
 package org.jetbrains.plugins.groovy.lang.resolve.api
 
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiSubstitutor
 
 interface GroovyMethodCandidate {
 
   val method: PsiMethod
-
-  val erasureSubstitutor: PsiSubstitutor
 
   val argumentMapping: ArgumentMapping?
 }

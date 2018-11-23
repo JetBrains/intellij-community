@@ -16,7 +16,7 @@ class MethodCallConstraint(
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     val candidate = result.candidate ?: return true
     val method = candidate.method
-    val contextSubstitutor = candidate.erasureSubstitutor
+    val contextSubstitutor = result.contextSubstitutor
     session.startNestedSession(method.typeParameters, contextSubstitutor, context, result) { nested ->
       nested.initArgumentConstraints(candidate.argumentMapping, session.inferenceSubstitution)
       nested.repeatInferencePhases()
