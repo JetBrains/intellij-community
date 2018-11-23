@@ -129,7 +129,9 @@ class RetypeSession(
     }
   }
 
-  val completionStack = ArrayDeque<String>()
+  // This stall will contains autocompletion elements
+  // E.g. "}", "]", "*/"
+  private val completionStack = ArrayDeque<String>()
 
   private fun typeNext() {
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
@@ -165,34 +167,50 @@ class RetypeSession(
         completedChars++
       }
       WriteCommandAction.runWriteCommandAction(project) {
+        // Delete symbols not from original text and move caret
         document.deleteString(pos, editor.caretModel.offset)
         editor.caretModel.moveToOffset(pos)
       }
     }
 
     if (document.textLength > pos + tailLength) {
-      checkStack()
+      updateStack()
       val firstCompletion = completionStack.peekLast()
 
       if (firstCompletion != null) {
-        val indexOfFirstCompletion = originalText.substring(pos, endPos).trim().indexOf(firstCompletion.trim())
-        // Handle -1
+        val origIndexOfFirstCompletion = originalText.substring(pos, endPos).trim().indexOf(firstCompletion)
 
-        if (indexOfFirstCompletion == 0) {
-          val origIndexOfFirstComp = originalText.substring(pos, endPos).indexOf(firstCompletion.trim())
-          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion.trim())
+        if (origIndexOfFirstCompletion == 0) {
+          // Next non-whitespace chars from original tests are from complation stack
+          val origIndexOfFirstComp = originalText.substring(pos, endPos).indexOf(firstCompletion)
+          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
           if (originalText.substring(pos).take(origIndexOfFirstComp) != document.text.substring(pos).take(origIndexOfFirstComp)) {
+            // We have some unexpected chars before completion. Remove them
             WriteCommandAction.runWriteCommandAction(project) {
-              document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos).take(origIndexOfFirstComp))
+              document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos, pos + origIndexOfFirstComp))
             }
           }
-          pos += origIndexOfFirstComp + firstCompletion.trim().length
+          pos += origIndexOfFirstComp + firstCompletion.length
           editor.caretModel.moveToOffset(pos)
           completionStack.removeLast()
           queueNextOrStop()
           return
         }
+        else if (origIndexOfFirstCompletion < 0) {
+          // Completion is wrong and original text doesn't contain it
+          // Remove this completion
+          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
+          WriteCommandAction.runWriteCommandAction(project) {
+            document.replaceString(pos, pos + docIndexOfFirstComp + firstCompletion.length, "")
+          }
+          completionStack.removeLast()
+          queueNextOrStop()
+          return
+        }
       }
+    } else if (document.textLength == pos + tailLength && completionStack.isNotEmpty()) {
+      // Text is as expected, but we have some extra completions in stack
+      completionStack.clear()
     }
 
     if (TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
@@ -243,15 +261,16 @@ class RetypeSession(
     queueNextOrStop()
   }
 
-  fun checkStack() {
+  private fun updateStack() {
     val unexpectedCharsDoc = document.text.substring(pos, document.textLength - tailLength)
 
     var endPosDoc = unexpectedCharsDoc.length
 
     val completionIterator = completionStack.iterator()
     while (completionIterator.hasNext()) {
+      // Validate all existing completions and add new completions if they are
       val completion = completionIterator.next()
-      val lastIndexOfCompletion = unexpectedCharsDoc.substring(0, endPosDoc).lastIndexOf(completion.trim())
+      val lastIndexOfCompletion = unexpectedCharsDoc.substring(0, endPosDoc).lastIndexOf(completion)
       if (lastIndexOfCompletion < 0) {
         completionIterator.remove()
         continue
@@ -259,6 +278,7 @@ class RetypeSession(
       endPosDoc = lastIndexOfCompletion
     }
 
+    // Add new completion in stack
     val unstackedCompletion = unexpectedCharsDoc.substring(0, endPosDoc)
     if (unstackedCompletion.trim().isNotEmpty()) {
       completionStack.add(unstackedCompletion.trim())
