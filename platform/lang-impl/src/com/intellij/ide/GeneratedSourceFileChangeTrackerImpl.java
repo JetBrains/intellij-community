@@ -54,11 +54,17 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
   }
 
   @TestOnly
-  public void waitForAlarm(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+  void waitForAlarm(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not wait for the alarm under write action");
     }
     myCheckingQueue.waitForAllExecuted(timeout, timeUnit);
+  }
+
+  @TestOnly
+  public void cancelAllAndWait(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    myCheckingQueue.cancelAllRequests();
+    waitForAlarm(timeout, timeUnit);
   }
 
   @Override

@@ -952,7 +952,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, timeout, timeUnit);
     GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
     if (tracker != null) {
-      tracker.waitForAlarm(timeout, timeUnit);
+      tracker.cancelAllAndWait(timeout, timeUnit);
     }
   }
 }
