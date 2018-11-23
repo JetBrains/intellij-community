@@ -645,6 +645,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   public boolean isImplicitCallReceiver() {
     // `a.&foo()` compiles into `new MethodClosure(a, "foo").call()` as if `call` was explicitly in the code
     // `a.@foo()` compiles into `a@.foo.call()` as if `call` was an explicitly in the code
-    return !hasAt() && !hasMemberPointer() && myStaticReference.resolve() instanceof GrVariable;
+    return hasAt() || hasMemberPointer() || myStaticReference.resolve() instanceof GrVariable;
   }
 }
