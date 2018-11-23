@@ -13,11 +13,11 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.WeakStringInterner;
-import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,7 +153,8 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public boolean isExcluded() {
-    return getPresentation().isExcluded(getDescriptor());
+    CommonProblemDescriptor descriptor = getDescriptor();
+    return descriptor != null && getPresentation().isExcluded(descriptor);
   }
 
   private static final WeakStringInterner NAME_INTERNER = new WeakStringInterner();
@@ -164,9 +165,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-
-    String name = XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
-                                                                                         ProblemDescriptorUtil.TRIM_AT_TREE_END));
+    String name = StringUtil.removeHtmlTags(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.TRIM_AT_TREE_END), true);
     return NAME_INTERNER.intern(name);
   }
 
