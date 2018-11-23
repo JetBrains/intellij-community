@@ -103,7 +103,7 @@ private fun searchForChangedIconsByDesigners(context: Context, devRepoVcsRoots: 
     }
     if (context.iconsChanges().size == before) {
       log("No icons in $commit, skipping")
-      context.iconsCommitHashesToSync.remove(commit)
+      iterator.remove()
     }
   }
   if (context.iconsChanges().isEmpty()) {
@@ -133,7 +133,7 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
     }
     if (repo == null) {
       log("No repo is found for $commit, skipping")
-      context.devIconsCommitHashesToSync.remove(commit)
+      iterator.remove()
     }
     else {
       val before = context.devChanges().size
@@ -146,7 +146,7 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
       }
       if (context.devChanges().size == before) {
         log("No icons in $commit, skipping")
-        context.devIconsCommitHashesToSync.remove(commit)
+        iterator.remove()
       }
     }
   }
