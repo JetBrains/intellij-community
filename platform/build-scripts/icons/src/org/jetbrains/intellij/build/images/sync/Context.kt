@@ -32,7 +32,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val addedByDesigners: MutableCollection<String> = mutableListOf()
   var removedByDesigners: Collection<String> = emptyList()
   var modifiedByDesigners: Collection<String> = emptyList()
-  var consistent: MutableCollection<String> = mutableListOf()
+  val consistent: MutableCollection<String> = mutableListOf()
   var createdReviews: Collection<Review> = emptyList()
   lateinit var icons: Map<String, GitObject>
   lateinit var devIcons: Map<String, GitObject>

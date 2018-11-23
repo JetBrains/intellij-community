@@ -48,12 +48,11 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
   log("Searching for all")
   val devIconsTmp = HashMap(context.devIcons)
   val modified = mutableListOf<String>()
-  val consistent = mutableListOf<String>()
   context.icons.forEach { icon, gitObject ->
     when {
       !devIconsTmp.containsKey(icon) -> context.addedByDesigners += icon
       gitObject.hash != devIconsTmp[icon]?.hash -> modified += icon
-      else -> consistent += icon
+      else -> context.consistent += icon
     }
     devIconsTmp.remove(icon)
   }
