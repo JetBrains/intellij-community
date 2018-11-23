@@ -1670,6 +1670,7 @@
     <outOfSourcesChecker implementation="org.jetbrains.plugins.groovy.projectRoots.GroovyOutOfSourcesChecker"/>
 
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerGradleConfigurationHandler"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -1806,9 +1807,6 @@
   </application-components>
 
   <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
-    </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
     </component>

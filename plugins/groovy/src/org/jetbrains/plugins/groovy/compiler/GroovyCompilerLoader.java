@@ -2,18 +2,16 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-public class GroovyCompilerLoader implements ProjectComponent {
-  private final CompilerManager myCompilerManager;
-
-  public GroovyCompilerLoader(CompilerManager manager) {
-    myCompilerManager = manager;
-  }
+public class GroovyCompilerLoader implements StartupActivity, DumbAware {
 
   @Override
-  public void projectOpened() {
-    myCompilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
+  public void runActivity(@NotNull Project project) {
+    CompilerManager.getInstance(project).addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
   }
 }
