@@ -240,8 +240,9 @@ class RetypeSession(
         if (origIndexOfFirstCompletion == 0) {
           // Next non-whitespace chars from original tests are from complation stack
           val origIndexOfFirstComp = originalText.substring(pos, endPos).indexOf(firstCompletion)
-          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
-          if (originalText.substring(pos).take(origIndexOfFirstComp) != document.text.substring(pos).take(origIndexOfFirstComp)) {
+          val docIndexOfFirstComp = document.text.indexOf(firstCompletion, startIndex = pos)
+          if (originalText.substring(pos, (pos + origIndexOfFirstComp).coerceAtMost(originalText.length))
+            != document.text.substring(pos, (pos + origIndexOfFirstComp).coerceAtMost(document.textLength))) {
             // We have some unexpected chars before completion. Remove them
             WriteCommandAction.runWriteCommandAction(project) {
               document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos, pos + origIndexOfFirstComp))
@@ -256,7 +257,7 @@ class RetypeSession(
         else if (origIndexOfFirstCompletion < 0) {
           // Completion is wrong and original text doesn't contain it
           // Remove this completion
-          val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
+          val docIndexOfFirstComp = document.text.indexOf(firstCompletion, startIndex = pos)
           WriteCommandAction.runWriteCommandAction(project) {
             document.replaceString(pos, pos + docIndexOfFirstComp + firstCompletion.length, "")
           }
@@ -282,7 +283,7 @@ class RetypeSession(
     while (completionIterator.hasNext()) {
       // Validate all existing completions and add new completions if they are
       val completion = completionIterator.next()
-      val lastIndexOfCompletion = unexpectedCharsDoc.substring(0, endPosDoc).lastIndexOf(completion)
+      val lastIndexOfCompletion = unexpectedCharsDoc.lastIndexOf(completion, startIndex = endPosDoc - 1)
       if (lastIndexOfCompletion < 0) {
         completionIterator.remove()
         continue
@@ -291,9 +292,9 @@ class RetypeSession(
     }
 
     // Add new completion in stack
-    unexpectedCharsDoc.substring(0, endPosDoc).trim().split("\\s+".toRegex()).reversed().forEach {
-      if (it.trim().isNotEmpty()) {
-        completionStack.add(it.trim())
+    unexpectedCharsDoc.substring(0, endPosDoc).trim().split("\\s+".toRegex()).map { it.trim() }.reversed().forEach {
+      if (it.isNotEmpty()) {
+        completionStack.add(it)
       }
     }
   }
