@@ -373,14 +373,10 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        try {
-          component.loadState(state)
-        }
-        finally {
-          val stateAfterLoad = stateGetter.close()
-          (stateAfterLoad ?: state).let {
-            FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, it, project)
-          }
+        component.loadState(state)
+        val stateAfterLoad = stateGetter.archiveState()
+        LOG.runAndLogException {
+          FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, stateAfterLoad ?: state, project)
         }
         return true
       }

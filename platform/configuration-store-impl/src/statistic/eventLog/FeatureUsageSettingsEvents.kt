@@ -23,7 +23,7 @@ object FeatureUsageSettingsEvents {
     }
   }
 
-  fun logConfigurationState(componentName: String, stateSpec: State, state: Any?, project: Project?) {
+  fun logConfigurationState(componentName: String, stateSpec: State, state: Any, project: Project?) {
     if (stateSpec.reportStatistic && FeatureUsageLogger.isEnabled()) {
       printer.logConfigurationState(componentName, state, project)
     }

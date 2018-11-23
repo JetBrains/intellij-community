@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.diagnostic.errorIfNotControlFlow
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.isEmpty
 import org.jdom.Element
@@ -29,7 +30,7 @@ fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: St
       return storage.getState(component, componentName, stateClass, mergeInto, reloadData)
     }
 
-    override fun close() : S? {
+    override fun archiveState() : S? {
       return null
     }
   }
@@ -38,7 +39,7 @@ fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: St
 interface StateGetter<S : Any> {
   fun getState(mergeInto: S? = null): S?
 
-  fun close(): S?
+  fun archiveState(): S?
 }
 
 private class StateGetterImpl<S : Any, T : Any>(private val component: PersistentStateComponent<S>,
@@ -55,7 +56,7 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     return storage.deserializeState(serializedState, stateClass, mergeInto)
   }
 
-  override fun close() : S? {
+  override fun archiveState() : S? {
     if (serializedState == null) {
       return null
     }
@@ -64,7 +65,7 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
       component.state
     }
     catch (e: Throwable) {
-      LOG.error("Cannot get state after load", e)
+      LOG.errorIfNotControlFlow(e) { "Cannot get state after load" }
       null
     }
 
