@@ -226,4 +226,10 @@ class FileTemplatesTest extends IdeaTestCase {
       return false
     }
   }
+
+  void 'test StringUtils special variable works and has removeAndHump method'() {
+    FileTemplate template = addTestTemplate("my_class", 'prefix ${StringUtils.removeAndHump("foo_barBar")} suffix')
+    def evaluated = template.getText([:])
+    assert evaluated == 'prefix FooBarBar suffix'
+  }
 }
