@@ -169,6 +169,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
           }
         }).withHidden(true));
     }
+    actions.add(new TerminalAction("Close Session", mySettingsProvider.getCloseSessionKeyStrokes(), input -> {
+      myListener.onSessionClosed();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     return actions;
   }
 
