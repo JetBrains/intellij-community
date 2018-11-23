@@ -11,6 +11,7 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
 import com.intellij.internal.performance.currentLatencyRecordKey
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Alarm
+import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
 
@@ -177,7 +179,8 @@ class RetypeSession(
           it.append("%delayType $delayMillis|$c\n")
         }
       }
-      editor.type(c.toString())
+      IdeEventQueue.getInstance().postEvent(
+        KeyEvent(editor.component, KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0, KeyEvent.VK_UNDEFINED, c))
       typedRightBefore = true
     }
     queueNextOrStop()
