@@ -92,10 +92,7 @@ public class CollectionFactoryInliner implements CallInliner {
     if (factoryInfo == null) return false;
     PsiExpression[] args = call.getArgumentList().getExpressions();
     for (PsiExpression arg : args) {
-      builder.pushExpression(arg);
-      if (factoryInfo.myNotNull) {
-        builder.checkNotNull(arg, NullabilityProblemKind.passingNullableToNotNullParameter);
-      }
+      builder.pushExpression(arg, factoryInfo.myNotNull ? NullabilityProblemKind.passingNullableToNotNullParameter : null);
       builder.pop();
     }
     DfaValueFactory factory = builder.getFactory();

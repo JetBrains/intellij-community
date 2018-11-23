@@ -56,6 +56,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final DfaValueFactory myFactory;
   private ControlFlow myCurrentFlow;
   private FList<Trap> myTrapStack = FList.emptyList();
+  private final Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> myCustomNullabilityProblems = new HashMap<>();
   private final ExceptionTransfer myRuntimeException;
   private final ExceptionTransfer myError;
   private final PsiType myAssertionError;
@@ -117,14 +118,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     catch (CannotAnalyzeException e) {
       return null;
-    }
-
-    PsiElement parent = myCodeFragment.getParent();
-    if (parent instanceof PsiLambdaExpression && myCodeFragment instanceof PsiExpression) {
-      generateBoxingUnboxingInstructionFor((PsiExpression)myCodeFragment,
-                                           LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
-      addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.nullableReturn.problem((PsiExpression)myCodeFragment)));
-      addInstruction(new PopInstruction());
     }
 
     addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
@@ -411,6 +404,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       jumpOut(exitedElement);
     }
     finishElement(statement);
+  }
+
+  void addNullCheck(PsiExpression expression) {
+    NullabilityProblemKind.NullabilityProblem<?> problem = NullabilityProblemKind.fromContext(expression, myCustomNullabilityProblems);
+    if (problem != null) {
+      addInstruction(new CheckNotNullInstruction(problem));
+    }
   }
 
   private void jumpOut(PsiElement exitedStatement) {
@@ -826,7 +826,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             generateBoxingUnboxingInstructionFor(returnValue, LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression));
           }
         }
-        addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.nullableReturn.problem(returnValue)));
         addInstruction(new PopInstruction());
       }
 
@@ -909,7 +908,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(caseExpression, targetType);
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(targetType);
       if (psiClass != null) {
-        addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.fieldAccessNPE.problem(caseExpression)));
         if (psiClass.isEnum()) {
           enumValues = new HashSet<>();
           for (PsiField f : psiClass.getFields()) {
@@ -1229,6 +1227,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       toPush = myFactory.createTypeValue(expression.getType(), Nullability.UNKNOWN);
     }
     addInstruction(new ArrayAccessInstruction(toPush, expression));
+    addNullCheck(expression);
     finishElement(expression);
   }
 
@@ -1305,23 +1304,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     else {
-      Nullability nullability = Nullability.UNKNOWN;
-      if (componentType != null) {
-        nullability = DfaPsiUtil.getTypeNullability(componentType);
-        if (nullability == Nullability.UNKNOWN && originalExpression != expression) {
-          PsiType expectedType = ExpectedTypeUtils.findExpectedType(originalExpression, false);
-          if (expectedType instanceof PsiArrayType) {
-            nullability = DfaPsiUtil.getTypeNullability(((PsiArrayType)expectedType).getComponentType());
-          }
-        }
-      }
       for (PsiExpression initializer : initializers) {
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
-          if (nullability == Nullability.NOT_NULL) {
-            addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.storingToNotNullArray.problem(initializer)));
-          }
         }
         addInstruction(new PopInstruction());
       }
@@ -1712,6 +1698,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (myInlining) {
       for (CallInliner inliner: INLINERS) {
         if (inliner.tryInlineCall(new CFGBuilder(this), call)) {
+          addNullCheck(call);
           return true;
         }
       }
@@ -1742,18 +1729,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
     List<? extends MethodContract> contracts = method == null ? Collections.emptyList() : JavaMethodContractUtil
       .getMethodCallContracts(method, expression);
-    MethodCallInstruction instruction;
     PsiExpression anchor;
     if (expression == null) {
       assert reference instanceof PsiMethodReferenceExpression;
-      instruction = new MethodCallInstruction((PsiMethodReferenceExpression)reference, contracts);
+      addInstruction(new MethodCallInstruction((PsiMethodReferenceExpression)reference, contracts));
       anchor = reference;
     }
     else {
-      instruction = new MethodCallInstruction(expression, myFactory.createValue(expression), contracts);
+      addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
+      addNullCheck(expression);
       anchor = expression;
     }
-    addInstruction(instruction);
     if (contracts.stream().anyMatch(c -> c.getReturnValue().isFail())) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
@@ -1761,8 +1747,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
       ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
       addInstruction(ifNotFail);
-      addInstruction(
-        new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(null), myTrapStack), anchor));
+      addInstruction(new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(null), myTrapStack), anchor));
 
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
     }
@@ -1797,7 +1782,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression qualifier = expression.getQualifier();
     if (qualifier != null) {
       qualifier.accept(this);
-      addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.innerClassNPE.problem(expression)));
       addInstruction(new PopInstruction());
     }
 
@@ -2003,7 +1987,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     // complex assignments (e.g. "|=") are both reading and writing
     boolean writing = PsiUtil.isAccessedForWriting(expression) && !PsiUtil.isAccessedForReading(expression);
     addInstruction(new PushInstruction(myFactory.createValue(expression), expression, writing));
-
+    addNullCheck(expression);
+    
     finishElement(expression);
   }
 
@@ -2012,6 +1997,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     DfaValue dfaValue = myFactory.createLiteralValue(expression);
     addInstruction(new PushInstruction(dfaValue, expression));
+    if (dfaValue == myFactory.getConstFactory().getNull()) {
+      addNullCheck(expression);
+    }
 
     finishElement(expression);
   }
@@ -2065,6 +2053,28 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     popTrap(Trap.InsideInlinedBlock.class);
     // Pop transfer value
     addInstruction(new PopInstruction());
+  }
+
+  /**
+   * Register custom nullability problem for given expression or its subexpressions (e.g. ternary branches). 
+   * This would override default problem detection.
+   * 
+   * @param expression an expression which nullness may cause the problem
+   * @param problem a problem to check. Use {@link NullabilityProblemKind#noProblem} to suppress the problem which 
+   *                would be detected by default.
+   */
+  void addCustomNullabilityProblem(@NotNull PsiExpression expression, @NotNull NullabilityProblemKind<? super PsiExpression> problem) {
+    myCustomNullabilityProblems.put(expression, problem);
+  }
+
+  /**
+   * Unregister custom nullability problem previously registered via {@link #addCustomNullabilityProblem(PsiExpression, NullabilityProblemKind)}. 
+   * Call this after given expression is fully analyzed.
+   * 
+   * @param expression an expression to deregister.
+   */
+  void removeCustomNullabilityProblem(@NotNull PsiExpression expression) {
+    myCustomNullabilityProblems.remove(expression);
   }
 
   /**
@@ -2141,11 +2151,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     void generateReturn(PsiExpression returnValue, ControlFlowAnalyzer analyzer) {
       if (returnValue != null) {
         analyzer.addInstruction(new PushInstruction(myTarget, null, true));
-        returnValue.accept(analyzer);
-        analyzer.generateBoxingUnboxingInstructionFor(returnValue, myTarget.getType());
-        if (myForceNonNullBlockResult) {
-          analyzer.addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.nullableFunctionReturn.problem(returnValue)));
+        if (!isSwitch()) {
+          analyzer.addCustomNullabilityProblem(returnValue, myForceNonNullBlockResult ? 
+                                                            NullabilityProblemKind.nullableFunctionReturn : NullabilityProblemKind.noProblem);
         }
+        returnValue.accept(analyzer);
+        analyzer.removeCustomNullabilityProblem(returnValue);
+        analyzer.generateBoxingUnboxingInstructionFor(returnValue, myTarget.getType());
         analyzer.addInstruction(new AssignInstruction(returnValue, null));
         analyzer.addInstruction(new PopInstruction());
       }
