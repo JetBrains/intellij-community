@@ -299,10 +299,8 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
       // name equals to base path name - just remove name
       nameFile.delete()
     }
-    else {
-      if (Paths.get(basePath).isDirectory()) {
-        nameFile.write(currentProjectName.toByteArray())
-      }
+    else if (Paths.get(basePath).isDirectory()) {
+      nameFile.write(currentProjectName.toByteArray())
     }
   }
 
