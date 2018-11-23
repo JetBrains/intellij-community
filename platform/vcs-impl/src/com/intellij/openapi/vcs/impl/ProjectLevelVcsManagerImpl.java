@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -63,9 +64,6 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -406,12 +404,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       ConsoleView console = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
       myConsole = console;
 
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.add(console.getComponent(), BorderLayout.CENTER);
+      SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
+      panel.setContent(console.getComponent());
 
       ActionToolbar toolbar = ActionManager.getInstance()
         .createActionToolbar("VcsManager", new DefaultActionGroup(console.createConsoleActions()), false);
-      panel.add(toolbar.getComponent(), BorderLayout.WEST);
+      panel.setToolbar(toolbar.getComponent());
 
       content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
       content.setDisposer(() -> releaseConsole());
