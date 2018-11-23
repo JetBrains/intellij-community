@@ -31,10 +31,12 @@ fun nullPromise(): Promise<*> = InternalPromiseUtil.FULFILLED_PROMISE.value
 /**
  * Creates a promise that is resolved with the given value.
  */
-fun <T> resolvedPromise(result: T): Promise<T> {
+fun <T> resolvedPromise(result: T): Promise<T> = resolvedCancellablePromise(result)
+
+fun <T> resolvedCancellablePromise(result: T): CancellablePromise<T> {
   @Suppress("UNCHECKED_CAST")
   return when (result) {
-    null -> InternalPromiseUtil.FULFILLED_PROMISE.value as Promise<T>
+    null -> InternalPromiseUtil.FULFILLED_PROMISE.value as CancellablePromise<T>
     else -> DonePromise(InternalPromiseUtil.PromiseValue.createFulfilled(result))
   }
 }
