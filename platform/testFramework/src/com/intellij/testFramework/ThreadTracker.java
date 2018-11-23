@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -23,7 +24,10 @@ import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
@@ -138,30 +142,32 @@ public class ThreadTracker {
         if (thread == Thread.currentThread()) continue;
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
-        if (isWellKnownOffender(thread)) continue;
         if (!thread.isAlive()) continue;
         StackTraceElement[] stackTrace = thread.getStackTrace();
-        if (isIdleApplicationPoolThread(thread, stackTrace)) continue;
-        if (isIdleCommonPoolThread(thread, stackTrace)) continue;
+        if (shouldIgnore(thread, stackTrace)) continue;
 
-        if (thread.getStackTrace().length == 0
+        if (stackTrace.length == 0
             // give thread a chance to run up to the completion
             || thread.getState() == Thread.State.RUNNABLE) {
           thread.interrupt();
           long start = System.currentTimeMillis();
-          while (thread.isAlive() && System.currentTimeMillis() < start + 5_000) {
-            //System.out.println("waiting for "+thread);
+          if (thread.isAlive()) {
+            System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
+          }
+          while (System.currentTimeMillis() < start + 5_000) {
             UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
+            // afters some time the submitted task can finish and the thread become idle pool
+            if (shouldIgnore(thread, thread.getStackTrace())) break;
+          }
+          long elapsed = System.currentTimeMillis() - start;
+          if (elapsed > 1_000) {
+            System.err.println("waited for " + thread + " for " + elapsed+"ms");
           }
         }
-        stackTrace = thread.getStackTrace();
-        if (stackTrace.length == 0) {
-          continue; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
-        }
 
-        if (isWellKnownOffender(thread)) continue; // check once more because the thread name may be set via race
-        if (isIdleApplicationPoolThread(thread, stackTrace)) continue;
-        if (isIdleCommonPoolThread(thread, stackTrace)) continue;
+        // check once more because the thread name may be set via race
+        stackTrace = thread.getStackTrace();
+        if (shouldIgnore(thread, stackTrace)) continue;
 
         String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
         Assert.fail(trace);
@@ -170,6 +176,17 @@ public class ThreadTracker {
     finally {
       before.clear();
     }
+  }
+
+  private static boolean shouldIgnore(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+    if (!thread.isAlive()) return true;
+    if (isWellKnownOffender(thread)) return true;
+
+    if (stackTrace.length == 0) {
+      return true; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
+    }
+    if (isIdleApplicationPoolThread(thread, stackTrace)) return true;
+    return isIdleCommonPoolThread(thread, stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull Thread thread) {
