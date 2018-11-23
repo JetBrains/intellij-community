@@ -1,13 +1,12 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.json.JsonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.LoggerKt;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Factory;
@@ -81,8 +80,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       try {
         providers.addAll(factory.getProviders(myProject));
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
-        LoggerKt.errorIfNotControlFlow(Logger.getInstance(JsonSchemaService.class), e);
+        Logger.getInstance(JsonSchemaService.class).error(PluginManagerCore.createPluginException(e.getMessage(), e, factory.getClass()));
       }
     }
     return providers;

@@ -1,10 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.diagnostic.errorIfNotControlFlow
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.isEmpty
 import org.jdom.Element
@@ -64,8 +65,11 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     val stateAfterLoad = try {
       component.state
     }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
     catch (e: Throwable) {
-      LOG.errorIfNotControlFlow(e) { "Cannot get state after load" }
+      LOG.error(PluginManagerCore.createPluginException("Cannot get state after load", e, component.javaClass))
       null
     }
 

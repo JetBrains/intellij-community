@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -16,8 +17,8 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.errorIfNotControlFlow
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
@@ -99,8 +100,11 @@ abstract class ComponentStoreImpl : IComponentStore {
         initJdomExternalizable(component, componentName)
       }
     }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
     catch (e: Exception) {
-      LOG.errorIfNotControlFlow(e) { "Cannot init $componentName component state" }
+      LOG.error(PluginManagerCore.createPluginException("Cannot init $componentName component state", e, component.javaClass))
       return
     }
   }

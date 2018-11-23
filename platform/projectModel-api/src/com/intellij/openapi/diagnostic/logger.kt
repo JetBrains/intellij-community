@@ -2,6 +2,7 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaGetter
 
@@ -38,26 +39,11 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   try {
     return runnable()
   }
+  catch (e: ProcessCanceledException) {
+    throw e
+  }
   catch (e: Throwable) {
-    errorIfNotControlFlow(e)
-    return null
-  }
-}
-
-fun Logger.errorIfNotControlFlow(e: Throwable) {
-  if (e is ControlFlowException) {
-    throw e
-  }
-  else {
     error(e)
-  }
-}
-
-inline fun Logger.errorIfNotControlFlow(e: Throwable, lazyMessage: () -> String) {
-  if (e is ControlFlowException) {
-    throw e
-  }
-  else {
-    error(lazyMessage())
+    return null
   }
 }
