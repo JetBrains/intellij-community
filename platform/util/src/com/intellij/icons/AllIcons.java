@@ -2243,18 +2243,66 @@ public class AllIcons {
     public static final Icon ProgressResumeSmallHover = IconLoader.getIcon("/process/progressResumeSmallHover.svg"); // 12x12
 
     public final static class State {
-      public static final Icon GreenOK = IconLoader.getIcon("/process/state/GreenOK.png"); // 16x16
-      public static final Icon GreyProgr = IconLoader.getIcon("/process/state/GreyProgr.png"); // 16x16
-      public static final Icon GreyProgr_1 = IconLoader.getIcon("/process/state/GreyProgr_1.png"); // 16x16
-      public static final Icon GreyProgr_2 = IconLoader.getIcon("/process/state/GreyProgr_2.png"); // 16x16
-      public static final Icon GreyProgr_3 = IconLoader.getIcon("/process/state/GreyProgr_3.png"); // 16x16
-      public static final Icon GreyProgr_4 = IconLoader.getIcon("/process/state/GreyProgr_4.png"); // 16x16
-      public static final Icon GreyProgr_5 = IconLoader.getIcon("/process/state/GreyProgr_5.png"); // 16x16
-      public static final Icon GreyProgr_6 = IconLoader.getIcon("/process/state/GreyProgr_6.png"); // 16x16
-      public static final Icon GreyProgr_7 = IconLoader.getIcon("/process/state/GreyProgr_7.png"); // 16x16
-      public static final Icon GreyProgr_8 = IconLoader.getIcon("/process/state/GreyProgr_8.png"); // 16x16
-      public static final Icon RedExcl = IconLoader.getIcon("/process/state/RedExcl.png"); // 16x16
-      public static final Icon YellowStr = IconLoader.getIcon("/process/state/YellowStr.png"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreenOK = IconLoader.getIcon("/process/state/GreenOK.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr = IconLoader.getIcon("/process/state/GreyProgr.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr_1 = IconLoader.getIcon("/process/state/GreyProgr_1.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr_2 = IconLoader.getIcon("/process/state/GreyProgr_2.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr_3 = IconLoader.getIcon("/process/state/GreyProgr_3.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr_4 = IconLoader.getIcon("/process/state/GreyProgr_4.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr_5 = IconLoader.getIcon("/process/state/GreyProgr_5.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr_6 = IconLoader.getIcon("/process/state/GreyProgr_6.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr_7 = IconLoader.getIcon("/process/state/GreyProgr_7.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GreyProgr_8 = IconLoader.getIcon("/process/state/GreyProgr_8.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon RedExcl = IconLoader.getIcon("/process/state/RedExcl.png");
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon YellowStr = IconLoader.getIcon("/process/state/YellowStr.png");
 
     }
     public static final Icon Step_1 = IconLoader.getIcon("/process/step_1.svg"); // 16x16
