@@ -17,8 +17,8 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.vcs.*;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -32,9 +32,7 @@ public class OptionsAndConfirmations {
   public OptionsAndConfirmations() {
     myOptions = new LinkedHashMap<>();
     myConfirmations = new LinkedHashMap<>();
-  }
 
-  public void init(final Convertor<? super String, ? extends VcsShowConfirmationOption.Value> initOptions) {
     createSettingFor(VcsConfiguration.StandardOption.ADD);
     createSettingFor(VcsConfiguration.StandardOption.REMOVE);
     createSettingFor(VcsConfiguration.StandardOption.CHECKOUT);
@@ -53,17 +51,6 @@ public class OptionsAndConfirmations {
       VcsBundle.message("label.text.when.files.are.deleted.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
       VcsBundle.message("radio.after.deletion.do.not.remove"), VcsBundle.message("radio.after.deletion.show.options"),
       VcsBundle.message("radio.after.deletion.remove.silently")));
-
-    restoreReadConfirm(VcsConfiguration.StandardConfirmation.ADD, initOptions);
-    restoreReadConfirm(VcsConfiguration.StandardConfirmation.REMOVE, initOptions);
-  }
-
-  private void restoreReadConfirm(final VcsConfiguration.StandardConfirmation confirm,
-                                  final Convertor<? super String, ? extends VcsShowConfirmationOption.Value> initOptions) {
-    final VcsShowConfirmationOption.Value initValue = initOptions.convert(confirm.getId());
-    if (initValue != null) {
-      getConfirmation(confirm).setValue(initValue);
-    }
   }
 
   @NotNull
@@ -95,11 +82,17 @@ public class OptionsAndConfirmations {
     return option;
   }
 
+  @NotNull
   VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
     if (!myOptions.containsKey(actionName)) {
       myOptions.put(actionName, new VcsShowOptionsSettingImpl(actionName));
     }
     return myOptions.get(actionName);
+  }
+
+  @Nullable
+  VcsShowConfirmationOptionImpl getConfirmation(String id) {
+    return myConfirmations.get(id);
   }
 
   // open for serialization purposes

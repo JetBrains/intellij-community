@@ -146,11 +146,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myAnnotationLocalChangesListener = new VcsAnnotationLocalChangesListenerImpl(myProject, this);
   }
 
-  @Override
-  public void initComponent() {
-    myOptionsAndConfirmations.init(mySerialization::getInitOptionValue);
-  }
-
   public void registerVcs(AbstractVcs vcs) {
     AllVcses.getInstance(myProject).registerManually(vcs);
   }
