@@ -38,8 +38,13 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
       else -> searchForAllChangedIcons(context, devRepoVcsRoots)
     }
   }
-  syncIcons(context)
-  report(context, skippedDirs.size)
+  if (context.devChanges().isEmpty() && context.iconsChanges().isEmpty()) {
+    log("No changes are found")
+  }
+  else {
+    syncIcons(context)
+    report(context, skippedDirs.size)
+  }
 }
 
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
@@ -106,13 +111,8 @@ private fun searchForChangedIconsByDesigners(context: Context, devRepoVcsRoots: 
       iterator.remove()
     }
   }
-  if (context.iconsChanges().isEmpty()) {
-    searchForAllChangedIcons(context, devRepoVcsRoots)
-  }
-  else {
-    log("Found ${context.iconsCommitHashesToSync.size} commits to sync from ${context.iconsRepoName} to ${context.devRepoName}")
-    log(context.iconsCommitHashesToSync.joinToString())
-  }
+  log("Found ${context.iconsCommitHashesToSync.size} commits to sync from ${context.iconsRepoName} to ${context.devRepoName}")
+  log(context.iconsCommitHashesToSync.joinToString())
 }
 
 private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<File>) {
@@ -150,13 +150,8 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
       }
     }
   }
-  if (context.devChanges().isEmpty()) {
-    searchForAllChangedIcons(context, devRepoVcsRoots)
-  }
-  else {
-    log("Found ${context.devIconsCommitHashesToSync.size} commits to sync from ${context.devRepoName} to ${context.iconsRepoName}")
-    log(context.devIconsCommitHashesToSync.joinToString())
-  }
+  log("Found ${context.devIconsCommitHashesToSync.size} commits to sync from ${context.devRepoName} to ${context.iconsRepoName}")
+  log(context.devIconsCommitHashesToSync.joinToString())
 }
 
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: File) = protectStdErr {
