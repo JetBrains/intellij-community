@@ -21,14 +21,14 @@ internal fun report(context: Context, skipped: Int) {
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
   @Suppress("Duplicates")
   var report = when {
-    context.iconsCommitsToSync.isNotEmpty() -> """
-      |${context.iconsRepoName} commits ${context.iconsCommitsToSync.values.flatten().joinToString { it.hash }} are synced into ${context.devRepoName}:
+    context.iconsCommitHashesToSync.isNotEmpty() -> """
+      |${context.iconsRepoName} commits ${context.iconsCommitHashesToSync.joinToString()} are synced into ${context.devRepoName}:
       | ${context.addedByDesigners.logIcons("added")}
       | ${context.removedByDesigners.logIcons("removed")}
       | ${context.modifiedByDesigners.logIcons("modified")}
     """.trimMargin()
-    context.devCommitsToSync.isNotEmpty() -> """
-      |${context.devRepoName} commits ${context.devCommitsToSync.values.flatten().joinToString { it.hash }} are synced into ${context.iconsRepoName}:
+    context.devIconsCommitHashesToSync.isNotEmpty() -> """
+      |${context.devRepoName} commits ${context.devIconsCommitHashesToSync.joinToString()} are synced into ${context.iconsRepoName}:
       | ${context.addedByDev.logIcons("added")}
       | ${context.removedByDev.logIcons("removed")}
       | ${context.modifiedByDev.logIcons("modified")}

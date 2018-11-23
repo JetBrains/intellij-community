@@ -38,8 +38,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   lateinit var devIcons: Map<String, GitObject>
   var devCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
   var iconsCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
-  val iconsCommitHashesToSync: Set<String>
-  val devIconsCommitHashesToSync: Set<String>
+  val iconsCommitHashesToSync: MutableSet<String>
+  val devIconsCommitHashesToSync: MutableSet<String>
   lateinit var devIconsFilter: (File, File) -> Boolean
 
   fun devChanges() = addedByDev + removedByDev + modifiedByDev
@@ -106,7 +106,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.takeIf { it.trim() != "*" }
       ?.split(",", ";", " ")
       ?.filter { it.isNotBlank() }
-      ?.mapTo(mutableSetOf(), String::trim) ?: emptySet()
+      ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf()
     devIconsCommitHashesToSync = System.getProperty("teamcity.build.changedFiles.file")
       ?.takeIf { !isScheduled() }
       ?.let(::File)
@@ -117,7 +117,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.mapNotNull {
         val (file, _, commit) = it.split(':')
         if (ImageExtension.fromName(file) != null) commit else null
-      }?.toSet() ?: emptySet()
+      }?.toMutableSet() ?: mutableSetOf()
     doSyncIconsRepo = bool(syncIconsArg)
     doSyncDevRepo = bool(syncDevIconsArg)
     doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg) || iconsCommitHashesToSync.isNotEmpty()

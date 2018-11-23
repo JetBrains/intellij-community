@@ -33,7 +33,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   context.devIcons = readDevRepo(context, devRepoVcsRoots)
   callWithTimer("Searching for changed icons..") {
     when {
-      context.iconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDesigners(context)
+      context.iconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDesigners(context, devRepoVcsRoots)
       context.devIconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDev(context, devRepoVcsRoots)
       else -> searchForAllChangedIcons(context, devRepoVcsRoots)
     }
@@ -45,6 +45,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
 
 private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collection<File>) {
+  log("Searching for all")
   val devIconsTmp = HashMap(context.devIcons)
   val modified = mutableListOf<String>()
   val consistent = mutableListOf<String>()
@@ -89,9 +90,11 @@ private fun asIcon(files: Collection<String>, repo: File, root: File) = files
   .filter { ImageExtension.fromName(it) != null }
   .map { repo.resolve(it).toRelativeString(root) }
 
-private fun searchForChangedIconsByDesigners(context: Context) {
-  log("${context.iconsRepoName} changes from commits ${context.iconsCommitHashesToSync.joinToString()}")
-  context.iconsCommitHashesToSync.forEach { commit ->
+private fun searchForChangedIconsByDesigners(context: Context, devRepoVcsRoots: List<File>) {
+  val iterator = context.iconsCommitHashesToSync.iterator()
+  while (iterator.hasNext()) {
+    val commit = iterator.next()
+    val before = context.iconsChanges().size
     changesFromCommit(context.iconsRepo, commit).forEach { type, files ->
       when (type) {
         ChangeType.ADDED -> context.addedByDesigners += asIcon(files, context.iconsRepo, context.iconsRepoDir)
@@ -99,15 +102,28 @@ private fun searchForChangedIconsByDesigners(context: Context) {
         ChangeType.DELETED -> context.removedByDesigners += asIcon(files, context.iconsRepo, context.iconsRepoDir)
       }
     }
+    if (context.iconsChanges().size == before) {
+      log("No icons in $commit, skipping")
+      context.iconsCommitHashesToSync.remove(commit)
+    }
+  }
+  if (context.iconsChanges().isEmpty()) {
+    searchForAllChangedIcons(context, devRepoVcsRoots)
+  }
+  else {
+    log("Found ${context.iconsCommitHashesToSync.size} commits to sync from ${context.iconsRepoName} to ${context.devRepoName}")
+    log(context.iconsCommitHashesToSync.joinToString())
   }
 }
 
 private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<File>) {
-  log("${context.devRepoName} changes from commits ${context.devIconsCommitHashesToSync.joinToString()}")
   fun asIcon(files: Collection<String>, repo: File) = asIcon(files, repo, context.devRepoRoot).filter {
     context.devIconsFilter(repo.resolve(it), repo)
   }
-  context.devIconsCommitHashesToSync.forEach { commit ->
+
+  val iterator = context.devIconsCommitHashesToSync.iterator()
+  while (iterator.hasNext()) {
+    val commit = iterator.next()
     val repo = devRepoVcsRoots.firstOrNull {
       try {
         commitInfo(it, commit)
@@ -118,8 +134,10 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
     }
     if (repo == null) {
       log("No repo is found for $commit, skipping")
+      context.devIconsCommitHashesToSync.remove(commit)
     }
     else {
+      val before = context.devChanges().size
       changesFromCommit(repo, commit).forEach { type, files ->
         when (type) {
           ChangeType.ADDED -> context.addedByDev.addAll(asIcon(files, repo))
@@ -127,9 +145,19 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
           ChangeType.DELETED -> context.removedByDev.addAll(asIcon(files, repo))
         }
       }
+      if (context.devChanges().size == before) {
+        log("No icons in $commit, skipping")
+        context.devIconsCommitHashesToSync.remove(commit)
+      }
     }
   }
-  if (context.devChanges().isEmpty()) searchForAllChangedIcons(context, devRepoVcsRoots)
+  if (context.devChanges().isEmpty()) {
+    searchForAllChangedIcons(context, devRepoVcsRoots)
+  }
+  else {
+    log("Found ${context.devIconsCommitHashesToSync.size} commits to sync from ${context.devRepoName} to ${context.iconsRepoName}")
+    log(context.devIconsCommitHashesToSync.joinToString())
+  }
 }
 
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: File) = protectStdErr {
