@@ -212,12 +212,36 @@ class CompletionQualityStatsAction : AnAction() {
       return
     }
 
-    val charsToWin = when {
-      rank0 == 0 -> 0
-      rank1 == 0 -> 1
-      rank3 == 0 -> {
+    val charsToFirst = calcCharsToFirstN(rank0, rank1, rank3, 1, editor, text, startIndex, project, existingCompletion, completionTime, file,
+                                         indicator)
+
+    val charsToFirst3 = calcCharsToFirstN(rank0, rank1, rank3, 3, editor, text, startIndex, project, existingCompletion, completionTime, file,
+                                         indicator)
+
+
+
+    stats.completions.add(
+      Completion(file.path, startIndex, existingCompletion, rank0, rank1, rank3, charsToFirst, charsToFirst3, completionTime.cnt, completionTime.time))
+  }
+
+  private fun calcCharsToFirstN(rank0: Int,
+                                rank1: Int,
+                                rank3: Int,
+                                N: Int,
+                                editor: Editor,
+                                text: String,
+                                startIndex: Int,
+                                project: Project,
+                                existingCompletion: String,
+                                completionTime: CompletionTime,
+                                file: VirtualFile,
+                                indicator: ProgressIndicator): Int {
+    return when {
+      rank0 in 0 until N -> 0
+      rank1 in 0 until N -> 1
+      rank3 in 0 until N -> {
         val rank2 = findCorrectElementRank(editor, text, startIndex, 2, project, existingCompletion, completionTime)
-        if (rank2 == 0) {
+        if (rank2 in 0 until N) {
           2
         }
         else {
@@ -225,12 +249,9 @@ class CompletionQualityStatsAction : AnAction() {
         }
       }
       else -> {
-        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, 4, 10, completionTime)
+        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, 4, 10, N, completionTime)
       }
     }
-
-    stats.completions.add(
-      Completion(file.path, startIndex, existingCompletion, rank0, rank1, rank3, charsToWin, completionTime.cnt, completionTime.time))
   }
 
   private fun findNumberOfCharsToWin(editor: Editor,
@@ -242,6 +263,7 @@ class CompletionQualityStatsAction : AnAction() {
                                      indicator: ProgressIndicator,
                                      from: Int,
                                      to: Int,
+                                     resultInFirstN: Int,
                                      timeStats: CompletionTime): Int {
     if (from < to) {
       val mid = (from + to) / 2
@@ -250,16 +272,16 @@ class CompletionQualityStatsAction : AnAction() {
       }
       val rank = findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)
 
-      if (rank == 0 || rank == -2) {
+      if ((rank in 0..(resultInFirstN - 1)) || rank == -2) {
         if (from >= mid - 1) {
           return mid
         }
         else {
-          return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, from, mid - 1, timeStats)
+          return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, from, mid - 1, resultInFirstN, timeStats)
         }
       }
       else {
-        return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, mid + 1, to, timeStats)
+        return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, mid + 1, to, resultInFirstN, timeStats)
       }
     }
     else {
@@ -413,7 +435,8 @@ private data class Completion(val path: String,
                               val rank0: Int,
                               val rank1: Int,
                               val rank3: Int,
-                              val charsToWin: Int,
+                              val charsToFirst: Int,
+                              val charsToFirst3: Int,
                               val callsCount: Int,
                               val totalTime: Long) {
   val id = (path + ":" + offset.toString()).hashCode()
