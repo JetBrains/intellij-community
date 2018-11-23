@@ -16,14 +16,15 @@ class MultiHostRegistrarPlaceholderHelper(private val multiHostRegistrar: MultiH
 
   private val globalPlaceholders = mutableListOf<Pair<TextRange, String>>()
 
-  fun addGlobalPlaceholders(globalPlaceholders: Iterable<Pair<TextRange, String>>) {
+  fun addGlobalPlaceholders(globalPlaceholders: Iterable<Pair<TextRange, String>>): MultiHostRegistrarPlaceholderHelper {
     this.globalPlaceholders.addAll(globalPlaceholders)
+    return this
   }
 
   private var lastPlaceholderEnd: Int = -1
   private var lastHost: PsiLanguageInjectionHost? = null
 
-  fun addHostPlace(host: PsiLanguageInjectionHost, hostPlaceholders: List<Pair<TextRange, String>>) {
+  fun addHostPlace(host: PsiLanguageInjectionHost, hostPlaceholders: List<Pair<TextRange, String>>): MultiHostRegistrarPlaceholderHelper {
     val valueTextRange = ElementManipulators.getValueTextRange(host)
 
     val foreignElements = hostPlaceholders + getGlobalPlaceholdersForHost(host)
@@ -35,6 +36,7 @@ class MultiHostRegistrarPlaceholderHelper(private val multiHostRegistrar: MultiH
 
     lastHost = host
     lastPlaceholderEnd = collectRanges(host, ranges)
+    return this
   }
 
   private tailrec fun collectRanges(host: PsiLanguageInjectionHost, ranges: List<Pair<TextRange, String?>>): Int {
