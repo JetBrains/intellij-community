@@ -279,7 +279,7 @@ public class TestAll implements Test {
   }
 
   @Nullable
-  private static Test getTest(@NotNull final Class<?> testCaseClass) {
+  private Test getTest(@NotNull final Class<?> testCaseClass) {
     try {
       if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) {
         return null;
@@ -365,7 +365,7 @@ public class TestAll implements Test {
   }
 
   @NotNull
-  private static JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
+  protected JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
     return new JUnit4TestAdapter(testCaseClass, getJUnit4TestAdapterCache());
   }
 
