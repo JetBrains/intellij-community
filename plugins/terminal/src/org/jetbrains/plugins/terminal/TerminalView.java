@@ -207,6 +207,16 @@ public class TerminalView {
           content.setDisplayName(generateUniqueName(name, Arrays.stream(contents).map(c -> c.getDisplayName()).collect(Collectors.toList())));
         }
       }
+
+      @Override
+      public void onPreviousTabSelected() {
+        toolWindow.getContentManager().selectPreviousContent();
+      }
+
+      @Override
+      public void onNextTabSelected() {
+        toolWindow.getContentManager().selectNextContent();
+      }
     });
 
     content.setCloseable(true);
