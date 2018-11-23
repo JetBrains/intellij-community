@@ -65,17 +65,21 @@ git push --tags
 '''
 
 
-from setuptools import setup
-from setuptools.dist import Distribution
-from distutils.extension import Extension
 import os
 import sys
+from distutils.extension import Extension
+
+from setuptools import setup
+from setuptools.dist import Distribution
+
 
 class BinaryDistribution(Distribution):
     def is_pure(self):
         return False
 
+
 data_files = []
+
 
 def accept_file(f):
     f = f.lower()
@@ -110,12 +114,29 @@ add_extensions_to_datafiles(data_files, '_pydevd_bundle')
 add_extensions_to_datafiles(data_files, '_pydevd_frame_eval')
 
 
-def get_version_from_file():
+def _get_version_from_file():
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'VERSION')) as version_file:
-        version = version_file.read().strip()
-    return version
+        version_str = version_file.read().strip()
+    return version_str
 
-version = get_version_from_file()
+
+def _replace_version_placeholder_in_file(filepath, version_str, version_placeholder="@@BUILD_NUMBER@@"):
+    with open(filepath, 'r') as file:
+        file_text = file.read()
+    result = file_text.replace(version_placeholder, version_str)
+    with open(filepath, 'w') as file:
+        file.write(result)
+
+
+def _replace_version_placeholder(version_str):
+    pydevd_filepath = os.path.dirname(os.path.abspath(__file__))
+    pydevd_comm_filepath = os.path.join(os.path.join(pydevd_filepath, '_pydevd_bundle'), 'pydevd_comm.py')
+    _replace_version_placeholder_in_file(pydevd_comm_filepath, version_str)
+
+
+version = _get_version_from_file()
+_replace_version_placeholder(version)
+
 
 args = dict(
     name='pydevd-pycharm',

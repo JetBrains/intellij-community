@@ -83,6 +83,7 @@ from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client
+import os
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
