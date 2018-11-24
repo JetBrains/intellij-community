@@ -366,14 +366,6 @@ class CompletionQualityStatsAction : AnAction() {
     return Pair(result.get(), total.get())
   }
 
-  private fun existingCompletion(startIndex: Int, text: String): String {
-    var i = startIndex + 1
-    while (Character.isJavaIdentifierPart(text[i]) && i < text.length) {
-      i++
-    }
-    return text.substring(startIndex + 1, i)
-  }
-
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null
     e.presentation.text = "Completion Quality Statistics"
