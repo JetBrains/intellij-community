@@ -30,6 +30,7 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.LayeredIcon;
@@ -212,6 +213,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
   @Override
   public final boolean isActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myToolWindowManager.getProject());
+    if (frame == null || !frame.isActive()) return false;
+
     if (myToolWindowManager.isEditorComponentActive()) return false;
     return myToolWindowManager.isToolWindowActive(myId) || myDecorator != null && myDecorator.isFocused();
   }

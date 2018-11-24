@@ -309,17 +309,17 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
 
     @Override
     protected void destroyProcessImpl() {
+      myTask.cancel();
     }
 
     @Override
     protected void detachProcessImpl() {
-      myTask.cancel();
       notifyProcessDetached();
     }
 
     @Override
     public boolean detachIsDefault() {
-      return true;
+      return false;
     }
 
     @Nullable

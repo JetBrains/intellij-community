@@ -716,8 +716,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
       // process all group's children. There are other groups, actions, references and links
-      for (final Object o : element.getChildren()) {
-        Element child = (Element)o;
+      for (Element child : element.getChildren()) {
         String name = child.getName();
         if (ACTION_ELEMENT_NAME.equals(name)) {
           AnAction action = processActionElement(child, loader, pluginId);
@@ -778,8 +777,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private void processReferenceNode(final Element element, final PluginId pluginId) {
     final AnAction action = processReferenceElement(element, pluginId);
 
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
+    for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(action, child, pluginId, isSecondary(child));
       }
@@ -824,8 +822,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private void addToGroupInner(AnAction group, AnAction action, Constraints constraints, boolean secondary) {
+    String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action);
     ((DefaultActionGroup)group).addAction(action, constraints, this).setAsSecondary(secondary);
-    myId2GroupId.putValue(myAction2Id.get(action), myAction2Id.get(group));
+    myId2GroupId.putValue(actionId, myAction2Id.get(group));
   }
 
   @Nullable
@@ -864,8 +863,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       parentGroup.add(separator, this);
     }
     // try to find inner <add-to-parent...> tag
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
+    for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(separator, child, pluginId, isSecondary(child));
       }

@@ -96,7 +96,7 @@ public class DaemonEditorPopup extends PopupHandler {
     previewCheckbox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        UISettings.getInstance().setShowToolWindowsNumbers(previewCheckbox.isSelected());
+        UISettings.getInstance().setShowEditorToolTip(previewCheckbox.isSelected());
         UISettings.getInstance().fireUISettingsChanged();
       }
     });

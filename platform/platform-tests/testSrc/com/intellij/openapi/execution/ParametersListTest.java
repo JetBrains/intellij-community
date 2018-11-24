@@ -183,11 +183,11 @@ public class ParametersListTest {
 
   @Test
   public void joiningParams() {
-    String[] parameters = {"simpleParam", "param with spaces", "withQuote=\"", "param=\"complex quoted\""};
+    String[] parameters = {"simpleParam", "param with spaces", "withQuote=\"", "param=\"complex quoted\"", "C:\\\"q\"", "C:\\w s\\"};
     ParametersList parametersList = new ParametersList();
     parametersList.addAll(parameters);
     String joined = parametersList.getParametersString();
-    assertEquals("simpleParam \"param with spaces\" withQuote=\\\" \"param=\\\"complex quoted\\\"\"", joined);
+    assertEquals("simpleParam \"param with spaces\" withQuote=\\\" \"param=\\\"complex quoted\\\"\" C:\\\\\"q\\\" \"C:\\w s\"\\", joined);
     checkTokenizer(joined, parameters);
   }
 

@@ -26,17 +26,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="trilead-ssh2">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/trilead.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/trileadsrc.zip!/trilead-ssh2/src/main/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library>
@@ -95,5 +84,8 @@
     <orderEntry type="module" module-name="diff-impl" />
     <orderEntry type="library" name="sqlite" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="trilead-ssh2" level="project" />
+    <orderEntry type="library" name="eddsa" level="project" />
+    <orderEntry type="library" name="jbcrypt" level="project" />
   </component>
 </module>

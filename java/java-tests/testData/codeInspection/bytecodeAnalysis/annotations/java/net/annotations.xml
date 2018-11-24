@@ -42,6 +42,9 @@
     <item name='java.net.DatagramPacket void setData(byte[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.net.DatagramSocket boolean checkFiltering(java.net.DatagramPacket) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.net.DatagramSocket boolean isBound()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -68,6 +71,12 @@
         </annotation>
     </item>
     <item name='java.net.DatagramSocket java.net.InetAddress getLocalAddress()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.DatagramSocket void checkAddress(java.net.InetAddress, java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.DatagramSocket void checkAddress(java.net.InetAddress, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.net.DatagramSocket void connect(java.net.InetAddress, int) 0'>
@@ -155,18 +164,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.net.InetAddress java.lang.Object checkLookupTable(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
-        </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.net.InetAddress java.lang.Object getCachedAddress(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.net.InetAddress java.lang.Object getCachedAddress(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='java.net.InetAddress java.lang.Object readResolve()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -176,8 +173,8 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.net.InetAddress java.lang.String getHostFromNameService(java.net.InetAddress, boolean) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
+    <item name='java.net.InetAddress java.lang.String getHostFromNameService(java.net.InetAddress, boolean)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.net.InetAddress java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -197,6 +194,20 @@
     <item name='java.net.InetAddress java.net.InetAddress getByName(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.net.InetAddress java.net.InetAddress getByName(java.lang.String, java.net.InetAddress) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.InetAddress java.net.InetAddress.InetAddressHolder holder()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] checkLookupTable(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;null&quot;"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.net.InetAddress java.net.InetAddress[] getAllByName(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;!null&quot;"/>
@@ -205,11 +216,71 @@
     <item name='java.net.InetAddress java.net.InetAddress[] getAllByName(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] getAllByName(java.lang.String, java.net.InetAddress)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null,_-&gt;!null&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] getAllByName(java.lang.String, java.net.InetAddress) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String, boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String, java.net.InetAddress, boolean) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] getCachedAddresses(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] getCachedAddresses(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.InetAddress void cacheAddresses(java.lang.String, java.net.InetAddress[], boolean) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.InetAddress void readObject(java.io.ObjectInputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.InetAddress void readObjectNoData(java.io.ObjectInputStream) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.InetAddress void writeObject(java.io.ObjectOutputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.InetAddress.Cache java.net.InetAddress.Cache put(java.lang.String, java.net.InetAddress[])'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.InetAddress.Cache java.net.InetAddress.CacheEntry get(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.InetAddress.InetAddressHolder InetAddressHolder()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.net.InetAddress.InetAddressHolder int getAddress()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.net.InetAddress.InetAddressHolder int getFamily()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.net.InetAddress.InetAddressHolder java.lang.String getHostName()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.net.InetAddress.InetAddressHolder java.lang.String getOriginalHostName()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.net.ServerSocket boolean isBound()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -232,6 +303,11 @@
     </item>
     <item name='java.net.ServerSocket void implAccept(java.net.Socket) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.ServerSocket void setPerformancePreferences(int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.net.Socket Socket(java.lang.String, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -272,6 +348,17 @@
     </item>
     <item name='java.net.Socket java.net.InetAddress getInetAddress()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.Socket void checkAddress(java.net.InetAddress, java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.Socket void checkAddress(java.net.InetAddress, java.lang.String) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.Socket void setPerformancePreferences(int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.net.URI URI(java.lang.String, java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -614,6 +701,33 @@
     <item name='java.net.URI void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.net.URI.Parser Parser(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.URI.Parser boolean at(int, int, java.lang.String) 2'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.URI.Parser int takeIPv4Address(int, int, java.lang.String) 2'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.URI.Parser java.lang.String substring(int, int)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.URI.Parser void checkChar(int, long, long, java.lang.String) 3'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.URI.Parser void checkChars(int, int, long, long, java.lang.String) 4'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.URI.Parser void failExpecting(java.lang.String, int) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.URI.Parser void failExpecting(java.lang.String, java.lang.String, int) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.net.URI.Parser void failExpecting(java.lang.String, java.lang.String, int) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.net.URL URL(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -634,6 +748,14 @@
     <item name='java.net.URL boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.net.URL boolean isBuiltinStreamHandler(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.net.URL boolean isBuiltinStreamHandler(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.net.URL boolean isValidProtocol(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -641,6 +763,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='java.net.URL java.lang.Object readResolve()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URL java.lang.String getAuthority()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -683,6 +808,9 @@
         </annotation>
     </item>
     <item name='java.net.URL java.net.URI toURI()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.URL java.net.URL fabricateNewURL()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URL void readObject(java.io.ObjectInputStream) 0'>

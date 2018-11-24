@@ -64,10 +64,12 @@ public class BulkMethodInfo {
       PsiClass listClass =
         JavaPsiFacade.getInstance(iterable.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, iterable.getResolveScope());
       if (listClass == null) return false;
-      type = factory.createType(listClass, componentType);
+      type = listClass.getTypeParameters().length == 1 ? factory.createType(listClass, componentType) : factory.createType(listClass);
       text = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + text + ")";
     }
-    if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return false;
+    boolean isIterable = InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE);
+    boolean isCollection = InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION);
+    if (!isIterable && !isCollection) return false;
     PsiExpression expression = factory.createExpressionFromText(qualifier.getText() + "." + myBulkName + "(" + text + ")", iterable);
     if (!(expression instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
@@ -79,9 +81,8 @@ public class BulkMethodInfo {
     parameterType = call.resolveMethodGenerics().getSubstitutor().substitute(parameterType);
     PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameterType);
     return parameterClass != null &&
-           (CommonClassNames.JAVA_LANG_ITERABLE.equals(parameterClass.getQualifiedName()) ||
-            CommonClassNames.JAVA_UTIL_COLLECTION.equals(parameterClass.getQualifiedName())) &&
-           parameterType.isAssignableFrom(type);
+           (CommonClassNames.JAVA_LANG_ITERABLE.equals(parameterClass.getQualifiedName()) && isIterable ||
+            CommonClassNames.JAVA_UTIL_COLLECTION.equals(parameterClass.getQualifiedName())) && isCollection;
   }
 
   public String getClassName() {

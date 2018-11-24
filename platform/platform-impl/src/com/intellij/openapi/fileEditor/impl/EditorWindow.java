@@ -357,7 +357,7 @@ public class EditorWindow {
         }
       }
     } else
-    if (uiSettings.getActiveRigtEditorOnClose() && fileIndex + 1 < myTabbedPane.getTabCount()) {
+    if (uiSettings.getActiveRightEditorOnClose() && fileIndex + 1 < myTabbedPane.getTabCount()) {
       return fileIndex + 1;
     }
 
@@ -1070,10 +1070,9 @@ public class EditorWindow {
 
     FileEditorManagerEx.getInstanceEx(getManager().getProject()).getReady(this).doWhenDone(() -> {
       if (myTabbedPane == null) return;
-      final boolean closeNonModifiedFilesFirst = UISettings.getInstance().getCloseNonModifiedFilesFirst();
       final EditorComposite selectedComposite = getSelectedEditor();
       try {
-        doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst, transferFocus);
+        doTrimSize(limit, fileToIgnore, UISettings.getInstance().getCloseNonModifiedFilesFirst(), transferFocus);
       }
       finally {
         setSelectedEditor(selectedComposite, false);
@@ -1084,20 +1083,16 @@ public class EditorWindow {
   private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
     LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
     VirtualFile selectedFile = getSelectedFile();
-    if (shouldCloseSelected()) {
-      defaultCloseFile(selectedFile, transferFocus);
-      closingOrder.remove(selectedFile);
-    }
 
     for (VirtualFile file : closingOrder) {
       if (myTabbedPane.getTabCount() <= limit || myTabbedPane.getTabCount() == 0 || areAllTabsPinned(fileToIgnore)) {
         return;
       }
-      if (fileCanBeClosed(file, fileToIgnore)) {
-        defaultCloseFile(file, transferFocus);
-      }
-    }
+      if (file.equals(selectedFile) && !shouldCloseSelected()) continue;
+      if (!fileCanBeClosed(file, fileToIgnore)) continue;
 
+      defaultCloseFile(file, transferFocus);
+    }
   }
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {

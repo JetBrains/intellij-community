@@ -1,38 +1,8 @@
 <root>
-    <item name='java.util.concurrent.TimeUnit int excessNanos(long, long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.TimeUnit long convert(long, java.util.concurrent.TimeUnit)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.concurrent.TimeUnit long convert(long, java.util.concurrent.TimeUnit) 1'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.util.concurrent.TimeUnit long doConvert(int, long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.TimeUnit long toMicros(long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.TimeUnit long toMillis(long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.TimeUnit long toNanos(long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.TimeUnit long toSeconds(long)'>
+    <item name='java.util.concurrent.TimeUnit long x(long, long, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

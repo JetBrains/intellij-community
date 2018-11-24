@@ -25,15 +25,20 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -78,8 +83,11 @@ public class JavaGenerateMemberCompletionContributor {
       if (field instanceof PsiEnumConstant) continue;
 
       List<PsiMethod> prototypes = ContainerUtil.newSmartList();
-      Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
-      Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
+      try {
+        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true, false));
+        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false, false));
+      }
+      catch (GenerateCodeException ignore) { }
       for (final PsiMethod prototype : prototypes) {
         if (parent.findMethodBySignature(prototype, false) == null && addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
           Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);

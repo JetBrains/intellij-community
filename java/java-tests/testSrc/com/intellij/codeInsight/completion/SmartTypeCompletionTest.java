@@ -866,7 +866,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
                       "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
                       "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER",
-                      "ElementType.TYPE", "ElementType.TYPE_PARAMETER", "ElementType.TYPE_USE");
+                      "ElementType.TYPE");
   }
 
   public void testAnnotation2() throws Exception {
@@ -906,7 +906,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
                       "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
                       "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER",
-                      "ElementType.TYPE", "ElementType.TYPE_PARAMETER", "ElementType.TYPE_USE");
+                      "ElementType.TYPE");
   }
 
   public void testArrayClone() throws Exception {

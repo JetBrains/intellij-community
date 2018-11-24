@@ -20,6 +20,9 @@ import com.intellij.codeInspection.bulkOperation.BulkMethodInfo;
 import com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider;
 import com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,5 +60,22 @@ public class UseBulkOperationInspectionTest extends LightQuickFixParameterizedTe
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/useBulkOperation";
+  }
+
+  public static class UseBulkOperationJava14Test extends UseBulkOperationInspectionTest {
+    @Override
+    protected String getBasePath() {
+      return super.getBasePath()+"/java14";
+    }
+
+    @Override
+    protected LanguageLevel getLanguageLevel() {
+      return LanguageLevel.JDK_1_4;
+    }
+
+    @Override
+    protected Sdk getProjectJDK() {
+      return IdeaTestUtil.getMockJdk14();
+    }
   }
 }

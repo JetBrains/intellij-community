@@ -136,8 +136,11 @@ class DependencyResolverImpl implements DependencyResolver {
 
         Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap = ArrayListMultimap.create()
         resolvedArtifacts.each { artifactMap.put(it.moduleVersion.id, it) }
+
+        def isBuildScriptConfiguration = myProject.buildscript.configurations.find { it == configuration } != null
         //noinspection GroovyAssignabilityCheck
-        Set<ComponentArtifactsResult> componentResults = myProject.dependencies.createArtifactResolutionQuery()
+        def dependencyHandler = isBuildScriptConfiguration ? myProject.buildscript.dependencies : myProject.dependencies
+        Set<ComponentArtifactsResult> componentResults = dependencyHandler.createArtifactResolutionQuery()
           .forComponents(resolvedArtifacts
                            .findAll { !isProjectDependencyArtifact(it) }
                            .collect { toComponentIdentifier(it.moduleVersion.id) })

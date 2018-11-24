@@ -92,6 +92,12 @@ class StatusPanel extends JPanel {
 
       return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
     }
+
+    @Override public void setCursor(Cursor cursor) {
+      // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
+      if (isCursorSet() && cursor == getCursor()) return;
+      super.setCursor(cursor);
+    }
   };
 
   StatusPanel() {

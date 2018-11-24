@@ -53,6 +53,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
   private boolean myMultiprocessDebug = false;
   protected PythonRunConfiguration myRunConfiguration;
+  private boolean myWaitForTermination = true;
 
 
   public PyDebuggerTask(@Nullable final String relativeTestDataPath, String scriptName, String scriptParameters) {
@@ -213,6 +214,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myMultiprocessDebug = multiprocessDebug;
   }
 
+  public void setWaitForTermination(boolean waitForTermination) {
+    myWaitForTermination = waitForTermination;
+  }
+
   protected void waitForAllThreadsPause() throws InterruptedException, InvocationTargetException {
     waitForPause();
     Assert.assertTrue(String.format("All threads didn't stop within timeout\n" +
@@ -235,7 +240,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
       myDebugProcess.stop();
 
-      waitFor(processHandler);
+      if (myWaitForTermination) {
+        // for some tests (with infinite loops, for example, it has no sense)
+        waitFor(processHandler);
+      }
 
       if (!processHandler.isProcessTerminated()) {
         killDebugProcess();

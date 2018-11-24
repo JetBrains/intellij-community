@@ -15,6 +15,10 @@
  */
 package com.intellij.remote;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -25,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author michael.golubev
  */
 public class RemoteCredentialsHolder implements MutableRemoteCredentials {
+  private static final String SERVICE_NAME_PREFIX = CredentialAttributesKt.SERVICE_NAME_PREFIX + " Remote Credentials ";
 
   public static final String HOST = "HOST";
   public static final String PORT = "PORT";
@@ -35,7 +40,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
   public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
   public static final String PASSPHRASE = "PASSPHRASE";
-  
+
   public static final String SSH_PREFIX = "ssh://";
 
   private String myHost;
@@ -172,7 +177,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     return myUserName;
   }
 
-  public void setSerializedUserName(String userName) {
+  private void setSerializedUserName(String userName) {
     if (StringUtil.isEmpty(userName)) {
       myUserName = null;
     }
@@ -181,17 +186,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
-  @NotNull
-  public String getSerializedPassword() {
-    if (myStorePassword) {
-      return PasswordUtil.encodePassword(myPassword);
-    }
-    else {
-      return "";
-    }
-  }
-
-  public void setSerializedPassword(String serializedPassword) {
+  private void setSerializedPassword(String serializedPassword) {
     if (!StringUtil.isEmpty(serializedPassword)) {
       myPassword = PasswordUtil.decodePassword(serializedPassword);
       myStorePassword = true;
@@ -201,17 +196,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
-  @NotNull
-  public String getSerializedPassphrase() {
-    if (myStorePassphrase) {
-      return PasswordUtil.encodePassword(myPassphrase);
-    }
-    else {
-      return "";
-    }
-  }
-
-  public void setSerializedPassphrase(String serializedPassphrase) {
+  private void setSerializedPassphrase(String serializedPassphrase) {
     if (!StringUtil.isEmpty(serializedPassphrase)) {
       myPassphrase = PasswordUtil.decodePassword(serializedPassphrase);
       myStorePassphrase = true;
@@ -247,26 +232,61 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setLiteralPort(element.getAttributeValue(PORT));
     setSerializedUserName(element.getAttributeValue(USERNAME));
     setSerializedPassword(element.getAttributeValue(PASSWORD));
+    setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
+    setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
+    setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
+    setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
+
+    // try to load credentials from PasswordSafe
+    final CredentialAttributes attributes = createAttributes(false);
+    final Credentials credentials = PasswordSafe.getInstance().get(attributes);
+    if (credentials != null) {
+      final boolean memoryOnly = PasswordSafe.getInstance().isPasswordStoredOnlyInMemory(attributes, credentials);
+      if (isUseKeyPair()) {
+        setPassword(null);
+        setStorePassword(false);
+        setPassphrase(credentials.getPasswordAsString());
+        setStorePassphrase(!memoryOnly);
+      }
+      else {
+        setPassword(credentials.getPasswordAsString());
+        setStorePassword(!memoryOnly);
+        setPassphrase(null);
+        setStorePassphrase(false);
+      }
+    }
+
     boolean isAnonymous = StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false);
     if (isAnonymous) {
       setSerializedUserName("anonymous");
       setSerializedPassword("user@example.com");
     }
-    setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
-    setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
-    setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
-    setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
   }
 
+  /**
+   * Stores main part of ssh credentials in xml element and password and passphrase in PasswordSafe.
+   *
+   * Don't use this method to serialize intermediate state of credentials
+   * because it will overwrite password and passphrase in PasswordSafe
+   */
   public void save(Element rootElement) {
     rootElement.setAttribute(HOST, StringUtil.notNullize(getHost()));
     rootElement.setAttribute(PORT, StringUtil.notNullize(getLiteralPort()));
     rootElement.setAttribute(USERNAME, getSerializedUserName());
-    rootElement.setAttribute(PASSWORD, getSerializedPassword());
     rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
     rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
-    rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
+
+    boolean memoryOnly = isUseKeyPair() ? !isStorePassphrase() : !isStorePassword();
+    final String password = isUseKeyPair() ? getPassphrase() : getPassword();
+    PasswordSafe.getInstance().set(createAttributes(memoryOnly), new Credentials(getUserName(), password));
+  }
+
+  @NotNull
+  private CredentialAttributes createAttributes(boolean memoryOnly) {
+    final String serviceName =
+      SERVICE_NAME_PREFIX + getCredentialsString(this) + "(" + (isUseKeyPair() ? "passphrase" : "password") + ")";
+    return new CredentialAttributes(serviceName, getUserName(), null, memoryOnly);
   }
 
   @Override

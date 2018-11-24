@@ -176,8 +176,9 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  public void clear() throws StorageException {
-    super.clear();
+  protected void doClear() throws StorageException, IOException {
+    super.doClear();
+
     if (mySnapshotInputMappings != null) try {
       mySnapshotInputMappings.clear();
     }
@@ -187,14 +188,16 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  public void flush() throws StorageException {
-    super.flush();
+  protected void doFlush() throws IOException, StorageException {
+    super.doFlush();
+
     if (mySnapshotInputMappings != null) mySnapshotInputMappings.flush();
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
+  protected void doDispose() throws StorageException {
+    super.doDispose();
+
     if (mySnapshotInputMappings != null) try {
       mySnapshotInputMappings.close();
     }

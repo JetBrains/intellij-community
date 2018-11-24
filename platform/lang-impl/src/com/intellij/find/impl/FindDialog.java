@@ -53,7 +53,6 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -493,7 +492,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-          Ref<VirtualFile> lastUsageFileRef = new Ref<>();
+          ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
 
           FindInProjectUtil.findUsages(findModel, myProject, info -> {
             if(isCancelled()) {

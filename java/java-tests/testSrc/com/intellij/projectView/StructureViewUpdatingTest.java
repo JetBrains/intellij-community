@@ -56,7 +56,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
                                        "-Class1.java\n" +
                                        " -Class1\n" +
                                        "  getValue(): int\n" +
-                                       "  getClass(): Class<? extends Object>\n" +
+                                       "  getClass(): Class<?>\n" +
                                        "  hashCode(): int\n" +
                                        "  equals(Object): boolean\n" +
                                        "  clone(): Object\n" +
@@ -87,7 +87,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 
       PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
                                                                          " -Class1\n" + "  getValue(): int\n" +
-                                                                         "  getClass(): Class<? extends Object>\n" +
+                                                                         "  getClass(): Class<?>\n" +
                                                                          "  hashCode(): int\n" +
                                                                          "  equals(Object): boolean\n" +
                                                                          "  clone(): Object\n" +

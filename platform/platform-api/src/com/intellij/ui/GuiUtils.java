@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -50,6 +51,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 
 public class GuiUtils {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GuiUtils");
+
   private static final Insets paddingFromDialogBoundaries = new Insets(7, 5, 7, 5);
   private static final Insets paddingInsideDialog = new Insets(5, 5, 5, 5);
 
@@ -396,5 +399,18 @@ public class GuiUtils {
     FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
     size.width = fontMetrics.charWidth('a') * charCount;
     return size;
+  }
+
+  public static void printDebugInfo(Component component) {
+    StringBuilder builder = new StringBuilder();
+    boolean first = true;
+    while (component != null) {
+      builder.append("\n");
+      builder.append(first ? "UI debug dump:" : "\tat ").append(component.getClass().getName()).append(" with bounds ")
+        .append(component.getBounds());
+      component = component.getParent();
+      first = false;
+    }
+    LOG.warn(builder.toString());
   }
 }

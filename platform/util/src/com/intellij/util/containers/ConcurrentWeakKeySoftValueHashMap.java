@@ -325,12 +325,20 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public V putIfAbsent(@NotNull K key, @NotNull V value) {
-    processQueues();
-    KeyReference<K, V> keyReference = createKeyReference(key, value);
-    ValueReference<K, V> valueReference = keyReference.getValueReference();
-
-    ValueReference<K, V> result = myMap.putIfAbsent(keyReference, valueReference);
-    return deref(result);
+    KeyReference<K, V> keyRef = createKeyReference(key, value);
+    ValueReference<K, V> newRef = keyRef.getValueReference();
+    while (true) {
+      processQueues();
+      ValueReference<K, V> oldRef = myMap.putIfAbsent(keyRef, newRef);
+      if (oldRef == null) return null;
+      final V oldVal = oldRef.get();
+      if (oldVal == null) {
+        if (myMap.replace(keyRef, oldRef, newRef)) return null;
+      }
+      else {
+        return oldVal;
+      }
+    }
   }
 
   @Override

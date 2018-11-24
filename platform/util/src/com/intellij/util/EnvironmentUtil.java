@@ -323,15 +323,20 @@ public class EnvironmentUtil {
 
   private static Map<String, String> setCharsetVar(@NotNull Map<String, String> env) {
     if (!isCharsetVarDefined(env)) {
-      Locale locale = Locale.getDefault();
-      Charset charset = CharsetToolkit.getDefaultSystemCharset();
-      String language = locale.getLanguage();
-      String country = locale.getCountry();
-      String value = (language.isEmpty() || country.isEmpty() ? "en_US" : language + '_' + country) + '.' + charset.name();
-      env.put(LC_CTYPE, value);
+      String value = setLocaleEnv(env, CharsetToolkit.getDefaultSystemCharset());
       LOG.info("LC_CTYPE=" + value);
     }
     return env;
+  }
+
+  @NotNull
+  public static String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
+    Locale locale = Locale.getDefault();
+    String language = locale.getLanguage();
+    String country = locale.getCountry();
+    String value = (language.isEmpty() || country.isEmpty() ? "en_US" : language + '_' + country) + '.' + charset.name();
+    env.put(LC_CTYPE, value);
+    return value;
   }
 
   private static boolean isCharsetVarDefined(@NotNull Map<String, String> env) {

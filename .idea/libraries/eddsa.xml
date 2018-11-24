@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="eddsa">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/eddsa-0.2.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/eddsa-0.2.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

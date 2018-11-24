@@ -2110,13 +2110,7 @@
     <item name='org.apache.commons.lang.NumberUtils java.lang.Float createFloat(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.lang.NumberUtils java.lang.Integer createInteger(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.lang.NumberUtils java.lang.Integer createInteger(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.lang.NumberUtils java.lang.Long createLong(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.NumberUtils java.lang.Long createLong(java.lang.String) 0'>
@@ -2456,7 +2450,8 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils boolean contains(java.lang.String, char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;false&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;false&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.StringUtils boolean contains(java.lang.String, java.lang.String)'>
@@ -2710,6 +2705,16 @@
     <item name='org.apache.commons.lang.StringUtils int getLevenshteinDistance(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.StringUtils int indexOf(java.lang.String, char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.StringUtils int indexOf(java.lang.String, char, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.StringUtils int indexOf(java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -2751,6 +2756,16 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils int indexOfDifference(java.lang.String[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.StringUtils int lastIndexOf(java.lang.String, char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.StringUtils int lastIndexOf(java.lang.String, char, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.StringUtils int lastIndexOf(java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>

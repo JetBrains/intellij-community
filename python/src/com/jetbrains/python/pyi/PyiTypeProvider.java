@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
 /**
  * @author vlan
  */
@@ -212,10 +210,10 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     final PyCallExpressionHelper.ArgumentMappingResults mapping =
       PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
 
-    final PyCallExpression callExpr = as(callSite, PyCallExpression.class);
-    if (callExpr != null && callExpr.getArguments().length != mapping.getMappedParameters().size()) {
+    if (!mapping.getUnmappedArguments().isEmpty() || !mapping.getUnmappedParameters().isEmpty()) {
       return null;
     }
+
     return mapping;
   }
 }
