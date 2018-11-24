@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.run;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -337,7 +338,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
-    if (PythonSdkType.isVirtualEnv(sdkHome)) {
+    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
+    if (PythonSdkType.isVirtualEnv(sdkHome) || (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk))) {
       PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
       if (reader.getActivate() != null) {
         try {
@@ -433,10 +435,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
-  protected static Collection<String> collectPythonPath(Project project, PythonRunParams config, boolean isDebug) {
+  @VisibleForTesting
+  public static Collection<String> collectPythonPath(Project project, PythonRunParams config, boolean isDebug) {
     final Module module = getModule(project, config);
     final HashSet<String> pythonPath =
-      Sets.newHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
+      Sets.newLinkedHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
 
     if (isDebug && PythonSdkFlavor.getFlavor(config.getSdkHome()) instanceof JythonSdkFlavor) {
       //that fixes Jython problem changing sys.argv on execfile, see PY-8164

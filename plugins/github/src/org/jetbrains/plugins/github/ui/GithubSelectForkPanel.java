@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public class GithubSelectForkPanel {
   private ComboBox myComboBox;
 
   public GithubSelectForkPanel() {
-    myModel = new SortedComboBoxModel<>(StringUtil.NATURAL_COMPARATOR);
+    myModel = new SortedComboBoxModel<>(NaturalComparator.INSTANCE);
 
     myComboBox.setModel(myModel);
   }

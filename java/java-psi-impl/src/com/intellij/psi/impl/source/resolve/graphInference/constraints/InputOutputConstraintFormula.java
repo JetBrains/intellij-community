@@ -25,10 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 9/25/13
- */
 public abstract class InputOutputConstraintFormula implements ConstraintFormula {
 
   public abstract PsiExpression getExpression();

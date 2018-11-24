@@ -19,13 +19,6 @@ package com.intellij.psi.filters;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.position.PositionElementFilter;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 30.01.2003
- * Time: 13:38:10
- * To change this template use Options | File Templates.
- */
 public class ScopeFilter extends PositionElementFilter{
   public ScopeFilter(){}
 

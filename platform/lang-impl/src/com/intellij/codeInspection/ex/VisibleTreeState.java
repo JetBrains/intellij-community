@@ -31,10 +31,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.TreeSet;
 
-/**
- * User: anna
- * Date: Dec 18, 2004
- */
 @Tag("profile-state")
 public class VisibleTreeState{
   @Tag("expanded-state")

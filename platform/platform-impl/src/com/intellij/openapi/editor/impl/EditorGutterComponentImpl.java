@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 6, 2002
- * Time: 8:37:03 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -53,7 +45,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +56,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
 import gnu.trove.TIntObjectHashMap;
@@ -127,6 +117,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  private int myStartIconAreaWidth = START_ICON_AREA_WIDTH;
   private int myIconsAreaWidth;
   private int myLineNumberAreaWidth;
   private int myAdditionalLineNumberAreaWidth;
@@ -601,7 +592,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
     Document document = myEditor.getDocument();
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
-    MarkupIterator<RangeHighlighterEx>docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset);
+    MarkupIterator<RangeHighlighterEx> docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset);
     MarkupIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset);
 
     try {
@@ -809,7 +800,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    int minWidth = areIconsShown() ? (int)(START_ICON_AREA_WIDTH * myEditor.getScale()) : 0;
+    int minWidth = areIconsShown() ? scaleWidth(myStartIconAreaWidth) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
     processGutterRenderers((line, renderers) -> {
@@ -976,17 +967,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     void process(int x, int y, @NotNull GutterMark renderer);
   }
 
-  private Icon scaleIcon(Icon icon) {
-    if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
+  private float getEditorScaleFactor() {
+    if (Registry.is("editor.scale.gutter.icons")) {
       float scale = myEditor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
-        if (icon instanceof JBUIScaleTrackable) {
-          ((JBUIScaleTrackable)icon).updateJBUIScale(getGraphicsConfiguration());
-        }
-        return ((ScalableIcon)icon).scale(scale);
+        return scale;
       }
     }
-    return icon;
+    return 1f;
+  }
+
+  private Icon scaleIcon(Icon icon) {
+    float scale = getEditorScaleFactor();
+    return scale == 1 ? icon : IconUtil.scale(icon, this, scale);
+  }
+
+  private int scaleWidth(int width) {
+    return (int) (getEditorScaleFactor() * width);
   }
 
   private void processIconsRow(int line, @NotNull List<GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
@@ -1544,7 +1541,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
     }
-    setCursor(cursor);
+    UIUtil.setCursor(this, cursor);
   }
 
   @Override
@@ -1790,6 +1787,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public void setForceShowRightFreePaintersArea(boolean value) {
     myForceRightFreePaintersAreaShown = value;
+  }
+
+  @Override
+  public void setInitialIconAreaWidth(int width) {
+    myStartIconAreaWidth = width;
   }
 
   private void invokePopup(MouseEvent e) {

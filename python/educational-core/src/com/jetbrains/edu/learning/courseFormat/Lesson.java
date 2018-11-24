@@ -137,6 +137,10 @@ public class Lesson implements StudyItem {
     myUpdateDate = updateDate;
   }
 
+  public void setPublic(boolean isPublic) {
+    this.is_public = isPublic;
+  }
+
   public boolean isUpToDate() {
     if (myId == 0) return true;
     final Date date = EduStepicConnector.getLessonUpdateDate(myId);

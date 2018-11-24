@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import javax.swing.*;
@@ -38,8 +41,15 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
   private static String buildNameFor(final PyElement element) {
     if (element instanceof PyFunction) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-      final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
-      return element.getName() + "(" + StringUtil.join(parameters, parameter -> PyUtil.getReadableRepr(parameter, false), ", ") + ")";
+      final List<PyCallableParameter> parameters = ((PyFunction)element).getParameters(context);
+
+      final StringBuilder result = new StringBuilder();
+
+      result.append(element.getName()).append('(');
+      StringUtil.join(parameters, parameter -> parameter.getPresentableText(true, context), ", ", result);
+      result.append(')');
+
+      return result.toString();
     }
     final PyClass cls = as(element, PyClass.class);
     if (cls != null && PyNames.TYPES_INSTANCE_TYPE.equals(cls.getQualifiedName())) {
@@ -57,6 +67,7 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
     return StringUtil.trimStart(StringUtil.trimStart(s, "_"), "_");
   }
 
+  @Override
   public MemberChooserObject getParentNodeDelegate() {
     final PyElement element = (PyElement)getPsiElement();
     final PyClass parent = PsiTreeUtil.getParentOfType(element, PyClass.class, false);

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 14-Jan-2008
- */
 package com.intellij.analysis;
 
 import com.intellij.openapi.application.ApplicationManager;

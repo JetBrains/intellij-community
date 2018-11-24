@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
@@ -74,14 +73,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   @Nullable
   public static PlatformProjectOpenProcessor getInstanceIfItExists() {
     ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for(ProjectOpenProcessor processor: processors) {
+    for (ProjectOpenProcessor processor : processors) {
       if (processor instanceof PlatformProjectOpenProcessor) {
-        return (PlatformProjectOpenProcessor) processor;
+        return (PlatformProjectOpenProcessor)processor;
       }
     }
     return null;
   }
 
+  @Override
   public boolean canOpenProject(final VirtualFile file) {
     return file.isDirectory();
   }
@@ -97,10 +97,16 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Nullable
+  @Override
   public Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
     EnumSet<Option> options = EnumSet.noneOf(Option.class);
     if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
+  }
+
+  @Nullable
+  public Project doOpenProject(@NotNull VirtualFile file, @Nullable Project projectToClose, int line, @NotNull EnumSet<Option> options) {
+    return doOpenProject(file, projectToClose, line, null, options);
   }
 
   /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
@@ -135,7 +141,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
       else {
         baseDir = virtualFile.getParent();
-        while (baseDir != null && !ProjectKt.isProjectDirectoryExistsUsingIo(baseDir)) {
+        while (baseDir != null && !com.intellij.openapi.project.ProjectUtil.isProjectDirectoryExistsUsingIo(baseDir)) {
           baseDir = baseDir.getParent();
         }
       }
@@ -249,7 +255,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       project.save();
     }
 
-    openFileFromCommandLine(project, virtualFile, line);
+    if (!virtualFile.isDirectory()) {
+      openFileFromCommandLine(project, virtualFile, line);
+    }
 
     if (!projectManager.openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
@@ -287,16 +295,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return false;
   }
 
-  private static void openFileFromCommandLine(final Project project, final VirtualFile file, final int line) {
+  private static void openFileFromCommandLine(Project project, VirtualFile file, int line) {
     StartupManager.getInstance(project).registerPostStartupActivity(
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
-        if (!project.isDisposed() && file.isValid() && !file.isDirectory()) {
-          if (line > 0) {
-            new OpenFileDescriptor(project, file, line - 1, 0).navigate(true);
-          }
-          else {
-            new OpenFileDescriptor(project, file).navigate(true);
-          }
+        if (!project.isDisposed() && file.isValid()) {
+          (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : new OpenFileDescriptor(project, file)).navigate(true);
         }
       }, ModalityState.NON_MODAL));
   }

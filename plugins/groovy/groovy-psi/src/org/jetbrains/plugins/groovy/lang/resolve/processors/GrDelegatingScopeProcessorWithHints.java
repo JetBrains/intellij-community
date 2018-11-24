@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-/**
- * Created by Max Medvedev on 31/03/14
- */
 public class GrDelegatingScopeProcessorWithHints extends GrScopeProcessorWithHints {
   private final PsiScopeProcessor myDelegate;
 

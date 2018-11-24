@@ -2,10 +2,6 @@ package org.jetbrains.plugins.groovy.lang.overriding;
 
 import com.intellij.psi.PsiMethod;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 02.08.2007
- */
 public class DeepestSuperMethodsTest extends OverridingTester {
 
   public void testManyOverridingMethods() throws Throwable { doTest(); }

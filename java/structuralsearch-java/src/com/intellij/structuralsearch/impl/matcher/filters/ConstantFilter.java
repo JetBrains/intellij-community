@@ -19,13 +19,6 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Apr 27, 2004
- * Time: 7:55:40 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ConstantFilter implements NodeFilter {
 
   private static final NodeFilter INSTANCE = new ConstantFilter();

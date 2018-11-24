@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.psi.impl.DebugUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ import java.util.Collection;
 /**
  * @author peter
  */
-public class LookupOffsets extends DocumentAdapter {
+public class LookupOffsets implements DocumentListener {
   private String myAdditionalPrefix = "";
   private String myInitialPrefix;
 
@@ -84,6 +84,10 @@ public class LookupOffsets extends DocumentAdapter {
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
     myInitialPrefix = null;
     return true;
+  }
+
+  void destabilizeLookupStart() {
+    myStableStart = false;
   }
 
   void checkMinPrefixLengthChanges(Collection<LookupElement> items, LookupImpl lookup) {

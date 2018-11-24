@@ -17,9 +17,6 @@ package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 
-/**
-* Created by Maxim.Mossienko on 6/12/2014.
-*/
 public class SortedFileIdSetIterator implements IntIdsIterator {
   private final int[] myBits;
   private final int myBitsLength;

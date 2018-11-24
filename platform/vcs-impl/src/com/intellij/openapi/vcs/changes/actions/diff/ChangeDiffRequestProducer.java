@@ -107,6 +107,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     }
 
     if (!Comparing.equal(change1.getClass(), change2.getClass())) return false;
+    if (!Comparing.equal(change1.getFileStatus(), change2.getFileStatus())) return false;
     if (!isEquals(change1.getBeforeRevision(), change2.getBeforeRevision())) return false;
     if (!isEquals(change1.getAfterRevision(), change2.getAfterRevision())) return false;
 
@@ -133,7 +134,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
   @Nullable
   public static ChangeDiffRequestProducer create(@Nullable Project project, @NotNull Change change) {
-    return create(project, change, Collections.<Key, Object>emptyMap());
+    return create(project, change, Collections.emptyMap());
   }
 
   @Nullable

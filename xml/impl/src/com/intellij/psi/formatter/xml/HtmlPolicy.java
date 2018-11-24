@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.formatting.Spacing;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
@@ -24,14 +25,17 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class HtmlPolicy extends XmlFormattingPolicy {
+  private static final TokenSet TAG_END_TOKEN_SET = TokenSet.create(XmlTokenType.XML_TAG_END, XmlTokenType.XML_EMPTY_ELEMENT_END);
 
   protected final CodeStyleSettings mySettings;
 
@@ -88,16 +92,6 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     if (prevNode == null) return false;
     if (!(SourceTreeToPsiMap.treeElementToPsi(prevNode) instanceof XmlTag)) return false;
     return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
-  }
-
-  @Override
-  public boolean insertLineBreakBeforeFirstAttribute(XmlAttribute attribute) {
-    return false;
-  }
-
-  @Override
-  public boolean insertLineBreakAfterLastAttribute(XmlAttribute attribute) {
-    return false;
   }
 
   @Override
@@ -272,5 +266,37 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   @Override
   public boolean shouldSaveSpacesBetweenTagAndText() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  public Spacing getSpacingBeforeFirstAttribute(XmlAttribute attribute) {
+    boolean isEnabled = mySettings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    return getStartTagDependantSpacingOrNull(attribute.getParent(), isEnabled, 1);
+  }
+
+  @Nullable
+  @Override
+  public Spacing getSpacingAfterLastAttribute(XmlAttribute attribute) {
+    XmlTag parent = attribute.getParent();
+    final int spaces = parent.isEmpty() && addSpaceIntoEmptyTag() ? 1 : 0;
+    boolean isEnabled = mySettings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    return getStartTagDependantSpacingOrNull(parent, isEnabled, spaces);
+  }
+
+  @Nullable
+  private Spacing getStartTagDependantSpacingOrNull(XmlTag tag, boolean enabled, int spaces) {
+    if (!enabled) return null;
+    TextRange range = getStartTagRange(tag);
+    if (range == null) return null;
+    return Spacing.createDependentLFSpacing(spaces, spaces, range, getShouldKeepLineBreaks(), getKeepBlankLines());
+  }
+
+  @Nullable
+  private static TextRange getStartTagRange(XmlTag tag) {
+    ASTNode start = tag.getNode().findChildByType(XmlTokenType.XML_START_TAG_START);
+    ASTNode end = tag.getNode().findChildByType(TAG_END_TOKEN_SET);
+    return start != null && end != null
+           ? new TextRange(start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset()) : null;
   }
 }

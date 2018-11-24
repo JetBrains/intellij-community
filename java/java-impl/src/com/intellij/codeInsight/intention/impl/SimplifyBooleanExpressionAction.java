@@ -21,15 +21,18 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifyBooleanExpressionAction implements IntentionAction{
+  private String myText = getFamilyName();
+
   @Override
   @NotNull
   public String getText() {
-    return getFamilyName();
+    return myText;
   }
 
   @Override
@@ -41,7 +44,12 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiExpression expression = getExpressionToSimplify(editor, file);
-    return expression != null && SimplifyBooleanExpressionFix.canBeSimplified(expression);
+    if (expression != null && SimplifyBooleanExpressionFix.canBeSimplified(expression)) {
+      Object o = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
+      myText = o instanceof Boolean ? SimplifyBooleanExpressionFix.getIntentionText(expression, (Boolean)o) : getFamilyName();
+      return true;
+    }
+    return false;
   }
 
   private static PsiExpression getExpressionToSimplify(final Editor editor, final PsiFile file) {

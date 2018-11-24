@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics
 import com.intellij.configurationStore.SchemeManagerIprProvider
 import com.intellij.configurationStore.save
 import com.intellij.execution.*
+import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
@@ -28,8 +29,8 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -40,14 +41,14 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.EventDispatcher
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
 import kotlin.concurrent.read
@@ -122,14 +123,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   private val customOrder = ObjectIntHashMap<String>()
   private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
-  private val myDispatcher = EventDispatcher.create(RunManagerListener::class.java)!!
-
   private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = schemeManagerProvider, autoSave = false)
 
-  internal var projectSchemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>? = null
+  @Suppress("LeakingThis")
+  private var projectSchemeManager = if (isUseProjectSchemeManager()) SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true), isUseOldFileNameSanitize = true) else null
+
+  private val isFirstLoadState = AtomicBoolean()
 
   private val stringIdToBeforeRunProvider by lazy {
     val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
@@ -138,6 +140,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
     result
   }
+
+  private val eventPublisher: RunManagerListener
+    get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
@@ -258,24 +263,23 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     lock.write {
       immutableSortedSettingsList = null
 
-      existingId = findExistingConfigurationId(settings)
       // https://youtrack.jetbrains.com/issue/IDEA-112821
       // we should check by instance, not by id (todo is it still relevant?)
+      existingId = if (idToSettings.get(newId) === settings) newId else findExistingConfigurationId(settings)
       existingId?.let {
-        // idToSettings is a LinkedHashMap - we must remove even if existingId equals to newId and in any case we will replace it on put
-        idToSettings.remove(it)
+        if (newId != it) {
+          idToSettings.remove(it)
+        }
       }
+
+      idToSettings.put(newId, settings)
 
       if (selectedConfigurationId != null && selectedConfigurationId == existingId) {
         selectedConfigurationId = newId
       }
-      idToSettings.put(newId, settings)
 
       if (existingId == null) {
         refreshUsagesList(settings)
-      }
-
-      if (existingId == null) {
         settings.schemeManager?.addScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
       else {
@@ -283,13 +287,14 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
     }
 
-    checkRecentsLimit()
-
     if (existingId == null) {
-      myDispatcher.multicaster.runConfigurationAdded(settings)
+      if (settings.isTemporary) {
+        checkRecentsLimit()
+      }
+      eventPublisher.runConfigurationAdded(settings)
     }
     else {
-      myDispatcher.multicaster.runConfigurationChanged(settings, existingId)
+      eventPublisher.runConfigurationChanged(settings, existingId)
     }
   }
 
@@ -373,7 +378,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
 
       selectedConfigurationId = value?.uniqueID
-      fireRunConfigurationSelected()
+      eventPublisher.runConfigurationSelected()
     }
 
   @Volatile
@@ -419,7 +424,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
             }
           }
 
-          folderNames.sortWith(StringUtil.NATURAL_COMPARATOR)
+          folderNames.sortWith(NaturalComparator.INSTANCE)
           folderNames.add(null)
 
           list.sortWith(Comparator { o1, o2 ->
@@ -483,6 +488,13 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun getState(): Element {
+    for (settings in idToSettings.values) {
+      if (settings.type is UnknownConfigurationType) {
+        continue
+      }
+      checkIfDependenciesAreStable(settings.configuration)
+    }
+
     val element = Element("state")
 
     workspaceSchemeManager.save()
@@ -595,8 +607,21 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return methodElement
   }
 
+  override fun noStateLoaded() {
+    isFirstLoadState.set(false)
+    projectSchemeManager?.loadSchemes()
+  }
+
   override fun loadState(parentNode: Element) {
-    clear(false)
+    val oldSelectedConfigurationId: String?
+    val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
+    if (isFirstLoadState) {
+      oldSelectedConfigurationId = null
+    }
+    else {
+      oldSelectedConfigurationId = selectedConfigurationId
+      clear(false)
+    }
 
     schemeManagerProvider.load(parentNode) {
       var name = it.getAttributeValue("name")
@@ -611,6 +636,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
       name
     }
+
     workspaceSchemeManager.reload()
 
     val order = ArrayList<String>()
@@ -642,9 +668,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       selectedConfigurationId = parentNode.getAttributeValue(SELECTED_ATTR)
     }
 
+    if (isFirstLoadState) {
+      projectSchemeManager?.loadSchemes()
+    }
+
     fireBeforeRunTasksUpdated()
-    // todo is it required
-    fireRunConfigurationSelected()
+
+    if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
+      eventPublisher.runConfigurationSelected()
+    }
   }
 
   fun readContext(parentNode: Element) {
@@ -659,7 +691,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     this.selectedConfigurationId = selectedConfigurationId
 
-    fireRunConfigurationSelected()
+    eventPublisher.runConfigurationSelected()
   }
 
   override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
@@ -718,12 +750,13 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     iconCache.clear()
-    removedConfigurations.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
+    val eventPublisher = eventPublisher
+    removedConfigurations.forEach { eventPublisher.runConfigurationRemoved(it) }
   }
 
   fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings {
     val settings = RunnerAndConfigurationSettingsImpl(this)
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       settings.readExternal(element, isShared)
     }
     addConfiguration(element, settings)
@@ -751,7 +784,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     for (methodElement in child.getChildren(OPTION)) {
       val key = methodElement.getAttributeValue(NAME_ATTR)
       val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
-      val beforeRunTask = provider.createTask(settings.configuration) ?: continue
+      val beforeRunTask = (if (provider is RunConfigurationBeforeRunProvider) provider.createTask(settings.configuration, this) else provider.createTask(settings.configuration)) ?: continue
       beforeRunTask.readExternal(methodElement)
       if (result == null) {
         result = SmartList()
@@ -761,7 +794,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return result ?: emptyList()
   }
 
-  fun getConfigurationType(typeName: String) = idToType.get(typeName)
+  override fun getConfigurationType(typeName: String) = idToType.get(typeName)
 
   @JvmOverloads
   fun getFactory(typeName: String?, _factoryName: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
@@ -878,8 +911,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
     return allSettings.firstOrNull { it.name == name }
   }
-
-  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
 
   override fun <T : BeforeRunTask<*>> getBeforeRunTasks(settings: RunConfiguration, taskProviderId: Key<T>): List<T> {
     if (settings is WrappingRunConfiguration<*>) {
@@ -1032,6 +1063,24 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     fireBeforeRunTasksUpdated()
   }
 
+  fun checkIfDependenciesAreStable(configuration: RunConfiguration) {
+    if (isFirstLoadState.get()) return
+    for (runTask in configuration.beforeRunTasks) {
+      if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings != null && runTask.settings.isTemporary) {
+        makeStable(runTask.settings)
+        checkIfDependenciesAreStable(runTask.settings.configuration)
+      }
+    }
+    if (configuration is CompoundRunConfiguration) {
+      configuration.setToRun.mapNotNull { getSettings(it) }.forEach {
+        if (it.isTemporary) {
+          makeStable(it)
+          checkIfDependenciesAreStable(it.configuration)
+        }
+      }
+    }
+  }
+
   fun removeNotExistingSharedConfigurations(existing: Set<String>) {
     var removed: MutableList<RunnerAndConfigurationSettings>? = null
     lock.write {
@@ -1047,35 +1096,32 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         }
       }
     }
-    removed?.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
+
+    if (removed != null) {
+      val publisher = eventPublisher
+      removed?.forEach { publisher.runConfigurationRemoved(it) }
+    }
   }
 
   fun fireBeginUpdate() {
-    myDispatcher.multicaster.beginUpdate()
+    eventPublisher.beginUpdate()
   }
 
   fun fireEndUpdate() {
-    myDispatcher.multicaster.endUpdate()
+    eventPublisher.endUpdate()
   }
 
   fun fireRunConfigurationChanged(settings: RunnerAndConfigurationSettings) {
-    myDispatcher.multicaster.runConfigurationChanged(settings, null)
+    eventPublisher.runConfigurationChanged(settings, null)
   }
 
-  private fun fireRunConfigurationSelected() {
-    myDispatcher.multicaster.runConfigurationSelected()
-  }
-
+  @Suppress("OverridingDeprecatedMember")
   override fun addRunManagerListener(listener: RunManagerListener) {
-    myDispatcher.addListener(listener)
-  }
-
-  override fun removeRunManagerListener(listener: RunManagerListener) {
-    myDispatcher.removeListener(listener)
+    project.messageBus.connect().subscribe(RunManagerListener.TOPIC, listener)
   }
 
   fun fireBeforeRunTasksUpdated() {
-    myDispatcher.multicaster.beforeRunTasksChanged()
+    eventPublisher.beforeRunTasksChanged()
   }
 
   override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {
@@ -1131,7 +1177,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       selectedConfiguration = null
     }
 
-    removed.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
-    changedSettings.forEach { myDispatcher.multicaster.runConfigurationChanged(it, null) }
+    removed.forEach { eventPublisher.runConfigurationRemoved(it) }
+    changedSettings.forEach { eventPublisher.runConfigurationChanged(it, null) }
   }
 }
+
+private fun isUseProjectSchemeManager() = Registry.`is`("runManager.use.schemeManager", false)

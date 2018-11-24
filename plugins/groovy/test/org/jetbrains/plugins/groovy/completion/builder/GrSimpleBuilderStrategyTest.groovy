@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,5 +197,23 @@ class Pojo {
 
 new Pojo().lolName("Janet").lolCounter(35).<caret>
 ''', 'lolName', 'lolDynamic', 'lolCounter', 'method'
+  }
+
+  void 'test return type with include super'() {
+    doVariantableTest('''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy, includeSuperProperties = true)
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+
+new Pojo().setName().<caret>
+''', CompletionResult.notContain,'setDynamic', 'setCounter')
   }
 }

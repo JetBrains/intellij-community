@@ -55,10 +55,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Jan 31, 2005
- */
 public class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
 
@@ -225,7 +221,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     group.add(new GroupByScopeTypeAction());
     group.add(new ContextHelpAction("dependency.viewer.tool.window"));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CyclicDependencies", group, true);
     return toolbar.getComponent();
   }
 

@@ -20,16 +20,18 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.testGuiFramework.recorder.GlobalActionRecorder
 import com.intellij.testGuiFramework.recorder.ScriptGenerator
+import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 
 /**
  * @author Sergey Karashevich
  */
-class StopRecAction : AnAction(null, "Stop Recording and Clear Buffer", AllIcons.Actions.Suspend) {
+class StopRecAction : AnAction(null, "Stop Recording, Compiling, Running and Clear Buffer", AllIcons.Actions.Suspend) {
 
   override fun actionPerformed(p0: AnActionEvent?) {
     GlobalActionRecorder.deactivate()
-    Notifier.updateStatus("Recording stopped")
+    GuiRecorderComponent.cancelCurrentTask()
+    Notifier.updateStatus("Stopped")
     ScriptGenerator.clearScriptBuffer()
   }
 

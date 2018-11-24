@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,10 +96,9 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
         myHighlightedText.getEnding().addText(" (" + presentableName + ')', ourPostfixAttributes);
       }
     }
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
     final VirtualFile vFile = buildFile.getVirtualFile();
     if (vFile != null) {
-      for (AntBeforeRunTask task : runManager.getBeforeRunTasks(AntBeforeRunTaskProvider.ID)) {
+      for (AntBeforeRunTask task : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(AntBeforeRunTaskProvider.ID)) {
         if (task.isRunningTarget(myTarget)) {
           myHighlightedText.getEnding().addText(" (Before Run/Debug)", ourPostfixAttributes);
           break;

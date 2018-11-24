@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 26.09.2006
- * Time: 19:33:19
- */
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;

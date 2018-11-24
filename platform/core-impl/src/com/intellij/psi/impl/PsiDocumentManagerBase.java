@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -507,8 +506,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       });
       if (executed) break;
 
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
+      TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
+      Semaphore semaphore = new Semaphore(1);
       application.invokeLater(() -> {
         if (myProject.isDisposed()) {
           // committedness doesn't matter anymore; give clients a chance to do checkCanceled
@@ -516,7 +515,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           return;
         }
 
-        performWhenAllCommitted(() -> semaphore.up());
+        performWhenAllCommitted(() -> semaphore.up(), contextTransaction);
       }, ModalityState.any());
       semaphore.waitFor();
     }
@@ -529,6 +528,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    */
   @Override
   public boolean performWhenAllCommitted(@NotNull final Runnable action) {
+    return performWhenAllCommitted(action, TransactionGuard.getInstance().getContextTransaction());
+  }
+
+  private boolean performWhenAllCommitted(@NotNull Runnable action, @Nullable TransactionId context) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkWeAreOutsideAfterCommitHandler();
 
@@ -544,13 +547,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
     actions.add(action);
 
-    TransactionId current = TransactionGuard.getInstance().getContextTransaction();
-    if (current != ModalityState.NON_MODAL) {
+    if (context != null) {
       // re-add all uncommitted documents into the queue with this new modality
       // because this client obviously expects them to commit even inside modal dialog
       for (Document document : myUncommittedDocuments) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document,
-                                                       "re-added with modality "+current+" because performWhenAllCommitted("+current+") was called", current);
+                                                       "re-added with context "+context+" because performWhenAllCommitted("+context+") was called", context);
       }
     }
     return false;
@@ -576,7 +578,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       whenAllCommitted.run();
     }
     else {
-      UIUtil.invokeLaterIfNeeded(() -> performWhenAllCommitted(whenAllCommitted));
+      UIUtil.invokeLaterIfNeeded(() -> { if (!myProject.isDisposed()) performWhenAllCommitted(whenAllCommitted);});
     }
   }
 
@@ -1022,7 +1024,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return mySynchronizer;
   }
 
-  private static class UncommittedInfo extends DocumentAdapter implements PrioritizedInternalDocumentListener {
+  private static class UncommittedInfo implements PrioritizedInternalDocumentListener, DocumentListener {
     private final DocumentImpl myOriginal;
     private final FrozenDocument myFrozen;
     private final List<DocumentEvent> myEvents = ContainerUtil.newArrayList();

@@ -127,10 +127,6 @@ public class GrPackageInspection extends BaseInspection {
     return null;
   }
 
-  /**
-   * User: Dmitry.Krasilschikov
-   * Date: 01.11.2007
-   */
   public static class ChangePackageQuickFix implements LocalQuickFix {
     private final String myNewPackageName;
 

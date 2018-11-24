@@ -550,15 +550,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       project = null;
     }
     if (mySearchPopup != null) {
-      myPopupLayeredPane.remove(mySearchPopup);
-      myPopupLayeredPane.validate();
-      myPopupLayeredPane.repaint();
-      myPopupLayeredPane = null;
+      if (myPopupLayeredPane != null) {
+        myPopupLayeredPane.remove(mySearchPopup);
+        myPopupLayeredPane.validate();
+        myPopupLayeredPane.repaint();
+        myPopupLayeredPane = null;
+      }
 
       if (myListenerDisposable != null) {
         Disposer.dispose(myListenerDisposable);
+        myListenerDisposable = null;
       }
-      myListenerDisposable = null;
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");

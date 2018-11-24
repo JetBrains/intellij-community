@@ -191,7 +191,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
 
       stub = stub.getParentStub();
     }
-    return result == null ? Collections.<String>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
   private static boolean isStatic(@NotNull StubElement<?> stub) {
@@ -216,6 +216,6 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
         methodTypeParams.add(((PsiTypeParameterStub)tStub).getName());
       }
     }
-    return methodTypeParams == null ? Collections.<String>emptySet() : methodTypeParams;
+    return methodTypeParams == null ? Collections.emptySet() : methodTypeParams;
   }
 }

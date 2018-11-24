@@ -483,7 +483,7 @@ public class Py3TypeTest extends PyTestCase {
 
   public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-    doTest("Union[D2, D1]",
+    doTest("Union[D1, D2]",
            "class D1(object):\n" +
            "    pass\n" +
            "class D2(object):\n" +
@@ -559,6 +559,53 @@ public class Py3TypeTest extends PyTestCase {
            "    pass\n" +
            "\n" +
            "expr = generic_kwargs(a=1, b='foo')\n");
+  }
+
+  // PY-19323
+  public void testReturnedTypingCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(...) -> Any",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  public void testReturnedTypingCallableWithUnknownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(...) -> int",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable[..., int]:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  public void testReturnedTypingCallableWithKnownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(int, str) -> int",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable[[int, str], int]:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  // PY-24445
+  public void testIsSubclassInsideListComprehension() {
+    doTest("List[Type[A]]",
+           "class A: pass\n" +
+           "expr = [e for e in [] if issubclass(e, A)]");
+  }
+
+  public void testIsInstanceInsideListComprehension() {
+    doTest("List[A]",
+           "class A: pass\n" +
+           "expr = [e for e in [] if isinstance(e, A)]");
   }
 
   private void doTest(final String expectedType, final String text) {

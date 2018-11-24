@@ -39,6 +39,7 @@ import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
+import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
@@ -97,6 +98,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   ImageEditorUI(@Nullable ImageEditor editor) {
     this.editor = editor;
 
+    imageComponent.addPropertyChangeListener(ZOOM_FACTOR_PROP, e -> imageComponent.setZoomFactor(getZoomModel().getZoomFactor()));
     Options options = OptionsManager.getInstance().getOptions();
     EditorOptions editorOptions = options.getEditorOptions();
     options.addPropertyChangeListener(optionsChangeListener);
@@ -253,11 +255,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     return zoomModel;
   }
 
-  public void setImage(BufferedImage image, String format) {
+  public void setImageProvider(ScaledImageProvider imageProvider, String format) {
     ImageDocument document = imageComponent.getDocument();
     BufferedImage previousImage = document.getValue();
-    document.setValue(image);
-    if (image == null) return;
+    document.setValue(imageProvider);
+    if (imageProvider == null) return;
     document.setFormat(format);
     ImageZoomModel zoomModel = getZoomModel();
     if (previousImage == null || !zoomModel.isZoomLevelChanged()) {
@@ -268,6 +270,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       zoomModel.setZoomFactor(1.0d);
 
       if (zoomOptions.isSmartZooming()) {
+        BufferedImage image = imageProvider.apply(zoomModel.getZoomFactor());
         Dimension prefferedSize = zoomOptions.getPrefferedSize();
         if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
           // Resize to preffered size
@@ -374,6 +377,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     public void setZoomFactor(double zoomFactor) {
       double oldZoomFactor = getZoomFactor();
+
+      if (Double.compare(oldZoomFactor, zoomFactor) == 0) return;
 
       // Change current size
       Dimension size = imageComponent.getCanvasSize();

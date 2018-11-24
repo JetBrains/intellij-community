@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 16-Aug-2006
- * Time: 16:56:21
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -41,12 +35,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 
@@ -79,12 +71,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   @Override
   protected void initTree() {
     super.initTree();
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath treePath) {
-        return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
-      }
-    }, true);
+    new TreeSpeedSearch(myTree, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName(), true);
 
     myTree.setRootVisible(false);
   }
@@ -169,7 +156,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       selectNodeInTree(findNodeByObject(myRoot, projectJdk));
     });
     actions.add(new MyActionGroupWrapper(group));
-    actions.add(new MyDeleteAction(Conditions.<Object[]>alwaysTrue()));
+    actions.add(new MyDeleteAction(Conditions.alwaysTrue()));
     return actions;
   }
 

@@ -18,13 +18,6 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/17/11
- * Time: 1:12 PM
- * To change this template use File | Settings | File Templates.
- */
 public class PrintCommand extends AbstractCommand {
 
   private String myText;

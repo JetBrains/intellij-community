@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-
-import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 
 /**
  * @author max
@@ -557,7 +555,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
     @NonNls String link = "";
-    if (!isEmpty(tool.loadDescription())) {
+    if (showToolDescription(tool)) {
       link = " <a "
              + "href=\"#inspection/" + tool.getShortName() + "\""
              + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
@@ -575,6 +573,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       registerQuickFixes(tool, info, quickFixes);
     }
     return info;
+  }
+
+  private static boolean showToolDescription(@NotNull LocalInspectionToolWrapper tool) {
+    return tool.getStaticDescription() == null || !tool.getStaticDescription().isEmpty();
   }
 
   private static void registerQuickFixes(@NotNull LocalInspectionToolWrapper tool,

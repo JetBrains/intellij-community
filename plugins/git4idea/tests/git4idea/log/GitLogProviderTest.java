@@ -64,7 +64,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     createTaggedBranch();
 
     VcsLogProvider.DetailedLogData block =
-      myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, false, Collections.<VcsRef>emptySet()));
+      myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, false, Collections.emptySet()));
     assertOrderedEquals(block.getCommits(), expectedLogWithoutTaggedBranch);
   }
 
@@ -125,7 +125,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     git("update-ref refs/remotes/origin/HEAD master");
 
     VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot,
-                                                                        new RequirementsImpl(1000, false, Collections.<VcsRef>emptySet()));
+                                                                        new RequirementsImpl(1000, false, Collections.emptySet()));
     assertFalse("origin/HEAD should be ignored", ContainerUtil.exists(block.getRefs(), ref -> ref.getName().equals("origin/HEAD")));
   }
 
@@ -135,7 +135,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     git("tag build");
 
     VcsLogProvider.DetailedLogData data = myLogProvider.readFirstBlock(myProjectRoot,
-                                                                       new RequirementsImpl(1000, true, Collections.<VcsRef>emptySet()));
+                                                                       new RequirementsImpl(1000, true, Collections.emptySet()));
     List<VcsCommitMetadata> expectedLog = log();
     assertOrderedEquals(data.getCommits(), expectedLog);
     assertTrue(ContainerUtil.exists(data.getRefs(), ref -> ref.getName().equals("build") && ref.getType() == GitRefManager.LOCAL_BRANCH));

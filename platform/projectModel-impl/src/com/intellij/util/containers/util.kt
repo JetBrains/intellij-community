@@ -40,7 +40,17 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 
 fun Collection<*>?.isNullOrEmpty() = this == null || isEmpty()
 
-inline fun <T, R> Iterator<T>.computeOrNull(processor: (T) -> R): R? {
+inline fun <T, R> Iterator<T>.computeIfAny(processor: (T) -> R): R? {
+  for (item in this) {
+    val result = processor(item)
+    if (result != null) {
+      return result
+    }
+  }
+  return null
+}
+
+inline fun <T, R> Array<T>.computeIfAny(processor: (T) -> R): R? {
   for (file in this) {
     val result = processor(file)
     if (result != null) {
@@ -50,19 +60,9 @@ inline fun <T, R> Iterator<T>.computeOrNull(processor: (T) -> R): R? {
   return null
 }
 
-inline fun <T, R> Array<T>.computeOrNull(processor: (T) -> R): R? {
-  for (file in this) {
-    val result = processor(file)
-    if (result != null) {
-      return result
-    }
-  }
-  return null
-}
-
-inline fun <T, R> List<T>.computeOrNull(processor: (T) -> R): R? {
-  for (file in this) {
-    val result = processor(file)
+inline fun <T, R> List<T>.computeIfAny(processor: (T) -> R): R? {
+  for (item in this) {
+    val result = processor(item)
     if (result != null) {
       return result
     }

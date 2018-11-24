@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -132,7 +133,7 @@ public class AntTasksProvider {
     private final Future<Map<String, Class>> myFuture;
 
     public AntClassLoader(ArrayList<URL> urls) {
-      super(build().urls(urls).allowUnescaped().noPreload());
+      super(getBuilder(urls));
       myFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {
           final ReflectedProject antProject = ReflectedProject.getProject(this);
@@ -154,6 +155,15 @@ public class AntTasksProvider {
           return null;
         }
       });
+    }
+
+    private static Builder getBuilder(ArrayList<URL> urls) {
+      Builder builder = build()
+        .urls(urls)
+        .allowUnescaped()
+        .noPreload();
+      ClassLoaderUtil.addPlatformLoaderParentIfOnJdk9(builder);
+      return builder;
     }
 
     @NotNull

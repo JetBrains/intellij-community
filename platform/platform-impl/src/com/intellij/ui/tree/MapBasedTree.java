@@ -57,6 +57,11 @@ public final class MapBasedTree<K, N> {
     this.path = path;
   }
 
+  public void invalidate() {
+    if (root != null) root.invalidate();
+    map.values().forEach(entry -> entry.invalidate());
+  }
+
   public void onRemove(@NotNull Consumer<N> consumer) {
     Consumer<N> old = nodeRemoved;
     nodeRemoved = old == null ? consumer : old.andThen(consumer);
@@ -146,6 +151,7 @@ public final class MapBasedTree<K, N> {
     }
     parent.leaf = children == null;
     parent.children = guard(newChildren);
+    parent.valid = true;
 
     List<Entry<N>> removed = oldChildren;
     List<Entry<N>> inserted = newChildren;
@@ -218,6 +224,7 @@ public final class MapBasedTree<K, N> {
     private volatile boolean leaf;
     private volatile List<Entry<N>> children;
     private volatile N loading;
+    private volatile boolean valid;
 
     private Entry(TreePath path, N parent, N node, Boolean leaf) {
       super(path, node);
@@ -225,6 +232,11 @@ public final class MapBasedTree<K, N> {
       this.parent = parent;
       this.leaf = Boolean.TRUE.equals(leaf);
       if (this.leaf) children = emptyList();
+      invalidate();
+    }
+
+    public void invalidate() {
+      valid = leaf;
     }
 
     public N getNode() {
@@ -240,7 +252,7 @@ public final class MapBasedTree<K, N> {
     }
 
     public boolean isLoadingRequired() {
-      return children == null;
+      return !valid || children == null;
     }
 
     public int getChildCount() {
@@ -272,6 +284,7 @@ public final class MapBasedTree<K, N> {
       if (children != null) LOG.warn("MapBasedTree: rewrite loaded nodes");
       this.loading = loading;
       children = loading == null ? emptyList() : singletonList(new Entry<>(this, node, loading, true));
+      valid = true;
     }
   }
 

@@ -18,11 +18,6 @@ package org.intellij.plugins.relaxNG.compact.psi;
 
 import com.intellij.psi.PsiNamedElement;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 16.08.2007
- */
 public interface RncDecl extends RncElement, PsiNamedElement {
   String getPrefix();
 

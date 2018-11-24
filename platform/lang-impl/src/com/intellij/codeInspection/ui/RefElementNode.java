@@ -23,7 +23,7 @@ import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.util.containers.FactoryMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +87,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public FileStatus getNodeStatus() {
-    return myPresentation.getElementStatus(getElement());
+    return getPresentation().getElementStatus(getElement());
   }
 
   @Override
@@ -122,12 +122,12 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public int getProblemCount(boolean allowSuppressed) {
-    return isLeaf() ? myPresentation.getIgnoredRefElements().contains(getElement()) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
+    return isLeaf() ? getPresentation().getIgnoredRefElements().contains(getElement()) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
   }
 
   @Override
-  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
-    if (isLeaf() && !myPresentation.isElementIgnored(getElement())) {
+  public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (isLeaf() && !getPresentation().isElementIgnored(getElement())) {
       counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
       return;
     }
@@ -141,11 +141,11 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Nullable
   @Override
-  public String getCustomizedTailText() {
-    if (myPresentation.isDummy()) {
+  public String getTailText() {
+    if (getPresentation().isDummy()) {
       return "";
     }
-    final String customizedText = super.getCustomizedTailText();
+    final String customizedText = super.getTailText();
     if (customizedText != null) {
       return customizedText;
     }

@@ -16,7 +16,7 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.ShutDownTracker
@@ -239,7 +239,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       old.directoryStreamIfExists {
         val new = if (newPath == null) dir else dir.resolve(newPath)
         for (file in it) {
-          LOG.catchAndLog {
+          LOG.runAndLogException {
             if (file.isHidden()) {
               file.delete()
             }
@@ -248,7 +248,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
                 file.move(new.resolve(file.fileName))
               }
               catch (ignored: FileAlreadyExistsException) {
-                return@catchAndLog
+                return@runAndLogException
               }
 
               if (addCommand == null) {
@@ -261,7 +261,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
         toDelete.add(DeleteDirectory(oldPath))
       }
 
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         old.delete()
       }
     }

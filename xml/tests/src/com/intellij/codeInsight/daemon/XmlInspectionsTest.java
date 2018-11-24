@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -34,5 +35,26 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
     myFixture.launchAction(action);
     myFixture.checkResult("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
                           "</schema>");
+  }
+
+  public void testHtmlFromRncSchema() {
+    myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
+    myFixture.configureByText(HtmlFileType.INSTANCE, "<!DOCTYPE html>\n" +
+                                                     "<html lang=\"en\">\n" +
+                                                     "<head>\n" +
+                                                     "    <meta charset=\"UTF-8\">\n" +
+                                                     "    <title>Title</title>\n" +
+                                                     "</head>\n" +
+                                                     "<body>\n" +
+                                                     "<form action=\"index.php\">\n" +
+                                                     "    <input type=\"hidden\" name=\"name_1\" value=\"val_1\">\n" +
+                                                     "    <input type=\"hidden\" name=\"name_2\" value=\"val_2\">\n" +
+                                                     "    <button type=\"button\">Proper js button</button>\n" +
+                                                     "    <button type=<warning descr=\"Redundant default attribute value assignment\">\"submit\"</warning>>Proper submit button</button>\n" +
+                                                     "    <button>Behave as submit when missing type=\"button\"</button>\n" +
+                                                     "</form>\n" +
+                                                     "</body>\n" +
+                                                     "</html>\n");
+    myFixture.checkHighlighting();
   }
 }

@@ -51,10 +51,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * User: anna
- * Date: 07-Feb-2006
- */
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   // option => array of packed OptionDescriptor
   private final Map<CharSequence, long[]> myStorage = Collections.synchronizedMap(new THashMap<CharSequence, long[]>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE));

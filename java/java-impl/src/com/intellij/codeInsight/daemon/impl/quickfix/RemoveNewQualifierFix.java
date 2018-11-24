@@ -23,13 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Nov 29, 2002
- * Time: 3:02:17 PM
- * To change this template use Options | File Templates.
- */
 public class RemoveNewQualifierFix implements IntentionAction {
   private final PsiNewExpression expression;
   private final PsiClass aClass;

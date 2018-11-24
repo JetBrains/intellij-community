@@ -36,12 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 20, 2009
- * Time: 7:07:02 PM
- */
 public class PyRefactoringUtil {
   private PyRefactoringUtil() {
   }

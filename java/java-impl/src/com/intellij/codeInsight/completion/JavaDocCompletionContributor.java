@@ -57,13 +57,6 @@ import java.util.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 05.03.2003
- * Time: 21:40:11
- * To change this template use Options | File Templates.
- */
 public class JavaDocCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaDocCompletionContributor");
   private static final @NonNls String VALUE_TAG = "value";

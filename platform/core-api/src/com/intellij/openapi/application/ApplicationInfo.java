@@ -31,6 +31,7 @@ public abstract class ApplicationInfo {
   public abstract String getMicroVersion();
   public abstract String getPatchVersion();
   public abstract String getVersionName();
+  @Nullable
   public abstract String getHelpURL();
 
   /**

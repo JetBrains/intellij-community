@@ -36,8 +36,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     assertModules("project", "project_main", "project_test");
     compileModules("project_main", "project_test");
 
-    assertCopied("build/resources/main/dir/file.properties");
-    assertCopied("build/resources/test/dir/file-test.properties");
+    assertCopied("out/production/resources/dir/file.properties");
+    assertCopied("out/test/resources/dir/file-test.properties");
   }
 
   @Test
@@ -50,8 +50,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     assertModules("project");
     compileModules("project");
 
-    assertCopied("build/resources/main/dir/file.properties");
-    assertCopied("build/resources/test/dir/file-test.properties");
+    assertCopied("out/production/resources/dir/file.properties");
+    assertCopied("out/test/resources/dir/file-test.properties");
   }
 
   @Test
@@ -70,9 +70,9 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     assertModules("project", "project_main", "project_test");
     compileModules("project_main", "project_test");
 
-    assertCopied("build/resources/main/dir/file.properties");
-    assertCopied("build/resources/test/dir/file-test.properties");
-    assertCopied("build/resources/main/file.txt");
+    assertCopied("out/production/resources/dir/file.properties");
+    assertCopied("out/test/resources/dir/file-test.properties");
+    assertCopied("out/production/resources/file.txt");
   }
 
   @Test
@@ -91,9 +91,9 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     assertModules("project");
     compileModules("project");
 
-    assertCopied("build/resources/main/dir/file.properties");
-    assertCopied("build/resources/test/dir/file-test.properties");
-    assertCopied("build/resources/main/file.txt");
+    assertCopied("out/production/resources/dir/file.properties");
+    assertCopied("out/test/resources/dir/file-test.properties");
+    assertCopied("out/production/resources/file.txt");
   }
 
   @Test
@@ -319,10 +319,10 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     assertModules("project", "bar", "foo", "test");
     compileModules("project", "bar", "foo", "test");
 
-    assertCopied("bar/foo/build/resources/main/dir/file.properties");
-    assertCopied("bar/foo/build/resources/test/dir/file-test.properties");
-    assertCopied("bar/test/build/resources/main/dir/file.properties");
-    assertCopied("bar/test/build/resources/test/dir/file-test.properties");
+    assertCopied("bar/foo/out/production/resources/dir/file.properties");
+    assertCopied("bar/foo/out/test/resources/dir/file-test.properties");
+    assertCopied("bar/test/out/production/resources/dir/file.properties");
+    assertCopied("bar/test/out/test/resources/dir/file-test.properties");
   }
 
   private void createFilesForIncludesAndExcludesTest() throws IOException {
@@ -341,17 +341,17 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
 
   private void assertCopiedResources() {
     // assert production resources
-    assertCopied("build/resources/main/dir/file.xxx");
-    assertCopied("build/resources/main/file.yyy");
-    assertNotCopied("build/resources/main/dir/file.yyy");
-    assertNotCopied("build/resources/main/file.xxx");
-    assertNotCopied("build/resources/main/file.zzz");
+    assertCopied("out/production/resources/dir/file.xxx");
+    assertCopied("out/production/resources/file.yyy");
+    assertNotCopied("out/production/resources/dir/file.yyy");
+    assertNotCopied("out/production/resources/file.xxx");
+    assertNotCopied("out/production/resources/file.zzz");
 
     // assert test resources
-    assertCopied("build/resources/test/dir/file.xxx");
-    assertCopied("build/resources/test/file.yyy");
-    assertNotCopied("build/resources/test/dir/file.yyy");
-    assertNotCopied("build/resources/test/file.xxx");
-    assertNotCopied("build/resources/test/file.zzz");
+    assertCopied("out/test/resources/dir/file.xxx");
+    assertCopied("out/test/resources/file.yyy");
+    assertNotCopied("out/test/resources/dir/file.yyy");
+    assertNotCopied("out/test/resources/file.xxx");
+    assertNotCopied("out/test/resources/file.zzz");
   }
 }

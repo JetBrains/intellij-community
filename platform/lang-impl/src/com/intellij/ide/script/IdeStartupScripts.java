@@ -23,8 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -47,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 class IdeStartupScripts implements ApplicationComponent {
@@ -66,47 +66,7 @@ class IdeStartupScripts implements ApplicationComponent {
     LOG.info(scripts.size() + " startup script(s) found");
     if (scripts.isEmpty()) return;
 
-    final Future<List<Pair<VirtualFile, IdeScriptEngine>>> scriptsAndEnginesFuture = prepareScriptEnginesAsync(scripts);
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-      final AtomicBoolean myScriptsExecutionStarted = new AtomicBoolean();
-
-      @Override
-      public void projectOpened(final Project project) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
-          if (project.isDisposed()) return;
-          if (!myScriptsExecutionStarted.compareAndSet(false, true)) return;
-          ProjectManager.getInstance().removeProjectManagerListener(this);
-          runAllScriptsImpl(project);
-        });
-      }
-
-      private void runAllScriptsImpl(@NotNull Project project) {
-        try {
-          for (Pair<VirtualFile, IdeScriptEngine> pair : scriptsAndEnginesFuture.get()) {
-            try {
-              if (pair.second == null) {
-                LOG.warn(pair.first.getPath() + " not supported (no script engine)");
-              }
-              else {
-                runImpl(project, pair.first, pair.second);
-              }
-            }
-            catch (Exception e) {
-              LOG.warn(e);
-            }
-          }
-        }
-        catch (ProcessCanceledException e) {
-          LOG.warn("... cancelled");
-        }
-        catch (InterruptedException e) {
-          LOG.warn("... interrupted");
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-    });
+    ProjectUtil.runWhenProjectOpened(project -> new MyProjectOpenedHandler(prepareScriptEnginesAsync(scripts)));
   }
 
   @NotNull
@@ -167,5 +127,51 @@ class IdeStartupScripts implements ApplicationComponent {
   private static VirtualFile getScriptsRootDirectory() throws IOException {
     PluginId corePlugin = ObjectUtils.assertNotNull(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
     return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
+  }
+
+  private static class MyProjectOpenedHandler implements Consumer<Project> {
+    final AtomicBoolean myScriptsExecutionStarted;
+    private final Future<List<Pair<VirtualFile, IdeScriptEngine>>> myScriptsAndEnginesFuture;
+
+    public MyProjectOpenedHandler(@NotNull Future<List<Pair<VirtualFile, IdeScriptEngine>>> scriptsAndEnginesFuture) {
+      myScriptsAndEnginesFuture = scriptsAndEnginesFuture;
+      myScriptsExecutionStarted = new AtomicBoolean();
+    }
+
+    @Override
+    public void accept(@NotNull Project project) {
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+        if (project.isDisposed()) return;
+        if (!myScriptsExecutionStarted.compareAndSet(false, true)) return;
+        runAllScriptsImpl(project);
+      });
+    }
+
+    private void runAllScriptsImpl(@NotNull Project project) {
+      try {
+        for (Pair<VirtualFile, IdeScriptEngine> pair : myScriptsAndEnginesFuture.get()) {
+          try {
+            if (pair.second == null) {
+              LOG.warn(pair.first.getPath() + " not supported (no script engine)");
+            }
+            else {
+              runImpl(project, pair.first, pair.second);
+            }
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+          }
+        }
+      }
+      catch (ProcessCanceledException e) {
+        LOG.warn("... cancelled");
+      }
+      catch (InterruptedException e) {
+        LOG.warn("... interrupted");
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 }

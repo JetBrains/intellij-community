@@ -23,13 +23,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 20.01.2003
- * Time: 16:17:14
- * To change this template use Options | File Templates.
- */
 public class CompletionElement{
   private final Object myElement;
   private final PsiSubstitutor mySubstitutor;
@@ -100,11 +93,16 @@ public class CompletionElement{
     return myEqualityObject != null ? myEqualityObject.hashCode() : 0;
   }
 
-  public boolean isMoreSpecificThan(@NotNull CompletionElement prev) {
-    Object prevElement = prev.getElement();
-    if (!(prevElement instanceof PsiMethod && myElement instanceof PsiMethod)) return false;
+  public boolean isMoreSpecificThan(@NotNull CompletionElement another) {
+    Object anotherElement = another.getElement();
+    if (!(anotherElement instanceof PsiMethod && myElement instanceof PsiMethod)) return false;
 
-    PsiType prevType = prev.getSubstitutor().substitute(((PsiMethod)prevElement).getReturnType());
+    if (((PsiMethod)myElement).hasModifierProperty(PsiModifier.ABSTRACT) && 
+        !((PsiMethod)anotherElement).hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
+
+    PsiType prevType = another.getSubstitutor().substitute(((PsiMethod)anotherElement).getReturnType());
     PsiType candidateType = mySubstitutor.substitute(((PsiMethod)myElement).getReturnType());
     return prevType != null && candidateType != null && !prevType.equals(candidateType) && prevType.isAssignableFrom(candidateType);
   }

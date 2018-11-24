@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.view;
 
-import com.intellij.execution.*;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunManagerListener;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
@@ -135,24 +137,29 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     return super.getData(dataId);
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public ExternalSystemUiAware getUiAware() {
     return myUiAware;
   }
 
+  @Override
   public ExternalSystemShortcutsManager getShortcutsManager() {
     return myProjectsManager.getShortcutsManager();
   }
 
+  @Override
   public ExternalSystemTaskActivator getTaskActivator() {
     return myProjectsManager.getTaskActivator();
   }
 
+  @Override
   @NotNull
   public ProjectSystemId getSystemId() {
     return myExternalSystemId;
@@ -210,7 +217,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerListener() {
+    myProject.getMessageBus().connect(this).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private void changed() {
         scheduleStructureRequest(() -> {
           assert myStructure != null;
@@ -311,6 +318,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     setContent(ScrollPaneFactory.createScrollPane(myTree));
 
     myTree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final String id = getMenuId(getSelectedNodes(ExternalSystemNode.class));
         if (id != null) {
@@ -376,6 +384,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
             || ApplicationManager.getApplication().isHeadlessEnvironment());
   }
 
+  @Override
   public void updateUpTo(ExternalSystemNode node) {
     ExternalProjectsStructure structure = getStructure();
     if (structure != null) {
@@ -383,11 +392,13 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     }
   }
 
+  @Override
   @Nullable
   public ExternalProjectsStructure getStructure() {
     return myStructure;
   }
 
+  @Override
   @NotNull
   public List<ExternalSystemNode<?>> createNodes(@NotNull ExternalProjectsView externalProjectsView,
                                                  @Nullable ExternalSystemNode<?> parent,
@@ -439,6 +450,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     myState = state;
   }
 
+  @Override
   public boolean getShowIgnored() {
     return myState.showIgnored;
   }
@@ -450,6 +462,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     }
   }
 
+  @Override
   public boolean getGroupTasks() {
     return myState.groupTasks;
   }
@@ -466,6 +479,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     }
   }
 
+  @Override
   public boolean showInheritedTasks() {
     return myState.showInheritedTasks;
   }

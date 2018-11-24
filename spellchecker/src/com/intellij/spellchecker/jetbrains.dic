@@ -308,6 +308,7 @@ keymap
 keymaps
 keystore
 kotlin
+kryo
 labeler
 labelers
 lcov
@@ -415,6 +416,7 @@ nohistory
 noinline
 noinspection
 noinspections
+nolint
 nologging
 nomapping
 nomaxvalue
@@ -500,6 +502,9 @@ precompile
 precompiled
 precompiler
 precompilers
+preconfigure
+preconfigured
+preconfigures
 prefetch
 premain
 prepend

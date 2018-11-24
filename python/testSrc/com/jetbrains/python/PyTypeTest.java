@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -1677,6 +1678,18 @@ public class PyTypeTest extends PyTestCase {
                     "        return get_class()");
   }
 
+  // PY-7322
+  public void testNamedTupleParameterInDocString() {
+    doTest("Point",
+           "from collections import namedtuple\n" +
+           "Point = namedtuple('Point', ('x', 'y'))\n" +
+           "def takes_a_point(point):\n" +
+           "    \"\"\"\n" +
+           "    :type point: Point\n" +
+           "    \"\"\"\n" +
+           "    expr = point");
+  }
+
   // PY-22919
   public void testMaxListKnownElements() {
     doTest("int",
@@ -1690,6 +1703,24 @@ public class PyTypeTest extends PyTestCase {
            "expr = max(l)");
   }
 
+  public void testWithAsType() {
+    doTest("Union[A, B]",
+           "from typing import Union\n" +
+           "\n" +
+           "class A(object):\n" +
+           "    def __enter__(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "class B(object):\n" +
+           "    def __enter__(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "def f(x):\n" +
+           "    # type: (Union[A, B]) -> None\n" +
+           "    with x as expr:\n" +
+           "        pass");
+  }
+
   // PY-23634
   public void testMinListKnownElements() {
     doTest("int",
@@ -1701,6 +1732,265 @@ public class PyTypeTest extends PyTestCase {
     doTest("Any",
            "l = []\n" +
            "expr = min(l)");
+  }
+
+  // PY-21906
+  public void testSOFOnTransitiveNamedTupleFields() {
+    final PyExpression expression = parseExpr("from collections import namedtuple\n" +
+                                              "class C:\n" +
+                                              "    FIELDS = ('a', 'b')\n" +
+                                              "FIELDS = C.FIELDS\n" +
+                                              "expr = namedtuple('Tup', FIELDS)");
+
+    getTypeEvalContexts(expression).forEach(context -> context.getType(expression));
+  }
+
+  // PY-22971
+  public void testFirstOverloadAndImplementationInClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "from typing import overload\n" +
+                   "class A:\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: int) -> int:\n" +
+                   "        pass\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: str) -> str:\n" +
+                   "        pass\n" +
+                   "    def foo(self, value):\n" +
+                   "        return None\n" +
+                   "expr = A().foo(5)")
+    );
+  }
+
+  // PY-22971
+  public void testTopLevelFirstOverloadAndImplementation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "from typing import overload\n" +
+                   "@overload\n" +
+                   "def foo(value: int) -> int:\n" +
+                   "    pass\n" +
+                   "@overload\n" +
+                   "def foo(value: str) -> str:\n" +
+                   "    pass\n" +
+                   "def foo(value):\n" +
+                   "    return None\n" +
+                   "expr = foo(5)")
+    );
+  }
+
+  // PY-22971
+  public void testFirstOverloadAndImplementationInImportedClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("int",
+                            "from b import A\n" +
+                            "expr = A().foo(5)")
+    );
+  }
+
+  // PY-22971
+  public void testFirstOverloadAndImplementationInImportedModule() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("int",
+                            "from b import foo\n" +
+                            "expr = foo(5)")
+    );
+  }
+
+  // PY-22971
+  public void testSecondOverloadAndImplementationInClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("str",
+                   "from typing import overload\n" +
+                   "class A:\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: int) -> int:\n" +
+                   "        pass\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: str) -> str:\n" +
+                   "        pass\n" +
+                   "    def foo(self, value):\n" +
+                   "        return None\n" +
+                   "expr = A().foo(\"5\")")
+    );
+  }
+
+  // PY-22971
+  public void testTopLevelSecondOverloadAndImplementation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("str",
+                   "from typing import overload\n" +
+                   "@overload\n" +
+                   "def foo(value: int) -> int:\n" +
+                   "    pass\n" +
+                   "@overload\n" +
+                   "def foo(value: str) -> str:\n" +
+                   "    pass\n" +
+                   "def foo(value):\n" +
+                   "    return None\n" +
+                   "expr = foo(\"5\")")
+    );
+  }
+
+  // PY-22971
+  public void testSecondOverloadAndImplementationInImportedClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("str",
+                            "from b import A\n" +
+                            "expr = A().foo(\"5\")")
+    );
+  }
+
+  // PY-22971
+  public void testSecondOverloadAndImplementationInImportedModule() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("str",
+                            "from b import foo\n" +
+                            "expr = foo(\"5\")")
+    );
+  }
+
+  // PY-22971
+  public void testNotMatchedOverloadsAndImplementationInClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Union[int, str]",
+                   "from typing import overload\n" +
+                   "class A:\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: int) -> int:\n" +
+                   "        pass\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: str) -> str:\n" +
+                   "        pass\n" +
+                   "    def foo(self, value):\n" +
+                   "        return None\n" +
+                   "expr = A().foo(object())")
+    );
+  }
+
+  // PY-22971
+  public void testTopLevelNotMatchedOverloadsAndImplementation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Union[int, str]",
+                   "from typing import overload\n" +
+                   "@overload\n" +
+                   "def foo(value: int) -> int:\n" +
+                   "    pass\n" +
+                   "@overload\n" +
+                   "def foo(value: str) -> str:\n" +
+                   "    pass\n" +
+                   "def foo(value):\n" +
+                   "    return None\n" +
+                   "expr = foo(object())")
+    );
+  }
+
+  // PY-22971
+  public void testNotMatchedOverloadsAndImplementationInImportedClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("Union[int, str]",
+                            "from b import A\n" +
+                            "expr = A().foo(object())")
+    );
+  }
+
+  // PY-22971
+  public void testNotMatchedOverloadsAndImplementationInImportedModule() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("Union[int, str]",
+                            "from b import foo\n" +
+                            "expr = foo(object())")
+    );
+  }
+
+  // PY-24383
+  public void testSubscriptionOnWeakType() {
+    doTest("Union[int, Any]",
+           "foo = bar() if 42 != 42 else [1, 2, 3, 4]\n" +
+           "expr = foo[0]");
+  }
+
+  // PY-24364
+  public void testReassignedParameter() {
+    doTest("(entries: Any) -> Generator[Any, Any, None]",
+           "def resort(entries):\n" +
+           "    entries = list(entries)\n" +
+           "    entries.sort(reverse=True)\n" +
+           "    for entry in entries:\n" +
+           "        yield entry\n" +
+           "expr = resort");
+  }
+
+  public void testIsSubclass() {
+    doTest("Type[A]",
+           "class A: pass\n" +
+           "def foo(cls):\n" +
+           "    if issubclass(cls, A):\n" +
+           "        expr = cls");
+  }
+
+  public void testIsSubclassWithTupleOfTypeObjects() {
+    doTest("Type[Union[A, B]]",
+           "class A: pass\n" +
+           "class B: pass\n" +
+           "def foo(cls):\n" +
+           "    if issubclass(cls, (A, B)):\n" +
+           "        expr = cls");
+  }
+
+  // PY-24323
+  public void testMethodQualifiedWithUnknownGenericsInstance() {
+    doTest("(object: Any) -> int",
+           "my_list = []\n" +
+           "expr = my_list.count");
+  }
+
+  // PY-24323
+  public void testMethodQualifiedWithKnownGenericsInstance() {
+    doTest("(object: int) -> int",
+           "my_list = [1, 2, 2, 3, 3]\n" +
+           "expr = my_list.count");
+  }
+
+  public void testConstructingGenericClassWithNotFilledGenericValue() {
+    doTest("MyIterator",
+           "from typing import Iterator\n" +
+           "class MyIterator(Iterator[]):\n" +
+           "    def __init__(self) -> None:\n" +
+           "        self.other = \"other\"\n" +
+           "expr = MyIterator()");
+  }
+
+  // PY-24923
+  public void testEmptyNumpyFunctionDocstring() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () ->
+      doTest("Any",
+             "def f(param):\n" +
+             "    \"\"\"\"\"\"\n" +
+             "    expr = param"));
+  }
+
+  // PY-24923
+  public void testEmptyNumpyClassDocstring() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () ->
+      doTest("Any",
+             "class C:\n" +
+             "    \"\"\"\"\"\"\n" +
+             "    def __init__(self, param):\n" +
+             "        expr = param"));
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

@@ -47,9 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * User: catherine
- */
 public class VFSTestFrameworkListener {
   private static final Logger LOG = Logger.getInstance(VFSTestFrameworkListener.class);
   

@@ -21,10 +21,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 20-Apr-2006
- */
 public abstract class TextEditorHighlightingPassRegistrar {
 
   /**

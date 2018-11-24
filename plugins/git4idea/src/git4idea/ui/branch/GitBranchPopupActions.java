@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitLocalBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.branch.GitNewBranchOptions;
@@ -74,15 +76,21 @@ class GitBranchPopupActions {
     }
 
     popupGroup.addSeparator("Local Branches" + repoInfo);
-    List<BranchActionGroup> localBranchActions =
-      myRepository.getBranches().getLocalBranches().stream()
-        .sorted()
-        .filter(branch -> !branch.equals(myRepository.getCurrentBranch()))
-        .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
-        .collect(toList());
+    GitLocalBranch currentBranch = myRepository.getCurrentBranch();
+    List<BranchActionGroup> localBranchActions = myRepository.getBranches().getLocalBranches().stream()
+      .sorted()
+      .filter(branch -> !branch.equals(currentBranch))
+      .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
+      .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .collect(toList());
+    int topShownBranches = getNumOfTopShownBranches(localBranchActions);
+    if (currentBranch != null) {
+      localBranchActions.add(0, new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
+      topShownBranches++;
+    }
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(localBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, localBranchActions,
+                               topShownBranches, firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
                                firstLevelGroup);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
@@ -160,9 +168,9 @@ class GitBranchPopupActions {
    */
   static class LocalBranchActions extends BranchActionGroup implements PopupElementWithAdditionalInfo {
 
-    private final Project myProject;
-    private final List<GitRepository> myRepositories;
-    private final String myBranchName;
+    protected final Project myProject;
+    protected final List<GitRepository> myRepositories;
+    protected final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
 
@@ -287,6 +295,14 @@ class GitBranchPopupActions {
           reportUsage("git.branch.rename");
         }
       }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (myRepositories.stream().anyMatch(Repository::isFresh)) {
+          e.getPresentation().setEnabled(false);
+          e.getPresentation().setDescription("Renaming branch is not possible before the first commit");
+        }
+      }
     }
 
     private static class DeleteAction extends DumbAwareAction {
@@ -307,6 +323,27 @@ class GitBranchPopupActions {
         brancher.deleteBranch(myBranchName, myRepositories);
         reportUsage("git.branch.delete.local");
       }
+    }
+  }
+
+  static class CurrentBranchActions extends LocalBranchActions {
+    CurrentBranchActions(@NotNull Project project,
+                         @NotNull List<GitRepository> repositories,
+                         @NotNull String branchName,
+                         @NotNull GitRepository selectedRepository) {
+      super(project, repositories, branchName, selectedRepository);
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName)};
+    }
+
+    @Nullable
+    @Override
+    public String getPrefixInfo() {
+      return "current";
     }
   }
 

@@ -98,6 +98,12 @@ fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
   return true
 }
 
+fun Path.deleteChildrenStartingWith(prefix: String) {
+  directoryStreamIfExists({ it.fileName.toString().startsWith(prefix) }) { it.toList() }?.forEach {
+    it.delete()
+  }
+}
+
 private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
   override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
     try {

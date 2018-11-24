@@ -218,7 +218,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
                                @Nullable String anchorFieldName,
                                Object... options) {
     if (myIsFirstUpdate) {
-      myCustomOptions.putValue(groupName, (Trinity)Trinity.create(settingsClass, fieldName, title));
+      myCustomOptions.putValue(groupName, Trinity.create(settingsClass, fieldName, title));
     }
 
     for (IntOption option : myOptions) {

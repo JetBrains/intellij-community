@@ -24,7 +24,7 @@ import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
 import com.intellij.util.xmlb.XmlSerializer;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,10 +33,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: Evgeny.Zakrevsky
- * Date: 10/4/12
- */
 public class GenericRepositoryType extends BaseRepositoryType<GenericRepository> {
 
   @NotNull
@@ -124,19 +120,19 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
   // Subtypes:
   public final class AsanaRepository extends GenericSubtype {
     public AsanaRepository() {
-      super("Asana", TasksIcons.Asana);
+      super("Asana", TasksCoreIcons.Asana);
     }
   }
 
   public final class AssemblaRepository extends GenericSubtype {
     public AssemblaRepository() {
-      super("Assembla", TasksIcons.Assembla);
+      super("Assembla", TasksCoreIcons.Assembla);
     }
   }
 
   public final class SprintlyRepository extends GenericSubtype {
     public SprintlyRepository() {
-      super("Sprintly", TasksIcons.Sprintly);
+      super("Sprintly", TasksCoreIcons.Sprintly);
     }
   }
 }

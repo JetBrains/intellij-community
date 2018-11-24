@@ -28,10 +28,6 @@ import java.util.*;
 import java.util.jar.Manifest;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * User: anna
- * Date: 10/29/12
- */
 public abstract class AbstractEclipseClasspathReader<T> {
   protected final String myRootPath;
   @Nullable protected final List<String> myCurrentRoots;

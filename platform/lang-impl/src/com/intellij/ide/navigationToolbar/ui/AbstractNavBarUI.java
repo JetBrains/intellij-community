@@ -18,7 +18,6 @@ package com.intellij.ide.navigationToolbar.ui;
 import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -35,6 +34,8 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.util.Map;
+
+import static com.intellij.ui.RelativeFont.SMALL;
 
 /**
  * @author Konstantin Bulenkov
@@ -60,7 +61,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
-    return SystemInfo.isMac ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
+    Font font = UIUtil.getLabelFont();
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? SMALL.derive(font) : font;
   }
 
   @Override

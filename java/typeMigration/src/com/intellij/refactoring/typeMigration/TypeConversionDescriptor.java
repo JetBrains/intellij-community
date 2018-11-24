@@ -14,13 +14,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Sep 28, 2004
- * Time: 7:13:53 PM
- * To change this template use File | Settings | File Templates.
- */
 public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
   private static final Logger LOG = Logger.getInstance(TypeConversionDescriptor.class);
 

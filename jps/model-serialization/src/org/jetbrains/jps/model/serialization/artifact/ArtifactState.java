@@ -37,6 +37,7 @@ public class ArtifactState {
   private boolean myBuildOnMake;
   private Element myRootElement;
   private List<ArtifactPropertiesState> myPropertiesList = new ArrayList<>();
+  private String myExternalSystemId;
 
   @Attribute(NAME_ATTRIBUTE)
   public String getName() {
@@ -51,6 +52,11 @@ public class ArtifactState {
   @Attribute("build-on-make")
   public boolean isBuildOnMake() {
     return myBuildOnMake;
+  }
+
+  @Attribute("external-system-id")
+  public String getExternalSystemId() {
+    return myExternalSystemId;
   }
 
   @Tag("output-path")
@@ -87,6 +93,10 @@ public class ArtifactState {
 
   public void setBuildOnMake(boolean buildOnMake) {
     myBuildOnMake = buildOnMake;
+  }
+
+  public void setExternalSystemId(String externalSystemId) {
+    myExternalSystemId = externalSystemId;
   }
 
   public void setRootElement(Element rootElement) {

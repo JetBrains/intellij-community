@@ -30,10 +30,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
-/**
- * User: anna
- * Date: 26-May-2006
- */
 public abstract class NamedConfigurable<T> implements Configurable {
   private JTextField myNameField;
   private JPanel myNamePanel;

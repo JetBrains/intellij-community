@@ -39,7 +39,7 @@ abstract class SchemeManagerFactory {
   }
 
   /**
-   * directoryName — like "keymaps".
+   * directoryName - like "keymaps".
    */
   @JvmOverloads
   fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, directoryPath: Path? = null): SchemeManager<SCHEME> {

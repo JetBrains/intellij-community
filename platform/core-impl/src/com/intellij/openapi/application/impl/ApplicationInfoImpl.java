@@ -103,7 +103,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
+  @Nullable
   private String myHelpFileName = "ideahelp.jar";
+  @Nullable
   private String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
@@ -318,9 +320,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return fullName;
   }
 
+  @Nullable
   @Override
   public String getHelpURL() {
-    return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
+    String jarPath = getHelpJarPath();
+    return jarPath == null || myHelpRootName == null ? null: "jar:file:///" + jarPath + "!/" + myHelpRootName;
   }
 
   @Override
@@ -338,8 +342,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myCompanyUrl;
   }
 
+  @Nullable
   private String getHelpJarPath() {
-    return PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
+    return myHelpFileName == null ? null: PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
-import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
@@ -170,10 +169,6 @@ public class SearchDialog extends DialogWrapper {
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void beforeDocumentChange(final DocumentEvent event) {
-      }
-
-      @Override
       public void documentChanged(final DocumentEvent event) {
         initiateValidation();
       }
@@ -235,10 +230,9 @@ public class SearchDialog extends DialogWrapper {
         return ((FileType)element).getName();
       }
     };
-    contexts = new ComboBox<>();
-    contexts.setPreferredSize(new Dimension(60, -1));
+    contexts = new ComboBox<>(60);
 
-    dialects = new ComboBox<>();
+    dialects = new ComboBox<>(120);
     dialects.setRenderer(new ListCellRendererWrapper<Language>() {
       @Override
       public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
@@ -257,7 +251,6 @@ public class SearchDialog extends DialogWrapper {
       }
     });
     new ComboboxSpeedSearch(dialects);
-    dialects.setPreferredSize(new Dimension(120, -1));
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
@@ -812,7 +805,7 @@ public class SearchDialog extends DialogWrapper {
     boolean result = true;
 
     try {
-      MatcherImpl.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
+      Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
       if (myRunFindActionOnClose) {

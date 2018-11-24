@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 8/19/13
- */
 public class GroovyTypeDefinitionBodySelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(PsiElement e) {

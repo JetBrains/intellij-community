@@ -7,10 +7,6 @@ import com.intellij.openapi.util.Iconable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 11/11/11
- */
 public abstract class BaseRefactoringIntentionAction extends PsiElementBaseIntentionAction implements Iconable, HighPriorityAction {
 
   @Override

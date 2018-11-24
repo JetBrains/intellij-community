@@ -85,7 +85,7 @@ public class SubstitutedExpressionEvaluationHelper {
                 values = realValues == null? DfaPsiUtil.getVariableAssignmentsInFile(psiVariable, true, o) : realValues;
               }
               else {
-                values = Collections.<PsiExpression>emptyList();
+                values = Collections.emptyList();
               }
               // return the first computed value as far as we do not support multiple injection
               for (PsiExpression value : values) {

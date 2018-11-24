@@ -38,10 +38,6 @@ import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
-/**
-* User: anna
-* Date: 3/16/12
-*/
 public class MyLookupExpression extends Expression {
   protected final String myName;
   protected final LookupElement[] myLookupItems;

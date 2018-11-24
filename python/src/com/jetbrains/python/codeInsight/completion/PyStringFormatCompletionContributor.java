@@ -197,13 +197,13 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
     @NotNull
     private static List<LookupElement> getFormatLookupBuilders(@NotNull final PyStringLiteralExpression expression) {
       final Map<String, PyStringFormatParser.SubstitutionChunk> chunks = PyStringFormatParser.getKeywordSubstitutions(
-        PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(expression.getStringValue())));
+        PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(expression.getText())));
       return getLookupBuilders(chunks);
     }
 
     private static List<LookupElement> getPercentLookupBuilders(@NotNull final PyStringLiteralExpression expression) {
       final Map<String, PyStringFormatParser.SubstitutionChunk> chunks = PyStringFormatParser.getKeywordSubstitutions(
-        PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parsePercentFormat(expression.getStringValue())));
+        PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parsePercentFormat(expression.getText())));
       return getLookupBuilders(chunks);
     }
 

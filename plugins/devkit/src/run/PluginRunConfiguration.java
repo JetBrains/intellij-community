@@ -24,6 +24,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -265,12 +266,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     if (getModule() == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
-    String moduleName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return getModule().getName();
-      }
-    });
+    String moduleName = ReadAction.compute(() -> getModule().getName());
     if (ModuleManager.getInstance(getProject()).findModuleByName(moduleName) == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }

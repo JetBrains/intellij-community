@@ -29,11 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 04.08.2007
- */
 public class RncHighlighter extends SyntaxHighlighterBase {
   @Override
   @NotNull

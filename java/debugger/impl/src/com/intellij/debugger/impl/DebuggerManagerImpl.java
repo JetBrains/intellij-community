@@ -372,13 +372,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));
     }
     final JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
-    String versionString = jdk.getVersionString();
     if (version == JavaSdkVersion.JDK_1_0 || version == JavaSdkVersion.JDK_1_1) {
+      String versionString = jdk.getVersionString();
       throw new ExecutionException(DebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
     if (SystemInfo.isWindows && version == JavaSdkVersion.JDK_1_2) {
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null || !homeDirectory.isValid()) {
+        String versionString = jdk.getVersionString();
         throw new ExecutionException(DebuggerBundle.message("error.invalid.jdk.home", versionString));
       }
       //noinspection HardCodedStringLiteral

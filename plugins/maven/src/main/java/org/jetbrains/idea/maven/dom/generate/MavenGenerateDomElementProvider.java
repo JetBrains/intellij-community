@@ -24,9 +24,6 @@ import com.intellij.util.xml.actions.generate.AbstractDomGenerateProvider;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class MavenGenerateDomElementProvider extends AbstractDomGenerateProvider {
   private final Function<MavenDomProjectModel, DomElement> myParentFunction;
 

@@ -1138,7 +1138,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole2 == ChildRole.TYPE
              && myChild1.getLastChildNode() != null
-             && myChild1.getLastChildNode().getElementType() == JavaElementType.ANNOTATION) {
+             && myChild1.getLastChildNode().getElementType() == JavaElementType.ANNOTATION
+             || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.RBRACE) {
       createSpaceProperty(true, mySettings.KEEP_LINE_BREAKS, 0);
     }
     else {
@@ -1149,7 +1150,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitModifierList(PsiModifierList list) {
     if (myType1 == JavaElementType.ANNOTATION && myType2 == JavaTokenType.FINAL_KEYWORD) {
-      myResult = Spacing.createSpacing(1, Integer.MAX_VALUE, 0, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      myResult = Spacing.createSpacing(1, 1, 0, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else if (myType1 == JavaTokenType.END_OF_LINE_COMMENT) {
       myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);

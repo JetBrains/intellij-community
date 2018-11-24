@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 16-Jul-2006
- * Time: 16:29:04
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.util.Consumer;

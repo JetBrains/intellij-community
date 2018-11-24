@@ -356,13 +356,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     Image image;
     if (isActive()) {
       if (myActiveImage == null || /*myActiveImage.getHeight() != r.height ||*/ type != myImageType) {
-        myActiveImage = drawToBuffer(true, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
+        myActiveImage = drawToBuffer(g2d, true, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
 
       image = myActiveImage;
     } else {
       if (myImage == null || /*myImage.getHeight() != r.height ||*/ type != myImageType) {
-        myImage = drawToBuffer(false, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
+        myImage = drawToBuffer(g2d, false, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
 
       image = myImage;
@@ -376,10 +376,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     }
   }
 
-  private static BufferedImage drawToBuffer(boolean active, int height, boolean floating) {
+  private static BufferedImage drawToBuffer(Graphics2D g2d, boolean active, int height, boolean floating) {
     final int width = 150;
 
-    BufferedImage image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();
     UIUtil.drawHeader(g, 0, width, height, active, true, !floating, true);
     g.dispose();

@@ -21,6 +21,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
@@ -166,6 +167,12 @@ public class JarRepositoryManager {
     return loadDependenciesImpl(project, libraryProps, loadSources, loadJavadoc, copyTo, repositories, true);
   }
 
+  
+  /**
+   * Warning! Suitable to be used from non-AWT thread only. When called from UI thread, may lead to a deadlock
+   * Use loadDependenciesModal() or loadDependenciesAsync() instead
+   */
+  @Deprecated
   public static Collection<OrderRoot> loadDependencies(@NotNull Project project,
                                                        @NotNull RepositoryLibraryProperties libraryProps,
                                                        boolean loadSources,
@@ -212,7 +219,7 @@ public class JarRepositoryManager {
     return Collections.emptyList();
   }
 
-  public static void loadDependenciesAsync(Project project,
+  public static void loadDependenciesAsync(@NotNull Project project,
                                            RepositoryLibraryProperties libraryProps,
                                            boolean loadSources,
                                            boolean loadJavadoc,
@@ -233,7 +240,7 @@ public class JarRepositoryManager {
     );
   }
   
-  public static void loadDependenciesAsync(Project project, JpsMavenRepositoryLibraryDescriptor desc, final Set<ArtifactKind> artifactKinds, @Nullable List<RemoteRepositoryDescription> repos, @Nullable String copyTo, Consumer<Collection<OrderRoot>> resultProcessor) {
+  public static void loadDependenciesAsync(@NotNull Project project, JpsMavenRepositoryLibraryDescriptor desc, final Set<ArtifactKind> artifactKinds, @Nullable List<RemoteRepositoryDescription> repos, @Nullable String copyTo, Consumer<Collection<OrderRoot>> resultProcessor) {
     if (repos == null || repos.isEmpty()) {
       repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     }
@@ -372,10 +379,11 @@ public class JarRepositoryManager {
   }
 
   private static <T> Future<T> submitBackgroundJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
+    final ModalityState startModality = ModalityState.defaultModalityState();
     return JobExecutor.INSTANCE.submit(() -> {
       try {
         ourTasksInProgress++;
-        final ProgressIndicator indicator = new EmptyProgressIndicator();
+        final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
         return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
       }
       catch (ProcessCanceledException ignored){

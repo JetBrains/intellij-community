@@ -33,9 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyDocstringLanguageInjector implements LanguageInjector {
   @Override
   public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {

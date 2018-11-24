@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 public class PyDataView implements DumbAware {
   public static final String DATA_VIEWER_ID = "Data View";
   public static final String COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault";
+  public static final String AUTO_RESIZE = "python.debugger.dataview.autoresize";
   public static final String EMPTY_TAB_NAME = "empty";
   private static final Logger LOG = Logger.getInstance(PyDataView.class);
 
@@ -283,6 +284,12 @@ public class PyDataView implements DumbAware {
       if (panel != null) {
         panel.setColored(state);
       }
+    }
+  }
+
+  public void changeAutoResize(boolean autoResize) {
+    for (TabInfo info : myTabs.getTabs()) {
+      getPanel(info).resize(autoResize);
     }
   }
 

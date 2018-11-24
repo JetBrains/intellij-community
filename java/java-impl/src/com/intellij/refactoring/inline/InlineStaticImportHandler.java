@@ -32,10 +32,6 @@ import java.util.List;
 import static com.intellij.psi.util.ImportsUtil.collectReferencesThrough;
 import static com.intellij.psi.util.ImportsUtil.replaceAllAndDeleteImport;
 
-/**
- * User: anna
- * Date: 9/1/11
- */
 public class InlineStaticImportHandler extends JavaInlineActionHandler {
 
   private static final String REFACTORING_NAME = "Expand static import";

@@ -135,16 +135,13 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
                                       @NotNull final GitFileRevision rev, @NotNull final Collection<String> parents) {
     VcsHistorySession session = event.getData(VcsDataKeys.HISTORY_SESSION);
     List<VcsFileRevision> revisions = session != null ? session.getRevisionList() : null;
-    checkIfFileWasTouchedAndFindParentsInBackground(filePath, rev, parents, revisions, new Consumer<MergeCommitPreCheckInfo>() {
-      @Override
-      public void consume(MergeCommitPreCheckInfo info) {
-        if (!info.wasFileTouched()) {
-          String message = String.format("There were no changes in %s in this merge commit, besides those which were made in both branches",
-                                         filePath.getName());
-          VcsBalloonProblemNotifier.showOverVersionControlView(GitDiffFromHistoryHandler.this.myProject, message, MessageType.INFO);
-        }
-        showPopup(event, rev, filePath, info.getParents());
+    checkIfFileWasTouchedAndFindParentsInBackground(filePath, rev, parents, revisions, info -> {
+      if (!info.wasFileTouched()) {
+        String message = String.format("There were no changes in %s in this merge commit, besides those which were made in both branches",
+                                       filePath.getName());
+        VcsBalloonProblemNotifier.showOverVersionControlView(GitDiffFromHistoryHandler.this.myProject, message, MessageType.INFO);
       }
+      showPopup(event, rev, filePath, info.getParents());
     });
   }
 

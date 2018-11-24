@@ -128,6 +128,6 @@ public class TokenSetTest {
         final IElementType next = elementTypes[(i + shift) % elementTypes.length];
         assertFalse(set.contains(next));
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 }

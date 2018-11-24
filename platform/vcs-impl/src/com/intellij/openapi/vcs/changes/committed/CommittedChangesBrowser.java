@@ -26,12 +26,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -87,7 +87,7 @@ public class CommittedChangesBrowser extends JPanel {
     myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
     myCommitMessageArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    myCommitMessageArea.setPreferredSize(new Dimension(150, 100));
+    myCommitMessageArea.setPreferredSize(new JBDimension(150, 100));
     myCommitMessageArea.setEditable(false);
 
     JPanel commitPanel = new JPanel(new BorderLayout());
@@ -206,7 +206,7 @@ public class CommittedChangesBrowser extends JPanel {
     CommittedChangeList list = (idx >= 0 && idx < items.size()) ? items.get(idx) : null;
     if (list != mySelectedChangeList) {
       mySelectedChangeList = list;
-      myChangesView.setChangesToDisplay(list != null ? new ArrayList<>(list.getChanges()) : Collections.<Change>emptyList());
+      myChangesView.setChangesToDisplay(list != null ? new ArrayList<>(list.getChanges()) : Collections.emptyList());
       myCommitMessageArea.setText(list != null ? formatText(list) : "");
       myCommitMessageArea.select(0, 0);
     }

@@ -27,11 +27,6 @@ import javax.xml.transform.*;
 import java.rmi.RemoteException;
 
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 23.11.2007
-*/
 public class XSLTDebuggerMain implements XSLTMain {
 
   public TransformerFactory createTransformerFactory() throws ClassNotFoundException, InstantiationException, IllegalAccessException {

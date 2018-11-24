@@ -37,11 +37,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: lex
- * Date: Jul 17, 2003
- * Time: 7:51:01 PM
- */
 public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
   public String getTemplateDescription() {

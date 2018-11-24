@@ -50,6 +50,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -310,9 +311,9 @@ public class HighlightUtil extends HighlightUtilBase {
   /**
    * 15.16 Cast Expressions
    * ( ReferenceType {AdditionalBound} ) expression, where AdditionalBound: & InterfaceType then all must be true
-   *  • ReferenceType must denote a class or interface type.
-   *  • The erasures of all the listed types must be pairwise different.
-   *  • No two listed types may be subtypes of different parameterization of the same generic interface.
+   *  - ReferenceType must denote a class or interface type.
+   *  - The erasures of all the listed types must be pairwise different.
+   *  - No two listed types may be subtypes of different parameterization of the same generic interface.
    */
   @Nullable
   static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression,
@@ -1255,6 +1256,9 @@ public class HighlightUtil extends HighlightUtilBase {
             QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.BOOLEAN, true));
           }
         }
+        else if (expr instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)expr).getOperationTokenType() == JavaTokenType.EQ) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAssignmentToComparisonFix((PsiAssignmentExpression)expr));
+        }
         return info;
       }
     }
@@ -1413,7 +1417,13 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       
       String description = JavaErrorMessages.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+      HighlightInfo error =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+      if (statement instanceof PsiExpressionStatement) {
+        QuickFixAction
+          .registerQuickFixAction(error, QuickFixFactory.getInstance().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
+      }
+      return error;
     }
     return null;
   }
@@ -1578,11 +1588,13 @@ public class HighlightUtil extends HighlightUtilBase {
         final PsiElement parent = expr.getParent();
         final PsiElement resolved = parent instanceof PsiReferenceExpression ? ((PsiReferenceExpression)parent).resolve() : null;
 
+        PsiClass containingClass =
+          ObjectUtils.notNull(resolved instanceof PsiMethod ? ((PsiMethod)resolved).getContainingClass() : null, aClass);
         for (PsiClass superClass : classT.getSupers()) {
-          if (superClass.isInheritor(aClass, true)) {
+          if (superClass.isInheritor(containingClass, true)) {
             String cause = null;
-            if (superClass.isInterface()) {
-              cause = "redundant interface " + format(aClass) + " is extended by ";
+            if (superClass.isInheritor(aClass, true) && superClass.isInterface()) {
+              cause = "redundant interface " + format(containingClass) + " is extended by ";
             }
             else if (resolved instanceof PsiMethod &&
                      MethodSignatureUtil.findMethodBySuperMethod(superClass, (PsiMethod)resolved, true) != resolved) {
@@ -2499,7 +2511,11 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiAssertStatement assertStatement = (PsiAssertStatement)expression.getParent();
     if (expression == assertStatement.getAssertCondition() && !TypeConversionUtil.isBooleanType(type)) {
       // addTypeCast quickfix is not applicable here since no type can be cast to boolean
-      return createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expression.getTextRange(), 0);
+      HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expression.getTextRange(), 0);
+      if (expression instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)expression).getOperationTokenType() == JavaTokenType.EQ) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAssignmentToComparisonFix((PsiAssignmentExpression)expression));
+      }
+      return highlightInfo;
     }
     if (expression == assertStatement.getAssertDescription() && TypeConversionUtil.isVoidType(type)) {
       String description = JavaErrorMessages.message("void.type.is.not.allowed");
@@ -2540,6 +2556,9 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType thenType = thenExpression.getType();
     if (thenType == null || type == null) return null;
     if (conditionalExpression.getType() == null) {
+      if (PsiUtil.isLanguageLevel8OrHigher(conditionalExpression) && PsiPolyExpressionUtil.isPolyExpression(conditionalExpression)) {
+        return null;
+      }
       // cannot derive type of conditional expression
       // elseType will never be cast-able to thenType, so no quick fix here
       return createIncompatibleTypeHighlightInfo(thenType, type, expression.getTextRange(), 0);

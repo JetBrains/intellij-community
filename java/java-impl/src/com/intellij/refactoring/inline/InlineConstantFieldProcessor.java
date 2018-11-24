@@ -15,7 +15,10 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -51,6 +54,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInCommentsAndStrings;
   private final boolean mySearchForTextOccurrences;
   private final boolean myDeleteDeclaration;
+  private Map<Language, InlineHandler.Inliner> myInliners;
 
   public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
     this(field, project, ref, isInlineThisOnly, false, false, true);
@@ -102,8 +106,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     for (PsiReference ref : ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false)) {
       PsiElement element = ref.getElement();
       UsageInfo info = new UsageInfo(element);
-
-      if (!(element instanceof PsiExpression) && PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class) == null) {
+      if (element instanceof PsiDocMethodOrFieldRef) {
         info = new UsageFromJavaDoc(element);
       }
 
@@ -156,8 +159,12 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
         }
         else {
           PsiImportStaticStatement importStaticStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
-          LOG.assertTrue(importStaticStatement != null, element.getText());
-          importStaticStatement.delete();
+          if (importStaticStatement != null) {
+            importStaticStatement.delete();
+          }
+          else {
+            GenericInlineHandler.inlineReference(info, myField, myInliners);
+          }
         }
       }
       catch (IncorrectOperationException e) {
@@ -285,12 +292,19 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    myInliners = GenericInlineHandler.initInliners(myField, usagesIn, new InlineHandler.Settings() {
+      @Override
+      public boolean isOnlyOneReferenceToInline() {
+        return myInlineThisOnly;
+      }
+    }, conflicts, JavaLanguage.INSTANCE);
+
     if (!myInlineThisOnly) {
       for (UsageInfo info : usagesIn) {
-        if (info instanceof UsageFromJavaDoc) {
-          final PsiElement element = info.getElement();
-          if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myField, element, false)) {
-            conflicts.putValue(element, "Inlined method is used in javadoc");
+        final PsiElement element = info.getElement();
+        if (element instanceof PsiDocMethodOrFieldRef) {
+          if (!PsiTreeUtil.isAncestor(myField, element, false)) {
+            conflicts.putValue(element, "Inlined field is used in javadoc");
           }
         }
       }

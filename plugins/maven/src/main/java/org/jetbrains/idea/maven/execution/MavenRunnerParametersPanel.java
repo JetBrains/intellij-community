@@ -54,18 +54,10 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
   private JComponent anchor;
 
   public MavenRunnerParametersPanel(@NotNull final Project project) {
+
     workingDirComponent.getComponent().addBrowseFolderListener(
       RunnerBundle.message("maven.select.maven.project.file"), "", project,
-      new FileChooserDescriptor(false, true, false, false, false, false) {
-        @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          if (!super.isFileSelectable(file)) return false;
-          for (VirtualFile child : file.getChildren()) {
-            if(MavenUtil.isPomFileName(child.getName())) return true;
-          }
-          return false;
-        }
-      });
+      new MavenPomFileChooserDescriptor(project));
 
     if (!project.isDefault()) {
       TextFieldCompletionProvider profilesCompletionProvider = new TextFieldCompletionProvider(true) {

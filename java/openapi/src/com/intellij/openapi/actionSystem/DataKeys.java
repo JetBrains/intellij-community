@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.10.2006
- * Time: 17:00:37
- */
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.vcs.changes.Change;

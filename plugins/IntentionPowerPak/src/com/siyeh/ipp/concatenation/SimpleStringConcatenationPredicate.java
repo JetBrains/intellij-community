@@ -16,7 +16,9 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
@@ -33,6 +35,7 @@ class SimpleStringConcatenationPredicate implements PsiElementPredicate {
     if (!ExpressionUtils.isConcatenation(element)) {
       return false;
     }
-    return !(excludeConcatenationsInsideAnnotations && AnnotationUtil.isInsideAnnotation(element));
+    return !(excludeConcatenationsInsideAnnotations && (AnnotationUtil.isInsideAnnotation(element) || 
+                                                        PsiTreeUtil.getParentOfType(element, PsiAnnotationMethod.class) != null));
   }
 }

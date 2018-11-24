@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -92,7 +91,7 @@ public abstract class GitHandler {
   // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
   private boolean myEnvironmentCleanedUp = true;
   private UUID myHttpHandler;
-  private Processor<OutputStream> myInputProcessor; // The processor for stdin
+  @Nullable private Processor<OutputStream> myInputProcessor; // The processor for stdin
 
   // if true process might be cancelled
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
@@ -515,12 +514,9 @@ public abstract class GitHandler {
   }
 
   protected static boolean isSshUrlExcluded(@NotNull final HttpConfigurable httpConfigurable, @NotNull Collection<String> urls) {
-    return ContainerUtil.exists(urls, new Condition<String>() {
-      @Override
-      public boolean value(String url) {
-        String host = URLUtil.parseHostFromSshUrl(url);
-        return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
-      }
+    return ContainerUtil.exists(urls, url -> {
+      String host = URLUtil.parseHostFromSshUrl(url);
+      return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
     });
   }
 
@@ -799,4 +795,13 @@ public abstract class GitHandler {
   public String toString() {
     return myCommandLine.toString();
   }
+
+  /**
+     * Set processor for standard input. This is a place where input to the git application could be generated.
+     *
+     * @param inputProcessor the processor
+     */
+    public void setInputProcessor(@Nullable Processor<OutputStream> inputProcessor) {
+      myInputProcessor = inputProcessor;
+    }
 }

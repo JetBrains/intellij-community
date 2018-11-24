@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexander.Kitaev
- * Date: 24.07.2006
- * Time: 16:58:22
- */
 package org.jetbrains.idea.svn.dialogs.browser;
 
+import com.intellij.ui.ColoredListCellRenderer;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
-import java.awt.*;
 
-class MessageBoxCellRenderer extends DefaultListCellRenderer {
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
 
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+class MessageBoxCellRenderer extends ColoredListCellRenderer<String> {
+
+  @Override
+  protected void customizeCellRenderer(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
     if (value != null) {
-      String message = (String) value;
-      message = message.replace('\r', '|');
-      message = message.replace('\n', '|');
-      if (message.length() > 50) {
-        message = message.substring(0, 50) + "[...]";
-      }
-      value = message;
+      value = shortenTextWithEllipsis(value.replace('\r', '|').replace('\n', '|'), 50, 0);
     }
-    return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    append(notNullize(value), REGULAR_ATTRIBUTES);
   }
 }

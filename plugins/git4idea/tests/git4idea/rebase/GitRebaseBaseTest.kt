@@ -106,14 +106,9 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected fun GitRepository.`make rebase fail after resolving conflicts`() {
     vcsHelper.onMerge {
-      resolveConflicts(this)
+      this.resolveConflicts()
       myGit.setShouldRebaseFail { true }
     }
-  }
-
-  protected fun resolveConflicts(repository: GitRepository) {
-    cd(repository)
-    git("add -u .")
   }
 
   protected fun assertSuccessfulRebaseNotification(message: String) : Notification {
@@ -219,7 +214,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
           """)
   }
 
-  class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
+  inner class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
     fun generate() : LocalChange {
       cd(repository)
       file(filePath).create(content).add()

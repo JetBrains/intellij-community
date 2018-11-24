@@ -20,10 +20,15 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class KeyFMapTest extends TestCase {
-  private static KeyFMap createKeyFMap(List<Key> keys, List<Object> values) {
+  private static final List<Key<Object>> KEYS =
+    IntStream.range(0, 20).mapToObj(i -> Key.create("Key#"+i)).collect(Collectors.toList());
+
+  private static KeyFMap createKeyFMap(List<Key<Object>> keys, List<Object> values) {
     KeyFMap map = KeyFMap.EMPTY_MAP;
 
     for (int i = 0; i < keys.size(); i++) {
@@ -34,21 +39,75 @@ public class KeyFMapTest extends TestCase {
   }
 
   private static void doTestGetKeys(int size) {
-    List<Key> keys = ContainerUtil.newArrayList();
     List<Object> values = ContainerUtil.newArrayList();
     for (int i = 0; i < size; i++) {
-      keys.add(Key.create("Key#" + i));
       values.add("Value#" + i);
     }
 
-    KeyFMap map = createKeyFMap(keys, values);
+    KeyFMap map = createKeyFMap(KEYS.subList(0, size), values);
 
     Key[] actualKeys = map.getKeys();
 
     assertEquals(size, actualKeys.length);
 
-    for (Key key : keys) {
+    for (Key key : KEYS.subList(0, size)) {
       assertTrue("Key not found: " + key, ArrayUtil.contains(key, actualKeys));
+    }
+  }
+
+  public void testHashCodeEquals() {
+    Random r = new Random(1);
+    for(int n=0; n<15; n++) {
+      Map<Key<Object>, Object> hashMap = new HashMap<>();
+      KeyFMap fMap = KeyFMap.EMPTY_MAP;
+
+      for(int i=0; i<n; i++) {
+        Object value = "Value#" + i;
+        Key<Object> key;
+        while (true) {
+          key = KEYS.get(r.nextInt(KEYS.size()));
+          if (hashMap.putIfAbsent(key, value) == null) break;
+        }
+        KeyFMap newFMap = fMap.plus(key, value);
+        assertNotSame(fMap, newFMap); // new key is added: must be not same
+        fMap = newFMap;
+      }
+      assertEquals(hashMap + ":" + fMap, hashMap.hashCode(), fMap.hashCode());
+      KeyFMap fMap2 = KeyFMap.EMPTY_MAP;
+      for (Map.Entry<Key<Object>, Object> entry : hashMap.entrySet()) {
+        fMap2 = fMap2.plus(entry.getKey(), entry.getValue());
+      }
+      assertEquals(fMap, fMap2);
+      Iterator<Key<Object>> iterator = hashMap.keySet().iterator();
+      while(iterator.hasNext()) {
+        Key<Object> key = iterator.next();
+        iterator.remove();
+        assertEquals(fMap, fMap2);
+        fMap = fMap.minus(key);
+        assertFalse(fMap.equals(fMap2));
+        fMap2 = fMap2.minus(key);
+        assertEquals(fMap, fMap2);
+        assertEquals(fMap.hashCode(), fMap2.hashCode());
+      }
+      assertTrue(fMap.isEmpty());
+    }
+  }
+
+  public void testIdentityHashCode() {
+    KeyFMap map = KeyFMap.EMPTY_MAP;
+    for(int i=0; i<15; i++) {
+      String val1 = "Value#"+i;
+      String val2 = "Value#"+i;
+      KeyFMap map1 = map.plus(KEYS.get(i), val1);
+      KeyFMap map2 = map.plus(KEYS.get(i), val2);
+      assertEquals(map1.hashCode(), map2.hashCode());
+      assertEquals(map1, map2);
+      assertFalse(map1.getValueIdentityHashCode() == map2.getValueIdentityHashCode());
+      assertFalse(map1.equalsByReference(map2));
+      map2 = map.plus(KEYS.get(i), val1);
+      assertTrue(map1.getValueIdentityHashCode() == map2.getValueIdentityHashCode());
+      assertTrue(map1.equalsByReference(map2));
+      map = map1;
     }
   }
 

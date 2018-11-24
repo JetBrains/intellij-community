@@ -140,6 +140,10 @@ public class EduUtils {
         taskFile.text = Base64.encodeBase64String(answerFile.contentsToByteArray());
         return taskFile;
       }
+      Document document = FileDocumentManager.getInstance().getDocument(answerFile);
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
+      }
       final LightVirtualFile studentFile = new LightVirtualFile("student_task", PlainTextFileType.INSTANCE,
                                                                 VfsUtilCore.loadText(answerFile));
       Document studentDocument = FileDocumentManager.getInstance().getDocument(studentFile);

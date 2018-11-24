@@ -17,7 +17,6 @@ package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -39,7 +38,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
-import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -62,7 +60,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.application.options.colors.ColorAndFontOptions.getColorSelector;
+import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.ui.SimpleTextAttributes.*;
 
 /**
@@ -185,12 +183,6 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
   }
 
   private static boolean openSettingsAndSelectKey(@NotNull Project project, @NotNull ColorSettingsPage page, @NotNull AttributesDescriptor descriptor) {
-    SettingsDialog dialog = (SettingsDialog)ShowSettingsUtilImpl.getDialog(
-      project, ShowSettingsUtilImpl.getConfigurableGroups(project, true), null);
-    Runnable selector = getColorSelector(dialog, descriptor.getDisplayName(), page.getDisplayName());
-    if (selector == null) return false;
-    selector.run();
-    dialog.show();
-    return true;
+    return selectOrEditColor(id -> CommonDataKeys.PROJECT.is(id) ? project : null, descriptor.getDisplayName(), page.getDisplayName());
   }
 }

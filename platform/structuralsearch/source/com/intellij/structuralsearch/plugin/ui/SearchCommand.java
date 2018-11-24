@@ -25,13 +25,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 15, 2004
- * Time: 4:49:07 PM
- * To change this template use File | Settings | File Templates.
- */
 public class SearchCommand {
   protected final SearchContext mySearchContext;
   protected final Configuration myConfiguration;

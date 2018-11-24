@@ -200,10 +200,10 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static ShortcutSet getActiveKeymapShortcuts(@NotNull String actionId) {
+  public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
     Application application = ApplicationManager.getApplication();
     KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
-    if (keymapManager == null) {
+    if (keymapManager == null || actionId == null) {
       return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
     }
     return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
@@ -298,6 +298,49 @@ public class KeymapUtil {
       }
     }
     return new MouseShortcut(button, modifiers, clickCount);
+  }
+
+  /**
+   * @return string representation of passed mouse shortcut. This method should
+   *         be used only for serializing of the <code>MouseShortcut</code>
+   */
+  public static String getMouseShortcutString(MouseShortcut shortcut) {
+    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
+      return "Force touch";
+    }
+
+    StringBuilder buffer = new StringBuilder();
+
+    // modifiers
+    int modifiers = shortcut.getModifiers();
+    if ((InputEvent.SHIFT_DOWN_MASK & modifiers) > 0) {
+      buffer.append(SHIFT);
+      buffer.append(' ');
+    }
+    if ((InputEvent.CTRL_DOWN_MASK & modifiers) > 0) {
+      buffer.append(CONTROL);
+      buffer.append(' ');
+    }
+    if ((InputEvent.META_DOWN_MASK & modifiers) > 0) {
+      buffer.append(META);
+      buffer.append(' ');
+    }
+    if ((InputEvent.ALT_DOWN_MASK & modifiers) > 0) {
+      buffer.append(ALT);
+      buffer.append(' ');
+    }
+    if ((InputEvent.ALT_GRAPH_DOWN_MASK & modifiers) > 0) {
+      buffer.append(ALT_GRAPH);
+      buffer.append(' ');
+    }
+
+    // button
+    buffer.append("button").append(shortcut.getButton()).append(' ');
+
+    if (shortcut.getClickCount() > 1) {
+      buffer.append(DOUBLE_CLICK);
+    }
+    return buffer.toString().trim(); // trim trailing space (if any)
   }
 
   public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {

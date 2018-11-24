@@ -20,11 +20,10 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -228,13 +227,10 @@ public abstract class CompletionContributor {
 
   @NotNull
   public static List<CompletionContributor> forParameters(@NotNull final CompletionParameters parameters) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
-      @Override
-      public List<CompletionContributor> compute() {
-        PsiElement position = parameters.getPosition();
-        List<CompletionContributor> all = forLanguage(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()));
-        return DumbService.getInstance(position.getProject()).filterByDumbAwareness(all);
-      }
+    return ReadAction.compute(() -> {
+      PsiElement position = parameters.getPosition();
+      List<CompletionContributor> all = forLanguage(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()));
+      return DumbService.getInstance(position.getProject()).filterByDumbAwareness(all);
     });
   }
 

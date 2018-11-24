@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
@@ -42,7 +43,7 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     private static final UsageGroup INSTANCE = new CodeUsageGroup();
 
     private CodeUsageGroup() {
-      super(0);
+      super(1);
     }
 
     @Override
@@ -61,7 +62,7 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     public static final UsageGroup INSTANCE = new UsageInGeneratedCodeGroup();
 
     private UsageInGeneratedCodeGroup() {
-      super(3);
+      super(4);
     }
 
     @Override
@@ -79,7 +80,7 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
 
     private NonCodeUsageGroup() {
-      super(2);
+      super(3);
     }
 
     @Override
@@ -103,7 +104,7 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     @NonNls private static final String DYNAMIC_CAPTION = "Dynamic usages";
 
     public DynamicUsageGroup() {
-      super(1);
+      super(2);
     }
 
     @Override
@@ -124,9 +125,31 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     }
   }
 
+  private static class UnloadedModulesUsageGroup extends UsageGroupBase {
+    public static final UsageGroup INSTANCE = new UnloadedModulesUsageGroup();
+
+    public UnloadedModulesUsageGroup() {
+      super(0);
+    }
+
+    @NotNull
+    @Override
+    public String getText(@Nullable UsageView view) {
+      return "Usages in Unloaded Modules";
+    }
+
+    @Override
+    public String toString() {
+      return getText(null);
+    }
+  }
+
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    if (usage instanceof UnknownUsagesInUnloadedModules) {
+      return UnloadedModulesUsageGroup.INSTANCE;
+    }
     if (usage instanceof UsageInFile) {
       VirtualFile file = ((UsageInFile)usage).getFile();
       if (file != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {

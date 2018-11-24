@@ -40,9 +40,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDesc
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
-* User: anna
-*/
 public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
 
   @NotNull

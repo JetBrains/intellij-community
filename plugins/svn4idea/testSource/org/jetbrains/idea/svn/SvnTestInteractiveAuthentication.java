@@ -26,12 +26,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
-* Created with IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 2/11/13
-* Time: 4:08 PM
-*/
 public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvider {
   private final SvnAuthenticationManager myManager;
   private boolean mySaveData;

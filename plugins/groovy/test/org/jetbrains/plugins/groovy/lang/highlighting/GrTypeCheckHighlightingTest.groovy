@@ -66,4 +66,16 @@ def m = [(aa): (<error descr="Expression expected">)</error>]
 foo<warning descr="'foo' in '_' cannot be applied to '(java.util.LinkedHashMap)'">(m)</warning>
 '''
   }
+
+  void 'test assignment when getter and setter have different types'() {
+    testHighlighting '''\
+interface MavenArtifactRepository {
+  URI getUrl()
+  void setUrl(Object var1)
+}
+def test(MavenArtifactRepository m) {
+  m.url = "String"
+}
+'''
+  }
 }

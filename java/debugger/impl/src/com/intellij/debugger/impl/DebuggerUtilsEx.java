@@ -590,22 +590,25 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new SigReader(s).getSignature();
   }
 
-  @NotNull
+  @Nullable
   public static List<Location> allLineLocations(Method method) {
     try {
       return method.allLineLocations();
     }
     catch (AbsentInformationException ignored) {
-      return Collections.emptyList();
+      return null;
     }
   }
 
-  @NotNull
+  @Nullable
   public static List<Location> allLineLocations(ReferenceType cls) {
     try {
       return cls.allLineLocations();
     }
-    catch (AbsentInformationException | ObjectCollectedException ignored) {
+    catch (AbsentInformationException ignored) {
+      return null;
+    }
+    catch (ObjectCollectedException ignored) {
       return Collections.emptyList();
     }
   }
@@ -1077,7 +1080,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static boolean isInLibraryContent(@Nullable VirtualFile file, @NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+    return ReadAction.compute(() -> {
       if (file == null) {
         return true;
       }

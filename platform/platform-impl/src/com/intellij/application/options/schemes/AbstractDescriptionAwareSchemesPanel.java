@@ -50,6 +50,10 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   private CardLayout myLayout;
   private AbstractPainter myPainter;
 
+  public AbstractDescriptionAwareSchemesPanel() {
+    super(0);
+  }
+
   @NotNull
   @Override
   protected JPanel createInfoComponent() {
@@ -61,25 +65,21 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     myDescriptionTextField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        applyDescription();
+        showDescription();
       }
     });
     myDescriptionTextField.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         showDescription();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(getConfigurableFocusComponent(), true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getConfigurableFocusComponent(), true));
       }
     }, ESC_KEY_STROKE, JComponent.WHEN_FOCUSED);
     myDescriptionTextField.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         applyDescription();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(getConfigurableFocusComponent(), true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getConfigurableFocusComponent(), true));
       }
     }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
 
@@ -151,9 +151,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   public void editDescription(@Nullable String startValue) {
     myLayout.show(myInfoComponent, EDIT_DESCRIPTION_CARD);
     myDescriptionTextField.setText(StringUtil.notNullize(startValue));
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myDescriptionTextField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myDescriptionTextField, true));
     myPainter.setNeedsRepaint(true);
   }
 

@@ -35,7 +35,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -106,7 +105,7 @@ public abstract class UsefulTestCase extends TestCase {
       CodeInsightSettings defaultSettings = new CodeInsightSettings();
       Element oldS = new Element("temp");
       defaultSettings.writeExternal(oldS);
-      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS, "\n");
+      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -259,7 +258,7 @@ public abstract class UsefulTestCase extends TestCase {
         try {
           Element newS = new Element("temp");
           settings.writeExternal(newS);
-          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
+          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS));
         }
         catch (AssertionError error) {
           CodeInsightSettings clean = new CodeInsightSettings();
@@ -296,7 +295,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   @NotNull
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
 
@@ -810,8 +808,8 @@ public abstract class UsefulTestCase extends TestCase {
     Element newS = new Element("temp");
     settings.writeExternal(newS);
 
-    String newString = JDOMUtil.writeElement(newS, "\n");
-    String oldString = JDOMUtil.writeElement(oldS, "\n");
+    String newString = JDOMUtil.writeElement(newS);
+    String oldString = JDOMUtil.writeElement(oldS);
     Assert.assertEquals("Code style settings damaged", oldString, newString);
   }
 

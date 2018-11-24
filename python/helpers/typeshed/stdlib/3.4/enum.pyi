@@ -17,8 +17,11 @@ class Enum:
     name = ...  # type: str
     value = ...  # type: Any
 
-class IntEnum(int, Enum):
+_T1 = TypeVar('_T1')
+
+class IntEnum(int, Enum):  # type: ignore
     value = ...  # type: int
+    def __new__(cls: Type[_T1], value: Any) -> _T1: ...
 
 _T = TypeVar('_T')
 

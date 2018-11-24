@@ -38,11 +38,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 8:36 PM
- */
 public class ExceptionWorker {
   @NonNls private static final String AT = "at";
   private static final String AT_PREFIX = AT + " ";
@@ -167,24 +162,14 @@ public class ExceptionWorker {
     return myInfo;
   }
 
-  //todo [roma] regexp
-  @Nullable
-  static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
-    int startIdx;
-    if (line.startsWith(AT_PREFIX)){
-      startIdx = 0;
-    }
-    else{
-      startIdx = line.indexOf(STANDALONE_AT);
-      if (startIdx < 0) {
-        startIdx = line.indexOf(AT_PREFIX);
-      }
+  private static int findAtPrefix(String line) {
+    if (line.startsWith(AT_PREFIX)) return 0;
 
-      if (startIdx < 0) {
-        startIdx = -1;
-      }
-    }
+    int startIdx = line.indexOf(STANDALONE_AT);
+    return startIdx < 0 ? line.indexOf(AT_PREFIX) : startIdx;
+  }
 
+  private static int findFirstRParenAfterDigit(String line) {
     int rParenIdx = -1;
     int rParenCandidate = line.lastIndexOf(')');
     //Looking for minimal position for ')' after a digit
@@ -194,6 +179,15 @@ public class ExceptionWorker {
       }
       rParenCandidate = line.lastIndexOf(')', rParenCandidate - 1);
     }
+    return rParenIdx;
+  }
+
+  @Nullable
+  public static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
+    int startIdx = findAtPrefix(line);
+
+    TextRange yourKitLink = startIdx < 0 ? getYourKitLinkRange(line) : null;
+    int rParenIdx = yourKitLink != null ? yourKitLink.getEndOffset() - 2 : findFirstRParenAfterDigit(line);
     if (rParenIdx < 0) return null;
 
     final int lParenIdx = line.lastIndexOf('(', rParenIdx);
@@ -207,7 +201,21 @@ public class ExceptionWorker {
     // class, method, link
     return Trinity.create(new TextRange(classNameIdx, handleSpaces(line, dotIdx, -1)),
                           new TextRange(handleSpaces(line, dotIdx + 1, 1), handleSpaces(line, lParenIdx, -1)),
-                          new TextRange(lParenIdx + 1, rParenIdx));
+                          yourKitLink != null ? yourKitLink : new TextRange(lParenIdx + 1, rParenIdx));
+  }
+
+  @Nullable
+  private static TextRange getYourKitLinkRange(String line) {
+    int lineEnd = line.length() - 1;
+    if (lineEnd > 0 && line.charAt(lineEnd) == '\n') lineEnd--;
+    if (lineEnd > 0 && Character.isDigit(line.charAt(lineEnd))) {
+      int spaceIndex = line.lastIndexOf(' ');
+      int rParenIdx = line.lastIndexOf(')');
+      if (rParenIdx > 0 && spaceIndex == rParenIdx + 1) {
+        return new TextRange(spaceIndex + 1, lineEnd + 1);
+      }
+    }
+    return null;
   }
 
   private static int handleSpaces(String line, int pos, int delta) {

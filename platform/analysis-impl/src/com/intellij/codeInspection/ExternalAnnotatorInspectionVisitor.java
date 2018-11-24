@@ -92,23 +92,32 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
     IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = ContainerUtil.newIdentityHashMap();
     for (Annotation annotation : annotations) {
       if (annotation.getSeverity() == HighlightSeverity.INFORMATION ||
-          annotation.getStartOffset() == annotation.getEndOffset()) {
+          annotation.getStartOffset() == annotation.getEndOffset() && !annotation.isAfterEndOfLine()) {
         continue;
       }
 
-      final PsiElement startElement = file.findElementAt(annotation.getStartOffset());
-      final PsiElement endElement = file.findElementAt(annotation.getEndOffset() - 1);
+      final PsiElement startElement;
+      final PsiElement endElement;
+      if (annotation.getStartOffset() == annotation.getEndOffset() && annotation.isAfterEndOfLine()) {
+        startElement = endElement = file.findElementAt(annotation.getEndOffset() - 1);
+      } else {
+        startElement = file.findElementAt(annotation.getStartOffset());
+        endElement = file.findElementAt(annotation.getEndOffset() - 1);
+      }
       if (startElement == null || endElement == null) {
         continue;
       }
 
       LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
-      ProblemDescriptor descriptor = manager.createProblemDescriptor(startElement,
+      ProblemDescriptor descriptor = new ProblemDescriptorBase(startElement,
                                                                      endElement,
                                                                      annotation.getMessage(),
+                                                                     quickFixes,
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                     false,
-                                                                     quickFixes);
+                                                                     annotation.isAfterEndOfLine(),
+                                                                     null,
+                                                                     true,
+                                                                     false);
       problems.add(descriptor);
     }
     return problems.toArray(new ProblemDescriptor[problems.size()]);

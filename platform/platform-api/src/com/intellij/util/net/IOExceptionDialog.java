@@ -41,7 +41,6 @@ public class IOExceptionDialog extends DialogWrapper {
     myErrorLabel = new JTextArea();
     myErrorLabel.setEditable(false);
     myErrorLabel.setText(errorText);
-    myErrorLabel.setColumns(120);
     myErrorLabel.setLineWrap(true);
     myErrorLabel.setWrapStyleWord(true);
     myErrorLabel.setFont(UIManager.getFont("Label.font"));

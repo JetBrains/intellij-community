@@ -482,7 +482,7 @@ NUMBER ('0yabc0')
     
     CharSequence bombed = new SlowCharSequence(text)
     ThrowableRunnable cl = { LexerTestCase.printTokens(bombed, 0, new CustomFileTypeLexer(table)) } as ThrowableRunnable
-    PlatformTestUtil.startPerformanceTest("slow", 10000, cl).cpuBound().useLegacyScaling().assertTiming()
+    PlatformTestUtil.startPerformanceTest("slow", 10000, cl).useLegacyScaling().assertTiming()
   }
 
 

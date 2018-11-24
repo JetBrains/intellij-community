@@ -30,9 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by Max Medvedev on 21/03/14
- */
 public class BuildAndRestartConsoleAction extends AnAction {
 
   private Module myModule;

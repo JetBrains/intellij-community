@@ -31,16 +31,21 @@ public class FileUrlLocationTest extends LightPlatformCodeInsightFixtureTestCase
       "my_example_spec.xml",
       "\n" +
       "<describe>\n" +
-      "    <a></a>\n" +
+      "    <a id='1'></a>\n" +
       "</describe>\n" +
       "\n").getVirtualFile();
 
-    doTest(1, file.getPath(), 2);
-    doTest(16, file.getPath(), 3);
+    doTest(1, file.getPath(), 2, -1);
+    doTest(16, file.getPath(), 3, -1);
+    doTest(2, file.getPath(), 2, 5);
+    doTest(19, file.getPath(), 3, 8);
+    doTest(0, file.getPath(), 100, -1);
+    doTest(11, file.getPath(), 2, 100);
   }
 
-  private void doTest(int expectedOffset, String filePath, int lineNum) {
-    SMTestProxy testProxy = new SMTestProxy("myTest", false, "file://" + filePath + ":" + lineNum);
+  private void doTest(int expectedOffset, String filePath, int lineNum, int columnNumber) {
+    SMTestProxy testProxy = new SMTestProxy("myTest", false, "file://" + filePath + ":" + lineNum
+                                                             + (columnNumber > 0 ? (":" + columnNumber) : ""));
     testProxy.setLocator(FileUrlProvider.INSTANCE);
 
     Location location = testProxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));

@@ -27,10 +27,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: Dec 8, 2004
- */
 public class Descriptor {
   private final String myText;
   private final String[] myGroup;

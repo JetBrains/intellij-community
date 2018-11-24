@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public class GrConstructorInvocationInfo extends ConstructorCallInfoBase<GrConstructorInvocation>
   implements ConstructorCallInfo<GrConstructorInvocation> {
   public GrConstructorInvocationInfo(GrConstructorInvocation call) {

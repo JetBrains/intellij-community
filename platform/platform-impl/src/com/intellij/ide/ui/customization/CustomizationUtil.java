@@ -40,10 +40,6 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Mar 30, 2005
- */
 public class CustomizationUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizationUtil");
 

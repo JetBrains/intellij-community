@@ -21,8 +21,3 @@ public interface LayoutCodeOptions extends OptionalReformatActions {
 
 }
 
-enum TextRangeType {
-  VCS_CHANGED_TEXT,
-  SELECTED_TEXT,
-  WHOLE_FILE
-}

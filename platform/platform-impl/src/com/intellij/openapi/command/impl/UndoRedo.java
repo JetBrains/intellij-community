@@ -70,7 +70,7 @@ abstract class UndoRedo {
   }
 
   private Set<DocumentReference> getDecRefs() {
-    return myEditor == null ? Collections.<DocumentReference>emptySet() : UndoManagerImpl.getDocumentReferences(myEditor);
+    return myEditor == null ? Collections.emptySet() : UndoManagerImpl.getDocumentReferences(myEditor);
   }
 
   protected abstract UndoRedoStacksHolder getStackHolder();

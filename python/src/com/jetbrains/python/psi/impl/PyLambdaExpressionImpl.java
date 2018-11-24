@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,17 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author yole
@@ -37,10 +38,13 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     super(astNode);
   }
 
+  @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyLambdaExpression(this);
   }
 
+  @Override
+  @NotNull
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final PyType type = provider.getCallableType(this, context);
@@ -51,6 +55,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     return new PyFunctionTypeImpl(this);
   }
 
+  @Override
   @NotNull
   public PyParameterList getParameterList() {
     final PyElement child = childToPsi(PyElementTypes.PARAMETER_LIST_SET, 0);
@@ -59,6 +64,17 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     }
     //noinspection unchecked
     return (PyParameterList)child;
+  }
+
+  @NotNull
+  @Override
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+    return Optional
+      .ofNullable(context.getType(this))
+      .filter(PyCallableType.class::isInstance)
+      .map(PyCallableType.class::cast)
+      .map(callableType -> callableType.getParameters(context))
+      .orElseGet(() -> ContainerUtil.map(getParameterList().getParameters(), PyCallableParameterImpl::psi));
   }
 
   @Nullable
@@ -77,16 +93,19 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   @Nullable
   @Override
   public PyType getCallType(@Nullable PyExpression receiver,
-                            @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                            @NotNull Map<PyExpression, PyCallableParameter> parameters,
                             @NotNull TypeEvalContext context) {
     return context.getReturnType(this);
   }
 
+  @Override
   @Nullable
   public PyExpression getBody() {
     return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
+  @Override
+  @Nullable
   public PyFunction asMethod() {
     return null; // we're never a method
   }

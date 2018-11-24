@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -151,12 +149,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     if (list.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
 
     List<ProblemDescriptor> problems =
-      ContainerUtil.concat(list, new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
-        @Override
-        public Collection<ProblemDescriptor> fun(final DomElementProblemDescriptor s) {
-          return annotationsManager.createProblemDescriptors(manager, s);
-        }
-      });
+      ContainerUtil.concat(list, s -> annotationsManager.createProblemDescriptors(manager, s));
     return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 

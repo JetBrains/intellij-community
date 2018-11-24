@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -127,11 +126,11 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
     final String prefix = fullText.substring(0, textRange.getStartOffset());
     final String suffix = fullText.substring(textRange.getEndOffset(), oldExpression.getTextLength());
-    final PyExpression formatValue = PyStringFormatParser.getFormatValueExpression(oldExpression);
-    final PyArgumentList newStyleFormatValue = PyStringFormatParser.getNewStyleFormatValueExpression(oldExpression);
+    final PyExpression formatValue = getFormatValueExpression(oldExpression);
+    final PyArgumentList newStyleFormatValue = getNewStyleFormatValueExpression(oldExpression);
     final String newText = newExpression.getText();
 
-    final List<PyStringFormatParser.SubstitutionChunk> substitutions;
+    final List<SubstitutionChunk> substitutions;
     if (newStyleFormatValue != null) {
       substitutions = filterSubstitutions(parseNewStyleFormat(fullText));
     }
@@ -153,7 +152,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
         final PyType valueType = context.getType(formatValue);
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();
-        final PyType mappingType = PyTypeParser.getTypeByName(null, "collections.Mapping");
+        final PyType mappingType = PyTypeParser.getTypeByName(null, "collections.Mapping", context);
         if (!PyTypeChecker.match(tupleType, valueType, context) ||
             (mappingType != null && !PyTypeChecker.match(mappingType, valueType, context))) {
           return replaceSubstringWithSingleValueFormatting(oldExpression, textRange, prefix, suffix, formatValue, newText, substitutions);
@@ -188,7 +187,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
                                                                       String suffix,
                                                                       PyExpression formatValue,
                                                                       String newText,
-                                                                      List<PyStringFormatParser.SubstitutionChunk> substitutions) {
+                                                                      List<SubstitutionChunk> substitutions) {
     // 'foo%s' % value if value is not tuple or mapping -> '%s%s' % (s, value)
     final PyElementGenerator generator = PyElementGenerator.getInstance(oldExpression.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
@@ -197,7 +196,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     oldExpression.replace(newLiteralExpression);
     final StringBuilder builder = new StringBuilder();
     builder.append("(");
-    final int i = getPositionInRanges(PyStringFormatParser.substitutionsToRanges(substitutions), textRange);
+    final int i = getPositionInRanges(substitutionsToRanges(substitutions), textRange);
     final int pos;
     if (i == 0) {
       pos = builder.toString().length();
@@ -256,7 +255,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
                                                                 String prefix,
                                                                 String suffix,
                                                                 PyTupleExpression tupleFormatValue,
-                                                                List<PyStringFormatParser.SubstitutionChunk> substitutions) {
+                                                                List<SubstitutionChunk> substitutions) {
     // 'foo%s' % (x,) -> '%s%s' % (s, x)
     final String newLiteralText = prefix + "%s" + suffix;
     final PyElementGenerator generator = PyElementGenerator.getInstance(oldExpression.getProject());
@@ -265,7 +264,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
 
     final PyExpression[] members = tupleFormatValue.getElements();
     final int n = members.length;
-    final int i = Math.min(n, Math.max(0, getPositionInRanges(PyStringFormatParser.substitutionsToRanges(substitutions), textRange)));
+    final int i = Math.min(n, Math.max(0, getPositionInRanges(substitutionsToRanges(substitutions), textRange)));
     final boolean last = i == n;
     final PsiElement trailingComma = PyPsiUtils.getNextComma(members[n - 1]);
     if (trailingComma != null) {
@@ -321,12 +320,12 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       builder.append("(");
     }
     if (!leftQuote.endsWith(prefix)) {
-      builder.append(prefix + rightQuote + " + ");
+      builder.append(prefix).append(rightQuote).append(" + ");
     }
     final int pos = builder.toString().length();
     builder.append(newText);
     if (!rightQuote.startsWith(suffix)) {
-      builder.append(" + " + leftQuote + suffix);
+      builder.append(" + ").append(leftQuote).append(suffix);
     }
     if (hasSubstitutions) {
       builder.append(")");
@@ -342,13 +341,13 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
                                                                    @NotNull String suffix,
                                                                    @NotNull PyArgumentList newStyleFormatValue,
                                                                    @NotNull String newText,
-                                                                   @NotNull List<PyStringFormatParser.SubstitutionChunk> substitutions) {
+                                                                   @NotNull List<SubstitutionChunk> substitutions) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(oldExpression.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
     final PyExpression[] arguments = newStyleFormatValue.getArguments();
     boolean hasKeywords = false;
     int maxPosition = -1;
-    for (PyStringFormatParser.SubstitutionChunk substitution : substitutions) {
+    for (SubstitutionChunk substitution : substitutions) {
       if (substitution.getMappingKey() != null) {
         hasKeywords = true;
       }
@@ -382,7 +381,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       final String newLiteralText = prefix + "{}" + suffix;
       final PyStringLiteralExpression newLiteralExpression = generator.createStringLiteralAlreadyEscaped(newLiteralText);
       oldExpression.replace(newLiteralExpression);
-      final int i = getPositionInRanges(PyStringFormatParser.substitutionsToRanges(substitutions), textRange);
+      final int i = getPositionInRanges(substitutionsToRanges(substitutions), textRange);
       final PyExpression arg = generator.createExpressionFromText(languageLevel, newText);
       if (i == 0) {
         newStyleFormatValue.addArgumentFirst(arg);
@@ -409,9 +408,9 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     return size;
   }
 
-  private static boolean containsStringFormatting(@NotNull List<PyStringFormatParser.SubstitutionChunk> substitutions,
+  private static boolean containsStringFormatting(@NotNull List<SubstitutionChunk> substitutions,
                                                   @NotNull TextRange range) {
-    final List<TextRange> ranges = PyStringFormatParser.substitutionsToRanges(substitutions);
+    final List<TextRange> ranges = substitutionsToRanges(substitutions);
     for (TextRange r : ranges) {
       if (range.contains(r)) {
         return true;

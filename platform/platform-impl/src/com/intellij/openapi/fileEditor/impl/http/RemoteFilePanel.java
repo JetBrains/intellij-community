@@ -129,7 +129,7 @@ public class RemoteFilePanel {
     for (RemoteFileEditorActionProvider actionProvider : RemoteFileEditorActionProvider.EP_NAME.getExtensions()) {
       group.addAll(actionProvider.createToolbarActions(project, myVirtualFile));
     }
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("RemoteFilePanel", group, true);
     myToolbarPanel.add(actionToolbar.getComponent(), BorderLayout.CENTER);
   }
 

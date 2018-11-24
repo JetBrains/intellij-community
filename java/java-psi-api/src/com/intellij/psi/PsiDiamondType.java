@@ -181,6 +181,18 @@ public abstract class PsiDiamondType extends PsiType {
     return null;
   }
 
+  public static JavaResolveResult getDiamondsAwareResolveResult(PsiCall expression) {
+    if (expression instanceof PsiNewExpression) {
+      PsiDiamondType diamondType = getDiamondType((PsiNewExpression)expression);
+      if (diamondType != null) {
+        JavaResolveResult factory = diamondType.getStaticFactory();
+        return factory != null ? factory : JavaResolveResult.EMPTY;
+      }
+    }
+
+    return expression.resolveMethodGenerics();
+  }
+
   @Nullable
   public abstract JavaResolveResult getStaticFactory();
 }

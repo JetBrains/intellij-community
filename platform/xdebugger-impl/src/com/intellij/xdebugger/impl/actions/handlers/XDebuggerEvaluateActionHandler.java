@@ -110,7 +110,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       }
       expression = new XExpressionImpl(expression.getExpression(), language, expression.getCustomInfo(), expression.getMode());
     }
-    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression, stackFrame == null ? null : stackFrame.getSourcePosition()).show();
+    XSourcePosition position = stackFrame == null ? null : stackFrame.getSourcePosition();
+    new XDebuggerEvaluationDialog(session, editorsProvider, expression, position, evaluator.isCodeFragmentEvaluationSupported()).show();
   }
 
   /**

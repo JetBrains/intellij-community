@@ -22,8 +22,8 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
@@ -56,12 +56,7 @@ public class ApplyIntentionAction extends AnAction {
   }
 
   public String getName() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return myAction.getText();
-      }
-    });
+    return ReadAction.compute(() -> myAction.getText());
   }
 
   @Nullable
@@ -78,12 +73,7 @@ public class ApplyIntentionAction extends AnAction {
     final ApplyIntentionAction[] result = new ApplyIntentionAction[actions.size()];
     for (int i = 0; i < result.length; i++) {
       final HighlightInfo.IntentionActionDescriptor descriptor = actions.get(i);
-      final String actionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          return descriptor.getAction().getText();
-        }
-      });
+      final String actionText = ReadAction.compute(() -> descriptor.getAction().getText());
       result[i] = new ApplyIntentionAction(descriptor, actionText, editor, file);
     }
     return result;

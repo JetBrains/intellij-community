@@ -20,7 +20,7 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_EXT
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
 import com.intellij.openapi.util.Condition
@@ -104,7 +104,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     if (useVfs && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
-      LOG.catchAndLog { refreshVirtualDirectoryAndAddListener() }
+      LOG.runAndLogException { refreshVirtualDirectoryAndAddListener() }
     }
   }
 
@@ -685,7 +685,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   private fun isEqualToBundledScheme(externalInfo: ExternalInfo?, newDigest: ByteArray, scheme: MUTABLE_SCHEME): Boolean {
     fun serializeIfPossible(scheme: T): Element? {
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         @Suppress("UNCHECKED_CAST")
         val bundledAsMutable = scheme as? MUTABLE_SCHEME ?: return null
         return processor.writeScheme(bundledAsMutable) as Element

@@ -1,13 +1,13 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.9"
+  id "com.jetbrains.python.envs" version "0.0.10"
 }
 
 envs {
   project.buildDir = new File(System.getenv().getOrDefault("PYCHARM_BUILD_DIR", buildDir))
-  bootstrapDirectory = new File(buildDir, '.miniconda')
-  envsDirectory = new File(buildDir, 'MinicondaEnvs')
+  bootstrapDirectory = new File(buildDir, 'pythons')
+  envsDirectory = new File(buildDir, 'envs')
   minicondaVersion = 'latest'
   packages = ["cython", "pip", "setuptools"]
 

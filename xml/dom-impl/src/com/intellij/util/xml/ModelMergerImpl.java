@@ -210,7 +210,7 @@ public class ModelMergerImpl implements ModelMerger {
 
   @Override
   public final <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
-    myInvocationStrategies.add(Pair.<InvocationStrategy,Class>create(strategy, aClass));
+    myInvocationStrategies.add(Pair.create(strategy, aClass));
   }
 
   @Override
@@ -236,7 +236,7 @@ public class ModelMergerImpl implements ModelMerger {
     final Set<Class> commonClasses = getCommonClasses(new THashSet<>(), implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
-    final T t = AdvancedProxy.<T>createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
+    final T t = AdvancedProxy.createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
     return t;
   }
 

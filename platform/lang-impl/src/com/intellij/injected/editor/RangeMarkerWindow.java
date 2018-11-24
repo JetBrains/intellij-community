@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Aug 22, 2007
- * Time: 9:09:57 PM
- */
 package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.Document;
@@ -83,11 +77,6 @@ class RangeMarkerWindow implements RangeMarkerEx {
     return startOffset <= endOffset && endOffset <= myDocumentWindow.getTextLength();
   }
 
-  @Override
-  public boolean setValid(boolean value) {
-    return myHostMarker.setValid(value);
-  }
-
   ////////////////////////////delegates
   @Override
   public void setGreedyToLeft(final boolean greedy) {
@@ -130,26 +119,6 @@ class RangeMarkerWindow implements RangeMarkerEx {
   @Override
   public boolean isGreedyToLeft() {
     return myHostMarker.isGreedyToLeft();
-  }
-
-  @Override
-  public int intervalStart() {
-    return getStartOffset();
-  }
-
-  @Override
-  public int intervalEnd() {
-    return getEndOffset();
-  }
-
-  @Override
-  public int setIntervalStart(int start) {
-    throw new IllegalStateException();
-  }
-
-  @Override
-  public int setIntervalEnd(int end) {
-    throw new IllegalStateException();
   }
 
   @Override

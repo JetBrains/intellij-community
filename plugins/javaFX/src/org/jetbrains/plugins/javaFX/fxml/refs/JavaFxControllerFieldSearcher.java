@@ -33,10 +33,6 @@ import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/29/13
- */
 public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>{
   @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {

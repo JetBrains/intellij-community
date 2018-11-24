@@ -78,12 +78,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
   public void initComponent() {
     if (!isNormalProject()) return;
 
-    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        doInit();
-      }
-    });
+    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> doInit());
   }
 
   @TestOnly

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
@@ -66,6 +67,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JPanel myRightMarginPanel;
   private JComboBox myQuotesCombo;
   private JBCheckBox myEnforceQuotesBox;
+  private ComboBox myBeforeFirstAttributeCombo;
+  private ComboBox myAfterLastAttributeCombo;
   private RightMarginForm myRightMarginForm;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
@@ -73,7 +76,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myPreviewPanel);
 
     fillWrappingCombo(myWrapAttributes);
-    fillQuotesCombo(myQuotesCombo);
+    fillEnumCombobox(myQuotesCombo, CodeStyleSettings.QuoteStyle.class);
+    fillEnumCombobox(myBeforeFirstAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
+    fillEnumCombobox(myAfterLastAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
 
     customizeField(ApplicationBundle.message("title.insert.new.line.before.tags"), myInsertNewLineTagNames);
     customizeField(ApplicationBundle.message("title.remove.line.breaks.before.tags"), myRemoveNewLineTagNames);
@@ -149,6 +154,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = myShouldKeepLineBreaksInText.isSelected();
     settings.HTML_QUOTE_STYLE = (CodeStyleSettings.QuoteStyle)myQuotesCombo.getSelectedItem();
     settings.HTML_ENFORCE_QUOTES = myEnforceQuotesBox.isSelected();
+    settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myBeforeFirstAttributeCombo.getSelectedItem();
+    settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myAfterLastAttributeCombo.getSelectedItem();
     myRightMarginForm.apply(settings);
   }
 
@@ -185,6 +192,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myRightMarginForm.reset(settings);
     myQuotesCombo.setSelectedItem(settings.HTML_QUOTE_STYLE);
     myEnforceQuotesBox.setSelected(settings.HTML_ENFORCE_QUOTES);
+    myBeforeFirstAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE);
+    myAfterLastAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE);
   }
 
   @Override
@@ -258,6 +267,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     if (myQuotesCombo.getSelectedItem() != settings.HTML_QUOTE_STYLE) {
       return true;
     }
+    if (myBeforeFirstAttributeCombo.getSelectedItem() != settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE) {
+      return true;
+    }
+    if (myAfterLastAttributeCombo.getSelectedItem() != settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE) {
+      return true;
+    }
 
     return myRightMarginForm.isModified(settings) ||
            myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES;
@@ -285,7 +300,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
 
-  private static void fillQuotesCombo(JComboBox combo) {
-    combo.setModel(new EnumComboBoxModel<>(CodeStyleSettings.QuoteStyle.class));
+  private static <T extends Enum<T>> void fillEnumCombobox(JComboBox combo, Class<T> enumClass) {
+    //noinspection unchecked
+    combo.setModel(new EnumComboBoxModel<>(enumClass));
   }
 }

@@ -402,7 +402,7 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
+  public static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
     if (!Registry.is("idea.regexp.search.uses.indices")) return "";
 
     return ReadAction.compute(() -> {

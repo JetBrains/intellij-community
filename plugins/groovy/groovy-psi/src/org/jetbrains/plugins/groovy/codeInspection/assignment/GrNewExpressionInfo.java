@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public class GrNewExpressionInfo extends ConstructorCallInfoBase<GrNewExpression> {
 
   public GrNewExpressionInfo(GrNewExpression expr) {

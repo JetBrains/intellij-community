@@ -71,6 +71,7 @@ public class JavadocEditor extends ModuleElementsEditor {
       urls[row] = item.getUrl();
     }
     getModel().getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls);
+    fireConfigurationChanged();
   }
 
   @Override

@@ -79,7 +79,7 @@ public class LowLevelSearchUtil {
                                            @NotNull ProgressIndicator progress,
                                            TreeElement lastElement) {
     if (scope instanceof PsiCompiledElement) {
-      throw new IllegalArgumentException("Scope is compiled, can't scan: "+scope);
+      throw new IllegalArgumentException("Scope is compiled, can't scan: "+scope+"; containingFile: "+scope.getContainingFile());
     }
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();

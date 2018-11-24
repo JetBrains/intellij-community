@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 31-Aug-2006
- * Time: 19:20:48
- */
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.keymap.KeymapUtil;

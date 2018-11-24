@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -69,14 +69,17 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     myLibraryManager = manager;
   }
 
+  @Override
   public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
     return runtimeName.startsWith(SCRIPT_CLOSURE_PREFIX) || GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
   }
 
+  @Override
   public boolean isAppropriateScriptFile(@NotNull final GroovyFile scriptFile) {
     return GroovyScriptUtil.isSpecificScriptFile(scriptFile, GradleScriptType.INSTANCE);
   }
 
+  @Override
   @NotNull
   public String getRuntimeScriptName(@NotNull GroovyFile groovyFile) {
     VirtualFile virtualFile = groovyFile.getVirtualFile();
@@ -93,6 +96,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     return className == null ? "" : className;
   }
 
+  @Override
   public PsiFile getExtraScriptIfNotFound(@NotNull ReferenceType refType, @NotNull String runtimeName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     String sourceFilePath = getScriptForClassName(refType);
     if (sourceFilePath == null) return null;
@@ -125,7 +129,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   @Nullable
   private ClassLoader createGradleClassLoader(@NotNull Module module) {
-    String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    String rootProjectPath = ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath();
     if (StringUtil.isEmpty(rootProjectPath)) {
       return null;
     }
@@ -153,6 +157,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
       myModule = module;
     }
 
+    @Override
     public Result<FactoryMap<File, String>> compute() {
       final FactoryMap<File, String> result = new ConcurrentFactoryMap<File, String>() {
         @Override

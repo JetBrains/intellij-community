@@ -68,4 +68,8 @@ class ParameterizedTestsDemo {
   <warning descr="Suspicious combination @Test and @ParameterizedTest">@org.junit.jupiter.api.Test</warning>
   void testWithTestAnnotation(int i) { }
 
+  @ValueSource(ints = {1})
+  <warning descr="Suspicious combination @Test and parameterized source">@org.junit.jupiter.api.Test</warning>
+  void testWithTestAnnotationNoParameterized(int i) { }
+
 }

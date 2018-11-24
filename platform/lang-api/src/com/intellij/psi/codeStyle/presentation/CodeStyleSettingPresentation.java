@@ -104,7 +104,7 @@ public class CodeStyleSettingPresentation {
   protected static void putGroupTop(@NotNull Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> result,
                                     @NotNull String fieldName,
                                     @NotNull String uiName, int[] values, String[] valueUiNames) {
-    result.put(new SettingsGroup(null), ContainerUtil.<CodeStyleSettingPresentation>immutableList(
+    result.put(new SettingsGroup(null), ContainerUtil.immutableList(
       new CodeStyleSelectSettingPresentation(fieldName, uiName, values, valueUiNames)
     ));
   }
@@ -272,7 +272,7 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("SPACE_BEFORE_TYPE_PARAMETER_LIST", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"))
     ));
 
-    result.put(new SettingsGroup(SPACES_IN_TYPE_PARAMETERS), ContainerUtil.<CodeStyleSettingPresentation>immutableList());
+    result.put(new SettingsGroup(SPACES_IN_TYPE_PARAMETERS), ContainerUtil.immutableList());
 
     result.put(new SettingsGroup(SPACES_OTHER), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_BEFORE_COMMA", ApplicationBundle.message("checkbox.spaces.before.comma")),
@@ -286,7 +286,7 @@ public class CodeStyleSettingPresentation {
     //-----------------------------------WRAPPING_AND_BRACES_SETTINGS-----------------------------------------------------
 
     result = ContainerUtil.newLinkedHashMap();
-    result.put(new SettingsGroup(null), ContainerUtil.<CodeStyleSettingPresentation>immutableList(
+    result.put(new SettingsGroup(null), ContainerUtil.immutableList(
       new CodeStyleBoundedIntegerSettingPresentation("RIGHT_MARGIN", ApplicationBundle.message("editbox.right.margin.columns"), 0, 999,
                                                      -1,
                                                      ApplicationBundle.message("settings.code.style.default.general"))
@@ -321,7 +321,7 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("WRAP_COMMENTS", ApplicationBundle.message("wrapping.comments.wrap.at.right.margin"))
     ));
 
-    result.put(new SettingsGroup(WRAPPING_BRACES), ContainerUtil.<CodeStyleSettingPresentation>immutableList(
+    result.put(new SettingsGroup(WRAPPING_BRACES), ContainerUtil.immutableList(
       new CodeStyleSelectSettingPresentation("CLASS_BRACE_STYLE",
                                              ApplicationBundle.message("wrapping.brace.placement.class.declaration"),
                                              BRACE_PLACEMENT_VALUES, BRACE_PLACEMENT_OPTIONS),
@@ -398,7 +398,7 @@ public class CodeStyleSettingPresentation {
                                              BRACE_OPTIONS)
     ));
 
-    result.put(new SettingsGroup(WRAPPING_WHILE_STATEMENT), ContainerUtil.<CodeStyleSettingPresentation>immutableList(
+    result.put(new SettingsGroup(WRAPPING_WHILE_STATEMENT), ContainerUtil.immutableList(
       new CodeStyleSelectSettingPresentation("WHILE_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), BRACE_VALUES,
                                              BRACE_OPTIONS)
     ));

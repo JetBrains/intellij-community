@@ -38,24 +38,31 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
     ButtonModel bm = b.getModel();
-    boolean focused = c.hasFocus() || bm.isRollover();
+    boolean focused = c.hasFocus() || bm.isRollover() || isCellRollover(b);
+    boolean pressed = bm.isPressed() || isCellPressed(b);
 
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, bm.isPressed());
+    Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, pressed);
 
-    Rectangle viewRect = new Rectangle(c.getSize());
-    int x = (iconRect.width - icon.getIconWidth()) / 2;
-    int y = (viewRect.height - icon.getIconHeight()) / 2;
+    int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
+    int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y;
     icon.paintIcon(c, g, x, y);
   }
 
   @Override
   protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
+    textRect.y -= JBUI.scale(1); // Move one pixel up
     super.drawText(c, g, b, fm, textRect, text);
-    if (b.hasFocus() && !textRect.isEmpty()) {
-      g.setColor(b.getForeground());
-      UIUtil.drawDottedRectangle(g, textRect.x - 2, textRect.y - 1, textRect.width + textRect.x + 1, textRect.height + 3);
-    }
+  }
+
+  private static boolean isCellRollover(JCheckBox checkBox) {
+    Rectangle cellPosition = (Rectangle)checkBox.getClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY);
+    return cellPosition != null && cellPosition.getBounds().equals(checkBox.getBounds());
+  }
+
+  private static boolean isCellPressed(JCheckBox checkBox) {
+    Rectangle cellPosition = (Rectangle)checkBox.getClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY);
+    return cellPosition != null && cellPosition.getBounds().equals(checkBox.getBounds());
   }
 
   @Override

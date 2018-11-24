@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.StubBuilder;
@@ -40,13 +39,13 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.Set;
 
 public class TreeUtil {
   private static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
-
-  private TreeUtil() {
-  }
 
   public static void ensureParsed(ASTNode node) {
     if (node != null) {
@@ -144,30 +143,6 @@ public class TreeUtil {
       }
       return null;
     }
-  }
-
-  private static boolean isLeafOrCollapsedChameleon(ASTNode node) {
-    return node instanceof LeafElement || isCollapsedChameleon(node);
-  }
-
-  @Nullable
-  public static TreeElement findFirstLeafOrChameleon(final TreeElement element) {
-    if (element == null) return null;
-
-    final Ref<TreeElement> result = Ref.create(null);
-    element.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
-      @Override
-      protected void visitNode(final TreeElement element) {
-        if (isLeafOrCollapsedChameleon(element)) {
-          result.set(element);
-          stopWalking();
-          return;
-        }
-        super.visitNode(element);
-      }
-    });
-
-    return result.get();
   }
 
   @Nullable

@@ -250,7 +250,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
         eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
-        eventMulticaster.addCaretListener(new CaretAdapter() {
+        eventMulticaster.addCaretListener(new CaretListener() {
           @Override
           public void caretPositionChanged(CaretEvent e) {
             if (myHint != null) {

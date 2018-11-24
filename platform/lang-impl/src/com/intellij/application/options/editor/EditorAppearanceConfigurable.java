@@ -18,6 +18,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
@@ -64,11 +65,11 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   //private JCheckBox myAntialiasingInEditorCheckBox;
   private JCheckBox myShowCodeLensInEditorCheckBox;
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
-
+  private JBCheckBox myCbShowIntentionBulbCheckBox;
   private JPanel myParameterHintsSettingsPanel;
   private JBCheckBox myShowParameterNameHints;
   private JButton myConfigureParameterHintsButton;
-  
+
   //private JCheckBox myUseLCDRendering;
 
   public EditorAppearanceConfigurable() {
@@ -99,6 +100,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private void applyNameHintsSettings() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     settings.setShowParameterNameHints(myShowParameterNameHints.isSelected());
+    ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
   }
 
   private void updateWhitespaceCheckboxesState() {
@@ -124,6 +126,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myInnerWhitespacesCheckBox.setSelected(editorSettings.isInnerWhitespacesShown());
     myTrailingWhitespacesCheckBox.setSelected(editorSettings.isTrailingWhitespacesShown());
     myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
+    myCbShowIntentionBulbCheckBox.setSelected(editorSettings.isShowIntentionBulb());
     //myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     //myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
     myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getShowToolWindowsNumbers());
@@ -153,6 +156,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     editorSettings.setInnerWhitespacesShown(myInnerWhitespacesCheckBox.isSelected());
     editorSettings.setTrailingWhitespacesShown(myTrailingWhitespacesCheckBox.isSelected());
     editorSettings.setIndentGuidesShown(myShowVerticalIndentGuidesCheckBox.isSelected());
+    editorSettings.setShowIntentionBulb(myCbShowIntentionBulbCheckBox.isSelected());
 
     EditorOptionsPanel.reinitAllEditors();
 
@@ -206,6 +210,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myInnerWhitespacesCheckBox, editorSettings.isInnerWhitespacesShown());
     isModified |= isModified(myTrailingWhitespacesCheckBox, editorSettings.isTrailingWhitespacesShown());
     isModified |= isModified(myShowVerticalIndentGuidesCheckBox, editorSettings.isIndentGuidesShown());
+    isModified |= isModified(myCbShowIntentionBulbCheckBox, editorSettings.isShowIntentionBulb());
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     //isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
     //isModified |= myUseLCDRendering.isSelected() != UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR;

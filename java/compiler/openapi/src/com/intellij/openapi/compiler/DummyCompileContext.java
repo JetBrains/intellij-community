@@ -15,12 +15,11 @@
  */
 package com.intellij.openapi.compiler;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -96,11 +95,7 @@ public class DummyCompileContext implements CompileContext {
   }
 
   public VirtualFile getModuleOutputDirectory(@NotNull final Module module) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        return CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-      }
-    });
+    return ReadAction.compute(() -> CompilerModuleExtension.getInstance(module).getCompilerOutputPath());
   }
 
   public VirtualFile getModuleOutputDirectoryForTests(Module module) {

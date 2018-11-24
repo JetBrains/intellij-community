@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.configurationStore.PROJECT_CONFIG_DIR
 import com.intellij.configurationStore.StoreAwareProjectManager
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
@@ -129,7 +128,7 @@ class ProjectInspectionManagerTest {
       // cause to use app profile
       val currentProfile = projectInspectionProfileManager.currentProfile
       assertThat(currentProfile.isProjectLevel).isTrue()
-      currentProfile.disableTool("Convert2Diamond", project)
+      currentProfile.setToolEnabled("Convert2Diamond", false)
 
       project.saveStore()
 
@@ -175,7 +174,7 @@ class ProjectInspectionManagerTest {
 
       val currentProfile = projectInspectionProfileManager.currentProfile
       assertThat(currentProfile.isProjectLevel).isTrue()
-      currentProfile.disableTool("Convert2Diamond", project)
+      currentProfile.setToolEnabled("Convert2Diamond", false)
       currentProfile.profileChanged()
 
       project.saveStore()
@@ -196,17 +195,11 @@ class ProjectInspectionManagerTest {
       </project>""".trimIndent()
       assertThat(projectFile.readText()).isEqualTo(expected)
 
-      currentProfile.disableAllTools(project)
+      currentProfile.disableAllTools()
       currentProfile.profileChanged()
       project.saveStore()
       assertThat(projectFile.readText()).isNotEqualTo(expected)
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
     }
-  }
-}
-
-fun InspectionProfileImpl.disableAllTools(project: Project?) {
-  for (entry in getInspectionTools(null)) {
-    disableTool(entry.shortName, project)
   }
 }

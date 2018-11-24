@@ -273,6 +273,55 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19293, PY-22102
+  public void testInitializingTypingNamedTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-24099
+  public void testInitializingTypingNamedTupleWithDefaultValues() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-4344, PY-8422, PY-22269, PY-22740
+  public void testInitializingCollectionsNamedTuple() {
+    doTest();
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedModule() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
+  public void testTypingCallableCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-24286
+  public void testBuiltinLong() {
+    doTest();
+  }
+
+  // PY-24930
+  public void testCallOperator() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 

@@ -42,10 +42,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/12/13
- */
 public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JavaFxArtifactProperties myProperties;
 

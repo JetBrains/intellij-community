@@ -16,6 +16,7 @@
 package com.intellij.core;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +25,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeImpl;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -112,6 +115,11 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     @Override
     public boolean isSearchInLibraries() {
       return false;
+    }
+
+    @Override
+    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      return myFileIndexFacade.getUnloadedModuleDescriptions();
     }
   }
 }

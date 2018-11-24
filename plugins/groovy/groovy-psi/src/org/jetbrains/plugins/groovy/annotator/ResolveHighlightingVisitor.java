@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.List;
 
-/**
-* Created by Max Medvedev on 21/03/14
-*/
 class ResolveHighlightingVisitor extends GroovyRecursiveElementVisitor {
   private final GrUnresolvedAccessChecker myReferenceChecker;
   private final List<HighlightInfo> myInfos;

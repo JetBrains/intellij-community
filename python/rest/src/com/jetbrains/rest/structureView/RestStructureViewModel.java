@@ -19,6 +19,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.rest.RestFile;
@@ -44,12 +45,12 @@ public class RestStructureViewModel extends StructureViewModelBase implements St
 
   @Override
   public boolean isAlwaysLeaf(StructureViewTreeElement element) {
-    return element.getValue() instanceof RestTitle;
+    return element.getChildren().length == 0;
   }
 
   @Override
   public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
-    return element.getValue() instanceof PsiFile;
+    return element.getValue() instanceof PsiFile || ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @Override

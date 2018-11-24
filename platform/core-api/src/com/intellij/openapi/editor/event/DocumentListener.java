@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,14 @@ public interface DocumentListener extends EventListener{
    *
    * @param event the event containing the information about the change.
    */
-  void beforeDocumentChange(DocumentEvent event);
+  default void beforeDocumentChange(DocumentEvent event) {
+  }
 
   /**
    * Called after the text of the document has been changed.
    *
    * @param event the event containing the information about the change.
    */
-  void documentChanged(DocumentEvent event);
+  default void documentChanged(DocumentEvent event) {
+  }
 }

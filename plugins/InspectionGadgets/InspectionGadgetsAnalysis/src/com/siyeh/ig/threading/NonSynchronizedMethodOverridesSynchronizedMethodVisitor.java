@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.09.2006
- * Time: 22:17:07
- */
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.PsiMethod;

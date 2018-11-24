@@ -52,7 +52,7 @@ public class IpnbEditorUtil {
   public static Editor createPythonCodeEditor(@NotNull final Project project, @NotNull final IpnbCodeSourcePanel codeSourcePanel) {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     assert editorFactory != null;
-    final String text = codeSourcePanel.getCell().getSourceAsString().trim();
+    final String text = codeSourcePanel.getCell().getSourceAsString();
     final Module module = ProjectRootManagerEx.getInstanceEx(project).getFileIndex()
       .getModuleForFile(codeSourcePanel.getIpnbCodePanel().getFileEditor().getVirtualFile());
     final IpnbPyFragment fragment = new IpnbPyFragment(project, text, true, codeSourcePanel);
@@ -60,7 +60,7 @@ public class IpnbEditorUtil {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
     assert document != null;
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project, fragment.getVirtualFile(), false);
-
+    editor.setFile(fragment.getVirtualFile());
     setupEditor(editor);
     return editor;
   }

@@ -27,9 +27,6 @@ import javax.swing.table.TableModel;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by Yuli Fiterman on 4/26/2016.
- */
 public class DataFrameTableModel extends AsyncArrayTableModel {
   private final Map<Integer, ArrayChunk.ColHeader> myColHeaders = Maps.newConcurrentMap();
   private final RowHeaderModel myRowHeaderModel;

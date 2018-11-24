@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +68,10 @@ public abstract class AbstractExternalSystemSettings<
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  public boolean showSelectiveImportDialogOnInitialImport() {
+    return SystemProperties.is("external.system.show.selective.import.dialog");
   }
 
   /**
@@ -165,6 +170,9 @@ public abstract class AbstractExternalSystemSettings<
             listener.onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
           }
           getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
+        }
+        if (old.isCreateEmptyContentRootDirectories() != current.isCreateEmptyContentRootDirectories()) {
+          ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
         }
         checkSettings(old, current);
       }

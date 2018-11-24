@@ -17,10 +17,6 @@ package org.jetbrains.plugins.javaFX.packaging;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JavaFxPackagerConstants {
   @NonNls public static final String UPDATE_MODE_BACKGROUND = "background";
   @NonNls public static final String UPDATE_MODE_ALWAYS = "always";

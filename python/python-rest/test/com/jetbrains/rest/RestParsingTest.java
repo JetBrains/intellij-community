@@ -33,6 +33,10 @@ public class RestParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
+  public void testDirectiveWithNewLine() {
+    doTest(true);
+  }
+
   protected String getTestDataPath() {
     return PythonHelpersLocator.getPythonCommunityPath() + "/python-rest/testData/psi";
   }

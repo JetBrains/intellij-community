@@ -409,7 +409,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @NotNull
-  private UsageInfo[] getMergedInfos() {
+  public UsageInfo[] getMergedInfos() {
     Object infos = myMergedUsageInfos;
     return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
   }

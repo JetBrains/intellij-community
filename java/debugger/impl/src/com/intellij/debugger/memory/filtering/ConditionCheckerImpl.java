@@ -26,7 +26,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.render.CachedEvaluator;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XExpression;
-import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,15 +49,15 @@ public class ConditionCheckerImpl implements ConditionChecker {
   }
 
   @Override
-  public CheckingResult check(@NotNull ObjectReference ref) {
+  public CheckingResult check(@NotNull Value ref) {
     myDebugProcess.getManagerThread().invokeAndWait(new MyCheckerCommand(ref));
     return myResultReference.get();
   }
 
   private class MyCheckerCommand extends DebuggerContextCommandImpl {
-    private final ObjectReference myReference;
+    private final Value myReference;
 
-    protected MyCheckerCommand(@NotNull ObjectReference ref) {
+    protected MyCheckerCommand(@NotNull Value ref) {
       super(myDebugProcess.getDebuggerContext());
       myReference = ref;
     }

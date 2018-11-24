@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 15-Jun-2010
- */
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.AbstractAddToTestsPatternAction;

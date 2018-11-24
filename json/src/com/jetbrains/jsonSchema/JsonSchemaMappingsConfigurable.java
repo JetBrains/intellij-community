@@ -32,11 +32,9 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
@@ -58,7 +56,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
   public static final String JSON_SCHEMA_MAPPINGS = "JSON Schema";
 
-  private final static Comparator<JsonSchemaMappingsConfigurationBase.SchemaInfo> COMPARATOR = (o1, o2) -> {
+  private final static Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
     if (o1.isApplicationLevel() != o2.isApplicationLevel()) {
       return o1.isApplicationLevel() ? -1 : 1;
     }
@@ -68,18 +66,16 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   public static final String ADD_PROJECT_SCHEMA = "Add Project Schema";
   private String myError;
 
-  @Nullable
-  private Project myProject;
-  private Runnable myTreeUpdater = () -> {
+  @NotNull
+  private final Project myProject;
+  private final Runnable myTreeUpdater = () -> {
     TREE_UPDATER.run();
     updateWarningText();
   };
 
-  public JsonSchemaMappingsConfigurable(@Nullable final Project project) {
+  public JsonSchemaMappingsConfigurable(@NotNull final Project project) {
     myProject = project;
     initTree();
-    fillTree();
-    updateWarningText();
   }
 
   @Nullable
@@ -111,26 +107,23 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(
         JsonBundle.message("json.schema.add.schema.chooser.title")), myProject, null);
     if (file != null) {
-      final String relativePath = VfsUtil.getRelativePath(file, myProject.getBaseDir());
+      final String relativePath = VfsUtilCore.getRelativePath(file, myProject.getBaseDir());
       if (relativePath == null) {
         Messages.showErrorDialog(myProject, "Please select file under project root.", ADD_PROJECT_SCHEMA);
         return;
       }
-      final JsonSchemaChecker importer = new JsonSchemaChecker(myProject, file);
-      if (!importer.checkSchemaFile()) {
-        if (!StringUtil.isEmptyOrSpaces(importer.getError())) {
-          JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(importer.getError(), MessageType.ERROR).notify(myProject);
-          Messages.showErrorDialog(myProject, importer.getError(), READ_JSON_SCHEMA);
-        }
+      final String error = JsonSchemaReader.checkIfValidJsonSchema(myProject, file);
+      if (error != null) {
+        JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.ERROR).notify(myProject);
+        Messages.showErrorDialog(myProject, error, READ_JSON_SCHEMA);
         return;
       }
 
-      addCreatedMappings(file,
-                         new JsonSchemaMappingsConfigurationBase.SchemaInfo(file.getNameWithoutExtension(), relativePath, false, null));
+      addCreatedMappings(file, new UserDefinedJsonSchemaConfiguration(file.getNameWithoutExtension(), relativePath, false, null));
     }
   }
 
-  private void addCreatedMappings(@NotNull VirtualFile schemaFile, @NotNull final JsonSchemaMappingsConfigurationBase.SchemaInfo info) {
+  private void addCreatedMappings(@NotNull VirtualFile schemaFile, @NotNull final UserDefinedJsonSchemaConfiguration info) {
     final JsonSchemaConfigurable configurable = new JsonSchemaConfigurable(myProject, FileUtil.toSystemDependentName(schemaFile.getPath()),
                                                                      info, myTreeUpdater);
     configurable.setError(myError);
@@ -144,8 +137,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
     if (myProject.isDefault()) return;
 
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list = getStoredList();
-    for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : list) {
+    final List<UserDefinedJsonSchemaConfiguration> list = getStoredList();
+    for (UserDefinedJsonSchemaConfiguration info : list) {
       final JsonSchemaConfigurable configurable =
         new JsonSchemaConfigurable(myProject, new File(myProject.getBasePath(), info.getRelativePathToSchema()).getPath(),
                                    info, myTreeUpdater);
@@ -159,14 +152,12 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   }
 
   @NotNull
-  private List<JsonSchemaMappingsConfigurationBase.SchemaInfo> getStoredList() {
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list = new ArrayList<>();
-    if (myProject != null) {
-      final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> projectState = JsonSchemaMappingsProjectConfiguration
-        .getInstance(myProject).getStateMap();
-      if (projectState != null) {
-        list.addAll(projectState.values());
-      }
+  private List<UserDefinedJsonSchemaConfiguration> getStoredList() {
+    final List<UserDefinedJsonSchemaConfiguration> list = new ArrayList<>();
+    final Map<String, UserDefinedJsonSchemaConfiguration> projectState = JsonSchemaMappingsProjectConfiguration
+      .getInstance(myProject).getStateMap();
+    if (projectState != null) {
+      list.addAll(projectState.values());
     }
 
     Collections.sort(list, COMPARATOR);
@@ -175,32 +166,28 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @Override
   public void apply() throws ConfigurationException {
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> uiList = getUiList(true);
+    final List<UserDefinedJsonSchemaConfiguration> uiList = getUiList(true);
     validate(uiList);
-    final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> projectMap = new HashMap<>();
-    for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : uiList) {
+    final Map<String, UserDefinedJsonSchemaConfiguration> projectMap = new HashMap<>();
+    for (UserDefinedJsonSchemaConfiguration info : uiList) {
       if (!info.isApplicationLevel()) {
         projectMap.put(info.getName(), info);
       }
     }
 
-    if (myProject != null) {
-      JsonSchemaMappingsProjectConfiguration.getInstance(myProject).setState(projectMap);
-    }
+    JsonSchemaMappingsProjectConfiguration.getInstance(myProject).setState(projectMap);
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       final JsonSchemaService service = JsonSchemaService.Impl.get(project);
       if (service != null) service.reset();
     }
-    if (myProject != null) {
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
-      EditorNotifications.getInstance(myProject).updateAllNotifications();
-    }
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    EditorNotifications.getInstance(myProject).updateAllNotifications();
   }
 
-  private static void validate(@NotNull List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list) throws ConfigurationException {
+  private static void validate(@NotNull List<UserDefinedJsonSchemaConfiguration> list) throws ConfigurationException {
     final Set<String> set = new HashSet<>();
-    for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : list) {
+    for (UserDefinedJsonSchemaConfiguration info : list) {
       if (set.contains(info.getName())) {
         throw new ConfigurationException("Duplicate schema name: '" + info.getName() + "'");
       }
@@ -210,8 +197,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @Override
   public boolean isModified() {
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> storedList = getStoredList();
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> uiList;
+    final List<UserDefinedJsonSchemaConfiguration> storedList = getStoredList();
+    final List<UserDefinedJsonSchemaConfiguration> uiList;
     try {
       uiList = getUiList(false);
     }
@@ -223,9 +210,9 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   }
 
   private void updateWarningText() {
-    final MultiMap<String, JsonSchemaMappingsConfigurationBase.Item> patternsMap = new MultiMap<>();
+    final MultiMap<String, UserDefinedJsonSchemaConfiguration.Item> patternsMap = new MultiMap<>();
     final StringBuilder sb = new StringBuilder();
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list;
+    final List<UserDefinedJsonSchemaConfiguration> list;
     try {
       list = getUiList(false);
     }
@@ -233,12 +220,12 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       // will not happen
       return;
     }
-    for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : list) {
+    for (UserDefinedJsonSchemaConfiguration info : list) {
       final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(myProject);
-      final List<JsonSchemaMappingsConfigurationBase.Item> patterns = info.getPatterns();
-      for (JsonSchemaMappingsConfigurationBase.Item pattern : patterns) {
-        for (Map.Entry<String, Collection<JsonSchemaMappingsConfigurationBase.Item>> entry : patternsMap.entrySet()) {
-          for (JsonSchemaMappingsConfigurationBase.Item item : entry.getValue()) {
+      final List<UserDefinedJsonSchemaConfiguration.Item> patterns = info.getPatterns();
+      for (UserDefinedJsonSchemaConfiguration.Item pattern : patterns) {
+        for (Map.Entry<String, Collection<UserDefinedJsonSchemaConfiguration.Item>> entry : patternsMap.entrySet()) {
+          for (UserDefinedJsonSchemaConfiguration.Item item : entry.getValue()) {
             final ThreeState similar = comparator.isSimilar(pattern, item);
             if (ThreeState.NO.equals(similar)) continue;
 
@@ -266,8 +253,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   }
 
   @NotNull
-  private List<JsonSchemaMappingsConfigurationBase.SchemaInfo> getUiList(boolean applyChildren) throws ConfigurationException {
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> uiList = new ArrayList<>();
+  private List<UserDefinedJsonSchemaConfiguration> getUiList(boolean applyChildren) throws ConfigurationException {
+    final List<UserDefinedJsonSchemaConfiguration> uiList = new ArrayList<>();
     final Enumeration children = myRoot.children();
     while (children.hasMoreElements()) {
       final MyNode node = (MyNode)children.nextElement();
@@ -299,7 +286,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     };
   }
 
-  private static JsonSchemaMappingsConfigurationBase.SchemaInfo getSchemaInfo(@NotNull final MyNode node) {
+  private static UserDefinedJsonSchemaConfiguration getSchemaInfo(@NotNull final MyNode node) {
     return ((JsonSchemaConfigurable) node.getConfigurable()).getSchema();
   }
 
@@ -340,50 +327,5 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Override
   public String getHelpTopic() {
     return SETTINGS_JSON_SCHEMA;
-  }
-
-  public static class JsonSchemaChecker {
-    private static final int MAX_SCHEMA_LENGTH = FileUtil.MEGABYTE;
-    private final Project myProject;
-    private final VirtualFile myFile;
-
-    public JsonSchemaChecker(Project project, VirtualFile file) {
-      myProject = project;
-      myFile = file;
-    }
-
-    @Nullable
-    private String myError;
-
-    public boolean checkSchemaFile() {
-      final long length = myFile.getLength();
-      if (length > MAX_SCHEMA_LENGTH) {
-        myError = "JSON schema was not loaded from '" + myFile.getName() + "' because it's too large (file size is " + length + " bytes).";
-        return false;
-      }
-      if (length == 0) {
-        myError = "JSON schema was not loaded from '" + myFile.getName() + "'. File is empty.";
-        return false;
-      }
-      final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
-      final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
-      if (service != null && !service.isSchemaFile(myFile, collectConsumer)) {
-        myError = "JSON Schema not found or contain error in '" + myFile.getName() + "'";
-        if (!collectConsumer.getResult().isEmpty()) {
-          myError += ": " + StringUtil.join(collectConsumer.getResult(), "; ");
-        }
-        return false;
-      }
-      return true;
-    }
-
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    @Nullable
-    public String getError() {
-      return myError;
-    }
   }
 }

@@ -147,10 +147,10 @@ public class RefactoringChangeUtil {
    }
 
   public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringChangeUtil.<PsiThisExpression>createQualifiedExpression(manager, qualifierClass, "this");
+    return RefactoringChangeUtil.createQualifiedExpression(manager, qualifierClass, "this");
   }
 
   public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringChangeUtil.<PsiSuperExpression>createQualifiedExpression(manager, qualifierClass, "super");
+    return RefactoringChangeUtil.createQualifiedExpression(manager, qualifierClass, "super");
   }
 }

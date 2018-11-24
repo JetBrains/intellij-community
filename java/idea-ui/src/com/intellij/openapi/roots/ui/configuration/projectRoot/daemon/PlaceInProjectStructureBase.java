@@ -28,16 +28,27 @@ public class PlaceInProjectStructureBase extends PlaceInProjectStructure {
   private final Project myProject;
   private final Place myPlace;
   private final ProjectStructureElement myElement;
+  private boolean myCanNavigate;
 
   public PlaceInProjectStructureBase(Project project, Place place, ProjectStructureElement element) {
+    this(project, place, element, true);
+  }
+
+  public PlaceInProjectStructureBase(Project project, Place place, ProjectStructureElement element, boolean navigate) {
     myProject = project;
     myPlace = place;
     myElement = element;
+    myCanNavigate = navigate;
   }
 
   @Override
   public String getPlacePath() {
     return null;
+  }
+
+  @Override
+  public boolean canNavigate() {
+    return myCanNavigate;
   }
 
   @NotNull

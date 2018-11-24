@@ -29,9 +29,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomElementsNavigationManagerImpl extends DomElementsNavigationManager {
   private final Map<String, DomElementNavigationProvider> myProviders = new HashMap<>();
   private final Project myProject;

@@ -208,11 +208,11 @@ public class JpsGantProjectBuilder {
   }
 
   public void buildAll() {
-    runBuild(Collections.<String>emptySet(), true, true);
+    runBuild(Collections.emptySet(), true, true);
   }
 
   public void buildProduction() {
-    runBuild(Collections.<String>emptySet(), true, false);
+    runBuild(Collections.emptySet(), true, false);
   }
 
   public void exportModuleOutputProperties() {

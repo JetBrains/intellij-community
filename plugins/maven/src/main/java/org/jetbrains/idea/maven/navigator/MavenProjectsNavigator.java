@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
@@ -182,12 +180,9 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   private void doInit() {
     listenForProjectsChanges();
     if (isUnitTestMode()) return;
-    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        initToolWindow();
-      }
+    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+      if (myProject.isDisposed()) return;
+      initToolWindow();
     });
   }
 
@@ -214,13 +209,6 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       }
     });
 
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
-      @Override
-      public void beforeRunTasksChanged() {
-        scheduleStructureRequest(() -> myStructure.updateGoals());
-      }
-    });
-
     MavenRunner.getInstance(myProject).getSettings().addListener(new MavenRunnerSettings.Listener() {
       @Override
       public void skipTestsChanged() {
@@ -228,7 +216,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       }
     });
 
-    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerListener() {
+    myProject.getMessageBus().connect().subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private void changed() {
         scheduleStructureRequest(() -> myStructure.updateRunConfigurations());
       }
@@ -246,6 +234,11 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
         changed();
+      }
+
+      @Override
+      public void beforeRunTasksChanged() {
+        scheduleStructureRequest(() -> myStructure.updateGoals());
       }
     });
   }

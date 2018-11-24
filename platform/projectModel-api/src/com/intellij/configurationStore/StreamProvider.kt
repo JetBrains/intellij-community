@@ -20,6 +20,9 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
+@set:TestOnly
+var IS_EXTERNAL_STORAGE_ENABLED = false
+
 interface StreamProvider {
   val enabled: Boolean
     get() = true

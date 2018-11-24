@@ -16,6 +16,8 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.SystemIndependent;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +58,8 @@ public class ProjectGroup {
     myProjectPaths = projectPaths;
   }
 
-  public void addProject(String path) {
+  public void addProject(@SystemIndependent String path) {
+    PathUtil.assertSystemIndependentName(path);
     final List<String> projects = getProjects();
     projects.add(path);
     save(projects);
@@ -70,7 +73,8 @@ public class ProjectGroup {
     return new ArrayList<>(new HashSet<>(StringUtil.split(myProjectPaths, File.pathSeparator)));
   }
 
-  public void removeProject(String path) {
+  public void removeProject(@SystemIndependent String path) {
+    PathUtil.assertSystemIndependentName(path);
     final List<String> projects = getProjects();
     projects.remove(path);
     save(projects);

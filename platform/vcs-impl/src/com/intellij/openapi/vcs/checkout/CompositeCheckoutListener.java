@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsKey;
@@ -87,12 +86,9 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
 
   @Nullable
   static Project findProjectByBaseDirLocation(@NotNull final File directory) {
-    return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), new Condition<Project>() {
-      @Override
-      public boolean value(Project project) {
-        VirtualFile baseDir = project.getBaseDir();
-        return baseDir != null && FileUtil.filesEqual(VfsUtilCore.virtualToIoFile(baseDir), directory);
-      }
+    return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), project -> {
+      VirtualFile baseDir = project.getBaseDir();
+      return baseDir != null && FileUtil.filesEqual(VfsUtilCore.virtualToIoFile(baseDir), directory);
     });
   }
 }

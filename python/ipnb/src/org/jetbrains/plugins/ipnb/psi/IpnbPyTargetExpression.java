@@ -2,9 +2,10 @@ package org.jetbrains.plugins.ipnb.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
@@ -31,7 +32,13 @@ public class IpnbPyTargetExpression extends PyTargetExpressionImpl {
     codePanel.setEditing(true);
     filePanel.setSelectedCellPanel(codePanel);
     super.navigate(false);
-    UIUtil.requestFocus(editor.getContentComponent());
+    FocusManagerImpl.getInstance().requestFocus(editor.getContentComponent(), true);
+  }
+
+  @Nullable
+  @Override
+  public PyTargetExpressionStub getStub() {
+    return null;
   }
 }
 

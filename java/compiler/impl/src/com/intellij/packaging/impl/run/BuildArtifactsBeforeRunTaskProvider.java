@@ -20,13 +20,13 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.task.ProjectTask;
+import com.intellij.task.ProjectTaskManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,7 +115,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BuildArtifactsBeforeRun
   }
 
   @Override
-  protected CompileScope createCompileScope(Project project, List<Artifact> artifacts) {
-    return ArtifactCompileScope.createArtifactsScope(project, artifacts);
+  protected ProjectTask createProjectTask(Project project, List<Artifact> artifacts) {
+    return ProjectTaskManager.getInstance(project).createArtifactsBuildTask(true, artifacts.toArray(new Artifact[artifacts.size()]));
   }
 }

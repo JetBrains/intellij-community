@@ -26,10 +26,10 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,10 +43,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 
-/**
- * User: anna
- * Date: 10/20/11
- */
 public class OutputFileUtil {
   private static final String CONSOLE_OUTPUT_FILE_MESSAGE = "Console output is saving to: ";
 
@@ -119,13 +115,8 @@ public class OutputFileUtil {
           @Override
           public void navigate(final Project project) {
             final VirtualFile file =
-              ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-                @Nullable
-                @Override
-                public VirtualFile compute() {
-                  return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath));
-                }
-              });
+              WriteAction
+                .compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath)));
 
             if (file != null) {
               file.refresh(false, false);

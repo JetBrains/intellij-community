@@ -89,6 +89,6 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
   @NotNull
   @Override
   public Object[] getVariants() {
-    return new Object[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return new Object[0];
   }
 }

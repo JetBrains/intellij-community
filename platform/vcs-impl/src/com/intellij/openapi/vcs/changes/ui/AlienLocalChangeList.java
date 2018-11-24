@@ -78,7 +78,7 @@ public class AlienLocalChangeList extends LocalChangeList {
     throw new UnsupportedOperationException();
   }
 
-  public static final AlienLocalChangeList DEFAULT_ALIEN = new AlienLocalChangeList(Collections.<Change>emptyList(), "Default") {
+  public static final AlienLocalChangeList DEFAULT_ALIEN = new AlienLocalChangeList(Collections.emptyList(), "Default") {
     public boolean isDefault() {
       return true;
     }

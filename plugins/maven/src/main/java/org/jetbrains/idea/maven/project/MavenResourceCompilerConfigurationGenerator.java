@@ -341,8 +341,6 @@ public class MavenResourceCompilerConfigurationGenerator {
     boolean filterWebXml = Boolean.parseBoolean(warCfg.getChildTextTrim("filteringDeploymentDescriptors"));
     Element webResources = warCfg.getChild("webResources");
 
-    if (webResources == null && !filterWebXml) return;
-
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
     MavenWebArtifactConfiguration artifactResourceCfg = projectCfg.webArtifactConfigs.get(webArtifactName);
@@ -354,6 +352,23 @@ public class MavenResourceCompilerConfigurationGenerator {
     else {
       LOG.error("MavenWebArtifactConfiguration already exists.");
     }
+
+    String packagingIncludes = warCfg.getChildTextTrim("packagingIncludes");
+    if (packagingIncludes != null) {
+      artifactResourceCfg.packagingIncludes.addAll(StringUtil.split(packagingIncludes, ","));
+    }
+
+    String packagingExcludes = warCfg.getChildTextTrim("packagingExcludes");
+    if (packagingExcludes != null) {
+      artifactResourceCfg.packagingExcludes.addAll(StringUtil.split(packagingExcludes, ","));
+    }
+
+    String warSourceDirectory = warCfg.getChildTextTrim("warSourceDirectory");
+    if (warSourceDirectory == null) warSourceDirectory = "src/main/webapp";
+    if (!FileUtil.isAbsolute(warSourceDirectory)) {
+      warSourceDirectory = mavenProject.getDirectory() + '/' + warSourceDirectory;
+    }
+    artifactResourceCfg.warSourceDirectory = FileUtil.toSystemIndependentName(StringUtil.trimEnd(warSourceDirectory, '/'));
 
     if (webResources != null) {
       for (Element resource : webResources.getChildren("resource")) {
@@ -396,7 +411,7 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     if (filterWebXml) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
-      r.directory = mavenProject.getDirectory() + "/src/main/webapp";
+      r.directory = warSourceDirectory;
       r.includes = Collections.singleton("WEB-INF/web.xml");
       r.isFiltered = true;
       r.targetPath = "";

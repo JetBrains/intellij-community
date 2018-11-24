@@ -60,7 +60,7 @@ public abstract class ModuleInsight {
     myExistingModuleNames = existingModuleNames;
     myExistingProjectLibraryNames = existingProjectLibraryNames;
     myProgress = new ProgressIndicatorWrapper(progress);
-    setRoots(Collections.<File>emptyList(), Collections.<DetectedSourceRoot>emptyList(), Collections.<String>emptySet());
+    setRoots(Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
   }
 
   public final void setRoots(final List<File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {

@@ -191,7 +191,7 @@ public class ContainerUtilTest {
           list.add(i);
         }
       }
-    }).cpuBound().assertTiming();
+    }).assertTiming();
     for (int i = 0; i < list.size(); i++) {
       assertEquals(i, list.get(i));
     }

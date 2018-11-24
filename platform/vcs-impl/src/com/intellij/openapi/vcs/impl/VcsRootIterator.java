@@ -16,11 +16,10 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,12 +64,7 @@ public class VcsRootIterator {
   }
 
   private static boolean isIgnoredByVcs(final ProjectLevelVcsManager vcsManager, final Project project, final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return project.isDisposed() ||  vcsManager.isIgnored(file);
-      }
-    });
+    return ReadAction.compute(() -> project.isDisposed() || vcsManager.isIgnored(file));
   }
 
   private static class MyRootFilter {

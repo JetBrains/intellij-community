@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 
 
-/**
- * Created by Max Medvedev on 9/9/13
- */
 public class GrLanguageReferenceProvider extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {

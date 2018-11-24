@@ -72,6 +72,6 @@ public class LowLevelSearchUtilTest extends TestCase {
         assertTrue(success);
         assertEquals(startOffset+","+endOffset, 1, found.size());
       }
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 }

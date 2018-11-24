@@ -43,6 +43,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -591,6 +592,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   @NotNull
   List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+
+  /**
+   * Get breadcrumbs to be generated for the current cursor position in the loaded file
+   * @return a list of the breadcrumbs in the order from the topmost element crumb to the deepest
+   */
+  @NotNull
+  List<Crumb> getBreadcrumbsAtCaret();
 
   void saveText(@NotNull VirtualFile file, @NotNull String text);
 }

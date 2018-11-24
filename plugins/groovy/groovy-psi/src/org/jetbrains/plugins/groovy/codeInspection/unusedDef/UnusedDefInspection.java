@@ -25,8 +25,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -107,21 +105,15 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
         if (!varInst.isWrite()) {
           final String varName = varInst.getVariableName();
           DefinitionMap e = dfaResult.get(i);
-          e.forEachValue(new TObjectProcedure<TIntHashSet>() {
-            @Override
-            public boolean execute(TIntHashSet reaching) {
-              reaching.forEach(new TIntProcedure() {
-                @Override
-                public boolean execute(int defNum) {
-                  final String defName = ((ReadWriteVariableInstruction) flow[defNum]).getVariableName();
-                  if (varName.equals(defName)) {
-                    unusedDefs.remove(defNum);
-                  }
-                  return true;
-                }
-              });
+          e.forEachValue(reaching -> {
+            reaching.forEach(defNum -> {
+              final String defName = ((ReadWriteVariableInstruction) flow[defNum]).getVariableName();
+              if (varName.equals(defName)) {
+                unusedDefs.remove(defNum);
+              }
               return true;
-            }
+            });
+            return true;
           });
         }
       }
@@ -129,14 +121,11 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
 
     final Set<PsiElement> checked = ContainerUtil.newHashSet();
 
-    unusedDefs.forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int num) {
-        final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction)flow[num];
-        final PsiElement element = instruction.getElement();
-        process(element, checked, problemsHolder, GroovyInspectionBundle.message("unused.assignment.tooltip"));
-        return true;
-      }
+    unusedDefs.forEach(num -> {
+      final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction)flow[num];
+      final PsiElement element = instruction.getElement();
+      process(element, checked, problemsHolder, GroovyInspectionBundle.message("unused.assignment.tooltip"));
+      return true;
     });
 
     owner.accept(new GroovyRecursiveElementVisitor() {

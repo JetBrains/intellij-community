@@ -46,7 +46,7 @@ public class ActionCallback implements Disposable {
     myRejected = new ExecutionCallback();
   }
 
-  private ActionCallback(ExecutionCallback done, ExecutionCallback rejected) {
+  private ActionCallback(@NotNull ExecutionCallback done, @NotNull ExecutionCallback rejected) {
     myDone = done;
     myRejected = rejected;
     myName = null;

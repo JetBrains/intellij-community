@@ -35,10 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: May 27, 2005
- */
 public class TodoTreeHelper {
   private final Project myProject;
   

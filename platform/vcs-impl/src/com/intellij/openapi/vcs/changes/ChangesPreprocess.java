@@ -23,12 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/28/12
- * Time: 6:47 PM
- */
 public class ChangesPreprocess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesPreprocess");
 

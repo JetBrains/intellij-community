@@ -24,11 +24,6 @@ import com.intellij.util.xml.NameStrategy;
 import org.intellij.plugins.relaxNG.model.CommonElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 16.08.2007
- */
 @NameStrategy(com.intellij.util.xml.JavaNameStrategy.class)
 public interface RngDomElement extends DomElement, CommonElement<XmlElement> {
   /**

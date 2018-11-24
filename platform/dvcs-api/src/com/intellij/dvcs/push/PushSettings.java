@@ -19,7 +19,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -66,12 +65,8 @@ public class PushSettings implements PersistentStateComponent<PushSettings.State
 
 
   public boolean containsForcePushTarget(@NotNull final String remote, @NotNull final String branch) {
-    return ContainerUtil.exists(myState.FORCE_PUSH_TARGETS, new Condition<ForcePushTargetInfo>() {
-      @Override
-      public boolean value(ForcePushTargetInfo info) {
-        return info.targetRemoteName.equals(remote) && info.targetBranchName.equals(branch);
-      }
-    });
+    return ContainerUtil.exists(myState.FORCE_PUSH_TARGETS,
+                                info -> info.targetRemoteName.equals(remote) && info.targetBranchName.equals(branch));
   }
 
   public void addForcePushTarget(@NotNull String targetRemote, @NotNull String targetBranch) {

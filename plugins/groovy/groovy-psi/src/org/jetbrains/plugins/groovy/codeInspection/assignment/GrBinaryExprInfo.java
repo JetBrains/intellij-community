@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public class GrBinaryExprInfo implements CallInfo<GrBinaryExpression> {
   private final GrBinaryExpression myExpr;
 

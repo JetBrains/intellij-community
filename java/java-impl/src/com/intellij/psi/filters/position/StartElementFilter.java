@@ -20,13 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.FilterUtil;
 import org.jdom.Element;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 30.01.2003
- * Time: 13:09:39
- * To change this template use Options | File Templates.
- */
 public class StartElementFilter extends PositionElementFilter{
   @Override
   public boolean isAcceptable(Object element, PsiElement context){

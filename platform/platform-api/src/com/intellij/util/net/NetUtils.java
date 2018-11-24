@@ -205,6 +205,14 @@ public class NetUtils {
         }
       }
     }
+    if (gzipStream != null) {
+      // Amount of read bytes may have changed when 'inputStream.read(buffer)' returns -1
+      // E.g. reading GZIP trailer doesn't produce inflated stream data.
+      bytesRead = gzipStream.getCompressedBytesRead();
+      if (indicator != null && expectedContentLength > 0) {
+        indicator.setFraction((double)bytesRead / expectedContentLength);
+      }
+    }
 
     if (indicator != null) {
       indicator.checkCanceled();

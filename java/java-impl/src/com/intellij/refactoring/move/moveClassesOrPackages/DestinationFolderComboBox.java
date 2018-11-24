@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -43,10 +43,6 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 9/13/11
- */
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
   private static final String LEAVE_IN_SAME_SOURCE_ROOT = "Leave in same source root";
   private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);
@@ -136,7 +132,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     });
 
-    editorComboBox.addDocumentListener(new DocumentAdapter() {
+    editorComboBox.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         JComboBox comboBox = getComboBox();

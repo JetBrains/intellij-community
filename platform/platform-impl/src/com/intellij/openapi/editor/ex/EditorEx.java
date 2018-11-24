@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -203,7 +204,12 @@ public interface EditorEx extends Editor {
    * {@link SoftWrapAppliancePlaces#MAIN_EDITOR} is used by default.
    *
    * @param place   soft wraps appliance appliance use-case
+   * @deprecated set {@link EditorKind} via
+   * {@link com.intellij.openapi.editor.EditorFactory#createEditor(Document, Project, EditorKind) },
+   * {@link com.intellij.openapi.editor.EditorFactory#createViewer(Document, Project, EditorKind)}
+   * {@link com.intellij.openapi.editor.EditorFactory#createEditor(Document, Project, VirtualFile, boolean, EditorKind)}
    */
+  @Deprecated
   void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place);
 
   /**

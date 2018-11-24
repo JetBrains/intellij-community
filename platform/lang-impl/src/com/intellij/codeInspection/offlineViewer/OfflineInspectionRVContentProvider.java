@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jan-2007
- */
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -68,8 +64,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     return Collections.singletonList(tools.getDefaultState());
   }
 
+  @NotNull
   @Override
-  @Nullable
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths == null) return QuickFixAction.EMPTY; 
@@ -98,7 +94,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       });
     }
 
-    if (selectedElements.isEmpty()) return null;
+    if (selectedElements.isEmpty()) return QuickFixAction.EMPTY;
 
     final RefEntity[] selectedRefElements = selectedElements.toArray(new RefEntity[selectedElements.size()]);
 

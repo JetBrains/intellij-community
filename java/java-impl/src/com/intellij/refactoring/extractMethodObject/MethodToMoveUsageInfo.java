@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 16-Feb-2009
- */
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.psi.PsiMethod;

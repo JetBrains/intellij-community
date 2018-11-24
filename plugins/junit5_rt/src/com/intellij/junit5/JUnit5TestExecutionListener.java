@@ -37,10 +37,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class JUnit5TestExecutionListener implements TestExecutionListener {
   private static final String NO_LOCATION_HINT = "";
@@ -99,7 +96,6 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   @Override
   public void testPlanExecutionFinished(TestPlan testPlan) {
-    myTestPlan = null;
   }
 
   @Override
@@ -164,7 +160,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           myPrintStream.println("\n##teamcity[testFinished name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + "\']");
         }
 
-        final Set<TestIdentifier> descendants = myTestPlan.getDescendants(testIdentifier);
+        final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
         if (!descendants.isEmpty() && myFinishCount == 0) {
           for (TestIdentifier childIdentifier : descendants) {
             testStarted(childIdentifier);
@@ -369,6 +365,16 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return testIdentifier.getSource().map((source) -> {
       if (source instanceof MethodSource) {
         return ((MethodSource)source).getMethodName();
+      }
+      return null;
+    }).orElse(null);
+  }
+  
+  static String getMethodSignature(TestIdentifier testIdentifier) {
+    return testIdentifier.getSource().map((source) -> {
+      if (source instanceof MethodSource) {
+        String parameterTypes = ((MethodSource)source).getMethodParameterTypes();
+        return ((MethodSource)source).getMethodName() + (parameterTypes != null ? "(" + parameterTypes + ")" : "");
       }
       return null;
     }).orElse(null);

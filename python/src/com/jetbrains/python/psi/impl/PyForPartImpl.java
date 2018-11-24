@@ -26,10 +26,6 @@ import com.jetbrains.python.psi.PyForPart;
 
 import java.util.List;
 
-/**
- * User: dcheryasov
- * Date: Mar 15, 2009 9:57:48 PM
- */
 public class PyForPartImpl extends PyStatementPartImpl implements PyForPart {
   public PyForPartImpl(ASTNode astNode) {
     super(astNode);

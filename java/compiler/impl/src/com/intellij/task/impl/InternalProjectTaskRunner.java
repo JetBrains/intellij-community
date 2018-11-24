@@ -25,6 +25,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -48,6 +49,7 @@ import java.util.stream.Stream;
  */
 public class InternalProjectTaskRunner extends ProjectTaskRunner {
   private static final Logger LOG = Logger.getInstance(InternalProjectTaskRunner.class);
+  public static final Key<Object> EXECUTION_SESSION_ID_KEY = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY;
 
   @Override
   public void run(@NotNull Project project,

@@ -916,8 +916,8 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stop() {
-    ProcessHandler processHandler = myDebugProcess.getProcessHandler();
-    if (processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
+    ProcessHandler processHandler = myDebugProcess == null ? null : myDebugProcess.getProcessHandler();
+    if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
 
     if (processHandler.detachIsDefault()) {
       processHandler.detachProcess();

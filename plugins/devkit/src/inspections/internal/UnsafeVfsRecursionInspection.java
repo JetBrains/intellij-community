@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class UnsafeVfsRecursionInspection extends DevKitInspectionBase {
         containingMethod.accept(new JavaRecursiveElementVisitor() {
           @Override
           public void visitMethodCallExpression(final PsiMethodCallExpression expression2) {
+            super.visitMethodCallExpression(expression2);
             if (expression2 != expression &&
                 containingMethodName.equals(expression2.getMethodExpression().getReferenceName()) &&
                 expression2.resolveMethod() == containingMethod) {

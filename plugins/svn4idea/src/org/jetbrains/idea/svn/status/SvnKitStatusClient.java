@@ -29,12 +29,6 @@ import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import java.io.File;
 import java.util.Collection;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/24/12
- * Time: 9:47 AM
- */
 public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
   private SVNStatusClient myStatusClient;

@@ -88,9 +88,9 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   public String getStartDescription(Object child) {
     final TestIdentifier testIdentifier = (TestIdentifier)child;
     final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
-    final String methodName = JUnit5TestExecutionListener.getMethodName(testIdentifier);
-    if (methodName != null) {
-      return className + "#" + methodName;
+    final String methodSignature = JUnit5TestExecutionListener.getMethodSignature(testIdentifier);
+    if (methodSignature != null) {
+      return className + "," + methodSignature;
     }
     return className != null ? className : (testIdentifier).getDisplayName();
   }

@@ -103,17 +103,7 @@ public class SelectMavenProjectDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     ComboBoxUtil.setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), myMavenDomProjectModels,
-                          model -> {
-                            String projectName = model.getName().getStringValue();
-                            MavenProject mavenProject = MavenDomUtil.findProject(model);
-                            if (mavenProject != null) {
-                              projectName = mavenProject.getDisplayName();
-                            }
-                            if (StringUtil.isEmptyOrSpaces(projectName)) {
-                              projectName = "pom.xml";
-                            }
-                            return Pair.create(projectName, model);
-                          });
+                          model -> Pair.create(MavenDomUtil.getProjectName(model), model));
 
     myReplaceAllListener = new ItemListener() {
       public void itemStateChanged(ItemEvent e) {

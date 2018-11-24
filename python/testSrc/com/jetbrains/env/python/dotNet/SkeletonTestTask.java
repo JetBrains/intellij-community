@@ -115,25 +115,22 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class); // This inspection should suggest us to generate stubs
 
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-        final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
-        IntentionAction intention = myFixture.findSingleIntention(intentionName);
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
+      IntentionAction intention = myFixture.findSingleIntention(intentionName);
 
-        if (intention instanceof IntentionActionDelegate) {
-          intention = ((IntentionActionDelegate)intention).getDelegate();
-        }
-
-        Assert.assertNotNull("No intention found to generate skeletons!", intention);
-        Assert.assertThat("Intention should be quick fix to run", intention, Matchers.instanceOf(QuickFixWrapper.class));
-        final LocalQuickFix quickFix = ((QuickFixWrapper)intention).getFix();
-        Assert.assertThat("Quick fix should be 'generate binary skeletons' fix to run", quickFix,
-                          Matchers.instanceOf(GenerateBinaryStubsFix.class));
-        final Task fixTask = ((GenerateBinaryStubsFix)quickFix).getFixTask(myFixture.getFile());
-        fixTask.run(new AbstractProgressIndicatorBase());
+      if (intention instanceof IntentionActionDelegate) {
+        intention = ((IntentionActionDelegate)intention).getDelegate();
       }
+
+      Assert.assertNotNull("No intention found to generate skeletons!", intention);
+      Assert.assertThat("Intention should be quick fix to run", intention, Matchers.instanceOf(QuickFixWrapper.class));
+      final LocalQuickFix quickFix = ((QuickFixWrapper)intention).getFix();
+      Assert.assertThat("Quick fix should be 'generate binary skeletons' fix to run", quickFix,
+                        Matchers.instanceOf(GenerateBinaryStubsFix.class));
+      final Task fixTask = ((GenerateBinaryStubsFix)quickFix).getFixTask(myFixture.getFile());
+      fixTask.run(new AbstractProgressIndicatorBase());
     });
 
     FileUtil.copy(skeletonFile, new File(myFixture.getTempDirPath(), skeletonFile.getName()));

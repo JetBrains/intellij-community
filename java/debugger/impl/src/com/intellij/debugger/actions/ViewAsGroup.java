@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,18 +28,13 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 26, 2003
- * Time: 11:05:57 PM
- */
 public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.ViewAsGroup");
 
@@ -185,16 +180,9 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
 
   @NotNull
   public static List<JavaValue> getSelectedValues(AnActionEvent event) {
-    List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(event.getDataContext());
-    if (selectedNodes.isEmpty()) return Collections.emptyList();
-
-    List<JavaValue> res = new ArrayList<>(selectedNodes.size());
-    for (XValueNodeImpl node : selectedNodes) {
-      XValue container = node.getValueContainer();
-      if (container instanceof JavaValue) {
-        res.add((JavaValue)container);
-      }
-    }
-    return res;
+    return StreamEx.of(XDebuggerTreeActionBase.getSelectedNodes(event.getDataContext()))
+      .map(XValueNodeImpl::getValueContainer)
+      .select(JavaValue.class)
+      .toList();
   }
 }

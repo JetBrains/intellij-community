@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -214,39 +213,33 @@ public class GitUpdateProcess {
     final Ref<GitUpdateResult> compoundResult = Ref.create();
     final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
     new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
-                             GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, new Runnable() {
-      @Override
-      public void run() {
-        LOG.info("updateImpl: updating...");
-        GitRepository currentlyUpdatedRoot = null;
-        try {
-          for (GitRepository repo : myRepositories) {
-            GitUpdater updater = finalUpdaters.get(repo);
-            if (updater == null) continue;
-            currentlyUpdatedRoot = repo;
-            GitUpdateResult res = updater.update();
-            LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
-            if (res == GitUpdateResult.INCOMPLETE) {
-              incomplete.set(true);
-            }
-            compoundResult.set(joinResults(compoundResult.get(), res));
-          }
-        }
-        catch (VcsException e) {
-          String rootName = (currentlyUpdatedRoot == null) ? "" : getShortRepositoryName(currentlyUpdatedRoot);
-          LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
-          notifyImportantError(myProject, "Error updating " + rootName,
-                               "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
-        }
-      }
-    }).execute(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
-        // But if updater.update() fails with exception for the first root, then the value would not be assigned.
-        // In this case we don't restore local changes either, because update failed.
-        return !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
-      }
+                             GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, () -> {
+                               LOG.info("updateImpl: updating...");
+                               GitRepository currentlyUpdatedRoot = null;
+                               try {
+                                 for (GitRepository repo : myRepositories) {
+                                   GitUpdater updater = finalUpdaters.get(repo);
+                                   if (updater == null) continue;
+                                   currentlyUpdatedRoot = repo;
+                                   GitUpdateResult res = updater.update();
+                                   LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
+                                   if (res == GitUpdateResult.INCOMPLETE) {
+                                     incomplete.set(true);
+                                   }
+                                   compoundResult.set(joinResults(compoundResult.get(), res));
+                                 }
+                               }
+                               catch (VcsException e) {
+                                 String rootName = (currentlyUpdatedRoot == null) ? "" : getShortRepositoryName(currentlyUpdatedRoot);
+                                 LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
+                                 notifyImportantError(myProject, "Error updating " + rootName,
+                                                      "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
+                               }
+                             }).execute(() -> {
+      // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
+      // But if updater.update() fails with exception for the first root, then the value would not be assigned.
+      // In this case we don't restore local changes either, because update failed.
+      return !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
     });
     // GitPreservingProcess#save may fail due index.lock presence
     return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);

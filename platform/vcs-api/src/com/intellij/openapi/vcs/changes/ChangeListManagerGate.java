@@ -31,17 +31,21 @@ import java.util.List;
  * it can NOT be done through {@link ChangeListManager} interface; it is for external/IDEA user modifications
  */
 public interface ChangeListManagerGate {
+  @NotNull
   List<LocalChangeList> getListsCopy();
   @Nullable
-  LocalChangeList findChangeList(final String name);
-  LocalChangeList addChangeList(final String name, final String comment);
-  LocalChangeList findOrCreateList(final String name, final String comment);
+  LocalChangeList findChangeList(@Nullable String name);
+  @NotNull
+  LocalChangeList addChangeList(@NotNull String name, @Nullable String comment);
+  @NotNull
+  LocalChangeList findOrCreateList(@NotNull String name, @Nullable String comment);
 
-  void editComment(final String name, final String comment);
-  void editName(final String oldName, final String newName);
+  void editComment(@NotNull String name, @Nullable String comment);
+  void editName(@NotNull String oldName, @NotNull String newName);
 
-  void setListsToDisappear(final Collection<String> names);
-  FileStatus getStatus(final VirtualFile file);
+  void setListsToDisappear(@NotNull Collection<String> names);
+  @Nullable
+  FileStatus getStatus(@NotNull VirtualFile file);
 
   @Nullable
   FileStatus getStatus(@NotNull FilePath filePath);
@@ -51,7 +55,7 @@ public interface ChangeListManagerGate {
    * @deprecated to remove in IDEA 16
    */
   @Deprecated
-  FileStatus getStatus(final File file);
+  FileStatus getStatus(@NotNull File file);
 
   void setDefaultChangeList(@NotNull String list);
 }

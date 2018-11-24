@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Vladislav.Kaznacheev
- * Date: Jul 4, 2007
- * Time: 12:33:18 AM
- */
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;

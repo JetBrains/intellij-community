@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.console.ConsoleRootType;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorHeaderComponent;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -29,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.console.actions.GrExecuteCommandAction;
-import org.jetbrains.plugins.groovy.console.actions.GrSelectModuleAction;
-
-import javax.swing.*;
 
 public final class GroovyConsoleRootType extends ConsoleRootType {
 
@@ -77,18 +73,9 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
 
   @Override
   public void fileOpened(@NotNull final VirtualFile file, @NotNull FileEditorManager source) {
-    final Project project = source.getProject();
-    final GroovyConsoleStateService projectConsole = GroovyConsoleStateService.getInstance(project);
-
     for (FileEditor fileEditor : source.getAllEditors(file)) {
       if (!(fileEditor instanceof TextEditor)) continue;
-      final Editor editor = ((TextEditor)fileEditor).getEditor();
-      final JPanel panel = new EditorHeaderComponent();
-      final DefaultActionGroup actionGroup = new DefaultActionGroup(EXECUTE_ACTION, new GrSelectModuleAction(projectConsole, file));
-      final ActionToolbar menu = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
-      panel.add(menu.getComponent());
-      editor.setHeaderComponent(panel);
-      EXECUTE_ACTION.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
+      EXECUTE_ACTION.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, fileEditor.getComponent());
     }
   }
 }

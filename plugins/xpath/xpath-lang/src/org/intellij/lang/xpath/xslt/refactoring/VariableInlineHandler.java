@@ -66,11 +66,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.11.10
-*/
 public class VariableInlineHandler extends InlineActionHandler {
   private static final String NAME = "Inline";
   private static final String TITLE = "XSLT - " + NAME;

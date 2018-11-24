@@ -196,10 +196,6 @@ public class AutoHardWrapHandler {
       private boolean autoFormatted(DocumentEvent event) {
         return event.getNewLength() <= event.getOldLength() && endsWithSpaces;
       }
-
-      @Override
-      public void documentChanged(DocumentEvent event) {
-      }
     };
 
     caretModel.moveToOffset(wrapOffset);

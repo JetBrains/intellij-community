@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
@@ -42,6 +43,9 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
     myToolWindowPanel = ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new DesignerToolWindow(project);
+    if (myToolWindowPanel != null) {
+      Disposer.register(this, () -> myToolWindowPanel.dispose());
+    }
   }
 
   public static DesignerToolWindow getInstance(GuiEditor designer) {
@@ -115,13 +119,6 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
                          toolWindowContent.getComponentTree(),
                          320,
                          null);
-  }
-
-  @Override
-  public void dispose() {
-    if (myToolWindowPanel != null) {
-      myToolWindowPanel.dispose();
-    }
   }
 
   @NotNull

@@ -115,7 +115,7 @@ final class JpsGantTool {
 
   private static JpsModule addModule(File imlFile, JpsModel model, JpsGantProjectBuilder builder) {
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-    def modules = JpsProjectLoader.loadModules(Collections.singletonList(imlFile), JpsJavaSdkType.INSTANCE, pathVariables)
+    def modules = JpsProjectLoader.loadModules(Collections.singletonList(imlFile.toPath()), JpsJavaSdkType.INSTANCE, pathVariables)
     def module = modules.get(0)
     model.project.addModule(module)
     builder.info("Module ${module.getName()} added to the project")

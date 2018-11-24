@@ -15,12 +15,6 @@
  */
 package com.intellij.openapi.diff;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/15/12
- * Time: 11:25 AM
- */
 public enum DiffViewerType {
   contents,
   merge,

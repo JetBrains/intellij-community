@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomTemplateRunnerImpl extends DomTemplateRunner {
   private final Project myProject;
 
@@ -57,7 +54,7 @@ public class DomTemplateRunnerImpl extends DomTemplateRunner {
   }
 
   public <T extends DomElement> void runTemplate(final T t, final Editor editor, @Nullable final Template template, Map<String, String> predefinedVars) {
-    if (template != null) {
+    if (template != null && t != null) {
       DomElement copy = t.createStableCopy();
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(editor.getDocument());
       XmlTag tag = copy.getXmlTag();

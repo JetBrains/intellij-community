@@ -157,8 +157,8 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected DefaultActionGroup collectToolbarActions(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> navigationActions = ContainerUtil.<AnAction>list(new MyPrevDifferenceAction(),
-                                                                    new MyNextDifferenceAction());
+    List<AnAction> navigationActions = ContainerUtil.list(new MyPrevDifferenceAction(),
+                                                          new MyNextDifferenceAction());
     DiffUtil.addActionBlock(group, navigationActions);
 
     DiffUtil.addActionBlock(group, viewerActions);

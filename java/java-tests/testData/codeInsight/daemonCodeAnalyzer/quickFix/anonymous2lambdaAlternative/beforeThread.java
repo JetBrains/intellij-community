@@ -1,4 +1,4 @@
-// "Replace with new Thread() with lambda argument" "true"
+// "Replace with new Thread(() -> {…})" "true"
 public class Main {
   public void testThread() {
     new <caret>Thread() {

@@ -362,15 +362,9 @@ public class PyPsiUtils {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyExpressionCodeFragment) {
       final PsiElement context = file.getContext();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("PyPsiUtil.getRealContext(" + element + ") is called. Returned " + context + ". Element inside code fragment");
-      }
       return context != null ? context : element;
     }
     else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("PyPsiUtil.getRealContext(" + element + ") is called. Returned " + element + ".");
-      }
       return element;
     }
   }

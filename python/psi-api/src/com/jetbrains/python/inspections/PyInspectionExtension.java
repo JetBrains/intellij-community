@@ -91,4 +91,8 @@ public abstract class PyInspectionExtension {
   public boolean ignoreProtectedSymbol(@NotNull final PyReferenceExpression expression, @NotNull final TypeEvalContext context) {
     return false;
   }
+
+  public boolean ignoreInitNewSignatures(@NotNull PyFunction original, @NotNull PyFunction complementary) {
+    return false;
+  }
 }

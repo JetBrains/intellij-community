@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Apr 19, 2002
- * Time: 2:26:19 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -103,8 +95,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       if (size == 0) return RangeHighlighter.EMPTY_ARRAY;
       List<RangeHighlighterEx> list = new ArrayList<>(size);
       CommonProcessors.CollectProcessor<RangeHighlighterEx> collectProcessor = new CommonProcessors.CollectProcessor<>(list);
-      myHighlighterTree.process(collectProcessor);
-      myHighlighterTreeForLines.process(collectProcessor);
+      myHighlighterTree.processAll(collectProcessor);
+      myHighlighterTreeForLines.processAll(collectProcessor);
       myCachedHighlighters = list.toArray(new RangeHighlighter[list.size()]);
     }
     return myCachedHighlighters;

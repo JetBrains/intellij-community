@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.ex;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
@@ -30,17 +29,17 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author spleaner
- */
-public interface StatusBarEx extends StatusBar, Disposable {
+public interface StatusBarEx extends StatusBar {
   void startRefreshIndication(String tooltipText);
+
   void stopRefreshIndication();
 
   BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody);
+
   BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener);
 
   void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info);
+
   List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses();
 
   void updateWidgets();
@@ -53,8 +52,6 @@ public interface StatusBarEx extends StatusBar, Disposable {
   void removeCustomIndicationComponents();
 
   Dimension getSize();
-  boolean isVisible();
 
-  @Nullable
-  String getInfoRequestor();
+  boolean isVisible();
 }

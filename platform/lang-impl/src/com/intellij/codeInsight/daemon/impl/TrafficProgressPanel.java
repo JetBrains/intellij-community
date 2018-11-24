@@ -38,9 +38,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
 
-/**
- * User: cdr
- */
 class TrafficProgressPanel extends JPanel {
   static final String MAX_TEXT = "100%";
   private static final String MIN_TEXT = "0%";

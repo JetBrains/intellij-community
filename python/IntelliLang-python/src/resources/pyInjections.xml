@@ -80,5 +80,11 @@
 
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*((BEGIN)|(START TRANSACTION))(\\s[^\n\r]+)?;")]]></place>
     <!-- MySQL/PostgreSQL transaction: ((BEGIN)|(START TRANSACTION))( smth)?; -->
+
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*((CREATE|DROP)\\s+EXTENSION\\s.+)")]]></place>
+    <!-- PostgreSQL extension: (CREATE|DROP) EXTENSION smth -->
+
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*(ALTER\\s+EXTENSION\\s.+?\\s(UPDATE|(SET SCHEMA)|ADD|DROP))")]]></place>
+    <!-- PostgreSQL extension: ALTER EXTENSION smth (UPDATE|SET SCHEMA|ADD|DROP) -->
   </injection>
 </component>

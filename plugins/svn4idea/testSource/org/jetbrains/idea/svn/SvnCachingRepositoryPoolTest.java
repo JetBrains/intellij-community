@@ -36,12 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/3/12
- * Time: 5:37 PM
- */
 public class SvnCachingRepositoryPoolTest extends FileBasedTest {
 
   @Test

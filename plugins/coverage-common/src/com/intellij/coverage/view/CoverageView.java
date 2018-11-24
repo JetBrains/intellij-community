@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.coverage.view;
 import com.intellij.CommonBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
@@ -55,10 +55,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * User: anna
- * Date: 1/2/12
- */
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls private static final String ACTION_GO_UP = "GoUp";
@@ -88,7 +84,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       emptyText.appendText("Edit", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           final String configurationName = configuration.getName();
-          final RunnerAndConfigurationSettings configurationSettings = RunManagerEx.getInstanceEx(project).findConfigurationByName(configurationName);
+          final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findConfigurationByName(configurationName);
           if (configurationSettings != null) {
             RunDialog.editConfiguration(project, configurationSettings, "Edit Run Configuration");
           } else {
@@ -144,7 +140,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     });
 
     final JComponent component =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActions(structure), false).getComponent();
+      ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(structure), false).getComponent();
     addToLeft(component);
   }
 

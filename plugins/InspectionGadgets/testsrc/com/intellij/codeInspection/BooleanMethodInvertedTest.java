@@ -6,10 +6,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.IGInspectionTestCase;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 
-/**
- * User: anna
- * Date: 06-Jan-2006
- */
 public class BooleanMethodInvertedTest extends IGInspectionTestCase {
 
   public void testUnusedMethod() throws Exception {

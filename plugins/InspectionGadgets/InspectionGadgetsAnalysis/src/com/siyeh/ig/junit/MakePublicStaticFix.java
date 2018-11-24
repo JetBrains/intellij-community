@@ -26,10 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* User: anna
-* Date: 5/22/13
-*/
 class MakePublicStaticFix extends InspectionGadgetsFix {
 
   private final String myName;

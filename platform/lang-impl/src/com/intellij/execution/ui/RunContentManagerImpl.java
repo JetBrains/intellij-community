@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.VetoableProjectManagerListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -603,14 +603,14 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return null;
   }
 
-  private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {
+  private class CloseListener extends ContentManagerAdapter implements VetoableProjectManagerListener, Disposable {
     private Content myContent;
     private final Executor myExecutor;
 
     private CloseListener(@NotNull final Content content, @NotNull Executor executor) {
       myContent = content;
       content.getManager().addContentManagerListener(this);
-      ProjectManager.getInstance().addProjectManagerListener(this);
+      ProjectManager.getInstance().addProjectManagerListener(myProject, this);
       myExecutor = executor;
     }
 
@@ -618,11 +618,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     public void contentRemoved(final ContentManagerEvent event) {
       final Content content = event.getContent();
       if (content == myContent) {
-        dispose();
+        Disposer.dispose(this);
       }
     }
 
-    private void dispose() {
+    @Override
+    public void dispose() {
       if (myContent == null) return;
 
       final Content content = myContent;
@@ -635,7 +636,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       finally {
         content.getManager().removeContentManagerListener(this);
-        ProjectManager.getInstance().removeProjectManagerListener(this);
+        ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
         content.release(); // don't invoke myContent.release() because myContent becomes null after destroyProcess()
         myContent = null;
       }
@@ -655,12 +656,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     public void projectClosed(final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
-        dispose(); // Dispose content even if content manager refused to.
+        Disposer.dispose(this); // Dispose content even if content manager refused to.
       }
     }
 
     @Override
-    public boolean canCloseProject(final Project project) {
+    public boolean canClose(@NotNull Project project) {
       if (project != myProject) return true;
 
       if (myContent == null) return true;

@@ -19,56 +19,78 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorPanel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.geom.Area;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.Path2D;
+
+import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustInWrapperRect;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJTextBorder extends DarculaTextBorder {
   @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (TextFieldWithPopupHandlerUI.isSearchField(c)) return;
+  public Insets getBorderInsets(Component c) {
+    if (isSearchFieldWithHistoryPopup(c)) {
+      return JBUI.insets(4, 27, 4, 24).asUIResource();
+    } else if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
+      return JBUI.insets(4, 21, 4, 24).asUIResource();
+    } else if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
+      return JBUI.insets(3, 3, 2, 2).asUIResource();
+    } else {
+      return JBUI.insets(4, 5).asUIResource();
+    }
+  }
 
+  @Override
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      g2.translate(x, y);
-      boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
+      Rectangle r = new Rectangle(x, y, width, height);
+
+      adjustInWrapperRect(r, c);
+
+      JBInsets.removeFrom(r, JBUI.insets(1));
 
       Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
       if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-        DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, c.hasFocus());
+        DarculaUIUtil.paintErrorBorder(g2, r.width, r.height, 0, true, c.hasFocus());
       } else {
-        int d = JBUI.scale(1);
-        int dd = JBUI.scale(2);
+        //boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
+        JComponent jc = (JComponent)c;
         if (c.hasFocus()) {
-          g2.setColor(getBorderColor(c.isEnabled() && editable, true));
+          g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
+        } else if (jc.isEnabled() && jc.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
+          g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
+        } else {
+          g2.setColor(UIManager.getColor("TextField.borderColor"));
+        }
 
-          Area s1 = new Area(new Rectangle2D.Float(d, d, width - 2 * d, height - 2 * d));
-          Area s2 = new Area(new Rectangle2D.Float(d + dd, d + dd, width - 2*d - 2*dd, height - 2*d - 2*dd));
-          s1.subtract(s2);
-          g2.fill(s1);
+        if (!jc.isEnabled()) {
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
         }
-        else {
-          g2.setColor(getBorderColor(c.isEnabled() && editable, false));
-          g2.drawRect(d, d, width - 2 * d, height - 2 * d);
-        }
+
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        border.append(r, false);
+
+        Rectangle innerRect = new Rectangle(r);
+        JBInsets.removeFrom(innerRect, JBUI.insets(1));
+        border.append(innerRect, false);
+
+        g2.fill(border);
       }
     } finally {
       g2.dispose();
     }
-  }
-
-  private static Color getBorderColor(boolean enabled, boolean focus) {
-    if (focus) {
-      return UIManager.getColor("TextField.activeBorderColor");
-    }
-    return UIManager.getColor(enabled ? "TextField.borderColor" : "disabledBorderColor");
   }
 }
 

@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +31,7 @@ public abstract class VcsCheckoutProcessor {
     new ExtensionPointName<>("com.intellij.vcs.checkoutProcessor");
 
   public static VcsCheckoutProcessor getProcessor(final @NotNull String protocol) {
-    return ContainerUtil.find(EXTENSION_POINT_NAME.getExtensions(), new Condition<VcsCheckoutProcessor>() {
-      @Override
-      public boolean value(VcsCheckoutProcessor processor) {
-        return protocol.equals(processor.getId());
-      }
-    });
+    return ContainerUtil.find(EXTENSION_POINT_NAME.getExtensions(), processor -> protocol.equals(processor.getId()));
   }
 
   @NotNull

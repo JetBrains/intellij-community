@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 25-Aug-2008
- */
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.psi.*;

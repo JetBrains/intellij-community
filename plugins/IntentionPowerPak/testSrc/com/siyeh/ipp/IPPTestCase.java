@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -55,10 +54,18 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
 
   protected void doTest(@NotNull @Language("JAVA") String before, @NotNull @Language("JAVA") String after) {
     final Matcher matcher = PATTERN.matcher(before);
-    Assert.assertTrue("No caret and intention name specified", matcher.find());
+    assertTrue("No caret and intention name specified", matcher.find());
     myFixture.configureByText("a.java", matcher.replaceFirst("<caret>"));
     myFixture.launchAction(myFixture.findSingleIntention(matcher.group(1)));
     myFixture.checkResult(after);
+  }
+
+  protected void doTestIntentionNotAvailable(@NotNull @Language("JAVA") String source) {
+    final Matcher matcher = PATTERN.matcher(source);
+    assertTrue("No caret and intention name specified", matcher.find());
+    myFixture.configureByText("a.java", matcher.replaceFirst("<caret>"));
+    final String intentionName = matcher.group(1);
+    assertEmpty("Intention \'" + intentionName + "\' is available but should not", myFixture.filterAvailableIntentions(intentionName));
   }
 
   protected void assertIntentionNotAvailable() {
@@ -68,8 +75,7 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
   protected void assertIntentionNotAvailable(@NotNull final String intentionName) {
     final String testName = getTestName(false);
     myFixture.configureByFile(testName + ".java");
-    assertEmpty("Intention \'" + intentionName + "\' is available but should not",
-                myFixture.filterAvailableIntentions(intentionName));
+    assertEmpty("Intention \'" + intentionName + "\' is available but should not", myFixture.filterAvailableIntentions(intentionName));
   }
 
   protected void assertIntentionNotAvailable(Class<? extends IntentionAction> intentionClass) {

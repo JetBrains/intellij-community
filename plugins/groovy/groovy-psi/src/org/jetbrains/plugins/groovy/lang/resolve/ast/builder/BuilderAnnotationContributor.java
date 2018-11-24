@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,22 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
+
+import java.util.Collection;
+
+import static java.util.Arrays.asList;
 
 public abstract class BuilderAnnotationContributor implements AstTransformationSupport {
 
@@ -37,5 +48,32 @@ public abstract class BuilderAnnotationContributor implements AstTransformationS
     PsiClass aClass = GrAnnotationUtil.inferClassAttribute(annotation, STRATEGY_ATTRIBUTE);
     if (aClass == null) return false;
     return StringUtil.getQualifiedName(BUILDER_PACKAGE, strategy).equals(aClass.getQualifiedName());
+  }
+
+  public static PsiField[] getFields(@NotNull TransformationContext context, boolean includeSuper) {
+    return filterFields(includeSuper ? context.getAllFields(false) : context.getFields());
+  }
+
+  public static PsiField[] getFields(@NotNull GrTypeDefinition clazz, boolean includeSuper) {
+    return filterFields(includeSuper ? asList(GrClassImplUtil.getAllFields(clazz, false)) : asList(clazz.getFields()));
+  }
+
+  private static PsiField[] filterFields(Collection<? extends PsiField> collectedFields) {
+    return collectedFields.stream()
+      .filter(field -> field.getName() != null)
+      .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
+      .filter(field -> {
+        PsiClass aClass = field.getContainingClass();
+        if (aClass == null || aClass.getQualifiedName() == null) {
+          return false;
+        }
+        String name = aClass.getQualifiedName();
+        return !name.equals(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT) && !name.equals(GroovyCommonClassNames.GROOVY_OBJECT);
+      })
+      .toArray(PsiField[]::new);
+  }
+
+  public static boolean isIncludeSuperProperties(@NotNull PsiAnnotation annotation) {
+    return PsiUtil.getAnnoAttributeValue(annotation, "includeSuperProperties", false);
   }
 }

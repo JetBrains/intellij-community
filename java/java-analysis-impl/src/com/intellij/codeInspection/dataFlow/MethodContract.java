@@ -20,8 +20,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A method contract which states that method will have a concrete return value
@@ -65,17 +65,59 @@ public abstract class MethodContract {
   /**
    * @return true if this contract result does not depend on arguments
    */
-  boolean isTrivial() {
-    return false;
+  public boolean isTrivial() {
+    return getConditions().isEmpty();
   }
 
   abstract String getArgumentsPresentation();
 
-  abstract List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments);
+  abstract List<ContractValue> getConditions();
 
   @Override
   public String toString() {
     return getArgumentsPresentation() + " -> " + getReturnValue();
+  }
+
+  public static MethodContract trivialContract(ValueConstraint value) {
+    return new MethodContract() {
+      @Override
+      public ValueConstraint getReturnValue() {
+        return value;
+      }
+
+      @Override
+      String getArgumentsPresentation() {
+        return "(any)";
+      }
+
+      @Override
+      List<ContractValue> getConditions() {
+        return Collections.emptyList();
+      }
+    };
+  }
+
+  public static MethodContract singleConditionContract(ContractValue left,
+                                                       RelationType relationType,
+                                                       ContractValue right,
+                                                       ValueConstraint returnValue) {
+    ContractValue condition = ContractValue.condition(left, relationType, right);
+    return new MethodContract() {
+      @Override
+      public ValueConstraint getReturnValue() {
+        return returnValue;
+      }
+
+      @Override
+      String getArgumentsPresentation() {
+        return condition.toString();
+      }
+
+      @Override
+      List<ContractValue> getConditions() {
+        return Collections.singletonList(condition);
+      }
+    };
   }
 
   public enum ValueConstraint {
@@ -100,17 +142,45 @@ public abstract class MethodContract {
     /**
      * Returns a condition value which should be applied to memory state to satisfy this constraint
      *
-     * @param factory factory to create new values
-     * @param argValue argument value to test
+     * @param argumentIndex argument number to test
      * @return a condition
      */
-    public DfaValue getCondition(DfaValueFactory factory, DfaValue argValue) {
-      if (this == THROW_EXCEPTION || this == ANY_VALUE) {
-        return factory.getBoolean(true);
+    public ContractValue getCondition(int argumentIndex) {
+      ContractValue left;
+      if (this == NULL_VALUE || this == NOT_NULL_VALUE) {
+        left = ContractValue.nullValue();
       }
-      DfaConstValue expectedValue = Objects.requireNonNull(getComparisonValue(factory));
+      else if (this == TRUE_VALUE || this == FALSE_VALUE) {
+        left = ContractValue.booleanValue(true);
+      }
+      else {
+        return ContractValue.booleanValue(true);
+      }
+      return ContractValue.condition(left, RelationType.equivalence(!shouldUseNonEqComparison()), ContractValue.argument(argumentIndex));
+    }
 
-      return factory.createCondition(argValue, RelationType.equivalence(!shouldUseNonEqComparison()), expectedValue);
+    /**
+     * @return true if constraint can be negated
+     * @see #negate()
+     */
+    public boolean canBeNegated() {
+      return this != ANY_VALUE && this != THROW_EXCEPTION;
+    }
+
+    /**
+     * @return negated constraint
+     * @throws IllegalStateException if constraint cannot be negated
+     * @see #canBeNegated()
+     */
+    public ValueConstraint negate() {
+      switch (this) {
+        case NULL_VALUE: return NOT_NULL_VALUE;
+        case NOT_NULL_VALUE: return NULL_VALUE;
+        case TRUE_VALUE: return FALSE_VALUE;
+        case FALSE_VALUE: return TRUE_VALUE;
+        default:
+          throw new IllegalStateException("ValueConstraint = " + this);
+      }
     }
 
     @Override

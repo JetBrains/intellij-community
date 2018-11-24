@@ -56,7 +56,7 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
     if (path != null) {
       int dx = getRendererRelativeX(e, tree, path);
       final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
-      if (myLastHitNode == null || myLastHitNode.get() != treeNode) {
+      if (myLastHitNode == null || myLastHitNode.get() != treeNode || e.getButton() != MouseEvent.NOBUTTON) {
         if (doCacheLastNode()) {
           myLastHitNode = new WeakReference<>(treeNode);
         }

@@ -65,6 +65,12 @@ public class ChangeListChooser extends DialogWrapper {
     return myPanel.getPreferredFocusedComponent();
   }
 
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.vcs.changelist.chooser";
+  }
+
   protected String getDimensionServiceKey() {
     return "VCS.ChangelistChooser";
   }

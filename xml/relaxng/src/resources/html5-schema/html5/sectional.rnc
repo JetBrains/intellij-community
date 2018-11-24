@@ -107,6 +107,31 @@
 
 	common.elem.flow |= h6.elem
 
+## Heading Group: <hgroup>
+
+	hgroup.elem =
+		element hgroup { hgroup.inner & hgroup.attrs } & nonW3C
+	hgroup.attrs =
+		(	common.attrs
+		&	(	common.attrs.aria.implicit.heading
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
+		)
+	hgroup.inner =
+		(	(	h1.elem
+			|	h2.elem
+			|	h3.elem
+			|	h4.elem
+			|	h5.elem
+			|	h6.elem
+			)
+			&	common.elem.script-supporting*
+		)+
+
+	common.elem.flow |= hgroup.elem
+
 # #####################################################################
 ## Section Meta
 

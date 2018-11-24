@@ -41,12 +41,6 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/4/13
- * Time: 2:07 PM
- */
 public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
   private ChangeListManager clManager;
 

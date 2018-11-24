@@ -106,7 +106,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     if (sb != null) {
       sb.append("last " + oldValue + "\n");
     }
-    final List<DomEvent> events = fireEvents ? new SmartList<>() : Collections.<DomEvent>emptyList();
+    final List<DomEvent> events = fireEvents ? new SmartList<>() : Collections.emptyList();
     if (oldValue != null) {
       if (fireEvents) {
         events.add(new DomEvent(oldValue, false));

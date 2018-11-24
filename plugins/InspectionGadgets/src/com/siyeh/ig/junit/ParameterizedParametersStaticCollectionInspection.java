@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jun-2009
- */
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;

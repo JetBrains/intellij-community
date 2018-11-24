@@ -20,17 +20,14 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModelBase;
-import com.intellij.lang.ant.config.AntBuildTargetBase;
-import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -66,6 +63,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   private DefaultMutableTreeNode myStatusNode;
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private OccurenceNavigatorSupport myOccurenceNavigatorSupport;
+  private final boolean myAutoCollapseTargets;
   @NonNls public static final String ROOT_TREE_USER_OBJECT = "root";
   @NonNls public static final String JUNIT_TASK_NAME = "junit";
 
@@ -82,6 +80,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
       }
     };
     myPanel = createPanel();
+    myAutoCollapseTargets = buildFile instanceof AntBuildFileBase && ((AntBuildFileBase)myBuildFile).isCollapseFinishedTargets();
   }
 
   @Override
@@ -150,7 +149,14 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
       }
     };
 
-    return JBUI.Panels.simplePanel(MessageTreeRenderer.install(myTree));
+    final JScrollPane treePane = MessageTreeRenderer.install(myTree);
+    if (myBuildFile instanceof AntBuildFileBase) {
+      ((MessageTreeRenderer)myTree.getCellRenderer()).setUseAnsiColor(
+        ((AntBuildFileBase)myBuildFile).isColoredOutputMessages()
+      );
+    }
+
+    return JBUI.Panels.simplePanel(treePane);
   }
 
   private void createModel() {
@@ -343,10 +349,12 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private void collapseTargets() {
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
-    for (int i = 0; i < root.getChildCount(); i++) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)root.getChildAt(i);
-      myTree.collapsePath(new TreePath(node.getPath()));
+    if (myAutoCollapseTargets) {
+      final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
+      for (int i = 0; i < root.getChildCount(); i++) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root.getChildAt(i);
+        myTree.collapsePath(new TreePath(node.getPath()));
+      }
     }
   }
 
@@ -421,11 +429,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private static boolean isValid(final VirtualFile file) {
-    return file != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return file.isValid();
-      }
-    }).booleanValue();
+    return file != null && ReadAction.compute(() -> file.isValid()).booleanValue();
   }
 
   public void finishBuild(String messageText) {

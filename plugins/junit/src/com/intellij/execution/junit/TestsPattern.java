@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Jun-2010
- */
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;

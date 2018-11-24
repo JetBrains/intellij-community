@@ -22,7 +22,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -35,10 +35,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.IconDeferrer;
-import com.intellij.util.Alarm;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -98,6 +95,48 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         recentPaths.remove(index);
       }
     }
+
+    // TODO Should be removed later (required to convert the already saved system-dependent paths).
+    private void makePathsSystemIndependent() {
+      makeSystemIndependent(recentPaths);
+
+      makeSystemIndependent(openPaths);
+
+      Map<String, String> namesCopy = new HashMap<>(names);
+      names.clear();
+      for (Map.Entry<String, String> entry : namesCopy.entrySet()) {
+        names.put(PathUtil.toSystemIndependentName(entry.getKey()), entry.getValue());
+      }
+
+      for (ProjectGroup group : groups) {
+        List<String> paths = new ArrayList<>(group.getProjects());
+        makeSystemIndependent(paths);
+        group.save(paths);
+      }
+
+      if (lastPath != null) {
+        lastPath = PathUtil.toSystemIndependentName(lastPath);
+      }
+
+      Map<String, RecentProjectMetaInfo> additionalInfoCopy = new HashMap<>(additionalInfo);
+      additionalInfo.clear();
+      for (Map.Entry<String, RecentProjectMetaInfo> entry : additionalInfoCopy.entrySet()) {
+        entry.getValue().binFolder = PathUtil.toSystemIndependentName(entry.getValue().binFolder);
+        additionalInfo.put(PathUtil.toSystemIndependentName(entry.getKey()), entry.getValue());
+      }
+
+      if (lastProjectLocation != null) {
+        lastProjectLocation = PathUtil.toSystemIndependentName(lastProjectLocation);
+      }
+    }
+
+    private static void makeSystemIndependent(List<String> paths) {
+      List<String> copy = new ArrayList<>(paths);
+      paths.clear();
+      for (String path : copy) {
+        paths.add(PathUtil.toSystemIndependentName(path));
+      }
+    }
   }
 
   private final Object myStateLock = new Object();
@@ -126,6 +165,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public void loadState(final State state) {
+    state.makePathsSystemIndependent();
     removeDuplicates(state);
     if (state.lastPath != null && !new File(state.lastPath).exists()) {
       state.lastPath = null;
@@ -143,7 +183,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   protected void removeDuplicates(State state) {
     for (String path : new ArrayList<>(state.recentPaths)) {
-      if (path.endsWith(File.separator)) {
+      if (path.endsWith("/")) {
         state.recentPaths.remove(path);
         state.additionalInfo.remove(path);
         state.openPaths.remove(path);
@@ -161,10 +201,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Override
-  public void removePath(@Nullable String path) {
+  public void removePath(@Nullable @SystemIndependent String path) {
     if (path == null) {
       return;
     }
+
+    PathUtil.assertSystemIndependentName(path);
 
     synchronized (myStateLock) {
       removePathFrom(myState.recentPaths, path);
@@ -176,7 +218,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Override
-  public boolean hasPath(String path) {
+  public boolean hasPath(@SystemIndependent String path) {
+    PathUtil.assertSystemIndependentName(path);
     final State state = getState();
     return state != null && state.recentPaths.contains(path);
   }
@@ -186,16 +229,20 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
    */
   @Override
   @Nullable
+  @SystemIndependent
   public String getLastProjectCreationLocation() {
     return myState.lastProjectLocation;
   }
 
   @Override
-  public void setLastProjectCreationLocation(@Nullable String lastProjectLocation) {
-    myState.lastProjectLocation = StringUtil.nullize(lastProjectLocation, true);
+  public void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation) {
+    PathUtil.assertSystemIndependentName(lastProjectLocation);
+    String location = StringUtil.nullize(lastProjectLocation, true);
+    myState.lastProjectLocation = PathUtil.toSystemIndependentName(location);
   }
 
   @Override
+  @SystemIndependent
   public String getLastProjectPath() {
     return myState.lastPath;
   }
@@ -228,6 +275,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Nullable
   public static Icon getProjectIcon(String path, boolean isDark) {
+    PathUtil.assertSystemIndependentName(path);
     final MyIcon icon = ourProjectIcons.get(path);
     if (icon != null) {
       return icon.getIcon();
@@ -239,6 +287,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Nullable
   protected static Icon calculateIcon(String path, boolean isDark) {
+    PathUtil.assertSystemIndependentName(path);
     File file = new File(path + (isDark ? "/.idea/icon_dark.png" : "/.idea/icon.png"));
     if (file.exists()) {
       final long timestamp = file.lastModified();
@@ -457,6 +506,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   private AnAction createOpenAction(String path, Set<String> duplicates) {
+    PathUtil.assertSystemIndependentName(path);
     String projectName = getProjectName(path);
     String displayName;
     synchronized (myStateLock) {
@@ -475,7 +525,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     //return null;
   }
 
-  private void markPathRecent(String path) {
+  private void markPathRecent(@SystemIndependent String path) {
+    PathUtil.assertSystemIndependentName(path);
     synchronized (myStateLock) {
       if (path.endsWith(File.separator)) {
         path = path.substring(0, path.length() - File.separator.length());
@@ -506,11 +557,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
+  @SystemIndependent
   protected abstract String getProjectPath(@NotNull Project project);
 
   protected abstract void doOpenProject(@NotNull String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
-  private class MyProjectListener extends ProjectManagerAdapter {
+  private class MyProjectListener implements ProjectManagerListener {
     @Override
     public void projectOpened(final Project project) {
       String path = getProjectPath(project);
@@ -523,6 +575,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     @Override
     public void projectClosing(Project project) {
       String path = getProjectPath(project);
+      if (path == null) return;
+      
       synchronized (myStateLock) {
         myState.names.put(path, getProjectDisplayName(project));
       }
@@ -705,7 +759,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       info.build = ApplicationInfoEx.getInstanceEx().getBuild().asString();
       info.productionCode = ApplicationInfoEx.getInstanceEx().getBuild().getProductCode();
       info.eap = ApplicationInfoEx.getInstanceEx().isEAP();
-      info.binFolder = PathManager.getBinPath();
+      info.binFolder = PathUtil.toSystemIndependentName(PathManager.getBinPath());
       info.projectOpenTimestamp = System.currentTimeMillis();
       info.buildTimestamp = ApplicationInfoEx.getInstanceEx().getBuildDate().getTimeInMillis();
       return info;

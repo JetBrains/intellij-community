@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Nov-2007
- */
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInspection.export.ExportToHTMLDialog;

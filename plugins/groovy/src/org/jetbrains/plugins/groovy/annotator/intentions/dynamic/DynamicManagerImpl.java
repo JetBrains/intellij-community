@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -24,7 +23,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -40,10 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 23.11.2007
- */
 @State(name = "DynamicElementsStorage", storages = @Storage("dynamic.xml"))
 
 public class DynamicManagerImpl extends DynamicManager {
@@ -366,10 +360,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
   @Override
   public void fireChange() {
-    TransactionGuard.submitTransaction(myProject, () -> {
-      ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
-    });
+    TransactionGuard.submitTransaction(myProject, () -> PsiManager.getInstance(myProject).dropPsiCaches());
   }
 
   @Override

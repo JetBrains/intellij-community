@@ -22,6 +22,8 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.inspections.PyStringFormatParser.SubstitutionChunk;
+import com.jetbrains.python.inspections.PyStringFormatParser.PercentSubstitutionChunk;
+import com.jetbrains.python.inspections.PyStringFormatParser.NewStyleSubstitutionChunk;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -50,7 +52,7 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   @NotNull
   @Override
   protected PySubstitutionChunkReference createReference(@NotNull SubstitutionChunk chunk) {
-    return new PySubstitutionChunkReference(myPyString, chunk, ObjectUtils.chooseNotNull(chunk.getAutoPosition(), 0), true);
+    return new PySubstitutionChunkReference(myPyString, chunk, ObjectUtils.chooseNotNull(chunk.getAutoPosition(), 0));
   }
 
   @Override
@@ -92,7 +94,9 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
       widthAndPrecision += "." + subsChunk.getPrecision();
     }
 
-    final String conversionFlags = subsChunk.getConversionFlags();
+    final String conversionFlags = subsChunk instanceof PercentSubstitutionChunk ?
+                                   ((PercentSubstitutionChunk)subsChunk).getConversionFlags() :
+                                   ((NewStyleSubstitutionChunk)subsChunk).getConversion();
 
     fStringText.append("{");
     final PySubstitutionChunkReference reference = createReference(subsChunk);

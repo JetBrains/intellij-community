@@ -32,10 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 14-Nov-2005
- */
 public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @Override
   @Nullable

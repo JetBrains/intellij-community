@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,6 +182,46 @@ class PojoBuilder {}
 
 new PojoBuilder().<caret>
 ''', CompletionResult.notContain, 'private', 'packageLocal', 'someFieldWithoutSetter'
+  }
+
+  void 'test not include super properties'() {
+    myFixture.addClass('''
+class Child extends Pojo {
+  String secondName;
+  public void setSecondName(String secondName) {}
+}
+''')
+
+    String code = '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.ExternalStrategy
+
+@Builder(builderStrategy = ExternalStrategy, forClass = Child)
+class PojoBuilder {}
+
+new PojoBuilder().<caret>
+'''
+    doVariantableTest code, CompletionResult.contain, 'secondName'
+    doVariantableTest code, CompletionResult.notContain, 'name', 'dynamic', 'counter', 'withoutField'
+  }
+
+  void 'test include super properties'() {
+    myFixture.addClass('''
+class Child extends Pojo {
+  String secondName;
+  public void setSecondName(String secondName) {}
+}
+''')
+
+    doVariantableTest '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.ExternalStrategy
+
+@Builder(builderStrategy = ExternalStrategy, forClass = Child, includeSuperProperties = true)
+class PojoBuilder {}
+
+new PojoBuilder().<caret>
+''', CompletionResult.contain, 'secondName', 'name', 'dynamic', 'counter', 'withoutField'
   }
 
 }

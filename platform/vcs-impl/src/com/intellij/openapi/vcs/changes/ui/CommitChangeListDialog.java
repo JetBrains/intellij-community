@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -270,7 +271,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myAllOfDefaultChangeListChangesIncluded = newHashSet(changes).containsAll(newHashSet(defaultChangeList.getChanges()));
 
-    myCommitMessageArea = new CommitMessage(project);
+    myCommitMessageArea = new CommitMessage(project, true, true, myShowVcsCommit);
 
     myIsAlien = isAlien;
     if (isAlien) {
@@ -461,7 +462,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (myWarningLabel != null) {
       myWarningLabel.setVisible(false);
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-      VcsException updateException = ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).getUpdateException();
+      VcsException updateException = ChangeListManagerImpl.getInstanceImpl(myProject).getUpdateException();
       if (updateException != null) {
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {
@@ -488,7 +489,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      executeDefaultCommitSession();
+      executeDefaultCommitSession(null);
     }
 
     @NotNull
@@ -533,7 +534,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return toObjectArray(result, Action.class);
   }
 
-  private void executeDefaultCommitSession() {
+  private void executeDefaultCommitSession(@Nullable CommitExecutor executor) {
     if (!myIsAlien && !addUnversionedFiles()) return;
     if (!saveDialogState()) return;
     saveComments(true);
@@ -541,7 +542,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     ensureDataIsActual(() -> {
       try {
         DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-        CheckinHandler.ReturnResult result = runBeforeCommitHandlers(null);
+        CheckinHandler.ReturnResult result = runBeforeCommitHandlers(executor);
         if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
           doCommit(myResultHandler);
@@ -558,7 +559,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void execute(@NotNull CommitExecutor commitExecutor) {
     CommitSession session = commitExecutor.createCommitSession();
     if (session == CommitSession.VCS_COMMIT) {
-      executeDefaultCommitSession();
+      executeDefaultCommitSession(commitExecutor);
       return;
     }
 
@@ -1005,13 +1006,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
     public DiffCommitMessageEditor(@NotNull Project project, @NotNull CommitMessage commitMessage) {
-      super(project, commitMessage);
+      super(project);
+      getEditorField().setDocument(commitMessage.getEditorField().getDocument());
     }
 
     @Override
     public Dimension getPreferredSize() {
       // we don't want to be squeezed to one line
-      return new Dimension(400, 120);
+      return new JBDimension(400, 120);
     }
   }
 
@@ -1021,7 +1023,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private class MyChangeProcessor extends CacheChangeProcessor {
+  private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.COMMIT_DIALOG);
 

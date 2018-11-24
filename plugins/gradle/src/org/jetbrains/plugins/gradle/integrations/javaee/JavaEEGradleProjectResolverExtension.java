@@ -66,17 +66,14 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
       }
     };
     if (webConfiguration != null) {
-      final List<War> warModels = ContainerUtil.map(webConfiguration.getWarModels(), new Function<WebConfiguration.WarModel, War>() {
-        @Override
-        public War fun(WebConfiguration.WarModel model) {
-          War war = new War(model.getWarName(), model.getWebAppDirName(), model.getWebAppDir());
-          war.setWebXml(model.getWebXml());
-          war.setWebResources(mapWebResources(model.getWebResources()));
-          war.setClasspath(model.getClasspath());
-          war.setManifestContent(model.getManifestContent());
-          war.setArchivePath(model.getArchivePath());
-          return war;
-        }
+      final List<War> warModels = ContainerUtil.map(webConfiguration.getWarModels(), (Function<WebConfiguration.WarModel, War>)model -> {
+        War war = new War(model.getWarName(), model.getWebAppDirName(), model.getWebAppDir());
+        war.setWebXml(model.getWebXml());
+        war.setWebResources(mapWebResources(model.getWebResources()));
+        war.setClasspath(model.getClasspath());
+        war.setManifestContent(model.getManifestContent());
+        war.setArchivePath(model.getArchivePath());
+        return war;
       });
       findTargetModuleNode.getValue().createChild(
         WebConfigurationModelData.KEY, new WebConfigurationModelData(GradleConstants.SYSTEM_ID, warModels));
@@ -84,16 +81,13 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
 
     final EarConfiguration earConfiguration = resolverCtx.getExtraProject(gradleModule, EarConfiguration.class);
     if (earConfiguration != null) {
-      final List<Ear> warModels = ContainerUtil.map(earConfiguration.getEarModels(), new Function<EarConfiguration.EarModel, Ear>() {
-        @Override
-        public Ear fun(EarConfiguration.EarModel model) {
-          Ear ear = new Ear(model.getEarName(), model.getAppDirName(), model.getLibDirName());
-          ear.setManifestContent(model.getManifestContent());
-          ear.setDeploymentDescriptor(model.getDeploymentDescriptor());
-          ear.setResources(mapEarResources(model.getResources()));
-          ear.setArchivePath(model.getArchivePath());
-          return ear;
-        }
+      final List<Ear> warModels = ContainerUtil.map(earConfiguration.getEarModels(), (Function<EarConfiguration.EarModel, Ear>)model -> {
+        Ear ear = new Ear(model.getEarName(), model.getAppDirName(), model.getLibDirName());
+        ear.setManifestContent(model.getManifestContent());
+        ear.setDeploymentDescriptor(model.getDeploymentDescriptor());
+        ear.setResources(mapEarResources(model.getResources()));
+        ear.setArchivePath(model.getArchivePath());
+        return ear;
       });
 
       final Collection<DependencyData> deployDependencies = GradleProjectResolverUtil.getIdeDependencies(
@@ -111,7 +105,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return ContainerUtil.<Class>set(WebConfiguration.class, EarConfiguration.class);
+    return ContainerUtil.set(WebConfiguration.class, EarConfiguration.class);
   }
 
   private static List<WebResource> mapWebResources(List<WebConfiguration.WebResource> webResources) {

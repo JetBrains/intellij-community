@@ -21,10 +21,6 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.intellij.lang.ASTNode;
 
-/**
- * User: dcheryasov
- * Date: Mar 16, 2009 4:46:26 AM
- */
 public abstract class PyConditionalStatementPartImpl extends PyStatementPartImpl implements PyConditionalStatementPart {
   public PyConditionalStatementPartImpl(ASTNode astNode) {
     super(astNode);

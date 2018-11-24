@@ -49,6 +49,8 @@ public class CompressedAppendableFile {
   private long [] myChunkOffsetTable; // one long offset per FACTOR compressed chunks
   private static final boolean doDebug = SystemProperties.getBooleanProperty("idea.compressed.file.self.check", false);
   private final TLongArrayList myCompressedChunksFileOffsets = doDebug ? new TLongArrayList() : null;
+
+  public static final int PAGE_LENGTH = SystemProperties.getIntProperty("idea.compressed.file.page.length", 32768);
   private static final int MAX_PAGE_LENGTH = 0xFFFF;
 
   private long myFileLength;
@@ -252,7 +254,7 @@ public class CompressedAppendableFile {
       public int available() {
         return remainingLimit();
       }
-    }, 32768);
+    }, pageSize);
   }
 
   public synchronized <Data> void append(Data value, KeyDescriptor<Data> descriptor) throws IOException {
@@ -401,8 +403,7 @@ public class CompressedAppendableFile {
   }
 
   private void saveIncompleteChunk() {
-    if (myNextChunkBuffer != null && myBufferPosition != 0 && myDirty) {
-
+    if (myNextChunkBuffer != null && myDirty) {
       File incompleteChunkFile = getIncompleteChunkFile();
 
       try {
@@ -420,6 +421,8 @@ public class CompressedAppendableFile {
             catch (IOException ignore) {
             }
           }
+        } else {
+          incompleteChunkFile.delete();
         }
       } catch (FileNotFoundException ex) {
         File parentFile = incompleteChunkFile.getParentFile();

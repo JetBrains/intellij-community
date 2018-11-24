@@ -26,10 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 
-/**
- * User: anna
- * Date: 11-Jan-2006
- */
 public class InvokeQuickFixAction extends AnAction {
   private final InspectionResultsView myView;
 

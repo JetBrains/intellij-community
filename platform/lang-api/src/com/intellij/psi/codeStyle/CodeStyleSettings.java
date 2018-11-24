@@ -173,7 +173,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public void copyFrom(CodeStyleSettings from) {
     copyPublicFields(from, this);
-
+    copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
     copyCustomSettingsFrom(from);
   }
 
@@ -410,9 +410,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
 
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
-  
   public boolean JD_PRESERVE_LINE_FEEDS;
   public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE;
+
+  public boolean JD_INDENT_ON_CONTINUATION = false;
 
 // endregion
 
@@ -503,6 +504,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
   public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
   public boolean HTML_ENFORCE_QUOTES = false;
+  public HtmlTagNewLineStyle HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
+  public HtmlTagNewLineStyle HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
 
 // endregion
 
@@ -1112,6 +1115,22 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
+  public enum HtmlTagNewLineStyle {
+    Never("Never"),
+    WhenMultiline("When multiline");
+
+    public final String description;
+
+    HtmlTagNewLineStyle(String description) {
+      this.description = description;
+    }
+
+    @Override
+    public String toString() {
+      return description;
+    }
+  }
+
   public enum QuoteStyle {
     Single("'"),
     Double("\""),
@@ -1128,6 +1147,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean equals(Object obj) {
     if (!(obj instanceof CodeStyleSettings)) return false;
     if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
+    if (!OTHER_INDENT_OPTIONS.equals(((CodeStyleSettings)obj).OTHER_INDENT_OPTIONS)) return false;
     if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
     for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
       if (!customSettings.equals(((CodeStyleSettings)obj).getCustomSettings(customSettings.getClass()))) return false;

@@ -198,7 +198,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
     }
 
     private void pasteAfterCopy(PsiElement[] elements, Module module, PsiElement target, boolean tryFromFiles) {
-      PsiDirectory targetDirectory = getTargetDirectory(module, target);
+      PsiDirectory targetDirectory = elements.length == 1 && elements[0] == target ? null : getTargetDirectory(module, target);
       try {
         if (CopyHandler.canCopy(elements)) {
           CopyHandler.doCopy(elements, targetDirectory);

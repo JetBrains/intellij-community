@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -142,7 +144,9 @@ public class GradleExecutionHelper {
     }
 
     if (!settings.getArguments().isEmpty()) {
-      LOG.info("Passing command-line args to Gradle Tooling API: " + StringUtil.join(settings.getArguments(), " "));
+      String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
+      LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
+
       // filter nulls and empty strings
       List<String> filteredArgs = ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s);
 
@@ -162,6 +166,10 @@ public class GradleExecutionHelper {
     operation.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
+    InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
+    if (inputStream != null) {
+      operation.setStandardInput(inputStream);
+    }
   }
 
   private static void setupEnvironment(@NotNull LongRunningOperation operation,
@@ -255,6 +263,7 @@ public class GradleExecutionHelper {
         final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
         wrapperPropertyFileLocation.deleteOnExit();
         final String[] lines = {
+          "",
           "gradle.taskGraph.afterTask { Task task ->",
           "    if (task instanceof Wrapper) {",
           "        def wrapperPropertyFileLocation = task.jarFile.getCanonicalPath() - '.jar' + '.properties'",
@@ -262,6 +271,7 @@ public class GradleExecutionHelper {
           StringUtil.escapeBackSlashes(wrapperPropertyFileLocation.getCanonicalPath()) +
           "').write wrapperPropertyFileLocation",
           "}}",
+          "",
         };
         final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
         settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
@@ -357,12 +367,11 @@ public class GradleExecutionHelper {
       ttl = (int)settings.getRemoteProcessIdleTtlInMs();
     }
 
+    // do not spawn gradle daemons during test execution
+    final Application app = ApplicationManager.getApplication();
+    ttl = (app != null && app.isUnitTestMode()) ? 10000 : ttl;
+
     if (ttl > 0 && connector instanceof DefaultGradleConnector) {
-
-      // do not spawn gradle daemons during test execution
-      final Application app = ApplicationManager.getApplication();
-      ttl = (app != null && app.isUnitTestMode()) ? 10000 : ttl;
-
       ((DefaultGradleConnector)connector).daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS);
     }
     connector.forProjectDirectory(projectDir);
@@ -569,6 +578,26 @@ public class GradleExecutionHelper {
     BuildLauncher result = connection.newBuild();
     prepare(result, id, settings, listener, vmOptions, commandLineArgs, connection);
     return result;
+  }
+
+  @VisibleForTesting
+  @NotNull
+  static List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
+    List<String> replaced = new ArrayList<>(commandLineArguments.size());
+    final String PASSWORD_PARAMETER_IDENTIFIER = ".password=";
+    for (String option : commandLineArguments) {
+      // Find parameters ending in "password", like:
+      //   -Pandroid.injected.signing.store.password=
+      //   -Pandroid.injected.signing.key.password=
+      int index = option.indexOf(PASSWORD_PARAMETER_IDENTIFIER);
+      if (index == -1) {
+        replaced.add(option);
+      }
+      else {
+        replaced.add(option.substring(0, index + PASSWORD_PARAMETER_IDENTIFIER.length()) + "*********");
+      }
+    }
+    return replaced;
   }
 
   /**

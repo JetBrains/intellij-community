@@ -30,7 +30,6 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,8 +49,7 @@ import java.util.concurrent.TimeUnit;
 public class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
   private final Runnable myTreeUpdater;
-  private TableView<JsonSchemaMappingsConfigurationBase.Item> myTableView;
-  private ToolbarDecorator myDecorator;
+  private TableView<UserDefinedJsonSchemaConfiguration.Item> myTableView;
   private JComponent myComponent;
   private Project myProject;
   private TextFieldWithBrowseButton mySchemaField;
@@ -69,23 +67,22 @@ public class JsonSchemaMappingsView implements Disposable {
     myProject = project;
     myTableView = new TableView<>();
     myTableView.getTableHeader().setVisible(false);
-    myDecorator = ToolbarDecorator.createDecorator(myTableView);
-    myDecorator
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final int[] rows = myTableView.getSelectedRows();
-          if (rows != null && rows.length > 0) {
-            int cnt = 0;
-            for (int row : rows) {
-              myTableView.getListTableModel().removeRow(row - cnt);
-              ++ cnt;
-            }
-            myTableView.getListTableModel().fireTableDataChanged();
-            myTreeUpdater.run();
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
+    decorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        final int[] rows = myTableView.getSelectedRows();
+        if (rows != null && rows.length > 0) {
+          int cnt = 0;
+          for (int row : rows) {
+            myTableView.getListTableModel().removeRow(row - cnt);
+            ++cnt;
           }
+          myTableView.getListTableModel().fireTableDataChanged();
+          myTreeUpdater.run();
         }
-      })
+      }
+    })
       .setAddAction(new MyAddActionButtonRunnable(project))
       .disableUpDownActions();
 
@@ -113,7 +110,7 @@ public class JsonSchemaMappingsView implements Disposable {
     wrapper.add(myErrorIcon, BorderLayout.WEST);
     wrapper.add(myError, BorderLayout.CENTER);
     builder.addComponent(wrapper);
-    builder.addComponentFillVertically(myDecorator.createPanel(), 5);
+    builder.addComponentFillVertically(decorator.createPanel(), 5);
 
     myComponent = builder.getPanel();
   }
@@ -147,11 +144,11 @@ public class JsonSchemaMappingsView implements Disposable {
     }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), mySchemaField);
   }
 
-  public List<JsonSchemaMappingsConfigurationBase.Item> getData() {
+  public List<UserDefinedJsonSchemaConfiguration.Item> getData() {
     return myTableView.getListTableModel().getItems();
   }
 
-  public void setItems(String schemaFilePath, final List<JsonSchemaMappingsConfigurationBase.Item> data) {
+  public void setItems(String schemaFilePath, final List<UserDefinedJsonSchemaConfiguration.Item> data) {
     myInitialized = true;
     mySchemaField.setText(schemaFilePath);
     myTableView.setModelAndUpdateColumns(
@@ -168,10 +165,10 @@ public class JsonSchemaMappingsView implements Disposable {
 
   private static ColumnInfo[] createColumns() {
     return new ColumnInfo[] {
-      new ColumnInfo<JsonSchemaMappingsConfigurationBase.Item, String>("") {
+      new ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String>("") {
         @Nullable
         @Override
-        public String valueOf(JsonSchemaMappingsConfigurationBase.Item item) {
+        public String valueOf(UserDefinedJsonSchemaConfiguration.Item item) {
           return item.getPresentation();
         }
       }
@@ -279,8 +276,8 @@ public class JsonSchemaMappingsView implements Disposable {
 
       if (builder.showAndGet()) {
         final String pattern = textGetter.get();
-        final JsonSchemaMappingsConfigurationBase.Item item =
-          new JsonSchemaMappingsConfigurationBase.Item(pattern, radioPattern.isSelected(), radioDirectory.isSelected());
+        final UserDefinedJsonSchemaConfiguration.Item item =
+          new UserDefinedJsonSchemaConfiguration.Item(pattern, radioPattern.isSelected(), radioDirectory.isSelected());
         myTableView.getListTableModel().addRow(item);
         myTreeUpdater.run();
       }
@@ -290,7 +287,7 @@ public class JsonSchemaMappingsView implements Disposable {
 
   private static String getRelativePath(@NotNull Project project, @NotNull String text) {
     text = text.trim();
-    if (project.isDefault()) return text;
+    if (project.isDefault() || project.getBasePath() == null) return text;
     if (StringUtil.isEmptyOrSpaces(text)) return text;
     final File ioFile = new File(text);
     if (!ioFile.isAbsolute()) return text;

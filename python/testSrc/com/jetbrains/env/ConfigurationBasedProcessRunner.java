@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.jetbrains.env;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -174,9 +177,10 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
       protected void run(@NotNull final Result result) throws Throwable {
         configurationCreatedAndWillLaunch(castedConfiguration);
 
-        RunManagerEx.getInstanceEx(project).addConfiguration(settings, false);
-        RunManagerEx.getInstanceEx(project).setSelectedConfiguration(settings);
-        Assert.assertSame(settings, RunManagerEx.getInstanceEx(project).getSelectedConfiguration());
+        RunManager runManager = RunManager.getInstance(project);
+        runManager.addConfiguration(settings, false);
+        runManager.setSelectedConfiguration(settings);
+        Assert.assertSame(settings, runManager.getSelectedConfiguration());
       }
     }.execute();
 

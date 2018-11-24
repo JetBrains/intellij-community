@@ -64,10 +64,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Mar 17, 2005
- */
 public class CustomizableActionsPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizableActionsPanel");
 

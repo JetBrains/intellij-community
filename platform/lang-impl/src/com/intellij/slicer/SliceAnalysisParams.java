@@ -17,9 +17,6 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 
-/**
- * User: cdr
- */
 public class SliceAnalysisParams {
   public boolean dataFlowToThis = true; // to/from this
   public boolean showInstanceDereferences = true; // show method calls or field access on the variable being analysed

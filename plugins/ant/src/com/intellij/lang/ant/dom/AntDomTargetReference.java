@@ -165,7 +165,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     if (projectToSearchFrom == null) {
       return null;
     }
-    return TargetResolver.resolve(projectToSearchFrom, contextTarget, referenceText == null? Collections.<String>emptyList() : Collections.singletonList(referenceText));
+    return TargetResolver.resolve(projectToSearchFrom, contextTarget, referenceText == null ? Collections.emptyList() : Collections.singletonList(referenceText));
   }
   
   private Set<String> getExistingNames() {

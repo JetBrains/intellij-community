@@ -1,6 +1,5 @@
 package com.jetbrains.python.debugger.pydev;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -258,17 +257,14 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
     if (myOtherDebuggers.size() > 0) {
       //here we add process id to thread name in case there are more then one process
-      return Collections.unmodifiableCollection(Collections2.transform(threads, new Function<PyThreadInfo, PyThreadInfo>() {
-        @Override
-        public PyThreadInfo apply(PyThreadInfo t) {
-          String threadName = ThreadRegistry.threadName(t.getName(), t.getId());
-          PyThreadInfo newThread =
-            new PyThreadInfo(t.getId(), threadName, t.getFrames(),
-                             t.getStopReason(),
-                             t.getMessage());
-          newThread.updateState(t.getState(), t.getFrames());
-          return newThread;
-        }
+      return Collections.unmodifiableCollection(Collections2.transform(threads, t -> {
+        String threadName = ThreadRegistry.threadName(t.getName(), t.getId());
+        PyThreadInfo newThread =
+          new PyThreadInfo(t.getId(), threadName, t.getFrames(),
+                           t.getStopReason(),
+                           t.getMessage());
+        newThread.updateState(t.getState(), t.getFrames());
+        return newThread;
       }));
     }
     else {

@@ -26,9 +26,6 @@ import java.awt.*;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * User: spLeaner
- */
 public abstract class DelegateColorScheme implements EditorColorsScheme {
 
   private EditorColorsScheme myDelegate;

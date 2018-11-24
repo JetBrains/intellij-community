@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import java.util.*;
  */
 public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
   private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "dll", "so", "dylib");
+
   public static final Condition<VirtualFile> LIBRARY_ROOT_CONDITION = file -> FileElement.isArchive(file) || isNativeLibrary(file);
 
   @Override
@@ -60,7 +61,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   @NotNull
   @Override
   public List<? extends AttachRootButtonDescriptor> createAttachButtons() {
-    return Arrays.asList(new AttachUrlJavadocDescriptor());
+    return Collections.singletonList(new AttachUrlJavadocDescriptor());
   }
 
   @NotNull
@@ -69,12 +70,11 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     List<RootDetector> results = new ArrayList<>();
     results.add(new FileTypeBasedRootFilter(OrderRootType.CLASSES, false, StdFileTypes.CLASS, "classes"));
     results.add(new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));
-    results.addAll(Arrays.asList(Extensions.getExtensions(LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR)));
-    Collections.addAll(results,
-                       new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"),
-                       new JavadocRootDetector(),
-                       new AnnotationsRootFilter(),
-                       new NativeLibraryRootFilter());
+    ContainerUtil.addAll(results, Extensions.getExtensions(LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR));
+    results.add(new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"));
+    results.add(new JavadocRootDetector());
+    results.add(new AnnotationsRootFilter());
+    results.add(new NativeLibraryRootFilter());
     return results;
   }
 
@@ -108,6 +108,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
       List<VirtualFile> result = new ArrayList<>();
       collectJavadocRoots(rootCandidate, result, progressIndicator);
+      JavadocQuarantineStatusCleaner.cleanIfNeeded(VfsUtilCore.toVirtualFileArray(result));
       return result;
     }
 
@@ -116,9 +117,9 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           progressIndicator.checkCanceled();
+          //noinspection SpellCheckingInspection
           if (file.isDirectory() && file.findChild("allclasses-frame.html") != null && file.findChild("allclasses-noframe.html") != null) {
             result.add(file);
-            JavadocQuarantineStatusCleaner.cleanIfNeeded(file);
             return false;
           }
           return true;
@@ -172,11 +173,8 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
                                      @Nullable VirtualFile initialSelection,
                                      @Nullable Module contextModule,
                                      @NotNull LibraryEditor libraryEditor) {
-      final VirtualFile vFile = Util.showSpecifyJavadocUrlDialog(parent);
-      if (vFile != null) {
-        return new VirtualFile[]{vFile};
-      }
-      return VirtualFile.EMPTY_ARRAY;
+      VirtualFile vFile = Util.showSpecifyJavadocUrlDialog(parent);
+      return vFile != null ? new VirtualFile[]{vFile} : VirtualFile.EMPTY_ARRAY;
     }
   }
 }

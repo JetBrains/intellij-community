@@ -32,7 +32,7 @@ import java.nio.charset.Charset;
  * In-memory implementation of {@link VirtualFile}.
  */
 public class LightVirtualFile extends LightVirtualFileBase {
-  private CharSequence myContent = "";
+  private CharSequence myContent;
   private Language myLanguage;
 
   public LightVirtualFile() {

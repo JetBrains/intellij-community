@@ -21,10 +21,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -36,8 +40,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class ResolveCache {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
-
   private final ConcurrentMap[] myMaps = new ConcurrentMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
@@ -87,7 +89,7 @@ public class ResolveCache {
       
   @NotNull
   private static <K,V> ConcurrentMap<K, V> createWeakMap() {
-    return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy()){
+    return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy()){
       @NotNull
       @Override
       protected ValueReference<K, V> createValueReference(@NotNull final V value,
@@ -138,8 +140,9 @@ public class ResolveCache {
     RecursionGuard.StackStamp stamp = myGuard.markStack();
     result = needToPreventRecursion ? myGuard.doPreventingRecursion(Trinity.create(ref, incompleteCode, isPoly), true,
                                                                     () -> resolver.resolve(ref, incompleteCode)) : resolver.resolve(ref, incompleteCode);
-    PsiElement element = result instanceof ResolveResult ? ((ResolveResult)result).getElement() : null;
-    LOG.assertTrue(element == null || element.isValid(), result);
+    if (result instanceof ResolveResult) {
+      ensureValidPsi((ResolveResult)result);
+    }
 
     if (stamp.mayCacheNow()) {
       cache(ref, map, result);
@@ -183,11 +186,23 @@ public class ResolveCache {
     RecursionGuard.StackStamp stamp = myGuard.markStack();
     result = needToPreventRecursion ? myGuard.doPreventingRecursion(Pair.create(ref, incompleteCode), true,
                                                                     () -> resolver.resolve(ref, containingFile, incompleteCode)) : resolver.resolve(ref, containingFile, incompleteCode);
+    if (result != null) {
+      for (ResolveResult resolveResult : result) {
+        ensureValidPsi(resolveResult);
+      }
+    }
 
     if (stamp.mayCacheNow()) {
       cache(ref, map, result);
     }
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
+  }
+
+  private static void ensureValidPsi(ResolveResult resolveResult) {
+    PsiElement element = resolveResult.getElement();
+    if (element != null) {
+      PsiUtilCore.ensureValid(element);
+    }
   }
 
   @Nullable

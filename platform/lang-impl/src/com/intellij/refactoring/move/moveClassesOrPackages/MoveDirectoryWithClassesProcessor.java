@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Dec-2009
- */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.project.DumbService;

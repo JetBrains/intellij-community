@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 7, 2002
- * Time: 2:33:28 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
@@ -40,6 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiMember;
+import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
+import static com.intellij.patterns.StandardPatterns.or;
 
 public class DfaValueFactory {
   private final List<DfaValue> myValues = ContainerUtil.newArrayList();
@@ -67,13 +63,24 @@ public class DfaValueFactory {
     return myHonorFieldInitializers;
   }
 
-  public boolean isUnknownMembersAreNullable() {
-    return myUnknownMembersAreNullable;
+  private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
+    or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
+
+
+  @NotNull
+  public Nullness suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
+    if (myUnknownMembersAreNullable && MEMBER_OR_METHOD_PARAMETER.accepts(member) && AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
+      return Nullness.NULLABLE;
+    }
+    
+    return Nullness.UNKNOWN;
   }
 
   @NotNull
   public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
-    type = TypeConversionUtil.erasure(type);
+    if (type instanceof PsiClassType) {
+      type = ((PsiClassType)type).rawType();
+    }
     if (type == null) return DfaUnknownValue.getInstance();
     return getTypeFactory().createTypeValue(internType(type), nullability);
   }
@@ -103,30 +110,6 @@ public class DfaValueFactory {
   @Nullable
   public DfaValue createLiteralValue(PsiLiteralExpression literal) {
     return getConstFactory().create(literal);
-  }
-
-  @NotNull
-  public DfaValue createStringLength(DfaValue value) {
-    if (value instanceof DfaVariableValue) {
-      DfaVariableValue variableValue = (DfaVariableValue)value;
-      PsiType type = variableValue.getVariableType();
-      if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (psiClass != null) {
-          PsiMethod[] lengthMethods = psiClass.findMethodsByName("length", false);
-          if (lengthMethods.length == 1) {
-            return getVarFactory().createVariableValue(lengthMethods[0], PsiType.INT, false, variableValue);
-          }
-        }
-      }
-    }
-    if(value instanceof DfaConstValue) {
-      Object str = ((DfaConstValue)value).getValue();
-      if(str instanceof String) {
-        return getConstFactory().createFromValue(((String)str).length(), PsiType.INT, null);
-      }
-    }
-    return DfaUnknownValue.getInstance();
   }
 
   /**

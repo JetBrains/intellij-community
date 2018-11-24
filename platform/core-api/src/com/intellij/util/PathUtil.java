@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class PathUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.PathUtil");
+
   private PathUtil() { }
 
   @Nullable
@@ -123,6 +126,20 @@ public class PathUtil {
   @Contract("null -> null; !null -> !null")
   public static String toSystemDependentName(@Nullable String path) {
     return path == null ? null : FileUtilRt.toSystemDependentName(path);
+  }
+
+  /**
+   * Makes sure that the given path is system-independent (with <code>/</code> separators).
+   *
+   * @param path Path
+   * @throws IllegalArgumentException
+   * @see SystemDependent
+   * @see SystemIndependent
+   */
+  public static void assertSystemIndependentName(@Nullable String path) {
+    if (path != null && path.contains("\\")) {
+      LOG.error("System-dependent path: " + path);
+    }
   }
 
   @NotNull

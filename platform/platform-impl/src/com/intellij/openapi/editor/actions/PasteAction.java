@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.TextRange;
@@ -45,9 +46,10 @@ public class PasteAction extends TextComponentEditorAction {
 
   @Override
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-    if (!(getHandler() instanceof EditorTextInsertHandler)) {
-      LOG.error("Handler for " + IdeActions.ACTION_EDITOR_PASTE +
-                " action should implement com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler");
+    EditorActionHandler handler = getHandler();
+    if (!(handler instanceof EditorTextInsertHandler)) {
+      LOG.error("Handler for " + IdeActions.ACTION_EDITOR_PASTE + " action (" + (handler == null ? null : handler.getClass()) + 
+                ") should implement com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler");
     }
   }
 

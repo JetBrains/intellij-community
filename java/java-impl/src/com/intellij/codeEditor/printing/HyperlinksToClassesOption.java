@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-Jan-2008
- */
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.fileTypes.FileType;

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.10.2006
- * Time: 17:18:38
- */
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.AbstractVcs;

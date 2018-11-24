@@ -27,6 +27,7 @@
     <remoteServer.type implementation="com.intellij.appengine.cloud.AppEngineCloudType"/>
 
     <pluginReplacement implementation="com.intellij.appengine.converter.AppEnginePluginReplacement"/>
+    <postStartupActivity implementation="com.intellij.appengine.converter.MigrateToCloudToolsNotification"/>
   </extensions>
 
   <actions>

@@ -150,9 +150,7 @@ public class PsiUtil {
   public static boolean isLValue(GroovyPsiElement element) {
     if (element instanceof GrExpression) {
       PsiElement parent = PsiTreeUtil.skipParentsOfType(element, GrParenthesizedExpression.class);
-      if (parent instanceof GrTupleExpression) {
-        return isLValue((GroovyPsiElement)parent);
-      }
+      if (parent instanceof GrTuple) return true;
       return parent instanceof GrAssignmentExpression &&
              PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getLValue(), element, false);
     }
@@ -536,7 +534,7 @@ public class PsiUtil {
   public static boolean mightBeLValue(@Nullable GrExpression expr) {
     if (expr instanceof GrParenthesizedExpression) return mightBeLValue(((GrParenthesizedExpression)expr).getOperand());
 
-    if (expr instanceof GrTupleExpression ||
+    if (expr instanceof GrTuple ||
         expr instanceof GrReferenceExpression ||
         expr instanceof GrIndexProperty ||
         expr instanceof GrPropertySelection) {
@@ -1183,7 +1181,7 @@ public class PsiUtil {
         parent instanceof GrAssignmentExpression ||
         parent instanceof GrInstanceOfExpression ||
         parent instanceof GrSafeCastExpression ||
-        parent instanceof GrTupleExpression ||
+        parent instanceof GrTuple ||
         parent instanceof GrArgumentList ||
         parent instanceof GrReturnStatement ||
         parent instanceof GrAssertStatement ||

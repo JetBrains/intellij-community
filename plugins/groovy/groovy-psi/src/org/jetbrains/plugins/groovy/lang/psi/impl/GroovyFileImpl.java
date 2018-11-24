@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -318,8 +319,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   }
 
   private static boolean shouldProcess(@Nullable PsiElement lastParent, @NotNull PsiElement run) {
-    return run instanceof GrAssignmentExpression || // binding variables
-           run instanceof GrVariableDeclaration && !(lastParent instanceof GrMember); // local variables
+    return run instanceof GrAssignmentExpression || run instanceof GrTupleAssignmentExpression || // binding variables
+           run instanceof GrVariableDeclaration && !(lastParent instanceof GrMember);             // local variables
   }
 
   @Override

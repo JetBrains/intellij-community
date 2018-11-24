@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -45,7 +46,6 @@ import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +71,7 @@ public class PyPackageUtil {
   private static final String INSTALL_REQUIRES = "install_requires";
 
   @NotNull
-  private static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {
+  private static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[]{
     REQUIRES, INSTALL_REQUIRES, "setup_requires", "tests_require"
   };
 
@@ -284,24 +284,27 @@ public class PyPackageUtil {
    * Refresh the list of installed packages inside the specified SDK if it hasn't been updated yet
    * displaying modal progress bar in the process, return cached packages otherwise.
    * <p>
-   * Note that it's unsafe to call this method from a write action AND for for a remote SDK, since such modal 
-   * tasks are executed directly on EDT and network operations on the dispatch thread are prohibited 
+   * Note that <strong>you shall never call this method from a write action</strong>, since such modal
+   * tasks are executed directly on EDT and network operations on the dispatch thread are prohibited
    * (see the implementation of ApplicationImpl#runProcessWithProgressSynchronously() for details).
    */
   @Nullable
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
+
+    final Application app = ApplicationManager.getApplication();
+    assert !(app.isWriteAccessAllowed()) :
+      "This method can't be called on WriteAction because " +
+      "refreshAndGetPackages would be called on AWT thread in this case (see runProcessWithProgressSynchronously) " +
+      "and may lead to freeze";
+
+
     final Ref<List<PyPackage>> packagesRef = Ref.create();
-    final boolean invokedUnderWriteAction = ApplicationManager.getApplication().isWriteAccessAllowed();
     @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
       try {
         final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-        if (PySdkUtil.isRemote(sdk) && invokedUnderWriteAction && manager.getPackages() == null) {
-          LOG.warn("Requesting the installed packages of a remote interpreter using PyPackageUtil#refreshAndGetPackagesModally() " +
-                   "inside a write action is going to cause network operations on EDT");
-        }
         packagesRef.set(manager.refreshAndGetPackages(false));
       }
       catch (ExecutionException e) {
@@ -320,7 +323,7 @@ public class PyPackageUtil {
   /**
    * Run unconditional update of the list of packages installed in SDK. Normally only one such of updates should run at time.
    * This behavior in enforced by the parameter isUpdating.
-   * 
+   *
    * @param manager    package manager for SDK
    * @param isUpdating flag indicating whether another refresh is already running
    * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
@@ -343,7 +346,7 @@ public class PyPackageUtil {
     }
     return true;
   }
-  
+
 
   @Nullable
   public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {

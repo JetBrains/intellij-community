@@ -41,12 +41,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/21/12
- * Time: 10:02 AM
- */
 public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   private volatile boolean myIsClosed;
   private volatile boolean myIsClosed1;

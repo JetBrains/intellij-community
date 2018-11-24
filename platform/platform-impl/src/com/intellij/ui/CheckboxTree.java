@@ -15,11 +15,6 @@
  */
 package com.intellij.ui;
 
-/**
- * User: lex
- * Date: Sep 18, 2003
- * Time: 5:40:20 PM
- */
 public class CheckboxTree extends CheckboxTreeBase {
 
   public static abstract class CheckboxTreeCellRenderer extends CheckboxTreeCellRendererBase { // This is 6.0 compatibility layer 

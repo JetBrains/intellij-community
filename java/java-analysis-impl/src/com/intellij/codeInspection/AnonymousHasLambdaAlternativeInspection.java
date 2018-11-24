@@ -52,7 +52,7 @@ public class AnonymousHasLambdaAlternativeInspection extends BaseJavaBatchLocalI
     new AnonymousLambdaAlternative("java.lang.ThreadLocal", "initialValue", "java.lang.ThreadLocal.withInitial($lambda$)",
                                    "ThreadLocal.withInitial()"),
     new AnonymousLambdaAlternative("java.lang.Thread", "run", "new java.lang.Thread($lambda$)",
-                                   "new Thread() with lambda argument")
+                                   "new Thread(() -> {…})")
   };
   
   @NotNull

@@ -495,10 +495,11 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "jre/lib/tools.jar"));
     resetNewerDir();
     FileUtil.rename(new File(myNewerDir, "jre"), new File(myNewerDir, "jre32"));
+    FileUtil.writeToFile(new File(myNewerDir, "jre32/lib/fontconfig.bfc"), "# empty");
 
     myPatchSpec.setOptionalFiles(Arrays.asList(
       "jre/bin/java", "jre/bin/jvm.dll", "jre/lib/rt.jar", "jre/lib/tools.jar",
-      "jre32/bin/java", "jre32/bin/jvm.dll", "jre32/lib/rt.jar", "jre32/lib/tools.jar"));
+      "jre32/bin/java", "jre32/bin/jvm.dll", "jre32/lib/rt.jar", "jre32/lib/tools.jar", "jre32/lib/fontconfig.bfc"));
     Patch patch = createPatch();
 
     FileUtil.delete(new File(myOlderDir, "jre"));

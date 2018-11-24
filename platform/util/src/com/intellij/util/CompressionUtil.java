@@ -19,6 +19,8 @@ import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.text.StringFactory;
+import net.jpountz.lz4.LZ4Compressor;
+import net.jpountz.lz4.LZ4Factory;
 import org.iq80.snappy.CorruptionException;
 import org.iq80.snappy.Snappy;
 import org.jetbrains.annotations.NotNull;
@@ -36,20 +38,19 @@ public class CompressionUtil {
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
 
-  public static int writeCompressed(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
+  public static int writeCompressed(@NotNull DataOutput out, @NotNull byte[] bytes, int start, int length) throws IOException {
     if (length > COMPRESSION_THRESHOLD) {
-      final byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
-
-      int compressedSize = Snappy.compress(bytes, 0, length, compressedOutputBuffer, 0);
-      DataInputOutputUtil.writeINT(out, -compressedSize);
-      out.write(compressedOutputBuffer, 0, compressedSize);
-      return compressedSize;
+      byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
+      int compressedSize = Snappy.compress(bytes, start, length, compressedOutputBuffer, 0);
+      if (compressedSize < length) {
+        DataInputOutputUtil.writeINT(out, -compressedSize);
+        out.write(compressedOutputBuffer, 0, compressedSize);
+        return compressedSize;
+      }
     }
-    else {
-      DataInputOutputUtil.writeINT(out, length);
-      out.write(bytes, 0, length);
-      return length;
-    }
+    DataInputOutputUtil.writeINT(out, length);
+    out.write(bytes, start, length);
+    return length;
   }
 
   private static final AtomicInteger myCompressionRequests = new AtomicInteger();
@@ -61,12 +62,22 @@ public class CompressionUtil {
   private static final AtomicLong mySizeAfterCompression = new AtomicLong();
 
   public static final boolean DUMP_COMPRESSION_STATS = SystemProperties.getBooleanProperty("idea.dump.compression.stats", false);
+  public static final boolean USE_SNAPPY = SystemProperties.getBooleanProperty("idea.use.snappy", true);
 
   public static int writeCompressedWithoutOriginalBufferLength(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
     long started = DUMP_COMPRESSION_STATS ? System.nanoTime() : 0;
 
-    final byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
-    int compressedSize = Snappy.compress(bytes, 0, length, compressedOutputBuffer, 0);
+    final byte[] compressedOutputBuffer;
+    int compressedSize;
+
+    if (USE_SNAPPY) {
+      compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
+      compressedSize = Snappy.compress(bytes, 0, length, compressedOutputBuffer, 0);
+    } else {
+      LZ4Compressor compressor = LZ4Factory.fastestJavaInstance().fastCompressor();
+      compressedOutputBuffer = spareBufferLocal.getBuffer(compressor.maxCompressedLength(length));
+      compressedSize = compressor.compress(bytes, 0, length, compressedOutputBuffer, 0);
+    }
 
     final long time = (DUMP_COMPRESSION_STATS ? System.nanoTime() : 0) - started;
     mySizeAfterCompression.addAndGet(compressedSize);
@@ -94,7 +105,13 @@ public class CompressionUtil {
     int decompressedRequests = myDecompressionRequests.incrementAndGet();
     long started = DUMP_COMPRESSION_STATS ? System.nanoTime() : 0;
 
-    byte[] decompressedResult = Snappy.uncompress(bytes, 0, size);
+    final byte[] decompressedResult;
+
+    if (USE_SNAPPY) {
+      decompressedResult = Snappy.uncompress(bytes, 0, size);
+    } else {
+      decompressedResult = LZ4Factory.fastestJavaInstance().fastDecompressor().decompress(bytes, 0, 32768);
+    }
 
     long doneTime = (DUMP_COMPRESSION_STATS ? System.nanoTime() : 0) - started;
     long decompressedSize = myDecompressedSize.addAndGet(size);

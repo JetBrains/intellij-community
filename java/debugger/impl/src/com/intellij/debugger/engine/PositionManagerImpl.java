@@ -553,27 +553,30 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
       int rangeBegin = Integer.MAX_VALUE;
       int rangeEnd = Integer.MIN_VALUE;
-      for (Location location : DebuggerUtilsEx.allLineLocations(fromClass)) {
-        final int lnumber = DebuggerUtilsEx.getLineNumber(location, false);
-        if (lnumber <= 1) {
-          // should be a native method, skipping
-          // sometimes compiler generates location where line number is exactly 1 (e.g. GWT)
-          // such locations are hardly correspond to real lines in code, so skipping them too
-          continue;
+      List<Location> locations = DebuggerUtilsEx.allLineLocations(fromClass);
+      if (locations != null) {
+        for (Location location : locations) {
+          final int lnumber = DebuggerUtilsEx.getLineNumber(location, false);
+          if (lnumber <= 1) {
+            // should be a native method, skipping
+            // sometimes compiler generates location where line number is exactly 1 (e.g. GWT)
+            // such locations are hardly correspond to real lines in code, so skipping them too
+            continue;
+          }
+          final Method method = DebuggerUtilsEx.getMethod(location);
+          if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge()) {
+            // do not take into account synthetic stuff
+            continue;
+          }
+          int locationLine = lnumber - 1;
+          PsiFile psiFile = position.getFile().getOriginalFile();
+          if (psiFile instanceof PsiCompiledFile) {
+            locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine);
+            if (locationLine < 0) continue;
+          }
+          rangeBegin = Math.min(rangeBegin, locationLine);
+          rangeEnd = Math.max(rangeEnd, locationLine);
         }
-        final Method method = DebuggerUtilsEx.getMethod(location);
-        if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge()) {
-          // do not take into account synthetic stuff
-          continue;
-        }
-        int locationLine = lnumber - 1;
-        PsiFile psiFile = position.getFile().getOriginalFile();
-        if (psiFile instanceof PsiCompiledFile) {
-          locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine);
-          if (locationLine < 0) continue;
-        }
-        rangeBegin = Math.min(rangeBegin,  locationLine);
-        rangeEnd = Math.max(rangeEnd,  locationLine);
       }
 
       final int positionLine = position.getLine();

@@ -110,7 +110,7 @@ public class Patches {
   static {
     boolean value;
     if (!SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast("9")) value = false;
-    else if (!SystemInfo.isJetbrainsJvm) value = true;
+    else if (!SystemInfo.isJetBrainsJvm) value = true;
     else {
       try {
         Class.forName("sun.font.CCompositeFont");
@@ -137,4 +137,7 @@ public class Patches {
   public static final boolean JDK_BUG_ID_8032832 = SystemInfo.isJavaVersionAtLeast("1.8.0_20");
 
   public static final boolean JDK_BUG_ID_8147994 = !SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.8.0_102");
+  
+  // IDEA-175066 / https://stackoverflow.com/questions/31676277/stackoverflowerror-in-regular-expression
+  public static final boolean JDK_SOE_IN_REGEXP = (true);
 }

@@ -143,14 +143,6 @@ public class Utils {
     Files.createSymbolicLink(path, Paths.get(target));
   }
 
-  public static boolean isEmptyDirectory(File file) {
-    if (file.isDirectory()) {
-      String[] children = file.list();
-      return children != null && children.length == 0;
-    }
-    return false;
-  }
-
   public static void copy(File from, File to) throws IOException {
     if (!from.exists()) throw new IOException("Source does not exist: " + from);
 

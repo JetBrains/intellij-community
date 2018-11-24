@@ -36,7 +36,6 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
@@ -48,7 +47,6 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
-import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -533,23 +531,7 @@ public abstract class DialogWrapper {
 
   @NotNull
   protected JButton createHelpButton(Insets insets) {
-    final JButton helpButton;
-    if ((UIUtil.isUnderWin10LookAndFeel())) {
-      helpButton = new JButton(getHelpAction()) {
-        @Override
-        public void paint(Graphics g) {
-          IconUtil.paintInCenterOf(this, g, AllIcons.Windows.WinHelp);
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-          return new Dimension(AllIcons.Windows.WinHelp.getIconWidth(), AllIcons.Windows.WinHelp.getIconHeight());
-        }
-      };
-      helpButton.setOpaque(false);
-    } else {
-      helpButton = new JButton(getHelpAction());
-    }
+    JButton helpButton = new JButton(getHelpAction());
     helpButton.putClientProperty("JButton.buttonType", "help");
     helpButton.setText("");
     helpButton.setMargin(insets);
@@ -620,7 +602,9 @@ public abstract class DialogWrapper {
 
     final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
     //noinspection UseDPIAwareInsets
-    final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
+    final Insets insets = SystemInfo.isMacOSLeopard ?
+                          UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() :
+                          UIUtil.isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
     if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -759,7 +743,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
-    optionButton.setOkToProcessDefaultMnemonics(true);
+    optionButton.setOkToProcessDefaultMnemonics(false);
     optionButton.setOptionTooltipText(
       "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
 
@@ -775,7 +759,7 @@ public abstract class DialogWrapper {
               final JBOptionButton buttonToActivate = eachInfo.getButton();
               buttonToActivate.showPopup(eachInfo.getAction(), true);
             }
-          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), optionButton, myDisposable);
+          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
         }
       }
     }
@@ -955,9 +939,6 @@ public abstract class DialogWrapper {
     unregisterKeyboardActions(rootPane);
     Container contentPane = rootPane.getContentPane();
     if (contentPane != null) contentPane.removeAll();
-    if (rootPane.getGlassPane() instanceof IdeGlassPane && rootPane.getClass() == JRootPane.class) {
-      rootPane.setGlassPane(new JPanel()); // resizeable AbstractPopup but not DialogWrapperPeer
-    }
     Disposer.clearOwnFields(rootPane, field -> {
       String clazz = field.getDeclaringClass().getName();
       // keep AWT and Swing fields intact, except some

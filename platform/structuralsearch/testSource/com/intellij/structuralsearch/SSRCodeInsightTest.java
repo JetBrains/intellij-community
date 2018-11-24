@@ -2,7 +2,6 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
-import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -64,7 +63,7 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     options.setSearchPattern(searchPattern);
     configuration.setMatchOptions(options);
 
-    myInspection.setConfigurations(Collections.<Configuration>singletonList(configuration), myFixture.getProject());
+    myInspection.setConfigurations(Collections.singletonList(configuration), myFixture.getProject());
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 

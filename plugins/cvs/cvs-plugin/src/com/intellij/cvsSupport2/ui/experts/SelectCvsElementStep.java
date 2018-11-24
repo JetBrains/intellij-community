@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.ui.experts;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootException;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
@@ -27,8 +26,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +72,7 @@ public class SelectCvsElementStep extends WizardStep {
   private boolean isLogged(final CvsRootConfiguration selectedConfiguration) {
     myErrors.set(null);
     final LoginPerformer performer = new LoginPerformer(
-      myProject, Collections.<CvsEnvironment>singletonList(selectedConfiguration),
+      myProject, Collections.singletonList(selectedConfiguration),
       e -> myErrors.set(Boolean.TRUE));
     try {
       final boolean logged = performer.loginAll(false);

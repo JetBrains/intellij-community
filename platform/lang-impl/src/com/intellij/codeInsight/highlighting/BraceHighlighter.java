@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class BraceHighlighter implements StartupActivity {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; // sorry, upsource
     final EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
-    CaretListener myCaretListener = new CaretAdapter() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         myAlarm.cancelAllRequests();
@@ -60,8 +60,7 @@ public class BraceHighlighter implements StartupActivity {
         }
         updateBraces(editor, myAlarm);
       }
-    };
-    eventMulticaster.addCaretListener(myCaretListener, project);
+    }, project);
 
     final SelectionListener mySelectionListener = new SelectionListener() {
       @Override
@@ -83,7 +82,7 @@ public class BraceHighlighter implements StartupActivity {
     };
     eventMulticaster.addSelectionListener(mySelectionListener, project);
 
-    DocumentListener documentListener = new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         myAlarm.cancelAllRequests();

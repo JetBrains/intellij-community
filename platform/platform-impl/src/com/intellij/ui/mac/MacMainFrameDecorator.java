@@ -46,9 +46,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
-/**
- * User: spLeaner
- */
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 
@@ -101,7 +98,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private void enterFullscreen() {
     myInFullScreen = true;
-    myFrame.storeFullScreenStateIfNeeded(true);
+    myFrame.storeFullScreenStateIfNeeded();
     myFullscreenQueue.runFromQueue();
   }
 
@@ -116,7 +113,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private void exitFullscreen() {
     myInFullScreen = false;
-    myFrame.storeFullScreenStateIfNeeded(false);
+    myFrame.storeFullScreenStateIfNeeded();
 
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);

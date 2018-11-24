@@ -30,11 +30,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 13.02.2009
-*/
 public class XsltRefactoringTest extends TestBase {
   @Override
   protected void setUp() throws Exception {

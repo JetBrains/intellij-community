@@ -65,18 +65,8 @@ public class FragmentGenerator {
 
   @NotNull
   public Set<Integer> getMiddleNodes(final int upNode, final int downNode, boolean strict) {
-    Set<Integer> downWalk = getWalkNodes(upNode, false, new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer > downNode;
-      }
-    });
-    Set<Integer> upWalk = getWalkNodes(downNode, true, new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer < upNode;
-      }
-    });
+    Set<Integer> downWalk = getWalkNodes(upNode, false, integer -> integer > downNode);
+    Set<Integer> upWalk = getWalkNodes(downNode, true, integer -> integer < upNode);
 
     downWalk.retainAll(upWalk);
     if (strict) {

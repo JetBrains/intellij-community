@@ -218,7 +218,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       int shift2 = editor2.getScrollingModel().getVerticalScrollOffset() - headerOffset2;
       double rotate = shift1 == shift2 ? 0 : Math.atan2(shift2 - shift1, clip.width);
 
-      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), false, rotate == 0, editor1, editor2, this);
+      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), rotate == 0, editor1, editor2, this);
 
       for (DiffChange change : myDiffChanges) {
         int y1 = editor1.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.LEFT), 0)).y - shift1;

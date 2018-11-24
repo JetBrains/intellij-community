@@ -43,11 +43,19 @@ class Vararg {
     myB = Class.forName("B");
   }
 
+  final Class<?> myB1;
+
   Vararg(int n) throws Exception {
     Object bb = Array.newInstance(myB, n);
     Class<?> bc = bb.getClass();
     ourA.getConstructor(bc);
     ourA.getMethod("bar", String.class, bc);
+    myB1 = B.class;
+  }
+
+  void foo1() {
+    ourA.getMethod("bar", myB1);
+    ourA.getMethod(<warning descr="Cannot resolve method 'bar' with specified argument types">"bar"</warning>, myB1, String.class);
   }
 }
 

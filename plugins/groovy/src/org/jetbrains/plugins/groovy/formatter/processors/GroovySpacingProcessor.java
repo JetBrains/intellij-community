@@ -333,7 +333,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
 
   @Override
-  public void visitTupleExpression(@NotNull GrTupleExpression tupleExpression) {
+  public void visitTuple(@NotNull GrTuple tuple) {
     manageSpaceInTuple();
   }
 

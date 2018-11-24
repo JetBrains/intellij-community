@@ -82,22 +82,14 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       return;
     }
 
-    Runnable selectAndOpenLog = new Runnable() {
-      @Override
-      public void run() {
-        Runnable selectCommit = new Runnable() {
-          @Override
-          public void run() {
-            jumpToRevisionUnderProgress(project, log, revision);
-          }
-        };
+    Runnable selectAndOpenLog = () -> {
+      Runnable selectCommit = () -> jumpToRevisionUnderProgress(project, log, revision);
 
-        if (!window.isVisible()) {
-          window.activate(selectCommit, true);
-        }
-        else {
-          selectCommit.run();
-        }
+      if (!window.isVisible()) {
+        window.activate(selectCommit, true);
+      }
+      else {
+        selectCommit.run();
       }
     };
 

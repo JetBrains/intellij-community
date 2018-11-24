@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.util.TimeoutUtil;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author peter
@@ -42,7 +44,7 @@ class AsyncFilterRunner {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("console filters", 1);
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;
-  private final Queue<LineHighlighter> myQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<HighlighterJob> myQueue = new ConcurrentLinkedQueue<>();
   @NotNull private List<FilterResult> myResults = new ArrayList<>();
 
   AsyncFilterRunner(EditorHyperlinkSupport hyperlinks, Editor editor) {
@@ -53,7 +55,7 @@ class AsyncFilterRunner {
   void highlightHyperlinks(final Filter customFilter, final int startLine, final int endLine) {
     if (endLine < 0) return;
 
-    queueTasks(customFilter, startLine, endLine);
+    myQueue.offer(new HighlighterJob(customFilter, startLine, endLine, myEditor.getDocument()));
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       runTasks();
       highlightAvailableResults();
@@ -139,42 +141,15 @@ class AsyncFilterRunner {
     }
   }
 
-  private void queueTasks(Filter filter, int startLine, int endLine) {
-    Document document = myEditor.getDocument();
-    int markerOffset = document.getLineEndOffset(endLine);
-    RangeMarker marker = document.createRangeMarker(markerOffset, markerOffset);
-    for (int line = startLine; line <= endLine; line++) {
-      myQueue.offer(processLine(document, filter, line, markerOffset, marker));
-    }
-  }
-
-  @NotNull
-  private LineHighlighter processLine(Document document, Filter filter, int line, int initialMarkerOffset, RangeMarker marker) {
-    int lineEnd = document.getLineEndOffset(line);
-    int endOffset = lineEnd + (lineEnd < document.getTextLength() ? 1 /* for \n */ : 0);
-    CharSequence text = EditorHyperlinkSupport.getLineSequence(document, line, true);
-    return () -> runFilterForLine(initialMarkerOffset, marker, filter, endOffset, text);
-  }
-
-  @Nullable
-  private FilterResult runFilterForLine(int initialMarkerOffset, RangeMarker marker, Filter filter, int endOffset, CharSequence lineText) {
-    if (!marker.isValid() || marker.getEndOffset() == 0) return null;
-
-    Filter.Result result = checkRange(filter, endOffset, filter.applyFilter(lineText.toString(), endOffset));
-    return result == null ? null : () -> {
-      if (marker.isValid()) {
-        myHyperlinks.highlightHyperlinks(result, marker.getStartOffset() - initialMarkerOffset);
-      }
-    };
-  }
-
   private void runTasks() {
     if (myEditor.isDisposed()) return;
 
     while (!myQueue.isEmpty()) {
-      ProgressManager.checkCanceled();
-      LineHighlighter highlighter = myQueue.peek();
-      addLineResult(highlighter.runFilterForLine());
+      HighlighterJob highlighter = myQueue.peek();
+      while (highlighter.hasUnprocessedLines()) {
+        ProgressManager.checkCanceled();
+        addLineResult(highlighter.analyzeNextLine());
+      }
       LOG.assertTrue(highlighter == myQueue.remove());
     }
   }
@@ -192,12 +167,61 @@ class AsyncFilterRunner {
     return result;
   }
 
-  private interface LineHighlighter {
-    @Nullable FilterResult runFilterForLine();
-  }
-
   private interface FilterResult {
     void applyHighlights();
+  }
+
+  private class HighlighterJob {
+    private AtomicInteger startLine;
+    private final int endLine;
+    private final int initialMarkerOffset;
+    private final RangeMarker endMarker;
+    private final Filter filter;
+    private final Document snapshot;
+
+    HighlighterJob(Filter filter, int startLine, int endLine, Document document) {
+      this.startLine = new AtomicInteger(startLine);
+      this.endLine = endLine;
+      this.filter = filter;
+
+      initialMarkerOffset = document.getLineEndOffset(endLine);
+      endMarker = document.createRangeMarker(initialMarkerOffset, initialMarkerOffset);
+      snapshot = ((DocumentImpl)document).freeze();
+    }
+
+    boolean hasUnprocessedLines() {
+      return !isOutdated() && startLine.get() <= endLine;
+    }
+
+    @Nullable
+    AsyncFilterRunner.FilterResult analyzeNextLine() {
+      int line = startLine.get();
+      Filter.Result result = analyzeLine(line);
+      LOG.assertTrue(line == startLine.getAndIncrement());
+      return result == null ? null : () -> {
+        if (!isOutdated()) {
+          myHyperlinks.highlightHyperlinks(result, getOffsetDelta());
+        }
+      };
+    }
+
+    Filter.Result analyzeLine(int line) {
+      int lineStart = snapshot.getLineStartOffset(line);
+      if (lineStart + getOffsetDelta() < 0) return null;
+
+      String lineText = EditorHyperlinkSupport.getLineText(snapshot, line, true);
+      int endOffset = lineStart + lineText.length();
+      return checkRange(filter, endOffset, filter.applyFilter(lineText, endOffset));
+    }
+
+    boolean isOutdated() {
+      return !endMarker.isValid() || endMarker.getEndOffset() == 0;
+    }
+
+    int getOffsetDelta() {
+      return endMarker.getStartOffset() - initialMarkerOffset;
+    }
+
   }
 
 }

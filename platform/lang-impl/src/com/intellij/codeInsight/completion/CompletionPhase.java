@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,7 +188,7 @@ public abstract class CompletionPhase implements Disposable {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
-      final DocumentAdapter documentListener = new DocumentAdapter() {
+      final DocumentListener documentListener = new DocumentListener() {
         @Override
         public void beforeDocumentChange(DocumentEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
@@ -200,7 +200,7 @@ public abstract class CompletionPhase implements Disposable {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
-      final CaretListener caretListener = new CaretAdapter() {
+      final CaretListener caretListener = new CaretListener() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);

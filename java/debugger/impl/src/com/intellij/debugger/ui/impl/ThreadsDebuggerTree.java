@@ -43,11 +43,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 26, 2003
- * Time: 5:57:58 PM
- */
 public class ThreadsDebuggerTree extends DebuggerTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.ThreadsDebuggerTree");
 

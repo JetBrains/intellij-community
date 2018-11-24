@@ -85,12 +85,9 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     final Collection<VirtualFile> files = myPanel.getVirtualFiles();
 
-    final Runnable performCheckoutAction = new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        finishAction.run();
-      }
+    final Runnable performCheckoutAction = () -> {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      finishAction.run();
     };
 
     if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {

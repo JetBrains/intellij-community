@@ -2,10 +2,14 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Not thread-safe.
@@ -37,7 +41,7 @@ public class LibraryData extends AbstractNamedData implements Named {
   @NotNull
   public Set<String> getPaths(@NotNull LibraryPathType type) {
     Set<String> result = myPaths.get(type);
-    return result == null ? Collections.<String>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
   public void addPath(@NotNull LibraryPathType type, @NotNull String path) {
@@ -70,6 +74,8 @@ public class LibraryData extends AbstractNamedData implements Named {
 
   @Override
   public String toString() {
-    return String.format("library %s%s", getExternalName(), myUnresolved ? "(unresolved)" : "");
+    String externalName = getExternalName();
+    String displayName = StringUtil.isEmpty(externalName) ? myPaths.toString() : externalName;
+    return String.format("library %s%s", displayName, myUnresolved ? "(unresolved)" : "");
   }
 }

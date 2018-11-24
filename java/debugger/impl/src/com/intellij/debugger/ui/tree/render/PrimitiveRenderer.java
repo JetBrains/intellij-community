@@ -28,11 +28,6 @@ import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * User: lex
- * Date: Sep 18, 2003
- * Time: 3:07:27 PM
- */
 public class PrimitiveRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "PrimitiveRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.PrimitiveRenderer");

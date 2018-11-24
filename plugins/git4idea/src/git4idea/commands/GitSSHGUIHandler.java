@@ -61,11 +61,8 @@ public class GitSSHGUIHandler {
       message = GitBundle.message("ssh.changed.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
     }
     final AtomicBoolean rc = new AtomicBoolean();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null));
-      }
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null)), ModalityState.any());
     return rc.get();
   }
 
@@ -88,11 +85,7 @@ public class GitSSHGUIHandler {
   private String processLastError(boolean resetPassword, final String lastError) {
     String error;
     if (lastError != null && lastError.length() != 0 && !resetPassword) {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        public void run() {
-          showError(lastError);
-        }
-      }, ModalityState.any());
+      ApplicationManager.getApplication().invokeAndWait(() -> showError(lastError), ModalityState.any());
       error = null;
     }
     else {
@@ -128,14 +121,12 @@ public class GitSSHGUIHandler {
                                          final Vector<Boolean> echo,
                                          final String lastError) {
     final AtomicReference<Vector<String>> rc = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        showError(lastError);
-        GitSSHKeyboardInteractiveDialog dialog =
-          new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
-        if (dialog.showAndGet()) {
-          rc.set(dialog.getResults());
-        }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      showError(lastError);
+      GitSSHKeyboardInteractiveDialog dialog =
+        new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
+      if (dialog.showAndGet()) {
+        rc.set(dialog.getResults());
       }
     }, ModalityState.any());
     return rc.get();
@@ -183,11 +174,7 @@ public class GitSSHGUIHandler {
     SSHConnectionSettings s = SSHConnectionSettings.getInstance();
     s.setLastSuccessful(userName, method);
     if (error != null && error.length() != 0) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          showError(error);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> showError(error));
     }
   }
 

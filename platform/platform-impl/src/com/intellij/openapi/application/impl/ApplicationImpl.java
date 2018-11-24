@@ -253,22 +253,23 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
-    if (manager != null) {
+    if (manager == null) {
+      saveSettings();
+    }
+    else {
       final boolean[] canClose = {true};
-      for (final Project project : manager.getOpenProjects()) {
-        try {
-          CommandProcessor.getInstance().executeCommand(project, () -> {
-            if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
-              canClose[0] = false;
-            }
-          }, ApplicationBundle.message("command.exit"), null);
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-        if (!canClose[0]) {
-          return false;
-        }
+      try {
+        CommandProcessor.getInstance().executeCommand(null, () -> {
+          if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
+            canClose[0] = false;
+          }
+        }, ApplicationBundle.message("command.exit"), null);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      if (!canClose[0]) {
+        return false;
       }
     }
     runWriteAction(() -> Disposer.dispose(this));
@@ -803,7 +804,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         return;
       }
 
-      saveSettings();
       lifecycleListener.appWillBeClosed(restart);
 
       boolean success = disposeSelf(!force);
@@ -1207,7 +1207,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
-      ActionPauses.WRITE.started();
+      ActionPauses.WRITE.started("write action ("+clazz+")");
     }
     myWriteActionPending = true;
     try {

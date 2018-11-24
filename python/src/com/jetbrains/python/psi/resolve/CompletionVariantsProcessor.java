@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,8 +71,8 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         final Project project = element.getProject();
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
-        final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
-        final String params = StringUtil.join(parameters, pyParameter -> pyParameter.getName(), ", ");
+        final List<PyCallableParameter> parameters = ((PyFunction)element).getParameters(context);
+        final String params = StringUtil.join(parameters, PyCallableParameter::getName, ", ");
         item = item.withTailText("(" + params + ")");
       }
       else if (element instanceof PyClass) {
@@ -130,10 +131,6 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       return false;
     }
     return PsiTreeUtil.isAncestor(decorator.getCallee(), elementInCall, false);
-  }
-
-  protected static LookupElementBuilder setItemNotice(final LookupElementBuilder item, String notice) {
-    return item.withTypeText(notice);
   }
 
   public LookupElement[] getResult() {

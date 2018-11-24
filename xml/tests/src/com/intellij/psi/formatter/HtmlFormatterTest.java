@@ -466,4 +466,50 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       "</div>"
     );
   }
+
+  public void testSpaceInEmptyTag() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.HTML_SPACE_INSIDE_EMPTY_TAG = true;
+    doTextTest("<div class=\"emptyWithAttributes\"/>\n" +
+               "<div/>\n" +
+               "<div class=\"notEmpty\"></div>", 
+               "<div class=\"emptyWithAttributes\" />\n" +
+               "<div />\n" +
+               "<div class=\"notEmpty\"></div>");
+  }
+
+  public void testMultilineTags_NewlinesBeforeAndAfterAttributes() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    String source = "<div class=\"singleline\" foo=\"1\" bar=\"2\"/>\n" +
+                    "<div class=\"singleline\"></div>\n" +
+                    "<div class=\"multiline\" foo=\"1\"\n" +
+                    "          bar=\"2\"></div>\n" +
+                    "<div class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
+                    "/>\n";
+    doTextTest(
+      source,
+      "<div class=\"singleline\" foo=\"1\" bar=\"2\"/>\n" +
+      "<div class=\"singleline\"></div>\n" +
+      "<div\n" +
+      "        class=\"multiline\" foo=\"1\"\n" +
+      "        bar=\"2\"\n" +
+      "></div>\n" +
+      "<div\n" +
+      "        class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
+      "/>\n");
+    settings.HTML_SPACE_INSIDE_EMPTY_TAG = true;
+    doTextTest(
+      source,
+      "<div class=\"singleline\" foo=\"1\" bar=\"2\" />\n" +
+      "<div class=\"singleline\"></div>\n" +
+      "<div\n" +
+      "        class=\"multiline\" foo=\"1\"\n" +
+      "        bar=\"2\"\n" +
+      "></div>\n" +
+      "<div\n" +
+      "        class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
+      "/>\n");
+  }
 }

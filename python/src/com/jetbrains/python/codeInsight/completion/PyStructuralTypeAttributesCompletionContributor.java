@@ -161,7 +161,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         return ancestors;
       }
       // Sentinel value to prevent infinite recursion
-      ancestorsCache.put(pyClass, Collections.<PyClass>emptySet());
+      ancestorsCache.put(pyClass, Collections.emptySet());
       final Set<PyClass> result = Sets.newHashSet();
       try {
         for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(context)) {

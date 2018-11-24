@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,13 +58,15 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
   private static final Object MERGED_KEY = new Object();
-  private final SvnVcs myVcs;
+  @NotNull private final SvnVcs myVcs;
 
-  public SvnAnnotationProvider(final SvnVcs vcs) {
+  public SvnAnnotationProvider(@NotNull SvnVcs vcs) {
     myVcs = vcs;
   }
 
-  public FileAnnotation annotate(final VirtualFile file) throws VcsException {
+  @Override
+  @NotNull
+  public FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
     final SvnDiffProvider provider = (SvnDiffProvider)myVcs.getDiffProvider();
     final SVNRevision currentRevision = ((SvnRevisionNumber)provider.getCurrentRevision(file)).getRevision();
     final VcsRevisionDescription lastChangedRevision = provider.getCurrentRevisionDescription(file);
@@ -81,12 +82,17 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                     lastChangedRevision.getRevisionNumber(), true);
   }
 
-  public FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision) throws VcsException {
+  @Override
+  @NotNull
+  public FileAnnotation annotate(@NotNull VirtualFile file, @NotNull VcsFileRevision revision) throws VcsException {
     return annotate(file, revision, revision.getRevisionNumber(), false);
   }
 
-  private FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision, final VcsRevisionNumber lastChangedRevision,
-                                  final boolean loadExternally) throws VcsException {
+  @NotNull
+  private FileAnnotation annotate(@NotNull VirtualFile file,
+                                  @NotNull VcsFileRevision revision,
+                                  @NotNull VcsRevisionNumber lastChangedRevision,
+                                  boolean loadExternally) throws VcsException {
     if (file.isDirectory()) {
       throw new VcsException(SvnBundle.message("exception.text.cannot.annotate.directory"));
     }
@@ -179,10 +185,11 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
   private void handleSvnException(File ioFile,
                                   Info info,
-                                  SVNException e,
-                                  VirtualFile file,
-                                  VcsFileRevision revision,
-                                  FileAnnotation[] annotation, VcsException[] exception) {
+                                  @NotNull SVNException e,
+                                  @NotNull VirtualFile file,
+                                  @NotNull VcsFileRevision revision,
+                                  @NotNull FileAnnotation[] annotation,
+                                  @NotNull VcsException[] exception) {
     // TODO: Check how this scenario could be reproduced by user and what changes needs to be done for command line client
     if (SVNErrorCode.FS_NOT_FOUND.equals(e.getErrorMessage().getErrorCode())) {
       final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();
@@ -230,11 +237,12 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
   }
 
-  private SvnRemoteFileAnnotation annotateNonExisting(Pair<SvnChangeList, FilePath> pair,
-                                                      VcsFileRevision revision,
-                                                      Info info,
-                                                      Charset charset, final VirtualFile current)
-    throws VcsException, SVNException, IOException {
+  @NotNull
+  private SvnRemoteFileAnnotation annotateNonExisting(@NotNull Pair<SvnChangeList, FilePath> pair,
+                                                      @NotNull VcsFileRevision revision,
+                                                      @NotNull Info info,
+                                                      @NotNull Charset charset,
+                                                      @NotNull VirtualFile current) throws VcsException, SVNException, IOException {
     final File wasFile = pair.getSecond().getIOFile();
     final File root = getCommonAncestor(wasFile, info.getFile());
 
@@ -259,8 +267,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
     final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
     byte[] data = SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(wasUrl), svnRevision, svnRevision);
-    final String contents =
-      LoadTextUtil.getTextByBinaryPresentation(data, charset == null ? CharsetToolkit.UTF8_CHARSET : charset).toString();
+    final String contents = LoadTextUtil.getTextByBinaryPresentation(data, charset).toString();
     final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), current);
     final AnnotationConsumer annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
 
@@ -331,7 +338,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   public FileAnnotation restore(@NotNull VcsAnnotation vcsAnnotation,
                                 @NotNull VcsAbstractHistorySession session,
                                 @NotNull String annotatedContent,
-                                boolean forCurrentRevision, VcsRevisionNumber revisionNumber) {
+                                boolean forCurrentRevision,
+                                VcsRevisionNumber revisionNumber) {
     final SvnFileAnnotation annotation =
       new SvnFileAnnotation(myVcs, vcsAnnotation.getFilePath().getVirtualFile(), annotatedContent, revisionNumber);
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();

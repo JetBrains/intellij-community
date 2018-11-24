@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * Created by Max Medvedev on 8/16/13
- */
 public class GrNumberConverter extends GrTypeConverter {
 
   @Override

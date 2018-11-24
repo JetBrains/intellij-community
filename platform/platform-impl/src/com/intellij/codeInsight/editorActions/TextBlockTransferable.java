@@ -108,7 +108,7 @@ public class TextBlockTransferable implements Transferable {
 
   @NotNull
   public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input) {
-    return convertLineSeparators(editor, input, Collections.<TextBlockTransferableData>emptyList());
+    return convertLineSeparators(editor, input, Collections.emptyList());
   }
 
   @NotNull

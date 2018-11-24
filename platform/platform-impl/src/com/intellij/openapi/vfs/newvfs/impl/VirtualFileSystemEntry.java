@@ -369,7 +369,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
           // file has already been deleted on disk
           return super.getCharset();
         }
-        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content);
+        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, getFileType());
       }
       catch (FileTooBigException e) {
         return super.getCharset();

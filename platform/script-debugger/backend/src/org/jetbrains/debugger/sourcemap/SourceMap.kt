@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 
 // sources - is not originally specified, but canonicalized/normalized
+// lines and columns are zero-based according to specification
 interface SourceMap {
   val outFile: String?
 

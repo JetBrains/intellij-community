@@ -22,10 +22,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public class GroovySurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] ourSurrounders = new Surrounder[]{
     //statements: like in java

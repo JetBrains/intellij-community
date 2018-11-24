@@ -139,7 +139,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void measureHighlighting(String text, int time) {
-    IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming()
+    IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).usesAllCPUCores().useLegacyScaling().assertTiming()
   }
 
   void testDeeplyNestedClosures() {
@@ -273,7 +273,7 @@ while (true) {
   f.canoPath<caret>
 }
 '''
-    IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming()
+    IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).usesAllCPUCores().useLegacyScaling().assertTiming()
   }
 
   void testClosureRecursion() {
@@ -490,7 +490,7 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
       for (ref in refs) {
         assert ref.resolve(): ref.text
       }
-    }).cpuBound().attempts(2).assertTiming()
+    }).attempts(2).assertTiming()
   }
 
   @CompileStatic
@@ -527,7 +527,7 @@ public class Doo$i {}
       configure 1
       myFixture.checkHighlighting true, false, false
       configure 2
-    }).attempts(1).cpuBound().assertTiming()
+    }).attempts(1).assertTiming()
   }
 
   void 'test resolve long chains'() {

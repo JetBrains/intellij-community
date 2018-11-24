@@ -73,13 +73,11 @@ public class LogFilesManager {
               }
             });
           }
-          catch (InterruptedException | InvocationTargetException ignored) {
-
-          }
+          catch (InterruptedException | InvocationTargetException ignored) { }
         }
 
-        if (!myLogFiles.isEmpty() && !myUpdateAlarm.isDisposed()) {
-          myUpdateAlarm.request();
+        if (!myLogFiles.isEmpty()) {
+          myUpdateAlarm.cancelAndRequest();
         }
       }
     }, 500, Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);

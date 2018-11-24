@@ -16,6 +16,8 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
+import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.Matcher;
@@ -120,7 +122,11 @@ public class SpeedSearch extends SpeedSearchSupply {
     String prevString = myString;
     myString = string;
     try {
-      myMatcher = NameUtil.buildMatcher("*" + string, myMatchAllOccurrences, 0, true, false);
+      String pattern = "*" + string;
+      NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
+      String separators = "";
+      myMatcher = myMatchAllOccurrences ? new AllOccurrencesMatcher(pattern, caseSensitivity, separators)
+                                        : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
     catch (Exception e) {
       myMatcher = null;

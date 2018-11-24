@@ -18,10 +18,9 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.dom.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -104,12 +103,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Nullable
   public AntBuildTargetBase findTarget(final String name) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<AntBuildTargetBase>() {
-      @Nullable
-      public AntBuildTargetBase compute() {
-        return findTargetImpl(name, AntBuildModelImpl.this);
-      }
-    });
+    return ReadAction.compute(() -> findTargetImpl(name, AntBuildModelImpl.this));
   }
 
   @Nullable
@@ -127,11 +121,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   private List<AntBuildTargetBase> getTargetsList() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<AntBuildTargetBase>>() {
-      public List<AntBuildTargetBase> compute() {
-        return myTargets.getValue();
-      }
-    });
+    return ReadAction.compute(() -> myTargets.getValue());
   }
 
   @Nullable

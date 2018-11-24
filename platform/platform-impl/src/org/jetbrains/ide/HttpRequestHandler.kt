@@ -52,7 +52,7 @@ abstract class HttpRequestHandler {
   @SuppressWarnings("SpellCheckingInspection")
   open fun isAccessible(request: HttpRequest): Boolean {
     val host = request.host
-    // If attacker.com DNS rebound to 127.0.0.1 and user open site directly — no Origin or Referrer headers.
+    // If attacker.com DNS rebound to 127.0.0.1 and user open site directly - no Origin or Referrer headers.
     // So we should check Host header.
     return host != null && request.isLocalOrigin() && parseAndCheckIsLocalHost("http://$host")
   }

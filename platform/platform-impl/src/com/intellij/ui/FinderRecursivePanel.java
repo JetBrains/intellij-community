@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -38,6 +41,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -60,7 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @param <T> List item type. Must implement {@code equals()/hashCode()} correctly.
  * @since 13.0
  */
-public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implements DataProvider, Disposable {
+public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implements DataProvider, UserDataHolder, Disposable {
 
   @NotNull
   private final Project myProject;
@@ -99,6 +103,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       return false;
     }
   };
+
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   protected FinderRecursivePanel(@NotNull FinderRecursivePanel parent) {
     this(parent.getProject(), parent, parent.getGroupId());
@@ -158,7 +164,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   /**
    * Returns tooltip text for the given list item or null if no tooltip is available.
-   *
+   * <p>
    * <p>This method is invoked by panel's list cell render in order to set a tooltip text for the list cell render component.
    * It is invoked before {@link #doCustomizeCellRenderer(SimpleColoredComponent, JList, Object, int, boolean, boolean)},
    * thus the tooltip may still be reset in {@code doCustomizeCellRenderer}.
@@ -214,6 +220,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setEmptyText(getListEmptyText());
     list.setCellRenderer(createListCellRenderer());
+
+    if (hasFixedSizeListElements()) {
+      list.setFixedCellHeight(JBUI.scale(UIUtil.LIST_FIXED_CELL_HEIGHT));
+      list.setFixedCellWidth(list.getWidth());
+    }
 
     installListActions(list);
     list.addListSelectionListener(new ListSelectionListener() {
@@ -338,72 +349,20 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   protected ListCellRenderer<T> createListCellRenderer() {
-    return new ColoredListCellRenderer<T>() {
-
-      public Component getListCellRendererComponent(JList list,
-                                                    Object value,
-                                                    int index,
-                                                    boolean isSelected,
-                                                    boolean cellHasFocus) {
-        mySelected = isSelected;
-        myForeground = UIUtil.getTreeTextForeground();
-        mySelectionForeground = cellHasFocus ? list.getSelectionForeground() : UIUtil.getTreeTextForeground();
-
-        clear();
-        setFont(UIUtil.getListFont());
-
-        //noinspection unchecked
-        final T t = (T)value;
-        try {
-          setIcon(getItemIcon(t));
-          append(getItemText(t));
-          setToolTipText(getItemTooltipText(t));
-        }
-        catch (IndexNotReadyException e) {
-          append("loading...");
-        }
-
-        try {
-          doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
-        }
-        catch (IndexNotReadyException ignored) {
-          // ignore
-        }
-
-        Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
-        if (!isSelected) {
-          VirtualFile file = getContainingFile(t);
-          Color bgColor = file == null ? null : EditorTabbedContainer.calcTabColor(myProject, file);
-          bg = bgColor == null ? bg : bgColor;
-        }
-        setBackground(bg);
-
-        if (hasChildren(t)) {
-          JPanel result = new JPanel(new BorderLayout());
-          JLabel childrenLabel = new JLabel();
-          childrenLabel.setOpaque(true);
-          childrenLabel.setVisible(true);
-          childrenLabel.setBackground(bg);
-
-          final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground());
-          childrenLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
-                                                    : AllIcons.Icons.Ide.NextStep
-                                           : AllIcons.Icons.Ide.NextStepGrayed);
-          result.add(this, BorderLayout.CENTER);
-          result.add(childrenLabel, BorderLayout.EAST);
-          result.setToolTipText(getToolTipText());
-          return result;
-        }
-        return this;
-      }
-
-      @Override
-      protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      }
-    };
+    return new MyListCellRenderer();
   }
 
   protected void doCustomizeCellRenderer(SimpleColoredComponent comp, JList list, T value, int index, boolean selected, boolean hasFocus) {
+  }
+
+  /**
+   * Whether this list contains "fixed size" elements.
+   *
+   * @return true.
+   * @since 2017.2
+   */
+  protected boolean hasFixedSizeListElements() {
+    return true;
   }
 
   @Nullable
@@ -429,6 +388,17 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       return myCopyProvider;
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public <U> U getUserData(@NotNull Key<U> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <U> void putUserData(@NotNull Key<U> key, @Nullable U value) {
+    myUserDataHolder.putUserData(key, value);
   }
 
   @Override
@@ -656,5 +626,99 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   protected int getFirstComponentPreferredSize() {
     return 200;
+  }
+
+  private class MyListCellRenderer extends ColoredListCellRenderer<T> {
+    private static final String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+      String toolTipText = getToolTipText();
+      if (toolTipText != null) {
+        return toolTipText;
+      }
+      @SuppressWarnings("unchecked")
+      T value = (T)getClientProperty(ITEM_PROPERTY);
+      return FinderRecursivePanel.this.getItemTooltipText(value);
+    }
+
+    public Component getListCellRendererComponent(JList list,
+                                                  Object value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+      mySelected = isSelected;
+      myForeground = UIUtil.getTreeTextForeground();
+      mySelectionForeground = cellHasFocus ? list.getSelectionForeground() : UIUtil.getTreeTextForeground();
+
+      clear();
+      setFont(UIUtil.getListFont());
+
+      //noinspection unchecked
+      final T t = (T)value;
+      try {
+        putClientProperty(ITEM_PROPERTY, t);
+        setIcon(getItemIcon(t));
+        append(getItemText(t));
+      }
+      catch (IndexNotReadyException e) {
+        append("loading...");
+      }
+
+      try {
+        doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+      }
+      catch (IndexNotReadyException ignored) {
+        // ignore
+      }
+
+      Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
+      if (!isSelected) {
+        VirtualFile file = getContainingFile(t);
+        Color bgColor = file == null ? null : EditorTabbedContainer.calcTabColor(myProject, file);
+        bg = bgColor == null ? bg : bgColor;
+      }
+      setBackground(bg);
+
+      if (hasChildren(t)) {
+        final JComponent rendererComponent = this;
+        JPanel result = new JPanel(new BorderLayout()) {
+          @Override
+          public String getToolTipText(MouseEvent event) {
+            return rendererComponent.getToolTipText(event);
+          }
+        };
+        JLabel childrenLabel = new JLabel();
+        childrenLabel.setOpaque(true);
+        childrenLabel.setVisible(true);
+        childrenLabel.setBackground(bg);
+
+        final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground());
+        childrenLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
+                                                  : AllIcons.Icons.Ide.NextStep
+                                         : AllIcons.Icons.Ide.NextStepGrayed);
+        result.add(this, BorderLayout.CENTER);
+        result.add(childrenLabel, BorderLayout.EAST);
+        return result;
+      }
+      return this;
+    }
+
+    @Override
+    protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    }
+  }
+
+  protected static class DisposablePanel extends JPanel implements Disposable {
+    public DisposablePanel(LayoutManager layout, @Nullable Disposable parent) {
+      super(layout);
+      if (parent != null) {
+        Disposer.register(parent, this);
+      }
+    }
+
+    @Override
+    public void dispose() {
+    }
   }
 }

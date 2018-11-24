@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.checkin.StepIntersection;
-import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -91,17 +90,7 @@ public class IntersectionTest extends TestCase {
   }
 
   private StepIntersection<Data, Area> createIntersection(Area[] areas) {
-    return new StepIntersection<>(new Convertor<Data, TextRange>() {
-      @Override
-      public TextRange convert(Data o) {
-        return o.getTextRange();
-      }
-    }, new Convertor<Area, TextRange>() {
-      @Override
-      public TextRange convert(Area o) {
-        return o.getTextRange();
-      }
-    }, Arrays.asList(areas));
+    return new StepIntersection<>(o -> o.getTextRange(), o -> o.getTextRange(), Arrays.asList(areas));
   }
 
   private static class Data {

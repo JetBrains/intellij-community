@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Jul-2007
- */
 package com.intellij.ide.plugins;
 
 import com.intellij.util.xmlb.annotations.Attribute;

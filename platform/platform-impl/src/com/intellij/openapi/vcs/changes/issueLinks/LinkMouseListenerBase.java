@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,12 +76,7 @@ public abstract class LinkMouseListenerBase<T> extends ClickListener implements 
   public void mouseMoved(MouseEvent e) {
     Component component = (Component)e.getSource();
     Object tag = getTagAt(e);
-    if (tag != null) {
-      component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
-    else {
-      component.setCursor(Cursor.getDefaultCursor());
-    }
+    UIUtil.setCursor(component, tag != null ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
   }
 
   @Override

@@ -50,17 +50,14 @@ public class TestNGDependsOnInspectionTest extends LightCodeInsightFixtureTestCa
   @BeforeMethod
     @Override
     protected void setUp() throws Exception {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            TestNGDependsOnInspectionTest.super.setUp();
-            myFixture.enableInspections(new DependsOnMethodInspection());
-           
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          TestNGDependsOnInspectionTest.super.setUp();
+          myFixture.enableInspections(new DependsOnMethodInspection());
+
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
         }
       });
     }
@@ -68,15 +65,12 @@ public class TestNGDependsOnInspectionTest extends LightCodeInsightFixtureTestCa
     @AfterMethod
     @Override
     protected void tearDown() throws Exception {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            TestNGDependsOnInspectionTest.super.tearDown();
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          TestNGDependsOnInspectionTest.super.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
         }
       });
     }

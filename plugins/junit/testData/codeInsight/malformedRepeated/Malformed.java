@@ -12,10 +12,10 @@ class WithRepeatedInfoAndTest {
 }
 
 class WithRepeated {
-  @RepeatedTest()
+  @RepeatedTest(1)
   void repeatedTestNoParams() { }
 
-  @RepeatedTest()
+  @RepeatedTest(1)
   void repeatedTestWithRepetitionInfo(RepetitionInfo repetitionInfo) { }
 
   @BeforeAll
@@ -27,6 +27,6 @@ class WithRepeated {
 
 class WithRepeatedAndTests {
   <warning descr="Suspicious combination @Test and @RepeatedTest">@Test</warning>
-  @RepeatedTest()
+  @RepeatedTest(1)
   void repeatedTestAndTest() { }
 }

@@ -59,4 +59,15 @@ public class ASMUtils {
     }
   }
 
+  @Contract(pure = true)
+  public static boolean isReferenceReturnType(String methodDesc) {
+    switch (methodDesc.charAt(methodDesc.indexOf(')') + 1)) {
+      case 'L':
+      case '[':
+        return true;
+      default:
+        return false;
+    }
+  }
+
 }

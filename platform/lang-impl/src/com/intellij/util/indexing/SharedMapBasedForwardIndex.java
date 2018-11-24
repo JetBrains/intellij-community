@@ -27,9 +27,9 @@ import java.util.Map;
 
 class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Value> {
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
-  private final MapBasedForwardIndex<Key, Value> myUnderlying;
+  private final KeyCollectionBasedForwardIndex<Key, Value> myUnderlying;
 
-  SharedMapBasedForwardIndex(IndexExtension<Key, Value, ?> extension, @Nullable MapBasedForwardIndex<Key, Value> underlying) {
+  SharedMapBasedForwardIndex(IndexExtension<Key, Value, ?> extension, @Nullable KeyCollectionBasedForwardIndex<Key, Value> underlying) {
     super(extension);
     myUnderlying = underlying;
     mySnapshotIndexExternalizer = VfsAwareMapReduceIndex.createInputsIndexExternalizer(extension);
@@ -42,7 +42,7 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       Collection<Key> keys = SharedIndicesData.recallFileData(inputId, (ID<Key, ?>)myIndexId, mySnapshotIndexExternalizer);
       if (myUnderlying != null) {
-        Collection<Key> keysFromInputsIndex = myUnderlying.getInputsIndex().get(inputId);
+        Collection<Key> keysFromInputsIndex = myUnderlying.getInput(inputId);
 
         if (keys == null && keysFromInputsIndex != null ||
             !DebugAssertions.equals(keysFromInputsIndex, keys, myKeyDescriptor)
@@ -58,14 +58,14 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
       }
       return new CollectionInputDataDiffBuilder<>(inputId, keys);
     }
-    return new CollectionInputDataDiffBuilder<>(inputId, myUnderlying.getInputsIndex().get(inputId));
+    return new CollectionInputDataDiffBuilder<>(inputId, myUnderlying.getInput(inputId));
   }
 
   @Override
   public void putInputData(int inputId, @NotNull Map<Key, Value> data)
     throws IOException {
     Collection<Key> keySeq = data.keySet();
-    if (myUnderlying != null) myUnderlying.putData(inputId, keySeq);
+    if (myUnderlying != null) myUnderlying.putInputData(inputId, data);
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       if (keySeq.isEmpty()) keySeq = null;
       SharedIndicesData.associateFileData(inputId, (ID<Key, ?>)myIndexId, keySeq, mySnapshotIndexExternalizer);

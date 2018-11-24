@@ -221,7 +221,7 @@ public class MasterDetailPopupBuilder implements MasterController {
 
     JComponent toolBar = null;
     if (myActions != null) {
-      ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("", myActions, true);
+      ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("MasterDetailPopup", myActions, true);
       actionToolbar.setReservePlaceAutoPopupIcon(false);
       actionToolbar.setMinimumButtonSize(new Dimension(20, 20));
       toolBar = actionToolbar.getComponent();

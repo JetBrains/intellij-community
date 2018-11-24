@@ -21,7 +21,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -105,7 +104,7 @@ public abstract class IntentionSettingsTree {
     group.add(actionManager.createExpandAllAction(treeExpander, myTree));
     group.add(actionManager.createCollapseAllAction(treeExpander, myTree));
 
-    myNorthPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.WEST);
+    myNorthPanel.add(ActionManager.getInstance().createActionToolbar("IntentionSettingsTree", group, true).getComponent(), BorderLayout.WEST);
 
     myComponent.add(myNorthPanel, BorderLayout.NORTH);
     myComponent.add(scrollPane, BorderLayout.CENTER);

@@ -41,10 +41,6 @@ import java.awt.event.ActionListener;
 
 import static java.awt.GridBagConstraints.*;
 
-/**
- * User: anna
- * Date: 05-Jun-2006
- */
 public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private JdkComboBox myCbProjectJdk;
   private JPanel myJdkPanel;

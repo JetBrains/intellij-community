@@ -66,8 +66,9 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
         setOpaque(true);
         setBackground(selected ? list.getSelectionBackground() : null);
       }
-    }
-    else {
+    } else if (UIUtil.isUnderWin10LookAndFeel()) {
+      setBackground(selected ? list.getSelectionBackground() : list.getBackground());
+    } else {
       setBackground(selected ? list.getSelectionBackground() : null);
     }
 

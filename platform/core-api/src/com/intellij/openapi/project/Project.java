@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemDependent;
+import com.intellij.util.SystemIndependent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +54,13 @@ public interface Project extends ComponentManager, AreaInstance {
   VirtualFile getBaseDir();
 
   /**
-   * Returns a system-independent path to a project base directory (see {@linkplain #getBaseDir()}).<br/>
+   * Returns a path to a project base directory (see {@linkplain #getBaseDir()}).<br/>
    * Returns {@code null} for default project.
    *
    * @return a path to a project base directory, or {@code null} for default project
    */
   @Nullable
+  @SystemIndependent
   String getBasePath();
 
   /**
@@ -74,9 +77,10 @@ public interface Project extends ComponentManager, AreaInstance {
   VirtualFile getProjectFile();
 
   /**
-   * @return a system-independent path to project file (see {@linkplain #getProjectFile()}) or {@code null} for default project.
+   * @return a path to project file (see {@linkplain #getProjectFile()}) or {@code null} for default project.
    */
   @Nullable
+  @SystemIndependent
   String getProjectFilePath();
 
   /**
@@ -88,7 +92,10 @@ public interface Project extends ComponentManager, AreaInstance {
    * @return presentable project path
    */
   @Nullable
-  String getPresentableUrl();
+  @SystemDependent
+  default String getPresentableUrl() {
+    return null;
+  }
 
   /**
    * <p>Returns a workspace file:

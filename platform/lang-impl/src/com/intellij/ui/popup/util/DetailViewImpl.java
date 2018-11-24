@@ -155,7 +155,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
 
   @NotNull
   protected Editor createEditor(@Nullable Project project, Document document, VirtualFile file) {
-    EditorEx editor = (EditorEx)EditorFactory.getInstance().createViewer(document, project);
+    EditorEx editor = (EditorEx)EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW);
 
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project);
@@ -168,9 +168,6 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     settings.setRefrainFromScrolling(false);
     settings.setLineNumbersShown(true);
     settings.setFoldingOutlineShown(false);
-    if (settings instanceof SettingsImpl) {
-      ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
-    }
     editor.getFoldingModel().setFoldingEnabled(false);
 
     return editor;

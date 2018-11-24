@@ -20,13 +20,6 @@ import com.intellij.openapi.util.Pair;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 21.06.2003
- * Time: 20:23:16
- * To change this template use Options | File Templates.
- */
 public class GlobalAnalyzer {
   private static boolean stepOneEnd(MarkedNode currNode, LinkedList worklist, OneEndFunctor functor) {
     boolean result = false;

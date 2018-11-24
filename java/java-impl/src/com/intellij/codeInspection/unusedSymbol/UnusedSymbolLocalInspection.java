@@ -24,10 +24,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: 17-Feb-2006
- */
 public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase {
 
   /**

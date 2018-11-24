@@ -18,35 +18,20 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author nik
  */
 public class ExternalProjectSystemRegistryImpl implements ExternalProjectSystemRegistry {
-  private final ConcurrentMap<String, ProjectModelExternalSource> myExternalSources = new ConcurrentHashMap<>();
-
   @Override
-  public ProjectModelExternalSource getExternalSource(Module module) {
-    //todo[nik] probably it would be better to introduce a special extension point instead
-    String externalSystemId = module.getOptionValue(EXTERNAL_SYSTEM_ID_KEY);
-    if (externalSystemId != null) {
-      return getSourceById(externalSystemId);
-    }
-    if ("true".equals(module.getOptionValue(IS_MAVEN_MODULE_KEY))) {
-      return getSourceById("Maven");
-    }
+  public ProjectModelExternalSource getExternalSource(@NotNull Module module) {
     return null;
   }
 
+  @Override
   @NotNull
-  private ProjectModelExternalSource getSourceById(String id) {
-    //todo[nik] specify display name explicitly instead, the current code is copied from ProjectSystemId constructor
-    return myExternalSources.computeIfAbsent(id, (sourceId) -> () -> StringUtil.capitalize(sourceId.toLowerCase(Locale.US)));
+  public ProjectModelExternalSource getSourceById(String id) {
+    throw new IllegalStateException();
   }
 }

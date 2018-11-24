@@ -55,7 +55,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   }
 
   @Override
-  public Data getFileData(@NotNull Project project, @NotNull VirtualFile file) {
+  public Data getFileData(@Nullable Project project, @NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     ProgressManager.checkCanceled();
 
@@ -91,17 +91,12 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   }
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final Map<Pair<String, Integer>, FileAttribute> ourAttributes = new FactoryMap<Pair<String, Integer>, FileAttribute>() {
-    @Nullable
-    @Override
-    protected FileAttribute create(Pair<String, Integer> key) {
-      return new FileAttribute(key.first, key.second, false);
-    }
-  };
+  private static final Map<Pair<String, Integer>, FileAttribute> ourAttributes = FactoryMap.createMap(
+    key -> new FileAttribute(key.first, key.second, false));
 
-  private FileAttribute getFileAttribute(Project project) {
+  private FileAttribute getFileAttribute(@Nullable Project project) {
     synchronized (ourAttributes) {
-      return ourAttributes.get(Pair.create(myId + project.getLocationHash(), myVersion + ourInternalVersion));
+      return ourAttributes.get(Pair.create(myId + (project == null ? "###noProject###" : project.getLocationHash()), myVersion + ourInternalVersion));
     }
   }
 

@@ -35,10 +35,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInAttributeDescr
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
-/**
- * User: anna
- * Date: 2/22/13
- */
 public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionAction{
   private static final Logger LOG = Logger.getInstance(JavaFxExpandAttributeIntention.class);
 

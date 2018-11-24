@@ -62,6 +62,6 @@ public class PsiMigrationManager {
       myCurrentMigration = null;
     }
 
-    PsiManagerEx.getInstanceEx(myProject).beforeChange(true);
+    PsiManager.getInstance(myProject).dropPsiCaches();
   }
 }

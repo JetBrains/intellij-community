@@ -55,7 +55,7 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<CALL_FRAME>, CAL
       throw IllegalStateException("Expected $context, but another suspend context exists")
     }
     context.valueManager.markObsolete()
-    debugListener.resumed()
+    debugListener.resumed(context.vm)
   }
 
   override val context: SuspendContext<CALL_FRAME>?

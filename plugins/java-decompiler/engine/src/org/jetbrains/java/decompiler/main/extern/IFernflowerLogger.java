@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,11 @@ public abstract class IFernflowerLogger {
 
   public abstract void writeMessage(String message, Severity severity);
 
-  public abstract void writeMessage(String message, Throwable t);
+  public abstract void writeMessage(String message, Severity severity, Throwable t);
+
+  public void writeMessage(String message, Throwable t) {
+    writeMessage(message, Severity.ERROR, t);
+  }
 
   public void startReadingClass(String className) { }
 

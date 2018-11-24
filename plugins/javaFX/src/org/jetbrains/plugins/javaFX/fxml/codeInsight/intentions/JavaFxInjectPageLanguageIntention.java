@@ -47,10 +47,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
-/**
-* User: anna
-* Date: 4/8/13
-*/
 public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
   public static final Logger LOG = Logger.getInstance(JavaFxInjectPageLanguageIntention.class);
 

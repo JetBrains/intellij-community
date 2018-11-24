@@ -54,11 +54,7 @@ public abstract class BasicAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveAllDocuments());
     final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null : "The action is only available when files are selected";
 
@@ -77,11 +73,7 @@ public abstract class BasicAction extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           VfsUtil.markDirtyAndRefresh(false, true, false, affectedFiles);
           VcsFileUtil.markFilesDirty(project, Arrays.asList(affectedFiles));
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              GitUIUtil.showOperationErrors(project, exceptions, actionName);
-            }
-          });
+          UIUtil.invokeLaterIfNeeded(() -> GitUIUtil.showOperationErrors(project, exceptions, actionName));
         }
       });
     }
@@ -225,10 +217,6 @@ public abstract class BasicAction extends DumbAwareAction {
    * Save all files in the application (the operation creates write action)
    */
   public static void saveAll() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 }

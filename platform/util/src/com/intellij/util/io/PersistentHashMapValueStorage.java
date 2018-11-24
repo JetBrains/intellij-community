@@ -20,8 +20,10 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,9 +188,10 @@ public class PersistentHashMapValueStorage {
     dataOutputStream.write(data, offset, dataLength);
   }
 
-  private final byte[] myBuffer = new byte[1024];
-  private final UnsyncByteArrayInputStream myBufferStreamWrapper = new UnsyncByteArrayInputStream(myBuffer);
+  private static final ThreadLocalCachedByteArray myBuffer = new ThreadLocalCachedByteArray();
+  private final UnsyncByteArrayInputStream myBufferStreamWrapper = new UnsyncByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
   private final DataInputStream myBufferDataStreamWrapper = new DataInputStream(myBufferStreamWrapper);
+  private static final int ourBufferLength = 4096;
 
   public long compactValues(List<PersistentHashMap.CompactionRecordInfo> infos, PersistentHashMapValueStorage storage) throws IOException {
     PriorityQueue<PersistentHashMap.CompactionRecordInfo> records = new PriorityQueue<PersistentHashMap.CompactionRecordInfo>(
@@ -381,16 +384,18 @@ public class PersistentHashMapValueStorage {
     try {
       while (chunk != 0) {
         if (chunk < 0 || chunk > mySize) throw new PersistentEnumeratorBase.CorruptedException(myFile);
-        int len = (int)Math.min(myBuffer.length, mySize - chunk);
+
+        byte[] buffer = myBuffer.getBuffer(ourBufferLength);
+        int len = (int)Math.min(ourBufferLength, mySize - chunk);
 
         if (myCompressedAppendableFile != null) {
           DataInputStream stream = myCompressedAppendableFile.getStream(chunk);
-          stream.readFully(myBuffer, 0, len);
+          stream.readFully(buffer, 0, len);
           stream.close();
         } else {
-          reader.get(chunk, myBuffer, 0, len);
+          reader.get(chunk, buffer, 0, len);
         }
-        myBufferStreamWrapper.init(myBuffer, 0, len);
+        myBufferStreamWrapper.init(buffer, 0, len);
 
         final int chunkSize = DataInputOutputUtil.readINT(myBufferDataStreamWrapper);
         if (chunkSize < 0) {
@@ -404,8 +409,8 @@ public class PersistentHashMapValueStorage {
         result = b;
 
         checkPreconditions(result, chunkSize, 0);
-        if (chunkSize < myBuffer.length - headerOffset) {
-          System.arraycopy(myBuffer, headerOffset, result, 0, chunkSize);
+        if (chunkSize < ourBufferLength - headerOffset) {
+          System.arraycopy(buffer, headerOffset, result, 0, chunkSize);
         } else {
           if (myCompressedAppendableFile != null) {
             DataInputStream stream = myCompressedAppendableFile.getStream(chunk + headerOffset);

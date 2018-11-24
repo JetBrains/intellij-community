@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.startup.impl;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -52,6 +53,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -142,18 +144,10 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void runPostStartupActivitiesFromExtensions() {
-    StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
-    for (final StartupActivity extension : extensions) {
-      final Runnable runnable = () -> {
-        if (!myProject.isDisposed()) {
-          long start = System.currentTimeMillis();
-          extension.runActivity(myProject);
-          long duration = System.currentTimeMillis() - start;
-          if (duration > 200) {
-            LOG.info(extension.getClass().getSimpleName() + " run in " + duration);
-          }
-        }
-      };
+    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+    AtomicBoolean uiFreezeWarned = new AtomicBoolean();
+    for (StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
+      Runnable runnable = () -> logActivityDuration(uiFreezeWarned, extension);
       if (extension instanceof DumbAware) {
         runActivity(runnable);
       }
@@ -161,6 +155,26 @@ public class StartupManagerImpl extends StartupManagerEx {
         queueSmartModeActivity(runnable);
       }
     }
+    snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
+  }
+
+  private void logActivityDuration(AtomicBoolean uiFreezeWarned, StartupActivity extension) {
+    long duration = runAndMeasure(extension);
+    
+    Application app = ApplicationManager.getApplication();
+    if (duration > 100 && !app.isUnitTestMode()) {
+      boolean edt = app.isDispatchThread();
+      if (edt && uiFreezeWarned.compareAndSet(false, true)) {
+        LOG.info("Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to do them in background under modal progress, or just making them faster to speed up project opening.");
+      }
+      LOG.info(extension.getClass().getSimpleName() + " run in " + duration + "ms " + (edt ? "on UI thread" : "under project opening modal progress"));
+    }
+  }
+
+  private long runAndMeasure(StartupActivity extension) {
+    long start = System.currentTimeMillis();
+    extension.runActivity(myProject);
+    return System.currentTimeMillis() - start;
   }
 
   // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish

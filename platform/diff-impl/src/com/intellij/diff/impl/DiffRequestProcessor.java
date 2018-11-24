@@ -325,7 +325,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<AnAction> getNavigationActions() {
-    return ContainerUtil.<AnAction>list(
+    return ContainerUtil.list(
       new MyPrevDifferenceAction(),
       new MyNextDifferenceAction(),
       new MyPrevChangeAction(),

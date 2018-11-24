@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 8/29/13
- */
 public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSettings> extends GrIntroduceHandlerBase<Settings, PsiClass> {
   @NotNull
   @Override

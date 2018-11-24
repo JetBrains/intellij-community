@@ -36,6 +36,6 @@ public class StringUtilPerformanceTest {
         StringUtil.containsAnyChar(TEST_STRING, "XYZ");
         StringUtil.containsAnyChar("XYZ", TEST_STRING);
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 }

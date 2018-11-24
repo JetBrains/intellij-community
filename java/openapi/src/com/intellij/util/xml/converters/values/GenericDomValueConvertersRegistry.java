@@ -33,9 +33,6 @@ import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class GenericDomValueConvertersRegistry {
 
   public interface Provider {

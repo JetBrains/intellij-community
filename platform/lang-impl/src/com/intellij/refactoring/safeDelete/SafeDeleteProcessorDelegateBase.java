@@ -26,10 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * User: anna
- * Date: 12/1/11
- */
 public abstract class SafeDeleteProcessorDelegateBase implements SafeDeleteProcessorDelegate {
   @Nullable
   public abstract Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @Nullable Module module, @NotNull Collection<PsiElement> allElementsToDelete);

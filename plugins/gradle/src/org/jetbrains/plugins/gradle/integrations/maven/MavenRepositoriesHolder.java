@@ -20,7 +20,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
@@ -50,7 +49,7 @@ import static org.jetbrains.idea.maven.indices.MavenIndicesManager.IndexUpdating
  * @author Vladislav.Soroka
  * @since 10/28/13
  */
-public class MavenRepositoriesHolder extends AbstractProjectComponent implements Disposable {
+public class MavenRepositoriesHolder extends AbstractProjectComponent {
   private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
   private static final Key<String> NOTIFICATION_KEY = Key.create(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
 
@@ -138,14 +137,6 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent implements
     });
 
     notificationManager.showNotification(GradleConstants.SYSTEM_ID, notificationData, NOTIFICATION_KEY);
-  }
-
-  @Override
-  public void dispose() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ExternalSystemNotificationManager.getInstance(myProject).clearNotifications(
-        UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP, NotificationSource.PROJECT_SYNC, GradleConstants.SYSTEM_ID);
-    }
   }
 
   public static MavenRepositoriesHolder getInstance(Project p) {

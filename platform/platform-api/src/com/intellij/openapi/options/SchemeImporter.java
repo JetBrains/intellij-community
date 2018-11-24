@@ -36,9 +36,12 @@ public interface SchemeImporter <T extends Scheme> {
 
   /**
    * Called after the scheme has been imported.
+   *
    * @param scheme The imported scheme.
    * @return An information message to be displayed after import.
    */
   @Nullable
-  String getAdditionalImportInfo(@NotNull T scheme);
+  default String getAdditionalImportInfo(@NotNull T scheme) {
+    return null;
+  }
 }

@@ -22,14 +22,14 @@ import java.awt.event.MouseEvent
 /**
  * @author Sergey Karashevich
  */
-interface ComponentCodeGenerator<C: Component> {
+interface ComponentCodeGenerator<ComponentType: Component> {
 
     fun priority(): Int = 0 // prioritize component code generators 0 - for common, (n) - for the most specific
     @Suppress("UNCHECKED_CAST")
     fun accept(cmp: Component): Boolean
-    fun generate(cmp: C, me: MouseEvent, cp: Point): String
+    fun generate(cmp: ComponentType, me: MouseEvent, cp: Point): String
 
-    fun typeSafeCast(cmp: Component): C = cmp as C
+    fun typeSafeCast(cmp: Component): ComponentType = cmp as ComponentType
     fun generateCode(cmp: Component, me: MouseEvent, cp: Point) = generate(typeSafeCast(cmp), me, cp)
 }
 

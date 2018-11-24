@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: spleaner
- * Date: Aug 9, 2007
- * Time: 4:45:40 PM
- */
 package com.intellij.xml.refactoring;
 
 import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
@@ -105,12 +99,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     myNameSuggestionsField = new NameSuggestionsField(new String[] { myTag.getName() }, myProject, FileTypes.PLAIN_TEXT, myEditor);
-    myNameChangedListener = new NameSuggestionsField.DataChanged() {
-      @Override
-      public void dataChanged() {
-        validateButtons();
-      }
-    };
+    myNameChangedListener = () -> validateButtons();
     myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
     myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {

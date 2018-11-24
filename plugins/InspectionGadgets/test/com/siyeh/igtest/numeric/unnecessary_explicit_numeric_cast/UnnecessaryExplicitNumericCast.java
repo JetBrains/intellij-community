@@ -101,4 +101,12 @@ class S {
     return (T) (Object) 0;
   }
 
+  void polyadic() {
+    int a=1;
+    int b=2;
+    System.out.println(((double) a) / b / 10.0);
+    double c = 3.5;
+    System.out.println((<warning descr="'a' unnecessarily cast to 'double'">double</warning>)a / c / 10.0);
+    System.out.println(19/ (double)a / c / 10.0);
+  }
 }

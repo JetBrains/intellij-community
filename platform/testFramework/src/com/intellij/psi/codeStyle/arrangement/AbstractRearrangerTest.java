@@ -202,12 +202,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   protected List<ArrangementSectionRule> getSectionRules(List<?> rules) {
     List<ArrangementSectionRule> sectionRules = Collections.emptyList();
-    if (rules != null) sectionRules = ContainerUtil.map(rules, new Function<Object, ArrangementSectionRule>() {
-      @Override
-      public ArrangementSectionRule fun(Object o) {
-        return o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o);
-      }
-    });
+    if (rules != null) sectionRules = ContainerUtil.map(rules, (Function<Object, ArrangementSectionRule>)o -> o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o));
     return sectionRules;
   }
 

@@ -153,6 +153,23 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     assertExcluded(src);
   }
 
+  public void testExcludeByPattern() {
+    File root1 = new File(myRoot, "root1");
+    File root2 = new File(myRoot, "root2");
+    JpsModule module = addModule();
+    addContentRoot(module, root1);
+    addContentRoot(module, root2);
+    module.addExcludePattern(JpsPathUtil.pathToUrl(root1.getAbsolutePath()), "*.txt");
+    module.addExcludePattern(JpsPathUtil.pathToUrl(root2.getAbsolutePath()), "out");
+    assertExcluded(new File(root1, "a.txt"));
+    assertExcluded(new File(root1, "dir/a.txt"));
+    assertNotExcluded(new File(root1, "A.java"));
+    assertNotExcluded(new File(root2, "a.txt"));
+    assertExcluded(new File(root2, "out"));
+    assertExcluded(new File(root2, "out/A.java"));
+    assertExcluded(new File(root2, "dir/out/A.java"));
+  }
+
   private static void addSourceRoot(JpsModule module, File src) {
     module.addSourceRoot(JpsPathUtil.pathToUrl(src.getAbsolutePath()), JavaSourceRootType.SOURCE);
   }

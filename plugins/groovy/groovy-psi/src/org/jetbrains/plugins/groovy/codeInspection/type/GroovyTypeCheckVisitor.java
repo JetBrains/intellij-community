@@ -625,7 +625,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   protected void processAssignmentWithinMultipleAssignment(@NotNull GrExpression lhs,
                                                            @NotNull GrExpression rhs,
-                                                           @NotNull GrExpression context) {
+                                                           @NotNull PsiElement context) {
     final PsiType targetType = lhs.getType();
     final PsiType actualType = rhs.getType();
     if (targetType == null || actualType == null) return;
@@ -640,8 +640,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     );
   }
 
-  protected void processTupleAssignment(@NotNull GrTupleExpression tupleExpression,
-                                        @NotNull GrExpression initializer) {
+  @Override
+  public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
+    super.visitTupleAssignmentExpression(expression);
+
+    GrExpression initializer = expression.getRValue();
+    if (initializer == null) return;
+
+    GrTuple tupleExpression = expression.getLValue();
     GrExpression[] lValues = tupleExpression.getExpressions();
     if (initializer instanceof GrListOrMap) {
       GrExpression[] initializers = ((GrListOrMap)initializer).getInitializers();
@@ -649,7 +655,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         GrExpression lValue = lValues[i];
         if (initializers.length <= i) break;
         GrExpression rValue = initializers[i];
-        processAssignmentWithinMultipleAssignment(lValue, rValue, tupleExpression);
+        processAssignmentWithinMultipleAssignment(lValue, rValue, expression);
       }
     }
     else {
@@ -817,16 +823,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       return;
     }
 
-    if (lValue instanceof GrTupleExpression) {
-      processTupleAssignment(((GrTupleExpression)lValue), rValue);
-    }
-    else {
-      PsiType lValueNominalType = lValue.getNominalType();
-      final PsiType targetType = PsiImplUtil.isSpreadAssignment(lValue) ? extractIterableTypeParameter(lValueNominalType, false)
-                                                                        : lValueNominalType;
-      if (targetType != null) {
-        processAssignment(targetType, rValue, lValue, "cannot.assign", assignment, ApplicableTo.ASSIGNMENT);
-      }
+    PsiType lValueNominalType = lValue.getNominalType();
+    final PsiType targetType = PsiImplUtil.isSpreadAssignment(lValue) ? extractIterableTypeParameter(lValueNominalType, false)
+                                                                      : lValueNominalType;
+    if (targetType != null) {
+      processAssignment(targetType, rValue, lValue, "cannot.assign", assignment, ApplicableTo.ASSIGNMENT);
     }
   }
 

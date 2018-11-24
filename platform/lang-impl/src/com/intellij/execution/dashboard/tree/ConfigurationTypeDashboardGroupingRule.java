@@ -70,9 +70,7 @@ public class ConfigurationTypeDashboardGroupingRule implements DashboardGrouping
     if (node instanceof DashboardRunConfigurationNode) {
       RunnerAndConfigurationSettings configurationSettings = ((DashboardRunConfigurationNode)node).getConfigurationSettings();
       ConfigurationType type = configurationSettings.getType();
-      if (type != null) {
-        return new DashboardGroupImpl<>(type, type.getDisplayName(), type.getIcon());
-      }
+      return new DashboardGroupImpl<>(type, type.getDisplayName(), type.getIcon());
     }
     return null;
   }

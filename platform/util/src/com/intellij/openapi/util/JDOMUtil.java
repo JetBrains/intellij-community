@@ -25,6 +25,7 @@ import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.text.StringFactory;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
@@ -310,6 +311,9 @@ public class JDOMUtil {
     return reader == null ? null : loadDocument(reader).detachRootElement();
   }
 
+  /**
+   * Consider to use `loadElement` (JdomKt.loadElement from java) due to more efficient whitespace handling (cannot be changed here due to backward compatibility).
+   */
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
     return stream == null ? null : loadDocument(stream).detachRootElement();
@@ -383,6 +387,18 @@ public class JDOMUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link #writeDocument(Document, String)} or {@link #writeElement(Element)}}
+   */
+  @NotNull
+  @Deprecated
+  public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {
+    CharArrayWriter writer = new CharArrayWriter();
+    writeDocument(document, writer, lineSeparator);
+
+    return StringFactory.createShared(writer.toCharArray()).getBytes(CharsetToolkit.UTF8_CHARSET);
+  }
+
   @NotNull
   public static String writeDocument(@NotNull Document document, String lineSeparator) {
     try {
@@ -417,7 +433,10 @@ public class JDOMUtil {
   }
 
   public static void writeElement(@NotNull Element element, Writer writer, String lineSeparator) throws IOException {
-    XMLOutputter xmlOutputter = createOutputter(lineSeparator);
+    writeElement(element, writer, createOutputter(lineSeparator));
+  }
+
+  public static void writeElement(@NotNull Element element, @NotNull Writer writer, @NotNull XMLOutputter xmlOutputter) throws IOException {
     try {
       xmlOutputter.output(element, writer);
     }
@@ -467,7 +486,12 @@ public class JDOMUtil {
 
   @NotNull
   public static XMLOutputter createOutputter(String lineSeparator) {
-    XMLOutputter xmlOutputter = new MyXMLOutputter();
+    return createOutputter(lineSeparator, null);
+  }
+
+  @NotNull
+  public static XMLOutputter createOutputter(String lineSeparator, @Nullable ElementOutputFilter elementOutputFilter) {
+    XMLOutputter xmlOutputter = new MyXMLOutputter(elementOutputFilter);
     Format format = Format.getCompactFormat().
       setIndent("  ").
       setTextMode(Format.TextMode.TRIM).
@@ -539,6 +563,16 @@ public class JDOMUtil {
   }
 
   public static class MyXMLOutputter extends XMLOutputter {
+    private final ElementOutputFilter myElementOutputFilter;
+
+    public MyXMLOutputter(@Nullable ElementOutputFilter filter) {
+      myElementOutputFilter = filter;
+    }
+
+    public MyXMLOutputter() {
+      this(null);
+    }
+
     @Override
     @NotNull
     public String escapeAttributeEntities(@NotNull String str) {
@@ -550,6 +584,17 @@ public class JDOMUtil {
     public String escapeElementEntities(@NotNull String str) {
       return escapeText(str, false, false);
     }
+
+    @Override
+    protected void printElement(Writer out, Element element, int level, NamespaceStack namespaces) throws IOException {
+      if (myElementOutputFilter == null || myElementOutputFilter.accept(element, level)) {
+        super.printElement(out, element, level, namespaces);
+      }
+    }
+  }
+
+  public interface ElementOutputFilter {
+    boolean accept(@NotNull Element element, int level);
   }
 
   private static void printDiagnostics(@NotNull Element element, String prefix) {
@@ -661,5 +706,18 @@ public class JDOMUtil {
 
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {
     return element == null || (element.getAttributes().size() == attributeCount && element.getContent().isEmpty());
+  }
+
+  public static void merge(@NotNull Element to, @NotNull Element from) {
+    for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
+      Element configuration = iterator.next();
+      iterator.remove();
+      to.addContent(configuration);
+    }
+    for (Iterator<Attribute> iterator = from.getAttributes().iterator(); iterator.hasNext(); ) {
+      Attribute attribute = iterator.next();
+      iterator.remove();
+      to.setAttribute(attribute);
+    }
   }
 }

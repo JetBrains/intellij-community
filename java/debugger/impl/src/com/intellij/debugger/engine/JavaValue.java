@@ -92,7 +92,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myContextSet = contextSet;
   }
 
-  static JavaValue create(JavaValue parent,
+  public static JavaValue create(JavaValue parent,
                           @NotNull ValueDescriptorImpl valueDescriptor,
                           @NotNull EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager,
@@ -365,11 +365,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           @Override
-          public void setRemaining(int remaining) {
-            node.tooManyChildren(remaining);
-          }
-
-          @Override
           public void initChildrenArrayRenderer(ArrayRenderer renderer) {
             renderer.START_INDEX = myCurrentChildrenStart;
             renderer.END_INDEX = myCurrentChildrenStart + XCompositeNode.MAX_CHILDREN_TO_SHOW - 1;
@@ -378,22 +373,22 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
           @Override
           public void addChildren(List<DebuggerTreeNode> nodes, boolean last) {
-            if (nodes.isEmpty()) {
-              node.addChildren(XValueChildrenList.EMPTY, last);
-            }
-            else {
-              nodes.stream().map(DebuggerTreeNode::getDescriptor).forEach(descriptor -> {
+            XValueChildrenList childrenList = XValueChildrenList.EMPTY;
+            if (!nodes.isEmpty()) {
+              childrenList = new XValueChildrenList(nodes.size());
+              for (DebuggerTreeNode treeNode : nodes) {
+                NodeDescriptor descriptor = treeNode.getDescriptor();
                 if (descriptor instanceof ValueDescriptorImpl) {
                   // Value is calculated already in NodeManagerImpl
-                  node.addChildren(XValueChildrenList.singleton(
-                    create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false)), last);
+                  childrenList.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
                 }
                 else if (descriptor instanceof MessageDescriptor) {
-                  node.addChildren(XValueChildrenList.singleton(
-                    new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(), DebuggerTreeRenderer.getDescriptorIcon(descriptor))), last);
+                  childrenList.add(
+                    new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(), DebuggerTreeRenderer.getDescriptorIcon(descriptor)));
                 }
-              });
+              }
             }
+            node.addChildren(childrenList, last);
           }
 
           @Override
@@ -407,6 +402,36 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                                  @NotNull SimpleTextAttributes attributes,
                                  @Nullable XDebuggerTreeNodeHyperlink link) {
             node.setMessage(message, icon, attributes, link);
+          }
+
+          @Override
+          public void addChildren(@NotNull XValueChildrenList children, boolean last) {
+            node.addChildren(children, last);
+          }
+
+          @Override
+          public void tooManyChildren(int remaining) {
+            node.tooManyChildren(remaining);
+          }
+
+          @Override
+          public void setAlreadySorted(boolean alreadySorted) {
+            node.setAlreadySorted(alreadySorted);
+          }
+
+          @Override
+          public void setErrorMessage(@NotNull String errorMessage) {
+            node.setErrorMessage(errorMessage);
+          }
+
+          @Override
+          public void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link) {
+            node.setErrorMessage(errorMessage, link);
+          }
+
+          @Override
+          public boolean isObsolete() {
+            return node.isObsolete();
           }
         }, myEvaluationContext);
       }
@@ -623,7 +648,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public void reBuild(final XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myCurrentChildrenStart = 0;
-    node.getTree().getLaterInvocator().offer(() -> {
+    node.invokeNodeUpdate(() -> {
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);
     });

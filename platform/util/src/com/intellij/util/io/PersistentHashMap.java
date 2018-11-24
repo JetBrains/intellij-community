@@ -316,7 +316,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       if (fileSize > 50 *  megabyte && forceNewCompact()) return true;
       if (deadKeys < 50) return false;
 
-      final int benefitSize = 100 * megabyte;
+      final long benefitSize = Math.max(100 * megabyte, fileSize / 4);
       final long avgValueSize = fileSize / (liveKeys + deadKeys);
 
       return deadKeys > liveKeys ||

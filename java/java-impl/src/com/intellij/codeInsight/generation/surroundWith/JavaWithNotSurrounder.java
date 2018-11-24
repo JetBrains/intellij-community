@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 
-class JavaWithNotSurrounder extends JavaBooleanExpressionSurrounder {
+public class JavaWithNotSurrounder extends JavaBooleanExpressionSurrounder {
   @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();

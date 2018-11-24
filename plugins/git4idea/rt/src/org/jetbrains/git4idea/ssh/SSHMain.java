@@ -409,38 +409,36 @@ public class SSHMain implements GitExternalApp {
    * @param releaseSemaphore if true the semaphore will be released
    */
   private void forward(@NonNls final String name, final OutputStream out, final InputStream in, final boolean releaseSemaphore) {
-    final Runnable action = new Runnable() {
-      public void run() {
-        byte[] buffer = new byte[BUFFER_SIZE];
-        int rc;
+    final Runnable action = () -> {
+      byte[] buffer = new byte[BUFFER_SIZE];
+      int rc;
+      try {
         try {
           try {
-            try {
-              while ((rc = in.read(buffer)) != -1) {
-                out.write(buffer, 0, rc);
-              }
-            }
-            finally {
-              out.close();
+            while ((rc = in.read(buffer)) != -1) {
+              out.write(buffer, 0, rc);
             }
           }
           finally {
-            in.close();
-          }
-        }
-        catch (IOException e) {
-          System.err.println(SSHMainBundle.message("sshmain.forwarding.failed", name, e.getMessage()));
-          e.printStackTrace();
-          myExitCode = 1;
-          if (releaseSemaphore) {
-            // in the case of error, release semaphore, so that application could exit
-            myForwardCompleted.release(1);
+            out.close();
           }
         }
         finally {
-          if (releaseSemaphore) {
-            myForwardCompleted.release(1);
-          }
+          in.close();
+        }
+      }
+      catch (IOException e) {
+        System.err.println(SSHMainBundle.message("sshmain.forwarding.failed", name, e.getMessage()));
+        e.printStackTrace();
+        myExitCode = 1;
+        if (releaseSemaphore) {
+          // in the case of error, release semaphore, so that application could exit
+          myForwardCompleted.release(1);
+        }
+      }
+      finally {
+        if (releaseSemaphore) {
+          myForwardCompleted.release(1);
         }
       }
     };

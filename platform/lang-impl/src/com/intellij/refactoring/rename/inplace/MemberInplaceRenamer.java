@@ -56,10 +56,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 11/9/11
- */
 public class MemberInplaceRenamer extends VariableInplaceRenamer {
   private final PsiElement mySubstituted;
   private RangeMarker mySubstitutedRange;

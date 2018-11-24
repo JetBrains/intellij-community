@@ -39,9 +39,6 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
 
-/**
- * Created by Max Medvedev on 25/04/14
- */
 public class CompleteCodeReferenceElement {
   private static final Logger LOG = Logger.getInstance(CompleteCodeReferenceElement.class);
 

@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @State(name = "DefaultFont", storages = @Storage("editor.xml"))
 public class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
 
@@ -40,6 +42,9 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     public int FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE;
     public @NotNull String FONT_FAMILY = FontPreferences.DEFAULT_FONT_NAME;
     public float FONT_SCALE = 1.0f;
+    public float LINE_SPACING = FontPreferences.DEFAULT_LINE_SPACING;
+    public boolean USE_LIGATURES = false;
+    public @Nullable String SECONDARY_FONT_FAMILY;
 
     /**
      * Serialization constructor.
@@ -51,7 +56,13 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     public PersistentFontPreferences(FontPreferences fontPreferences) {
       FONT_FAMILY = fontPreferences.getFontFamily();
       FONT_SIZE = fontPreferences.getSize(FONT_FAMILY);
-      FONT_SCALE = UISettings.getNormalizingScale();
+      FONT_SCALE = UISettings.getDefFontScale();
+      LINE_SPACING = fontPreferences.getLineSpacing();
+      USE_LIGATURES = fontPreferences.useLigatures();
+      List<String> fontFamilies = fontPreferences.getEffectiveFontFamilies();
+      if (fontFamilies.size() > 1) {
+        SECONDARY_FONT_FAMILY = fontFamilies.get(1);
+      }
     }
   }
 
@@ -71,6 +82,11 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     myFontPreferences.clear();
     int fontSize = UISettings.restoreFontSize(state.FONT_SIZE, state.FONT_SCALE);
     myFontPreferences.register(state.FONT_FAMILY, fontSize);
+    myFontPreferences.setLineSpacing(state.LINE_SPACING);
+    myFontPreferences.setUseLigatures(state.USE_LIGATURES);
+    if (state.SECONDARY_FONT_FAMILY != null) {
+      myFontPreferences.register(state.SECONDARY_FONT_FAMILY, fontSize);
+    }
     myFontPreferences.setChangeListener(() -> EditorFontCache.getInstance().reset());
   }
 

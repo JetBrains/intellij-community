@@ -26,10 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: Sep 6, 2010
- */
 public class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
   public static final String CHANGE_SIGNATURE = "Apply signature change";
   private final String myMethodName;

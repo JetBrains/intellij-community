@@ -20,9 +20,6 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterPositionUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: spLeaner
- */
 public class AfterElement extends PositionElementFilter {
 
   public AfterElement(ElementFilter filter){

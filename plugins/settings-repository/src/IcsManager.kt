@@ -21,11 +21,11 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -73,7 +73,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   private val commitAlarm = SingleAlarm(Runnable {
     runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
       }
     }
@@ -243,8 +243,8 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     icsManager = IcsManager(pluginSystemDir)
 
     if (!pluginSystemDir.exists()) {
-      LOG.catchAndLog {
-        val oldPluginDir = Paths.get(PathManager.getSystemPath(), "settingsRepository")
+      LOG.runAndLogException {
+        val oldPluginDir = appSystemDir.resolve("settingsRepository")
         if (oldPluginDir.exists()) {
           oldPluginDir.move(pluginSystemDir)
         }

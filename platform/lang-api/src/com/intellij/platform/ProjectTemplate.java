@@ -44,6 +44,7 @@ public interface ProjectTemplate {
   /**
    * @return null if ok, error message otherwise
    */
+  @Deprecated
   @Nullable
   ValidationInfo validateSettings();
 }

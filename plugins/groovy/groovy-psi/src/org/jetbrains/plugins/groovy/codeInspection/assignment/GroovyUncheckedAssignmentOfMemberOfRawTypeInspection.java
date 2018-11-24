@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -144,7 +143,6 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       super.visitAssignmentExpression(assignment);
 
       GrExpression lValue = assignment.getLValue();
-      if (lValue instanceof GrTupleExpression) return;
       if (!PsiUtil.mightBeLValue(lValue)) return;
 
       IElementType opToken = assignment.getOperationTokenType();

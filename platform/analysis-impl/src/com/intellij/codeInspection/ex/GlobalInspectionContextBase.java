@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,6 +239,12 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       public void onSuccess() {
         notifyInspectionsFinished(scope);
       }
+
+      @Override
+      public void onCancel() {
+        // execute cleanup in EDT because of myTools
+        cleanup();
+      }
     });
   }
 
@@ -249,15 +255,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       public boolean shouldStartInBackground() {
         return true;
       }
-
-      @Override
-      public void processSentToBackground() {
-
-      }
     };
   }
 
-  protected void notifyInspectionsFinished(AnalysisScope scope) {
+  protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
   }
 
   public void performInspectionsWithProgress(@NotNull final AnalysisScope scope, final boolean runGlobalToolsOnly, final boolean isOfflineInspections) {
@@ -278,11 +279,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       ProgressManager.getInstance().executeProcessUnderProgress(() -> runTools(scope, runGlobalToolsOnly, isOfflineInspections), ProgressWrapper.wrap(myProgressIndicator));
     }
     catch (ProcessCanceledException e) {
-      cleanup();
       throw e;
     }
     catch (IndexNotReadyException e) {
-      cleanup();
       DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
       throw new ProcessCanceledException();
     }

@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="automaton" level="project" />
     <orderEntry type="module" module-name="projectModel-api" exported="" />
+    <orderEntry type="module" module-name="platform-api" />
   </component>
 </module>

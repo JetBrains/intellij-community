@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.BaseDocumentAdapter;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -354,7 +353,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  private static class MyDocument extends BaseDocumentAdapter implements DocumentEx {
+  private static class MyDocument extends UserDataHolderBase implements DocumentEx {
     RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this) {
     };
     char[] myChars = ArrayUtil.EMPTY_CHAR_ARRAY;
@@ -404,7 +403,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     @Override
-    public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.process(processor); }
+    public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.processAll(processor); }
 
     @Override
     public boolean processRangeMarkersOverlappingWith(int start,
@@ -415,11 +414,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @NotNull
     @Override
-    public String getText() { return myString; }
-
-    @NotNull
-    @Override
-    public String getText(@NotNull TextRange range) { return range.substring(getText()); }
+    public CharSequence getImmutableCharSequence() {
+      return myString;
+    }
 
     @NotNull
     @Override
@@ -436,5 +433,42 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public int getLineEndOffset(int line) { return myChars.length == 0 ? 0 : myLineSet.getLineEnd(line); }
+
+    @Override
+    public void insertString(int offset, @NotNull CharSequence s) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void deleteString(int startOffset, int endOffset) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public boolean isWritable() {
+      return false;
+    }
+
+    @Override
+    public long getModificationStamp() {
+      return 0;
+    }
+
+    @NotNull
+    @Override
+    public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @NotNull
+    @Override
+    public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
   }
 }

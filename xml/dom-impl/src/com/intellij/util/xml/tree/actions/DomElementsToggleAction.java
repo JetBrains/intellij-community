@@ -30,9 +30,6 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomElementsToggleAction extends ToggleAction {
   private final DomModelTreeView myTreeView;
   private final Class myClass;

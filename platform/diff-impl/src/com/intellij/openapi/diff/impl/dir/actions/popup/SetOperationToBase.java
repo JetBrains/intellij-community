@@ -33,14 +33,12 @@ import javax.swing.*;
 public abstract class SetOperationToBase extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DirDiffOperation operation = getOperation();
-    boolean setToDefault = operation == DirDiffOperation.NONE;
     final DirDiffTableModel model = getModel(e);
     final JTable table = getTable(e);
     assert model != null && table != null;
     for (DirDiffElementImpl element : model.getSelectedElements()) {
       if (isEnabledFor(element)) {
-        element.setOperation(setToDefault ? element.getDefaultOperation() : operation);
+        element.setOperation(getOperation(element));
       } else {
         element.setOperation(DirDiffOperation.NONE);
       }
@@ -49,7 +47,7 @@ public abstract class SetOperationToBase extends DumbAwareAction {
   }
 
   @NotNull
-  protected abstract DirDiffOperation getOperation();
+  protected abstract DirDiffOperation getOperation(DirDiffElementImpl element);
 
   @Override
   public final void update(AnActionEvent e) {

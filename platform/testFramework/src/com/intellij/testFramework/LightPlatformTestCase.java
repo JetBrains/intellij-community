@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
@@ -89,6 +88,7 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
@@ -303,7 +303,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
-    projectManagerEx.openTestProject(ourProject);
+    try {
+      projectManagerEx.openTestProject(ourProject);
+    }
+    catch (Throwable e) {
+      ourProject = null;
+      throw e;
+    }
     if (reusedProject) {
       DumbService.getInstance(ourProject).queueTask(new UnindexedFilesUpdater(ourProject));
     }
@@ -403,8 +409,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
             e.printStackTrace();
           }
         }
-        EncodingManager encodingManager = EncodingManager.getInstance();
-        if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
 
         FileDocumentManager manager = FileDocumentManager.getInstance();
         if (manager instanceof FileDocumentManagerImpl) {
@@ -413,6 +417,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       })).
       append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
       append(() -> {
+        EncodingManager encodingManager = EncodingManager.getInstance();
+        if (encodingManager instanceof EncodingManagerImpl) {
+          ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
+        }
+
         if (!ourAssertionsInTestDetected) {
           if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred;
@@ -485,9 +494,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }).run();
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public final void runBare() throws Throwable {
+    runBareImpl(this::startRunAndTear);
+  }
+
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
     if (!shouldRunTest()) {
       return;
     }
@@ -496,7 +509,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     EdtTestUtil.runInEdtAndWait(() -> {
       try {
         ourTestThread = Thread.currentThread();
-        startRunAndTear();
+        start.run();
       }
       finally {
         ourTestThread = null;
@@ -607,7 +620,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @NotNull
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyleSettingsManager.getSettings(getProject());
   }
 
@@ -656,8 +668,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourProject = null;
     assertTrue(ourModule.isDisposed());
     ourModule = null;
-    assertTrue(ourPsiManager.isDisposed());
-    ourPsiManager = null;
+    if (ourPsiManager != null) {
+      assertTrue(ourPsiManager.isDisposed());
+      ourPsiManager = null;
+    }
     ourPathToKeep = null;
   }
 

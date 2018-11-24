@@ -102,7 +102,7 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
   }
 
   public static Method createGetFontMethod() {
-    return new Method("getFont" + System.currentTimeMillis(), ourFontType,
+    return new Method(AsmCodeGenerator.GET_FONT_METHOD_NAME, ourFontType,
                       new Type[]{ourStringType, Type.INT_TYPE, Type.INT_TYPE, ourFontType});
   }
 

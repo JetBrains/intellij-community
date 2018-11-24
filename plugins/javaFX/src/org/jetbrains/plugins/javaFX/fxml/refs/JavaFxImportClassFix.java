@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
-* User: anna
-*/
 abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTagNameReference> {
 
   public JavaFxImportClassFix(@NotNull JavaFxTagNameReference ref, @NotNull XmlTag element) {

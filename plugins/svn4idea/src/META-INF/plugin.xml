@@ -7,12 +7,6 @@
   <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.svn.SvnFileUrlMappingImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-  </project-components>
 
   <actions>
 
@@ -87,10 +81,10 @@
     </group>
     <action id="Subversion.MarkLocallyDeletedTreeResolved"
             class="org.jetbrains.idea.svn.actions.MarkLocallyDeletedTreeConflictResolvedAction">
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.Diff"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowDiff"/>
     </action>
     <reference id="Subversion.MarkTreeResolved">
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.Diff"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowDiff"/>
     </reference>
     <group id="SubversionUpdateActionGroup" class="org.jetbrains.idea.svn.actions.SubversionGroup">
       <reference ref="ChangesView.AddUnversioned"/>
@@ -121,6 +115,8 @@
     <applicationService serviceInterface="org.jetbrains.idea.svn.SvnApplicationSettings"
                         serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.SvnConfiguration"/>
+    <projectService serviceInterface="org.jetbrains.idea.svn.SvnFileUrlMapping"
+                    serviceImplementation="org.jetbrains.idea.svn.SvnFileUrlMappingImpl"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"
                     serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.history.LoadedRevisionsCache"
@@ -139,6 +135,13 @@
     <search.topHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"
          crawlUpToCheckUnderVcs="true"/>
+    <projectConfigurable id="vcs.Subversion" displayName="Subversion" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
+                         parentId="project.propVCSSupport.Mappings" groupWeight="-500">
+      <configurable id="vcs.Subversion.Presentation" displayName="Presentation"
+                    instance="org.jetbrains.idea.svn.SvnConfigurable$Presentation"/>
+      <configurable id="vcs.Subversion.Network" displayName="Network" instance="org.jetbrains.idea.svn.SvnConfigurable$Network"/>
+      <configurable id="vcs.Subversion.SSH" displayName="SSH" instance="org.jetbrains.idea.svn.SvnConfigurable$Ssh"/>
+    </projectConfigurable>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
 
     <statistics.usagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>

@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -338,7 +337,7 @@ public class MavenRootModelAdapter {
 
     Library library = provider.getLibraryByName(libraryName);
     if (library == null) {
-      library = provider.createLibrary(libraryName);
+      library = provider.createLibrary(libraryName, getMavenExternalSource());
     }
     Library.ModifiableModel libraryModel = provider.getModifiableLibraryModel(library);
 
@@ -455,6 +454,10 @@ public class MavenRootModelAdapter {
 
   public static boolean isMavenLibrary(@Nullable Library library) {
     return library != null && MavenArtifact.isMavenLibrary(library.getName());
+  }
+
+  public static ProjectModelExternalSource getMavenExternalSource() {
+    return ExternalProjectSystemRegistry.getInstance().getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID);
   }
 
   @Nullable

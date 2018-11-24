@@ -28,11 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: lex
- * Date: Oct 29, 2003
- * Time: 9:29:36 PM
- */
 public class PositionUtil extends ContextUtil {
   public static SourcePosition getSourcePosition(final StackFrameContext context) {
     if(context instanceof DebuggerContextImpl) return ((DebuggerContextImpl)context).getSourcePosition();

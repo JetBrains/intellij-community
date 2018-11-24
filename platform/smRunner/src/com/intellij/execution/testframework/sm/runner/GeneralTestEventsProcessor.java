@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -213,14 +212,11 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) {
-            return;
-          }
-          myTransferToEDTQueue.drain();
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        if (myProject.isDisposed()) {
+          return;
         }
+        myTransferToEDTQueue.drain();
       });
     }
   }

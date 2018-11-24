@@ -146,9 +146,15 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Clears the resolve caches of the PSI manager. Can be used to reduce memory consumption
-   * in batch operations sequentially processing multiple files.
+   * in batch operations sequentially processing multiple files. Can be invoked from any thread.
    */
   public abstract void dropResolveCaches();
+
+  /**
+   * Clears all {@link com.intellij.psi.util.CachedValue} depending on {@link PsiModificationTracker#MODIFICATION_COUNT} and resolve caches.
+   * Can be used to reduce memory consumption in batch operations sequentially processing multiple files. Should be invoked on Swing thread.
+   */
+  public abstract void dropPsiCaches();
 
   /**
    * Checks if the specified PSI element belongs to the sources of the project.

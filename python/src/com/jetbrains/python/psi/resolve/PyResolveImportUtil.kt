@@ -82,8 +82,8 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val pythonResults = listOf(relativeResults,
                              resultsFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
-  val allResults = foreignResults + pythonResults
-  val results = if (name.componentCount > 0) foreignResults + findFirstResults(pythonResults) else allResults
+  val allResults = pythonResults + foreignResults
+  val results = if (name.componentCount > 0) findFirstResults(pythonResults) + foreignResults else allResults
 
   if (mayCache) {
     cache?.put(key, results)
@@ -250,9 +250,10 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
 
   val visitor = RootVisitor { root, module, sdk, isModuleSource ->
     val results = if (isModuleSource) moduleResults else sdkResults
+    val effectiveSdk = sdk ?: context.effectiveSdk
     if (!root.isValid ||
         root == PyUserSkeletonsUtil.getUserSkeletonsDirectory() ||
-        sdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, sdk)) {
+        effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)) {
       return@RootVisitor true
     }
     results.addAll(resolveInRoot(name, root, context))

@@ -35,7 +35,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -55,7 +54,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
   @NonNls public static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-  @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  @NonNls public static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
 
   protected final Project myProject;
 
@@ -403,9 +402,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     incModificationCount();
 
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    psiManager.dropResolveCaches();
-    ((PsiModificationTrackerImpl)psiManager.getModificationTracker()).incCounter();
+    PsiManager.getInstance(myProject).dropPsiCaches();
 
     fireRootsChangedEvent(fileTypes);
 

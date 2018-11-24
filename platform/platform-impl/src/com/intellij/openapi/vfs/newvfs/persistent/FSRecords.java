@@ -283,7 +283,9 @@ public class FSRecords {
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
                                              PagedFileStorage.BUFFER_SIZE, aligned, IOUtil.ourByteBuffersUseNativeByteOrder);
 
-        if (myRecords.length() == 0) {
+        boolean initial = myRecords.length() == 0;
+
+        if (initial) {
           cleanRecord(0); // Clean header
           cleanRecord(1); // Create root record
           setCurrentVersion();
@@ -296,7 +298,7 @@ public class FSRecords {
         if (myRecords.getInt(HEADER_CONNECTION_STATUS_OFFSET) != SAFELY_CLOSED_MAGIC) {
           throw new IOException("FS repository wasn't safely shut down");
         }
-        markDirty();
+        if (initial) markDirty();
         scanFreeRecords();
       }
       catch (Exception e) { // IOException, IllegalArgumentException
@@ -809,7 +811,6 @@ public class FSRecords {
     w.lock();
 
     try {
-      DbConnection.markDirty();
       if (ourStoreRootsSeparately) {
         try {
           try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
@@ -823,6 +824,8 @@ public class FSRecords {
             }
           }
         } catch (FileNotFoundException ignored) {}
+
+        DbConnection.markDirty();
         try (Writer stream = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile, true)))) {
           int id = createRecord();
           stream.write(id + " " + rootUrl + "\n");
@@ -830,7 +833,7 @@ public class FSRecords {
         }
       }
 
-      final int root = getNames().enumerate(rootUrl);
+      int root = getNames().tryEnumerate(rootUrl);
 
       final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
       int[] names = ArrayUtil.EMPTY_INT_ARRAY;
@@ -859,6 +862,9 @@ public class FSRecords {
           input.close();
         }
       }
+
+      DbConnection.markDirty();
+      root = getNames().enumerate(rootUrl);
 
       int id;
       try (DataOutputStream output = writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
@@ -1728,7 +1734,8 @@ public class FSRecords {
           if (page > 0) return;
           page = -page;
           fixedSize = true;
-        } else {
+        }
+        else {
           incModCount(myFileId);
           page = getContentRecordId(myFileId);
           if (page == 0 || contentStorage.getRefCount(page) > 1) {
@@ -1741,19 +1748,16 @@ public class FSRecords {
         if (useSnappyForCompression) {
           BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
           DataOutputStream outputStream = new DataOutputStream(out);
-          byte[] rawBytes = bytes.getBytes();
-          if (bytes.getOffset() != 0) {
-            rawBytes = new byte[bytes.getLength()];
-            System.arraycopy(bytes.getBytes(), bytes.getOffset(), rawBytes, 0, bytes.getLength());
-          }
-          CompressionUtil.writeCompressed(outputStream, rawBytes, bytes.getLength());
+          CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
           outputStream.close();
           bytes = new ByteSequence(out.getInternalBuffer(), 0, out.size());
         }
         contentStorage.writeBytes(page, bytes, fixedSize);
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         DbConnection.handleError(e);
-      } finally {
+      }
+      finally {
         w.unlock();
       }
     }

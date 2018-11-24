@@ -127,17 +127,12 @@ public class ImportFromExistingAction implements QuestionAction {
       }
     };
 
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-      @Override
-      public void consume(DataContext dataContext) {
-        new PopupChooserBuilder(list)
-          .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
-          .setItemChoosenCallback(runnable)
-          .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
-          .createPopup()
-          .showInBestPositionFor(dataContext);
-      }
-    });
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> new PopupChooserBuilder(list)
+      .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
+      .setItemChoosenCallback(runnable)
+      .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
+      .createPopup()
+      .showInBestPositionFor(dataContext));
   }
 
   private void doIt(final ImportCandidateHolder item) {

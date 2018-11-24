@@ -27,12 +27,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/26/13
- * Time: 4:50 PM
- */
 public class ProxyExceptionsTest {
   private HttpConfigurable myConfigurable;
   private IdeaWideProxySelector mySelector;

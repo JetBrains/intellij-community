@@ -222,6 +222,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   private VirtualFileSystemEntry createChild(int nameId, int id, @NotNull NewVirtualFileSystem delegate) {
+    FileLoadingTracker.fileLoaded(this, nameId);
+
     final int attributes = ourPersistence.getFileAttributes(id);
     VfsData.Segment segment = VfsData.getSegment(id, true);
     try {

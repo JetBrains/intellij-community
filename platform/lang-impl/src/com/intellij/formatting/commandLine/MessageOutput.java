@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintWriter;
 
-class MessageOutput {
+public class MessageOutput {
 
   private final PrintWriter myErrorOutput;
   private final PrintWriter myInfoOutput;

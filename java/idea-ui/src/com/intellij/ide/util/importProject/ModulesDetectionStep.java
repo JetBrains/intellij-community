@@ -104,7 +104,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   protected List<ModuleDescriptor> calculate() {
     myInsight.scanModules();
     final List<ModuleDescriptor> suggestedModules = myInsight.getSuggestedModules();
-    return suggestedModules != null? suggestedModules : Collections.<ModuleDescriptor>emptyList();
+    return suggestedModules != null? suggestedModules : Collections.emptyList();
   }
 
   @Override

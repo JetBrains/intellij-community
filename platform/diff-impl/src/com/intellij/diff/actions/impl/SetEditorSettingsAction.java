@@ -30,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.util.ArrayUtil.toObjectArray;
@@ -165,11 +164,26 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    List<AnAction> result = new ArrayList<>();
-    ContainerUtil.addAll(result, myActions);
-    result.add(Separator.getInstance());
-    result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP));
+    AnAction[] children = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP)).getChildren(e);
+    AnAction editorSettingsGroup = ActionManager.getInstance().getAction("Diff.EditorGutterPopupMenu.EditorSettings");
+
+    DefaultActionGroup ourGroup = new DefaultActionGroup();
+    ourGroup.add(Separator.getInstance());
+    ourGroup.addAll(myActions);
+    ourGroup.add(editorSettingsGroup);
+    ourGroup.add(Separator.getInstance());
+
+    List<AnAction> result = ContainerUtil.newArrayList(children);
+    replaceOrAppend(result, editorSettingsGroup, ourGroup);
+
     return toObjectArray(result, AnAction.class);
+  }
+
+  private static <T> void replaceOrAppend(List<T> list, T from, T to) {
+    int index = list.indexOf(from);
+    if (index == -1) index = list.size();
+    list.remove(from);
+    list.add(index, to);
   }
 
   private abstract class EditorSettingToggleAction extends ToggleAction implements DumbAware, EditorSettingAction {

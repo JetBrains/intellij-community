@@ -56,10 +56,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 11-Jan-2006
- */
 public class ExportHTMLAction extends AnAction implements DumbAware {
   private final InspectionResultsView myView;
   @NonNls private static final String PROBLEMS = "problems";

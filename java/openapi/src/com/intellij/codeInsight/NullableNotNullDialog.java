@@ -47,10 +47,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 1/25/11
- */
 public class NullableNotNullDialog extends DialogWrapper {
   private final Project myProject;
   private AnnotationsPanel myNullablePanel;

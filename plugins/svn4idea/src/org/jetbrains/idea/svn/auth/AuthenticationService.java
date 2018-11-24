@@ -61,12 +61,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 1:27 PM
- */
 public class AuthenticationService {
 
   @NotNull private final SvnVcs myVcs;

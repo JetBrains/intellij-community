@@ -40,9 +40,9 @@ public class Endpoint {
     DSDispatcher _dsDispatcher = new DSDispatcher();
     UriBuilder _uriBuilder = new UriBuilder();
     _uriBuilder.addPathSegment(uri);
-    String _url = _uriBuilder.buildUri(Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap());
+    String _url = _uriBuilder.buildUri(Collections.emptyMap(), Collections.emptyMap());
     DataSource _retVal =
-      _dsDispatcher.doGET(_url, Collections.<String, Object>emptyMap(), "application/vnd.org.jfrog.artifactory.search.ArtifactSearchResult+json");
+      _dsDispatcher.doGET(_url, Collections.emptyMap(), "application/vnd.org.jfrog.artifactory.search.ArtifactSearchResult+json");
     return _retVal;
   }
 

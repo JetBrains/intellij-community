@@ -2,8 +2,9 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -78,7 +79,9 @@ public class StudyStepicFormatTest {
     answerPlaceholder.setSubtaskInfos(ContainerUtil.newHashMap(ContainerUtil.list(0, 1), ContainerUtil.list(info1, info2)));
     final String placeholderSerialization = gson.toJson(answerPlaceholder);
     String expected = FileUtil.loadFile(new File(getTestDataPath(), "placeholder.json"));
-    assertEquals(expected, placeholderSerialization);
+    JsonObject object = new JsonParser().parse(expected).getAsJsonObject();
+    StudySerializationUtils.Json.removeIndexFromSubtaskInfos(object);
+    assertEquals(gson.toJson(gson.fromJson(object, AnswerPlaceholder.class)), placeholderSerialization);
 
   }
 
@@ -93,6 +96,6 @@ public class StudyStepicFormatTest {
 
   @NotNull
   private static String getTestDataPath() {
-    return FileUtil.join(PlatformTestUtil.getCommunityPath(), "python/educational-core/testData/stepic");
+    return FileUtil.join("testData/stepic");
   }
 }

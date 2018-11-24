@@ -135,13 +135,13 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     if (qualifierTypeElement != null) {
       final PsiType psiType = qualifierTypeElement.getType();
       if (psiType instanceof PsiClassType && !(((PsiClassType)psiType).isRaw())) {
+        PsiClass aClass = ((PsiClassType)psiType).resolve();
+        if (aClass == null) return;
         final JavaResolveResult result = expression.advancedResolve(false);
         final PsiElement element = result.getElement();
         if (element instanceof PsiTypeParameterListOwner) {
-          final PsiMethodReferenceExpression copy = createMethodReference(expression, qualifierTypeElement);
-          final JavaResolveResult simplifiedResolve = copy.advancedResolve(false);
-          final PsiElement candidate = simplifiedResolve.getElement();
-          if (candidate == element) {
+          PsiMethod method = element instanceof PsiMethod ? (PsiMethod)element : null;
+          if (PsiDiamondTypeUtil.areTypeArgumentsRedundant(((PsiClassType)psiType).getParameters(), expression, false, method, aClass.getTypeParameters())) {
             final PsiJavaCodeReferenceElement referenceElement = qualifierTypeElement.getInnermostComponentReferenceElement();
             LOG.assertTrue(referenceElement != null, qualifierTypeElement);
             final PsiReferenceParameterList parameterList = referenceElement.getParameterList();

@@ -33,7 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
@@ -50,9 +50,8 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -76,6 +75,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -128,12 +128,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     // so we need resize window when it is shown
     doWhenFirstShown(this, this::pack);
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
-    }, this);
+    });
 
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
 
@@ -204,8 +204,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
   }
 
-  @Nullable
-  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList> pair) {
+  @NotNull
+  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList<AnAction>> pair) {
     if (pair.second.getModel().getSize() == 1) {
       JBTextField textField = UIUtil.uiTraverser(pair.first).filter(JBTextField.class).first();
       if (textField != null) {
@@ -476,10 +476,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     private AnAction wrapGroups(AnAction action) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        final Pair<JPanel, JBList> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack(), this);
+        final Pair<JPanel, JBList<AnAction>> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack(), this);
         final Runnable onDone = () -> {
           setTitle("New Project");
-          final JBList list = panel.second;
+          final JBList<AnAction> list = panel.second;
           ScrollingUtil.ensureSelectionExists(list);
           final ListSelectionListener[] listeners =
             ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
@@ -488,12 +488,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           for (ListSelectionListener listener : listeners) {
             listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
           }
-          JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
-          if (toFocus != null) {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true);
-            });
-          }
+          JComponent toFocus = getPreferredFocusedComponent(panel);
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
         };
         final String name = action.getClass().getName();
         mySlidingPanel.add(name, panel.first);
@@ -610,9 +606,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             if (focusListOnLeft) {
               if (list != null) {
-                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                  IdeFocusManager.getGlobalInstance().requestFocus(list, true);
-                });
+                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(list, true));
               }
             } else {
               focusPrev(comp);
@@ -643,9 +637,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (policy != null) {
         Component prev = policy.getComponentBefore(FlatWelcomeFrame.this, comp);
         if (prev != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(prev, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(prev, true));
         }
       }
     }
@@ -655,9 +647,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (policy != null) {
         Component next = policy.getComponentAfter(FlatWelcomeFrame.this, comp);
         if (next != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(next, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
         }
       }
     }
@@ -791,23 +781,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return getRootPane();
   }
 
-  public static void notifyFrameClosed(JFrame frame) {
-    saveLocation(frame.getBounds());
-  }
-
   public static class WelcomeScreenActionsPanel {
     private JPanel root;
     private JPanel actions;
   }
-  
-  public static Pair<JPanel, JBList> createActionGroupPanel(final ActionGroup action,
-                                                            final JComponent parent,
-                                                            final Runnable backAction,
-                                                            @NotNull Disposable parentDisposable) {
+
+  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(final ActionGroup action,
+                                                                      final JComponent parent,
+                                                                      final Runnable backAction,
+                                                                      @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
     final List<AnAction> groups = flattenActionGroups(action);
-    final DefaultListModel<AnAction> model = JBList.createDefaultListModel(ArrayUtil.toObjectArray(groups));
+    final DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
     final JBList<AnAction> list = new JBList<>(model);
     for (AnAction group : groups) {
       if (group instanceof Disposable) {
@@ -891,7 +877,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (back != null && !singleProjectGenerator) {
       actionsListPanel.add(back, BorderLayout.SOUTH);
     }
-    
+
+    final HashMap<Object, JPanel> panelsMap = ContainerUtil.newHashMap();
     ListSelectionListener selectionListener = e -> {
       if (e.getValueIsAdjusting()) {
         // Update when a change has been finalized.
@@ -903,7 +890,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
       Object value = list.getSelectedValue();
       if (value instanceof AbstractActionWithPanel) {
-        JPanel panel = ((AbstractActionWithPanel)value).createPanel();
+        final JPanel panel = panelsMap.computeIfAbsent(value, o -> ((AbstractActionWithPanel)value).createPanel());
+        ((AbstractActionWithPanel)value).onPanelSelected();
+
         panel.setBorder(JBUI.Borders.empty(7, 10));
         selected.set(panel);
         main.add(selected.get());
@@ -965,10 +954,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return back;
   }
 
-  public static void installQuickSearch(JBList list) {
-    new ListSpeedSearch(list, (Convertor<Object, String>)o -> {
+  public static void installQuickSearch(JBList<AnAction> list) {
+    new ListSpeedSearch<>(list, (Function<AnAction, String>)o -> {
       if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
-        return ((AbstractActionWithPanel)o).getTemplatePresentation().getText();
+        return o.getTemplatePresentation().getText();
       }
       return null;
     });

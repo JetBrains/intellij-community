@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public final class SpreadState {
   @Nullable private final PsiType containerType;
   @Nullable private final SpreadState innerState;
 
-  public SpreadState(@Nullable PsiType type, @Nullable SpreadState state) {
+  private SpreadState(@Nullable PsiType type, @Nullable SpreadState state) {
     containerType = type;
     innerState = state;
   }

@@ -16,17 +16,45 @@
 package com.intellij.stats.events.completion
 
 import com.google.gson.Gson
+import com.google.gson.internal.LinkedTreeMap
+import java.lang.reflect.Field
 
 object JsonSerializer {
     private val gson = Gson()
-    fun toJson(obj: Any) = com.intellij.stats.events.completion.JsonSerializer.gson.toJson(obj)
-    fun <T> fromJson(json: String, clazz: Class<T>) = com.intellij.stats.events.completion.JsonSerializer.gson.fromJson(json, clazz)
+    private val ignoredFields = setOf(
+      "recorderId", "timestamp", "sessionUid", "actionType", "userUid"
+    )
+
+    fun toJson(obj: Any): String = gson.toJson(obj)
+
+    fun <T> fromJson(json: String, clazz: Class<T>): DeserializationResult<T> {
+        val declaredFields = allFields(clazz).map { it.name }.filter { it !in ignoredFields }
+        val jsonFields = gson.fromJson(json, LinkedTreeMap::class.java).keys.map { it.toString() }.toSet()
+        val value = gson.fromJson(json, clazz)
+
+        val unknownFields = jsonFields.subtract(declaredFields)
+        val absentFields = declaredFields.subtract(jsonFields)
+
+        return DeserializationResult(value, unknownFields, absentFields)
+    }
+
+    private fun <T> allFields(clazz: Class<T>): List<Field> {
+        val fields: List<Field> = clazz.declaredFields.toList()
+        if (clazz.superclass != null) {
+            return fields + allFields(clazz.superclass)
+        }
+        return fields
+    }
 }
+
+
+class DeserializationResult<out T>(val value: T, val unknownFields: Set<String>, val absentFields: Set<String>)
 
 
 object LogEventSerializer {
 
-    val actionClassMap: Map<Action, Class<out LogEvent>> = mapOf(
+
+    private val actionClassMap: Map<Action, Class<out LogEvent>> = mapOf(
         Action.COMPLETION_STARTED to CompletionStartedEvent::class.java,
         Action.TYPE to TypeEvent::class.java,
         Action.DOWN to DownPressedEvent::class.java,
@@ -38,21 +66,16 @@ object LogEventSerializer {
         Action.CUSTOM to CustomMessageEvent::class.java
     )
 
+
     fun toString(event: LogEvent): String {
-        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${com.intellij.stats.events.completion.JsonSerializer.toJson(
-          event)}"
+        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(event)}"
     }
 
-    fun fromString(line: String): LogEvent? {
-        val items = mutableListOf<String>()
 
-        var start = -1
-        for (i in 0..4) {
-            val nextSpace = line.indexOf('\t', start + 1)
-            val newItem = line.substring(start + 1, nextSpace)
-            items.add(newItem)
-            start = nextSpace
-        }
+    fun fromString(line: String): DeserializedLogEvent {
+        val pair = tabSeparatedValues(line) ?: return DeserializedLogEvent(null, emptySet(), emptySet())
+        val items = pair.first
+        val start = pair.second
 
         val timestamp = items[0].toLong()
         val recorderId = items[1]
@@ -60,18 +83,49 @@ object LogEventSerializer {
         val sessionUid = items[3]
         val actionType = Action.valueOf(items[4])
 
-        val clazz = com.intellij.stats.events.completion.LogEventSerializer.actionClassMap[actionType] ?: return null
+        val clazz = actionClassMap[actionType] ?: return DeserializedLogEvent(null, emptySet(), emptySet())
 
         val json = line.substring(start + 1)
-        val obj = com.intellij.stats.events.completion.JsonSerializer.fromJson(json, clazz)
+        val result = JsonSerializer.fromJson(json, clazz)
 
-        obj.userUid = userUid
-        obj.timestamp = timestamp
-        obj.recorderId = recorderId
-        obj.sessionUid = sessionUid
-        obj.actionType = actionType
+        val event = result.value
 
-        return obj
+        event.userUid = userUid
+        event.timestamp = timestamp
+        event.recorderId = recorderId
+        event.sessionUid = sessionUid
+        event.actionType = actionType
+
+        return DeserializedLogEvent(event, result.unknownFields, result.absentFields)
     }
+
+    private fun tabSeparatedValues(line: String): Pair<List<String>, Int>? {
+        val items = mutableListOf<String>()
+        var start = -1
+        try {
+            for (i in 0..4) {
+                val nextSpace = line.indexOf('\t', start + 1)
+                val newItem = line.substring(start + 1, nextSpace)
+                items.add(newItem)
+                start = nextSpace
+            }
+            return Pair(items, start)
+        }
+        catch (e: Exception) {
+            return null
+        }
+    }
+
+}
+
+
+class DeserializedLogEvent(
+  val event: LogEvent?,
+  val unknownEventFields: Set<String>,
+  val absentEventFields: Set<String>
+) {
+
+    val isFailed: Boolean
+      get() = unknownEventFields.isNotEmpty() || absentEventFields.isNotEmpty()
 
 }

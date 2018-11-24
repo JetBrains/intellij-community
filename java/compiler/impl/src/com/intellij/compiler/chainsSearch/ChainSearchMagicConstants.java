@@ -22,7 +22,12 @@ public interface ChainSearchMagicConstants {
   /**
    * Used to know do 2 methods frequently occurred in one file simultaneously
    */
-  int CORRELATION = 5;
+  int METHOD_PROBABILITY_THRESHOLD = 5;
+
+  /**
+   * Used to know do 2 variables frequently occurred in one file simultaneously
+   */
+  int VAR_PROBABILITY_THRESHOLD = 1;
 
   /**
    * Maximum count of completion contributor response chains
@@ -38,4 +43,9 @@ public interface ChainSearchMagicConstants {
    * Relative coefficient to filter out rarely used methods
    */
   int FILTER_RATIO = 10;
+
+  /**
+   * Qualifier class hierarchy max cardinality
+   */
+  int MAX_HIERARCHY_SIZE = 20;
 }

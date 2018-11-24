@@ -52,6 +52,7 @@ interface UObjectLiteralExpression : UCallExpression {
     override fun accept(visitor: UastVisitor) {
         if (visitor.visitObjectLiteralExpression(this)) return
         annotations.acceptList(visitor)
+        valueArguments.acceptList(visitor)
         declaration.accept(visitor)
         visitor.afterVisitObjectLiteralExpression(this)
     }

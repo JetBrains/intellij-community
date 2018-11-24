@@ -104,12 +104,8 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
       }
     } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
 
-      CodeStyleManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
-        @Override
-        public void run() {
-          FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);
-        }
-      });
+      CodeStyleManager.getInstance(myProject).performActionWithFormatterDisabled(
+        (Runnable)() -> FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange));
 
       return whiteSpace;
     } else {
@@ -123,12 +119,8 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
       if (leafElement.getElementType() == TokenType.WHITE_SPACE) return null;
     }
 
-    CodeStyleManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
-      @Override
-      public void run() {
-        FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, TokenType.WHITE_SPACE, textRange);
-      }
-    });
+    CodeStyleManager.getInstance(myProject).performActionWithFormatterDisabled(
+      (Runnable)() -> FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, TokenType.WHITE_SPACE, textRange));
 
     return whiteSpace;
   }

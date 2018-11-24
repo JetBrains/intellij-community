@@ -86,7 +86,7 @@ public class PyFStringTest extends PyTestCase {
     doTestRanges("f'''{|\"'}\"|}'''");
     doTestRanges("f'''{|\"\\\"}\"|}'''");
     doTestRanges("f'''{|\"\"\"}'\"}'\"\"\"|}'''");
-    doTestRanges("f\"{|'''}\"'\"'''|}\"");
+    doTestRanges("f\"{|'''}\\\"'\\\"'''|}\"");
   }
 
   public void testChunkTypeConversionsAndFormatSpecifiers() {

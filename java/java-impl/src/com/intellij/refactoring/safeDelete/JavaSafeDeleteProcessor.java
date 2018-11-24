@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -320,6 +321,17 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     final ArrayList<SafeDeleteMethodCalleeUsageInfo> calleesSafeToDelete = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) {
+        if (usage instanceof SafeDeleteUsageInfo) {
+          PsiElement element = ((SafeDeleteUsageInfo)usage).getReferencedElement();
+          if (element instanceof PsiModifierListOwner) {
+            ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(element.getProject());
+            List<PsiFile> annotationsFiles = annotationsManager.findExternalAnnotationsFiles((PsiModifierListOwner)element);
+            if (annotationsFiles != null && annotationsFiles.contains(usage.getFile())) {
+              result.add(new SafeDeleteExternalAnnotationsUsageInfo(element, usage.getElement()));
+              continue;
+            }
+          }
+        }
         result.add(usage);
       }
       else if (usage instanceof SafeDeleteMethodCalleeUsageInfo) {
@@ -516,10 +528,22 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     final String qualifiedName = psiClass.getQualifiedName();
     final boolean annotationType = psiClass.isAnnotationType() && qualifiedName != null;
 
+    PsiElement[] topElementsToDelete = Arrays.stream(allElementsToDelete).map(element -> {
+      if (element instanceof PsiClass) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiClassOwner) {
+          PsiClass[] classes = ((PsiClassOwner)parent).getClasses();
+          if (classes.length == 1 && classes[0] == element) {
+            return element.getContainingFile();
+          }
+        }
+      }
+      return element;
+    }).toArray(PsiElement[]::new);
     ReferencesSearch.search(psiClass).forEach(reference -> {
       final PsiElement element = reference.getElement();
 
-      if (!isInside(element, allElementsToDelete)) {
+      if (!isInside(element, topElementsToDelete)) {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiReferenceList) {
           final PsiElement pparent = parent.getParent();
@@ -844,7 +868,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       privateModifierList = newMethod.getModifierList();
       privateModifierList.setModifierProperty(PsiModifier.PRIVATE, true);
     } catch (IncorrectOperationException e) {
-      LOG.assertTrue(false);
+      LOG.error(e);
       return false;
     }
     for (PsiReference reference : references) {
@@ -983,5 +1007,27 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
     @Override
     public void deleteElement() throws IncorrectOperationException {}
+  }
+
+  private static class SafeDeleteExternalAnnotationsUsageInfo extends SafeDeleteReferenceUsageInfo {
+
+    public SafeDeleteExternalAnnotationsUsageInfo(PsiElement referenceElement, PsiElement element) {
+      super(element, referenceElement, true);
+    }
+
+    @Override
+    public void deleteElement() throws IncorrectOperationException {
+      PsiElement referencedElement = getReferencedElement();
+      if (!referencedElement.isValid()) return;
+      ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(referencedElement.getProject());
+      PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations((PsiModifierListOwner)referencedElement);
+      if (externalAnnotations != null) {
+        for (PsiAnnotation annotation : externalAnnotations) {
+          String qualifiedName = annotation.getQualifiedName();
+          if (qualifiedName == null) continue;
+          annotationsManager.deannotate((PsiModifierListOwner)referencedElement, qualifiedName);
+        }
+      }
+    }
   }
 }

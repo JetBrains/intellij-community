@@ -27,9 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by karashevich on 07/06/16.
- */
 public class JToggleButtonFinder extends ComponentFinderTemplate<JToggleButton> {
 
   public JToggleButtonFinder(@Nullable String componentName) {

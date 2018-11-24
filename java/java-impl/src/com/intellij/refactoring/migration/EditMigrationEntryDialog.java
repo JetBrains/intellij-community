@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ package com.intellij.refactoring.migration;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -48,14 +48,17 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     init();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myOldNameField;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -117,7 +120,7 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     panel.setPreferredSize(new Dimension(300, panel.getPreferredSize().height));
     panel.add(myNewNameField, gbConstraints);
 
-    final DocumentAdapter documentAdapter = new DocumentAdapter() {
+    final DocumentListener documentAdapter = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         validateOKButton();

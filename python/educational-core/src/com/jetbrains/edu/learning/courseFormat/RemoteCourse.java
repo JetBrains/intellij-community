@@ -27,7 +27,7 @@ public class RemoteCourse extends Course {
   @Expose @SerializedName("update_date") private Date myUpdateDate;
   private Boolean isUpToDate = true;
   @Expose private boolean isAdaptive = false;
-  @SerializedName("is_public") boolean isPublic;
+  @Expose @SerializedName("is_public") boolean isPublic;
 
   public String getType() {
     return myType;
@@ -119,5 +119,9 @@ public class RemoteCourse extends Course {
 
   private void updateType(String language) {
     myType = String.format("%s%d %s", EduStepicNames.PYCHARM_PREFIX, EduStepicConnector.CURRENT_VERSION, language);
+  }
+
+  public boolean isPublic() {
+    return isPublic;
   }
 }

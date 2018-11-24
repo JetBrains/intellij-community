@@ -9,11 +9,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertToThreadLocalIntentionTest extends LightQuickFixParameterizedTestCase {
   @Override
-  protected boolean shouldBeAvailableAfterExecution() {
-    return true;
-  }
-
-  @Override
   protected String getBasePath() {
     return "/intentions/threadLocal";
   }

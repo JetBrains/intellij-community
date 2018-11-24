@@ -15,16 +15,13 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * A method contract which is described by {@link MethodContract.ValueConstraint} constraints on arguments.
@@ -78,19 +75,15 @@ public final class StandardMethodContract extends MethodContract {
     return result;
   }
 
-  boolean isTrivial() {
-    return Arrays.stream(this.arguments).allMatch(Predicate.isEqual(ValueConstraint.ANY_VALUE));
-  }
-
   @Override
   String getArgumentsPresentation() {
     return StringUtil.join(arguments, constraint -> constraint.toString(), ", ");
   }
 
   @Override
-  List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] argValues) {
-    return StreamEx.zip(arguments, argValues, (constraint, value) -> constraint.getCondition(factory, value))
-      .without(factory.getConstFactory().getTrue()).toList();
+  protected List<ContractValue> getConditions() {
+    return IntStreamEx.ofIndices(arguments).mapToObj(idx -> arguments[idx].getCondition(idx)).without(ContractValue.booleanValue(true))
+      .toList();
   }
 
   public static List<StandardMethodContract> parseContract(String text) throws ParseException {

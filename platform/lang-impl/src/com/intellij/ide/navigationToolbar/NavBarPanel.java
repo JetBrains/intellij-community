@@ -55,14 +55,14 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -627,17 +627,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
       if (psiElements == null) return null;
-      Set<VirtualFile> files = new LinkedHashSet<>();
+      Set<VirtualFile> files = ContainerUtil.newLinkedHashSet();
       for (PsiElement element : psiElements) {
-        PsiFile file = element.getContainingFile();
-        if (file != null) {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null) {
-            files.add(virtualFile);
-          }
-        } else if (element instanceof PsiFileSystemItem) {
-          files.add(((PsiFileSystemItem)element).getVirtualFile());
-        }
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+        ContainerUtil.addIfNotNull(files, virtualFile);
       }
       return !files.isEmpty() ? VfsUtilCore.toVirtualFileArray(files) : null;
     }

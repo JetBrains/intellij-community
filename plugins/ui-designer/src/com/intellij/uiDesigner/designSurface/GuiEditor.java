@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -187,7 +187,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
    * is {@code true} then we do not react on incoming DocumentEvent.
    */
   private boolean myInsideChange;
-  private final DocumentAdapter myDocumentListener;
+  private final DocumentListener myDocumentListener;
   private final CardLayout myCardLayout = new CardLayout();
   private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
   private final JPanel myCardPanel = new JPanel(myCardLayout);
@@ -295,7 +295,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     // We need to synchronize GUI editor with the document
     final Alarm alarm = new Alarm();
-    myDocumentListener = new DocumentAdapter() {
+    myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(final DocumentEvent e) {
         if (!myInsideChange) {

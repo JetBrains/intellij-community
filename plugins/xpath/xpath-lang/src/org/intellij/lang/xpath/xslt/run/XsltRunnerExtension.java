@@ -31,11 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 14.06.2007
- */
 public abstract class XsltRunnerExtension {
     public static final ExtensionPointName<XsltRunnerExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("XPathView.xsltRunnerExtension");
 

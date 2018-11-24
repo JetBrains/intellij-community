@@ -35,12 +35,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.File;
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 7:59 PM
- */
 public class SvnStatusHandler extends DefaultHandler {
 
   private static final Logger LOG = Logger.getInstance(SvnStatusHandler.class);

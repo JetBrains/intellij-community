@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -663,7 +664,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     for (VirtualFile file : files) {
       assertNull(fdm.getCachedDocument(file));
       for (int i = 0; i < 30; i++) {
-        futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+        futures.add(ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> ReadAction.run(() -> {
           Document document = fdm.getDocument(file);
           assertEquals(file, fdm.getFile(document));
         })));
@@ -671,7 +672,13 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     }
 
     for (Future future : futures) {
-      future.get(20, TimeUnit.SECONDS);
+      try {
+        future.get(20, TimeUnit.SECONDS);
+      }
+      catch (TimeoutException e) {
+        printThreadDump();
+        throw e;
+      }
     }
   }
 

@@ -124,8 +124,8 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
     final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject), myProject);
 
-    scope.addDirtyData(Arrays.<FilePath>asList(VcsUtil.getFilePath(data.dir1), VcsUtil.getFilePath(data.dir2)),
-                       Collections.<FilePath>singletonList(VcsUtil.getFilePath(data.baseDir)));
+    scope.addDirtyData(Arrays.asList(VcsUtil.getFilePath(data.dir1), VcsUtil.getFilePath(data.dir2)),
+                       Collections.singletonList(VcsUtil.getFilePath(data.baseDir)));
     final Set<FilePath> dirtyDirs = scope.getRecursivelyDirtyDirectories();
     final Set<FilePath> dirtyFiles = scope.getDirtyFilesNoExpand();
 

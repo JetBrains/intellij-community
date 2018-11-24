@@ -18,7 +18,7 @@ import traceback
 from datetime import timedelta
 
 from teamcity.messages import TeamcityServiceMessages
-from teamcity.common import limit_output, split_output, convert_error_to_string
+from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
 from teamcity import is_running_under_teamcity
 
 
@@ -171,11 +171,9 @@ class EchoTeamCityMessages(object):
                 continue
 
             if 'stdout' in secname:
-                for chunk in split_output(limit_output(data)):
-                    self.teamcity.testStdOut(test_id, out=chunk, flowId=test_id)
+                dump_test_stdout(self.teamcity, test_id, test_id, data)
             elif 'stderr' in secname:
-                for chunk in split_output(limit_output(data)):
-                    self.teamcity.testStdErr(test_id, out=chunk, flowId=test_id)
+                dump_test_stderr(self.teamcity, test_id, test_id, data)
 
     def report_test_finished(self, test_id, duration=None):
         self.teamcity.testFinished(test_id, testDuration=duration, flowId=test_id)

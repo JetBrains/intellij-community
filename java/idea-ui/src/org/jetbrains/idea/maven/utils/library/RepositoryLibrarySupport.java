@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils.library;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +28,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
 import java.util.Arrays;
@@ -52,12 +50,7 @@ public class RepositoryLibrarySupport {
                          @NotNull ModifiableModelsProvider modifiableModelsProvider) {
     LibraryTable.ModifiableModel modifiableModel = modifiableModelsProvider.getLibraryTableModifiableModel(module.getProject());
 
-    Library library = Iterables.find(Arrays.asList(modifiableModel.getLibraries()), new Predicate<Library>() {
-      @Override
-      public boolean apply(@Nullable Library library) {
-        return isLibraryEqualsToSelected(library);
-      }
-    }, null);
+    Library library = Iterables.find(Arrays.asList(modifiableModel.getLibraries()), library1 -> isLibraryEqualsToSelected(library1), null);
     if (library == null) {
       library = createNewLibrary(module, modifiableModel);
     }
@@ -67,14 +60,9 @@ public class RepositoryLibrarySupport {
     final DependencyScope dependencyScope = LibraryDependencyScopeSuggester.getDefaultScope(library);
     final ModifiableRootModel moduleModifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
     LibraryOrderEntry foundEntry =
-      (LibraryOrderEntry)Iterables.find(Arrays.asList(moduleModifiableModel.getOrderEntries()), new Predicate<OrderEntry>() {
-        @Override
-        public boolean apply(@Nullable OrderEntry entry) {
-          return entry instanceof LibraryOrderEntry
-                 && ((LibraryOrderEntry)entry).getScope() == dependencyScope
-                 && isLibraryEqualsToSelected(((LibraryOrderEntry)entry).getLibrary());
-        }
-      }, null);
+      (LibraryOrderEntry)Iterables.find(Arrays.asList(moduleModifiableModel.getOrderEntries()), entry -> entry instanceof LibraryOrderEntry
+                                                                                                     && ((LibraryOrderEntry)entry).getScope() == dependencyScope
+                                                                                                     && isLibraryEqualsToSelected(((LibraryOrderEntry)entry).getLibrary()), null);
     modifiableModelsProvider.disposeModuleModifiableModel(moduleModifiableModel);
     if (foundEntry == null) {
       rootModel.addLibraryEntry(library).setScope(dependencyScope);

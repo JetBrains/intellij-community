@@ -25,10 +25,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;

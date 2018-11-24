@@ -23,10 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public abstract class TrySurrounder extends GroovyManyStatementsSurrounder {
   @Override
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * User: ksafonov
- */
 public class ClsElementWritingAccessProvider extends WritingAccessProvider {
 
   @NotNull

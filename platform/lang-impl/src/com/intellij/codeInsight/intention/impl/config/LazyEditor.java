@@ -131,6 +131,12 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     return getEditor().getInlayModel();
   }
 
+  @NotNull
+  @Override
+  public EditorKind getEditorKind() {
+    return getEditor().getEditorKind();
+  }
+
   @Override
   @NotNull
   public EditorSettings getSettings() {

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * User: anna
- */
 public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JBList> {
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
     super(project, title);

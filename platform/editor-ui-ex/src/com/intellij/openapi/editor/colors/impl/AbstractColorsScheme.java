@@ -34,7 +34,6 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +56,7 @@ import static com.intellij.ui.ColorUtil.fromHex;
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
   private static final int CURR_VERSION = 142;
 
+  // todo: unify with UIUtil.DEF_SYSTEM_FONT_SIZE
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
 
   protected EditorColorsScheme myParentScheme;
@@ -221,7 +221,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setLineSpacing(float lineSpacing) {
-    myFontPreferences.setLineSpacing(lineSpacing);
+    ensureEditableFontPreferences().setLineSpacing(lineSpacing);
   }
 
   @NotNull
@@ -324,6 +324,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     myMetaInfo.clear();
     Ref<Float> fontScale = Ref.create();
+    boolean clearEditorFonts = true;
+    boolean clearConsoleFonts = true;
     for (Element childNode : node.getChildren()) {
       String childName = childNode.getName();
       switch (childName) {
@@ -331,10 +333,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
           readSettings(childNode, isDefault, fontScale);
           break;
         case EDITOR_FONT:
-          myFontPreferences = readFontSettings(childNode, isDefault, fontScale.get());
+          readFontSettings(ensureEditableFontPreferences(), childNode, isDefault, fontScale.get(), clearEditorFonts);
+          clearEditorFonts = false;
           break;
         case CONSOLE_FONT:
-          myConsoleFontPreferences = readFontSettings(childNode, isDefault, fontScale.get());
+          readFontSettings(ensureEditableConsoleFontPreferences(), childNode, isDefault, fontScale.get(), clearConsoleFonts);
+          clearConsoleFonts = false;
           break;
         case COLORS_ELEMENT:
           readColors(childNode);
@@ -501,7 +505,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private int readFontSize(Element element, boolean isDefault, Float fontScale) {
     if (isDefault) {
-      return (int)(UISettings.getNormalizingScale() * DEFAULT_FONT_SIZE.getSize());
+      return UISettings.getDefFontSize();
     }
     Integer intSize = myValueReader.read(Integer.class, element);
     if (intSize == null) {
@@ -510,11 +514,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return UISettings.restoreFontSize(intSize, fontScale);
   }
 
-  private FontPreferencesImpl readFontSettings(@NotNull Element element,
-                                               boolean isDefaultScheme,
-                                               @Nullable Float fontScale) {
-    FontPreferencesImpl preferences = new FontPreferencesImpl();
-    preferences.setChangeListener(() -> initFonts());
+  private void readFontSettings(@NotNull ModifiableFontPreferences preferences,
+                                @NotNull Element element,
+                                boolean isDefaultScheme,
+                                @Nullable Float fontScale,
+                                boolean clearFonts) {
+    if (clearFonts) preferences.clearFonts();
     List children = element.getChildren(OPTION_ELEMENT);
     String fontFamily = null;
     int size = -1;
@@ -533,7 +538,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     else if (fontFamily != null) {
       preferences.addFontFamily(fontFamily);
     }
-    return preferences;
   }
 
   public void writeExternal(Element parentNode) {
@@ -550,7 +554,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
      * FONT_SCALE value should also be written by that reason.
      */
     if (!(myFontPreferences instanceof DelegatingFontPreferences) || !(myConsoleFontPreferences instanceof DelegatingFontPreferences)) {
-      JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getNormalizingScale())); // must precede font options
+      JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getDefFontScale())); // must precede font options
     }
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
@@ -821,7 +825,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setConsoleLineSpacing(float lineSpacing) {
-    myConsoleFontPreferences.setLineSpacing(lineSpacing);
+    ensureEditableConsoleFontPreferences().setLineSpacing(lineSpacing);
   }
 
   protected TextAttributes getFallbackAttributes(@NotNull TextAttributesKey fallbackKey) {
@@ -908,7 +912,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (!(other instanceof AbstractColorsScheme)) return false;
     AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
     
-    // parent is used only for default schemes (e.g. Darcula — bundled in all ide (opposite to IDE-specific, like Cobalt))
+    // parent is used only for default schemes (e.g. Darcula bundled in all ide (opposite to IDE-specific, like Cobalt))
     if (getBaseDefaultScheme(this) != getBaseDefaultScheme(otherScheme)) {
       return false;
     }
@@ -1006,8 +1010,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (myParentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)myParentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
-      assert newParent != null : "Can not resolve '" + parentName + "' color scheme.";
-      assert newParent instanceof ReadOnlyColorsScheme : "Resolved parent color scheme must be read-only.";
+      if (newParent == null || !(newParent instanceof ReadOnlyColorsScheme)) {
+        throw new InvalidDataException(parentName);
+      }
       myParentScheme = newParent;
     }
   }

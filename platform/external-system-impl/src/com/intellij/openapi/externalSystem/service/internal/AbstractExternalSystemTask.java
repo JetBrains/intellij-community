@@ -213,7 +213,6 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     boolean result = false;
     try {
       result = doCancel();
-      setState(result ? ExternalSystemTaskState.CANCELED : ExternalSystemTaskState.CANCELLATION_FAILED);
       return result;
     }
     catch (NotSupportedException e) {

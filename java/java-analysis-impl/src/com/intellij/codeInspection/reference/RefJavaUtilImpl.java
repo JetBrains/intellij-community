@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -56,6 +52,17 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
           if (target instanceof PsiModifierListOwner && isDeprecated(target)) {
             refFrom.setUsesDeprecatedApi(true);
+          }
+        }
+
+        @Override
+        public void visitLiteralExpression(PsiLiteralExpression expression) {
+          for (PsiReference reference : expression.getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve instanceof PsiMember) {
+              final RefElement refClass = refFrom.getRefManager().getReference(resolve);
+              refFrom.addReference(refClass, resolve, psiFrom, false, true, null);
+            }
           }
         }
 
@@ -507,7 +514,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             }
           }
           else {
-            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement, false);
+            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement);
           }
         }
       }

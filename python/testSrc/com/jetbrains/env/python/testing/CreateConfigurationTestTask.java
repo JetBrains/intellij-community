@@ -27,13 +27,14 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.TestRunnerService;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestFactory;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.PyAbstractTestConfiguration;
+import com.jetbrains.python.testing.PyAbstractTestFactory;
+import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,6 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 
 /**
@@ -81,11 +81,22 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
       for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {
 
 
-        @SuppressWarnings("unchecked") // Checked one line above
-        final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
-        checkConfiguration(typedConfiguration, elementToRightClickOn);
+        if (configurationShouldBeProducedForElement(elementToRightClickOn)) {
+          @SuppressWarnings("unchecked") // Checked one line above
+          final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
+          Assert.assertTrue("Should use module sdk", typedConfiguration.isUseModuleSdk());
+          checkConfiguration(typedConfiguration, elementToRightClickOn);
+        } else {
+          // Any py file could be run script
+          // If no test config should be produced for this element then run script should be created
+          createConfigurationByElement(elementToRightClickOn, PythonRunConfiguration.class);
+        }
       }
     }), ModalityState.NON_MODAL);
+  }
+
+  protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
+    return true;
   }
 
   /**
@@ -148,7 +159,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
   /**
    * Task to create configuration
    */
-  abstract static class PyConfigurationCreationTask<T extends PyUniversalTestConfiguration> extends PyExecutionFixtureTestTask {
+  abstract static class PyConfigurationCreationTask<T extends PyAbstractTestConfiguration> extends PyExecutionFixtureTestTask {
     private volatile T myConfiguration;
 
 
@@ -166,7 +177,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     }
 
     @NotNull
-    protected abstract PyUniversalTestFactory<T> createFactory();
+    protected abstract PyAbstractTestFactory<T> createFactory();
 
     @NotNull
     T getConfiguration() {

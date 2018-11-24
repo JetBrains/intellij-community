@@ -166,9 +166,6 @@ class NewTeamcityServiceMessages(_old_service_messages):
     _latest_subtest_result = None
     
     def message(self, messageName, **properties):
-        # Intellij may fail to process message if it has char just before it.
-        # New line has no visible affect, but saves from such cases
-        print("")
         if messageName in set(["enteredTheMatrix", "testCount"]):
             _old_service_messages.message(self, messageName, **properties)
             return
@@ -239,7 +236,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         # closing subtest
         test_name = ".".join(TREE_MANAGER.current_branch)
-        if self._latest_subtest_result == "Failure":
+        if self._latest_subtest_result in set(["Failure", "Error"]):
             self.testFailed(test_name)
         if self._latest_subtest_result == "Skip":
             self.testIgnored(test_name)
@@ -384,8 +381,7 @@ def jb_start_tests():
     # But sys.path should be same as when launched with test runner directly
     try:
         if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
-            helpers_path = sys.path.pop(0)
-            sys.path.append(helpers_path)
+            sys.path.pop(0)
     except KeyError:
         pass
     return namespace.path, namespace.target, additional_args
@@ -403,4 +399,4 @@ def jb_doc_args(framework_name, args):
     Runner encouraged to report its arguments to user with aid of this function
 
     """
-    print("Launching {0} with arguments {1} in {2}".format(framework_name, " ".join(args), os.getcwd()))
+    print("Launching {0} with arguments {1} in {2}\n".format(framework_name, " ".join(args), os.getcwd()))

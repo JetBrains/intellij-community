@@ -23,6 +23,6 @@ public class IpnbLatexPanel extends IpnbCodeOutputPanel<IpnbLatexOutputCell> {
   @Override
   protected JComponent createViewPanel() {
     final int width = myParent.getWidth();
-    return IpnbUtils.createLatexPane(StringUtil.join(myCell.getLatex(), ""), width);
+    return IpnbUtils.createLatexPane(StringUtil.join(myCell.getLatex(), ""), myParent.getProject(), width);
   }
 }

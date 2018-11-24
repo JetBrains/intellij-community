@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,7 +254,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
     final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
     exportResults(descriptions, refElement, parentNode, d -> false);
-    final List list = parentNode.getChildren();
+    final List<Element> list = parentNode.getChildren();
 
     @NonNls final String ext = ".xml";
     final String fileName = ourOutputPath + File.separator + myToolWrapper.getShortName() + ext;
@@ -263,13 +263,12 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     try {
       new File(ourOutputPath).mkdirs();
       final File file = new File(fileName);
-      final CharArrayWriter writer = new CharArrayWriter();
+      final StringWriter writer = new StringWriter();
       if (!file.exists()) {
         writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" " + GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE + "=\"")
           .append(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper)).append("\">\n");
       }
-      for (Object o : list) {
-        final Element element = (Element)o;
+      for (Element element : list) {
         pathMacroManager.collapsePaths(element);
         JDOMUtil.writeElement(element, writer, "\n");
       }
@@ -533,7 +532,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   public boolean hasReportedProblems() {
-    return !getProblemElements().isEmpty();
+    return !myProblemToElements.isEmpty();
   }
 
   @Override
@@ -575,19 +574,18 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
-  @Nullable
+  @NotNull
   public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, InspectionTree tree) {
     return extractActiveFixes(refElements, getProblemElements(), tree != null ? tree.getSelectedDescriptors() : null);
   }
 
   @Override
-  @Nullable
+  @NotNull
   public QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
                                              @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
                                              @Nullable CommonProblemDescriptor[] allowedDescriptors) {
     final Set<CommonProblemDescriptor> allowedDescriptorSet = allowedDescriptors == null ? null : ContainerUtil.newHashSet(allowedDescriptors);
-    Map<String, LocalQuickFixWrapper> result = new com.intellij.util.containers.HashMap<>();
-    boolean isFirst = true;
+    Map<String, LocalQuickFixWrapper> result = null;
     for (RefEntity refElement : refElements) {
       final CommonProblemDescriptor[] descriptors = descriptorMap.get(refElement);
       if (descriptors == null) continue;
@@ -596,48 +594,46 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
           continue;
         }
         QuickFix[] fixes = d.getFixes();
-        if (fixes != null) {
-          if (isFirst) {
+        if (fixes == null || fixes.length == 0) continue;
+        if (result == null) {
+          result = new HashMap<>();
+          for (QuickFix fix : fixes) {
+            if (fix == null) continue;
+            result.put(fix.getFamilyName(), new LocalQuickFixWrapper(fix, myToolWrapper));
+          }
+        }
+        else {
+          for (String familyName : new ArrayList<>(result.keySet())) {
+            boolean isFound = false;
             for (QuickFix fix : fixes) {
               if (fix == null) continue;
-              LocalQuickFixWrapper quickFixWrapper = new LocalQuickFixWrapper(fix, myToolWrapper);
-              result.put(fix.getFamilyName(), quickFixWrapper);
-            }
-            isFirst = false;
-          }
-          else {
-            for (String familyName : new ArrayList<>(result.keySet())) {
-              boolean isFound = false;
-              for (QuickFix fix : fixes) {
-                if (fix == null) continue;
-                if (familyName.equals(fix.getFamilyName())) {
-                  isFound = true;
-                  final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
-                  LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
-                                 "QuickFix-es with the same getFamilyName() should be the same class instances. " +
-                                 "Please assign reported exception for the fix \"" + fix.getClass().getName() + "\" developer");
-                  try {
-                    quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
-                  }
-                  catch (AbstractMethodError e) {
-                    //for plugin compatibility
-                    quickFixAction.setText("Name is not available");
-                  }
-                  break;
+              if (familyName.equals(fix.getFamilyName())) {
+                isFound = true;
+                final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
+                LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
+                               "QuickFix-es with the same getFamilyName() should be the same class instances. " +
+                               "Please assign reported exception for the fix \"" + fix.getClass().getName() + "\" developer");
+                try {
+                  quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
                 }
+                catch (AbstractMethodError e) {
+                  //for plugin compatibility
+                  quickFixAction.setText("Name is not available");
+                }
+                break;
               }
-              if (!isFound) {
-                result.remove(familyName);
-                if (result.isEmpty()) {
-                  return QuickFixAction.EMPTY;
-                }
+            }
+            if (!isFound) {
+              result.remove(familyName);
+              if (result.isEmpty()) {
+                return QuickFixAction.EMPTY;
               }
             }
           }
         }
       }
     }
-    return result.values().isEmpty() ? null : result.values().toArray(new QuickFixAction[result.size()]);
+    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(new QuickFixAction[result.size()]);
   }
 
   private static Class getFixClass(QuickFix fix) {

@@ -111,8 +111,13 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     if (ioFile.isAbsolute() && ioFile.isFile()) {
       return ioFile;
     }
-    ioFile = new File(myBaseDir.getPath(), filePath);
-    return ioFile.isFile() ? ioFile : null;
+    if (myBaseDir != null) {
+      ioFile = new File(myBaseDir.getPath(), filePath);
+      if (ioFile.isFile()) {
+        return ioFile;
+      }
+    }
+    return null;
   }
 
   private boolean isGrayedHyperlink(@NotNull VirtualFile file) {

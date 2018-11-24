@@ -31,10 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -126,6 +123,42 @@ public class SheetMessage implements Disposable {
       myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
       setPositionRelativeToParent();
     }
+
+    KeyListener animationKeyListener = new KeyListener() {
+      @Override
+      public void keyTyped(KeyEvent e) {}
+
+      @Override
+      public void keyPressed(KeyEvent e) {
+        int modifiers = e.getModifiers();
+        int modifiersUnion = InputEvent.SHIFT_DOWN_MASK
+                             | InputEvent.CTRL_DOWN_MASK
+                             | InputEvent.ALT_DOWN_MASK
+                             | InputEvent.META_DOWN_MASK;
+
+        boolean modifiersAreNotPressed = ((modifiers & modifiersUnion) == 0);
+
+        if (modifiersAreNotPressed) {
+          if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            Disposer.dispose(SheetMessage.this);
+          }
+          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            myController.setDefaultResult();
+            Disposer.dispose(SheetMessage.this);
+          }
+          if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+            myController.setFocusedResult();
+            Disposer.dispose(SheetMessage.this);
+          }
+        }
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {}
+    };
+    Disposer.register(this, () -> myWindow.removeKeyListener(animationKeyListener));
+    myWindow.addKeyListener(animationKeyListener);
+
     startAnimation(true);
     if (couldBeInFullScreen()) {
       FullScreenUtilities.setWindowCanFullScreen(myParent, false);

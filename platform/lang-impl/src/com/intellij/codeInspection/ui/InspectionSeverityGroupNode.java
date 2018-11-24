@@ -23,10 +23,6 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 
 
-/**
- * User: anna
- * Date: Mar 15, 2005
- */
 public class InspectionSeverityGroupNode extends InspectionTreeNode{
 
   private final HighlightDisplayLevel myLevel;

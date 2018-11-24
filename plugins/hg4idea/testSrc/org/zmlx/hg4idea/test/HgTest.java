@@ -73,15 +73,12 @@ public abstract class HgTest extends AbstractVcsTestCase {
     myMainRepo = initRepositories();
     myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          initProject(myProjectDir, testMethod.getName());
-          activateVCS(HgVcs.VCS_NAME);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        initProject(myProjectDir, testMethod.getName());
+        activateVCS(HgVcs.VCS_NAME);
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     });
 
@@ -93,15 +90,12 @@ public abstract class HgTest extends AbstractVcsTestCase {
 
   @AfterMethod
   protected void tearDown() throws Exception {
-    GuiUtils.runOrInvokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          tearDownProject();
-          tearDownRepositories();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+    GuiUtils.runOrInvokeAndWait(() -> {
+      try {
+        tearDownProject();
+        tearDownRepositories();
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     });
   }

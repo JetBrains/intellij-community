@@ -39,24 +39,8 @@ public abstract class StartedActivated {
   private final Object myLock;
 
   protected StartedActivated(final Disposable parent) {
-    myStart = new MySection(new ThrowableRunnable<VcsException>() {
-      public void run() throws VcsException {
-        start();
-      }
-    }, new ThrowableRunnable<VcsException>() {
-      public void run() throws VcsException {
-        shutdown();
-      }
-    });
-    myActivate = new MySection(new ThrowableRunnable<VcsException>() {
-      public void run() throws VcsException {
-        activate();
-      }
-    }, new ThrowableRunnable<VcsException>() {
-      public void run() throws VcsException {
-        deactivate();
-      }
-    });
+    myStart = new MySection(() -> start(), () -> shutdown());
+    myActivate = new MySection(() -> activate(), () -> deactivate());
     myStart.setDependent(myActivate);
     myActivate.setMaster(myStart);
 

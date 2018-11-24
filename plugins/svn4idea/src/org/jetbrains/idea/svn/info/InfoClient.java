@@ -25,12 +25,6 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.Collection;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/20/12
- * Time: 6:54 PM
- */
 public interface InfoClient extends SvnClient {
 
   Info doInfo(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException;

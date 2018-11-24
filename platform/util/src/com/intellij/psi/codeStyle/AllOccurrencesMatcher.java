@@ -24,8 +24,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class AllOccurrencesMatcher extends FixingLayoutMatcher {
-  AllOccurrencesMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
+/**
+ * {@link FixingLayoutMatcher} extension that returns all matches (not just the first one) 
+ * from {@link MinusculeMatcher#matchingFragments(String)}.
+ */
+public class AllOccurrencesMatcher extends FixingLayoutMatcher {
+  public AllOccurrencesMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
     super(pattern, options, hardSeparators);
   }
 

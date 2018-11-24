@@ -39,9 +39,9 @@ public interface PsiFunctionalExpression extends PsiExpression, Iconable, Naviga
    * 15.12.2.1 Identify Potentially Applicable Methods
    * A member method is potentially applicable to a method invocation if and only if all of the following are true:
    *  The name of the member is identical to the name of the method in the method invocation.
-   *  The member is accessible (§6.6) to the class or interface in which the method invocation appears.
+   *  The member is accessible (p6.6) to the class or interface in which the method invocation appears.
    *  If the member is a fixed arity method with arity n, the arity of the method invocation is equal to n,
-   *   and for all i (1 ≤ i ≤ n), the i'th argument of the method invocation is potentially compatible, as defined below,
+   *   and for all i (1 <= i <= n), the i'th argument of the method invocation is potentially compatible, as defined below,
    *   with the type of the i'th parameter of the method.
    *  If the member is a variable arity method with arity n, etc
    */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
   private boolean myMultiprocessDebug = false;
   protected PythonRunConfiguration myRunConfiguration;
+  private boolean myWaitForTermination = true;
 
 
   public PyDebuggerTask(@Nullable final String relativeTestDataPath, String scriptName, String scriptParameters) {
@@ -95,9 +96,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        RunManagerEx.getInstanceEx(project).addConfiguration(settings, false);
-        RunManagerEx.getInstanceEx(project).setSelectedConfiguration(settings);
-        Assert.assertSame(settings, RunManagerEx.getInstanceEx(project).getSelectedConfiguration());
+        RunManager runManager = RunManager.getInstance(project);
+        runManager.addConfiguration(settings, false);
+        runManager.setSelectedConfiguration(settings);
+        Assert.assertSame(settings, runManager.getSelectedConfiguration());
       }
     }.execute();
 
@@ -213,6 +215,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myMultiprocessDebug = multiprocessDebug;
   }
 
+  public void setWaitForTermination(boolean waitForTermination) {
+    myWaitForTermination = waitForTermination;
+  }
+
   protected void waitForAllThreadsPause() throws InterruptedException, InvocationTargetException {
     waitForPause();
     Assert.assertTrue(String.format("All threads didn't stop within timeout\n" +
@@ -235,7 +241,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
       myDebugProcess.stop();
 
-      waitFor(processHandler);
+      if (myWaitForTermination) {
+        // for some tests (with infinite loops, for example, it has no sense)
+        waitFor(processHandler);
+      }
 
       if (!processHandler.isProcessTerminated()) {
         killDebugProcess();

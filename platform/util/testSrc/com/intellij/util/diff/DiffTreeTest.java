@@ -18,7 +18,6 @@ package com.intellij.util.diff;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ThreeState;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -85,12 +84,6 @@ public class DiffTreeTest extends TestCase {
     @Override
     public Node getParent(@NotNull final Node node) {
       return null;
-    }
-
-    @Override
-    @NotNull
-    public Node prepareForGetChildren(@NotNull final Node node) {
-      return node;
     }
 
     @Override

@@ -586,7 +586,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Nullable
-  private TypeDescriptor findTypeDescriptorImpl(XmlTag rootTag, final String name, String namespace) {
+  private TypeDescriptor findTypeDescriptorImpl(@Nullable XmlTag rootTag, final String name, String namespace) {
+    if (rootTag == null) return null;
     return RecursionManager.createGuard("findDescriptor").doPreventingRecursion(rootTag, true, () -> {
       XmlNSDescriptorImpl responsibleDescriptor = this;
       if (namespace != null && namespace.length() != 0 && !namespace.equals(getDefaultNamespace())) {
@@ -600,8 +601,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       if (responsibleDescriptor != this) {
         return responsibleDescriptor.findTypeDescriptor(name, namespace);
       }
-
-      if (rootTag == null) return null;
 
       final Pair<QNameKey, XmlTag> pair = Pair.create(new QNameKey(name, namespace), rootTag);
       final CachedValue<TypeDescriptor> descriptor = myTypesMap.get(pair);

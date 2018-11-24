@@ -45,8 +45,8 @@ public class AsTypeTransformation extends SimpleBinaryTransformation {
 
   @Override
   public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull ChangeToOperatorInspection.Options options) {
+    if (!super.couldApplyInternal(methodCall, options)) return false;
     GrExpression rhs = getRhs(methodCall);
-    return super.couldApplyInternal(methodCall, options)
-           && ResolveUtil.resolvesToClass(rhs);
+    return ResolveUtil.resolvesToClass(rhs);
   }
 }

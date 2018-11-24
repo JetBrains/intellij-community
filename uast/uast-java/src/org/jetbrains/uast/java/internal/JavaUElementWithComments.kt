@@ -16,13 +16,28 @@
 package org.jetbrains.uast.java.internal
 
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.uast.UComment
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 
 interface JavaUElementWithComments : UElement {
     override val comments: List<UComment>
         get() {
             val psi = psi ?: return emptyList()
-            return psi.children.filter { it is PsiComment }.map { UComment(it, this) }
+            val childrenComments = psi.children.filterIsInstance<PsiComment>().map { UComment(it, this) }
+            if (this !is UExpression) return childrenComments
+            return childrenComments +
+                psi.nearestCommentSibling(forward = true )?.let { listOf(UComment(it, this)) }.orEmpty() +
+                psi.nearestCommentSibling(forward = false)?.let { listOf(UComment(it, this)) }.orEmpty()
         }
+
+    private fun PsiElement.nearestCommentSibling(forward: Boolean): PsiComment? {
+        var sibling = if (forward) nextSibling else prevSibling
+        while (sibling is PsiWhiteSpace && !sibling.text.contains('\n')) {
+            sibling = if (forward) sibling.nextSibling else sibling.prevSibling
+        }
+        return sibling as? PsiComment
+    }
 }

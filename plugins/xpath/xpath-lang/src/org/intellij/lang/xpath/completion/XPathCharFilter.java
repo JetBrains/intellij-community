@@ -6,11 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import org.intellij.lang.xpath.XPathFile;
 import org.jetbrains.annotations.Nullable;
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 03.09.13
- */
 public class XPathCharFilter extends CharFilter {
   @Nullable
   @Override

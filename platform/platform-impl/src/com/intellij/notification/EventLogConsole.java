@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -96,7 +96,7 @@ class EventLogConsole {
     final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
     editor.getSettings().setWhitespacesShown(false);
     installNotificationsFont(editor);
-    myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(Project project) {
         if (project == myProjectModel.getProject()) {
@@ -113,6 +113,7 @@ class EventLogConsole {
 
     editor.setContextMenuGroupId(null); // disabling default context menu
     editor.addEditorMouseListener(new EditorPopupHandler() {
+      @Override
       public void invokePopup(final EditorMouseEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();
         DefaultActionGroup actions = createPopupActions(actionManager, clearLog, editor, event);
@@ -294,8 +295,8 @@ class EventLogConsole {
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
     int layer = HighlighterLayer.CARET_ROW + 1;
-    RangeHighlighter highlighter =
-      editor.getMarkupModel().addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter = editor.getMarkupModel()
+      .addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
     GROUP_ID.set(highlighter, notification.getGroupId());
     NOTIFICATION_ID.set(highlighter, notification.id);
 
@@ -484,6 +485,7 @@ class EventLogConsole {
       e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       LogModel model = myConsole.myProjectModel;
       for (Notification notification : model.getNotifications()) {

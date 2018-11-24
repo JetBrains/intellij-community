@@ -28,6 +28,9 @@ Reports calls to <code>Map.get()</code> which could be replaced with <code>getOr
   </li>
 
 </ul>
+<p>Note that replacement with <code>computeIfAbsent()</code> or <code>merge()</code> may work incorrectly for some <code>Map</code>
+implementations if the code extracted to lambda expression modifies the same <code>Map</code>. By default,
+warning is not issued if this code may have side effects. If desired, use the last checkbox to issue warning always.</p>
 <!-- tooltip end -->
 <p>This inspection only reports if the project or module is configured to use a language level of 8 or higher.</p>
 <p><small>New in 2016.3</small></p>

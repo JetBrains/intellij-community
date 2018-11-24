@@ -17,6 +17,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -191,6 +192,11 @@ public abstract class SourceScope {
 
     public boolean isSearchInLibraries() {
       return true;
+    }
+
+    @Override
+    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      return myMainScope.getUnloadedModulesBelongingToScope();
     }
 
     @Nullable

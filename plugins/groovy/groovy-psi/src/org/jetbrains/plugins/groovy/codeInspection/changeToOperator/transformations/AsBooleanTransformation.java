@@ -35,9 +35,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.
 
 /**
  * e.g.
- * !a.asBoolean()    → !a
- * a.asBoolean()     → !!a
- * if(a.asBoolean()) → if(a)
+ * !a.asBoolean()    -> !a
+ * a.asBoolean()     -> !!a
+ * if(a.asBoolean()) -> if(a)
  */
 class AsBooleanTransformation extends Transformation {
   public static final String NEGATION = mLNOT.toString();

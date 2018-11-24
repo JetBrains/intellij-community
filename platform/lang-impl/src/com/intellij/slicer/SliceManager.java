@@ -17,19 +17,15 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -58,43 +54,6 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
 
   public SliceManager(@NotNull Project project) {
     myProject = project;
-  }
-
-  @NotNull
-  private Disposable addPsiListener(@NotNull final ProgressIndicator indicator) {
-    Disposable disposable = Disposer.newDisposable();
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-      @Override
-      public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-    }, disposable);
-    return disposable;
   }
 
   private ContentManager getContentManager(boolean dataFlowToThis) {
@@ -177,25 +136,6 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     return "<html><head>" + UIUtil.getCssFontDeclaration(BaseLabel.getLabelFont()) + "</head><body>" +
            (prefix == null ? "" : prefix) + StringUtil.first(desc, 100, true)+(suffix == null ? "" : suffix) +
            "</body></html>";
-  }
-
-  void runInterruptibly(@NotNull ProgressIndicator progress,
-                        @NotNull Runnable onCancel,
-                        @NotNull Runnable runnable) throws ProcessCanceledException {
-    Disposable disposable = addPsiListener(progress);
-    try {
-      progress.checkCanceled();
-      ProgressManager.getInstance().executeProcessUnderProgress(runnable, progress);
-    }
-    catch (ProcessCanceledException e) {
-      progress.cancel();
-      //reschedule for later
-      onCancel.run();
-      throw e;
-    }
-    finally {
-      Disposer.dispose(disposable);
-    }
   }
 
   @Override

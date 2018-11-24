@@ -98,7 +98,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (selEnd > selStart) {
         myTextField.select(selStart, selEnd);
       }
-      rebuildList(myInitialIndex, 0, ModalityState.current(), null);
+      rebuildList(SelectionPolicyKt.fromIndex(myInitialIndex), 0, ModalityState.current(), null);
     }
     if (myOldFocusOwner != null) {
       myPreviouslyFocusedComponent = myOldFocusOwner;
@@ -340,7 +340,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
-                                                                                "(?::|@|,| |#L| on line | at line |:?\\(|:?\\[)" + // separator
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
                                                                                 "(\\d+)(?:(?:\\D)(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
@@ -355,7 +355,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
     Pattern regex = null;
-    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ")) { // quick test if reg exp should be used
+    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
     }
 

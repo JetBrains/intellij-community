@@ -16,14 +16,13 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -86,16 +85,10 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
     }
     else if (object instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer psiPackage = (PsiDirectoryContainer)object;
-      final PsiDirectory[] psiDirectories = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiDirectory[]>() {
-          @Override
-          public PsiDirectory[] compute() {
-            return rootElement instanceof Module
-                   ? psiPackage.getDirectories(GlobalSearchScope.moduleScope((Module)rootElement))
-                   : psiPackage.getDirectories();
-          }
-        }
-      );
+      final PsiDirectory[] psiDirectories = ReadAction.compute(() -> rootElement instanceof Module
+                                                                     ? psiPackage.getDirectories(
+        GlobalSearchScope.moduleScope((Module)rootElement))
+                                                                     : psiPackage.getDirectories());
       for (PsiDirectory psiDirectory : psiDirectories) {
         if (!processChildren(psiDirectory, rootElement, processor)) return false;
       }
@@ -111,17 +104,12 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   }
 
   private static boolean processChildren(final Project object, final Processor<Object> processor) {
-    return ApplicationManager.getApplication().runReadAction(
-      new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          for (Module module : ModuleManager.getInstance(object).getModules()) {
-            if (!(ModuleType.get(module) instanceof InternalModuleType) && !processor.process(module)) return false;
-          }
-          return true;
-        }
+    return ReadAction.compute(() -> {
+      for (Module module : ModuleManager.getInstance(object).getModules()) {
+        if (!(ModuleType.get(module) instanceof InternalModuleType) && !processor.process(module)) return false;
       }
-    );
+      return true;
+    });
   }
 
   private static boolean processChildren(Module module, Processor<Object> processor) {
@@ -129,14 +117,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     VirtualFile[] roots = moduleRootManager.getContentRoots();
     for (final VirtualFile root : roots) {
-      final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiDirectory>() {
-          @Override
-          public PsiDirectory compute() {
-            return psiManager.findDirectory(root);
-          }
-        }
-      );
+      final PsiDirectory psiDirectory = ReadAction.compute(() -> psiManager.findDirectory(root));
       if (psiDirectory != null) {
         if (!processor.process(psiDirectory)) return false;
       }
@@ -145,43 +126,35 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   }
 
   private static boolean processChildren(final PsiDirectory object, final Object rootElement, final Processor<Object> processor) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final ModuleFileIndex moduleFileIndex =
-          rootElement instanceof Module ? ModuleRootManager.getInstance((Module)rootElement).getFileIndex() : null;
-        final PsiElement[] children = object.getChildren();
-        for (PsiElement child : children) {
-          if (child != null && child.isValid()) {
-            if (moduleFileIndex != null) {
-              final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(child);
-              if (virtualFile != null && !moduleFileIndex.isInContent(virtualFile)) continue;
-            }
-            if (!processor.process(child)) return false;
+    return ReadAction.compute(() -> {
+      final ModuleFileIndex moduleFileIndex =
+        rootElement instanceof Module ? ModuleRootManager.getInstance((Module)rootElement).getFileIndex() : null;
+      final PsiElement[] children = object.getChildren();
+      for (PsiElement child : children) {
+        if (child != null && child.isValid()) {
+          if (moduleFileIndex != null) {
+            final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(child);
+            if (virtualFile != null && !moduleFileIndex.isInContent(virtualFile)) continue;
           }
+          if (!processor.process(child)) return false;
         }
-        return true;
       }
+      return true;
     });
   }
 
   private static boolean processChildren(final PsiFileSystemItem object, final Processor<Object> processor) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    return ReadAction.compute(() -> object.processChildren(new PsiFileSystemItemProcessor() {
       @Override
-      public Boolean compute() {
-        return object.processChildren(new PsiFileSystemItemProcessor() {
-          @Override
-          public boolean acceptItem(String name, boolean isDirectory) {
-            return true;
-          }
-
-          @Override
-          public boolean execute(@NotNull PsiFileSystemItem element) {
-            return processor.process(element);
-          }
-        });
+      public boolean acceptItem(String name, boolean isDirectory) {
+        return true;
       }
-    });
+
+      @Override
+      public boolean execute(@NotNull PsiFileSystemItem element) {
+        return processor.process(element);
+      }
+    }));
   }
 
   @Nullable

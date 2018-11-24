@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,26 +168,23 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
         }
       });
 
-      expressionToDequalifyOffsets.forEachDescending(new TIntProcedure() {
-        @Override
-        public boolean execute(int offset) {
-          PsiJavaCodeReferenceElement expression = PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiJavaCodeReferenceElement.class, false);
-          if (expression == null) {
-            return false;
-          }
-          PsiElement qualifierExpression = expression.getQualifier();
-          if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
-            qualifierExpression.delete();
-            if (editor != null) {
-              HighlightManager.getInstance(project)
-                .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
-                                   EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
-                                   false, null);
-            }
-          }
-
-          return true;
+      expressionToDequalifyOffsets.forEachDescending(offset -> {
+        PsiJavaCodeReferenceElement expression = PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiJavaCodeReferenceElement.class, false);
+        if (expression == null) {
+          return false;
         }
+        PsiElement qualifierExpression = expression.getQualifier();
+        if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
+          qualifierExpression.delete();
+          if (editor != null) {
+            HighlightManager.getInstance(project)
+              .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
+                                 EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
+                                 false, null);
+          }
+        }
+
+        return true;
       });
     }
   }

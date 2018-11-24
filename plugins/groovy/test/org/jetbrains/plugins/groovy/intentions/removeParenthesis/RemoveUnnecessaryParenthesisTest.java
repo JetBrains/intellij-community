@@ -20,10 +20,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 30.01.2009
- */
 public class RemoveUnnecessaryParenthesisTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {

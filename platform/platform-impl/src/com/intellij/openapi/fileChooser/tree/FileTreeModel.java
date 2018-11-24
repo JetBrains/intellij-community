@@ -79,6 +79,17 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
     });
   }
 
+  public void invalidate() {
+    invoker.invokeLaterIfNeeded(() -> {
+      if (roots != null) {
+        for (Root root : roots) {
+          root.tree.invalidate();
+        }
+      }
+      treeStructureChanged(state.path, null, null);
+    });
+  }
+
   @Override
   public void dispose() {
   }

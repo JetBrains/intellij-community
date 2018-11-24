@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ChangedRangesInfo {
-
   public final List<TextRange> insertedRanges;
   public final List<TextRange> allChangedRanges;
 
@@ -30,5 +29,4 @@ public class ChangedRangesInfo {
     this.insertedRanges = insertedRanges;
     this.allChangedRanges = allChangedRanges;
   }
-  
 }

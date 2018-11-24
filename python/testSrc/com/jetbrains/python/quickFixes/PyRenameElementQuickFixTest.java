@@ -23,9 +23,6 @@ import com.jetbrains.python.inspections.PyPep8NamingInspection;
 import com.jetbrains.python.inspections.PyProtectedMemberInspection;
 import com.jetbrains.python.inspections.PyShadowingBuiltinsInspection;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/RenameElementQuickFixTest/")
 public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
 

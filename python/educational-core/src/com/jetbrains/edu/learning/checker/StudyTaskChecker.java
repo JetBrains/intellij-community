@@ -7,6 +7,7 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StudyTaskChecker<T extends Task> {
   @NotNull protected final T myTask;
@@ -31,7 +32,7 @@ public class StudyTaskChecker<T extends Task> {
     return new StudyCheckResult(StudyStatus.Unchecked, "Check for " + myTask.getTaskType() + " task isn't available");
   }
 
-  public StudyCheckResult checkOnRemote(@NotNull StepicUser user)  {
+  public StudyCheckResult checkOnRemote(@Nullable StepicUser user)  {
     return new StudyCheckResult(StudyStatus.Unchecked, "Remote check for " + myTask.getTaskType() + " task isn't available");
   }
 

@@ -9,10 +9,6 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifactProperties> {
   protected MyState myState = new MyState();
 

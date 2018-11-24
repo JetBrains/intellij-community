@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.recorder.compile.KotlinCompileUtil
 import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 import com.intellij.testGuiFramework.recorder.ui.Notifier
-import java.util.function.Consumer
 
 /**
  * @author Sergey Karashevich
@@ -36,13 +35,9 @@ class PerformScriptAction : AnAction(null, "Run GUI Script", AllIcons.Actions.Ex
 
   override fun actionPerformed(p0: AnActionEvent?) {
     LOG.info("Compile and evaluate current script buffer")
-    Notifier.updateStatus("<long>Compiling and performing current script")
+    Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Compiling and performing current script")
     val editor = GuiRecorderComponent.getEditor()
 
-    //we wrapping it in lambda consumer because of different classloader problem in CompileDaemon class.
-    val myNotifier: Consumer<String> = Consumer<String> { statusMessage -> Notifier.updateStatus(statusMessage) }
-
-//        ApplicationManager.getApplication().executeOnPooledThread { KotlinCompileUtil.compileAndEvalCodeWithNotifier(editor.document.text, myNotifier) }
     KotlinCompileUtil.compileAndRun(editor.document.text)
   }
 

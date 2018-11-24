@@ -16,10 +16,11 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.ExtendableAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,13 +43,15 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CreatePatchFromChangesAction extends AnAction implements DumbAware {
+public class CreatePatchFromChangesAction extends ExtendableAction implements DumbAware {
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider");
+
   public CreatePatchFromChangesAction() {
-    super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
-          VcsBundle.message("action.description.create.patch.for.selected.revisions"), AllIcons.Vcs.Patch);
+    super(EP_NAME);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void defaultActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
     if ((changes == null) || (changes.length == 0)) return;
@@ -73,7 +77,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     createPatch(project, commitMessage, changeCollection);
   }
 
-  public static void createPatch(Project project, String commitMessage, List<Change> changeCollection) {
+  public static void createPatch(Project project, String commitMessage, @NotNull List<Change> changeCollection) {
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
     CommitSession commitSession = executor.createCommitSession();
@@ -117,7 +121,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     }, VcsBundle.message("create.patch.loading.content.progress"), true, project);
   }
 
-  public void update(final AnActionEvent e) {
+  public void defaultUpdate(@NotNull AnActionEvent e) {
     final Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
     Change[] changes;
     ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);

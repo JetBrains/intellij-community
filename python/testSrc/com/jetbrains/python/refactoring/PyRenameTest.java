@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,11 +238,6 @@ public class PyRenameTest extends PyTestCase {
   }
 
   // PY-2748
-  public void testFormatStringKeyword() {
-    doTest("renamed");
-  }
-
-  // PY-2748
   public void testFormatStringDictLiteral() {
     doUnsupportedOperationTest();
   }
@@ -291,7 +286,47 @@ public class PyRenameTest extends PyTestCase {
   public void testDictAsPercentArg() {
     doUnsupportedOperationTest();
   }
-  
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationRenameOverload() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationRenameImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationRenameCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassRenameOverload() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassRenameImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassRenameCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedModuleRenameCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedClassRenameCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("bar"));
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, () -> doTest(newName));
   }

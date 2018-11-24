@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jan-2007
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -34,7 +30,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -76,12 +71,12 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     return presentation.hasReportedProblems();
   }
 
+  @NotNull
   @Override
-  @Nullable
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final RefEntity[] refEntities = tree.getSelectedElements();
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
-    return refEntities.length == 0 ? null : presentation.getQuickFixes(refEntities, tree);
+    return refEntities.length == 0 ? QuickFixAction.EMPTY : presentation.getQuickFixes(refEntities, tree);
   }
 
 

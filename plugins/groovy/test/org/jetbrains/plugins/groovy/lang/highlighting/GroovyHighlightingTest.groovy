@@ -349,6 +349,112 @@ class Baz implements I {
     myFixture.testHighlighting(false, false, false)
   }
 
+  void testMethodDelegate() {
+    myFixture.addClass('''\
+package groovy.lang;
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface Delegate {}
+''')
+    myFixture.configureByText('a.groovy','''
+class A {
+  def foo(){}
+}
+
+class B {
+  @Delegate A getA(){return new A()}
+}
+
+new B().foo()
+''')
+
+    fixture.checkHighlighting()
+  }
+
+  void testMethodDelegateError() {
+    myFixture.configureByText('a.groovy','''
+class A {
+  def foo(){}
+}
+
+class B {
+  <error>@Delegate</error> A getA(int i){return new A()}
+}
+
+new B().foo()
+''')
+
+    fixture.checkHighlighting()
+  }
+
+
+  void testBuilderSimpleStrategyError() {
+    myFixture.addClass('''\
+package groovy.transform.builder;
+@Target({ ElementType.TYPE})
+
+public @interface Builder {
+  Class<?> builderStrategy();
+  boolean includeSuperProperties() default false;
+}
+''')
+
+    myFixture.addClass('''
+package groovy.transform.builder;
+public class SimpleStrategy {}
+''')
+
+    myFixture.configureByText('a.groovy', '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+<error>@Builder(builderStrategy = SimpleStrategy, includeSuperProperties = true)</error>
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+''')
+
+    fixture.checkHighlighting()
+  }
+
+  void testBuilderSimpleStrategy() {
+    myFixture.addClass('''\
+package groovy.transform.builder;
+@Target({ ElementType.TYPE})
+
+public @interface Builder {
+  Class<?> builderStrategy();
+  boolean includeSuperProperties() default false;
+}
+''')
+
+    myFixture.addClass('''
+package groovy.transform.builder;
+public class SimpleStrategy {}
+''')
+
+    myFixture.configureByText('a.groovy', '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy)
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+new Pojo().setName("sd").setCounter(5)
+''')
+
+    fixture.checkHighlighting()
+  }
+
+
   void testPrimitiveTypeParams() {
     myFixture.configureByText('a.groovy', '''\
 List<<error descr="Primitive type parameters are not allowed in type parameter list">int</error>> list = new ArrayList<int><EOLError descr="'(' expected"></EOLError>
@@ -2020,7 +2126,20 @@ package a.b.c.trait.d.as.e.def.f.in.g;
 public class Foo {} 
 '''
     testHighlighting '''\
-<info>import</info> a.b.c.trait.d.as.e.def.f.in.g.*
+import a.b.c.<info>trait</info>.d.<info>as</info>.e.<info>def</info>.f.<info>in</info>.g.*
 ''', false, true
+  }
+
+  void 'test resolve methods of boxed types on primitive qualifiers'() {
+    testHighlighting '''\
+class Widget {
+    float width = 1.1f
+}
+
+Widget w = new Widget()
+w.width.round()
+w.width.intValue()
+w.width.compareTo(2f)
+''', GrUnresolvedAccessInspection
   }
 }

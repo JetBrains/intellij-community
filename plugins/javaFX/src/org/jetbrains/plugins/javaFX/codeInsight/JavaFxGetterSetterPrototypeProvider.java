@@ -27,10 +27,6 @@ import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
- * User: anna
- * Date: 3/4/13
- */
 public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypeProvider {
   private static final Logger LOG = Logger.getInstance(JavaFxGetterSetterPrototypeProvider.class);
 

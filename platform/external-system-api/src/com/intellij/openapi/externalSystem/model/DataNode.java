@@ -342,7 +342,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   @NotNull
   public DataNode<T> graphCopy() {
-    return сopy(this, null);
+    return copy(this, null);
   }
 
   @NotNull
@@ -399,11 +399,11 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   }
 
   @NotNull
-  private static <T> DataNode<T> сopy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
+  private static <T> DataNode<T> copy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
     DataNode<T> copy = nodeCopy(dataNode);
     copy.myParent = newParent;
     for (DataNode<?> child : dataNode.myChildren) {
-      copy.addChild(сopy(child, copy));
+      copy.addChild(copy(child, copy));
     }
     return copy;
   }

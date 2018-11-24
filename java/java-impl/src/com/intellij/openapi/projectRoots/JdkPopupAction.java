@@ -43,9 +43,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class JdkPopupAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.JDKPopupAction");
 

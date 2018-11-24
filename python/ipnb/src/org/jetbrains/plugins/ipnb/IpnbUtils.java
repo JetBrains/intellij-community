@@ -6,9 +6,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.TimeoutUtil;
-import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.configuration.IpnbSettings;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 
 import javax.swing.*;
@@ -21,10 +21,9 @@ import java.util.concurrent.Future;
 
 public class IpnbUtils {
   private static final Logger LOG  = Logger.getInstance(IpnbUtils.class);
-  private static int hasFx = 0;
 
-  public static JComponent createLatexPane(@NotNull final String source, int width) {
-    final JComponent panel = createHtmlPanel(source, width);
+  public static JComponent createLatexPane(@NotNull final String source, Project project, int width) {
+    final JComponent panel = createHtmlPanel(source, project, width);
 
     panel.addMouseListener(new MouseAdapter() {
       @Override
@@ -39,21 +38,8 @@ public class IpnbUtils {
     return panel;
   }
 
-  public static boolean hasFx() {
-    if (hasFx == 0) {
-      try {
-        Platform.setImplicitExit(false);
-        hasFx = 1;
-      }
-      catch (NoClassDefFoundError e) {
-        hasFx = 2;
-      }
-    }
-    return hasFx == 1;
-  }
-
-  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
-    if (hasFx()) {
+  public static JComponent createHtmlPanel(@NotNull final String source, Project project, int width) {
+    if (IpnbSettings.getInstance(project).hasFx()) {
       return IpnbJfxUtils.createHtmlPanel(source, width);
     }
     return createNonJfxPanel(source);

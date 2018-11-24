@@ -18,9 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -186,14 +184,13 @@ public class DomConcurrencyStressTest extends DomTestCase {
   }
 
   public void testBigCustomFile() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription(MyAllCustomElement.class, "component"), getTestRootDisposable());
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyAllCustomElement.class, "component"), getTestRootDisposable());
 
     registerExtender(MyAllCustomElement.class, MyAllCustomExtender.class);
 
-    VirtualFile bigXml = LocalFileSystem.getInstance().findFileByPath(
-      PlatformTestUtil.getCommunityPath() + "/xml/dom-tests/testData/performance.xml");
-    assert bigXml != null;
-    final XmlFile file = (XmlFile)PsiManager.getInstance(ourProject).findFile(bigXml);
+    String line = "<tag1><tag2><tag3 attr=\"42\">value</tag3></tag2></tag1>\n";
+    String text = "<component>\n" + StringUtil.repeat(line, 100) + "</component>";
+    XmlFile file = (XmlFile)createFile("a.xml", text);
 
     runThreads(42, () -> {
       final Random random = new Random();
@@ -206,7 +203,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
           assert element instanceof MyAllCustomElement : element;
         });
 
-        if (random.nextInt(50) == 0) {
+        if (random.nextInt(20) == 0) {
           SemService.getSemService(getProject()).clearCache();
         }
       }

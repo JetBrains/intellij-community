@@ -53,6 +53,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Field;
 
 public class IdeTooltipManager implements Disposable, AWTEventListener, ApplicationComponent {
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
@@ -188,14 +189,21 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     int shift = centerStrict ? 0 : centerDefault ? 4 : 0;
 
     // Balloon may appear exactly above useful content, such behavior is rather annoying.
+    Rectangle rowBounds = null;
     if (c instanceof JTree) {
       TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
       if (path != null) {
-        Rectangle pathBounds = ((JTree)c).getPathBounds(path);
-        if (pathBounds != null && pathBounds.y + 4 < me.getY()) {
-          shift += me.getY() - pathBounds.y - 4;
-        }
+        rowBounds = ((JTree)c).getPathBounds(path);
       }
+    }
+    else if (c instanceof JList) {
+      int row = ((JList)c).locationToIndex(me.getPoint());
+      if (row > -1) {
+        rowBounds = ((JList)c).getCellBounds(row, row);
+      }
+    }
+    if (rowBounds != null && rowBounds.y + 4 < me.getY()) {
+      shift += me.getY() - rowBounds.y - 4;
     }
 
     queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
@@ -607,7 +615,16 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
         if (o instanceof HTML.Tag) {
           HTML.Tag kind = (HTML.Tag)o;
           if (kind == HTML.Tag.HR) {
-            return new CustomHrView(elem, hintHint.getTextForeground());
+            View view = super.create(elem);
+            try {
+              Field field = view.getClass().getDeclaredField("size");
+              field.setAccessible(true);
+              field.set(view, JBUI.scale(1));
+              return view;
+            }
+            catch (Exception ignored) {
+              //ignore
+            }
           }
         }
         return super.create(elem);

@@ -33,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
-/**
-* Created by Max Medvedev on 14/05/14
-*/
 class GrStatementStartCompletionProvider extends CompletionProvider<CompletionParameters> {
   private static final PsiElementPattern.Capture<PsiElement> STATEMENT_START =
     PlatformPatterns.psiElement(GroovyTokenTypes.mIDENT).andOr(

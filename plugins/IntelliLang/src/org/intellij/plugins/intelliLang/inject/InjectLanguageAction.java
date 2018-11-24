@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -37,9 +36,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.injection.Injectable;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -166,11 +163,10 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     }
     finally {
       if (injectable.getLanguage() != null) {    // no need for reference injection
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
       }
       else {
-        ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        PsiManager.getInstance(project).dropPsiCaches();
       }
     }
   }

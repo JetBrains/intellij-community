@@ -171,12 +171,12 @@ public final class SearchScope {
     switch (getScopeType()) {
       case PROJECT:
         //noinspection unchecked
-        ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.<VirtualFile>alwaysTrue()));
+        ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
         break;
       case MODULE:
         final Module module = ModuleManager.getInstance(project).findModuleByName(getModuleName());
         assert module != null;
-        ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.<VirtualFile>alwaysTrue()));
+        ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
         break;
       case DIRECTORY:
         final String dirName = getPath();

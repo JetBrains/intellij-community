@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -41,8 +40,6 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +67,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private final Project myProject;
   private JPanel myGenericSettingsPanel;
-  private JLabel myModificationOfImportedModelWarningLabel;
+  private ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
 
   private final ModulesProvider myModulesProvider;
@@ -221,6 +218,11 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         }
       }
     }
+    for (ModuleConfigurationEditor editor : myEditors) {
+      if (editor instanceof ModuleElementsEditor) {
+        ((ModuleElementsEditor)editor).addListener(this::updateImportedModelWarning);
+      }
+    }
   }
 
   private static Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
@@ -264,8 +266,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
     final JComponent component = createCenterPanel();
     myGenericSettingsPanel.add(component, BorderLayout.CENTER);
-    myModificationOfImportedModelWarningLabel = new JLabel();
-    myGenericSettingsPanel.add(myModificationOfImportedModelWarningLabel, BorderLayout.SOUTH);
+    myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
+    myGenericSettingsPanel.add(myModificationOfImportedModelWarningComponent.getLabel(), BorderLayout.SOUTH);
     updateImportedModelWarning();
     myEditorsInitialized = true;
     return myGenericSettingsPanel;
@@ -297,15 +299,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private void updateImportedModelWarning() {
+    if (!myEditorsInitialized) return;
+
     ProjectModelExternalSource externalSource = ModuleRootManager.getInstance(myModule).getExternalSource();
     if (externalSource != null && isModified()) {
-      myModificationOfImportedModelWarningLabel.setVisible(true);
-      myModificationOfImportedModelWarningLabel.setBorder(JBUI.Borders.empty(5, 5));
-      myModificationOfImportedModelWarningLabel.setIcon(AllIcons.General.Warning);
-      myModificationOfImportedModelWarningLabel.setText(UIUtil.toHtml("Module '" + myModule.getName() + "' is imported from " + externalSource.getDisplayName() + ". Any changes made in its configuration may be lost after reimporting."));
+      myModificationOfImportedModelWarningComponent.showWarning("Module '" + myModule.getName() + "'", externalSource);
     }
     else {
-      myModificationOfImportedModelWarningLabel.setVisible(false);
+      myModificationOfImportedModelWarningComponent.hideWarning();
     }
   }
 

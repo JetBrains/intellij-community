@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
@@ -261,7 +260,7 @@ public class ExceptionUtil {
                                                                     @Nullable PsiElement topElement,
                                                                     boolean includeSelfCalls) {
     final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null, includeSelfCalls);
-    return set == null ? Collections.<PsiClassType>emptyList() : set;
+    return set == null ? Collections.emptyList() : set;
   }
 
   @Nullable
@@ -458,7 +457,7 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
     final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(methodCall.getArgumentList());
-    final JavaResolveResult result = properties != null ? properties.getInfo() : InferenceSession.getResolveResult(methodCall);
+    final JavaResolveResult result = properties != null ? properties.getInfo() : PsiDiamondType.getDiamondsAwareResolveResult(methodCall);
     final PsiElement element = result.getElement();
     final PsiMethod method = element instanceof PsiMethod ? (PsiMethod)element : null;
     if (method == null) {
@@ -559,7 +558,7 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceListElement resource) {
     List<PsiClassType> ex = getExceptionsFromClose(resource);
-    return ex != null ? ex : Collections.<PsiClassType>emptyList();
+    return ex != null ? ex : Collections.emptyList();
   }
 
   @NotNull
@@ -571,7 +570,7 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getUnhandledCloserExceptions(PsiElement place, @Nullable PsiElement topElement, PsiType type) {
     List<PsiClassType> ex = type instanceof PsiClassType ? getExceptionsFromClose(type, place.getResolveScope()) : null;
-    return ex != null ? getUnhandledExceptions(place, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()])) : Collections.<PsiClassType>emptyList();
+    return ex != null ? getUnhandledExceptions(place, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()])) : Collections.emptyList();
   }
 
   private static List<PsiClassType> getExceptionsFromClose(PsiResourceListElement resource) {
@@ -704,6 +703,11 @@ public class ExceptionUtil {
 
   public static boolean isUncheckedException(@NotNull PsiClassType type) {
     return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ERROR);
+  }
+
+  public static boolean isUncheckedException(@NotNull PsiClass psiClass) {
+    return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) ||
+           InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_ERROR);
   }
 
   public static boolean isUncheckedExceptionOrSuperclass(@NotNull final PsiClassType type) {

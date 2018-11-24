@@ -193,23 +193,26 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       }
     }
 
-    if (listOwner instanceof PsiMethodImpl) {
+    if (listOwner instanceof PsiMethod) {
       PsiAnnotation hardcoded = getHardcodedContractAnnotation((PsiMethod)listOwner);
       if (hardcoded != null) {
         result.add(hardcoded);
-      } else if (!ignoreInference(listOwner, ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
-        ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethodImpl)listOwner));
       }
+      if (listOwner instanceof PsiMethodImpl) {
+        if (hardcoded == null && !ignoreInference(listOwner, ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
+          ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethodImpl)listOwner));
+        }
 
-      if (!ignoreInference(listOwner, AnnotationUtil.NOT_NULL) || !ignoreInference(listOwner, AnnotationUtil.NULLABLE)) {
-        PsiAnnotation annotation = getInferredNullityAnnotation((PsiMethodImpl)listOwner);
-        if (annotation != null && !ignoreInference(listOwner, annotation.getQualifiedName())) {
-          result.add(annotation);
+        if (!ignoreInference(listOwner, AnnotationUtil.NOT_NULL) || !ignoreInference(listOwner, AnnotationUtil.NULLABLE)) {
+          PsiAnnotation annotation = getInferredNullityAnnotation((PsiMethodImpl)listOwner);
+          if (annotation != null && !ignoreInference(listOwner, annotation.getQualifiedName())) {
+            result.add(annotation);
+          }
         }
       }
     }
 
-    return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
+    return result.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Override

@@ -10,13 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
-* Created by IntelliJ IDEA.
-* User: zajac
-* Date: 05.03.11
-* Time: 10:57
-* To change this template use File | Settings | File Templates.
-*/
 public class SwitchToFind extends AnAction implements DumbAware {
   public SwitchToFind(@NotNull JComponent shortcutHolder) {
     AnAction findAction = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND);

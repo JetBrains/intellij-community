@@ -65,8 +65,8 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
                                visualPositionTowardsLargerOffsets, myEditor.offsetToVisualPosition(offset, true, false));
     assertEquals("Wrong afterOffset->visualLine calculation", 
                  visualPositionTowardsLargerOffsets.line, ((EditorImpl)myEditor).offsetToVisualLine(offset));
-    assertEquals("Wrong beforeOffset->xy calculation", xyTowardsSmallerOffsets, ((EditorImpl)myEditor).offsetToXY(offset, false));
-    assertEquals("Wrong afterOffset->xy calculation", xyTowardsLargerOffsets, ((EditorImpl)myEditor).offsetToXY(offset, true));
+    assertEquals("Wrong beforeOffset->xy calculation", xyTowardsSmallerOffsets, myEditor.offsetToXY(offset, false, false));
+    assertEquals("Wrong afterOffset->xy calculation", xyTowardsLargerOffsets, myEditor.offsetToXY(offset, true, false));
   }
 
   protected static void checkLPConversions(int logicalColumn, int offset,

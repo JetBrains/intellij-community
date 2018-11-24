@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
     final String result;
     if (myConfiguration instanceof ReplaceConfiguration) {
       final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)myConfiguration;
-      final String replacement = replaceConfiguration.getOptions().getReplacement();
+      final String replacement = replaceConfiguration.getReplaceOptions().getReplacement();
       result = SSRBundle.message("replace.occurrences.of.0.with.1.in.2", pattern, replacement, scope);
     }
     else {

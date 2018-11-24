@@ -29,9 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* User: cdr
-*/
 class SuppressByCommentOutAction extends SuppressIntentionAction {
   private final String nonNlsCommentPattern;
 

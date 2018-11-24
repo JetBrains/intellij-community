@@ -114,6 +114,6 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     final Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMapToOverrideImplement(aClass, true, implemented).values();
     return OverrideImplementUtil
-      .showOverrideImplementChooser(editor, startElement, true, overrideImplement, ContainerUtil.<CandidateInfo>newArrayList());
+      .showOverrideImplementChooser(editor, startElement, true, overrideImplement, ContainerUtil.newArrayList());
   }
 }

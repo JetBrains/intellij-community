@@ -52,12 +52,6 @@ import static java.util.stream.Collectors.toList;
 import static org.tmatesoft.svn.core.wc.SVNRevision.UNDEFINED;
 import static org.tmatesoft.svn.core.wc.SVNRevision.WORKING;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/27/13
- * Time: 12:58 PM
- */
 public class SvnQuickMergeTest extends Svn17TestCase {
   private SvnVcs myVcs;
   private String myBranchUrl;

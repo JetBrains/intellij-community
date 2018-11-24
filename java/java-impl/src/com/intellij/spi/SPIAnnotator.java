@@ -26,9 +26,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class SPIAnnotator implements Annotator{
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {

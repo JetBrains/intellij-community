@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
     final Object o;
     try {
-      o = new SampleObjectGenerator().createValue(aClass, FList.<Type>emptyList());
+      o = new SampleObjectGenerator().createValue(aClass, FList.emptyList());
     }
     catch (Exception e) {
       Messages.showErrorDialog(project, "Cannot generate class '" + className + "': " + e.getMessage(), CommonBundle.getErrorTitle());
@@ -135,7 +135,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       Messages.showErrorDialog(project, e.getMessage() + (cause != null ? ": " + cause.getMessage() : ""), CommonBundle.getErrorTitle());
       return;
     }
-    final String text = JDOMUtil.writeElement(element, "\n");
+    final String text = JDOMUtil.writeElement(element);
     Messages.showIdeaMessageDialog(project, text, "Serialized XML for '" + className + "'",
                                    new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getInformationIcon(), null);
   }
@@ -154,7 +154,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
     @Nullable
     public Object createValue(Type type, final FList<Type> types) throws Exception {
-      return createValue(type, types, Collections.<Type>emptyList());
+      return createValue(type, types, Collections.emptyList());
     }
 
     @Nullable
@@ -204,7 +204,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       Object o = ReflectionUtil.newInstance(aClass);
       for (MutableAccessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
         AbstractCollection abstractCollection = accessor.getAnnotation(AbstractCollection.class);
-        List<Type> elementTypes = abstractCollection != null ? Arrays.<Type>asList(abstractCollection.elementTypes()) : Collections.<Type>emptyList();
+        List<Type> elementTypes = abstractCollection != null ? Arrays.asList(abstractCollection.elementTypes()) : Collections.emptyList();
         Object value = createValue(accessor.getGenericType(), processedTypes, elementTypes);
         if (value != null) {
           accessor.set(o, value);

@@ -1107,8 +1107,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void rebuildStub() {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!myManager.isDisposed()) {
-        myManager.dropResolveCaches();
-        ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
+        myManager.dropPsiCaches();
       }
 
       final VirtualFile vFile = getVirtualFile();

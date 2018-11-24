@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Feb-2008
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.debugger.DebuggerManagerEx;

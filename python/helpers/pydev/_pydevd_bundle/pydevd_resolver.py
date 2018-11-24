@@ -45,6 +45,11 @@ except:
     inspect = InspectStub()
 
 try:
+    from collections import OrderedDict
+except:
+    OrderedDict = dict
+
+try:
     import java.lang #@UnresolvedImport
 except:
     pass
@@ -252,8 +257,11 @@ class DictResolver:
                     return "u'%s'" % key
             return key
 
+    def init_dict(self):
+        return {}
+
     def get_dictionary(self, dict):
-        ret = {}
+        ret = self.init_dict()
 
         i = 0
         for key, val in dict_iter_items(dict):
@@ -538,6 +546,14 @@ class DequeResolver(TupleResolver):
 
 
 #=======================================================================================================================
+# OrderedDictResolver
+#=======================================================================================================================
+class OrderedDictResolver(DictResolver):
+    def init_dict(self):
+        return OrderedDict()
+
+
+#=======================================================================================================================
 # FrameResolver
 #=======================================================================================================================
 class FrameResolver:
@@ -598,4 +614,5 @@ ndarrayResolver = NdArrayResolver()
 multiValueDictResolver = MultiValueDictResolver()
 djangoFormResolver = DjangoFormResolver()
 dequeResolver = DequeResolver()
+orderedDictResolver = OrderedDictResolver()
 frameResolver = FrameResolver()

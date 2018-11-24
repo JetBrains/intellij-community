@@ -63,14 +63,14 @@ public class InspectionTreeState {
 
   private static class InspectionTreeSelectionPath {
     private final Object[] myPath;
-    private final int[] myIndicies;
+    private final int[] myIndices;
 
     public InspectionTreeSelectionPath(TreePath path) {
       myPath = path.getPath();
-      myIndicies = new int[myPath.length];
+      myIndices = new int[myPath.length];
       for (int i = 0; i < myPath.length - 1; i++) {
         InspectionTreeNode node = (InspectionTreeNode)myPath[i];
-        myIndicies[i + 1] = getChildIndex(node, (InspectionTreeNode)myPath[i + 1]);
+        myIndices[i + 1] = getChildIndex(node, (InspectionTreeNode)myPath[i + 1]);
       }
     }
 
@@ -116,8 +116,8 @@ public class InspectionTreeState {
       // Exactly same element not found. Trying to select somewhat near.
       int count = newRoot.getChildCount();
       if (count > 0) {
-        if (myIndicies[idx] < count) {
-          newPath.add(newRoot.getChildAt(myIndicies[idx]));
+        if (myIndices[idx] < count) {
+          newPath.add(newRoot.getChildAt(myIndices[idx]));
         }
         else {
           newPath.add(newRoot.getChildAt(count - 1));

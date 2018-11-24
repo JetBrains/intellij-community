@@ -9,10 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/5/12
- */
 public class CoverageListRootNode extends CoverageListNode {
   private List<AbstractTreeNode> myTopLevelPackages;
   private final Project myProject;

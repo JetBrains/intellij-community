@@ -16,13 +16,9 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -384,6 +380,32 @@ public class PyTypingTest extends PyTestCase {
     doTestNoInjectedText("class C:\n" +
                          "    def foo(self, expr: '<caret>foo bar'):\n" +
                          "        pass\n");
+  }
+
+  // PY-22620
+  public void testVariableTypeCommentInjectionTuple() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
+                       "int, int");
+  }
+
+  // PY-22620
+  public void testVariableTypeCommentInjectionParenthesisedTuple() {
+    doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)", 
+                       "(int, int)");
+  }
+
+  // PY-22620
+  public void testForTypeCommentInjectionTuple() {
+    doTestInjectedText("for x, y in undefined():  # type: int,<caret> int\n" +
+                       "    pass", 
+                       "int, int");
+  }
+
+  // PY-22620
+  public void testWithTypeCommentInjectionTuple() {
+    doTestInjectedText("with undefined() as (x, y):  # type: int,<caret> int\n" +
+                       "    pass",
+                       "int, int");
   }
 
   // PY-16125
@@ -931,6 +953,21 @@ public class PyTypingTest extends PyTestCase {
            "expr = f(True, 1, 'foo')\n");
   }
 
+  // PY-24260
+  public void testGenericClassParameterTakenFromGenericClassObject() {
+    doTest("MyClass[TypeVar('T')]",
+           "from typing import TypeVar, Generic, Type\n" +
+           "\n" +
+           "T = TypeVar(\"T\")\n" +
+           "\n" +
+           "class MyClass(Generic[T]):\n" +
+           "    def __init__(self, type: Type[T]):\n" +
+           "        pass\n" +
+           "\n" +
+           "def f(x: Type[T]):\n" +
+           "    expr = MyClass(x)\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -948,17 +985,6 @@ public class PyTypingTest extends PyTestCase {
     assertFalse(files.isEmpty());
     final PsiElement injected = files.get(0).getFirst();
     assertEquals(expected, injected.getText());
-  }
-
-  @NotNull
-  private PsiElement getElementAtCaret() {
-    final Editor editor = myFixture.getEditor();
-    final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
-    assertNotNull(file);
-    final PsiElement element = file.findElementAt(myFixture.getCaretOffset());
-    assertNotNull(element);
-    return element;
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {

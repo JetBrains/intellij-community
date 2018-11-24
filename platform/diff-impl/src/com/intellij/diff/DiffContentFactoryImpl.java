@@ -37,6 +37,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -250,12 +252,35 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull byte[] content,
+                                     @NotNull FileType fileType,
+                                     @NotNull String fileName) throws IOException {
+    if (isBinaryContent(content, fileType)) {
+      return createBinaryImpl(project, content, fileType, fileName, null);
+    }
+
+    return createDocumentFromBytes(project, content, fileType, fileName);
+  }
+
+  @NotNull
+  @Override
+  public DiffContent createFromBytes(@Nullable Project project,
+                                     @NotNull byte[] content,
                                      @NotNull VirtualFile highlightFile) throws IOException {
     if (isBinaryContent(content, highlightFile.getFileType())) {
       return createBinaryImpl(project, content, highlightFile.getFileType(), highlightFile.getName(), highlightFile);
     }
 
     return createDocumentFromBytes(project, content, highlightFile);
+  }
+
+  @NotNull
+  @Override
+  public DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                 @NotNull byte[] content,
+                                                 @NotNull FileType fileType,
+                                                 @NotNull String fileName) {
+    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
+    return createFromBytesImpl(project, content, fileType, fileName, null, e.getDefaultCharset());
   }
 
   @NotNull

@@ -31,7 +31,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -44,7 +43,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 public class DetectedIndentOptionsNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("indent.options.notification.provider");
   private static final Key<Boolean> NOTIFIED_FLAG = Key.create("indent.options.notification.provider.status");
-  protected static final Key<Boolean> DETECT_INDENT_NOTIFICATION_SHOWN_KEY = Key.create("indent.options.notification.provider.status.test.notification.shown");
+  public static final Key<Boolean> DETECT_INDENT_NOTIFICATION_SHOWN_KEY = Key.create("indent.options.notification.provider.status.test.notification.shown");
 
   private static boolean myShowNotificationInTest = false;
 
@@ -125,7 +124,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
   }
 
   @TestOnly
-  static void setShowNotificationInTest(boolean show) {
+  public static void setShowNotificationInTest(boolean show) {
     myShowNotificationInTest = show;
   }
 }

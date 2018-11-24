@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 09-Jan-2007
- */
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;

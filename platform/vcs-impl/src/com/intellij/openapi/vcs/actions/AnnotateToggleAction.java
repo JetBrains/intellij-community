@@ -64,6 +64,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public static final ExtensionPointName<Provider> EP_NAME =
     ExtensionPointName.create("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
 
+  public AnnotateToggleAction() {
+    setEnabledInModalContext(true);
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);

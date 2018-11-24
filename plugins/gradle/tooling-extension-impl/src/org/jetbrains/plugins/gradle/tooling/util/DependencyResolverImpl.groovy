@@ -43,6 +43,7 @@ import org.gradle.api.tasks.compile.AbstractCompile
 import org.gradle.language.base.artifact.SourcesArtifact
 import org.gradle.language.java.artifact.JavadocArtifact
 import org.gradle.plugins.ide.idea.IdeaPlugin
+import org.gradle.util.GUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -58,7 +59,9 @@ import java.util.regex.Pattern
 class DependencyResolverImpl implements DependencyResolver {
 
   private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
-  private static isDependencySubstitutionsSupported = is4OrBetter ||
+  private static isJavaLibraryPluginSupported = is4OrBetter ||
+                                                      (GradleVersion.current() >= GradleVersion.version("3.4"))
+  private static isDependencySubstitutionsSupported = isJavaLibraryPluginSupported ||
                                                       (GradleVersion.current() > GradleVersion.version("2.5"))
   private static isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
                                                       (GradleVersion.current() >= GradleVersion.version("2.0"))
@@ -136,8 +139,11 @@ class DependencyResolverImpl implements DependencyResolver {
 
         Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap = ArrayListMultimap.create()
         resolvedArtifacts.each { artifactMap.put(it.moduleVersion.id, it) }
+
+        def isBuildScriptConfiguration = myProject.buildscript.configurations.find { it == configuration } != null
         //noinspection GroovyAssignabilityCheck
-        Set<ComponentArtifactsResult> componentResults = myProject.dependencies.createArtifactResolutionQuery()
+        def dependencyHandler = isBuildScriptConfiguration ? myProject.buildscript.dependencies : myProject.dependencies
+        Set<ComponentArtifactsResult> componentResults = dependencyHandler.createArtifactResolutionQuery()
           .forComponents(resolvedArtifacts
                            .findAll { !isProjectDependencyArtifact(it) }
                            .collect { toComponentIdentifier(it.moduleVersion.id) })
@@ -204,10 +210,14 @@ class DependencyResolverImpl implements DependencyResolver {
     Collection<ExternalDependency> result = new ArrayList<>()
 
     // resolve compile dependencies
+    def isMainSourceSet = sourceSet.name == SourceSet.MAIN_SOURCE_SET_NAME
+    String deprecatedCompileConfigurationName = isMainSourceSet ? "compile" : GUtil.toCamelCase(sourceSet.name) + "Compile"
+    def deprecatedCompileConfiguration = myProject.configurations.findByName(deprecatedCompileConfigurationName)
     def compileConfigurationName = sourceSet.compileConfigurationName
     def compileClasspathConfiguration = myProject.configurations.findByName(compileConfigurationName + 'Classpath')
     def originCompileConfiguration = myProject.configurations.findByName(compileConfigurationName)
     def compileConfiguration = compileClasspathConfiguration ?: originCompileConfiguration
+    def compileOnlyConfiguration = isJavaLibraryPluginSupported ? myProject.configurations.findByName(sourceSet.compileOnlyConfigurationName) : null
 
     def compileScope = 'COMPILE'
     def (compileDependencies, resolvedCompileFileDependencies) = resolveDependencies(compileConfiguration, compileScope)
@@ -229,10 +239,21 @@ class DependencyResolverImpl implements DependencyResolver {
       def resolvedObj = resolve(it)
       resolvedMap.put(resolvedObj, it)
 
-      if (checkCompileOnlyDeps &&
-          (resolvedObj instanceof Collection ? !originCompileConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
-           !originCompileConfiguration.contains(resolvedObj))) {
-        ((AbstractExternalDependency)it).scope = providedScope
+      // since version 3.4 compileOnly no longer extends compile
+      // so, we can use compileOnly configuration for the check
+      Object[] resolvedObjArray = resolvedObj instanceof Collection ? ((Collection)resolvedObj).toArray() : [resolvedObj]
+      if (isJavaLibraryPluginSupported) {
+        if (compileOnlyConfiguration != null && compileOnlyConfiguration.containsAll(resolvedObjArray)) {
+          // deprecated 'compile' configuration still can be used
+          if (deprecatedCompileConfiguration == null || !deprecatedCompileConfiguration.containsAll(resolvedObjArray)) {
+            ((AbstractExternalDependency)it).scope = providedScope
+          }
+        }
+      }
+      else {
+        if (checkCompileOnlyDeps && !originCompileConfiguration.containsAll(resolvedObjArray)) {
+          ((AbstractExternalDependency)it).scope = providedScope
+        }
       }
     }
 

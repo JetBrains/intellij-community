@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class ClassReferenceParser extends StandardHeaderParser {
   public static final String MAIN_CLASS = "Main-Class";
   public static final String PREMAIN_CLASS = "Premain-Class";
   public static final String AGENT_CLASS = "Agent-Class";
+  public static final String LAUNCHER_AGENT_CLASS = "Launcher-Agent-Class";
 
   public static final HeaderParser INSTANCE = new ClassReferenceParser();
 
@@ -100,7 +101,7 @@ public class ClassReferenceParser extends StandardHeaderParser {
       return true;
     }
 
-    if (header.equals(AGENT_CLASS) && !hasInstrumenterMethod(aClass, "agentmain")) {
+    if ((header.equals(AGENT_CLASS) || header.equals(LAUNCHER_AGENT_CLASS)) && !hasInstrumenterMethod(aClass, "agentmain")) {
       holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.agent.class.invalid"));
       return true;
     }

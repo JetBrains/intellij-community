@@ -130,7 +130,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       ApplicationBundle.message("settings.code.style.general.formatter.marker.title"), true));
     myMarkerOptionsPanel.setBorder(
       IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
-    myPanel.setBorder(JBUI.Borders.empty(10, 10));
+    myPanel.setBorder(JBUI.Borders.empty(0, 10));
     myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
     myScrollPane.setViewport(new GradientViewport(myPanel, JBUI.insetsTop(5), true));
 

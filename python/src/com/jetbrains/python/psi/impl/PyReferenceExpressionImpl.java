@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,6 +101,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     pyVisitor.visitPyReferenceExpression(this);
   }
 
+  @Override
   @Nullable
   public PyExpression getQualifier() {
     final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
@@ -111,12 +113,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return getQualifier() != null;
   }
 
+  @Override
   @Nullable
   public String getReferencedName() {
     final ASTNode nameElement = getNameElement();
     return nameElement != null ? nameElement.getText() : null;
   }
 
+  @Override
   @Nullable
   public ASTNode getNameElement() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
@@ -128,6 +132,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return getReferencedName();
   }
 
+  @Override
   @NotNull
   public QualifiedResolveResult followAssignmentsChain(@NotNull PyResolveContext resolveContext) {
     final List<QualifiedRatedResolveResult> resolveResults = multiFollowAssignmentsChain(resolveContext);
@@ -206,6 +211,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return result;
   }
 
+  @Override
   @Nullable
   public QualifiedName asQualifiedName() {
     if (myQualifiedName == null) {
@@ -219,6 +225,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return "PyReferenceExpression: " + getReferencedName();
   }
 
+  @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (!TypeEvalStack.mayEvaluate(this)) {
@@ -375,11 +382,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static PyType getTypeFromTarget(@NotNull PsiElement target,
                                           @NotNull TypeEvalContext context,
                                           @NotNull PyReferenceExpression anchor) {
-    final PyType type = getGenericTypeFromTarget(target, context, anchor);
+    final PyType type = dropSelfForInstanceMethod(getGenericTypeFromTarget(target, context, anchor), context, anchor);
 
     if (context.maySwitchToAST(anchor)) {
       final PyExpression qualifier = anchor.getQualifier();
-      if (qualifier != null && !(type instanceof PyFunctionType) && PyTypeChecker.hasGenerics(type, context)) {
+      if (qualifier != null && PyTypeChecker.hasGenerics(type, context)) {
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
         if (!ContainerUtil.isEmpty(substitutions)) {
           final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
@@ -465,6 +472,26 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return null;
   }
 
+  @Nullable
+  private static PyType dropSelfForInstanceMethod(@Nullable PyType type,
+                                                  @NotNull TypeEvalContext context,
+                                                  @NotNull PyReferenceExpression anchor) {
+    if (type instanceof PyFunctionType && context.maySwitchToAST(anchor)) {
+      final PyExpression qualifier = anchor.getQualifier();
+      final PyFunctionType functionType = (PyFunctionType)type;
+
+      if (qualifier != null && PyCallExpressionHelper.isQualifiedByInstance(functionType.getCallable(), qualifier, context)) {
+        final List<PyCallableParameter> parameters = functionType.getParameters(context);
+
+        if (!ContainerUtil.isEmpty(parameters) && parameters.get(0).isSelf()) {
+          return new PyFunctionTypeImpl(functionType.getCallable(), ContainerUtil.subList(parameters, 1));
+        }
+      }
+    }
+
+    return type;
+  }
+
   private static PyType getTypeByControlFlow(@NotNull String name,
                                              @NotNull TypeEvalContext context,
                                              @NotNull PyExpression anchor,
@@ -486,6 +513,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     catch (PyDefUseUtil.InstructionNotFoundException ignored) {
     }
     return null;
+  }
+
+  @Nullable
+  public static PyType getReferenceTypeFromOverridingProviders(@NotNull PsiElement target,
+                                                               @NotNull TypeEvalContext context,
+                                                               @Nullable PsiElement anchor) {
+    return StreamEx
+      .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+      .select(PyOverridingTypeProvider.class)
+      .map(provider -> provider.getReferenceType(target, context, anchor))
+      .findFirst(Objects::nonNull)
+      .orElse(null);
   }
 
   @Nullable

@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- */
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
   @NonNls private static final String FEATURE_ID = "featureType";

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Dec-2008
- */
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.*;

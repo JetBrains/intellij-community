@@ -56,12 +56,7 @@ public class HgAddCommand {
       }.queue();
     }
     else {
-      HgUtil.executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          executeInCurrentThread(files);
-        }
-      }, myProject);
+      HgUtil.executeOnPooledThread(() -> executeInCurrentThread(files), myProject);
     }
   }
 

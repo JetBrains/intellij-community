@@ -18,10 +18,6 @@
 package git4idea.test
 
 import com.intellij.dvcs.push.PushSpec
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.Executor.*
@@ -175,5 +171,10 @@ fun makePushSpec(repository: GitRepository, from: String, to: String): PushSpec<
     newBranch = false
   }
   return PushSpec(GitPushSource.create(source), GitPushTarget(target, newBranch))
+}
+
+fun GitRepository.resolveConflicts() {
+  cd(this)
+  git("add -u .")
 }
 

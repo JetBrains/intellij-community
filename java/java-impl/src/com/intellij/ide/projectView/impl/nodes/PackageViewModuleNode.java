@@ -17,6 +17,7 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,7 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> {
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
       List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots());
       final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), getValue(), false);
       if (getSettings().isShowLibraryContents()) {

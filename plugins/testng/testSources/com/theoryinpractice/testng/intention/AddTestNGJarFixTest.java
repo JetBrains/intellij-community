@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 04-Mar-2008
- */
 package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -75,17 +71,14 @@ public class AddTestNGJarFixTest {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
-          myFixture.tearDown();
-          myFixture = null;
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
+        myFixture.tearDown();
+        myFixture = null;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -98,23 +91,20 @@ public class AddTestNGJarFixTest {
 
   @Test(dataProvider = "data")
   public void doTest(final String testName) throws Throwable {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          IntentionAction resultAction = null;
-          final List<IntentionAction> actions = myFixture.getAvailableIntentions("intention/testNGJar" + "/" + testName + ".java");
-          for (IntentionAction action : actions) {
-            if (Comparing.strEqual(action.getText(), "Add testng.jar to classpath")) {
-              resultAction = action;
-              break;
-            }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        IntentionAction resultAction = null;
+        final List<IntentionAction> actions = myFixture.getAvailableIntentions("intention/testNGJar" + "/" + testName + ".java");
+        for (IntentionAction action : actions) {
+          if (Comparing.strEqual(action.getText(), "Add testng.jar to classpath")) {
+            resultAction = action;
+            break;
           }
-          Assert.assertNotNull(resultAction);
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        Assert.assertNotNull(resultAction);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }

@@ -30,9 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 03/06/14
- */
 public class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspectionBase {
 
   @NotNull

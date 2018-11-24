@@ -26,8 +26,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -149,7 +147,7 @@ public class GitChangeUtils {
         case 'A':
           before = null;
           status = FileStatus.ADDED;
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
+          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, true);
           break;
         case 'U':
           status = FileStatus.MERGED_WITH_CONFLICTS;
@@ -157,22 +155,22 @@ public class GitChangeUtils {
           if (status == null) {
             status = FileStatus.MODIFIED;
           }
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, false, true, true);
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
+          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true);
+          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, true);
           break;
         case 'D':
           status = FileStatus.DELETED;
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true, true);
+          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true);
           after = null;
           break;
         case 'R':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(vcsRoot, tokens[1], parentRevision, project, true, true, true);
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
+          before = GitContentRevision.createRevision(vcsRoot, tokens[1], parentRevision, project, true, true);
+          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, true);
           break;
         case 'T':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true, true);
+          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true);
           after = GitContentRevision.createRevisionForTypeChange(project, vcsRoot, path, thisRevision, true);
           break;
         default:
@@ -393,7 +391,7 @@ public class GitChangeUtils {
     String output = getDiffOutput(project, root, range, dirtyPaths);
 
     Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, newRev, oldRev, output, changes, Collections.<String>emptySet());
+    parseChanges(project, root, newRev, oldRev, output, changes, Collections.emptySet());
     return changes;
   }
 
@@ -417,7 +415,7 @@ public class GitChangeUtils {
     Collection<Change> changes = new ArrayList<>();
     final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
     parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
-                 Collections.<String>emptySet());
+                 Collections.emptySet());
     return changes;
   }
 

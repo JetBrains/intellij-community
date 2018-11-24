@@ -17,11 +17,16 @@ package com.intellij.xdebugger;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.JdomKt;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author nik
@@ -85,9 +90,9 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   public void testDoNotSaveUnmodifiedDefaultBreakpoint() {
     reload();
 
-    assertEquals("default", getSingleBreakpoint().getProperties().myOption);
+    assertThat(getSingleBreakpoint().getProperties().myOption).isEqualTo("default");
     Element element = save();
-    assertEquals(0, element.getContent().size());
+    assertThat(element).isNull();
   }
 
   public void testSaveChangedDefaultBreakpoint() {

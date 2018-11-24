@@ -19,9 +19,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
 public class GrAssignTypeCalculator implements Function<GrOperatorExpression, PsiType> {
   public static final GrAssignTypeCalculator INSTANCE = new GrAssignTypeCalculator();
 

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Jun-2009
- */
 package com.intellij.junit4;
 
 import junit.framework.Test;

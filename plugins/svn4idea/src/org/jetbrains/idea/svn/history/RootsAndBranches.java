@@ -249,7 +249,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private void createToolbar() {
     final DefaultActionGroup svnGroup = createActions();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, svnGroup, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SvnRootsAndBranches", svnGroup, true);
     myToolbarComponent = actionToolbar.getComponent();
   }
 

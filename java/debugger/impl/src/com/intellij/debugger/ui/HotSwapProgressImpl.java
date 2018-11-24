@@ -63,13 +63,10 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   public HotSwapProgressImpl(Project project) {
     super(project);
     myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, new PerformInBackgroundOption() {
+      @Override
       public boolean shouldStartInBackground() {
         return DebuggerSettings.getInstance().HOTSWAP_IN_BACKGROUND;
       }
-
-      public void processSentToBackground() {
-      }
-
     }, null, null, true);
     myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase(){
       @Override
@@ -81,6 +78,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     myUpdateQueue = new MergingUpdateQueue("HotSwapProgress update queue", 100, true, null, myProgressWindow);
   }
 
+  @Override
   public void finished() {
     super.finished();
 
@@ -160,6 +158,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     return res.toString();
   }
   
+  @Override
   public void addMessage(DebuggerSession session, final int type, final String text) {
     List<String> messages = myMessages.get(type);
     if (messages == null) {
@@ -169,6 +168,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     messages.add(session.getSessionName() + ": " + text + ";");
   }
 
+  @Override
   public void setText(final String text) {
     myUpdateQueue.queue(new Update("Text") {
       @Override
@@ -182,6 +182,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     });
   }
 
+  @Override
   public void setTitle(final String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
@@ -191,6 +192,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
 
   }
 
+  @Override
   public void setFraction(final double v) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
@@ -199,6 +201,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     }, myProgressWindow.getModalityState());
   }
 
+  @Override
   public boolean isCancelled() {
     return myProgressWindow.isCanceled();
   }
@@ -207,6 +210,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
      return myProgressWindow;
   }
 
+  @Override
   public void setDebuggerSession(DebuggerSession session) {
     myTitle = DebuggerBundle.message("progress.hot.swap.title") + " : " + session.getSessionName();
     myProgressWindow.setTitle(myTitle);

@@ -22,10 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: zolotov
- * Date: 1/31/13
- */
 public class ZenEmptyNode extends ZenCodingNode {
   public static final ZenCodingNode INSTANCE = new ZenEmptyNode();
 

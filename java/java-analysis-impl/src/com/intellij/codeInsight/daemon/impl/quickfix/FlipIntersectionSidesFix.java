@@ -28,10 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
-* User: anna
-* Date: 10/31/13
-*/
 public class FlipIntersectionSidesFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(FlipIntersectionSidesFix.class);
   private final String myClassName;

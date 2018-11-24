@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,7 @@ import com.jetbrains.python.inspections.quickfix.PyUpdatePropertySignatureQuickF
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +54,7 @@ import java.util.function.Predicate;
  */
 public class PyPropertyDefinitionInspection extends PyInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -121,7 +119,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
           assert arglist != null : "Property call has null arglist";
           // we assume fget, fset, fdel, doc names
           final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(getResolveContext());
-          for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
+          for (Map.Entry<PyExpression, PyCallableParameter> entry : mapping.getMappedParameters().entrySet()) {
             final String paramName = entry.getValue().getName();
             PyExpression argument = PyUtil.peelArgument(entry.getKey());
             checkPropertyCallArgument(paramName, argument, node.getContainingFile());

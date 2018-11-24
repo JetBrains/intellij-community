@@ -111,8 +111,8 @@ public class ByLine {
     /*
      * We want to fix invalid matching here:
      *
-     * .{        ..{
-     * ..{   vs  ...{
+     * .{        ..{
+     * ..{   vs  ...{
      * ...{
      *
      * first step will return matching (0,2)-(0,2). And we should adjust it to (1,3)-(0,2)
@@ -120,9 +120,9 @@ public class ByLine {
      *
      * From the other hand, we don't want to reduce number of IW-matched lines.
      *
-     * .{         ...{
-     * ..{    vs  ..{
-     * ...{       .{
+     * .{         ...{
+     * ..{    vs  ..{
+     * ...{       .{
      *
      * first step will return (0,3)-(0,3) and 'correcting' it to (0,1)-(2,3) is wrong (and it will break ByWord highlighting).
      *

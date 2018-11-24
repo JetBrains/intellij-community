@@ -112,11 +112,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
       "newInstance"
       };
     myNameField = new NameSuggestionsField(nameSuggestions, getProject());
-    myNameChangedListener = new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        validateButtons();
-      }
-    };
+    myNameChangedListener = () -> validateButtons();
     myNameField.addDataChangedListener(myNameChangedListener);
     panel.add(myNameField.getComponent(), gbc);
 

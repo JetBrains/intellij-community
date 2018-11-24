@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import static org.fest.swing.edt.GuiActionRunner.execute;
@@ -70,12 +69,7 @@ public class InspectionsFixture extends ToolWindowFixture {
     for (int i = 0, n = node.getChildCount(); i < n; i++) {
       children.add((InspectionTreeNode)node.getChildAt(i));
     }
-    Collections.sort(children, new Comparator<InspectionTreeNode>() {
-      @Override
-      public int compare(InspectionTreeNode node1, InspectionTreeNode node2) {
-        return node1.toString().compareTo(node2.toString());
-      }
-    });
+    Collections.sort(children, (node1, node2) -> node1.toString().compareTo(node2.toString()));
     for (InspectionTreeNode child : children) {
       describe(child, sb, depth + 1);
     }

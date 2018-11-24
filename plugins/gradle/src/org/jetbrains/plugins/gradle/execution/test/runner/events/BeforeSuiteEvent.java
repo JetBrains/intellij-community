@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
@@ -40,12 +42,24 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
       registerTestProxy(testId, getResultsViewer().getTestsRootNode());
     }
     else {
-      String locationUrl = findLocationUrl(null, fqClassName);
-      final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, true, locationUrl, null);
-      testProxy.setLocator(getExecutionConsole().getUrlProvider());
-      testProxy.setParentId(parentTestId);
-      testProxy.setStarted();
-      registerTestProxy(testId, testProxy);
+      SMTestProxy parentTest = findTestProxy(parentTestId);
+      if (isHiddenTestNode(name, parentTest)) {
+        registerTestProxy(testId, parentTest);
+      }
+      else {
+        String locationUrl = findLocationUrl(null, fqClassName);
+        final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, true, locationUrl, null);
+        testProxy.setLocator(getExecutionConsole().getUrlProvider());
+        testProxy.setParentId(parentTestId);
+        testProxy.setStarted();
+        registerTestProxy(testId, testProxy);
+      }
     }
+  }
+
+  private boolean isHiddenTestNode(String name, SMTestProxy parentTest) {
+    return parentTest != null &&
+           !GradleConsoleProperties.SHOW_INTERNAL_TEST_NODES.value(getProperties()) &&
+           StringUtil.startsWith(name, "Gradle Test Executor");
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -130,6 +131,21 @@ public class DfaUtil {
       return Nullness.UNKNOWN;
     }
 
+    return inferBlockNullity(body, InferenceFromSourceUtil.suppressNullable(method));
+  }
+
+  @NotNull
+  public static Nullness inferLambdaNullity(PsiLambdaExpression lambda) {
+    final PsiElement body = lambda.getBody();
+    if (body == null || LambdaUtil.getFunctionalInterfaceReturnType(lambda) == null) {
+      return Nullness.UNKNOWN;
+    }
+
+    return inferBlockNullity(body, false);
+  }
+
+  @NotNull
+  private static Nullness inferBlockNullity(PsiElement body, boolean suppressNullable) {
     final AtomicBoolean hasNulls = new AtomicBoolean();
     final AtomicBoolean hasNotNulls = new AtomicBoolean();
     final AtomicBoolean hasUnknowns = new AtomicBoolean();
@@ -140,15 +156,17 @@ public class DfaUtil {
       public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
                                                          DataFlowRunner runner,
                                                          DfaMemoryState memState) {
-        DfaValue returned = memState.peek();
-        if (memState.isNull(returned)) {
-          hasNulls.set(true);
-        }
-        else if (memState.isNotNull(returned)) {
-          hasNotNulls.set(true);
-        }
-        else {
-          hasUnknowns.set(true);
+        if(PsiTreeUtil.isAncestor(body, instruction.getReturn(), false)) {
+          DfaValue returned = memState.peek();
+          if (memState.isNull(returned)) {
+            hasNulls.set(true);
+          }
+          else if (memState.isNotNull(returned)) {
+            hasNotNulls.set(true);
+          }
+          else {
+            hasUnknowns.set(true);
+          }
         }
         return super.visitCheckReturnValue(instruction, runner, memState);
       }
@@ -156,7 +174,7 @@ public class DfaUtil {
 
     if (rc == RunnerResult.OK) {
       if (hasNulls.get()) {
-        return InferenceFromSourceUtil.suppressNullable(method) ? Nullness.UNKNOWN : Nullness.NULLABLE;
+        return suppressNullable ? Nullness.UNKNOWN : Nullness.NULLABLE;
       }
       if (hasNotNulls.get() && !hasUnknowns.get()) {
         return Nullness.NOT_NULL;

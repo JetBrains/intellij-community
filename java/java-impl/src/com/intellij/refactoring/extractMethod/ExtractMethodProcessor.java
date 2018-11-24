@@ -60,7 +60,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -105,7 +104,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected String myMethodName; // name for extracted method
   protected PsiType myReturnType; // return type for extracted method
   protected PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
-  private VariableData[] myVariableDatum; // parameter data for extracted method
+  protected VariableData[] myVariableDatum; // parameter data for extracted method
   protected PsiClassType[] myThrownExceptions; // exception to declare as thrown by extracted method
   protected boolean myStatic; // whether to declare extracted method static
 
@@ -549,8 +548,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
-    final List<VariableData> variables = myInputVariables.getInputVariables();
-    myVariableDatum = variables.toArray(new VariableData[variables.size()]);
+    setDataFromInputVariables();
     myNullness = initNullness();
     myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
@@ -606,6 +604,11 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
     };
+  }
+
+  public void setDataFromInputVariables() {
+    final List<VariableData> variables = myInputVariables.getInputVariables();
+    myVariableDatum = variables.toArray(new VariableData[variables.size()]);
   }
 
   public PsiExpression[] findOccurrences() {
@@ -939,21 +942,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       deleteExtracted();
     }
     else {
-      PsiExpression expression2Replace = myExpression;
-      if (myExpression instanceof PsiAssignmentExpression) {
-        expression2Replace = ((PsiAssignmentExpression)myExpression).getRExpression();
-      } else if (myExpression instanceof PsiPostfixExpression || myExpression instanceof PsiPrefixExpression) {
-        final IElementType elementType = myExpression instanceof PsiPostfixExpression
-                                          ? ((PsiPostfixExpression)myExpression).getOperationTokenType()
-                                          : ((PsiPrefixExpression)myExpression).getOperationTokenType();
-        if (elementType == JavaTokenType.PLUSPLUS || elementType == JavaTokenType.MINUSMINUS) {
-          PsiExpression operand = myExpression instanceof PsiPostfixExpression ? ((PsiPostfixExpression)myExpression).getOperand() :
-                                  ((PsiPrefixExpression)myExpression).getOperand();
-          expression2Replace =
-            ((PsiBinaryExpression)myExpression.replace(myElementFactory.createExpressionFromText(operand.getText() + " + x", operand))).getROperand();
-        }
-
-      }
+      PsiExpression expression2Replace = expressionToReplace(myExpression);
       myExpression = (PsiExpression)IntroduceVariableBase.replace(expression2Replace, myMethodCall, myProject);
       myMethodCall = PsiTreeUtil.getParentOfType(myExpression.findElementAt(myExpression.getText().indexOf(myMethodCall.getText())), PsiMethodCallExpression.class);
       declareNecessaryVariablesAfterCall(myOutputVariable);
@@ -1012,6 +1001,13 @@ public class ExtractMethodProcessor implements MatchProvider {
         RefactoringChangeUtil.qualifyReference(methodExpression, myExtractedMethod, PsiUtil.getEnclosingStaticElement(methodExpression, myTargetClass) != null ? myTargetClass : null);
       }
     }
+  }
+
+  protected PsiExpression expressionToReplace(PsiExpression expression) {
+    if (expression instanceof PsiAssignmentExpression) {
+      return ((PsiAssignmentExpression)expression).getRExpression();
+    }
+    return expression;
   }
 
   protected PsiMethod addExtractedMethod(PsiMethod newMethod) {
@@ -1350,7 +1346,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
         list.add(parm);
       }
-      else {
+      else if (defineVariablesForUnselectedParameters()){
         @NonNls StringBuilder buffer = new StringBuilder();
         if (isFinal) {
           buffer.append("final ");
@@ -1380,6 +1376,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     return (PsiMethod)myStyleManager.reformat(newMethod);
+  }
+
+  protected boolean defineVariablesForUnselectedParameters() {
+    return true;
   }
 
   private void copyParamAnnotations(PsiParameter parm) {
@@ -1735,6 +1735,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myExtractedMethod;
   }
 
+  public void setMethodName(String methodName) {
+    myMethodName = methodName;
+  }
+
   public Boolean hasDuplicates() {
     List<Match> duplicates = getDuplicates();
     if (duplicates != null && !duplicates.isEmpty()) {
@@ -1830,5 +1834,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public PsiVariable[] getOutputVariables() {
     return myOutputVariables;
+  }
+  
+  public void setMethodVisibility(String methodVisibility) {
+    myMethodVisibility = methodVisibility;
   }
 }

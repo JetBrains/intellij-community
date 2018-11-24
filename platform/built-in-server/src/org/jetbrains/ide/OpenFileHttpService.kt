@@ -22,7 +22,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectUtil
+import com.intellij.openapi.project.guessProjectForContentFile
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
@@ -260,7 +260,7 @@ private fun openAbsolutePath(file: Path, request: OpenFileRequest): Promise<Void
         promise.setError(NOT_FOUND)
       }
       else {
-        navigate(ProjectUtil.guessProjectForContentFile(virtualFile), virtualFile, request)
+        navigate(guessProjectForContentFile(virtualFile), virtualFile, request)
         promise.setResult(null)
       }
     }

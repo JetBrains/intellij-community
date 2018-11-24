@@ -34,10 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 05-Jun-2006
- */
 public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> implements Place.Navigator {
   private final ProjectJdkImpl myProjectJdk;
   private final SdkEditor mySdkEditor;

@@ -37,7 +37,12 @@
                         serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
     </applicationService>
 
+    <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementTracking"
+                        serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementTracking"/>
+
     <!--<postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>-->
+
+    <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
 
   </extensions>
 
@@ -48,6 +53,10 @@
 
     <component>
       <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.completion.tracker.ShownTimesTrackerInitializer</implementation-class>
     </component>
   </application-components>
 

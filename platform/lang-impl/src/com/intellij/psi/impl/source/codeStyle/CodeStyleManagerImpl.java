@@ -793,6 +793,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       if (myCaretModel.getVisualPosition().column == myVisualColumnToRestore) {
         return;
       }
+      Project project = myEditor.getProject();
+      if (project == null || PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(myDocument)) {
+        return;
+      }
       insertWhiteSpaceIndentIfNeeded(newCaretLineStartOffset);
     }
 

@@ -68,6 +68,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -164,7 +165,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       @Override
       public void projectOpened(Project project) {
         if (project == myProject) {
-          ToolWindowManagerImpl.this.projectOpened();
+          //noinspection TestOnlyProblems
+          init();
         }
       }
 
@@ -390,7 +392,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     assert myId2StripeButton.isEmpty();
   }
 
-  public void projectOpened() {
+  @TestOnly
+  public void init() {
     final MyUIManagerPropertyChangeListener uiManagerPropertyListener = new MyUIManagerPropertyChangeListener();
     final MyLafManagerListener lafManagerListener = new MyLafManagerListener();
 
@@ -1133,6 +1136,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                         boolean canCloseContent,
                                         final boolean canWorkInDumbMode,
                                         boolean shouldBeAvailable) {
+    if (myToolWindowsPane == null) {
+      //noinspection TestOnlyProblems
+      init();
+    }
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -2027,8 +2035,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
 
+    @NotNull
     @Override
-    @Nullable
     public Condition getExpireCondition() {
       return ApplicationManager.getApplication().getDisposed();
     }
@@ -2118,8 +2126,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
 
+    @NotNull
     @Override
-    @Nullable
     public Condition getExpireCondition() {
       return ApplicationManager.getApplication().getDisposed();
     }

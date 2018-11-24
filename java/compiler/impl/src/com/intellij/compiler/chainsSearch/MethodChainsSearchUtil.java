@@ -76,15 +76,4 @@ public final class MethodChainsSearchUtil {
       .filter(t -> !TypeConversionUtil.isPrimitiveAndNotNull(t))
       .count();
   }
-
-  public static boolean doesMethodsContainParameters(@NotNull PsiMethod[] psiMethods,
-                                                     @NotNull Set<PsiType> parameterRawTypes) {
-    for (PsiMethod m : psiMethods) {
-      //TODO
-      //if (!containsParameter(m, parameterRawTypes)) {
-      //  return true;
-      //}
-    }
-    return false;
-  }
 }

@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.diff.comparison.ComparisonManagerImpl;
+import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,9 +40,6 @@ public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
   @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
-
-  // we can't use ComparisonManager.getInstance() because of Upsource
-  private static final ComparisonManagerImpl ourComparisonManager = new ComparisonManagerImpl();
 
   @NotNull private final String myBasePath;
   private final boolean myIsReversePath;
@@ -264,8 +262,10 @@ public class TextPatchBuilder {
     }
   }
 
+  @NotNull
   private static List<Range> doCompareLines(@NotNull List<String> beforeLines, @NotNull List<String> afterLines) {
-    return ourComparisonManager.compareLines(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+    FairDiffIterable iterable = ByLine.compare(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+    return ContainerUtil.newArrayList(iterable.iterateChanges());
   }
 
   @NotNull

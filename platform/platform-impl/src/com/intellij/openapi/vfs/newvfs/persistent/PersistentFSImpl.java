@@ -519,15 +519,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
       return content;
     }
-    else {
-      try {
-        assert length >= 0 : file;
-        return FileUtil.loadBytes(contentStream, (int)length);
-      }
-      catch (IOException e) {
-        FSRecords.handleError(e);
-        return ArrayUtil.EMPTY_BYTE_ARRAY;
-      }
+    try {
+      assert length >= 0 : file;
+      return FileUtil.loadBytes(contentStream, (int)length);
+    }
+    catch (IOException e) {
+      FSRecords.handleError(e);
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   }
 

@@ -15,84 +15,53 @@
  */
 package com.intellij.compiler.chainsSearch;
 
-import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.openapi.util.Pair;
 
 import java.util.*;
 
 public class SearchInitializer {
-  private final static int CHAIN_SEARCH_MAGIC_RATIO = 10;
-
-  private final LinkedHashMap<MethodIncompleteSignature, Pair<MethodsChain, Integer>> myChains;
   private final ChainCompletionContext myContext;
+  private final LinkedList<MethodChain> myQueue;
+  private final LinkedHashMap<MethodIncompleteSignature, MethodChain> myChains;
 
-  public SearchInitializer(SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues,
+  public SearchInitializer(SortedSet<SignatureAndOccurrences> indexValues,
                            ChainCompletionContext context) {
     myContext = context;
     int size = indexValues.size();
-    myChains = new LinkedHashMap<>(size);
-    add(indexValues);
+    List<MethodChain> chains = new ArrayList<>(size);
+    populateFrequentlyUsedMethod(indexValues, chains);
+    myQueue = new LinkedList<>();
+    myChains = new LinkedHashMap<>(chains.size());
+    for (MethodChain chain : chains) {
+      MethodIncompleteSignature signature = chain.getHeadSignature();
+      myQueue.add(chain);
+      myChains.put(signature, chain);
+    }
   }
 
-  private void add(Collection<OccurrencesAware<MethodIncompleteSignature>> indexValues) {
+  public LinkedList<MethodChain> getChainQueue() {
+    return myQueue;
+  }
+
+  public LinkedHashMap<MethodIncompleteSignature, MethodChain> getChains() {
+    return myChains;
+  }
+
+  private void populateFrequentlyUsedMethod(SortedSet<SignatureAndOccurrences> signatures,
+                                            List<MethodChain> chains) {
     int bestOccurrences = -1;
-    for (OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
-      if (add(indexValue)) {
-        int occurrences = indexValue.getOccurrences();
+    for (SignatureAndOccurrences indexValue : signatures) {
+      MethodChain methodChain = MethodChain.create(indexValue.getSignature(), indexValue.getOccurrenceCount(), myContext);
+      if (methodChain != null) {
+        chains.add(methodChain);
+        int occurrences = indexValue.getOccurrenceCount();
         if (bestOccurrences == -1) {
           bestOccurrences = occurrences;
         }
-        else if (bestOccurrences > occurrences * CHAIN_SEARCH_MAGIC_RATIO) {
+        else if (bestOccurrences > occurrences * ChainSearchMagicConstants.FILTER_RATIO) {
           return;
         }
       }
-    }
-  }
-
-  private boolean add(OccurrencesAware<MethodIncompleteSignature> indexValue) {
-    MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
-    int occurrences = indexValue.getOccurrences();
-    MethodsChain methodsChain = MethodsChain.create(indexValue.getUnderlying(), occurrences, myContext);
-    if (methodsChain != null) {
-      myChains.put(methodInvocation, Pair.create(methodsChain, occurrences));
-      return true;
-    }
-    return false;
-  }
-
-  public InitResult init(Set<String> excludedEdgeNames) {
-    int size = myChains.size();
-    List<OccurrencesAware<MethodIncompleteSignature>> initedVertexes = new ArrayList<>(size);
-    LinkedHashMap<MethodIncompleteSignature, MethodsChain> initedChains =
-      new LinkedHashMap<>(size);
-    for (Map.Entry<MethodIncompleteSignature, Pair<MethodsChain, Integer>> entry : myChains.entrySet()) {
-      MethodIncompleteSignature signature = entry.getKey();
-      if (!excludedEdgeNames.contains(signature.getName())) {
-        initedVertexes.add(new OccurrencesAware<>(entry.getKey(), entry.getValue().getSecond()));
-        MethodsChain methodsChain = entry.getValue().getFirst();
-        initedChains.put(signature, methodsChain);
-      }
-    }
-    return new InitResult(initedVertexes, initedChains);
-  }
-
-  public static class InitResult {
-    private final List<OccurrencesAware<MethodIncompleteSignature>> myVertexes;
-    private final LinkedHashMap<MethodIncompleteSignature, MethodsChain> myChains;
-
-    private InitResult(List<OccurrencesAware<MethodIncompleteSignature>> vertexes,
-                       LinkedHashMap<MethodIncompleteSignature, MethodsChain> chains) {
-      myVertexes = vertexes;
-      myChains = chains;
-    }
-
-    public List<OccurrencesAware<MethodIncompleteSignature>> getVertices() {
-      return myVertexes;
-    }
-
-    public LinkedHashMap<MethodIncompleteSignature, MethodsChain> getChains() {
-      return myChains;
     }
   }
 }

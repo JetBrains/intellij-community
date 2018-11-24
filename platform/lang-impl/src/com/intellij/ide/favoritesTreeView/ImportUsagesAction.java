@@ -29,12 +29,6 @@ import com.intellij.usages.UsageView;
 
 import java.util.Collection;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/1/12
- * Time: 11:22 PM
- */
 public class ImportUsagesAction extends AnAction {
   public ImportUsagesAction() {
     super("To Favorites", "To Favorites", AllIcons.Toolwindows.ToolWindowFavorites);

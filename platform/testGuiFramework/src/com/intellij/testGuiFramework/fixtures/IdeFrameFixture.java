@@ -245,11 +245,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture invokeProjectMakeAndSimulateFailure(@NotNull final String failure) {
-    Runnable failTask = new Runnable() {
-      @Override
-      public void run() {
-        throw new ExternalSystemException(failure);
-      }
+    Runnable failTask = () -> {
+      throw new ExternalSystemException(failure);
     };
     //ApplicationManager.getApplication().putUserData(EXECUTE_BEFORE_PROJECT_BUILD_IN_GUI_TEST_KEY, failTask);
     selectProjectMakeAction();
@@ -386,11 +383,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture requestProjectSyncAndSimulateFailure(@NotNull final String failure) {
-    Runnable failTask = new Runnable() {
-      @Override
-      public void run() {
-        throw new ExternalSystemException(failure);
-      }
+    Runnable failTask = () -> {
+      throw new ExternalSystemException(failure);
     };
     //ApplicationManager.getApplication().putUserData(EXECUTE_BEFORE_PROJECT_SYNC_TASK_IN_GUI_TEST_KEY, failTask);
     // When simulating the error, we don't have to wait for sync to happen. Sync never happens because the error is thrown before it (sync)
@@ -606,12 +600,9 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   public IdeSettingsDialogFixture openIdeSettings() {
     // Using invokeLater because we are going to show a *modal* dialog via API (instead of clicking a button, for example.) If we use
     // GuiActionRunner the test will hang until the modal dialog is closed.
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Project project = getProject();
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true));
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Project project = getProject();
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true));
     });
     return IdeSettingsDialogFixture.find(robot());
   }

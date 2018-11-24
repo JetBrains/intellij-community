@@ -1,17 +1,13 @@
 package com.jetbrains.edu.learning.stepic;
 
-import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.annotations.Transient;
-import com.jetbrains.edu.learning.StudyTaskManager;
 import org.jetbrains.annotations.NotNull;
 
 public class StepicUser {
-  private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
   private int id = -1;
-  private String myFirstName;
-  private String myLastName;
-  private String myEmail;
+  @SerializedName("first_name") private String myFirstName;
+  @SerializedName("last_name") private String myLastName;
   private String myAccessToken;
   private String myRefreshToken;
   private boolean isGuest;
@@ -19,7 +15,6 @@ public class StepicUser {
   private StepicUser() {
     myFirstName = "";
     myLastName = "";
-    myEmail = "";
     myAccessToken = "";
     myRefreshToken = "";
   }
@@ -27,10 +22,8 @@ public class StepicUser {
   public static StepicUser createEmptyUser() {
     return new StepicUser();
   }
-  
-  public StepicUser(@NotNull final String email, @NotNull final String password, @NotNull StepicWrappers.TokenInfo tokenInfo) {
-    this.myEmail = email;
-    setPassword(password);
+
+  public StepicUser(@NotNull StepicWrappers.TokenInfo tokenInfo) {
     setTokenInfo(tokenInfo);
   }
 
@@ -56,28 +49,6 @@ public class StepicUser {
 
   public void setLastName(final String lastName) {
     myLastName = lastName;
-  }
-
-  public String getEmail() {
-    return myEmail;
-  }
-
-  public void setEmail(@NotNull final String email) {
-    this.myEmail = email;
-  }
-
-  @Transient
-  @NotNull
-  public String getPassword() {
-    final String login = getEmail();
-    if (StringUtil.isEmptyOrSpaces(login)) return "";
-    return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + login));
-  }
-
-  @Transient
-  public void setPassword(@NotNull final String password) {
-    if (password.isEmpty()) return;
-    PasswordSafe.getInstance().setPassword(StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
   }
 
   @NotNull
@@ -122,5 +93,28 @@ public class StepicUser {
 
   public void setGuest(boolean guest) {
     isGuest = guest;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    StepicUser user = (StepicUser)o;
+
+    if (id != user.id) return false;
+    if (isGuest != user.isGuest) return false;
+    if (!myFirstName.equals(user.myFirstName)) return false;
+    if (!myLastName.equals(user.myLastName)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = id;
+    result = 31 * result + myFirstName.hashCode();
+    result = 31 * result + myLastName.hashCode();
+    return result;
   }
 }

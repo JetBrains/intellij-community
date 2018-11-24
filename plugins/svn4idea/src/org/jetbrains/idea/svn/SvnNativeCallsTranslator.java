@@ -26,12 +26,6 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/2/12
- * Time: 4:22 PM
- */
 public class SvnNativeCallsTranslator {
   private final static String ourGenericAdvice =
     new StringBuilder().append("An error result is returned by native ").append(SystemInfo.OS_NAME).append(" ")

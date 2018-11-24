@@ -156,23 +156,8 @@
   </action>
   <action id="GotoSuperMethod"/>
   <action id="GotoTypeDeclaration"/>
-  <action id="Graph.Faces.OpenSelectedPages">
-    <keyboard-shortcut first-keystroke="F12"/>
-    <keyboard-shortcut first-keystroke="shift control E"/>
-  </action>
-  <action id="GuiDesigner.CreateComponent">
-    <keyboard-shortcut first-keystroke="meta N"/>
-  </action>
-  <action id="GuiDesigner.CreateListener"/>
-  <action id="GuiDesigner.Duplicate">
-    <keyboard-shortcut first-keystroke="meta alt UP"/>
-    <keyboard-shortcut first-keystroke="meta alt DOWN"/>
-  </action>
   <action id="GuiDesigner.EditComponent"/>
   <action id="GuiDesigner.EditGroup"/>
-  <action id="GuiDesigner.GoToListener">
-    <keyboard-shortcut first-keystroke="meta T"/>
-  </action>
   <action id="HighlightUsagesInFile"/>    <!-- TODO -->
   <action id="IDEtalk.Rename"/>
   <action id="Images.ShowThumbnails"/>

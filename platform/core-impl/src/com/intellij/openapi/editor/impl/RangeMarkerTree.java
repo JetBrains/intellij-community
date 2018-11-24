@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,15 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.editor.ex.SweepProcessor;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Segment;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * User: cdr
- */
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
   private final PrioritizedDocumentListener myListener;
   private final Document myDocument;
@@ -47,9 +42,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       public int getPriority() {
         return EditorDocumentPriorities.RANGE_MARKER; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
       }
-
-      @Override
-      public void beforeDocumentChange(DocumentEvent event) {}
 
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -93,7 +85,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   @NotNull
   @Override
   public RMNode<T> addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    interval.setValid(true);
+    ((RangeMarkerImpl)interval).setValid(true);
     RMNode<T> node = (RMNode<T>)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
 
     if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT && !ApplicationInfoImpl.isInStressTest() && ApplicationManager.getApplication().isUnitTestMode()) {
@@ -183,7 +175,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       if (size() == 0) return;
       checkMax(true);
 
-      modCount++;
+      incModCount();
+
       List<IntervalNode<T>> affected = new SmartList<>();
       collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
       checkMax(false);
@@ -307,55 +300,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return norm;
   }
 
-  public boolean sweep(final int start, final int end, @NotNull SweepProcessor<T> sweepProcessor) {
-    return sweep(processor -> processOverlappingWith(start, end, processor), sweepProcessor);
-  }
-
-  @FunctionalInterface
-  public interface Generator<T> {
-    boolean generateInStartOffsetOrder(@NotNull Processor<T> processor);
-  }
-
-  public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
-    final Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
-    final List<T> starts = new ArrayList<>();
-    if (!generator.generateInStartOffsetOrder(marker -> {
-      // decide whether previous marker ends here or new marker begins
-      int start = marker.getStartOffset();
-      while (true) {
-        assert ends.size() == starts.size();
-        T previous = ends.peek();
-        if (previous != null) {
-          int prevEnd = previous.getEndOffset();
-          if (prevEnd <= start) {
-            if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
-            ends.remove();
-            boolean removed = starts.remove(previous);
-            assert removed;
-            continue;
-          }
-        }
-        break;
-      }
-      if (!sweepProcessor.process(start, marker, true, ends)) return false;
-      starts.add(marker);
-      ends.offer(marker);
-
-      return true;
-    })) return false;
-
-    while (!ends.isEmpty()) {
-      assert ends.size() == starts.size();
-      T previous = ends.remove();
-      int prevEnd = previous.getEndOffset();
-      if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
-      boolean removed = starts.remove(previous);
-      assert removed;
-    }
-
-    return true;
-  }
-
+  // all intervals contained in (start, end) will be shifted by (newBase-start)
+  // that's what happens when you "move" text in document, e.g. ctrl-shift-up/down the selection.
   private void reTarget(int start, int end, int newBase) {
     l.writeLock().lock();
     try {

@@ -138,7 +138,7 @@ private class ControlTransferHandler(val state: DfaMemoryState, val runner: Data
 
   private fun initVariableState(param: PsiParameter, throwable: DfaValue): DfaVariableState {
     val sampleVar = (state as DfaMemoryStateImpl).factory.varFactory.createVariableValue(param, false)
-    val varState = state.createVariableState(sampleVar).withNullability(Nullness.NOT_NULL)
+    val varState = state.createVariableState(sampleVar).withFact(DfaFactType.CAN_BE_NULL, false)
     return if (throwable is DfaTypeValue) varState.withInstanceofValue(throwable)!! else varState
   }
 

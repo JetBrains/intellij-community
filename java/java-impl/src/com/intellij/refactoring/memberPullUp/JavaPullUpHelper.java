@@ -44,9 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by Max Medvedev on 10/3/13
- */
 public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private static final Logger LOG = Logger.getInstance(JavaPullUpHelper.class);
 

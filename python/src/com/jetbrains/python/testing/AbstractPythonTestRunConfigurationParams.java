@@ -18,9 +18,6 @@ package com.jetbrains.python.testing;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: catherine
- */
 public interface AbstractPythonTestRunConfigurationParams {
   AbstractPythonRunConfigurationParams getBaseParams();
 

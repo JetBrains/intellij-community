@@ -20,10 +20,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxRootTagDescriptor;
 
 import java.util.ArrayList;
 
-/**
-* User: anna
-* Date: 1/9/13
-*/
 public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
   private XmlFile myFile;
 

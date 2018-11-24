@@ -71,6 +71,7 @@ import java.util.*;
 
 public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
+  public static final String IMPLEMENT_COMMAND_MARKER = "implement";
 
   private OverrideImplementUtil() { }
 
@@ -385,7 +386,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       return false;
     }
     String commandName = CommandProcessor.getInstance().getCurrentCommandName();
-    return commandName != null && StringUtil.containsIgnoreCase(commandName, "implement");
+    return commandName != null && StringUtil.containsIgnoreCase(commandName, IMPLEMENT_COMMAND_MARKER);
   }
 
   public static void chooseAndOverrideMethods(Project project, Editor editor, PsiClass aClass){
@@ -407,7 +408,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
     Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ?
-                                          ContainerUtil.<CandidateInfo>newArrayList() : getMethodsToOverrideImplement(aClass, true);
+                                          ContainerUtil.newArrayList() : getMethodsToOverrideImplement(aClass, true);
 
     final MemberChooser<PsiMethodMember> chooser = showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;

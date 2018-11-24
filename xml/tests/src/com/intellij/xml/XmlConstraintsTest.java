@@ -21,7 +21,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.xml.actions.validate.TestErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import org.apache.xerces.impl.Constants;
@@ -139,12 +138,7 @@ public class XmlConstraintsTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(descriptor);
     XmlElementDescriptor[] descriptors = descriptor.getElementsDescriptors(tag);
     Map<String, XmlElementDescriptor> map =
-      ContainerUtil.newMapFromValues(Arrays.asList(descriptors).iterator(), new Convertor<XmlElementDescriptor, String>() {
-        @Override
-        public String convert(XmlElementDescriptor o) {
-          return o.getName();
-        }
-      });
+      ContainerUtil.newMapFromValues(Arrays.asList(descriptors).iterator(), o -> o.getName());
     map.put(tag.getName(), tag.getDescriptor());
     return map;
   }

@@ -35,7 +35,7 @@ public final class ConsoleManager {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       ActionGroup actionGroup = netService.getConsoleToolWindowActions();
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("BuiltInServer", actionGroup, false);
 
       SimpleToolWindowPanel toolWindowPanel = new SimpleToolWindowPanel(false, true);
       toolWindowPanel.setContent(console.getComponent());

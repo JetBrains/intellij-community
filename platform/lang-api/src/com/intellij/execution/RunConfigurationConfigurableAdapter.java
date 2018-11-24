@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,6 @@ public class  RunConfigurationConfigurableAdapter<T extends RunConfiguration> ex
   @Override
   public String getDisplayName() {
     return getSettings().getName();
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return null;
   }
 
   public T getConfiguration() {

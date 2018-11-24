@@ -36,10 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.function.Consumer;
 
-/**
- * User: anna
- * Date: Feb 7, 2005
- */
 public class EditInspectionToolsSettingsAction implements IntentionAction, Iconable, HighPriorityAction {
   private final String myShortName;
 

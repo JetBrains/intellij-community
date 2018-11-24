@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,28 +26,24 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
  * Time: 19:26:37
  */
 public class CompileContext {
-  private OptimizingSearchHelper searchHelper;
+  private final OptimizingSearchHelper searchHelper;
   
-  private CompiledPattern pattern;
-  private MatchOptions options;
-  private Project project;
+  private final CompiledPattern pattern;
+  private final MatchOptions options;
+  private final Project project;
 
-  public void clear() {
-    if (searchHelper!=null) searchHelper.clear();
-
-    project = null;
-    pattern = null;
-    options = null;
-  }
-
-  public void init(final CompiledPattern _result, final MatchOptions _options, final Project _project, final boolean _findMatchingFiles) {
+  public CompileContext(final CompiledPattern _result, final MatchOptions _options, final Project _project) {
     options = _options;
     project = _project;
     pattern = _result;
 
     searchHelper = ApplicationManager.getApplication().isUnitTestMode() ?
-                   new TestModeOptimizingSearchHelper(this) :
-                   new FindInFilesOptimizingSearchHelper(this, _findMatchingFiles, _project);
+                   new TestModeOptimizingSearchHelper() :
+                   new FindInFilesOptimizingSearchHelper(options.getScope(), options.isCaseSensitiveMatch(), _project);
+  }
+
+  public void clear() {
+    searchHelper.clear();
   }
 
   public OptimizingSearchHelper getSearchHelper() {
@@ -58,23 +54,11 @@ public class CompileContext {
     return pattern;
   }
 
-  void setPattern(CompiledPattern pattern) {
-    this.pattern = pattern;
-  }
-
   public MatchOptions getOptions() {
     return options;
   }
 
-  void setOptions(MatchOptions options) {
-    this.options = options;
-  }
-
   public Project getProject() {
     return project;
-  }
-
-  void setProject(Project project) {
-    this.project = project;
   }
 }

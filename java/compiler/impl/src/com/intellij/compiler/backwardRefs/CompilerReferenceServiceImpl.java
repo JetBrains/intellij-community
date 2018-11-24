@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +20,22 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
-import com.intellij.compiler.chainsSearch.OccurrencesAware;
+import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
+import com.intellij.compiler.chainsSearch.MethodIncompleteSignature;
+import com.intellij.compiler.chainsSearch.SignatureAndOccurrences;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompilationStatusListener;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -56,8 +57,10 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -85,6 +88,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final Lock myReadDataLock = myLock.readLock();
   private final Lock myOpenCloseLock = myLock.writeLock();
+  // index build start/finish callbacks are not ordered, so "build1 started" -> "build2 started" -> "build1 finished" -> "build2 finished" is expected sequence
+  private int myActiveBuilds = 0;
 
   private volatile CompilerReferenceReader myReader;
 
@@ -99,18 +104,17 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Override
   public void projectOpened() {
     if (isEnabled()) {
-      myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
+      MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+      connection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
           if (project == myProject) {
-            myDirtyScopeHolder.compilerActivityStarted();
-            closeReaderIfNeed(false);
+            closeReaderIfNeed(IndexCloseReason.COMPILATION_STARTED);
           }
         }
       });
 
-      CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-      compilerManager.addCompilationStatusListener(new CompilationStatusListener() {
+      connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
           compilationFinished(compileContext);
@@ -129,9 +133,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
                 return context.getCompileScope().getAffectedModules();
               });
               if (compilationModules == null) return;
-              myDirtyScopeHolder.compilerActivityFinished();
-              myCompilationCount.increment();
-              openReaderIfNeed();
+              openReaderIfNeed(IndexOpenReason.COMPILATION_FINISHED);
             };
             executeOnBuildThread(compilationFinished);
           }
@@ -141,25 +143,27 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
       myDirtyScopeHolder.installVFSListener();
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
-          if (CompilerReferenceReader.exists(myProject)) {
+          boolean indexExist = CompilerReferenceReader.exists(myProject);
+          if (indexExist) {
             CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
             isUpToDate = compilerManager.isUpToDate(projectCompileScope);
           } else {
             isUpToDate = false;
           }
           executeOnBuildThread(() -> {
-            myDirtyScopeHolder.upToDateChecked(isUpToDate);
             if (isUpToDate) {
-              myCompilationCount.increment();
-              openReaderIfNeed();
+              openReaderIfNeed(IndexOpenReason.UP_TO_DATE_CACHE);
+            } else {
+              markAsOutdated(indexExist);
             }
           });
         });
       }
 
-      Disposer.register(myProject, () -> closeReaderIfNeed(false));
+      Disposer.register(myProject, () -> closeReaderIfNeed(IndexCloseReason.PROJECT_CLOSED));
     }
   }
 
@@ -221,8 +225,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                               @SignatureData.IteratorKind byte iteratorKind) {
+  public SortedSet<SignatureAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                                                      @SignatureData.IteratorKind byte iteratorKind) {
     try {
       myReadDataLock.lock();
       if (myReader == null) throw new ReferenceIndexUnavailableException();
@@ -230,22 +234,31 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
         if (type == 0) return Collections.emptySortedSet();
         return Stream.of(new SignatureData(type, iteratorKind, true), new SignatureData(type, iteratorKind, false))
-          .flatMap(sd -> myReader.getMembersFor(sd)
+          .flatMap(sd -> StreamEx.of(myReader.getMembersFor(sd))
+            .peek(r -> ProgressManager.checkCanceled())
+            .select (LightRef.JavaLightMethodRef.class)
+            .flatMap(r -> {
+              LightRef.NamedLightRef[] hierarchy =
+                myReader.getHierarchy(r.getOwner(), false, false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
+              return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
+            })
+            .distinct()
+            .map(r -> {
+              int count = myReader.getOccurrenceCount(r);
+              return count <= 1 ? null : new SignatureAndOccurrences(
+                new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+                count);
+            }))
+          .filter(Objects::nonNull)
+          .collect(Collectors.groupingBy(x -> x.getSignature(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
+          .entrySet()
           .stream()
-          .filter(r -> r instanceof LightRef.JavaLightMethodRef)
-          .map(r -> (LightRef.JavaLightMethodRef) r)
-          .flatMap(r -> {
-            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false);
-            return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
-          })
-          .map(r -> new OccurrencesAware<>(
-            new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
-            myReader.getOccurrenceCount(r))))
+          .map(e -> new SignatureAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       catch (Exception e) {
-        //noinspection ConstantConditions
-        return onException(e, "find methods");
+        onException(e, "find methods");
+        return Collections.emptySortedSet();
       }
     } finally {
       myReadDataLock.unlock();
@@ -273,8 +286,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         return false;
       }
       catch (Exception e) {
-        //noinspection ConstantConditions
-        return onException(e, "correlation");
+        onException(e, "conditional probability");
+        return false;
       }
     } finally {
       myReadDataLock.unlock();
@@ -288,6 +301,58 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     try {
       if (myReader == null) throw new ReferenceIndexUnavailableException();
       return myReader.getNameEnumerator().getName(idx);
+    } catch (Exception e) {
+        onException(e, "find methods");
+        throw new ReferenceIndexUnavailableException();
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @Override
+  public int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      int id;
+      try {
+        id = myReader.getNameEnumerator().tryEnumerate(name);
+      }
+      catch (Exception e) {
+        onException(e, "get name-id");
+        throw new ReferenceIndexUnavailableException();
+      }
+      return id;
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @NotNull
+  @Override
+  public LightRef.LightClassHierarchyElementDef[] getDirectInheritors(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      return myReader.getDirectInheritors(baseClass);
+    } catch (Exception e) {
+      onException(e, "find methods");
+      throw new ReferenceIndexUnavailableException();
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @Override
+  public int getInheritorCount(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(baseClass, false, true, -1);
+      return hierarchy == null ? -1 : hierarchy.length;
+    } catch (Exception e) {
+      onException(e, "inheritor count");
+      throw new ReferenceIndexUnavailableException();
     } finally {
       myReadDataLock.unlock();
     }
@@ -482,11 +547,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
-  private void closeReaderIfNeed(boolean removeIndex) {
+  private void closeReaderIfNeed(IndexCloseReason reason) {
     myOpenCloseLock.lock();
     try {
+      if (reason == IndexCloseReason.COMPILATION_STARTED) {
+        myActiveBuilds++;
+        myDirtyScopeHolder.compilerActivityStarted();
+      }
       if (myReader != null) {
-        myReader.close(removeIndex);
+        myReader.close(reason == IndexCloseReason.AN_EXCEPTION);
         myReader = null;
       }
     } finally {
@@ -494,14 +563,43 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
-  private void openReaderIfNeed() {
+  private void openReaderIfNeed(IndexOpenReason reason) {
+    myCompilationCount.increment();
     myOpenCloseLock.lock();
     try {
-      if (myProject.isOpen()) {
-        LOG.assertTrue(myReader == null, "isAutoMakeEnabled = " + ReadAction.compute(() -> CompilerWorkspaceConfiguration.getInstance(myProject).MAKE_PROJECT_ON_SAVE));
+      try {
+        switch (reason) {
+          case UP_TO_DATE_CACHE:
+            myDirtyScopeHolder.upToDateChecked(true);
+            break;
+          case COMPILATION_FINISHED:
+            myDirtyScopeHolder.compilerActivityFinished();
+        }
+      }
+      catch (RuntimeException e) {
+        --myActiveBuilds;
+        throw e;
+      }
+      if ((--myActiveBuilds == 0) && myProject.isOpen()) {
+        LOG.assertTrue(myReader == null, "isAutoMakeEnabled = " +
+                                         ReadAction
+                                           .compute(() -> CompilerWorkspaceConfiguration.getInstance(myProject).MAKE_PROJECT_ON_SAVE));
         myReader = CompilerReferenceReader.create(myProject);
         LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
+    }
+    finally {
+      myOpenCloseLock.unlock();
+    }
+  }
+
+  private void markAsOutdated(boolean decrementBuildCount) {
+    myOpenCloseLock.lock();
+    try {
+      if (decrementBuildCount) {
+        --myActiveBuilds;
+      }
+      myDirtyScopeHolder.upToDateChecked(false);
     } finally {
       myOpenCloseLock.unlock();
     }
@@ -667,14 +765,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @Nullable
   private <T> T onException(@NotNull Exception e, @NotNull String actionName) {
-    if (e instanceof ProcessCanceledException) {
-      throw (ProcessCanceledException)e;
+    if (e instanceof ControlFlowException) {
+      throw (RuntimeException)e;
     }
 
     LOG.error("an exception during " + actionName + " calculation", e);
     Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
     if (requireIndexRebuild(unwrapped)) {
-      closeReaderIfNeed(true);
+      closeReaderIfNeed(IndexCloseReason.AN_EXCEPTION);
     }
     return null;
   }
@@ -690,5 +788,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     return exception instanceof PersistentEnumeratorBase.CorruptedException ||
            exception instanceof StorageException ||
            exception instanceof IOException;
+  }
+
+  private enum IndexCloseReason {
+    AN_EXCEPTION,
+    COMPILATION_STARTED,
+    PROJECT_CLOSED
+  }
+
+  private enum IndexOpenReason {
+    COMPILATION_FINISHED,
+    UP_TO_DATE_CACHE
   }
 }

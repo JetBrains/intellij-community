@@ -28,6 +28,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
@@ -56,7 +57,6 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
-  private boolean mySchemesPanelEnabled;
   private boolean myIsDisposed = false;
   private final Action mySetFromAction = new AbstractAction("Set from...") {
     @Override
@@ -79,8 +79,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     super(new BorderLayout());
     myModel = model;
     myFactory = factory;
-    mySchemesPanel = new CodeStyleSchemesPanel(model);
-    mySchemesPanelEnabled = schemesPanelEnabled;
+    mySchemesPanel = new CodeStyleSchemesPanel(model, createLinkComponent());
     myProperties = PropertiesComponent.getInstance();
 
     model.addListener(new CodeStyleSettingsListener(){
@@ -115,35 +114,26 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       }
 
       @Override
-      public void usePerProjectSettingsOptionChanged() {
-        mySchemesPanel.usePerProjectSettingsOptionChanged();
+      public void schemeChanged(final CodeStyleScheme scheme) {
+        ensurePanel(scheme).reset(scheme.getCodeStyleSettings());
       }
 
       @Override
-      public void schemeChanged(final CodeStyleScheme scheme) {
-        ensurePanel(scheme).reset(scheme.getCodeStyleSettings());
+      public void settingsChanged(@NotNull CodeStyleSettings settings) {
+        ensureCurrentPanel().reset(settings);
       }
     });
 
     addWaitCard();
 
-    JLabel link = new SwingActionLink(mySetFromAction);
-    link.setVerticalAlignment(SwingConstants.BOTTOM);
-
     JPanel top = new JPanel();
     top.setLayout(new BoxLayout(top, BoxLayout.X_AXIS));
 
-    if (mySchemesPanelEnabled) {
-      JPanel linkPanel = new JPanel();
-      linkPanel.setLayout(new BoxLayout(linkPanel, BoxLayout.Y_AXIS));
-      linkPanel.add(Box.createVerticalGlue());
-      linkPanel.add(link);
+    if (schemesPanelEnabled) {
       top.add(mySchemesPanel);
-      top.add(Box.createRigidArea(new Dimension(10,0)));
-      top.add(linkPanel);
     }
 
-    top.setBorder(JBUI.Borders.empty(10, 10, 0, 10));
+    top.setBorder(JBUI.Borders.empty(5, 10, 0, 10));
     add(top, BorderLayout.NORTH);
     add(mySettingsPanel, BorderLayout.CENTER);
 
@@ -151,6 +141,17 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     mySchemesPanel.onSelectedSchemeChanged();
     onCurrentSchemeChanged();
 
+  }
+
+  @NotNull
+  private JComponent createLinkComponent() {
+    JPanel linkPanel = new JPanel();
+    JLabel link = new SwingActionLink(mySetFromAction);
+    link.setVerticalAlignment(SwingConstants.BOTTOM);
+    linkPanel.setLayout(new BoxLayout(linkPanel, BoxLayout.Y_AXIS));
+    linkPanel.add(Box.createVerticalGlue());
+    linkPanel.add(link);
+    return linkPanel;
   }
 
   private void addWaitCard() {
@@ -234,7 +235,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     String name = scheme.getName();
     if (!mySettingsPanels.containsKey(name)) {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);
-      panel.reset(scheme.getCodeStyleSettings());
+      panel.reset(myModel.getCloneSettings(scheme));
       panel.setModel(myModel);
       CodeStyleAbstractPanel settingsPanel = panel.getSelectedPanel();
       if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {

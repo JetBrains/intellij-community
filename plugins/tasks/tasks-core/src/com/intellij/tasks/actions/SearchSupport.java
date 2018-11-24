@@ -21,8 +21,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.popup.*;
@@ -67,7 +67,7 @@ public abstract class SearchSupport<T extends Task> {
   public SearchSupport(EditorTextField textField) {
 
     myTextField = textField;
-    myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    myTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         onTextChanged();

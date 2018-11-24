@@ -197,9 +197,9 @@
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.ComparableImplementedButEqualsNotOverriddenInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ComparatorMethodParameterNotUsed" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="comparator.method.parameter.not.used.display.name" groupBundle="messages.InspectionsBundle"
+                     key="suspicious.comparator.compare.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.ComparatorMethodParameterNotUsedInspection"/>
+                     implementationClass="com.siyeh.ig.bugs.SuspiciousComparatorCompareInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CompareToUsesNonFinalVariable" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="non.final.field.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
@@ -2457,7 +2457,7 @@
                      implementationClass="com.siyeh.ig.style.UnnecessaryFinalOnLocalVariableOrParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryFullyQualifiedName" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.fully.qualified.name.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFO" cleanupTool="true"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryInterfaceModifier" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.interface.modifier.display.name" groupBundle="messages.InspectionsBundle"
@@ -2546,6 +2546,11 @@
                      key="single.element.annotation.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.annotation.SingleElementAnnotationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MetaAnnotationWithoutRuntimeRetention"
+                     bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="meta.annotation.without.runtime.retention" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.reflective.access.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.annotation.MetaAnnotationWithoutRuntimeRetentionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ArrayCreationWithoutNewKeyword" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="array.creation.without.new.keyword.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

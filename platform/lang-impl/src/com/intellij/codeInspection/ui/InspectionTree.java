@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Nov 4, 2001
- * Time: 5:19:35 PM
- */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -62,9 +56,9 @@ public class InspectionTree extends Tree {
   @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
-  public InspectionTree(@NotNull Project project,
-                        @NotNull GlobalInspectionContextImpl context,
+  public InspectionTree(@NotNull GlobalInspectionContextImpl context,
                         @NotNull InspectionResultsView view) {
+    Project project = context.getProject();
     setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
     myExcludedManager = view.getExcludedManager();
@@ -358,7 +352,7 @@ public class InspectionTree extends Tree {
   }
 
   public void queueUpdate() {
-    ((InspectionRootNode) getRoot()).getUpdater().update(null, true);
+    ((InspectionRootNode) getRoot()).getUpdater().update(true);
   }
 
   public void restoreExpansionAndSelection(boolean treeNodesMightChange) {

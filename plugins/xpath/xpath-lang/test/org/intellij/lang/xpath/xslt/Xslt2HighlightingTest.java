@@ -21,11 +21,6 @@ import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 12.06.2008
-*/
 public class Xslt2HighlightingTest extends TestBase {
   @Override
   protected void setUp() throws Exception {

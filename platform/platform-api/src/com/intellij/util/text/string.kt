@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.openapi.util.text.StringUtil
 
 fun String?.nullize(nullizeSpaces: Boolean = false): String? = StringUtil.nullize(this, nullizeSpaces)
 
-fun String.trimMiddle(maxLength: Int): String? = StringUtil.trimMiddle(this, maxLength)
+fun String.trimMiddle(maxLength: Int, useEllipsisSymbol: Boolean = true): String {
+  return StringUtil.shortenTextWithEllipsis(this, maxLength, maxLength shr 1, useEllipsisSymbol)
+}
 
 fun CharArray.nullize() = if (isEmpty()) null else this

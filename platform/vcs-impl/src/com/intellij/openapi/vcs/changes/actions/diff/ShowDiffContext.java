@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes.actions.diff;
 
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Key;
-import com.intellij.diff.DiffDialogHints;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class ShowDiffContext {
 
   public <T> void putChangeContext(@NotNull Change change, @NotNull Key<T> key, T value) {
     if (myRequestContext == null) myRequestContext = ContainerUtil.newHashMap();
-    if (!myRequestContext.containsKey(change)) myRequestContext.put(change, ContainerUtil.<Key, Object>newHashMap());
+    if (!myRequestContext.containsKey(change)) myRequestContext.put(change, ContainerUtil.newHashMap());
     myRequestContext.get(change).put(key, value);
   }
 }

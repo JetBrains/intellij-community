@@ -65,7 +65,13 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public NodeFilter getLexicalNodesFilter() {
-    return element -> element instanceof PsiWhiteSpace || element instanceof PsiErrorElement;
+    return element -> {
+      if (element instanceof XmlText) {
+        final PsiElement child = element.getFirstChild();
+        return child == element.getLastChild() && child instanceof PsiWhiteSpace;
+      }
+      return element instanceof PsiWhiteSpace || element instanceof PsiErrorElement;
+    };
   }
 
   @Override

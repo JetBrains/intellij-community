@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 04-Sep-2006
- * Time: 18:30:23
- */
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;

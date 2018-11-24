@@ -90,7 +90,7 @@ public class EduCreateNewProjectPanel extends JPanel {
   }
 
   public String getLocationPath() {
-    return myLocationField.getText();
+    return FileUtil.toSystemDependentName(myLocationField.getText());
   }
 
   public void resetError() {

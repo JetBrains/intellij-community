@@ -32,10 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.xml.util.documentation.HtmlDescriptorsTable.LOG;
 
-/**
- * User: anna
- * Date: 2/20/13
- */
 public class XmlProcessingInstructionManipulator extends AbstractElementManipulator<XmlProcessingInstruction> {
 
   @Override

@@ -18,10 +18,6 @@ package com.intellij.coverage;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 
-/**
- * User: anna
- * Date: 4/28/11
- */
 @State(
   name = "CoverageOptionsProvider",
   storages = {

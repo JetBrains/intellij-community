@@ -31,7 +31,7 @@ public class FixingLayoutMatcher extends MinusculeMatcher {
   @Nullable
   private final MinusculeMatcher myFixedMatcher;
 
-  FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
+  public FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
     super(pattern, options, hardSeparators);
     String s = fixPattern(pattern);
     myFixedMatcher = s == null ? null : new MinusculeMatcher(s, options, hardSeparators);

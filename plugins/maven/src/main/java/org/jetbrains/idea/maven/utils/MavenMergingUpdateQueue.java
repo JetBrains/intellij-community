@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
@@ -78,14 +81,14 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
     try {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
-      multicaster.addCaretListener(new CaretAdapter() {
+      multicaster.addCaretListener(new CaretListener() {
           @Override
           public void caretPositionChanged(CaretEvent e) {
             MavenMergingUpdateQueue.this.restartTimer();
           }
         }, this);
 
-      multicaster.addDocumentListener(new DocumentAdapter() {
+      multicaster.addDocumentListener(new DocumentListener() {
           @Override
           public void documentChanged(DocumentEvent event) {
             MavenMergingUpdateQueue.this.restartTimer();

@@ -66,12 +66,8 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         if (context != null || object != null) {
           requestModelUpdateFromContextOrObject(context, object);
         } else {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-            @Override
-            public void consume(DataContext dataContext) {
-              requestModelUpdateFromContextOrObject(dataContext, null);
-            }
-          });
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone(
+            (Consumer<DataContext>)dataContext -> requestModelUpdateFromContextOrObject(dataContext, null));
         }
       }
 
@@ -225,14 +221,11 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       protected void after() {
         final LightweightHint hint = myPanel.getHint();
         if (hint != null) {
-          myPanel.getHintContainerShowPoint().doWhenDone(new Consumer<RelativePoint>() {
-            @Override
-            public void consume(final RelativePoint relativePoint) {
-              hint.setSize(myPanel.getPreferredSize());
-              hint.setLocation(relativePoint);
-              if (after != null) {
-                after.run();
-              }
+          myPanel.getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
+            hint.setSize(myPanel.getPreferredSize());
+            hint.setLocation(relativePoint);
+            if (after != null) {
+              after.run();
             }
           });
         }

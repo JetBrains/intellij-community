@@ -91,7 +91,7 @@ public class TestStatusLine extends JPanel {
       myState.append(result + " done: ");
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
     }
-    myState.append(" – " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    myState.append(" - " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   private static String getTestsTotalMessage(int testsTotal) {

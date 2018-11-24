@@ -118,7 +118,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public PyClassLikeType toClass() {
     return myIsDefinition ? this : new PyClassTypeImpl(myClass, true);
   }
-  
+
   /**
    * Wrap new instance to copy user data to it
    */
@@ -208,7 +208,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    final List<? extends RatedResolveResult> classMembers = resolveInner(myClass, myIsDefinition, name, location);
+    final List<? extends RatedResolveResult> classMembers = resolveInner(myClass, myIsDefinition, name, location, context);
 
     if (PyNames.__CLASS__.equals(name)) {
       return resolveDunderClass(context, classMembers);
@@ -244,7 +244,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
             type = type.toInstance();
           }
           final List<? extends RatedResolveResult> superMembers =
-            resolveInner(((PyClassType)type).getPyClass(), myIsDefinition, name, location);
+            resolveInner(((PyClassType)type).getPyClass(), myIsDefinition, name, location, context);
           if (!superMembers.isEmpty()) {
             return superMembers;
           }
@@ -412,20 +412,28 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return null;
     }
     try {
-      return Collections.max(classTypes, (t1, t2) -> {
-        if (t1 == t2 || t1 != null && t1.equals(t2)) {
-          return 0;
-        }
-        else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
-          return 1;
-        }
-        else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
-          return -1;
-        }
-        else {
-          throw new NotDerivedClassTypeException();
-        }
-      });
+      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
+
+      return classTypes
+        .stream()
+        .filter(t -> !abcMeta.equals(t.getClassQName()))
+        .max(
+          (t1, t2) -> {
+            if (Objects.equals(t1, t2)) {
+              return 0;
+            }
+            else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
+              return 1;
+            }
+            else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
+              return -1;
+            }
+            else {
+              throw new NotDerivedClassTypeException();
+            }
+          }
+        )
+        .orElse(null);
     }
     catch (NotDerivedClassTypeException ignored) {
       return null;
@@ -494,12 +502,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  @Nullable
-  @Override
-  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    return null;
-  }
-
   @NotNull
   @Override
   public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
@@ -549,7 +551,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static List<? extends RatedResolveResult> resolveInner(@NotNull PyClass cls,
                                                                  boolean isDefinition,
                                                                  @NotNull String name,
-                                                                 @Nullable PyExpression location) {
+                                                                 @Nullable PyExpression location,
+                                                                 @NotNull TypeEvalContext context) {
     final PyResolveProcessor processor = new PyResolveProcessor(name);
     final Collection<PsiElement> result;
 
@@ -561,12 +564,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       result = processor.getElements();
     }
 
-    return ContainerUtil.map(result, element -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, element));
+    return ContainerUtil.map(result, element -> new RatedResolveResult(PyReferenceImpl.getRate(element, context), element));
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
   public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
+  @Override
   public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
@@ -794,6 +798,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return lookupString.startsWith("_") && !lookupString.startsWith("__");
   }
 
+  @Override
+  @Nullable
   public String getName() {
     return getPyClass().getName();
   }
@@ -842,6 +848,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return (isValid() ? "" : "[INVALID] ") + "PyClassType: " + getClassQName();
   }
 
+  @Override
   public boolean isValid() {
     return myClass.isValid();
   }
@@ -881,6 +888,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       this.instance = instance;
     }
 
+    @Override
     public boolean value(final PsiElement target) {
       return (instance != target);
     }

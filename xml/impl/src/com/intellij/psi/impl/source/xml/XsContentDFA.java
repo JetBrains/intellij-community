@@ -16,15 +16,15 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.actions.validate.ErrorReporter;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.xs.*;
 import org.apache.xerces.impl.xs.models.CMBuilder;
@@ -63,12 +63,7 @@ class XsContentDFA extends XmlContentDFA {
   public static XmlContentDFA createContentDFA(@NotNull XmlTag parentTag) {
     final PsiFile file = parentTag.getContainingFile().getOriginalFile();
     if (!(file instanceof XmlFile)) return null;
-    XSModel xsModel = ApplicationManager.getApplication().runReadAction(new NullableComputable<XSModel>() {
-      @Override
-      public XSModel compute() {
-        return getXSModel((XmlFile)file);
-      }
-    });
+    XSModel xsModel = ApplicationManager.getApplication().runReadAction((NullableComputable<XSModel>)() -> getXSModel((XmlFile)file));
     if (xsModel == null) {
       return null;
     }
@@ -85,14 +80,10 @@ class XsContentDFA extends XmlContentDFA {
     myContentModel = definition.getContentModel(new CMBuilder(new CMNodeFactory()));
     myHandler = new SubstitutionGroupHandler(new MyXSElementDeclHelper());
     myState = myContentModel.startContentModel();
-    myElementDescriptors = ApplicationManager.getApplication().runReadAction(new Computable<XmlElementDescriptor[]>() {
-
-      @Override
-      public XmlElementDescriptor[] compute() {
-        XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
-        assert parentTagDescriptor != null;
-        return parentTagDescriptor.getElementsDescriptors(parentTag);
-      }
+    myElementDescriptors = ReadAction.compute(() -> {
+      XmlElementDescriptor parentTagDescriptor = parentTag.getDescriptor();
+      assert parentTagDescriptor != null;
+      return parentTagDescriptor.getElementsDescriptors(parentTag);
     });
   }
 
@@ -171,7 +162,9 @@ class XsContentDFA extends XmlContentDFA {
       @Override
       protected SAXParser createParser() throws SAXException, ParserConfigurationException {
         SAXParser parser = super.createParser();
-        parser.getXMLReader().setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE, true);
+        if (parser != null) {
+          parser.getXMLReader().setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE, true);
+        }
         return parser;
       }
     };

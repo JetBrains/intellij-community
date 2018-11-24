@@ -28,7 +28,6 @@ import com.intellij.openapi.options.ExternalizableSchemeAdapter
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
@@ -38,7 +37,6 @@ import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import gnu.trove.THashMap
 import org.jdom.Element
-import java.awt.event.InputEvent
 import java.util.*
 import javax.swing.KeyStroke
 
@@ -589,7 +587,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
           }
           is MouseShortcut -> {
             val element = Element(MOUSE_SHORTCUT)
-            element.setAttribute(KEYSTROKE_ATTRIBUTE, getMouseShortcutString(shortcut))
+            element.setAttribute(KEYSTROKE_ATTRIBUTE, KeymapUtil.getMouseShortcutString(shortcut))
             actionElement.addContent(element)
           }
           is KeyboardModifierGestureShortcut -> {
@@ -711,47 +709,4 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
     }
   }
   return true
-}
-
-/**
- * @return string representation of passed mouse shortcut. This method should
- * *         be used only for serializing of the `MouseShortcut`
- */
-private fun getMouseShortcutString(shortcut: MouseShortcut): String {
-  if (Registry.`is`("ide.mac.forceTouch") && shortcut is PressureShortcut) {
-    return "Force touch"
-  }
-
-  val buffer = StringBuilder()
-
-  // modifiers
-  val modifiers = shortcut.modifiers
-  if (InputEvent.SHIFT_DOWN_MASK and modifiers > 0) {
-    buffer.append("shift")
-    buffer.append(' ')
-  }
-  if (InputEvent.CTRL_DOWN_MASK and modifiers > 0) {
-    buffer.append("control")
-    buffer.append(' ')
-  }
-  if (InputEvent.META_DOWN_MASK and modifiers > 0) {
-    buffer.append("meta")
-    buffer.append(' ')
-  }
-  if (InputEvent.ALT_DOWN_MASK and modifiers > 0) {
-    buffer.append("alt")
-    buffer.append(' ')
-  }
-  if (InputEvent.ALT_GRAPH_DOWN_MASK and modifiers > 0) {
-    buffer.append("altGraph")
-    buffer.append(' ')
-  }
-
-  // button
-  buffer.append("button").append(shortcut.button).append(' ')
-
-  if (shortcut.clickCount > 1) {
-    buffer.append("doubleClick")
-  }
-  return buffer.toString().trim { it <= ' ' } // trim trailing space (if any)
 }

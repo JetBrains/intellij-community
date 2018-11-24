@@ -26,13 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 09.04.2003
- * Time: 12:37:26
- * To change this template use Options | File Templates.
- */
 public class ExpectedTypesGetter {
 
   @NotNull

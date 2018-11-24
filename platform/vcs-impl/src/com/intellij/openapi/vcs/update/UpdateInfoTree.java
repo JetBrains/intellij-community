@@ -46,7 +46,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -115,7 +114,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myProject = project;
     myUpdatedFiles = updatedFiles;
     myRootName = rootName;
-    
+
     myShowOnlyFilteredItems = VcsConfiguration.getInstance(myProject).UPDATE_FILTER_BY_SCOPE;
 
     myFileStatusManager = FileStatusManager.getInstance(myProject);
@@ -153,14 +152,14 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     group.add(new FilterAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
-    group.add(ActionManager.getInstance().getAction("Diff.UpdatedFiles"));
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON));
   }
 
   protected JComponent createCenterPanel() {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     myCenterPanel.add(CARD_STATUS, scrollPane);
-    myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
+    myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.emptyList());
     Disposer.register(this, myTreeBrowser);
     myTreeBrowser.setHelpId(getHelpId());
     myCenterPanel.add(CARD_CHANGES, myTreeBrowser);
@@ -192,14 +191,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     });
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
     TreeUtil.installActions(myTree);
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      public String convert(TreePath path) {
-        Object last = path.getLastPathComponent();
-        if (last instanceof AbstractTreeNode) {
-          return ((AbstractTreeNode)last).getText();
-        }
-        return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
+    new TreeSpeedSearch(myTree, path -> {
+      Object last = path.getLastPathComponent();
+      if (last instanceof AbstractTreeNode) {
+        return ((AbstractTreeNode)last).getText();
       }
+      return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
     }, true);
 
     myTree.addMouseListener(new PopupHandler() {
@@ -361,6 +358,20 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return result.toArray(new File[result.size()]);
   }
 
+  int getFilteredFilesCount() {
+    Pair<PackageSetBase, NamedScopesHolder> scopeFilter = getScopeFilter();
+    int[] result = new int[1];
+    TreeUtil.traverse(myRoot, node -> {
+      if (node instanceof FileTreeNode) {
+        if (((FileTreeNode)node).acceptFilter(scopeFilter, true)) {
+          result[0]++;
+        }
+      }
+      return true;
+    });
+    return result[0];
+  }
+
   public void expandRootChildren() {
     TreeNode root = (TreeNode)myTreeModel.getRoot();
 
@@ -372,25 +383,23 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   public void setChangeLists(final List<CommittedChangeList> receivedChanges) {
     final boolean hasEmptyCaches = CommittedChangesCache.getInstance(myProject).hasEmptyCaches();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myLoadingChangeListsLabel != null) {
-          remove(myLoadingChangeListsLabel);
-          myLoadingChangeListsLabel = null;
-        }
-        myCommittedChangeLists = receivedChanges;
-        myTreeBrowser.setItems(myCommittedChangeLists, CommittedChangesBrowserUseCase.UPDATE);
-        if (hasEmptyCaches) {
-          final StatusText statusText = myTreeBrowser.getEmptyText();
-          statusText.clear();
-          statusText.appendText("Click ")
-            .appendText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
-              public void actionPerformed(final ActionEvent e) {
-                RefreshIncomingChangesAction.doRefresh(myProject);
-              }
-            })
-            .appendText(" to initialize repository changes cache");
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myLoadingChangeListsLabel != null) {
+        remove(myLoadingChangeListsLabel);
+        myLoadingChangeListsLabel = null;
+      }
+      myCommittedChangeLists = receivedChanges;
+      myTreeBrowser.setItems(myCommittedChangeLists, CommittedChangesBrowserUseCase.UPDATE);
+      if (hasEmptyCaches) {
+        final StatusText statusText = myTreeBrowser.getEmptyText();
+        statusText.clear();
+        statusText.appendText("Click ")
+          .appendText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+              RefreshIncomingChangesAction.doRefresh(myProject);
+            }
+          })
+          .appendText(" to initialize repository changes cache");
       }
     }, myProject.getDisposed());
   }
@@ -454,7 +463,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   @Nullable
   private Pair<PackageSetBase, NamedScopesHolder> getScopeFilter() {
-    String scopeName = VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME;
+    String scopeName = getFilterScopeName();
     if (scopeName != null) {
       for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
         NamedScope scope = holder.getScope(scopeName);
@@ -467,6 +476,17 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private String getFilterScopeName() {
+    return VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME;
+  }
+
+  @Nullable
+  NamedScope getFilterScope() {
+    Pair<PackageSetBase, NamedScopesHolder> filter = getScopeFilter();
+    return filter == null ? null : filter.second.getScope(getFilterScopeName());
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
@@ -488,7 +508,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!myGroupByChangeList && VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME != null);
+      e.getPresentation().setEnabled(!myGroupByChangeList && getFilterScopeName() != null);
     }
   }
 

@@ -30,6 +30,7 @@ import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.PyCondaPackageService;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,14 +49,14 @@ public class PyCondaManagementService extends PyPackageManagementService {
 
   @Override
   @NotNull
-  public List<RepoPackage> getAllPackages() {
-    return versionMapToPackageList(PyCondaPackageService.getInstance().loadAndGetPackages());
+  public List<RepoPackage> getAllPackages() throws IOException {
+    return versionMapToPackageList(PyCondaPackageService.getInstance().loadAndGetPackages(false));
   }
 
   @Override
   @NotNull
-  public List<RepoPackage> reloadAllPackages() {
-    return getAllPackages();
+  public List<RepoPackage> reloadAllPackages() throws IOException {
+    return versionMapToPackageList(PyCondaPackageService.getInstance().loadAndGetPackages(true));
   }
 
   @Override

@@ -36,7 +36,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
@@ -356,7 +355,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), myTree);
     group.add(collapseAllAction);
 
-    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(),
+    panel.add(ActionManager.getInstance().createActionToolbar("MemberChooser", group, true).getComponent(),
               BorderLayout.NORTH);
 
     // Tree
@@ -436,18 +435,14 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected void installSpeedSearch() {
-    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      @Nullable
-      public String convert(TreePath path) {
-        final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
-        if (lastPathComponent == null) return null;
-        String text = lastPathComponent.getDelegate().getText();
-        if (text != null) {
-          text = convertElementText(text);
-        }
-        return text;
+    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, path -> {
+      final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
+      if (lastPathComponent == null) return null;
+      String text = lastPathComponent.getDelegate().getText();
+      if (text != null) {
+        text = convertElementText(text);
       }
+      return text;
     });
     treeSpeedSearch.setComparator(getSpeedSearchComparator());
   }

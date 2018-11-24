@@ -19,10 +19,6 @@ package com.intellij.ide.ui.search;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 17-Mar-2006
- */
 public class OptionDescription implements Comparable{
   private final String myOption;
   private final String myHit;

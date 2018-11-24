@@ -1,8 +1,5 @@
 <component name="DefaultColorSchemesManager">
   <scheme name="Default" default_scheme="true" version="1">
-    <option name="LINE_SPACING" value="1.0"/>
-    <option name="EDITOR_FONT_SIZE" value="12"/>
-    <option name="EDITOR_FONT_NAME" value="Monospaced" mac="Menlo" linux="DejaVu Sans Mono"/>
     <colors>
 
       <option name="SELECTION_BACKGROUND" value="5974ab"/>
@@ -21,6 +18,8 @@
       <option name="SOFT_WRAP_SIGN_COLOR" value="c0c0c0"/>
       <option name="TEARLINE_COLOR" value="D0D0D0"/>
       <option name="SELECTED_TEARLINE_COLOR" value="9C9C9C"/>
+      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
+      <option name="SEPARATOR_BELOW_COLOR" value="e4e4e4"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
@@ -1045,12 +1044,13 @@
         <option name="BREADCRUMBS_HOVERED">
            <value>
              <option name="FOREGROUND" value="585858"/>
-             <option name="BACKGROUND" value="dedede"/>
+             <option name="BACKGROUND" value="e0e0e0"/>
            </value>
         </option>
         <option name="BREADCRUMBS_CURRENT">
            <value>
              <option name="FOREGROUND" value="585858"/>
+             <option name="BACKGROUND" value="d6d6d6"/>
            </value>
         </option>
         <option name="BREADCRUMBS_INACTIVE">
@@ -1063,9 +1063,6 @@
   </scheme>
 
   <scheme name="Darcula" version="1" parent_scheme="Default" default_scheme="true">
-    <option name="LINE_SPACING" value="1.0" />
-    <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>
-    <option name="EDITOR_FONT_NAME" value="Monospaced" mac="Menlo" linux="Source Code Pro"/>
     <colors>
       <option name="ADDED_LINES_COLOR" value="384C38" deuteranopia="355237" protanopia="355237"/>
       <option name="MODIFIED_LINES_COLOR" value="374752" deuteranopia="345a67" protanopia="345a67"/>
@@ -1102,6 +1099,8 @@
       <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
       <option name="SELECTED_INDENT_GUIDE" value="505050" />
       <option name="SELECTED_TEARLINE_COLOR" value="787878" />
+      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
+      <option name="SEPARATOR_BELOW_COLOR" value="393a3c"/>
       <option name="SELECTION_BACKGROUND" value="214283" />
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
@@ -2152,12 +2151,13 @@
       <option name="BREADCRUMBS_HOVERED">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="44474a"/>
+           <option name="BACKGROUND" value="3a3c3e"/>
          </value>
       </option>
       <option name="BREADCRUMBS_CURRENT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
+           <option name="BACKGROUND" value="44474a"/>
          </value>
       </option>
       <option name="BREADCRUMBS_INACTIVE">

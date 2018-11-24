@@ -22,7 +22,6 @@ import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +70,7 @@ public class Java9ReflectionClassVisibilityInspection extends BaseJavaBatchLocal
       if (className != null) {
         final Project project = holder.getProject();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        PsiClass psiClass = facade.findClass(className, holder.getFile().getResolveScope());
-        if (psiClass == null) {
-          psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
-        }
+        final PsiClass psiClass = facade.findClass(className, callExpression.getResolveScope());
         if (psiClass != null) {
           final PsiJavaModule otherModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
           if (otherModule != null && otherModule != javaModule) {

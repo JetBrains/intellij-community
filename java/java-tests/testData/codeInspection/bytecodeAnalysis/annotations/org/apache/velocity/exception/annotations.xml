@@ -1,4 +1,14 @@
 <root>
+    <item name='org.apache.velocity.exception.MacroOverflowException MacroOverflowException(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.exception.MathException MathException(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.exception.MethodInvocationException int getColumnNumber()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -23,6 +33,11 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.exception.MethodInvocationException java.lang.String getTemplateName()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.exception.ParseErrorException ParseErrorException(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -65,6 +80,16 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.exception.ResourceNotFoundException ResourceNotFoundException(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.exception.TemplateInitException TemplateInitException(java.lang.String, java.lang.String, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.exception.TemplateInitException int getColumnNumber()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -76,6 +101,11 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.exception.TemplateInitException java.lang.String getTemplateName()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.exception.VelocityException VelocityException(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

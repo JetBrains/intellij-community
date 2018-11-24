@@ -119,6 +119,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private boolean isCythonWarningShown = false;
 
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
@@ -312,10 +313,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           if (myProcessHandler != null) {
             myProcessHandler.destroyProcess();
           }
-          if (!myClosing) {
-            invokeLater(
-              () -> Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), getConnectionTitle()));
-          }
+          LOG.error(e);
         }
       }
     });
@@ -379,6 +377,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       else {
         consoleView.inputReceived();
       }
+    }
+  }
+
+  @Override
+  public void showCythonWarning() {
+    if (!isCythonWarningShown) {
+      PyCythonExtensionWarning.showCythonExtensionWarning(getSession().getProject());
+      isCythonWarningShown = true;
     }
   }
 

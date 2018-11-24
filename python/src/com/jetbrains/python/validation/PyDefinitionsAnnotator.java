@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Highlights class definitions, functrion definitions, and decorators.
@@ -75,14 +77,13 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
     }
   }
 
-  private void highlightDecorator(PyDecorator node) {
-    // highlight only the identifier
-    PsiElement mk = node.getFirstChild(); // the '@'
-    if (mk != null) {
-      mk = mk.getNextSibling(); // ref
-      if (mk != null) {
-        Annotation ann = getHolder().createInfoAnnotation(mk, null);
-        ann.setTextAttributes(PyHighlighter.PY_DECORATOR);
+  private void highlightDecorator(@NotNull PyDecorator node) {
+    final PsiElement atSign = node.getFirstChild();
+    if (atSign != null) {
+      getHolder().createInfoAnnotation(atSign, null).setTextAttributes(PyHighlighter.PY_DECORATOR);
+      final PsiElement refExpression = PyPsiUtils.getNextNonWhitespaceSibling(atSign);
+      if (refExpression != null) {
+        getHolder().createInfoAnnotation(refExpression, null).setTextAttributes(PyHighlighter.PY_DECORATOR);
       }
     }
   }

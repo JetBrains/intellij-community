@@ -38,12 +38,12 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
@@ -52,7 +52,6 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -117,7 +116,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
       @Override
       public boolean isToBuildChildrenInBackground(final Object element) {
-        return getRootElement() == element;
+        return Registry.is("ide.structureView.StructureViewTreeStructure.BuildChildrenInBackground") ||
+               getRootElement() == element;
       }
 
       @Override
@@ -199,16 +199,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     TreeUtil.installActions(getTree());
 
-    new TreeSpeedSearch(getTree(), new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath treePath) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (userObject != null) {
-          return FileStructurePopup.getSpeedSearchText(userObject);
-        }
-        return null;
+    new TreeSpeedSearch(getTree(), treePath -> {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject != null) {
+        return FileStructurePopup.getSpeedSearchText(userObject);
       }
+      return null;
     });
 
     addTreeKeyListener();
@@ -478,16 +475,14 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public boolean select(final Object element, final boolean requestFocus) {
-    myAbstractTreeBuilder.getReady(this).doWhenDone(() -> expandPathToElement(element).doWhenDone(new Consumer<AbstractTreeNode>() {
-      @Override
-      public void consume(AbstractTreeNode abstractTreeNode) {
+    myAbstractTreeBuilder.getReady(this).doWhenDone(() -> expandPathToElement(element).doWhenDone(
+      (Consumer<AbstractTreeNode>)abstractTreeNode -> {
         myAbstractTreeBuilder.select(abstractTreeNode, () -> {
           if (requestFocus) {
             IdeFocusManager.getInstance(myProject).requestFocus(myAbstractTreeBuilder.getTree(), false);
           }
         });
-      }
-    }));
+      }));
     return true;
   }
 
@@ -814,10 +809,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
       final Object o = unwrapValue(getValue());
       long currentStamp = -1;
-      if (o instanceof StubBasedPsiElement && ((StubBasedPsiElement)o).getStub() != null) {
-        currentStamp = ((StubBasedPsiElement)o).getContainingFile().getModificationStamp();
-      } else if (o instanceof PsiElement && ((PsiElement)o).getNode() instanceof CompositeElement) {
-        currentStamp = ((CompositeElement)((PsiElement)o).getNode()).getModificationCount();
+      if (o instanceof PsiElement) {
+        PsiFile file = ((PsiElement)o).getContainingFile();
+        if (file != null) {
+          currentStamp = file.getModificationStamp();
+        }
       } else if (o instanceof ModificationTracker) {
         currentStamp = ((ModificationTracker)o).getModificationCount();
       }

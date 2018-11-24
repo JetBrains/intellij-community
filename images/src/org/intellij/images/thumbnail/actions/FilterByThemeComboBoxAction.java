@@ -45,7 +45,7 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
     @Override
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
         DefaultActionGroup group = new DefaultActionGroup();
-        group.add(new FilterByThemeAction(new ThemeFilter() {
+        group.add(new FilterImagesAction(new ThemeFilter() {
             @Override
             public String getDisplayName() {
                 return "All";
@@ -60,9 +60,14 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
             public boolean isApplicableToProject(Project project) {
                 return true;
             }
+
+            @Override
+            public void setFilter(ThumbnailView view) {
+                view.setFilter(this);
+            }
         }));
         for (ThemeFilter filter : ThemeFilter.EP_NAME.getExtensions()) {
-            group.add(new FilterByThemeAction(filter));
+            group.add(new FilterImagesAction(filter));
         }
 
         return group;

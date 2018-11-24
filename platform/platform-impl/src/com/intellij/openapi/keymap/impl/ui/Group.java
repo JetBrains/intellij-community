@@ -26,10 +26,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Mar 18, 2005
- */
 public class Group implements KeymapGroup {
   private Group myParent;
   private final String myName;

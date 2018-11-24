@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -59,10 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +66,7 @@ import java.util.List;
  * @author max
  */
 public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider,
-                                                       DocumentBasedComponent, FocusListener {
+                                                       DocumentBasedComponent, FocusListener, MouseListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
@@ -82,6 +78,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private boolean myWholeTextSelected;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<FocusListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<MouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsListenerInstalled;
   private boolean myIsViewer;
   private boolean myIsSupplementary;
@@ -174,7 +171,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return this;
   }
 
-  public void addDocumentListener(DocumentListener listener) {
+  public void addDocumentListener(@NotNull DocumentListener listener) {
     myDocumentListeners.add(listener);
     installDocumentListener();
   }
@@ -396,6 +393,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     remove(editor.getComponent());
 
     editor.getContentComponent().removeFocusListener(this);
+    editor.getContentComponent().removeMouseListener(this);
 
     if (!editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
@@ -512,7 +510,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
     editor.getContentComponent().setFocusCycleRoot(false);
     editor.getContentComponent().addFocusListener(this);
-    
+    editor.getContentComponent().addMouseListener(this);
+
     editor.setPlaceholder(myHintText);
 
     initOneLineMode(editor);
@@ -545,18 +544,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   protected void setupBorder(@NotNull EditorEx editor) {
     if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      editor.setBorder(UIUtil.isUnderDefaultMacTheme() ? new DarculaUIUtil.EditorTextFieldBorder(this) : new DarculaEditorTextFieldBorder());
-      editor.addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(Editor editor) {
-          repaint();
-        }
+      if (UIUtil.isUnderDefaultMacTheme()) {
+        editor.setBorder(new DarculaUIUtil.MacEditorTextFieldBorder(this, editor));
+      } else if (UIUtil.isUnderWin10LookAndFeel()) {
+        editor.setBorder(new DarculaUIUtil.WinEditorTextFieldBorder(this, editor));
+      } else {
+        editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
+      }
 
-        @Override
-        public void focusLost(Editor editor) {
-          repaint();
-        }
-      });
     }
     else if (UIUtil.isUnderAlloyLookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
       editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1)));
@@ -779,6 +774,53 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   public void focusLost(FocusEvent e) {
     for (FocusListener listener : myFocusListeners) {
       listener.focusLost(e);
+    }
+  }
+
+  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+  @Override
+  public void addMouseListener(MouseListener l) {
+    myMouseListeners.add(l);
+  }
+
+  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+  @Override
+  public void removeMouseListener(MouseListener l) {
+    myMouseListeners.remove(l);
+  }
+
+  @Override
+  public void mouseClicked(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mouseClicked(e);
+    }
+  }
+
+  @Override
+  public void mousePressed(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mousePressed(e);
+    }
+  }
+
+  @Override
+  public void mouseReleased(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mouseReleased(e);
+    }
+  }
+
+  @Override
+  public void mouseEntered(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mouseEntered(e);
+    }
+  }
+
+  @Override
+  public void mouseExited(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mouseExited(e);
     }
   }
 

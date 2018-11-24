@@ -120,11 +120,9 @@ abstract class HgAbstractFilesAction extends AnAction {
 
     batchPerform(project, activeVcs, enabledFiles, context);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : files) {
-          file.refresh(false, true);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (VirtualFile file : files) {
+        file.refresh(false, true);
       }
     });
 

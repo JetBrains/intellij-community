@@ -21,8 +21,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.JdomKt;
 import com.intellij.util.io.HttpRequests;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,18 +65,13 @@ public abstract class SourceSearcher {
   }
 
   @NotNull
-  protected static Element readDocumentCancelable(final ProgressIndicator indicator, String url) throws IOException {
+  protected static Document readDocumentCancelable(final ProgressIndicator indicator, String url) throws IOException {
     return HttpRequests.request(url)
       .accept("application/xml")
-      .connect(new HttpRequests.RequestProcessor<Element>() {
+      .connect(new HttpRequests.RequestProcessor<Document>() {
         @Override
-        public Element process(@NotNull HttpRequests.Request request) throws IOException {
-          try {
-            return JdomKt.loadElement(request.getReader(indicator));
-          }
-          catch (JDOMException e) {
-            throw new IOException(e);
-          }
+        public Document process(@NotNull HttpRequests.Request request) throws IOException {
+          return JdomKt.loadDocument(request.getReader(indicator));
         }
       });
   }

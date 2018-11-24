@@ -21,10 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PathKt;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,11 +53,11 @@ public class TestDiscoveryIndex implements Disposable {
     this(project, TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
   }
 
-  public TestDiscoveryIndex(final Project project, final String basePath) {
+  public TestDiscoveryIndex(final Project project, @NotNull Path basePath) {
     myLocalTestRunDataController = new TestDataController(basePath, false);
     myRemoteTestRunDataController = new TestDataController(null, true);
 
-    if (new File(basePath).exists()) {
+    if (Files.exists(basePath)) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         myLocalTestRunDataController.getHolder(); // proactively init with maybe io costly compact
       }));
@@ -92,8 +94,8 @@ public class TestDiscoveryIndex implements Disposable {
     });
   }
 
-  public void setRemoteTestRunDataPath(String path) {
-    if(!TestInfoHolder.isValidPath(path)) {
+  public void setRemoteTestRunDataPath(@NotNull Path path) {
+    if (!TestInfoHolder.isValidPath(path)) {
       path = null;
     }
     myRemoteTestRunDataController.init(path);
@@ -195,16 +197,16 @@ public class TestDiscoveryIndex implements Disposable {
 
   static class TestDataController {
     private final Object myLock = new Object();
-    private String myBasePath;
+    private Path myBasePath;
     private final boolean myReadOnly;
     private volatile TestInfoHolder myHolder;
 
-    TestDataController(String basePath, boolean readonly) {
+    TestDataController(Path basePath, boolean readonly) {
       myReadOnly = readonly;
       init(basePath);
     }
 
-    void init(String basePath) {
+    void init(Path basePath) {
       if (myHolder != null) dispose();
 
       synchronized (myLock) {
@@ -237,8 +239,7 @@ public class TestDiscoveryIndex implements Disposable {
     private void thingsWentWrongLetsReinitialize(@Nullable TestInfoHolder holder, Throwable throwable) throws IOException {
       LOG.error("Unexpected problem", throwable);
       if (holder != null) holder.dispose();
-      final File versionFile = TestInfoHolder.getVersionFile(myBasePath);
-      FileUtil.delete(versionFile);
+      PathKt.delete(TestInfoHolder.getVersionFile(myBasePath));
 
       myHolder = null;
       if (throwable instanceof IOException) throw (IOException) throwable;

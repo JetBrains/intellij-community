@@ -20,11 +20,6 @@ import com.intellij.psi.PsiNamedElement;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 13.08.2007
- */
 public interface RncDefine extends RncPattern, PsiNamedElement, Define<RncPattern, RncElement> {
   @Override
   @Nullable

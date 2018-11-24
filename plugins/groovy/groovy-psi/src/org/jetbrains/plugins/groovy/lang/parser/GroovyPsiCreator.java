@@ -129,7 +129,7 @@ public class GroovyPsiCreator {
     if (elem == GroovyElementTypes.CASE_LABEL) return new GrCaseLabelImpl(node);
     if (elem == GroovyElementTypes.CASE_SECTION) return new GrCaseSectionImpl(node);
     if (elem == GroovyElementTypes.VARIABLE_DEFINITION || elem == GroovyElementTypes.VARIABLE_DEFINITION_ERROR) return new GrVariableDeclarationImpl(node);
-    if (elem == GroovyElementTypes.TUPLE_EXPRESSION) return new GrTupleExpressionImpl(node);
+    if (elem == GroovyElementTypes.TUPLE) return new GrTupleImpl(node);
     if (elem == GroovyElementTypes.VARIABLE) return new GrVariableImpl(node);
 
     if (elem == GroovyElementTypes.FIELD) return new GrFieldImpl(node);
@@ -190,6 +190,7 @@ public class GroovyPsiCreator {
     if (elem == GroovyElementTypes.CONDITIONAL_EXPRESSION) return new GrConditionalExprImpl(node);
     if (elem == GroovyElementTypes.ELVIS_EXPRESSION) return new GrElvisExprImpl(node);
     if (elem == GroovyElementTypes.ASSIGNMENT_EXPRESSION) return new GrAssignmentExpressionImpl(node);
+    if (elem == GroovyElementTypes.TUPLE_ASSIGNMENT_EXPRESSION) return new GrTupleAssignmentExpressionImpl(node);
 
     if (elem == GroovyElementTypes.LOGICAL_OR_EXPRESSION) return new GrLogicalExpressionImpl(node);
     if (elem == GroovyElementTypes.LOGICAL_AND_EXPRESSION) return new GrLogicalExpressionImpl(node);

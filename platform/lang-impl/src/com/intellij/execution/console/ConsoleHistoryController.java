@@ -43,7 +43,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,7 +62,6 @@ import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.xml.util.XmlStringUtil;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -74,7 +72,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author gregsh
@@ -404,7 +401,7 @@ public class ConsoleHistoryController {
           PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
             "a." + consoleFile.getFileType().getDefaultExtension(),
             language,
-            StringUtil.convertLineSeparators(new String(text)), false, true);
+            StringUtil.convertLineSeparators(text), false, true);
           VirtualFile virtualFile = psiFile.getViewProvider().getVirtualFile();
           if (virtualFile instanceof LightVirtualFile) ((LightVirtualFile)virtualFile).setWritable(false);
           Document document = FileDocumentManager.getInstance().getDocument(virtualFile);

@@ -206,4 +206,8 @@ public class ActionButtonWithText extends ActionButton {
     final String text = myPresentation.getText();
     return text != null ? text : "";
   }
+
+  public int getMnemonic() {
+    return KeyEvent.getExtendedKeyCodeForChar(myPresentation.getMnemonic());
+  }
 }

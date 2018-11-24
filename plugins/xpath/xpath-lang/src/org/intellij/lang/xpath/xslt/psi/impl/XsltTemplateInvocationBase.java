@@ -1,10 +1,4 @@
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 14.12.2005
- * Time: 18:34:48
- */
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import org.intellij.lang.xpath.xslt.psi.XsltWithParam;

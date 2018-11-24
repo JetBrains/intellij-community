@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -181,7 +184,63 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.STOP;
       }
     }
+    else if (c == ',' && handleAnnotationParameter(project, editor, file)) {
+      return Result.STOP;
+    }
     return Result.CONTINUE;
+  }
+
+  private static boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    int caret = editor.getCaretModel().getOffset();
+    if (mightBeInsideDefaultAnnotationAttribute(editor, caret - 2)) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      PsiAnnotation anno = PsiTreeUtil.findElementOfClassAtOffset(file, caret, PsiAnnotation.class, false);
+      PsiNameValuePair attr = anno == null ? null : getTheOnlyDefaultAttribute(anno);
+      if (attr != null && hasDefaultArrayMethod(anno) && !(attr.getValue() instanceof PsiArrayInitializerMemberValue)) {
+        editor.getDocument().insertString(caret, "}");
+        editor.getDocument().insertString(attr.getTextRange().getStartOffset(), "{");
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable private static PsiNameValuePair getTheOnlyDefaultAttribute(@NotNull PsiAnnotation anno) {
+    List<PsiNameValuePair> attributes = ContainerUtil.findAll(anno.getParameterList().getAttributes(), a -> !a.getTextRange().isEmpty());
+    return attributes.size() == 1 && attributes.get(0).getNameIdentifier() == null ? attributes.get(0) : null;
+  }
+
+  private static boolean hasDefaultArrayMethod(@NotNull PsiAnnotation anno) {
+    PsiJavaCodeReferenceElement nameRef = anno.getNameReferenceElement();
+    PsiElement annoClass = nameRef == null ? null : nameRef.resolve();
+    if (annoClass instanceof PsiClass) {
+      PsiMethod[] methods = ((PsiClass)annoClass).getMethods();
+      return methods.length == 1 && PsiUtil.isAnnotationMethod(methods[0]) &&
+             PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(methods[0].getName()) &&
+             methods[0].getReturnType() instanceof PsiArrayType;
+    }
+    return false;
+  }
+
+  private static boolean mightBeInsideDefaultAnnotationAttribute(@NotNull Editor editor, int offset) {
+    if (offset < 0) return false;
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    int parenCount = 0;
+    while (!iterator.atEnd()) {
+      IElementType tokenType = iterator.getTokenType();
+      if (tokenType == JavaTokenType.AT) {
+        return true;
+      }
+      if (tokenType == JavaTokenType.RPARENTH || tokenType == JavaTokenType.LBRACE ||
+          tokenType == JavaTokenType.EQ || tokenType == JavaTokenType.SEMICOLON || tokenType == JavaTokenType.COMMA) {
+        return false;
+      }
+      if (tokenType == JavaTokenType.LPARENTH && ++parenCount > 1) {
+        return false;
+      }
+      iterator.retreat();
+    }
+    return false;
   }
 
   private static boolean handleSemicolon(Editor editor, FileType fileType) {

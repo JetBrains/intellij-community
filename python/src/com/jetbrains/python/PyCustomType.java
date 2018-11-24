@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,17 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,12 +184,6 @@ public class PyCustomType implements PyClassLikeType {
 
   @Nullable
   @Override
-  public final List<PyCallableParameter> getParameters(@NotNull final TypeEvalContext context) {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public final List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                                 @Nullable final PyExpression location,
                                                                 @NotNull final AccessDirection direction,
@@ -212,7 +210,7 @@ public class PyCustomType implements PyClassLikeType {
       lookupElements.addAll(Collections2.filter(Arrays.asList(parentType.getCompletionVariants(completionPrefix, location, context)),
                                                 new CompletionFilter()));
     }
-    return lookupElements.toArray(new Object[lookupElements.size()]);
+    return ArrayUtil.toObjectArray(lookupElements);
   }
 
 

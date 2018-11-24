@@ -354,7 +354,7 @@ public final class HttpRequests {
       FileUtilRt.createParentDirs(file);
 
       boolean deleteFile = true;
-      try (OutputStream out = new FileOutputStream(file)) {
+      try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
         NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
         deleteFile = false;
       }

@@ -23,12 +23,6 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/26/12
- * Time: 2:11 PM
- */
 public class GitRepositoryForAnnotationsListener {
   private final Project myProject;
   private final GitRepositoryChangeListener myListener;

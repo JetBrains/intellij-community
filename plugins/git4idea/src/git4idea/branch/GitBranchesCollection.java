@@ -15,7 +15,6 @@
  */
 package git4idea.branch;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitBranch;
@@ -43,7 +42,7 @@ import java.util.Map;
 public final class GitBranchesCollection {
 
   public static final GitBranchesCollection EMPTY =
-    new GitBranchesCollection(Collections.<GitLocalBranch, Hash>emptyMap(), Collections.<GitRemoteBranch, Hash>emptyMap());
+    new GitBranchesCollection(Collections.emptyMap(), Collections.emptyMap());
 
   @NotNull
   private final Map<GitLocalBranch, Hash> myLocalBranches;
@@ -85,12 +84,7 @@ public final class GitBranchesCollection {
 
   @Nullable
   private static <T extends GitBranch> T findByName(Collection<T> branches, @NotNull final String name) {
-    return ContainerUtil.find(branches, new Condition<T>() {
-      @Override
-      public boolean value(T branch) {
-        return GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(name, branch.getName());
-      }
-    });
+    return ContainerUtil.find(branches, branch -> GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(name, branch.getName()));
   }
 
 }

@@ -27,12 +27,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.*;
+import com.intellij.task.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -136,9 +137,10 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
       }
     }.execute();
 
-    final CompileStatusNotification callback = new CompileStatusNotification() {
-      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-        result.set(!aborted && errors == 0);
+    final ProjectTaskNotification callback = new ProjectTaskNotification() {
+      @Override
+      public void finished(@NotNull ProjectTaskResult executionResult) {
+        result.set(!executionResult.isAborted() && executionResult.getErrors() == 0);
         finished.up();
       }
     };
@@ -147,11 +149,10 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
       if (myProject.isDisposed()) {
         return;
       }
-      final CompilerManager manager = CompilerManager.getInstance(myProject);
-      final CompileScope scope = createCompileScope(myProject, artifacts);
-      ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
+      ProjectTask artifactsBuildProjectTask = createProjectTask(myProject, artifacts);
       finished.down();
-      manager.make(scope, CompilerFilter.ALL, callback);
+      Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
+      ProjectTaskManager.getInstance(myProject).run(new ProjectTaskContext(sessionId), artifactsBuildProjectTask, callback);
     }, ModalityState.NON_MODAL);
 
     finished.waitFor();
@@ -190,5 +191,5 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
 
   protected abstract T doCreateTask(Project project);
 
-  protected abstract CompileScope createCompileScope(Project project, List<Artifact> artifacts);
+  protected abstract ProjectTask createProjectTask(Project project, List<Artifact> artifacts);
 }

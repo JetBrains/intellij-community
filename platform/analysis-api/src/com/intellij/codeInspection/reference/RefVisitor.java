@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import org.jetbrains.annotations.NotNull;

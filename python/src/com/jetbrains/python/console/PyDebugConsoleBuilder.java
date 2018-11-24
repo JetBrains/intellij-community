@@ -22,7 +22,6 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.debugger.PyRunCythonExtensionsFilter;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +52,6 @@ public class PyDebugConsoleBuilder extends TextConsoleBuilder {
   protected  ConsoleView createConsole() {
     PythonDebugLanguageConsoleView consoleView = new PythonDebugLanguageConsoleView(myProject, mySdk);
     consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
-    consoleView.addMessageFilter(new PyRunCythonExtensionsFilter(myProject));
     return consoleView;
   }
 

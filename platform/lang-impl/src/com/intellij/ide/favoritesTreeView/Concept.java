@@ -15,12 +15,6 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/1/12
- * Time: 2:14 PM
- */
 public class Concept {
   private String myTagName;
   private String myDescription;

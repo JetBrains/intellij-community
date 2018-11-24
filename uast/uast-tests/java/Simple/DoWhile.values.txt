@@ -22,7 +22,7 @@ UFile (package = ) [public class DoWhile {...]
                             UBlockExpression [{...}] = Phi((var count = Undetermined), (var count = 0), (var count = 1))
                                 UPostfixExpression (operator = ++) [count++] = Phi((var count = Undetermined), (var count = 0), (var count = 1))
                                     USimpleNameReferenceExpression (identifier = count) [count] = Phi((var count = Undetermined), (var count = 0), (var count = 1))
-                            UastEmptyExpression [UastEmptyExpression] = Undetermined
+                            UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
                         UBinaryExpression (operator = =) [number = number / 10] = Undetermined
                             USimpleNameReferenceExpression (identifier = number) [number] = Phi((var number = Undetermined), (var number = 0), (var number = 4))
                             UBinaryExpression (operator = /) [number / 10] = Undetermined

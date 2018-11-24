@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
@@ -142,7 +141,11 @@ public class FrameWrapper implements Disposable, DataProvider {
     } else {
       ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
+
+    UIUtil.decorateFrame(((RootPaneContainer)frame).getRootPane());
+
     final WindowAdapter focusListener = new WindowAdapter() {
+      @Override
       public void windowOpened(WindowEvent e) {
         IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
         JComponent toFocus = getPreferredFocusedComponent();
@@ -187,6 +190,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     myFocusWatcher = new FocusWatcher() {
+      @Override
       protected void focusLostImpl(final FocusEvent e) {
         myFocusTrackback.consume();
       }
@@ -205,6 +209,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     Disposer.dispose(this);
   }
 
+  @Override
   public void dispose() {
     if (isDisposed()) return;
 
@@ -382,14 +387,17 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       boolean setMenuOnFrame = SystemInfo.isMac;
 
-      if (SystemInfo.isLinux && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
-        try {
-          Class.forName("com.jarego.jayatana.Agent");
-          setMenuOnFrame = true;
-        }
-        catch (ClassNotFoundException e) {
-          // ignore
-        }
+      if (SystemInfo.isLinux) {
+        final String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+        if ("Unity".equals(desktop) || "Unity:Unity7".equals(desktop)) {
+         try {
+           Class.forName("com.jarego.jayatana.Agent");
+           setMenuOnFrame = true;
+         }
+         catch (ClassNotFoundException e) {
+           // ignore
+         }
+       }
       }
 
       if (setMenuOnFrame) {
@@ -454,6 +462,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return myParent;
     }
 
+    @Override
     public void dispose() {
       FrameWrapper owner = myOwner;
       myOwner = null;
@@ -465,6 +474,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       setMenuBar(null);
     }
 
+    @Override
     public Object getData(String dataId) {
       if (IdeFrame.KEY.getName().equals(dataId)) {
         return this;
@@ -542,6 +552,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return myParent;
     }
 
+    @Override
     public void dispose() {
       FrameWrapper owner = myOwner;
       myOwner = null;
@@ -552,6 +563,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       rootPane = null;
     }
 
+    @Override
     public Object getData(String dataId) {
       if (IdeFrame.KEY.getName().equals(dataId)) {
         return this;
@@ -575,7 +587,8 @@ public class FrameWrapper implements Disposable, DataProvider {
     getFrame().setSize(size);
   }
 
-  private class MyProjectManagerListener extends ProjectManagerAdapter {
+  private class MyProjectManagerListener implements ProjectManagerListener {
+    @Override
     public void projectClosing(Project project) {
       if (project == myProject) {
         close();

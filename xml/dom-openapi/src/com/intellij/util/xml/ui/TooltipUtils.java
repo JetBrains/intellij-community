@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class TooltipUtils {
   @NonNls private static final String MESSAGE_DELIMITER = "<hr size=1 noshade>";
 

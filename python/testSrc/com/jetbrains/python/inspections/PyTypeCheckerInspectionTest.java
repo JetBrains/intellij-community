@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author vlan
@@ -380,5 +381,54 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   // PY-23138
   public void testHomogeneousTuplePlusHeterogeneousTupleWithTheSameElementsType() {
     doTest();
+  }
+
+  // PY-22763
+  public void testChainedComparisons() {
+    doTest();
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedModule() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
+  // PY-23429
+  public void testMatchingModuleAgainstStructuralType() {
+    doMultiFileTest();
+  }
+
+  // PY-24287
+  public void testPromotingBytearrayToStrAndUnicode() {
+    doTest();
+  }
+
+  // PY-24930
+  public void testCallOperator() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-24763
+  public void testAnnotatedDunderInitInGenericClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testDunderInitAnnotatedAsNonNone() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 }

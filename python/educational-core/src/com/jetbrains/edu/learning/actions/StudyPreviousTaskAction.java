@@ -2,19 +2,14 @@ package com.jetbrains.edu.learning.actions;
 
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 public class StudyPreviousTaskAction extends StudyTaskNavigationAction {
   public StudyPreviousTaskAction() {
-    super("Previous Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")",
-          "Navigate to the previous task", AllIcons.Actions.Back);
+    super("Previous Task","Navigate to the previous task", AllIcons.Actions.Back);
   }
 
   public static final String ACTION_ID = "PreviousTaskAction";

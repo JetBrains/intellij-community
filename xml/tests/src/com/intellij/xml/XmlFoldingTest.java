@@ -20,10 +20,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 import java.io.File;
 
-/**
- * User: zolotov
- * Date: 8/3/12
- */
 public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testTagFolding() throws Throwable { doTest(); }

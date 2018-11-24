@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 17-Jun-2009
- */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.annotation.HighlightSeverity;

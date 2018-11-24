@@ -229,8 +229,15 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
-      if (containingComment != null && acceptFqnInJavadoc((PsiJavaFile)containingFile, reference.getQualifiedName(), styleSettings)) {
-        return;
+      boolean reportAsInformationInsideJavadoc = false;
+      if (containingComment != null) {
+        if (acceptFqnInJavadoc((PsiJavaFile)containingFile, styleSettings)) {
+          return;
+        }
+        JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+        if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
+          reportAsInformationInsideJavadoc = !ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, reference.getQualifiedName());
+        }
       }
       final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
       final PsiElement qualifierTarget = qualifierReference.resolve();
@@ -258,10 +265,15 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         }
         final PsiElement qualifier1 = aReference.getQualifier();
         if (qualifier1 != null) {
-          final ProblemHighlightType highlightType =
-            (ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null)
-            ? ProblemHighlightType.INFORMATION
-            : ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+          final ProblemHighlightType highlightType;
+          if (reportAsInformationInsideJavadoc ||
+              ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null) {
+            if (!isOnTheFly()) return;
+            highlightType = ProblemHighlightType.INFORMATION;
+          }
+          else {
+            highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+          }
 
           final boolean inSameFile = aClass.getContainingFile() == containingFile ||
                                      ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, qualifiedName);
@@ -283,15 +295,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
     }
 
-    private boolean acceptFqnInJavadoc(PsiJavaFile javaFile, String fullyQualifiedName, CodeStyleSettings styleSettings) {
+    private boolean acceptFqnInJavadoc(PsiJavaFile javaFile, CodeStyleSettings styleSettings) {
       if ("package-info.java".equals(javaFile.getName())) {
         return true;
       }
-      final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
-      if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
-        return !ImportHelper.isAlreadyImported(javaFile, fullyQualifiedName);
-      }
-      return javaSettings.useFqNamesInJavadocAlways();
+      return styleSettings.getCustomSettings(JavaCodeStyleSettings.class).useFqNamesInJavadocAlways();
     }
   }
 }

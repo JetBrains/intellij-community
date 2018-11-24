@@ -27,10 +27,6 @@ import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.XmlOptions;
 
-/**
- * User: anna
- * Date: 10/27/10
- */
 public class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider {
   @Override
   public UpdateCopyright createInstance(Project project, Module module, VirtualFile file, FileType base, CopyrightProfile options) {

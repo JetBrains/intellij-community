@@ -424,7 +424,7 @@ public class ScopeEditorPanel {
       group.add(new ChooseScopeTypeAction(update));
     }
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ScopeEditor", group, true);
     return toolbar.getComponent();
   }
 

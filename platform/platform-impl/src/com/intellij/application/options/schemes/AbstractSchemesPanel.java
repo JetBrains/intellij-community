@@ -27,10 +27,12 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,19 +61,58 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   protected static final Color HINT_FOREGROUND = JBColor.GRAY;
   @SuppressWarnings("UseJBColor")
   protected static final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
+
+  protected static final int DEFAULT_VGAP = 8;
   
   // endregion
 
   public AbstractSchemesPanel() {
+    this(DEFAULT_VGAP, null);
+  }
+
+  public AbstractSchemesPanel(int vGap) {
+    this(vGap, null);
+  }
+
+  public AbstractSchemesPanel(int vGap, @Nullable JComponent rightCustomComponent) {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-    createUIComponents();
+    createUIComponents(vGap, rightCustomComponent);
   }
   
-  private void createUIComponents() {
+  private void createUIComponents(int vGap, @Nullable JComponent rightCustomComponent) {
+    final JPanel verticalContainer = rightCustomComponent != null ? createVerticalContainer() : this;
+    JPanel controlsPanel = createControlsPanel();
+    verticalContainer.add(controlsPanel);
+    verticalContainer.add(Box.createRigidArea(new JBDimension(0, 12)));
+    if (rightCustomComponent != null) {
+      JPanel horizontalContainer = new JPanel();
+      horizontalContainer.setLayout(new BoxLayout(horizontalContainer, BoxLayout.X_AXIS));
+      horizontalContainer.add(verticalContainer);
+      horizontalContainer.add(Box.createHorizontalGlue());
+      horizontalContainer.add(rightCustomComponent);
+      add(horizontalContainer);
+    }
+    add(new JSeparator());
+    if (vGap > 0) {
+      add(Box.createVerticalGlue());
+      add(Box.createRigidArea(new JBDimension(0, vGap)));
+    }
+  }
+
+  private static JPanel createVerticalContainer() {
+    JPanel container = new JPanel();
+    container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+    return container;
+  }
+
+  private JPanel createControlsPanel() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
-    controlsPanel.add(new JLabel(getSchemeTypeName() + ":"));
-    controlsPanel.add(Box.createRigidArea(new JBDimension(10, 0)));
+    String label = getComboBoxLabel();
+    if (label != null) {
+      controlsPanel.add(new JLabel(label));
+      controlsPanel.add(Box.createRigidArea(new JBDimension(10, 0)));
+    }
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
@@ -82,20 +123,22 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
-    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
-    add(controlsPanel);
-    add(Box.createRigidArea(new JBDimension(0, 12)));
-    add(new JSeparator());
-    add(Box.createVerticalGlue());
-    add(Box.createRigidArea(new JBDimension(0, 10)));
+    int height = Math.max(mySchemesCombo.getComponent().getPreferredSize().height, myToolbar.getPreferredSize().height);
+    height += UIUtil.isUnderWin10LookAndFeel() ? 0 : 2;
+    controlsPanel.setPreferredSize(new Dimension(controlsPanel.getMinimumSize().width, height));
+    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
+    return controlsPanel;
   }
   
   private JComponent createToolbar() {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     toolbarComponent.setMaximumSize(new Dimension(toolbarComponent.getPreferredSize().width, Short.MAX_VALUE));
+    toolbarComponent.setBorder(IdeBorderFactory.createEmptyBorder());
     return toolbarComponent;
   }
 
@@ -172,6 +215,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   @NotNull
   protected abstract InfoComponent createInfoComponent();
 
+  /**
+   * @return a string label to place before the combobox or {@code null} if it is not needed
+   */
+  @Nullable
+  protected String getComboBoxLabel() {
+    return getSchemeTypeName() + ":";
+  }
+
   protected String getSchemeTypeName() {
     return ApplicationBundle.message("editbox.scheme.type.name");
   }
@@ -191,6 +242,17 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   }
 
   /**
+   * Returns an indent to calculate a left margin for the scheme name in the combo box.
+   * By default, all names are aligned to the left.
+   *
+   * @param scheme the scheme to calculate its indent
+   * @return an indent that shows a nesting level for the specified scheme
+   */
+  protected int getIndent(@NotNull T scheme) {
+    return 0;
+  }
+
+  /**
    * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be
    *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes
    *         separators.
@@ -198,6 +260,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   protected abstract boolean supportsProjectSchemes();
 
   protected abstract boolean highlightNonDefaultSchemes();
+
+  protected boolean hideDeleteActionIfUnavailable() {
+    return true;
+  }
 
   public abstract boolean useBoldForNonRemovableSchemes();
 
@@ -226,6 +292,17 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       p.setIcon(AllIcons.General.Gear);
+      p.setEnabledAndVisible(isEnabledAndVisible(e));
+    }
+
+    private boolean isEnabledAndVisible(AnActionEvent e) {
+      // copy existing event because an action update changes its presentation
+      e = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, e.getDataContext());
+      for (AnAction action : myActionGroup.getChildren(e)) {
+        action.update(e); // ensure that at least action is enabled and visible
+        if (e.getPresentation().isEnabledAndVisible()) return true;
+      }
+      return false;
     }
 
     @Override

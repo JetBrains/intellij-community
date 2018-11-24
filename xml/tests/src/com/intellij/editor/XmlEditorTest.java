@@ -41,7 +41,7 @@ public class XmlEditorTest extends LightCodeInsightTestCase {
       for (int i = 0; i < 3; i ++) {
         EditorTestUtil.performTypingAction(myEditor, '\n');
       }
-    }).cpuBound().attempts(1).assertTiming();
+    }).attempts(1).assertTiming();
     checkResultByFile(getTestFilePath(false));
   }
 

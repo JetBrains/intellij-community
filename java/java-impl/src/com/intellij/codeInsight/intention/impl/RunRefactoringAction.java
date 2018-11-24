@@ -26,10 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 9/5/11
- */
 public class RunRefactoringAction extends BaseRefactoringIntentionAction {
   private final RefactoringActionHandler myHandler;
   private final String myCommandName;

@@ -6,10 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 
-/**
- * User: Evgeny.Zakrevsky
- * Date: 8/14/12
- */
 public class PlaySavedMacros extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {

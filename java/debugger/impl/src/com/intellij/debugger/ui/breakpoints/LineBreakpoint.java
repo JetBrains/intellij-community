@@ -138,6 +138,14 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
           }
         }
       }
+      else if (DebuggerUtilsEx.allLineLocations(classType) == null) {
+        // there's no line info in this class
+        debugProcess.getRequestsManager()
+          .setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.no.line.info", classType.name()));
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("No line number info in " + classType.name());
+        }
+      }
       else {
         // there's no executable code in this class
         debugProcess.getRequestsManager().setInvalid(this, DebuggerBundle.message(

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jun 8, 2007
- * Time: 8:41:25 PM
- */
 package com.intellij.lang.injection;
 
 import com.intellij.injected.editor.DocumentWindow;

@@ -61,9 +61,19 @@ private fun getSaxBuilder(): SAXBuilder {
 
 @JvmOverloads
 @Throws(IOException::class)
-fun Parent.write(file: Path, lineSeparator: String = "\n") {
-  BufferedOutputStream(file.outputStream()).use {
-    JDOMUtil.write(this, it, lineSeparator)
+fun Parent.write(file: Path, lineSeparator: String = "\n", filter: JDOMUtil.ElementOutputFilter? = null) {
+  write(file.outputStream(), lineSeparator, filter)
+}
+
+@JvmOverloads
+fun Parent.write(output: OutputStream, lineSeparator: String = "\n", filter: JDOMUtil.ElementOutputFilter? = null) {
+  output.bufferedWriter().use { writer ->
+    if (this is Document) {
+      JDOMUtil.writeDocument(this, writer, lineSeparator)
+    }
+    else {
+      JDOMUtil.writeElement(this as Element, writer, JDOMUtil.createOutputter(lineSeparator, filter))
+    }
   }
 }
 
@@ -79,7 +89,7 @@ fun loadElement(stream: InputStream): Element = loadDocument(stream.reader()).de
 @Throws(IOException::class, JDOMException::class)
 fun loadElement(path: Path): Element = loadDocument(path.inputStream().bufferedReader()).detachRootElement()
 
-private fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
+fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
 

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.11.2006
- * Time: 20:44:46
- */
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.cvsSupport2.CvsVcs2;

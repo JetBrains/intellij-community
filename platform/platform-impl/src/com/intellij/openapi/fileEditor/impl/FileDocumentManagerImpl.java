@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 
-public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener, ProjectManagerListener, SafeWriteRequestor {
+public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener, VetoableProjectManagerListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
@@ -96,10 +96,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private volatile MemoryDiskConflictResolver myConflictResolver = new MemoryDiskConflictResolver();
   private final PrioritizedDocumentListener myPhysicalDocumentChangeTracker = new PrioritizedDocumentListener() {
-    @Override
-    public void beforeDocumentChange(DocumentEvent event) {
-    }
-
     @Override
     public int getPriority() {
       return Integer.MIN_VALUE;
@@ -130,6 +126,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     projectManager.addProjectManagerListener(this);
 
     myBus = ApplicationManager.getApplication().getMessageBus();
+    myBus.connect().subscribe(ProjectManager.TOPIC, this);
+
     InvocationHandler handler = (proxy, method, args) -> {
       multiCast(method, args);
       return null;
@@ -407,12 +405,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       registerDocument(document, file);
     }
 
-    if (!isSaveNeeded(document, file)) {
+    boolean saveNeeded = false;
+    IOException ioException = null;
+    try {
+      saveNeeded = isSaveNeeded(document, file);
+    }
+    catch (IOException e) {
+      // in case of corrupted VFS try to stay consistent
+      ioException = e;
+    }
+    if (!saveNeeded) {
       if (document instanceof DocumentEx) {
         ((DocumentEx)document).setModificationStamp(file.getModificationStamp());
       }
       removeFromUnsaved(document);
       updateModifiedProperty(file);
+      if (ioException != null) throw ioException;
       return;
     }
 
@@ -654,28 +662,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   @Override
-  public void fileCreated(@NotNull VirtualFileEvent event) {
-  }
-
-  @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {
     Document doc = getCachedDocument(event.getFile());
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
     }
-  }
-
-  @Override
-  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-  }
-
-  @Override
-  public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-    fileCreated(event);
-  }
-
-  @Override
-  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
   }
 
   @Override
@@ -699,15 +690,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   @Override
-  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-  }
-
-  @Override
-  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-  }
-
-  @Override
-  public boolean canCloseProject(Project project) {
+  public boolean canClose(@NotNull Project project) {
     if (!myUnsavedDocuments.isEmpty()) {
       myOnClose = true;
       try {

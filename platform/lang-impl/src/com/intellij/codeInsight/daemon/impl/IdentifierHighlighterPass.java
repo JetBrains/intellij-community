@@ -189,7 +189,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       }
     }
 
-    return Couple.<Collection<TextRange>>of(readRanges, writeRanges);
+    return Couple.of(readRanges, writeRanges);
   }
 
   private void highlightTargetUsages(@NotNull PsiElement target) {
@@ -201,7 +201,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   @Override
   public void doApplyInformationToEditor() {
     final boolean virtSpace = TargetElementUtil.inVirtualSpace(myEditor, myEditor.getCaretModel().getOffset());
-    final List<HighlightInfo> infos = virtSpace ? Collections.<HighlightInfo>emptyList() : getHighlights();
+    final List<HighlightInfo> infos = virtSpace ? Collections.emptyList() : getHighlights();
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
   }
 

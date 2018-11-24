@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
@@ -34,12 +35,15 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -49,6 +53,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -295,7 +300,8 @@ public class GradleManager
   @Nullable
   @Override
   public FileChooserDescriptor getExternalProjectConfigDescriptor() {
-    return GradleUtil.getGradleProjectFileChooserDescriptor();
+    // project *.gradle script can be absent for gradle subproject
+    return FileChooserDescriptorFactory.createSingleFolderDescriptor();
   }
 
   @Nullable
@@ -349,6 +355,29 @@ public class GradleManager
     return GradleUtil.getGradleProjectFileChooserDescriptor();
   }
 
+  @Nullable
+  @Override
+  public GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
+    String projectPath = taskExecutionSettings.getExternalProjectPath();
+    if (StringUtil.isEmpty(projectPath)) return null;
+
+    GradleProjectSettings projectSettings =
+
+      getSettingsProvider().fun(project).getLinkedProjectSettings(projectPath);
+    if (projectSettings == null) return null;
+
+    if (!projectSettings.isResolveModulePerSourceSet()) {
+      // use default implementation which will find target module using projectPathFile
+      return null;
+    }
+    else {
+      Module[] modules = Arrays.stream(ModuleManager.getInstance(project).getModules())
+        .filter(module -> StringUtil.equals(projectPath, ExternalSystemApiUtil.getExternalProjectPath(module)))
+        .toArray(Module[]::new);
+      return modules.length > 0 ? SearchScopeProvider.createSearchScope(modules) : null;
+    }
+  }
+
   @Override
   public void runActivity(@NotNull final Project project) {
     // We want to automatically refresh linked projects on gradle service directory change.
@@ -357,21 +386,19 @@ public class GradleManager
 
       @Override
       public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
-        ensureProjectsRefresh();
+        for (GradleProjectSettings projectSettings : GradleSettings.getInstance(project).getLinkedProjectsSettings()) {
+          ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(projectSettings.getExternalProjectPath());
+        }
       }
 
       @Override
       public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath) {
-        ensureProjectsRefresh();
+        ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(linkedProjectPath);
       }
 
       @Override
       public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
-        ensureProjectsRefresh();
-      }
-
-      private void ensureProjectsRefresh() {
-        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+        ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(linkedProjectPath);
       }
     });
 

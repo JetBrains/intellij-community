@@ -75,7 +75,7 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
   @Override
   public List<JpsLibraryRoot> getRoots(@NotNull JpsOrderRootType rootType) {
     final JpsElementCollection<JpsLibraryRoot> rootsCollection = myContainer.getChild(getRole(rootType));
-    return rootsCollection != null ? rootsCollection.getElements() : Collections.<JpsLibraryRoot>emptyList();
+    return rootsCollection != null ? rootsCollection.getElements() : Collections.emptyList();
   }
 
   @Override

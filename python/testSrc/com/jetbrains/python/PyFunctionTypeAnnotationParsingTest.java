@@ -42,6 +42,7 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDocstringTokenSetContributor());
+    PythonDialectsTokenSetProvider.reset();
   }
 
   protected void doCodeTest(@NotNull String typeAnnotation) {

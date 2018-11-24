@@ -22,11 +22,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.xml.XmlTag;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.07.2007
- */
 public class RngHighlightingTest extends HighlightingTestBase {
 
   @Override

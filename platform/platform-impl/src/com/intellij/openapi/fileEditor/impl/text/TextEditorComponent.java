@@ -24,8 +24,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -281,7 +281,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   /**
    * Updates "modified" property
    */
-  private final class MyDocumentListener extends DocumentAdapter {
+  private final class MyDocumentListener implements DocumentListener {
     /**
      * We can reuse this runnable to decrease number of allocated object.
      */

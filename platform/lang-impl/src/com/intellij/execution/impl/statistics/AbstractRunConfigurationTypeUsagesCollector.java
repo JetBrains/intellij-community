@@ -23,7 +23,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -42,23 +41,20 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Abstra
   @Override
   public final Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
     final Set<String> runConfigurationTypes = new HashSet<>();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
-        final RunManager runManager = RunManager.getInstance(project);
-        for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {
-          RunConfiguration runConfiguration = settings.getConfiguration();
-          if (runConfiguration != null && isApplicable(runManager, settings)) {
-            final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
-            final ConfigurationType configurationType = configurationFactory.getType();
-            final StringBuilder keyBuilder = new StringBuilder();
-            keyBuilder.append(configurationType.getId());
-            if (configurationType.getConfigurationFactories().length > 1) {
-              keyBuilder.append(".").append(configurationFactory.getName());
-            }
-            runConfigurationTypes.add(keyBuilder.toString());
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      if (project.isDisposed()) return;
+      final RunManager runManager = RunManager.getInstance(project);
+      for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {
+        RunConfiguration runConfiguration = settings.getConfiguration();
+        if (runConfiguration != null && isApplicable(runManager, settings)) {
+          final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
+          final ConfigurationType configurationType = configurationFactory.getType();
+          final StringBuilder keyBuilder = new StringBuilder();
+          keyBuilder.append(configurationType.getId());
+          if (configurationType.getConfigurationFactories().length > 1) {
+            keyBuilder.append(".").append(configurationFactory.getName());
           }
+          runConfigurationTypes.add(keyBuilder.toString());
         }
       }
     });

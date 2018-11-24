@@ -17,6 +17,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
@@ -31,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* User: cdr
-*/
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   private volatile Identikit myIdentikit;
@@ -149,7 +147,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   public static PsiDirectory restoreDirectoryFromVirtual(final VirtualFile virtualFile, @NotNull final Project project) {
     if (virtualFile == null) return null;
 
-    return ApplicationManager.getApplication().runReadAction((Computable<PsiDirectory>)() -> {
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;
       PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
@@ -184,7 +183,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       final SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myIdentikit != otherInfo.myIdentikit) return false;
 
-      return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      return ReadAction.compute(() -> {
         Segment range1 = getPsiRange();
         Segment range2 = otherInfo.getPsiRange();
         return range1 != null && range2 != null

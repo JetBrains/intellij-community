@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
@@ -34,7 +33,6 @@ import org.intellij.plugins.xpathView.XPathEvalAction;
 import org.intellij.plugins.xpathView.XPathProjectComponent;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
-import org.intellij.plugins.xpathView.util.Namespace;
 import org.jaxen.JaxenException;
 import org.jaxen.XPathSyntaxException;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +133,7 @@ public class FindByXPathAction extends AnAction {
     private static boolean validateExpression(Project project, String expression) {
         try {
             //noinspection unchecked
-            XPathSupport.getInstance().createXPath(null, expression, Collections.<Namespace>emptyList());
+            XPathSupport.getInstance().createXPath(null, expression, Collections.emptyList());
             return true;
         } catch (XPathSyntaxException e) {
             Messages.showErrorDialog(project, e.getMultilineMessage(), "XPath Syntax Error");

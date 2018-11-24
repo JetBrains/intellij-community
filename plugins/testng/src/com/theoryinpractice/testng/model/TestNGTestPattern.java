@@ -21,10 +21,8 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -33,7 +31,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,21 +70,10 @@ public class TestNGTestPattern extends TestNGTestObject {
         methodName = null;
       }
 
-      final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-        @Nullable
-        @Override
-        public PsiClass compute() {
-          return ClassUtil
-            .findPsiClass(PsiManager.getInstance(config.getProject()), className.replace('/', '.'), null, true, searchScope);
-        }
-      });
+      final PsiClass psiClass = ReadAction.compute(() -> ClassUtil
+        .findPsiClass(PsiManager.getInstance(config.getProject()), className.replace('/', '.'), null, true, searchScope));
       if (psiClass != null) {
-        final Boolean hasTest = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return TestNGUtil.hasTest(psiClass);
-          }
-        });
+        final Boolean hasTest = ReadAction.compute(() -> TestNGUtil.hasTest(psiClass));
         if (hasTest) {
           if (StringUtil.isEmpty(methodName)) {
             calculateDependencies(null, classes, searchScope, psiClass);

@@ -50,10 +50,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -161,8 +159,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     int commitIndex = myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot());
     Set<FilePath> names;
     if (myVisiblePack instanceof FileHistoryVisiblePack) {
-      IndexDataGetter.FileNamesData namesData = ((FileHistoryVisiblePack)myVisiblePack).getNamesData();
-      names = namesData.getAffectedPaths(commitIndex);
+      Map<Integer, FilePath> namesData = ((FileHistoryVisiblePack)myVisiblePack).getNamesData();
+      names = Collections.singleton(namesData.get(commitIndex));
     }
     else {
       names = myIndexDataGetter.getFileNames(myPath, commitIndex);

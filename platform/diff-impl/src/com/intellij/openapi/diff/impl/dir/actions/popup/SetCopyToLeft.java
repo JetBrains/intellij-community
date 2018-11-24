@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.ide.diff.DirDiffElement;
 import com.intellij.ide.diff.DirDiffOperation;
+import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class SetCopyToLeft extends SetOperationToBase {
   @NotNull
   @Override
-  protected DirDiffOperation getOperation() {
+  protected DirDiffOperation getOperation(DirDiffElementImpl element) {
     return DirDiffOperation.COPY_FROM;
   }
 

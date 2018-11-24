@@ -1,10 +1,3 @@
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 23.01.2003
- * Time: 17:59:45
- * To change this template use Options | File Templates.
- */
 public class FieldsAndLocals {
     private int a = 0;
     {

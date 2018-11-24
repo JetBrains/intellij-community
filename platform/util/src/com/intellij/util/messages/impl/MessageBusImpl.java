@@ -18,6 +18,7 @@ package com.intellij.util.messages.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
@@ -380,20 +381,25 @@ public class MessageBusImpl implements MessageBus {
       myParentBus.pumpMessages();
     }
     else {
-      Map<MessageBusImpl, Integer> map = asRoot().myWaitingBuses.get();
+      final Map<MessageBusImpl, Integer> map = asRoot().myWaitingBuses.get();
       if (map != null) {
-        Set<MessageBusImpl> buses = map.keySet();
+        List<MessageBusImpl> buses = ContainerUtil.filter(map.keySet(), new Condition<MessageBusImpl>() {
+          @Override
+          public boolean value(MessageBusImpl bus) {
+            return ensureAlive(map, bus);
+          }
+        });
         if (!buses.isEmpty()) {
-          pumpWaitingBuses(map, new ArrayList<MessageBusImpl>(buses));
+          pumpWaitingBuses(buses);
         }
       }
     }
   }
 
-  private static void pumpWaitingBuses(Map<MessageBusImpl, Integer> map, ArrayList<MessageBusImpl> buses) {
+  private static void pumpWaitingBuses(List<MessageBusImpl> buses) {
     List<Throwable> exceptions = null;
     for (MessageBusImpl bus : buses) {
-      if (!ensureAlive(map, bus)) continue;
+      if (bus.myDisposed) continue;
 
       exceptions = appendExceptions(exceptions, bus.doPumpMessages());
     }

@@ -70,7 +70,7 @@ public class War extends Jar {
   }
 
   public void setWebResources(@Nullable List<WebResource> webResources) {
-    myWebResources = webResources == null ? Collections.<WebResource>emptyList() : webResources;
+    myWebResources = webResources == null ? Collections.emptyList() : webResources;
   }
 
   @NotNull
@@ -79,7 +79,7 @@ public class War extends Jar {
   }
 
   public void setClasspath(@Nullable Set<File> classpath) {
-    myClasspath = classpath == null ? Collections.<File>emptySet() : classpath;
+    myClasspath = classpath == null ? Collections.emptySet() : classpath;
   }
 
   @NotNull

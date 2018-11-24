@@ -1,0 +1,5 @@
+{
+  "about1": <warning descr="Value should be one of: [\"var13\", \"var23\"]">"var1"</warning>,
+  "b_111": true,
+  <warning descr="Property 'ccc' is not allowed">"ccc": 18</warning>
+}

@@ -59,10 +59,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.MethodExitEvent;
-import com.sun.jdi.request.ClassPrepareRequest;
-import com.sun.jdi.request.EventRequest;
-import com.sun.jdi.request.MethodEntryRequest;
-import com.sun.jdi.request.MethodExitRequest;
+import com.sun.jdi.request.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -194,25 +191,35 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
     try {
       Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, debugProcess.getVirtualMachineProxy());
+      if (lambdaMethod != null &&
+          !breakpoint
+            .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::allMethods), debugProcess)
+            .findFirst().isPresent()) {
+        return;
+      }
       StreamEx<Method> methods = lambdaMethod != null
                          ? StreamEx.of(lambdaMethod)
                          : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
       boolean found = false;
       for (Method method : methods) {
         found = true;
-        if (base && method.isNative()) {
+        if (method.isNative()) {
           breakpoint.disableEmulation();
           return;
         }
         Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, debugProcess.getVirtualMachineProxy());
-        if (target != null && !DebuggerUtilsEx.allLineLocations(target).isEmpty()) {
+        if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
           method = target;
         }
 
         List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-        if (!allLineLocations.isEmpty()) {
+        if (allLineLocations == null) { // no line numbers
+          breakpoint.disableEmulation();
+          return;
+        }
+        if (!ContainerUtil.isEmpty(allLineLocations)) {
           if (breakpoint.isWatchEntry()) {
-            createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess);
+            createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess, true);
           }
           if (breakpoint.isWatchExit()) {
             MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
@@ -234,7 +241,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                   //case Opcodes.ATHROW:
                     allLineLocations.stream()
                       .filter(l -> l.lineNumber() == myLastLine)
-                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess));
+                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));
                 }
               }
             }, true);
@@ -249,6 +256,16 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
     catch (Exception e) {
       LOG.debug(e);
+    }
+  }
+
+  private static void createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
+                                                      @Nullable Location location,
+                                                      @NotNull DebugProcessImpl debugProcess,
+                                                      boolean methodEntry) {
+    BreakpointRequest request = createLocationBreakpointRequest(requestor, location, debugProcess);
+    if (request != null) {
+      request.putProperty(METHOD_ENTRY_KEY, methodEntry);
     }
   }
 
@@ -313,41 +330,41 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
   }
 
-
   public String getEventMessage(@NotNull LocatableEvent event) {
-    final Location location = event.location();
-    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
+    return getEventMessage(event, getFileName());
+  }
+
+  static String getEventMessage(@NotNull LocatableEvent event, String defaultFileName) {
+    Location location = event.location();
+    if (event instanceof MethodEntryEvent) {
+      return getEventMessage(true, ((MethodEntryEvent)event).method(), location, defaultFileName);
+    }
+    if (event instanceof MethodExitEvent) {
+      return getEventMessage(false, ((MethodExitEvent)event).method(), location, defaultFileName);
+    }
+    Object entryProperty = event.request().getProperty(METHOD_ENTRY_KEY);
+    if (entryProperty instanceof Boolean) {
+      return getEventMessage((Boolean)entryProperty, location.method(), location, defaultFileName);
+    }
+    return "";
+  }
+
+  private static String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
+    String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName;
     try {
       locationFileName = location.sourceName();
     }
     catch (AbsentInformationException e) {
-      locationFileName = getFileName();
+      locationFileName = defaultFileName;
     }
-    final int locationLine = location.lineNumber();
-    if (event instanceof MethodEntryEvent) {
-      MethodEntryEvent entryEvent = (MethodEntryEvent)event;
-      final Method method = entryEvent.method();
-      return DebuggerBundle.message(
-        "status.method.entry.breakpoint.reached", 
-        method.declaringType().name() + "." + method.name() + "()",
-        locationQName,
-        locationFileName,
-        locationLine
-      );
-    }
-    if (event instanceof MethodExitEvent) {
-      MethodExitEvent exitEvent = (MethodExitEvent)event;
-      final Method method = exitEvent.method();
-      return DebuggerBundle.message(
-        "status.method.exit.breakpoint.reached", 
-        method.declaringType().name() + "." + method.name() + "()",
-        locationQName,
-        locationFileName,
-        locationLine
-      );
-    }
-    return "";
+    int locationLine = location.lineNumber();
+    return DebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
+                                  method.declaringType().name() + "." + method.name() + "()",
+                                  locationQName,
+                                  locationFileName,
+                                  locationLine
+    );
   }
 
   public PsiElement getEvaluationElement() {

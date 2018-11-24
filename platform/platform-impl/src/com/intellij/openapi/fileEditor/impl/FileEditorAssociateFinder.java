@@ -21,12 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: angus
- * Date: 3/6/12
- * Time: 1:37 PM
- */
 public interface FileEditorAssociateFinder {
   ExtensionPointName<FileEditorAssociateFinder> EP_NAME = ExtensionPointName.create("com.intellij.editorFileAssociateFinder");
 

@@ -55,7 +55,7 @@ public class ExternalSystemProgressNotificationManagerImpl extends RemoteObject
         ids = myListeners.get(listener);
       }
       else {
-        ids = myListeners.putIfAbsent(listener, ContainerUtil.<ExternalSystemTaskId>newConcurrentSet());
+        ids = myListeners.putIfAbsent(listener, ContainerUtil.newConcurrentSet());
       }
     }
     return ids.add(taskId);

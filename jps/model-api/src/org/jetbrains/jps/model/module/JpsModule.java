@@ -56,6 +56,14 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
 
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 
+  /**
+   * Add a {@link JpsExcludePattern pattern} for names of files which should be excluded from this module.
+   */
+  void addExcludePattern(@NotNull String baseDirUrl, @NotNull String pattern);
+  void removeExcludePattern(@NotNull String baseDirUrl, @NotNull String pattern);
+
+  List<JpsExcludePattern> getExcludePatterns();
+
   JpsDependenciesList getDependenciesList();
 
   @NotNull

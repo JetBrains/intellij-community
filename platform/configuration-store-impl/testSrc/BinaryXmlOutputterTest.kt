@@ -12,7 +12,59 @@ class BinaryXmlOutputterTest {
   }
 
   @Test fun attributes() {
-    test("""<foo bar="1" />""")
+    test("""
+    <state>
+      <component name="CopyrightManager">
+        <copyright>
+          <option name="myName" value="Foo" />
+          <option name="notice" value="where" />
+        </copyright>
+      </component>
+      <component name="InspectionProjectProfileManager">
+        <profile version="1.0">
+          <option name="myName" value="Project Default" />
+          <inspection_tool class="AntDuplicateTargetsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="AntMissingPropertiesFileInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="AntResolveInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="ArgNamesErrorsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="ArgNamesWarningsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="AroundAdviceStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="EmptyEventHandler" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+        </profile>
+        <version value="1.0" />
+      </component>
+      <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
+      <component name="masterDetails">
+        <states>
+          <state key="Copyright.UI">
+            <settings>
+              <last-edited>Foo</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+          <state key="ProjectJDKs.UI">
+            <settings>
+              <last-edited>1.4</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+        </states>
+      </component>
+    </state>""")
   }
 
   private fun test(xml: String) {
@@ -21,7 +73,7 @@ class BinaryXmlOutputterTest {
       serializeElementToBinary(loadElement(xml), it)
     }
 
-    val xmlAfter = JDOMUtil.writeElement(byteOut.toByteArray().inputStream().use { readElement(it) })
+    val xmlAfter = JDOMUtil.writeElement(byteOut.toByteArray().inputStream().use { deserializeElementFromBinary(it) })
 
     assertThat(xml.trimIndent()).isEqualTo(xmlAfter)
   }

@@ -32,10 +32,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- * Date: 4/8/11
- */
 public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   private @Nullable JComboBox myInitializerCombo;
   private JComboBox myVisibilityCombo;

@@ -70,7 +70,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     myExternalSystemUiAware = ExternalSystemUiUtil.getUiAware(GradleConstants.SYSTEM_ID);
     myTree = createTree();
 
-    setTitle(String.format("%s Project Build Composite", GradleConstants.SYSTEM_ID.getReadableName()));
+    setTitle("Composite Build Configuration");
     init();
   }
 
@@ -121,7 +121,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   private CheckboxTree createTree() {
     final CheckedTreeNode root = new CheckedTreeNode();
     if (myCompositeRootSettings != null) {
-      List<TreeNode> nodes = ContainerUtil.newArrayList();
+      List<CheckedTreeNode> nodes = ContainerUtil.newArrayList();
       for (GradleProjectSettings projectSettings : GradleSettings.getInstance(myProject).getLinkedProjectsSettings()) {
         if (projectSettings == myCompositeRootSettings) continue;
         if (projectSettings.getCompositeBuild() != null &&
@@ -140,6 +140,8 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
         nodes.add(treeNode);
       }
 
+      ContainerUtil.sort(nodes, (o1, o2) ->
+        StringUtil.naturalCompare((String)((Pair)o1.getUserObject()).first, (String)((Pair)o2.getUserObject()).first));
       TreeUtil.addChildrenTo(root, nodes);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,15 @@ public class PyPackageRequirementsInspectionTest extends PyTestCase {
   // PY-17422
   public void testTypingNotInRequirements() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("test1.py"));
+  }
+
+  // PY-11963
+  public void testMismatchBetweenPackageAndRequirement() {
+    doTest("test1.py");
+  }
+
+  public void testOnePackageManyPossibleRequirements() {
+    doTest("test1.py");
   }
 
   private void doTest(@NotNull final String filename) {

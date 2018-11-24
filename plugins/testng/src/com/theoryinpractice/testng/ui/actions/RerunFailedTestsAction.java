@@ -10,10 +10,10 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -57,12 +57,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
                 final HashMap<PsiClass, Map<PsiMethod, List<String>>> fullClassList = ContainerUtil.newHashMap();
                 super.fillTestObjects(fullClassList);
                 for (final PsiClass aClass : fullClassList.keySet()) {
-                  if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-                    @Override
-                    public Boolean compute() {
-                      return TestNGUtil.hasTest(aClass);
-                    }
-                  })) {
+                  if (!ReadAction.compute(() -> TestNGUtil.hasTest(aClass))) {
                     classes.put(aClass, fullClassList.get(aClass));
                   }
                 }

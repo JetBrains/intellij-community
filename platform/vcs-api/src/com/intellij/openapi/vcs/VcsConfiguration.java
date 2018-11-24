@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;
+  public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
 
   @AbstractCollection(surroundWithTag = false, elementTag = "path")
   @Tag("ignored-roots")
@@ -218,9 +219,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public boolean shouldStartInBackground() {
       return PERFORM_UPDATE_IN_BACKGROUND;
     }
-
-    @Override
-    public void processSentToBackground() {}
   }
 
   private class CommitInBackgroundOption implements PerformInBackgroundOption {
@@ -228,9 +226,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public boolean shouldStartInBackground() {
       return PERFORM_COMMIT_IN_BACKGROUND;
     }
-
-    @Override
-    public void processSentToBackground() {}
   }
 
   private class EditInBackgroundOption implements PerformInBackgroundOption {

@@ -24,7 +24,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -35,7 +35,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -48,6 +47,7 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,12 +77,17 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       if (gotoData != null) {
         show(project, editor, file, gotoData);
       }
+      else {
+        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data));
+      }
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
     }
   }
 
+  protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<GotoData> successCallback) { }
+  
   @NonNls
   protected abstract String getFeatureUsedKey();
 
@@ -325,12 +330,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       targets = ArrayUtil.append(targets, element);
       renderers.put(element, createRenderer(this, element));
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
-        final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return ((PsiNamedElement)element).getName();
-          }
-        });
+        final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
       }

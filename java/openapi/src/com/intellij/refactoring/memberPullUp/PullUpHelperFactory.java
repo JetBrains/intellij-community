@@ -15,9 +15,6 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
-/**
-* Created by Max Medvedev on 10/4/13
-*/
 public interface PullUpHelperFactory {
   PullUpHelper createPullUpHelper(PullUpData data);
 }

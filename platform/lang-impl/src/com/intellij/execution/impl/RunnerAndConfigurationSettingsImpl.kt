@@ -121,7 +121,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getUniqueID(): String {
     var result = uniqueId
-    if (result == null) {
+    // check name if configuration name was changed not using our setName
+    if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
       @Suppress("DEPRECATION")
       result = "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
@@ -200,9 +201,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     uniqueId = null
 
     PathMacroManager.getInstance(configuration.project).expandPaths(element)
-    if (configuration is ModuleBasedConfiguration<*>) {
-      configuration.configurationModule.module?.let {
-        PathMacroManager.getInstance(it).expandPaths(element)
+    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+      val moduleName = element.getChild("module")?.getAttributeValue("name")
+      if (moduleName != null) {
+        configuration.configurationModule.findModule(moduleName)?.let {
+          PathMacroManager.getInstance(it).expandPaths(element)
+        }
       }
     }
 
@@ -265,6 +269,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     if (configuration !is UnknownRunConfiguration) {
       manager.writeBeforeRunTasks(this, configuration)?.let {
         element.addContent(it)
+      }
+    }
+
+    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+      configuration.configurationModule.module?.let {
+        PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
     }
   }

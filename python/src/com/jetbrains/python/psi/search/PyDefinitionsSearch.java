@@ -15,8 +15,7 @@
  */
 package com.jetbrains.python.psi.search;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -39,14 +38,8 @@ public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement
       });
     }
     else if (queryParameters instanceof PyFunction) {
-      final Query<PyFunction> query = ApplicationManager.getApplication().runReadAction(
-        new Computable<Query<PyFunction>>() {
-          @Override
-          public Query<PyFunction> compute() {
-            return PyOverridingMethodsSearch.search((PyFunction)queryParameters, true);
-          }
-        }
-      );
+      final Query<PyFunction> query =
+        ReadAction.compute(() -> PyOverridingMethodsSearch.search((PyFunction)queryParameters, true));
 
       return query.forEach(
         pyFunction -> {
@@ -55,14 +48,7 @@ public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement
       );
     }
     else if (queryParameters instanceof PyTargetExpression) {  // PY-237
-      final PsiElement parent = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiElement>() {
-          @Override
-          public PsiElement compute() {
-            return queryParameters.getParent();
-          }
-        }
-      );
+      final PsiElement parent = ReadAction.compute(() -> queryParameters.getParent());
 
       if (parent instanceof PyAssignmentStatement) {
         return consumer.process(parent);

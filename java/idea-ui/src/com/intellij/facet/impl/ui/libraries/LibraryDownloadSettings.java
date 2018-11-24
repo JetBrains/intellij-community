@@ -76,12 +76,7 @@ public class LibraryDownloadSettings {
   }
 
   private static List<? extends DownloadableLibraryFileDescription> getRequiredFiles(List<? extends DownloadableLibraryFileDescription> files) {
-    return ContainerUtil.filter(files, new Condition<DownloadableLibraryFileDescription>() {
-      @Override
-      public boolean value(DownloadableLibraryFileDescription description) {
-        return !description.isOptional();
-      }
-    });
+    return ContainerUtil.filter(files, (Condition<DownloadableLibraryFileDescription>)description -> !description.isOptional());
   }
 
   @NotNull

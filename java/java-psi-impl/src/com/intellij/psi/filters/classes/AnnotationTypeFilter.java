@@ -20,13 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.util.ReflectionUtil;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 21:00:45
- * To change this template use Options | File Templates.
- */
 public class AnnotationTypeFilter
   implements ElementFilter{
 

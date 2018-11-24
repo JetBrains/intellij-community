@@ -142,7 +142,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     myHelpId = notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
 
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
-    myComments.setPreferredSize(new Dimension(150, 100));
+    myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
     myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 

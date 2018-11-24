@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
@@ -221,12 +222,9 @@ public class SceneBuilderImpl implements SceneBuilder {
       jdk = ProjectRootManager.getInstance(project).getProjectSdk();
     }
     if (jdk == null) return true;
-    final String versionString = jdk.getVersionString();
-    if (versionString != null) {
-      final JavaSdkVersion jdkVersion = JavaSdkVersion.fromVersionString(versionString);
-      if (jdkVersion != null) {
-        return targetLevel.isAtLeast(jdkVersion.getMaxLanguageLevel());
-      }
+    final JavaSdkVersion jdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
+    if (jdkVersion != null) {
+      return targetLevel.isAtLeast(jdkVersion.getMaxLanguageLevel());
     }
     return true;
   }

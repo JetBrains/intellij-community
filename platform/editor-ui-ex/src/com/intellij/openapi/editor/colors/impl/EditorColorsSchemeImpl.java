@@ -146,9 +146,9 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       Color thisColor = getColor(key);
       Color otherColor = otherScheme.getColor(key);
       if (thisColor == null) {
-        return otherColor == null;
+        if (otherColor != null) return false;
       }
-      if (!isColorKeyIgnored(filters, key) && !thisColor.equals(otherColor)) {
+      else if (!isColorKeyIgnored(filters, key) && !thisColor.equals(otherColor)) {
         return false;
       }
     }
@@ -162,8 +162,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   private static boolean isColorKeyIgnored(@NotNull Collection<Function<ColorKey, Boolean>> filters, ColorKey key) {
     for (Function<ColorKey,Boolean> filter : filters) {
-      if (filter.apply(key)) return false;
+      if (filter.apply(key)) return true;
     }
-    return true;
+    return false;
   }
 }

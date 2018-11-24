@@ -23,12 +23,6 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/28/12
- * Time: 2:45 PM
- */
 public class VcsLimitHistoryConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   private final VcsConfiguration myConfiguration;
 

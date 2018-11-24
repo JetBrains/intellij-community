@@ -17,12 +17,12 @@ package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -96,11 +96,8 @@ public class JavacOutputParser extends OutputParser {
       final int colonIndex2 = line.indexOf(':', colonIndex1 + 1);
       if (colonIndex2 >= 0){
         final String filePath = part1.replace(File.separatorChar, '/');
-        final Boolean fileExists = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
-          public Boolean compute(){
-            return LocalFileSystem.getInstance().findFileByPath(filePath) != null;
-          }
-        });
+        final Boolean fileExists =
+          ReadAction.compute(() -> LocalFileSystem.getInstance().findFileByPath(filePath) != null);
         if (!fileExists.booleanValue()) {
           // the part one turned out to be something else than a file path
           return true;
@@ -234,11 +231,9 @@ public class JavacOutputParser extends OutputParser {
     else if (JavacResourcesReader.MSG_NOTE.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         protected void doExecute(final String line, @Nullable final String filePath, final Callback callback) {
-          final boolean fileExists = filePath != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
-            public Boolean compute(){
-              return LocalFileSystem.getInstance().findFileByPath(filePath) != null;
-            }
-          });
+          final boolean fileExists = filePath != null &&
+                                     ReadAction
+                                       .compute(() -> LocalFileSystem.getInstance().findFileByPath(filePath) != null);
           if (fileExists) {
             addMessage(callback, CompilerMessageCategory.WARNING, line, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), -1, -1);
           }

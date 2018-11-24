@@ -55,6 +55,10 @@ public class ProgramRunnerUtil {
   }
 
   public static void executeConfiguration(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {
+    executeConfigurationAsync(environment, showSettings, assignNewId, null);
+  }
+
+  public static void executeConfigurationAsync(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId, ProgramRunner.Callback callback) {
     if (ExecutorRegistry.getInstance().isStarting(environment)) {
       return;
     }
@@ -115,7 +119,11 @@ public class ProgramRunnerUtil {
 
       }
 
-      environment.getRunner().execute(environment);
+      if (callback != null) {
+        environment.getRunner().execute(environment, callback);
+      } else {
+        environment.getRunner().execute(environment);
+      }
     }
     catch (ExecutionException e) {
       String name = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getName() : null;

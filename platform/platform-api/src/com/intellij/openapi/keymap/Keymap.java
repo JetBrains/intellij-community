@@ -54,7 +54,7 @@ public interface Keymap extends Scheme {
    * @return all keyboard shortcuts for the action with the specified <code>actionId</code>
    * or an empty array if the action doesn't have any keyboard shortcut.
    */
-  // 60 external usages — actionId cannot be marked as NotNull
+  // 60 external usages - actionId cannot be marked as NotNull
   @NotNull
   Shortcut[] getShortcuts(@Nullable String actionId);
 

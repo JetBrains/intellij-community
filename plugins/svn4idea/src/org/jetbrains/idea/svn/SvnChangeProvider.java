@@ -15,14 +15,13 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -249,7 +248,7 @@ public class SvnChangeProvider implements ChangeProvider {
           status = null;
         }
         if (status != null && status.is(StatusType.STATUS_DELETED)) {
-          final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
+          final FilePath filePath = myFactory.createFilePathOn(wcPath, false);
           final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
           final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
           context.getBuilder().processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
@@ -278,8 +277,7 @@ public class SvnChangeProvider implements ChangeProvider {
                          deletedFile.getStatus());
     final boolean isUnder = dirtyScope == null
                             ? true
-                            : ApplicationManager.getApplication()
-                              .runReadAction((Computable<Boolean>)() -> ChangeListManagerImpl.isUnder(change, dirtyScope));
+                            : ReadAction.compute(() -> ChangeListManagerImpl.isUnder(change, dirtyScope));
     if (isUnder) {
       context.getBuilder().removeRegisteredChangeFor(oldPath);
       context.getBuilder().processChangeInList(change, clName, SvnVcs.getKey());

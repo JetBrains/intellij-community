@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,6 +189,51 @@ public class PyDunderSlotsInspectionTest extends PyTestCase {
     doTestPy3();
   }
 
+  // PY-20280
+  public void testSlotInListAndClassVar() {
+    doTestPy3();
+  }
+
+  // PY-20280
+  public void testSlotInTupleAndClassVar() {
+    doTestPy3();
+  }
+
+  // PY-20280
+  public void testSlotAndClassVar() {
+    doTestPy3();
+  }
+
+  // PY-20280
+  public void testTwoSlotsInListAndClassVar() {
+    doTestPy3();
+  }
+
+  // PY-20280
+  public void testTwoSlotsInTupleAndClassVar() {
+    doTestPy3();
+  }
+
+  // PY-20280
+  public void testSlotsInBaseAndClassVarInDerived() {
+    doTestPy3();
+  }
+
+  // PY-20280
+  public void testClassVarInBaseAndSlotsInDerived() {
+    doTestPy3();
+  }
+
+  // PY-20280
+  public void testSlotsInBaseAndDerivedClassVarInDerived() {
+    doTestPy3();
+  }
+
+  // PY-20280
+  public void testSlotsInBaseAndDerivedClassVarInBase() {
+    doTestPy3();
+  }
+
   private void doTestPy2() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTestPy);
   }
@@ -198,7 +243,7 @@ public class PyDunderSlotsInspectionTest extends PyTestCase {
   }
 
   private void doTestPy() {
-    final String path = "inspections/PyDunderSlotsInspectionTest/" + getTestName(true) + ".py";
+    final String path = "inspections/PyDunderSlotsInspection/" + getTestName(true) + ".py";
 
     final VirtualFile file = myFixture.getTempDirFixture().getFile(path);
     if (file != null) {

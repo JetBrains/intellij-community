@@ -413,7 +413,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           realAdded.add(VcsUtil.getFilePath(rootPath + "/" + tk[1]));
           break;
         case 'D':
-          realRemoved.add(VcsUtil.getFilePathForDeletedFile(rootPath + "/" + tk[1], false));
+          realRemoved.add(VcsUtil.getFilePath(rootPath + "/" + tk[1], false));
           break;
         default:
           throw new IllegalStateException("Unexpected status: " + line);

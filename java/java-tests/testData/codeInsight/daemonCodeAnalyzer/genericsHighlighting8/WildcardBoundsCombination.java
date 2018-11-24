@@ -10,7 +10,8 @@ class NachCollections<K,V> {
                       Collection<? super Map.Entry<K,V>> c2,
                       Consumer<Map.Entry<K, V>> a) {
     c1.forEach(consumer(a));
-    c2.forEach(consumer<error descr="'consumer(java.util.function.Consumer<java.util.Map.Entry<K1,V1>>)' in 'NachCollections' cannot be applied to '(java.util.function.Consumer<java.util.Map.Entry<K,V>>)'">(a)</error>);
+    c2.forEach(<error descr="Incompatible types. Required Consumer<? super capture of ? super Entry<K, V>> but 'consumer' was inferred to Consumer<Entry<K1, V1>>:
+no instance(s) of type variable(s) K1, V1 exist so that capture of ? super Entry<K, V> conforms to Entry<K1, V1>">consumer(a)</error>);
   }
 }
 

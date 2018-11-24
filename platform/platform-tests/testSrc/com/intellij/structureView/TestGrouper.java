@@ -101,7 +101,7 @@ public class TestGrouper implements Grouper {
     List<Group> result = new ArrayList<>();
     Collection<String> parentGroupUsedStrings = parent.getValue() instanceof StringGroup ?
                                                 ((StringGroup)parent.getValue()).myChildrenUsedStrings :
-                                                Collections.<String>emptySet();
+                                                Collections.emptySet();
     Collection<TreeElement> elements = new LinkedHashSet<>(children);
     for (String subString : mySubStrings) {
       if (parentGroupUsedStrings.contains(subString)) continue;

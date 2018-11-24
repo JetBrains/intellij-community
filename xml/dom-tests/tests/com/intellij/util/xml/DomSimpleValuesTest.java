@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -82,6 +83,15 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertEquals(239, createElement("<a>239</a>").getInt());
     assertEquals(true, createElement("<a>true</a>").getBoolean());
     assertEquals("true", createElement("<a>true</a>").getBuffer().toString());
+
+    assertEquals((short)239, createElement("<a>239</a>").getShort());
+    assertEquals(new Long("239"), createElement("<a>239</a>").getLong());
+    assertEquals(new Float("239.42"), createElement("<a>239.42</a>").getFloat());
+    assertEquals(new BigDecimal("239.42"), createElement("<a>239.42</a>").getBigDecimal());
+
+    final MyElement bigDecimalValue = createElement("<a>239.42</a>");
+    bigDecimalValue.setValue(new BigDecimal("111.234"));
+    assertEquals("111.234", bigDecimalValue.getValue());
 
     try {
       createElement("<a>true</a>").getInt();
@@ -400,6 +410,20 @@ public class DomSimpleValuesTest extends DomTestCase {
 
     @TagValue()
     String getTagValue();
+
+    @TagValue
+    Long getLong();
+
+    @TagValue
+    Float getFloat();
+
+    @TagValue
+    short getShort();
+
+    @TagValue
+    BigDecimal getBigDecimal();
+
+    void setValue(BigDecimal value);
 
     GenericDomValue<Integer> getGenericChild();
 

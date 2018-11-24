@@ -15,12 +15,11 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +34,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
@@ -277,7 +279,7 @@ public class LocalSearchScope extends SearchScope {
     if (scope == EMPTY) {
       return EMPTY;
     }
-    return ApplicationManager.getApplication().runReadAction((Computable<LocalSearchScope>)() -> {
+    return ReadAction.compute(() -> {
       PsiElement[] elements = scope.getScope();
       List<PsiElement> result = new ArrayList<>(elements.length);
       for (PsiElement element : elements) {
@@ -287,7 +289,9 @@ public class LocalSearchScope extends SearchScope {
           result.add(element);
         }
       }
-      return result.isEmpty() ? EMPTY : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());
+      return result.isEmpty()
+             ? EMPTY
+             : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());
     });
 
 

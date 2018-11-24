@@ -64,8 +64,7 @@ public class GenericPatchApplier {
     Collections.addAll(myLines, LineTokenizer.tokenize(text, false));
     myBaseFileEndsWithNewLine = StringUtil.endsWithLineBreak(text);
     myHunks = hunks;
-    final Comparator<TextRange> textRangeComparator =
-      (o1, o2) -> new Integer(o1.getStartOffset()).compareTo(new Integer(o2.getStartOffset()));
+    final Comparator<TextRange> textRangeComparator = Comparator.comparingInt(TextRange::getStartOffset);
     myTransformations = new TreeMap<>(textRangeComparator);
     myNotExact = new ArrayList<>();
     myNotBound = new ArrayList<>();
@@ -1319,7 +1318,7 @@ public class GenericPatchApplier {
 
     @Override
     public int compare(SplitHunk o1, SplitHunk o2) {
-      return Integer.valueOf(o1.getStartLineBefore()).compareTo(Integer.valueOf(o2.getStartLineBefore()));
+      return Integer.compare(o1.getStartLineBefore(), o2.getStartLineBefore());
     }
   }
 }

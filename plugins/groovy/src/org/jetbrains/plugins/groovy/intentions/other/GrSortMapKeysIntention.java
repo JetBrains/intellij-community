@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
 import java.util.Arrays;
 
-/**
- * Created by Max Medvedev on 10/01/14
- */
 public class GrSortMapKeysIntention extends Intention {
 
   @Override
@@ -85,7 +82,7 @@ public class GrSortMapKeysIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         PsiElement parent = element.getParent();
         if (parent instanceof GrArgumentLabel &&
             ((GrArgumentLabel)parent).getNameElement().equals(element) &&

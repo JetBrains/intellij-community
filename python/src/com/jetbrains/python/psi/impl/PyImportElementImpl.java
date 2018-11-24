@@ -245,7 +245,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   @Override
   public List<RatedResolveResult> multiResolve() {
     final QualifiedName qName = getImportedQName();
-    return qName == null ? Collections.<RatedResolveResult>emptyList() : ResolveImportUtil.multiResolveImportElement(this, qName);
+    return qName == null ? Collections.emptyList() : ResolveImportUtil.multiResolveImportElement(this, qName);
   }
 
   @Override

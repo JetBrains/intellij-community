@@ -100,10 +100,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 25-Jan-2006
- */
 public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
   private final IdeView myIdeView = new MyIdeView();
@@ -117,12 +113,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
     @Nullable
     @Override
-    public Color getFileColorFor(DefaultMutableTreeNode node) {
-      if (!(node instanceof PackageDependenciesNode)) {
-        return null;
-      }
-      return ProjectViewTree.getColorForObject(((PackageDependenciesNode)node).getPsiElement(), myProject,
-                                               FunctionUtil.id());
+    public Color getFileColorForPath(@NotNull TreePath path) {
+      if (!(path.getLastPathComponent() instanceof PackageDependenciesNode)) return null;
+      PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+      return ProjectViewTree.getColorForObject(node.getPsiElement(), myProject, FunctionUtil.id());
     }
   };
   @NotNull

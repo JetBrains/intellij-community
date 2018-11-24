@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,9 +58,6 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
         return;
       }
       final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (ErrorUtil.containsDeepError(lhs) || ErrorUtil.containsDeepError(rhs)) {
-        return;
-      }
       final String rhsText = rhs.getText();
       final String lhsText = lhs.getText();
       final PsiJavaToken sign = assignmentExpression.getOperationSign();
@@ -80,9 +76,6 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       final PsiExpression returnValue = returnStatement.getReturnValue();
       if (returnValue == null) {
-        return;
-      }
-      if (ErrorUtil.containsDeepError(returnValue)) {
         return;
       }
       final String valueText = returnValue.getText();

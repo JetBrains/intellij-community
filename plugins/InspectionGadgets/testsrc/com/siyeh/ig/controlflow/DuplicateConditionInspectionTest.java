@@ -9,10 +9,15 @@ public class DuplicateConditionInspectionTest extends LightInspectionTestCase {
   public void testDuplicateCondition() {
     doTest();
   }
+  public void testDuplicateConditionNoSideEffect() {
+    doTest();
+  }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new DuplicateConditionInspection();
+    DuplicateConditionInspection inspection = new DuplicateConditionInspection();
+    inspection.ignoreMethodCalls = getTestName(false).contains("NoSideEffect");
+    return inspection;
   }
 }

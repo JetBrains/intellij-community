@@ -91,10 +91,7 @@ public class DiffTree<OT, NT> {
   };
 
   @NotNull
-  private CompareResult build(@NotNull OT oldN, @NotNull NT newN, int level, @NotNull DiffTreeChangeBuilder<OT, NT> consumer) {
-    OT oldNode = myOldTree.prepareForGetChildren(oldN);
-    NT newNode = myNewTree.prepareForGetChildren(newN);
-
+  private CompareResult build(@NotNull OT oldNode, @NotNull NT newNode, int level, @NotNull DiffTreeChangeBuilder<OT, NT> consumer) {
     if (level == myNewChildrenLists.size()) {
       myNewChildrenLists.add(new Ref<NT[]>());
       myOldChildrenLists.add(new Ref<OT[]>());

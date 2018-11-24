@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 26-Mar-2010
- */
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.PluginPathManager;

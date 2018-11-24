@@ -184,7 +184,7 @@ public class MantisRepository extends BaseRepositoryImpl {
   @NotNull
   public List<MantisProject> getProjects() throws Exception {
     ensureProjectsRefreshed();
-    return myProjects == null ? Collections.<MantisProject>emptyList() : myProjects;
+    return myProjects == null ? Collections.emptyList() : myProjects;
   }
 
   private void ensureProjectsRefreshed() throws Exception {

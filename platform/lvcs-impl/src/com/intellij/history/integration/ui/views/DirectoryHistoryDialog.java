@@ -74,7 +74,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     JPanel p = new JPanel(new BorderLayout());
 
-    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(root), true);
+    myToolBar = ActionManager.getInstance().createActionToolbar("DirectoryHistoryDiffPanel", createChangesTreeActions(root), true);
     JPanel toolBarPanel = new JPanel(new BorderLayout());
     toolBarPanel.add(myToolBar.getComponent(), BorderLayout.CENTER);
 
@@ -128,7 +128,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private ChangesTreeList<Change> createChangesTree() {
-    return new ChangesTreeList<Change>(myProject, Collections.<Change>emptyList(), false, false, null, null) {
+    return new ChangesTreeList<Change>(myProject, Collections.emptyList(), false, false, null, null) {
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> cc, ChangeNodeDecorator changeNodeDecorator) {
         return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), cc, changeNodeDecorator);

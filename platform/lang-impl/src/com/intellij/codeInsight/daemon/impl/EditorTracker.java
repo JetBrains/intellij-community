@@ -198,7 +198,7 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   @NotNull
-  List<Editor> getActiveEditors() {
+  public List<Editor> getActiveEditors() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myActiveEditors;
   }
@@ -222,7 +222,7 @@ public class EditorTracker extends AbstractProjectComponent {
     return filtered;
   }
 
-  void setActiveEditors(@NotNull List<Editor> editors) {
+  public void setActiveEditors(@NotNull List<Editor> editors) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myActiveEditors = editors;
 

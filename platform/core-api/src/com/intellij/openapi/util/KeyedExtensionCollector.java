@@ -170,7 +170,7 @@ public class KeyedExtensionCollector<T, KeyT> {
           }
         }
       }
-      return result == null ? Collections.<T>emptyList() : result;
+      return result == null ? Collections.emptyList() : result;
     }
   }
 

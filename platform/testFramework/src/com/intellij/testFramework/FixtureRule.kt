@@ -17,7 +17,6 @@ package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.ComponentManager
@@ -84,14 +83,14 @@ class ProjectRule : ApplicationRule() {
       Throwable(projectPath, null).printStackTrace(PrintStream(buffer))
 
       val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
-      Disposer.register(ApplicationManager.getApplication(), Disposable {
+      PlatformTestUtil.registerProjectCleanup {
         try {
           disposeProject()
         }
         finally {
           Files.deleteIfExists(projectFile)
         }
-      })
+      }
 
       (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).storePointers()
       return project
@@ -101,13 +100,13 @@ class ProjectRule : ApplicationRule() {
       val project = sharedProject ?: return
       sharedProject = null
       sharedModule = null
-      Disposer.dispose(project)
+      (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, true)
     }
   }
 
   override public fun after() {
     if (projectOpened.compareAndSet(true, false)) {
-      sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).closeProject(it, false, false, false) } }
+      sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(it, false) } }
     }
   }
 
@@ -190,7 +189,7 @@ class InitInspectionRule : TestRule {
   override fun apply(base: Statement, description: Description) = statement { runInInitMode { base.evaluate() } }
 }
 
-private inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
+inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
   override fun evaluate() {
     runnable()
   }
@@ -243,7 +242,7 @@ fun Project.use(task: (Project) -> Unit) {
     task(this)
   }
   finally {
-    runInEdtAndWait { projectManager.closeProject(this, false, true, false) }
+    runInEdtAndWait { projectManager.forceCloseProject(this, true) }
   }
 }
 
@@ -252,7 +251,7 @@ class DisposeNonLightProjectsRule : ExternalResource() {
     val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManager.getInstance() as ProjectManagerImpl
     projectManager?.openProjects?.forEachGuaranteed {
       if (!ProjectManagerImpl.isLight(it)) {
-        runInEdtAndWait { projectManager.closeProject(it, false, true, false) }
+        runInEdtAndWait { projectManager.forceCloseProject(it, true) }
       }
     }
   }

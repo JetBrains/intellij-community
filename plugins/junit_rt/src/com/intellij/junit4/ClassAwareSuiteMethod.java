@@ -17,10 +17,6 @@ package com.intellij.junit4;
 
 import org.junit.internal.runners.SuiteMethod;
 
-/**
-* User: anna
-* Date: 2/22/12
-*/
 class ClassAwareSuiteMethod extends SuiteMethod {
   private final Class myKlass;
 

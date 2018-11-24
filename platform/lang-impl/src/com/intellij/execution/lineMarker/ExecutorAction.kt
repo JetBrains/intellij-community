@@ -23,8 +23,8 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Key
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.mapSmartNotNull
@@ -72,7 +72,7 @@ class ExecutorAction private constructor(private val origin: AnAction,
       }
 
       return RunConfigurationProducer.getProducers(context.project).mapSmartNotNull {
-        LOG.catchAndLog {
+        LOG.runAndLogException {
           val configuration = it.createLightConfiguration(context) ?: return@mapSmartNotNull null
           val settings = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.project), configuration, false)
           ConfigurationFromContextImpl(it, settings, context.psiLocation)

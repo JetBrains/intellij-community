@@ -46,6 +46,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xml.CommonXmlStrings;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.request.BreakpointRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,11 +54,6 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 import javax.swing.*;
 
-/**
- * User: lex
- * Date: Sep 2, 2003
- * Time: 3:22:55 PM
- */
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter");
 
@@ -236,13 +232,17 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }
   }
 
-  static void createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
-                                              @Nullable Location location,
-                                              @NotNull DebugProcessImpl debugProcess) {
+  @Nullable
+  static BreakpointRequest createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
+                                                           @Nullable Location location,
+                                                           @NotNull DebugProcessImpl debugProcess) {
     if (location != null) {
       RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-      requestsManager.enableRequest(requestsManager.createBreakpointRequest(requestor, location));
+      BreakpointRequest request = requestsManager.createBreakpointRequest(requestor, location);
+      requestsManager.enableRequest(request);
+      return request;
     }
+    return null;
   }
 
   @Override

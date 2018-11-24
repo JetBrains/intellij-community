@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,7 +46,7 @@ class DiffRangeMarker implements RangeMarker {
     void onRangeInvalidated();
   }
 
-  private static class InvalidRangeDispatcher extends DocumentAdapter {
+  private static class InvalidRangeDispatcher implements DocumentListener {
     private static final Key<InvalidRangeDispatcher> KEY = Key.create("deferedNotifier");
     private final Map<DiffRangeMarker, RangeInvalidListener> myDiffRangeMarkers = ContainerUtil.newConcurrentMap();
 

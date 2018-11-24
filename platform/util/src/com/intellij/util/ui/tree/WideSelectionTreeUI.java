@@ -17,7 +17,6 @@ package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -267,7 +266,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected boolean isToggleSelectionEvent(MouseEvent e) {
-    return SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
+    return UIUtil.isToggleListSelectionEvent(e);
   }
 
   @Override

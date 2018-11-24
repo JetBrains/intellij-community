@@ -16,23 +16,21 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ConsoleFontOptions extends FontOptions {
   public ConsoleFontOptions(ColorAndFontOptions options) {
     super(options);
   }
 
-
-  @Nullable
   @Override
-  protected String getInheritFontTitle() {
-    return "editor font";
+  protected String getOverwriteFontTitle() {
+    return ApplicationBundle.message("settings.editor.console.font.overwrite");
   }
 
   @Override
@@ -53,6 +51,11 @@ public class ConsoleFontOptions extends FontOptions {
   @Override
   protected FontPreferences getFontPreferences() {
     return getCurrentScheme().getConsoleFontPreferences();
+  }
+
+  @Override
+  protected FontPreferences getBaseFontPreferences() {
+    return getCurrentScheme().getFontPreferences();
   }
 
   @Override

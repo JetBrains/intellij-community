@@ -15,22 +15,13 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jul 16, 2003
- * Time: 10:25:44 PM
- * To change this template use Options | File Templates.
- */
 public interface DfaMemoryState {
   @NotNull
   DfaMemoryState createCopy();
@@ -52,10 +43,17 @@ public interface DfaMemoryState {
 
   boolean applyContractCondition(DfaValue dfaCond);
 
-  ThreeState checkOptional(DfaValue value);
-
+  /**
+   * Returns a value fact about supplied value within the context of current memory state.
+   * Returns null if the fact of given type is not known or not applicable to a given value.
+   *
+   * @param factType a type of the fact to get
+   * @param value a value to get the fact about
+   * @param <T> a type of the fact value
+   * @return a fact about value, if known
+   */
   @Nullable
-  LongRangeSet getRange(DfaValue value);
+  <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value);
 
   void flushFields();
 

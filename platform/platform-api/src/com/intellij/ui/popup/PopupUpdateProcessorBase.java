@@ -17,10 +17,6 @@ package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 
-/**
- * User: anna
- * Date: 12/19/12
- */
 public abstract class PopupUpdateProcessorBase extends JBPopupAdapter {
   public abstract void updatePopup(Object lookupItemObject);
 }

@@ -24,10 +24,6 @@ import org.jetbrains.idea.eclipse.IdeaXml;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 11/8/12
- */
 public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
   public void readIdeaSpecific(@NotNull Element root, T model, @Nullable SdkType projectSdkType, @Nullable Map<String, String> levels) {
     expandElement(root, model);

@@ -91,7 +91,7 @@ public class TextChangesStorage {
       }
       result.add(myChanges.get(i).change);
     }
-    return result == null ? Collections.<TextChange>emptyList() : result;
+    return result == null ? Collections.emptyList() : result;
   }
   
   public boolean isEmpty() {

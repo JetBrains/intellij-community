@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -68,6 +69,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   protected void initToolWindow() {
     if (myToolWindowContent == null) {
       myToolWindowContent = new DesignerToolWindow(myProject, true);
+      Disposer.register(this, () -> myToolWindowContent.dispose());
     }
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
@@ -108,13 +110,6 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     else {
       myToolWindow.setAvailable(true, null);
       myToolWindow.show(null);
-    }
-  }
-
-  @Override
-  public void disposeComponent() {
-    if (myToolWindowContent != null) {
-      myToolWindowContent.dispose();
     }
   }
 

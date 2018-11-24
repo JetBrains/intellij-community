@@ -21,9 +21,6 @@ import javax.swing.plaf.basic.BasicPopupMenuUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-/**
- * User: spLeaner
- */
 public class MacPopupMenuUI extends BasicPopupMenuUI {
   static Stroke THREE_PIXEL_STROKE = new BasicStroke(3F);
 

@@ -27,8 +27,9 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  * @since 12/19/13
+ *
+ * @deprecated use {@link ExternalSystemTaskManager} interface
  */
-@Deprecated
 public abstract class AbstractExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> implements ExternalSystemTaskManager<S> {
 
   public abstract void executeTasks(@NotNull ExternalSystemTaskId id,

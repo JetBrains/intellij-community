@@ -102,8 +102,9 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myProgramParameters.setLabelLocation(BorderLayout.WEST);
     myProgramParameters.setAnchor(myModuleLabel);
 
+    int ipady = UIUtil.isUnderWin10LookAndFeel() ? 0 : UIUtil.DEFAULT_VGAP;
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                   JBUI.insets(2, 0, 0, 0), UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
+                                                   JBUI.insets(2, 0, 0, 0), UIUtil.DEFAULT_HGAP, ipady);
     wholePanel.add(myVMParameters, gc);
     wholePanel.add(myProgramParameters, gc);
     gc.gridwidth = 1;

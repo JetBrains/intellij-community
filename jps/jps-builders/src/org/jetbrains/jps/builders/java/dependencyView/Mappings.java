@@ -1110,7 +1110,7 @@ public class Mappings {
     private void processDisappearedClasses() {
       if (myFilesToCompile != null) {
         myDelta.compensateRemovedContent(
-          myFilesToCompile, myCompiledWithErrors != null ? myCompiledWithErrors : Collections.<File>emptySet()
+          myFilesToCompile, myCompiledWithErrors != null ? myCompiledWithErrors : Collections.emptySet()
         );
       }
 
@@ -2212,7 +2212,7 @@ public class Mappings {
             final File fileName = compiledFile.myFileName;
             final Set<ClassRepr> classes = compiledFile.myFileClasses;
             final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
-            final DiffState state = new DiffState(Difference.<ClassRepr, ClassRepr.Diff>make(pastClasses, classes));
+            final DiffState state = new DiffState(Difference.make(pastClasses, classes));
   
             if (!processChangedClasses(state)) {
               if (!myEasyMode) {
@@ -2765,12 +2765,12 @@ public class Mappings {
 
   @NotNull
   private Set<Pair<ClassRepr, File>> getDeletedClasses() {
-    return myDeletedClasses == null ? Collections.<Pair<ClassRepr, File>>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
+    return myDeletedClasses == null ? Collections.emptySet() : Collections.unmodifiableSet(myDeletedClasses);
   }
 
   @NotNull
   private Set<ClassRepr> getAddedClasses() {
-    return myAddedClasses == null ? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myAddedClasses);
+    return myAddedClasses == null ? Collections.emptySet() : Collections.unmodifiableSet(myAddedClasses);
   }
 
   private TIntHashSet getChangedClasses() {

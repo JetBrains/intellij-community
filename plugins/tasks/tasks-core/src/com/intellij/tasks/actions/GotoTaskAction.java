@@ -76,7 +76,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
         popup.rebuildList(true);
       }
     });
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("GoToTask", group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     actionToolbar.updateActionsImmediately();
     actionToolbar.getComponent().setFocusable(false);

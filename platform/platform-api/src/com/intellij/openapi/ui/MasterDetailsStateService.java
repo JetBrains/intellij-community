@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 26-Jun-2008
- */
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.components.*;

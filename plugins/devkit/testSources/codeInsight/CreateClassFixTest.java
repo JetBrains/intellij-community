@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 14-Jun-2007
- */
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;

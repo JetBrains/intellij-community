@@ -21,10 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescriptor {
   private final String myName;
   private final PsiClass myPsiClass;

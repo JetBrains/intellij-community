@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditorPopupHandler;
@@ -459,12 +458,7 @@ public class TextDiffViewerUtil {
 
   @NotNull
   public static List<? extends EditorEx> getEditableEditors(@NotNull List<? extends EditorEx> editors) {
-    return ContainerUtil.filter(editors, new Condition<EditorEx>() {
-      @Override
-      public boolean value(EditorEx editor) {
-        return !editor.isViewer();
-      }
-    });
+    return ContainerUtil.filter(editors, editor -> !editor.isViewer());
   }
 
   public static class EditorFontSizeSynchronizer implements PropertyChangeListener {

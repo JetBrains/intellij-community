@@ -69,6 +69,6 @@ public class HgProjectConfigurable implements SearchableConfigurable {
 
   @NotNull
   public String getId() {
-    return "Mercurial.Project";
+    return "vcs.Mercurial";
   }
 }

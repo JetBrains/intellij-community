@@ -22,10 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 1/16/13
- */
 public class JavaFxCommonNames {
   @NonNls public static final String JAVAFX_BEANS_PROPERTY = "javafx.beans.property.Property";
   @NonNls public static final String JAVAFX_COLLECTIONS_OBSERVABLE_LIST = "javafx.collections.ObservableList";

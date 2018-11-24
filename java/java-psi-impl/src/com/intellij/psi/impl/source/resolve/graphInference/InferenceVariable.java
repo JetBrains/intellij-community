@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiFunction;
 
-/**
- * User: anna
- */
 public class InferenceVariable extends LightTypeParameter {
   private final PsiElement myContext;
 
@@ -115,12 +112,12 @@ public class InferenceVariable extends LightTypeParameter {
 
   public List<PsiType> getBounds(InferenceBound inferenceBound) {
     final List<PsiType> bounds = myBounds.get(inferenceBound);
-    return bounds != null ? new ArrayList<>(bounds) : Collections.<PsiType>emptyList();
+    return bounds != null ? new ArrayList<>(bounds) : Collections.emptyList();
   }
 
   public List<PsiType> getReadOnlyBounds(InferenceBound inferenceBound) {
     final List<PsiType> bounds = myBounds.get(inferenceBound);
-    return bounds != null ? bounds : Collections.<PsiType>emptyList();
+    return bounds != null ? bounds : Collections.emptyList();
   }
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {

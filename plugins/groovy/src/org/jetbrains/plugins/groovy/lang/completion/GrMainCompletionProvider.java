@@ -62,9 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
-* Created by Max Medvedev on 14/05/14
-*/
 public class GrMainCompletionProvider extends CompletionProvider<CompletionParameters> {
   public static final ElementPattern<PsiElement> AFTER_AT = PlatformPatterns.psiElement().afterLeaf("@");
   public static final ElementPattern<PsiElement> IN_CATCH_TYPE = PlatformPatterns

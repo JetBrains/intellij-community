@@ -40,9 +40,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newTroveMap;
-
 public class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
 
@@ -106,10 +103,10 @@ public class VfsImplUtil {
         file = file.findChildIfCached(pathElement);
       }
 
-      if (file == null) return pair(null, last);
+      if (file == null) return Pair.pair(null, last);
     }
 
-    return pair(file, null);
+    return Pair.pair(file, null);
   }
 
   @Nullable
@@ -180,7 +177,7 @@ public class VfsImplUtil {
    * Refreshing files via {@link #refresh(NewVirtualFileSystem, boolean)} doesn't work well if the file was changed 
    * twice in short time and content length wasn't changed (for example file modification timestamp for HFS+ works per seconds).
    * 
-   * If you're sure that a file is changed twice in a second and you have to get the latest file's state – use this method.
+   * If you're sure that a file is changed twice in a second and you have to get the latest file's state - use this method.
    * 
    * Likely you need this method if you have following code:
    * 
@@ -196,8 +193,8 @@ public class VfsImplUtil {
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
-  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlers = newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
-  private static final Map<String, Set<String>> ourDominatorsMap = newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlers = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Map<String, Set<String>> ourDominatorsMap = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
 
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
@@ -208,9 +205,9 @@ public class VfsImplUtil {
   }
 
   @NotNull
-  public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
-                                                        @NotNull String localPath,
-                                                        @NotNull Function<String, T> producer) {
+  private static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
+                                                         @NotNull String localPath,
+                                                         @NotNull Function<String, T> producer) {
     checkSubscription();
 
     ArchiveHandler handler;
@@ -222,20 +219,16 @@ public class VfsImplUtil {
         record = Pair.create(vfs, handler);
         ourHandlers.put(localPath, record);
 
-        final String finalRootPath = localPath;
         forEachDirectoryComponent(localPath, containingDirectoryPath -> {
-          Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-          if (handlers == null) {
-            ourDominatorsMap.put(containingDirectoryPath, handlers = ContainerUtil.newTroveSet());
-          }
-          handlers.add(finalRootPath);
+          Set<String> handlers = ourDominatorsMap.computeIfAbsent(containingDirectoryPath, __ -> ContainerUtil.newTroveSet());
+          handlers.add(localPath);
         });
       }
       handler = record.second;
     }
 
-    @SuppressWarnings("unchecked") T t = (T)handler;
-    return t;
+    //noinspection unchecked
+    return (T)handler;
   }
 
   private static void forEachDirectoryComponent(String rootPath, Consumer<String> consumer) {

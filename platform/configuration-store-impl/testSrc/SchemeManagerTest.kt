@@ -143,7 +143,7 @@ internal class SchemeManagerTest {
   }
 
   fun TestScheme.save(file: Path) {
-    file.write(serialize().toByteArray())
+    file.write(serialize()!!.toByteArray())
   }
 
   @Test fun `different extensions`() {
@@ -429,7 +429,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
     name = value
   }
 
-  override fun writeScheme() = serialize()
+  override fun writeScheme() = serialize()!!
 }
 
 open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {

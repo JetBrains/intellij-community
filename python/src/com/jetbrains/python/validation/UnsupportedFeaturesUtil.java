@@ -34,9 +34,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * User: catherine
- */
 public class UnsupportedFeaturesUtil {
   public static Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
   public static Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();

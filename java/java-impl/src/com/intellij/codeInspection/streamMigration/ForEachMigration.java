@@ -99,9 +99,12 @@ class ForEachMigration extends BaseStreamApiMigration {
 
     if (expressions[0] instanceof PsiFunctionalExpression &&
         ((PsiFunctionalExpression)expressions[0]).getFunctionalInterfaceType() == null) {
-      callStatement =
-        (PsiExpressionStatement)callStatement.replace(factory.createStatementFromText(
-          stream + "(" + tb.getVariable().getText() + ") -> " + wrapInBlock(block) + ");", callStatement));
+      PsiTypeElement typeElement = tb.getVariable().getTypeElement();
+      if (typeElement != null) {
+        String typedVariable = typeElement.getText() + " " + tb.getVariable().getName();
+        callStatement = (PsiExpressionStatement)callStatement.replace(factory.createStatementFromText(
+          stream + "(" + typedVariable + ") -> " + wrapInBlock(block) + ");", callStatement));
+      }
     }
     return callStatement;
   }

@@ -38,9 +38,10 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
                                        .definedInClass(JAVA_LANG_CLASS));
 
   public static final PsiJavaElementPattern.Capture<PsiLiteral> CLASS_PATTERN =
-    psiLiteral().methodCallParameter(or(
+    psiLiteral().methodCallParameter(0, or(
       psiMethod().withName(FOR_NAME).definedInClass(JAVA_LANG_CLASS),
-      psiMethod().withName(LOAD_CLASS).definedInClass(JAVA_LANG_CLASS_LOADER)));
+      psiMethod().withName(LOAD_CLASS).definedInClass(JAVA_LANG_CLASS_LOADER),
+      psiMethod().withName(FIND_CLASS).definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP)));
 
   private static final ElementPattern<? extends PsiElement> METHOD_HANDLE_PATTERN = psiLiteral()
     .methodCallParameter(1, psiMethod()
@@ -62,17 +63,12 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
     });
 
     registrar.registerReferenceProvider(CLASS_PATTERN, new JavaReflectionReferenceProvider() {
-      @Nullable
       @Override
       protected PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
                                                      @NotNull PsiReferenceExpression methodReference,
                                                      @NotNull ProcessingContext context) {
 
-        final String referenceName = methodReference.getReferenceName();
-        if (FOR_NAME.equals(referenceName) || LOAD_CLASS.equals(referenceName)) {
-          return new JavaClassReferenceProvider().getReferencesByElement(literalArgument, context);
-        }
-        return null;
+        return new JavaClassReferenceProvider().getReferencesByElement(literalArgument, context);
       }
     });
 

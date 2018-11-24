@@ -204,19 +204,22 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   @Nullable
   public static CapturePoint getMatchingDisabledInsertionPoint(@NotNull StackFrameProxyImpl frame) {
-    try {
-      Location location = frame.location();
-      String className = location.declaringType().name();
-      String methodName = location.method().name();
+    List<CapturePoint> capturePoints = DebuggerSettings.getInstance().getCapturePoints();
+    if (!capturePoints.isEmpty()) {
+      try {
+        Location location = frame.location();
+        String className = location.declaringType().name();
+        String methodName = location.method().name();
 
-      for (CapturePoint c : DebuggerSettings.getInstance().getCapturePoints()) {
-        if (!c.myEnabled && StringUtil.equals(c.myInsertClassName, className) && StringUtil.equals(c.myInsertMethodName, methodName)) {
-          return c;
+        for (CapturePoint c : capturePoints) {
+          if (!c.myEnabled && StringUtil.equals(c.myInsertClassName, className) && StringUtil.equals(c.myInsertMethodName, methodName)) {
+            return c;
+          }
         }
       }
-    }
-    catch (EvaluateException e) {
-      LOG.debug(e);
+      catch (EvaluateException | InternalException e) {
+        LOG.debug(e);
+      }
     }
     return null;
   }

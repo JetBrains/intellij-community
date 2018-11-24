@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -199,21 +197,13 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   @NotNull
   public Collection<FilePatch> filterBadFileTypePatches() {
     List<Pair<VirtualFile, ApplyTextFilePatch>> failedTextPatches =
-      ContainerUtil.findAll(myTextPatches, new Condition<Pair<VirtualFile, ApplyTextFilePatch>>() {
-        @Override
-        public boolean value(Pair<VirtualFile, ApplyTextFilePatch> textPatch) {
-          final VirtualFile file = textPatch.getFirst();
-          if (file.isDirectory()) return false;
-          return !isFileTypeOk(file);
-        }
+      ContainerUtil.findAll(myTextPatches, textPatch -> {
+        final VirtualFile file = textPatch.getFirst();
+        if (file.isDirectory()) return false;
+        return !isFileTypeOk(file);
       });
     myTextPatches.removeAll(failedTextPatches);
-    return ContainerUtil.map(failedTextPatches, new Function<Pair<VirtualFile, ApplyTextFilePatch>, FilePatch>() {
-      @Override
-      public FilePatch fun(Pair<VirtualFile, ApplyTextFilePatch> patchInfo) {
-        return patchInfo.getSecond().getPatch();
-      }
-    });
+    return ContainerUtil.map(failedTextPatches, patchInfo -> patchInfo.getSecond().getPatch());
   }
 
   private boolean isFileTypeOk(@NotNull VirtualFile file) {
@@ -647,11 +637,13 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       final List<FilePatch> result = new LinkedList<>();
       if (! myOverrideExisting.isEmpty()) {
         final String title = "Overwrite Existing Files";
-        final Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
-          new ArrayList<>(myOverrideExisting.keySet()), title,
+        List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
+        Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
+          files, title,
           "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
           "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
-          VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
+          VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
+          "Overwrite", "Cancel");
         if (selected != null) {
           for (FilePath path : selected) {
             myOverrideExisting.remove(path);

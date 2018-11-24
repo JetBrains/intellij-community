@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.test.GitPlatformTest;
@@ -272,18 +271,8 @@ public class GitLogParserTest extends GitPlatformTest {
   }
 
   private void assertPaths(List<FilePath> actualPaths, List<String> expectedPaths) {
-    List<String> actual = ContainerUtil.map(actualPaths, new Function<FilePath, String>() {
-      @Override
-      public String fun(FilePath path) {
-        return FileUtil.getRelativePath(new File(myProjectPath), path.getIOFile());
-      }
-    });
-    List<String> expected = ContainerUtil.map(expectedPaths, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return FileUtil.toSystemDependentName(s);
-      }
-    });
+    List<String> actual = ContainerUtil.map(actualPaths, path -> FileUtil.getRelativePath(new File(myProjectPath), path.getIOFile()));
+    List<String> expected = ContainerUtil.map(expectedPaths, s -> FileUtil.toSystemDependentName(s));
     assertOrderedEquals(actual, expected);
   }
 

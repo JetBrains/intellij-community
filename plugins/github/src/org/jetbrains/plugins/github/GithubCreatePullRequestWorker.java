@@ -287,21 +287,13 @@ public class GithubCreatePullRequestWorker {
     synchronized (fork.LOCK) {
       if (fork.getFetchTask() != null) return;
 
-      final MasterFutureTask<Void> task = new MasterFutureTask<>(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          doFetchRemote(fork);
-          return null;
-        }
+      final MasterFutureTask<Void> task = new MasterFutureTask<>(() -> {
+        doFetchRemote(fork);
+        return null;
       });
       fork.setFetchTask(task);
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          task.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> task.run());
     }
   }
 
@@ -316,20 +308,10 @@ public class GithubCreatePullRequestWorker {
       MasterFutureTask<Void> masterTask = branch.getForkInfo().getFetchTask();
       assert masterTask != null;
 
-      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, new Callable<DiffInfo>() {
-        @Override
-        public DiffInfo call() throws VcsException {
-          return doLoadDiffInfo(branch);
-        }
-      });
+      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, () -> doLoadDiffInfo(branch));
       branch.setDiffInfoTask(task);
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          task.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> task.run());
     }
   }
 
@@ -852,12 +834,7 @@ public class GithubCreatePullRequestWorker {
     }
 
     protected void runSlave(@NotNull final SlaveFutureTask slave) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          slave.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> slave.run());
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class SimpleBuilderStrategySupport extends BuilderAnnotationContributor {
     GrTypeDefinition typeDefinition = context.getCodeClass();
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(typeDefinition, BUILDER_FQN);
     if (!isApplicable(annotation, SIMPLE_STRATEGY_NAME)) return;
+    if (isIncludeSuperProperties(annotation)) return;
     for (GrField field : typeDefinition.getCodeFields()) {
       context.addMethod(createFieldSetter(typeDefinition, field, annotation));
     }

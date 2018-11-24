@@ -24,6 +24,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -174,6 +177,12 @@ public class QualifiedNameFinder {
 
   @Nullable
   public static String getQualifiedName(@NotNull PyElement element) {
+    return CachedValuesManager.getCachedValue(element, () ->
+      new Result<>(getQualifiedNameInner(element), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Nullable
+  private static String getQualifiedNameInner(@NotNull final PyElement element) {
     final String name = element.getName();
     if (name != null) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(element);

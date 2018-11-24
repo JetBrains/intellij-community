@@ -61,7 +61,8 @@ public class RunConfigurationDashboardGroupingRule implements DashboardGroupingR
   public DashboardGroup getGroup(AbstractTreeNode<?> node) {
     if (node instanceof DashboardRunConfigurationNode) {
       RunnerAndConfigurationSettings configurationSettings = ((DashboardRunConfigurationNode)node).getConfigurationSettings();
-      return new DashboardGroupImpl<>(configurationSettings, configurationSettings.getName(), configurationSettings.getConfiguration().getIcon());
+      return new DashboardGroupImpl<>(configurationSettings, configurationSettings.getName(),
+                                      configurationSettings.getConfiguration().getIcon());
     }
     return null;
   }

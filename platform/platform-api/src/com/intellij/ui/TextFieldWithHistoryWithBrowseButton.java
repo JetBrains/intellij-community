@@ -23,9 +23,6 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
   public TextFieldWithHistoryWithBrowseButton() {
     super(new TextFieldWithHistory(), null);

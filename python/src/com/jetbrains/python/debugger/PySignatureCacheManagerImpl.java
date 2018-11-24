@@ -21,7 +21,6 @@ import com.google.common.cache.LoadingCache;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -274,18 +273,15 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   public void clearCache() {
     final Ref<Boolean> deleted = Ref.create(false);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      (Runnable)() -> ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
-        @Override
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (readAttribute(fileOrDir) != null) {
-            writeAttribute(fileOrDir, "");
-            deleted.set(true);
-          }
-          if (ProgressManager.getInstance().getProgressIndicator().isCanceled()) {
-            return false;
-          }
-          return true;
+      (Runnable)() -> ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(fileOrDir -> {
+        if (readAttribute(fileOrDir) != null) {
+          writeAttribute(fileOrDir, "");
+          deleted.set(true);
         }
+        if (ProgressManager.getInstance().getProgressIndicator().isCanceled()) {
+          return false;
+        }
+        return true;
       }), "Cleaning the Cache of Dynamically Collected Types", true, myProject);
 
 

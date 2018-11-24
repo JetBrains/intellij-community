@@ -39,7 +39,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -57,6 +56,7 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
@@ -96,12 +96,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -118,6 +116,9 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -369,10 +370,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void disableInspections(@NotNull InspectionProfileEntry... inspections) {
-    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
-    for (InspectionProfileEntry inspection : inspections) {
-      profile.disableTool(inspection.getShortName(), getProject());
-    }
+    InspectionsKt.disableInspections(getProject(), inspections);
   }
 
   @Override
@@ -977,7 +975,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           throw new RuntimeException(e);
         }
         finally {
-          ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
+          PsiManager.getInstance(getProject()).dropPsiCaches();
         }
       }
     }.execute().getResultObject();
@@ -1783,6 +1781,31 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                    new MockProgressIndicator(),
                                                    new CommonProcessors.CollectProcessor<>(results));
     return results;
+  }
+
+  @NotNull
+  @Override
+  public List<Crumb> getBreadcrumbsAtCaret() {
+    PsiElement element = getFile().findElementAt(getCaretOffset());
+    if (element == null) {
+      return Collections.emptyList();
+    }
+    final Language language = element.getContainingFile().getLanguage();
+
+    final BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
+
+    if (provider == null) {
+      return Collections.emptyList();
+    }
+
+    List<Crumb> result = new ArrayList<>();
+    while (element != null) {
+      if (provider.acceptElement(element)) {
+        result.add(new Crumb.Impl(provider.getElementIcon(element), provider.getElementInfo(element), provider.getElementTooltip(element)));
+      }
+      element = provider.getParent(element);
+    }
+    return ContainerUtil.reverse(result);
   }
 
   @NotNull

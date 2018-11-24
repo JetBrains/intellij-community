@@ -11,6 +11,7 @@ import javax.swing.*;
 
 public class PyStudyInstructionPainter extends EditorEmptyTextPainter {
   private static final String separator = " / ";
+
   @Override
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
     String shortcut = KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(StudyNextWindowAction.SHORTCUT2), null));

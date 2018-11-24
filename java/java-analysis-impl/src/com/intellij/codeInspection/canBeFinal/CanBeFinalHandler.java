@@ -19,10 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiMember;
 
-/**
- * User: anna
- * Date: 1/31/12
- */
 public abstract class CanBeFinalHandler {
   public static final ExtensionPointName<CanBeFinalHandler> EP_NAME = ExtensionPointName.create("com.intellij.canBeFinal");
 

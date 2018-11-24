@@ -48,20 +48,17 @@ public class RestoreUpdateTree implements ProjectComponent, PersistentStateCompo
 
   @Override
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
-          ActionInfo actionInfo = myUpdateInfo.getActionInfo();
-          if (actionInfo != null) {
-            ProjectLevelVcsManagerEx.getInstanceEx(myProject).showUpdateProjectInfo(myUpdateInfo.getFileInformation(),
-                                                                                    VcsBundle.message("action.display.name.update"), actionInfo,
-                                                                                    false);
-            CommittedChangesCache.getInstance(myProject).refreshIncomingChangesAsync();
-          }
+    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
+      if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
+        ActionInfo actionInfo = myUpdateInfo.getActionInfo();
+        if (actionInfo != null) {
+          ProjectLevelVcsManagerEx.getInstanceEx(myProject).showUpdateProjectInfo(myUpdateInfo.getFileInformation(),
+                                                                                  VcsBundle.message("action.display.name.update"), actionInfo,
+                                                                                  false);
+          CommittedChangesCache.getInstance(myProject).refreshIncomingChangesAsync();
         }
-        myUpdateInfo = null;
       }
+      myUpdateInfo = null;
     });
   }
 

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Dec-2009
- */
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.configurationStore.XmlSerializer;

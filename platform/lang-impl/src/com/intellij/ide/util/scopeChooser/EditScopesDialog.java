@@ -26,10 +26,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 03-Jul-2006
- */
 public class EditScopesDialog extends SettingsDialog {
   private NamedScope mySelectedScope;
   private final Project myProject;

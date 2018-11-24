@@ -2,13 +2,12 @@ package com.jetbrains.edu.learning.actions;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,11 +28,8 @@ import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public class StudyCheckAction extends StudyActionWithShortcut {
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
@@ -44,13 +40,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
   protected final Ref<Boolean> myCheckInProgress = new Ref<>(false);
 
   public StudyCheckAction() {
-    super(getTextWithShortcuts(TEXT),
-          "Check current task", EducationalCoreIcons.CheckTask);
-  }
-
-  @NotNull
-  private static String getTextWithShortcuts(String text) {
-    return text + "(" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")";
+    super(TEXT,"Check current task", EducationalCoreIcons.CheckTask);
   }
 
   @Override
@@ -102,10 +92,10 @@ public class StudyCheckAction extends StudyActionWithShortcut {
       if (studyEditor != null) {
         final Task task = studyEditor.getTaskFile().getTask();
         if (task instanceof TheoryTask) {
-          presentation.setText(getTextWithShortcuts("Get Next Recommendation"));
+          presentation.setText("Get Next Recommendation");
         }
         else {
-          presentation.setText(getTextWithShortcuts(TEXT));
+          presentation.setText(TEXT);
         }
       }
     }
@@ -158,12 +148,14 @@ public class StudyCheckAction extends StudyActionWithShortcut {
         default:
           StudyCheckUtils.showTestResultPopUp(message, MessageType.WARNING.getPopupBackground(), myProject);
       }
-      StudyUtils.updateToolWindows(myProject);
-      ProjectView.getInstance(myProject).refresh();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        StudyUtils.updateToolWindows(myProject);
+        ProjectView.getInstance(myProject).refresh();
 
-      for (StudyCheckListener listener : StudyCheckListener.EP_NAME.getExtensions()) {
-        listener.afterCheck(myProject, myTask);
-      }
+        for (StudyCheckListener listener : StudyCheckListener.EP_NAME.getExtensions()) {
+          listener.afterCheck(myProject, myTask);
+        }
+      });
       myChecker.clearState();
       myCheckInProgress.set(false);
     }
@@ -175,11 +167,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
     }
 
     private StudyCheckResult checkOnRemote() {
-      final StepicUser user = StudySettings.getInstance().getUser();
-      if (user == null) {
-        return new StudyCheckResult(StudyStatus.Unchecked, "Failed to launch checking: you're not authorized");
-      }
-      return myChecker.checkOnRemote(user);
+      return myChecker.checkOnRemote(StudySettings.getInstance().getUser());
     }
   }
 }

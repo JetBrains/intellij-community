@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 19, 2002
- * Time: 3:19:05 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -99,12 +92,19 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myShowIntentionBulb                     = null;
   
   public SettingsImpl() {
-    this(null, null);
+    this(null, null, null);
   }
 
-  public SettingsImpl(@Nullable EditorEx editor, @Nullable Project project) {
+  SettingsImpl(@Nullable EditorEx editor, @Nullable Project project, @Nullable EditorKind kind) {
     myEditor = editor;
     myLanguage = editor != null && project != null ? getDocumentLanguage(project, editor.getDocument()) : null;
+    
+    if (EditorKind.CONSOLE.equals(kind)) {
+      mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.CONSOLE;
+    }
+    else if (EditorKind.PREVIEW.equals(kind)) {
+      mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.PREVIEW;
+    }
   }
   
   @Override
@@ -221,13 +221,16 @@ public class SettingsImpl implements EditorSettings {
     return myRightMargin != null ? myRightMargin.intValue() :
            CodeStyleFacade.getInstance(project).getRightMargin(myLanguage);
   }
-  
+
   @Nullable
-  private static Language getDocumentLanguage(@Nullable Project project, @NotNull Document document) {
-     if (project != null) {
+  private static Language getDocumentLanguage(@NotNull Project project, @NotNull Document document) {
+    if (!project.isDisposed()) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       PsiFile file = documentManager.getPsiFile(document);
       if (file != null) return file.getLanguage();
+    }
+    else {
+      LOG.warn("Attempting to get a language for document on a disposed project: " + project.getName());
     }
     return null;
   }
@@ -329,6 +332,10 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   */
+  @Deprecated
   public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
     if (softWrapAppliancePlace != mySoftWrapAppliancePlace) {
       mySoftWrapAppliancePlace = softWrapAppliancePlace;
@@ -336,6 +343,10 @@ public class SettingsImpl implements EditorSettings {
     }
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   */
+  @Deprecated
   public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
     return mySoftWrapAppliancePlace;
   }
@@ -633,7 +644,7 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
   
-  public void setUseSoftWrapsQuiet() {
+  void setUseSoftWrapsQuiet() {
     myUseSoftWraps = Boolean.TRUE;
   }
 

@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.xml.dom;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.08.2007
- */
 public class RngDomVisitor implements DomElementVisitor {
   @Override
   public void visitDomElement(DomElement element) {

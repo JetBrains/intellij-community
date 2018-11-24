@@ -22,7 +22,6 @@ import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -134,7 +133,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     }
     catch (ProcessCanceledException e) {
       OperationCanceledDiffRequest request = new OperationCanceledDiffRequest(name);
-      request.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new ReloadRequestAction(provider)));
+      request.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.singletonList(new ReloadRequestAction(provider)));
       return request;
     }
     catch (DiffRequestProducerException e) {
@@ -151,6 +150,10 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   protected void onDispose() {
     super.onDispose();
     myQueue.abort();
+    myRequestCache.clear();
+  }
+
+  protected void dropCaches() {
     myRequestCache.clear();
   }
 

@@ -44,9 +44,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 9/28/13
- */
 public class GrPullUpConflictsUtil {
   private GrPullUpConflictsUtil() {}
 

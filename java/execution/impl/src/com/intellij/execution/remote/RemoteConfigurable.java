@@ -20,7 +20,7 @@
  */
 package com.intellij.execution.remote;
 
-import com.intellij.application.options.ModulesComboBox;
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
@@ -53,7 +53,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private ConfigurationArgumentsHelpArea myHelpArea;
   @NonNls private ConfigurationArgumentsHelpArea myJDK13HelpArea;
   private ConfigurationArgumentsHelpArea myJDK14HelpArea;
-  private LabeledComponent<ModulesComboBox> myModule;
+  private LabeledComponent<ModuleDescriptionsComboBox> myModule;
   private String myHostName = "";
   @NonNls
   protected static final String LOCALHOST = "localhost";
@@ -128,8 +128,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     };
     myAddressField.addFocusListener(fieldFocusListener);
     myPortField.addFocusListener(fieldFocusListener);
-
-    myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent(), "<whole project>");
+    
+    myModule.getComponent().allowEmptySelection("<whole project>");
+    myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
   }
 
   public void applyEditorTo(@NotNull final RemoteConfiguration configuration) throws ConfigurationException {

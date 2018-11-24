@@ -64,6 +64,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private boolean mySearchInCommentsAndStrings;
   private boolean mySearchNonJava;
   private boolean myPreviewNonCodeUsages = true;
+  private Runnable myAfterRefactoringCallback;
 
   private SafeDeleteProcessor(Project project, @Nullable Runnable prepareSuccessfulCallback,
                               PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
@@ -391,6 +392,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
         element.delete();
       }
+      if (myAfterRefactoringCallback != null) myAfterRefactoringCallback.run();
     } catch (IncorrectOperationException e) {
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
@@ -496,5 +498,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean skipNonCodeUsages() {
     return true;
+  }
+
+  public void setAfterRefactoringCallback(Runnable afterRefactoringCallback) {
+    myAfterRefactoringCallback = afterRefactoringCallback;
   }
 }

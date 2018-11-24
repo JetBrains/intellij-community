@@ -40,6 +40,7 @@ public class UI {
     ourColors.put("panel.custom.background", new Color(250, 249, 245));
 
     ourColors.put("link.foreground", new Color(82, 99, 155));
+    ourColors.put("link.hover.foreground", new JBColor(new Color(82, 99, 155), new Color(82, 99, 155)));
     ourColors.put("link.pressed.foreground", new JBColor(new Color(240, 0, 0), new Color(186, 111, 37)));
     ourColors.put("link.visited.foreground", new JBColor(new Color(128, 0, 128), new Color(151, 118, 169)));
 
@@ -73,7 +74,7 @@ public class UI {
   }
 
   public static Color getColor(@NonNls String id) {
-    if (UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel()) {
       final Color color = UIManager.getColor(id);
       if (color != null) {
         return color;

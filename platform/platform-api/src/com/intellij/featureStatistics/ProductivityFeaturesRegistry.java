@@ -20,10 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Feb 3, 2005
- */
 public abstract class ProductivityFeaturesRegistry {
   @NotNull
   public abstract Set<String> getFeatureIds();

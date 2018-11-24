@@ -20,11 +20,9 @@ import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.GraphStrUtils.permanentGraphLayoutModelToStr;
@@ -43,13 +41,10 @@ public abstract class GraphLayoutBuilderTest<CommitId> extends AbstractTestWithT
     PermanentLinearGraphBuilder<CommitId> graphBuilder = PermanentLinearGraphBuilder.newInstance(commits);
     PermanentLinearGraphImpl graph = graphBuilder.build();
 
-    GraphLayout graphLayout = GraphLayoutBuilder.build(graph, new Comparator<Integer>() {
-      @Override
-      public int compare(@NotNull Integer o1, @NotNull Integer o2) {
-        CommitId id1 = commits.get(o1).getId();
-        CommitId id2 = commits.get(o2).getId();
-        return idManager.toStr(id1).compareTo(idManager.toStr(id2));
-      }
+    GraphLayout graphLayout = GraphLayoutBuilder.build(graph, (o1, o2) -> {
+      CommitId id1 = commits.get(o1).getId();
+      CommitId id2 = commits.get(o2).getId();
+      return idManager.toStr(id1).compareTo(idManager.toStr(id2));
     });
     assertEquals(out, permanentGraphLayoutModelToStr(graphLayout, graph.nodesCount()));
   }

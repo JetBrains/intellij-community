@@ -29,10 +29,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 2/17/12
- */
 public class AddTypeArgumentsConditionalFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(AddTypeArgumentsConditionalFix.class);
 

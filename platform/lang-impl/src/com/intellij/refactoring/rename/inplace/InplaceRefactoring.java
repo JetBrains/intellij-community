@@ -91,10 +91,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/11/12
- */
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
@@ -395,7 +391,8 @@ public abstract class InplaceRefactoring {
     template.setToShortenLongNames(false);
     template.setToReformat(false);
     myHighlighters = new ArrayList<>();
-    topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+    int targetOffset = rangeMarker.getStartOffset();
+    topLevelEditor.getCaretModel().moveToLogicalPosition(topLevelEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
     restoreOldCaretPositionAndSelection(offset);
@@ -430,7 +427,8 @@ public abstract class InplaceRefactoring {
   private void restoreOldCaretPositionAndSelection(final int offset) {
     //move to old offset
     Runnable runnable = () -> {
-      myEditor.getCaretModel().moveToOffset(restoreCaretOffset(offset));
+      int targetOffset = restoreCaretOffset(offset);
+      myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
       restoreSelection();
     };
 
@@ -875,7 +873,7 @@ public abstract class InplaceRefactoring {
     public void beforeTemplateFinished(final TemplateState templateState, Template template) {
       try {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-        myInsertedName = value != null ? value.toString() : null;
+        myInsertedName = value != null ? value.toString().trim() : null;
 
         TextRange range = templateState.getCurrentVariableRange();
         final int currentOffset = myEditor.getCaretModel().getOffset();

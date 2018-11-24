@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 
-/**
-* Created by Max Medvedev on 10/25/13
-*/
 public abstract class TypePointerBase<T extends PsiType> implements SmartTypePointer {
   private Reference<T> myTypeRef;
 

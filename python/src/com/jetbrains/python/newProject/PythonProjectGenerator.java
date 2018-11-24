@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.remote.*;
@@ -61,7 +61,9 @@ import java.util.function.Consumer;
  *
  * @param <T> project settings
  */
-public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> implements DirectoryProjectGenerator<T> {
+public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
+  public static final Object NO_SETTINGS = new Object();
+
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   private final boolean myAllowRemoteProjectCreation;
   @Nullable private MouseListener myErrorLabelMouseListener;
@@ -127,9 +129,10 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
   @Override
   public final void generateProject(@NotNull final Project project,
                                     @NotNull final VirtualFile baseDir,
-                                    @Nullable final T settings,
+                                    @NotNull final T settings,
                                     @NotNull final Module module) {
-    if (settings == null) {
+    // Use NO_SETTINGS to avoid nullable settings of project generator
+    if (settings == NO_SETTINGS) {
       // We are in Intellij Module and framework is implemented as project template, not facet.
       // See class doc for mote info
       configureProjectNoSettings(project, baseDir, module);

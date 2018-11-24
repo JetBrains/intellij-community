@@ -157,10 +157,6 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myNameLabel.setLabelFor(myNameField);
     myNameField.addDocumentListener(new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
-      @Override
       public void documentChanged(DocumentEvent event) {
         fireNameDataChanged();
       }

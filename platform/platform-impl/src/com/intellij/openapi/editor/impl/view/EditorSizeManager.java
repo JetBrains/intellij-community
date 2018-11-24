@@ -378,6 +378,8 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   }
 
   void textLayoutPerformed(int startOffset, int endOffset) {
+    assert 0 <= startOffset && startOffset < endOffset && endOffset <= myDocument.getTextLength() 
+      : "startOffset=" + startOffset + ", endOffset=" + endOffset;
     if (myDocument.isInBulkUpdate()) return;
     if (myEditor.getFoldingModel().isInBatchFoldingOperation()) {
       myDeferredRanges.add(new TextRange(startOffset, endOffset));

@@ -1,8 +1,8 @@
 package com.jetbrains.edu.learning.core;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -15,7 +15,7 @@ import java.util.List;
  * Listens changes in study files and updates
  * coordinates of all the windows in current task file
  */
-public class EduDocumentListener extends DocumentAdapter {
+public class EduDocumentListener implements DocumentListener {
   private final TaskFile myTaskFile;
   private final boolean myTrackLength;
   private final List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<>();

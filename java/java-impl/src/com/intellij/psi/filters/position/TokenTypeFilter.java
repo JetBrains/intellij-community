@@ -23,13 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.ReflectionUtil;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 10.03.2003
- * Time: 12:10:08
- * To change this template use Options | File Templates.
- */
 public class TokenTypeFilter implements ElementFilter{
   private final IElementType myType;
 

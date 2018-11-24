@@ -24,9 +24,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
 public class UsageLimitUtil {
   public static final int USAGES_LIMIT = 1000;
 

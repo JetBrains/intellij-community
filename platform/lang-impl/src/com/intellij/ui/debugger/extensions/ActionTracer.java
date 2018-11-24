@@ -29,13 +29,6 @@ import java.awt.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/4/11
- * Time: 7:52 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ActionTracer implements UiDebuggerExtension, AnActionListener {
 
   private final Logger LOG = Logger.getInstance("ActionTracer");
@@ -57,7 +50,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
       myComponent = new JPanel(new BorderLayout());
       final DefaultActionGroup group = new DefaultActionGroup();
       group.add(clear);
-      myComponent.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
+      myComponent.add(ActionManager.getInstance().createActionToolbar("ActionTracer", group, true).getComponent(), BorderLayout.NORTH);
       myComponent.add(log);
 
       ActionManager.getInstance().addAnActionListener(this);

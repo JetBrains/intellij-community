@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,32 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
  */
 public interface PyBinaryExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
+
+  @Nullable
+  @Override
+  default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    final boolean isRight = resolvedCallee != null && PyNames.isRightOperatorName(resolvedCallee.getName());
+    return isRight ? getRightExpression() : getLeftExpression();
+  }
+
+  @NotNull
+  @Override
+  default List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    final boolean isRight = resolvedCallee != null && PyNames.isRightOperatorName(resolvedCallee.getName());
+    return Collections.singletonList(isRight ? getLeftExpression() : getRightExpression());
+  }
+
   PyExpression getLeftExpression();
   @Nullable PyExpression getRightExpression();
 

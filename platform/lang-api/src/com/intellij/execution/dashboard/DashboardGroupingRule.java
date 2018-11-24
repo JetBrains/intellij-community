@@ -38,6 +38,7 @@ public interface DashboardGroupingRule extends TreeAction {
   /**
    * Grouping rules are ordered and applied to dashboard nodes according to their priority.
    * The higher the priority, the higher groups produced by this rule are presented in the dashboard tree.
+   *
    * @return rule's priority.
    */
   int getPriority();

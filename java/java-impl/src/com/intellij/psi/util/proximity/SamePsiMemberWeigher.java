@@ -22,43 +22,34 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class SamePsiMemberWeigher extends ProximityWeigher {
-  private static final NotNullLazyKey<Boolean, ProximityLocation> INSIDE_PSI_MEMBER = NotNullLazyKey.create("insidePsiMember", new NotNullFunction<ProximityLocation, Boolean>() {
-    @Override
-    @NotNull
-    public Boolean fun(ProximityLocation proximityLocation) {
-      return PsiTreeUtil.getContextOfType(proximityLocation.getPosition(), PsiMember.class, false) != null;
-    }
-  });
-  private static final NotNullLazyKey<PsiElement, ProximityLocation> PHYSICAL_POSITION = NotNullLazyKey.create("physicalPosition", new NotNullFunction<ProximityLocation, PsiElement>() {
-    @Override
-    @NotNull
-    public PsiElement fun(ProximityLocation location) {
-      PsiElement position = location.getPosition();
-      assert position != null;
-      if (!position.isPhysical()) {
-        final PsiFile file = position.getContainingFile();
-        if (file != null) {
-          final PsiFile originalFile = file.getOriginalFile();
-          final int offset = position.getTextRange().getStartOffset();
-          PsiElement candidate = originalFile.findElementAt(offset);
-          if (candidate == null) {
-            candidate = originalFile.findElementAt(offset - 1);
-          }
-          if (candidate != null) {
-            return candidate;
-          }
-        }
-      }
-      return position;
-    }
-  });
+  private static final NotNullLazyKey<Boolean, ProximityLocation> INSIDE_PSI_MEMBER = NotNullLazyKey.create("insidePsiMember",
+                                                                                                            proximityLocation -> PsiTreeUtil.getContextOfType(proximityLocation.getPosition(), PsiMember.class, false) != null);
+  private static final NotNullLazyKey<PsiElement, ProximityLocation> PHYSICAL_POSITION = NotNullLazyKey.create("physicalPosition",
+                                                                                                               location -> {
+                                                                                                                 PsiElement position = location.getPosition();
+                                                                                                                 assert position != null;
+                                                                                                                 if (!position.isPhysical()) {
+                                                                                                                   final PsiFile file = position.getContainingFile();
+                                                                                                                   if (file != null) {
+                                                                                                                     final PsiFile originalFile = file.getOriginalFile();
+                                                                                                                     final int offset = position.getTextRange().getStartOffset();
+                                                                                                                     PsiElement candidate = originalFile.findElementAt(offset);
+                                                                                                                     if (candidate == null) {
+                                                                                                                       candidate = originalFile.findElementAt(offset - 1);
+                                                                                                                     }
+                                                                                                                     if (candidate != null) {
+                                                                                                                       return candidate;
+                                                                                                                     }
+                                                                                                                   }
+                                                                                                                 }
+                                                                                                                 return position;
+                                                                                                               });
 
   @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {

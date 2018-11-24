@@ -22,13 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 8, 2003
- * Time: 4:20:36 PM
- * To change this template use Options | File Templates.
- */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class MissingReturnExpressionFixer implements Fixer {
   @Override

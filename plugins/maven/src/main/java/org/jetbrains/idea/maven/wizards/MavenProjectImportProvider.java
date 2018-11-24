@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Jul-2007
- */
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.CommonBundle;
@@ -30,9 +26,14 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 
@@ -91,8 +92,22 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
   }
 
   @Override
+  public boolean canImport(@NotNull VirtualFile fileOrDirectory, @Nullable Project project) {
+    if (super.canImport(fileOrDirectory, project)) return true;
+
+    if (!fileOrDirectory.isDirectory() && project != null) {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(fileOrDirectory);
+      if (psiFile != null) {
+        return MavenDomUtil.isProjectFile(psiFile);
+      }
+    }
+
+    return false;
+  }
+
+  @Override
   protected boolean canImportFromFile(VirtualFile file) {
-    return "pom.xml".equals(file.getName());
+    return MavenUtil.isPomFileName(file.getName());
   }
 
   @Nullable

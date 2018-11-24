@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 22-Jan-2008
- */
 package com.intellij.ide.scopeView;
 
 import com.intellij.openapi.extensions.ExtensionPointName;

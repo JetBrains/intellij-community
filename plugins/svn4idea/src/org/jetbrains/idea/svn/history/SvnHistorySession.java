@@ -26,13 +26,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import java.io.File;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 4/27/12
- * Time: 12:24 PM
- * To change this template use File | Settings | File Templates.
- */
 public class SvnHistorySession extends VcsAbstractHistorySession {
   private final SvnVcs myVcs;
   private final FilePath myCommittedPath;

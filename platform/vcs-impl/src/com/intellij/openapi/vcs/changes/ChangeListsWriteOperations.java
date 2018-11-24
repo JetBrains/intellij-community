@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ChangeListsWriteOperations {
   @Nullable
@@ -26,8 +26,8 @@ public interface ChangeListsWriteOperations {
   LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data);
   boolean removeChangeList(@NotNull String name);
   @Nullable
-  MultiMap<LocalChangeList, Change> moveChangesTo(String name, Change[] changes);
+  MultiMap<LocalChangeList, Change> moveChangesTo(String name, @NotNull Change[] changes);
   boolean editName(@NotNull String fromName, @NotNull String toName);
   @Nullable
-  String editComment(@NotNull String fromName, final String newComment);
+  String editComment(@NotNull String fromName, @Nullable String newComment);
 }

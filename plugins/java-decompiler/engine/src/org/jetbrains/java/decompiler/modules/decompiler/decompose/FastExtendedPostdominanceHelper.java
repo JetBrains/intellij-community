@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,9 @@ public class FastExtendedPostdominanceHelper {
 
     filterOnDominance(filter);
 
-    HashMap<Integer, Set<Integer>> res = new HashMap<>();
-    for (Entry<Integer, FastFixedSet<Integer>> entry : mapExtPostdominators.entrySet()) {
+    Set<Entry<Integer, FastFixedSet<Integer>>> entries = mapExtPostdominators.entrySet();
+    HashMap<Integer, Set<Integer>> res = new HashMap<>(entries.size());
+    for (Entry<Integer, FastFixedSet<Integer>> entry : entries) {
       res.put(entry.getKey(), entry.getValue().toPlainSet());
     }
 
@@ -173,7 +174,7 @@ public class FastExtendedPostdominanceHelper {
           lstPredSets.add(setPred);
         }
 
-        for (Integer id : setReachability.toPlainSet()) {
+        for (Integer id : setReachability) {
 
           FastFixedSet<Integer> setReachabilityCopy = setReachability.getCopy();
 
@@ -245,7 +246,7 @@ public class FastExtendedPostdominanceHelper {
         Integer nodeid = node.id;
         FastFixedSet<Integer> setReachability = mapSets.get(nodeid);
 
-        for (Integer id : setReachability.toPlainSet()) {
+        for (Integer id : setReachability) {
           mapExtPostdominators.get(id).add(nodeid);
         }
 

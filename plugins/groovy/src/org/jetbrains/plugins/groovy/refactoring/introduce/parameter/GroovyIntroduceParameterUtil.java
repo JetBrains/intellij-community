@@ -34,7 +34,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,20 +102,17 @@ public class GroovyIntroduceParameterUtil {
   }
 
   public static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, final TIntArrayList parametersToRemove) {
-    parametersToRemove.forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(final int paramNum) {
-        try {
-          final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
-          for (PsiElement arg : actualArg.args) {
-            arg.delete();
-          }
+    parametersToRemove.forEach(paramNum -> {
+      try {
+        final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
+        for (PsiElement arg : actualArg.args) {
+          arg.delete();
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        return true;
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
   }
 
@@ -139,30 +135,27 @@ public class GroovyIntroduceParameterUtil {
       hasNamedArgs = false;
     }
 
-    parametersToRemove.forEachDescending(new TIntProcedure() {
-      @Override
-      public boolean execute(int paramNum) {
-        try {
-          if (paramNum == 0 && hasNamedArgs) {
-            for (GrNamedArgument namedArgument : namedArguments) {
-              namedArgument.delete();
-            }
-          }
-          else {
-            if (hasNamedArgs) paramNum--;
-            if (paramNum < arguments.length) {
-              arguments[paramNum].delete();
-            }
-            else if (paramNum < arguments.length + closureArguments.length) {
-              closureArguments[paramNum - arguments.length].delete();
-            }
+    parametersToRemove.forEachDescending(paramNum -> {
+      try {
+        if (paramNum == 0 && hasNamedArgs) {
+          for (GrNamedArgument namedArgument : namedArguments) {
+            namedArgument.delete();
           }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        else {
+          if (hasNamedArgs) paramNum--;
+          if (paramNum < arguments.length) {
+            arguments[paramNum].delete();
+          }
+          else if (paramNum < arguments.length + closureArguments.length) {
+            closureArguments[paramNum - arguments.length].delete();
+          }
         }
-        return true;
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
   }
 
@@ -236,15 +229,12 @@ public class GroovyIntroduceParameterUtil {
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature((PsiMethod)resolved, resolveResult.getSubstitutor());
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, methodCall);
     LOG.assertTrue(argInfos != null);
-    settings.parametersToRemove().forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int value) {
-        final List<PsiElement> args = argInfos[value].args;
-        for (PsiElement arg : args) {
-          arg.delete();
-        }
-        return true;
+    settings.parametersToRemove().forEach(value -> {
+      final List<PsiElement> args = argInfos[value].args;
+      for (PsiElement arg : args) {
+        arg.delete();
       }
+      return true;
     });
   }
 

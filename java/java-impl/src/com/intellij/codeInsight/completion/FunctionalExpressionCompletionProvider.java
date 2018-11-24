@@ -42,9 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * User: anna
- */
 public class FunctionalExpressionCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   private static final InsertHandler<LookupElement> CONSTRUCTOR_REF_INSERT_HANDLER = (context, item) -> {

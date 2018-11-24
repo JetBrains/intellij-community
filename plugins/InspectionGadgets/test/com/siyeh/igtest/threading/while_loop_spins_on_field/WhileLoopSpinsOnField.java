@@ -80,7 +80,7 @@ class WhileLoopSpinsOnFieldFalsePosDemo {
 
     public synchronized void waitForStuff() throws InterruptedException {
         // IDEA incorrectly reports "'while' loop spins on field" here:
-        while (!field) {    // <— this line
+        while (!field) {    // <- this line
             this.wait();    // this has the effect of synchronizing the field correctly
         }
     }

@@ -309,7 +309,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     PsiElement identifier = IdentifierUtil.getNameIdentifier(element);
     if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
-      return injectedManager.injectedToHost(identifier, identifier.getTextRange());
+      TextRange range = identifier.getTextRange();
+      return range == null ? null : injectedManager.injectedToHost(identifier, range);
     }
     return null;
   }

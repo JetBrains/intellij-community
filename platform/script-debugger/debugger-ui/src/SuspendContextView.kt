@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.UIUtil
@@ -30,56 +31,57 @@ import org.jetbrains.debugger.frame.CallFrameView
 import org.jetbrains.debugger.values.StringValue
 import java.util.*
 
-const val MAIN_LOOP_NAME = "main loop"
+/**
+ * Debugging several VMs simultaneously should be similar to debugging multi-threaded Java application when breakpoints suspend only one thread.
+ * 1. When thread is paused and another thread reaches breakpoint, show notification about it with possibility to switch thread.
+ * 2. Stepping and releasing affects only current thread.
+ * 3. When another thread is selected in Frames view, it changes its icon from (0) to (v) and becomes current, i.e. step/release commands
+ *    are applied to it.
+ * 4. Stepping/releasing updates current thread icon and clears frame, but doesn't switch thread. To release other threads, user needs to
+ *    select them firstly.
+ */
+abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProcess,
+                                  activeStack: ExecutionStackView,
+                                  @Volatile var activeVm: Vm)
+  : XSuspendContext() {
 
-abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProcess, protected val activeStack: ExecutionStackView) : XSuspendContext() {
-  protected open val stacks by lazy {
-    val childConnections = debugProcess.childConnections
-    if (childConnections.isNotEmpty()) {
-      val list = ArrayList<XExecutionStack>(1 + childConnections.size)
+  private val stacks: MutableMap<Vm, ScriptExecutionStack> = Collections.synchronizedMap(LinkedHashMap<Vm, ScriptExecutionStack>())
 
-      val mainVm = debugProcess.mainVm
-      if (activeStack.suspendContext.vm == mainVm) {
-        list.add(activeStack)
-      }
-      else {
-        list.add(createStackView(mainVm?.suspendContextManager?.context, MAIN_LOOP_NAME))
-      }
+  init {
+    val mainVm = debugProcess.mainVm
+    val vmList = debugProcess.collectVMs
+    if (mainVm != null && !vmList.isEmpty()) {
+      // main vm should go first
+      vmList.forEach {
+        val context = it.suspendContextManager.context
 
-      childConnections.mapNotNullTo(list) {
-        it.vm?.let {
-          val context = it.suspendContextManager.context
-          if (context == activeStack.suspendContext) {
+        val stack: ScriptExecutionStack =
+          if (context == null) {
+            RunningThreadExecutionStackView(it)
+          }
+          else if (context == activeStack.suspendContext) {
             activeStack
           }
           else {
-            val displayName = it.name ?: throw IllegalStateException("Name must be not null for child VM")
-            createStackView(context, displayName)
+            logger<SuspendContextView>().error("Paused VM was lost.")
+            InactiveAtBreakpointExecutionStackView(it)
           }
-        }
+        stacks[it] = stack
       }
-      list.toTypedArray()
     }
     else {
-      arrayOf(activeStack)
+      stacks[activeVm] = activeStack
     }
   }
 
-  private fun createStackView(context: SuspendContext<*>?, displayName: String): XExecutionStack {
-    return if (context == null) {
-      RunningThreadExecutionStackView(displayName)
-    }
-    else {
-      ExecutionStackView(context, activeStack.viewSupport, null, null, displayName)
-    }
-  }
+  override fun getActiveExecutionStack() = stacks[activeVm]
 
-  override fun getActiveExecutionStack() = activeStack
-
-  override fun getExecutionStacks(): Array<out XExecutionStack> = stacks
+  override fun getExecutionStacks(): Array<out XExecutionStack> = stacks.values.toTypedArray()
 
   fun evaluateExpression(expression: String): Promise<String> {
+    val activeStack = stacks[activeVm]!!
     val frame = activeStack.topFrame ?: return rejectedPromise("Top frame is null")
+    if (frame !is CallFrameView) return rejectedPromise("Can't evaluate on non-paused thread")
     return evaluateExpression(frame.callFrame.evaluateContext, expression)
   }
 
@@ -93,9 +95,57 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
           resolvedPromise(value.valueString!!)
         }
       }
+
+  fun pauseInactiveThread(inactiveThread: ExecutionStackView) {
+    stacks[inactiveThread.vm] = inactiveThread
+  }
+
+  fun hasPausedThreads(): Boolean {
+    return stacks.values.any { it is ExecutionStackView }
+  }
+
+  fun resume(vm: Vm) {
+    val prevStack = stacks[vm]
+    if (prevStack is ExecutionStackView) {
+      stacks[vm] = RunningThreadExecutionStackView(prevStack.vm)
+    }
+  }
+
+  fun resumeCurrentThread() {
+    resume(activeVm)
+  }
+
+  fun setActiveThread(selectedStackFrame: XStackFrame?): Boolean {
+    if (selectedStackFrame !is CallFrameView) return false
+
+    var selectedVm: Vm? = null
+    for ((key, value) in stacks) {
+      if (value is ExecutionStackView && value.topFrame?.vm == selectedStackFrame.vm) {
+        selectedVm = key
+        break
+      }
+    }
+
+    val selectedVmStack = stacks[selectedVm]
+    if (selectedVm != null && selectedVmStack is ExecutionStackView) {
+      activeVm = selectedVm
+      stacks[selectedVm] = selectedVmStack.copyWithIsCurrent(true)
+
+      stacks.keys.forEach {
+        val stack = stacks[it]
+        if (it != selectedVm && stack is ExecutionStackView) {
+          stacks[it] = stack.copyWithIsCurrent(false)
+        }
+      }
+
+      return stacks[selectedVm] !== selectedVmStack
+    }
+
+    return false
+  }
 }
 
-class RunningThreadExecutionStackView(displayName: String) : XExecutionStack(displayName, AllIcons.Debugger.ThreadRunning) {
+class RunningThreadExecutionStackView(vm: Vm) : ScriptExecutionStack(vm, vm.presentableName, AllIcons.Debugger.ThreadRunning) {
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer?) {
     // add dependency to DebuggerBundle?
     container?.errorOccurred("Frames not available for unsuspended thread")
@@ -104,12 +154,33 @@ class RunningThreadExecutionStackView(displayName: String) : XExecutionStack(dis
   override fun getTopFrame(): XStackFrame? = null
 }
 
-// icon ThreadCurrent would be preferred for active thread, but it won't be updated on stack change
+class InactiveAtBreakpointExecutionStackView(vm: Vm) : ScriptExecutionStack(vm, vm.presentableName, AllIcons.Debugger.ThreadAtBreakpoint) {
+  override fun getTopFrame(): XStackFrame? = null
+
+  override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer?) {}
+}
+
+abstract class ScriptExecutionStack(val vm: Vm, displayName: String, icon: javax.swing.Icon): XExecutionStack(displayName, icon) {
+  override fun hashCode(): Int {
+    return vm.hashCode()
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return other is ScriptExecutionStack && other.vm == vm
+  }
+}
+
+// TODO should be AllIcons.Debugger.ThreadCurrent, but because of strange logic to add non-equal XExecutionStacks we can't update icon.
+private fun getThreadIcon(isCurrent: Boolean) = AllIcons.Debugger.ThreadAtBreakpoint
+
 class ExecutionStackView(val suspendContext: SuspendContext<*>,
                          internal val viewSupport: DebuggerViewSupport,
                          private val topFrameScript: Script?,
                          private val topFrameSourceInfo: SourceInfo? = null,
-                         displayName: String = "") : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
+                         displayName: String = "",
+                         isCurrent: Boolean = true)
+  : ScriptExecutionStack(suspendContext.vm, displayName, getThreadIcon(isCurrent)) {
+
   private var topCallFrameView: CallFrameView? = null
 
   override fun getTopFrame(): CallFrameView? {
@@ -157,6 +228,12 @@ class ExecutionStackView(val suspendContext: SuspendContext<*>,
           }
           container.addStackFrames(result, true)
         }
+  }
+
+  fun copyWithIsCurrent(isCurrent: Boolean): ExecutionStackView {
+    if (icon == getThreadIcon(isCurrent)) return this
+
+    return ExecutionStackView(suspendContext, viewSupport, topFrameScript, topFrameSourceInfo, displayName, isCurrent)
   }
 }
 

@@ -489,7 +489,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     invocation = (GrConstructorInvocation)block.addStatementBefore(invocation, getFirstStatement(block));
     processMethodUsage(invocation.getInvokedExpression(), changeInfo,
                        changeInfo.isParameterSetOrOrderChanged() || changeInfo.isParameterNamesChanged(),
-                       changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.<PsiElement>empty_array(), substitutor);
+                       changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.empty_array(), substitutor);
   }
 
   @Nullable

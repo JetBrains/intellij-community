@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 13, 2007
- * Time: 2:09:28 PM
- */
 package com.intellij.psi.util.proximity;
 
 import com.intellij.extapi.psi.MetadataPsiElementBase;

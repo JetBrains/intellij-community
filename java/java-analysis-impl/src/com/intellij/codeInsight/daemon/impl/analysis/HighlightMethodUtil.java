@@ -195,7 +195,9 @@ public class HighlightMethodUtil {
 
     if (returnType.equals(substitutedSuperReturnType)) return null;
     if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
-      if (isJdk15 && TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
+      if (isJdk15 && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(), 
+                                                                      methodSignature.getSubstitutor(), 
+                                                                      () -> TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType))) {
         return null;
       }
     }
@@ -826,6 +828,9 @@ public class HighlightMethodUtil {
                                               QUICK_FIX_FACTORY.createModifierListFix((PsiClass)resolve, PsiModifier.STATIC, true, false));
       }
     }
+    else if (qualifierExpression instanceof PsiSuperExpression && ((PsiSuperExpression)qualifierExpression).getQualifier() == null) {
+      QualifySuperArgumentFix.registerQuickFixAction((PsiSuperExpression)qualifierExpression, highlightInfo);
+    }
 
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createCreateMethodFromUsageFix(methodCall));
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createCreateAbstractMethodFromUsageFix(methodCall));
@@ -930,7 +935,7 @@ public class HighlightMethodUtil {
 
     @Language("HTML")
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
-    String errorMessage = info != null ? info.getParentInferenceErrorMessage(list) : null;
+    String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
       cols - parameters.length + 1,
@@ -1043,7 +1048,7 @@ public class HighlightMethodUtil {
     }
 
     s+= "</table>";
-    final String errorMessage = info != null ? info.getParentInferenceErrorMessage(list) : null;
+    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
     if (errorMessage != null) {
       s+= "reason: "; 
       s += XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>");
@@ -1123,7 +1128,7 @@ public class HighlightMethodUtil {
 
       String description = JavaErrorMessages.message("missing.method.body");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description).create();
-      if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList()) == null) {
+      if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList()) == null && !(aClass instanceof PsiAnonymousClass)) {
         QuickFixAction.registerQuickFixAction(errorResult,
                                               QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, true, false));
       }
@@ -1316,6 +1321,7 @@ public class HighlightMethodUtil {
     HighlightInfo info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, handledExceptions);
     if (info != null) {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createInsertSuperFix(constructor));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createInsertThisFix(constructor));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(aClass.getSuperClass()));
     }
     return info;

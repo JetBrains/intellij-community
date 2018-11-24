@@ -26,7 +26,6 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.StructuredDocString;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.toolbox.Substring;
@@ -49,12 +48,12 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       final List<TextRange> ranges = expr.getStringValueTextRanges();
 
       final String exprText = expr.getText();
-      final TextRange textRange = PyStringLiteralExpressionImpl.getNodeTextRange(exprText);
-      final String text = textRange.substring(exprText);
 
       if (!ranges.isEmpty()) {
+        final TextRange firstNodeRange = ranges.get(0);
+        final int offset = firstNodeRange.getStartOffset();
+        final String text = firstNodeRange.substring(exprText);
         final List<PsiReference> result = new ArrayList<>();
-        final int offset = ranges.get(0).getStartOffset();
         // XXX: It does not work with multielement docstrings
         StructuredDocString docString = DocStringUtil.parse(text, element);
         if (docString instanceof TagBasedDocString) {

@@ -31,10 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * User: anna
- * Date: Nov 22, 2004
- */
 public class Sandbox implements ValidatableSdkAdditionalData {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.Sandbox");
 

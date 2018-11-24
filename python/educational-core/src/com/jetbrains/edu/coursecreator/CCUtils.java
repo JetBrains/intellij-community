@@ -1,6 +1,5 @@
 package com.jetbrains.edu.coursecreator;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -43,6 +42,7 @@ import java.util.Map;
 
 public class CCUtils {
   public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
+  public static final String TASK_DESCRIPTION_TEXT = "Write task description here using markdown or html";
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
   public static final String COURSE_MODE = "Course Creator";
@@ -50,8 +50,7 @@ public class CCUtils {
   public static int getSubtaskIndex(@NotNull Project project, @NotNull VirtualFile file) {
     String fileName = file.getName();
     String name = FileUtil.getNameWithoutExtension(fileName);
-    boolean canBeSubtaskFile = isTestsFile(project, file) || StudyUtils.isTaskDescriptionFile(fileName);
-    if (!canBeSubtaskFile) {
+    if (!isTestsFile(project, file)) {
       return -1;
     }
     if (!name.contains(EduNames.SUBTASK_MARKER)) {
@@ -85,16 +84,13 @@ public class CCUtils {
                                           final String prefix,
                                           final int delta) {
     ArrayList<VirtualFile> dirsToRename = new ArrayList<>
-      (Collections2.filter(Arrays.asList(dirs), new Predicate<VirtualFile>() {
-        @Override
-        public boolean apply(VirtualFile dir) {
-          final StudyItem item = getStudyItem.fun(dir);
-          if (item == null) {
-            return false;
-          }
-          int index = item.getIndex();
-          return index > threshold;
+      (Collections2.filter(Arrays.asList(dirs), dir -> {
+        final StudyItem item = getStudyItem.fun(dir);
+        if (item == null) {
+          return false;
         }
+        int index = item.getIndex();
+        return index > threshold;
       }));
     Collections.sort(dirsToRename, (o1, o2) -> {
       StudyItem item1 = getStudyItem.fun(o1);
@@ -283,7 +279,7 @@ public class CCUtils {
         }
         if (file.isDirectory()) return true;
 
-        if (StudyUtils.isTaskDescriptionFile(name) || StudyUtils.isTestsFile(project, name)) return true;
+        if (StudyUtils.isTestsFile(project, name)) return true;
 
         if (name.contains(".iml") || (configurator != null && configurator.excludeFromArchive(file.getPath()))) {
           return false;

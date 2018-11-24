@@ -183,7 +183,7 @@ public abstract class VcsVFSListener implements Disposable {
     else {
       final VcsDeleteType type = needConfirmDeletion(file);
       final FilePath filePath =
-        VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(file.getPath()), file.isDirectory());
+        VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(file.getPath()), file.isDirectory());
       if (type == VcsDeleteType.CONFIRM) {
         myDeletedFiles.add(filePath);
       }

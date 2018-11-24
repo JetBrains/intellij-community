@@ -18,54 +18,34 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.idea.IdeaApplication
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testGuiFramework.remote.JUnitClient
-import org.junit.runner.JUnitCore
 
 /**
  * @author Sergey Karashevich
  */
-class GuiTestStarter: IdeaApplication.IdeStarter(), ApplicationStarter {
+class GuiTestStarter : IdeaApplication.IdeStarter(), ApplicationStarter {
+
+  companion object {
+    val COMMAND_NAME = "guitest"
+
+    val GUI_TEST_PORT = "idea.gui.test.port"
+    val GUI_TEST_HOST = "idea.gui.test.host"
+    val GUI_TEST_LIST = "idea.gui.test.list"
+
+    fun isGuiTestThread(): Boolean = Thread.currentThread().name == GuiTestThread.GUI_TEST_THREAD_NAME
+  }
 
   private val LOG = Logger.getInstance(this.javaClass)
-
-  val GUI_TEST_PORT = "idea.gui.test.port"
-  val GUI_TEST_HOST = "idea.gui.test.host"
-  val GUI_TEST_LIST = "idea.gui.test.list"
-
-  val host: String by lazy {
-    System.getProperty(GUI_TEST_HOST)
-  }
-
-  val port: Int? by lazy {
-    val guiTestPort = System.getProperty(GUI_TEST_PORT)
-    if (guiTestPort == null || guiTestPort == PORT_UNDEFINED) null
-    else guiTestPort.toInt()
-  }
-
-  val guiTestList: List<Class<*>> by lazy {
-    val listOfTestNames = System.getProperty(GUI_TEST_LIST)?.split(",")!!
-    listOfTestNames.map { testName -> Class.forName(testName) }
-  }
-
-  private var myClient: JUnitClient? = null
-
-  private val guiTestThread: Thread by lazy {
-    object : Thread("GuiTest thread") {
-      override fun run() {
-        this@GuiTestStarter.run()
-      }
-    }
-  }
-
-  override fun getCommandName() = "guitest"
-
   private val PORT_UNDEFINED = "undefined"
-
   private val HOST_LOCALHOST = "localhost"
+
+  private val guiTestThread = GuiTestThread()
+
+  override fun getCommandName() = COMMAND_NAME
 
   override fun premain(args: Array<String>) {
     processArgs(args)
-    runActivity(args)
+    LOG.info("Starting GuiTest activity")
+    guiTestThread.start()
     super.premain(args)
   }
 
@@ -74,38 +54,15 @@ class GuiTestStarter: IdeaApplication.IdeStarter(), ApplicationStarter {
     super.main(myArgs)
   }
 
-  fun stopGuiTestThread() {
-    LOG.info("Stopping guiTestThread")
-    assert(Thread.currentThread() != guiTestThread)
-    guiTestThread.join()
-    if (myClient != null) myClient!!.stopClient()
-  }
-  fun runActivity(args: Array<String>) {
-    LOG.info("Starting GuiTest activity")
-    guiTestThread.start()
-  }
-
-
-  fun run() {
-    assert(myClient == null)
-    if (port != null) {
-      myClient = JUnitClient(host, port!!)
-      myClient!!.runTests(*guiTestList.toTypedArray())
-    } else {
-      val core = JUnitCore()
-      core.run(*guiTestList.toTypedArray())
-    }
-  }
-
   /**
-   * We assume next argument string model: main.app -guitest testName1,testName2,testName3 host="localhost" port=5555
+   * We assume next argument string model: main.app guitest testName1,testName2,testName3 host="localhost" port=5009
    */
   private fun processArgs(args: Array<String>) {
     val guiTestList = args[1].removeSurrounding("\"")
     System.setProperty(GUI_TEST_LIST, guiTestList)
-    val hostArg : String?  = args.find { arg -> arg.toLowerCase().startsWith("host") }?.substringAfter("host=") ?: HOST_LOCALHOST
+    val hostArg: String? = args.find { arg -> arg.toLowerCase().startsWith("host") }?.substringAfter("host=") ?: HOST_LOCALHOST
     System.setProperty(GUI_TEST_HOST, hostArg!!.removeSurrounding("\""))
-    val portArg : String?  = args.find { arg -> arg.toLowerCase().startsWith("port") }?.substringAfter("port=") ?: PORT_UNDEFINED
+    val portArg: String? = args.find { arg -> arg.toLowerCase().startsWith("port") }?.substringAfter("port=") ?: PORT_UNDEFINED
     if (portArg != null)
       System.setProperty(GUI_TEST_PORT, portArg.removeSurrounding("\""))
     else

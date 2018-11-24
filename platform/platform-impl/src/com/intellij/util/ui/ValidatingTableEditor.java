@@ -329,7 +329,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private void setItems(List<Item> items) {
     if (items.isEmpty()) {
-      getTableModel().setItems(Collections.<Item>emptyList());
+      getTableModel().setItems(Collections.emptyList());
       myWarnings.clear();
     }
     else {

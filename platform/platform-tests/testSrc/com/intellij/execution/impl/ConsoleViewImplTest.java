@@ -209,11 +209,16 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   @NotNull
   static ConsoleViewImpl createConsole() {
+    return createConsole(false);
+  }
+
+  @NotNull
+  private static ConsoleViewImpl createConsole(boolean usePredefinedMessageFilter) {
     Project project = getProject();
     ConsoleViewImpl console = new ConsoleViewImpl(project,
                                                   GlobalSearchScope.allScope(project),
                                                   false,
-                                                  false);
+                                                  usePredefinedMessageFilter);
     console.getComponent(); // initConsoleEditor()
     ProcessHandler processHandler = new NopProcessHandler();
     processHandler.startNotify();
@@ -232,12 +237,24 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         }
         LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
         console.waitAllRequests();
-      }).cpuBound().assertTiming());
+      }).assertTiming());
+  }
+
+  public void testLargeConsolePerformance() throws Exception {
+    withCycleConsole(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
+      PlatformTestUtil.startPerformanceTest("console print", 9000, () -> {
+        console.clear();
+        for (int i=0; i<10_000_000; i++) {
+          console.print("hello\n", ConsoleViewContentType.NORMAL_OUTPUT);
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        }
+        console.waitAllRequests();
+      }).assertTiming());
   }
 
   public void testPerformanceOfMergeableTokens() throws Exception {
     withCycleConsole(1000, console ->
-      PlatformTestUtil.startPerformanceTest("console print", 5500, () -> {
+      PlatformTestUtil.startPerformanceTest("console print", 3500, () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -247,7 +264,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         MarkupModel model = DocumentMarkupModel.forDocument(console.getEditor().getDocument(), getProject(), true);
         RangeHighlighter highlighter = assertOneElement(model.getAllHighlighters());
         assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), TextRange.create(highlighter));
-      }).cpuBound().assertTiming());
+      }).assertTiming());
   }
 
   private static void withCycleConsole(int capacityKB, Consumer<ConsoleViewImpl> runnable) {
@@ -257,12 +274,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     UISettings.getInstance().setOverrideConsoleCycleBufferSize(true);
     UISettings.getInstance().setConsoleCycleBufferSizeKb(capacityKB);
     // create new to reflect changed buffer size
-    ConsoleViewImpl console = createConsole();
+    ConsoleViewImpl console = createConsole(true);
     try {
-      ConsoleBuffer.useCycleBuffer();
-      ConsoleBuffer.getCycleBufferSize();
-      UISettings.getInstance();// instantiate early
-
       runnable.consume(console);
     }
     finally {

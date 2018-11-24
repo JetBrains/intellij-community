@@ -3,7 +3,7 @@
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.matchPredicateProvider"
-                    interface="com.intellij.structuralsearch.impl.matcher.MatchPredicateProvider"/>
+                    interface="com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicateProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

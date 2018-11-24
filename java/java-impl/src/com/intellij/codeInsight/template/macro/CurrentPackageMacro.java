@@ -24,13 +24,6 @@ import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 
 
-/**
- * Created by IntelliJ IDEA.
- * User: ven
- * Date: May 13, 2003
- * Time: 8:36:42 PM
- * To change this template use Options | File Templates.
- */
 class CurrentPackageMacro extends Macro {
   @Override
   public String getName() {

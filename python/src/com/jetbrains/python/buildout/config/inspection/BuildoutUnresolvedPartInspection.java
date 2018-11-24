@@ -93,7 +93,7 @@ public class BuildoutUnresolvedPartInspection extends LocalInspectionTool {
         }
 
       }
-      super.visitElement(element);    //To change body of overridden methods use File | Settings | File Templates.
+      super.visitElement(element);
     }
 
     public List<BuildoutPartReference> getUnresolvedParts() {

@@ -15,6 +15,9 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -55,6 +58,8 @@ import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalInspectionTool {
   private static final CallMatcher COLLECTION_STREAM =
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "stream").parameterCount(0);
+  private static final CallMatcher OPTIONAL_STREAM =
+    instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "stream").parameterCount(0);
   private static final CallMatcher STREAM_FIND =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "findFirst", "findAny").parameterCount(0);
   private static final CallMatcher STREAM_FILTER =
@@ -73,6 +78,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher OPTIONAL_IS_PRESENT =
     instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0);
+  private static final CallMatcher BOOLEAN_EQUALS =
+    instanceCall(CommonClassNames.JAVA_LANG_BOOLEAN, "equals").parameterCount(1);
 
   private static final CallMatcher STREAM_MATCH = CallMatcher.anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
 
@@ -90,6 +97,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
 
   private static final String FOR_EACH_METHOD = "forEach";
+  private static final String IF_PRESENT_METHOD = "ifPresent";
   private static final String STREAM_METHOD = "stream";
   private static final String EMPTY_METHOD = "empty";
   private static final String OF_METHOD = "of";
@@ -392,12 +400,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "forEach", "forEachOrdered").parameterCount(1);
 
     private final String myStreamMethod;
-    private final String myCollectionMethod;
+    private final String myReplacementMethod;
     private final boolean myChangeSemantics;
 
-    public ReplaceForEachMethodFix(String streamMethod, String collectionMethod, boolean changeSemantics) {
+    public ReplaceForEachMethodFix(String streamMethod, String replacementMethod, boolean changeSemantics) {
       myStreamMethod = streamMethod;
-      myCollectionMethod = collectionMethod;
+      myReplacementMethod = replacementMethod;
       myChangeSemantics = changeSemantics;
     }
 
@@ -406,14 +414,14 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @Override
     public String getName() {
       return "Replace 'stream()." + myStreamMethod +
-             "()' with '" + myCollectionMethod + "()'" +
+             "()' with '" + myReplacementMethod + "()'" +
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
     @NotNull
     public String getMessage() {
       return "The 'stream()." + myStreamMethod +
-             "()' chain can be replaced with '" + myCollectionMethod + "()'" +
+             "()' chain can be replaced with '" + myReplacementMethod + "()'" +
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
@@ -424,16 +432,21 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       PsiExpression collectionExpression = collectionStreamCall.getMethodExpression().getQualifierExpression();
       if (collectionExpression == null) return null;
       collectionStreamCall.replace(collectionExpression);
-      if (!myStreamMethod.equals(myCollectionMethod)) {
-        ExpressionUtils.bindCallTo(streamMethodCall, myCollectionMethod);
-      }
+      ExpressionUtils.bindCallTo(streamMethodCall, myReplacementMethod);
       return streamMethodCall;
     }
 
     static CallHandler<CallChainSimplification> handler() {
-      return CallHandler.of(STREAM_FOR_EACH, call ->
-        COLLECTION_STREAM.test(getQualifierMethodCall(call))
-        ? new ReplaceForEachMethodFix(call.getMethodExpression().getReferenceName(), FOR_EACH_METHOD, true) : null);
+      return CallHandler.of(STREAM_FOR_EACH, call -> {
+        PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+        if (COLLECTION_STREAM.test(qualifierCall)) {
+          return new ReplaceForEachMethodFix(call.getMethodExpression().getReferenceName(), FOR_EACH_METHOD, true);
+        }
+        if (OPTIONAL_STREAM.test(qualifierCall)) {
+          return new ReplaceForEachMethodFix(call.getMethodExpression().getReferenceName(), IF_PRESENT_METHOD, false);
+        }
+        return null;
+      });
     }
   }
 
@@ -1101,6 +1114,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   private static class RemoveBooleanIdentityFix implements CallChainSimplification {
+    private boolean myInvert;
+
+    public RemoveBooleanIdentityFix(boolean invert) {
+      myInvert = invert;
+    }
+
     @Override
     public String getName() {
       return "Merge with previous 'map' call";
@@ -1117,6 +1136,17 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       if (qualifier == null) return null;
       String name = call.getMethodExpression().getReferenceName();
       if (name == null) return null;
+      if (myInvert) {
+        if (name.equals("allMatch")) {
+          name = "noneMatch";
+        }
+        else if (name.equals("noneMatch")) {
+          name = "allMatch";
+        }
+        else {
+          return null;
+        }
+      }
       PsiExpression[] args = qualifier.getArgumentList().getExpressions();
       CommentTracker ct = new CommentTracker();
       if (args.length == 1) {
@@ -1131,13 +1161,29 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(STREAM_MATCH, call -> {
-        PsiExpression predicate = call.getArgumentList().getExpressions()[0];
-        if (!isBooleanIdentity(predicate)) return null;
         PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
         if (!STREAM_MAP.test(qualifierCall)) return null;
-        PsiExpression qualifierArg = qualifierCall.getArgumentList().getExpressions()[0];
-        if (adaptToPredicate(qualifierArg) == null) return null;
-        return new RemoveBooleanIdentityFix();
+        PsiExpression qualifierArg = PsiUtil.skipParenthesizedExprDown(qualifierCall.getArgumentList().getExpressions()[0]);
+        PsiExpression predicate = call.getArgumentList().getExpressions()[0];
+        boolean invert = false;
+        if (!isBooleanIdentity(predicate)) {
+          Boolean target = getBooleanEqualsTarget(predicate);
+          if (target == null || (!target && "anyMatch".equals(call.getMethodExpression().getReferenceName()))) return null;
+          invert = !target;
+          if (qualifierArg instanceof PsiMethodReferenceExpression) {
+            PsiMethod method = tryCast(((PsiMethodReferenceExpression)qualifierArg).resolve(), PsiMethod.class);
+            if (method == null) return null;
+            if (!PsiType.BOOLEAN.equals(method.getReturnType()) && !NullableNotNullManager.isNotNull(method)) return null;
+          }
+          else if (!(qualifierArg instanceof PsiLambdaExpression) ||
+                   DfaUtil.inferLambdaNullity((PsiLambdaExpression)qualifierArg) != Nullness.NOT_NULL) {
+            return null;
+          }
+        }
+        else {
+          if (adaptToPredicate(qualifierArg) == null) return null;
+        }
+        return new RemoveBooleanIdentityFix(invert);
       });
     }
 
@@ -1150,6 +1196,37 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         return true;
       }
       return arg instanceof PsiLambdaExpression && LambdaUtil.isIdentityLambda((PsiLambdaExpression)arg);
+    }
+
+    @Nullable
+    private static Boolean getBooleanEqualsTarget(PsiExpression arg) {
+      // Boolean.TRUE::equals or x -> Boolean.TRUE.equals(x)
+      arg = PsiUtil.skipParenthesizedExprDown(arg);
+      PsiReferenceExpression qualifier = null;
+      if (arg instanceof PsiMethodReferenceExpression) {
+        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)arg;
+        if (!BOOLEAN_EQUALS.methodReferenceMatches(methodRef)) return null;
+        qualifier = tryCast(methodRef.getQualifierExpression(), PsiReferenceExpression.class);
+      }
+      else if (arg instanceof PsiLambdaExpression) {
+        PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
+        PsiParameter parameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
+        if (parameter == null) return null;
+        PsiMethodCallExpression call = tryCast(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()), PsiMethodCallExpression.class);
+        if (!BOOLEAN_EQUALS.test(call)) return null;
+        if (!ExpressionUtils.isReferenceTo(call.getArgumentList().getExpressions()[0], parameter)) return null;
+        qualifier = tryCast(call.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+      }
+      if (qualifier == null) return null;
+      PsiField field = tryCast(qualifier.resolve(), PsiField.class);
+      if (field == null) return null;
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(containingClass.getQualifiedName())) {
+        String name = field.getName();
+        if ("TRUE".equals(name)) return Boolean.TRUE;
+        if ("FALSE".equals(name)) return Boolean.FALSE;
+      }
+      return null;
     }
 
     /**

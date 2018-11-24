@@ -18,6 +18,7 @@ package com.intellij.execution.scratch;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -110,7 +111,7 @@ public class JavaScratchCompilationSupport implements CompileTask {
         }
         FileUtil.delete(srcDir); // perform cleanup
 
-        final String srcFileName = ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+        final String srcFileName = ReadAction.compute(() -> {
           final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(scratchUrl);
           if (vFile != null) {
             final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
@@ -124,7 +125,7 @@ public class JavaScratchCompilationSupport implements CompileTask {
                     break;
                   }
                 }
-                else if (isPublic(aClass)){
+                else if (isPublic(aClass)) {
                   name = aClass.getName();
                   break;
                 }

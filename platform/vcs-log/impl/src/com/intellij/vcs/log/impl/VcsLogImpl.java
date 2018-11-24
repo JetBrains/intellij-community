@@ -70,7 +70,7 @@ public class VcsLogImpl implements VcsLog {
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root) {
-    return myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
+    return myLogData.getContainingBranchesGetter().getContainingBranchesQuickly(root, commitHash);
   }
 
   @NotNull

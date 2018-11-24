@@ -2,32 +2,32 @@
 <problems>
   <problem>
     <file>CaseAndNpe.java</file>
-    <line>79</line>
+    <line>71</line>
     <description>Condition 'a != null' is always true</description>
   </problem>
   <problem>
     <file>CaseAndNpe.java</file>
-    <line>26</line>
+    <line>18</line>
     <description>Method invocation 'equals' may produce NullPointerException</description>
   </problem>
   <problem>
     <file>CaseAndNpe.java</file>
-    <line>48</line>
+    <line>40</line>
     <description>Switch label 'case 1:' is unreachable</description>
   </problem>
   <problem>
     <file>CaseAndNpe.java</file>
-    <line>49</line>
+    <line>41</line>
     <description>Switch label 'case 2:' is unreachable</description>
   </problem>
   <problem>
     <file>CaseAndNpe.java</file>
-    <line>56</line>
+    <line>48</line>
     <description>Condition &lt;code&gt;i &lt; 5&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
   </problem>
   <problem>
     <file>CaseAndNpe.java</file>
-    <line>80</line>
+    <line>72</line>
     <description>Condition is always true</description>
   </problem>
 </problems>

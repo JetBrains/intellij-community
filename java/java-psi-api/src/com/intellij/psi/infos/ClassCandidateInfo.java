@@ -20,13 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 06.10.2003
- * Time: 19:28:22
- * To change this template use Options | File Templates.
- */
 public class ClassCandidateInfo extends CandidateInfo{
   public ClassCandidateInfo(@NotNull PsiElement candidate, @NotNull PsiSubstitutor substitutor, boolean accessProblem, PsiElement currFileContext){
     super(candidate, substitutor, accessProblem, false, currFileContext);

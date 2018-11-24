@@ -330,12 +330,11 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public void runAfterUpdate(final Runnable runnable) {
-    if (runnable == null) return;
-    synchronized (myRunAfterUpdate) {
-      myRunAfterUpdate.add(runnable);
+    if (runnable != null) {
+      synchronized (myRunAfterUpdate) {
+        myRunAfterUpdate.add(runnable);
+      }
     }
-
-    maybeRunAfterUpdate();
   }
 
   public synchronized void runBeforeUpdate(final Runnable runnable) {

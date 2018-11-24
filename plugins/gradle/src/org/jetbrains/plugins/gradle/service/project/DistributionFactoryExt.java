@@ -34,7 +34,6 @@ import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -118,12 +117,7 @@ public class DistributionFactoryExt extends DistributionFactory {
         throw new IllegalArgumentException(
           String.format("The specified %s does not appear to contain a Gradle distribution.", locationDisplayName));
       }
-      File[] files = libDir.listFiles(new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          return hasExtension(file, ".jar");
-        }
-      });
+      File[] files = libDir.listFiles(file -> hasExtension(file, ".jar"));
       // Make sure file order is always consistent
       Arrays.sort(files);
       return new DefaultClassPath(files);
@@ -152,11 +146,7 @@ public class DistributionFactoryExt extends DistributionFactory {
         final DistributionInstaller installer = new DistributionInstaller(progressLoggerFactory, progressListener);
         File installDir;
         try {
-          cancellationToken.addCallback(new Runnable() {
-            public void run() {
-              installer.cancel();
-            }
-          });
+          cancellationToken.addCallback(() -> installer.cancel());
           installDir = installer.install(determineRealUserHomeDir(userHomeDir), wrapperConfiguration);
         }
         catch (CancellationException e) {

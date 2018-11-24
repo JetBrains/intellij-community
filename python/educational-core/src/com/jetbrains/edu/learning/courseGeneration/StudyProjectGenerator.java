@@ -199,6 +199,9 @@ public class StudyProjectGenerator {
     try {
       final JBZipFile zipFile = new JBZipFile(zipFilePath);
       final JBZipEntry entry = zipFile.getEntry(EduNames.COURSE_META_FILE);
+      if (entry == null) {
+        return null;
+      }
       byte[] bytes = entry.getData();
       final String jsonText = new String(bytes, CharsetToolkit.UTF8_CHARSET);
       Gson gson = new GsonBuilder()

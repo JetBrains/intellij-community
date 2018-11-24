@@ -83,7 +83,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   static boolean hasErrors(@NotNull Project project, @NotNull Document document) {
     return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
-                              CommonProcessors.<HighlightInfo>alwaysFalse());
+                              CommonProcessors.alwaysFalse());
   }
 
   @NotNull

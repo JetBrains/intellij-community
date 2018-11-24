@@ -27,10 +27,6 @@ import com.intellij.openapi.ui.Messages;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Feb 24, 2005
- */
 public class AddNewFavoritesListAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {

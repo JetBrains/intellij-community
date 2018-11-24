@@ -1,7 +1,4 @@
 <scheme name="Monokai" parent_scheme="Darcula" version="1">
-  <option name="LINE_SPACING" value="1.0" />
-  <option name="EDITOR_FONT_SIZE" value="12" />
-  <option name="EDITOR_FONT_NAME" value="Menlo" />
   <colors>
     <option name="CONSOLE_BACKGROUND_KEY" value="272822" />
     <option name="INDENT_GUIDE" value="3B3A32" />

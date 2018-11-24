@@ -52,6 +52,9 @@ public class CompactStorageTest extends StorageTestBase {
     int logicalRecordCount = countLiveLogicalRecords();
     assertEquals(recordCount / 2, logicalRecordCount);
 
+    int removedRecordId = recordsList.getQuick(0);
+    assertEquals("No content for reading removed record",0, myStorage.readStream(removedRecordId).available());
+
     Disposer.dispose(myStorage);  // compact is triggered
     myStorage = createStorage(getFileName());
     assertEquals(myStorage.getLiveRecordsCount(), physicalRecordCount / 2);

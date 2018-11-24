@@ -32,4 +32,12 @@ public class JsonSchemaDocumentationTest extends JsonBySchemaDocumentationBaseTe
   public void testCheckEscaping() throws Exception {
     doTest(true, "json");
   }
+
+  public void testWithDefinition() throws Exception {
+    doTest(true, "json");
+  }
+
+  public void testWithTitleInDefinition() throws Exception {
+    doTest(true, "json");
+  }
 }

@@ -41,7 +41,7 @@ import java.awt.event.KeyEvent;
  * @author Dennis.Ushakov
  */
 public abstract class AbstractNewProjectDialog extends DialogWrapper {
-  private Pair<JPanel, JBList> myPair;
+  private Pair<JPanel, JBList<AnAction>> myPair;
 
   public AbstractNewProjectDialog() {
     super(ProjectManager.getInstance().getDefaultProject());
@@ -68,7 +68,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     DefaultActionGroup root = createRootStep();
     Disposer.register(getDisposable(), () -> root.removeAll());
 
-    Pair<JPanel, JBList> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null, getDisposable());
+    Pair<JPanel, JBList<AnAction>> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null, getDisposable());
     JPanel component = pair.first;
     new AnAction() {
       @Override

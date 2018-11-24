@@ -30,11 +30,6 @@ import org.intellij.lang.xpath.xslt.refactoring.XsltExtractFunctionAction;
 
 import java.util.Set;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 13.02.2009
-*/
 public class Xslt2RefactoringTest extends TestBase {
   @Override
   protected void setUp() throws Exception {

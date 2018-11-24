@@ -120,13 +120,10 @@ public class ManagePackagesDialog extends DialogWrapper {
         });
       }
     };
-    myListSpeedSearch = new ListSpeedSearch(myPackages, new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o instanceof RepoPackage)
-          return ((RepoPackage)o).getName();
-        return "";
-      }
+    myListSpeedSearch = new ListSpeedSearch(myPackages, (Function<Object, String>)o -> {
+      if (o instanceof RepoPackage)
+        return ((RepoPackage)o).getName();
+      return "";
     });
     JPanel packagesPanel = ToolbarDecorator.createDecorator(myPackages)
       .disableAddAction()

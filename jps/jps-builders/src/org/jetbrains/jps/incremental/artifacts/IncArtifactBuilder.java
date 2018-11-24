@@ -154,7 +154,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
             List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(destination.getOutputFilePath());
             if (sources == null || sources.size() > 0 && sources.get(0).getRootIndex() == descriptor.getRootIndex()) {
               outSrcMapping.update(destination.getOutputFilePath(),
-                                   Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
+                                   Collections.emptyList());
               changedJars.add(((JarDestinationInfo)destination).getJarInfo());
             }
           }

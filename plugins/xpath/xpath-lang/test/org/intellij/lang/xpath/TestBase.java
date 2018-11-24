@@ -21,11 +21,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 17.12.2008
-*/
 public abstract class TestBase extends UsefulTestCase {
 
   protected CodeInsightTestFixture myFixture;

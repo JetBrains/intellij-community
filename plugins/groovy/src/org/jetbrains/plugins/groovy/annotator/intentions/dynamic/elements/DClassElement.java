@@ -23,10 +23,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 
 import java.util.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 20.12.2007
- */
 public class DClassElement implements DNamedElement {
   public String myName;
   public Set<DPropertyElement> myProperties = new HashSet<>();

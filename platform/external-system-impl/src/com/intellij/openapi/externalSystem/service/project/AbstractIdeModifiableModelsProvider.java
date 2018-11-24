@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactModel;
@@ -71,6 +73,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   private ModifiableArtifactModel myModifiableArtifactModel;
   private AbstractIdeModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;
   private final ArtifactExternalDependenciesImporter myArtifactExternalDependenciesImporter;
+
+  @NotNull private final MyUserDataHolderBase myUserData = new MyUserDataHolderBase();
 
   public AbstractIdeModifiableModelsProvider(@NotNull Project project) {
     super(project);
@@ -130,7 +134,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }
 
     // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
-    module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+    module.setModuleType(moduleTypeId);
     return module;
   }
 
@@ -237,6 +241,11 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   }
 
   @Override
+  public Library createLibrary(String name, @Nullable ProjectModelExternalSource externalSource) {
+    return getModifiableProjectLibrariesModel().createLibrary(name, null, externalSource);
+  }
+
+  @Override
   public void removeLibrary(Library library) {
     getModifiableProjectLibrariesModel().removeLibrary(library);
   }
@@ -290,6 +299,12 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
         return Arrays.asList(dependentModules).iterator();
       }
     }));
+  }
+
+  private static class MyUserDataHolderBase extends UserDataHolderBase {
+    void clear() {
+      clearUserData();
+    }
   }
 
   private class MyPackagingElementResolvingContext implements PackagingElementResolvingContext {
@@ -402,6 +417,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
         myModifiableArtifactModel.commit();
       }
     });
+    myUserData.clear();
   }
 
   @Override
@@ -427,6 +443,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     myModifiableRootModels.clear();
     myModifiableFacetModels.clear();
     myModifiableLibraryModels.clear();
+    myUserData.clear();
   }
 
   @Override
@@ -438,5 +455,16 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Override
   public String getProductionModuleName(Module module) {
     return myProductionModulesForTestModules.get(module);
+  }
+
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserData.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserData.putUserData(key, value);
   }
 }

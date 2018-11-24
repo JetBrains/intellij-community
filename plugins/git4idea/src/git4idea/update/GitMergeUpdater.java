@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -111,17 +110,14 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("Local changes would be overwritten by merge");
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
-            @Override protected String getDescription() {
-              return "Your local changes to the following files would be overwritten by merge.<br/>" +
-                                "Please, commit your changes or stash them before you can merge.";
-            }
-          };
-          dialog.show();
-        }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
+          @Override protected String getDescription() {
+            return "Your local changes to the following files would be overwritten by merge.<br/>" +
+                              "Please, commit your changes or stash them before you can merge.";
+          }
+        };
+        dialog.show();
       });
       return GitUpdateResult.ERROR;
     }
@@ -164,12 +160,7 @@ public class GitMergeUpdater extends GitUpdater {
                                                                                  currentBranch, remoteBranch);
       final List<File> locallyChanged = myChangeListManager.getAffectedPaths();
       for (final File localPath : locallyChanged) {
-        if (ContainerUtil.exists(remotelyChanged, new Condition<String>() {
-          @Override
-          public boolean value(String remotelyChangedPath) {
-            return FileUtil.pathsEqual(localPath.getPath(), remotelyChangedPath);
-          }
-        })) {
+        if (ContainerUtil.exists(remotelyChanged, remotelyChangedPath -> FileUtil.pathsEqual(localPath.getPath(), remotelyChangedPath))) {
           // found a file which was changed locally and remotely => need to save
           return true;
         }

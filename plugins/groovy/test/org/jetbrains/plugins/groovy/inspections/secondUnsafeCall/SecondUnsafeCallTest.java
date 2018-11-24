@@ -22,10 +22,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 15.11.2007
- */
 public class SecondUnsafeCallTest extends LightCodeInsightFixtureTestCase {
 
   @Override

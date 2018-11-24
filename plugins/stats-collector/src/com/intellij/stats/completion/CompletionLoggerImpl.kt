@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.stats.completion
 
 
@@ -6,39 +21,18 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.lang.Language
-import com.intellij.openapi.application.PermanentInstallationID
-import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.events.completion.*
-import java.util.*
 
 
-class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : ApplicationComponent, CompletionLoggerProvider() {
-    private val logFileManager = LogFileManager(filePathProvider)
-
-    override fun disposeComponent() {
-        logFileManager.dispose()
-    }
-
-    private fun String.shortedUUID(): String {
-        val start = this.lastIndexOf('-')
-        if (start > 0 && start + 1 < this.length) {
-            return this.substring(start + 1)
-        }
-        return this
-    }
-
-    override fun newCompletionLogger(): CompletionLogger {
-        val installationUID = PermanentInstallationID.get()
-        val completionUID = UUID.randomUUID().toString()
-        return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), logFileManager)
-    }
+interface CompletionEventLogger {
+    fun log(event: LogEvent)
 }
 
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
-                           private val logFileManager: LogFileManager) : CompletionLogger() {
+                           private val eventLogger: CompletionEventLogger) : CompletionLogger() {
 
     val elementToId = mutableMapOf<String, Int>()
 
@@ -60,11 +54,6 @@ class CompletionFileLogger(private val installationUID: String,
         return elementToId[itemString]
     }
 
-    private fun logEvent(event: LogEvent) {
-        val line = LogEventSerializer.toString(event)
-        logFileManager.println(line)
-    }
-
     private fun getRecentlyAddedLookupItems(items: List<LookupElement>): List<LookupElement> {
         val newElements = items.filter { getElementId(it) == null }
         newElements.forEach {
@@ -73,7 +62,7 @@ class CompletionFileLogger(private val installationUID: String,
         return newElements
     }
 
-    fun List<LookupElement>.toLookupInfos(lookup: LookupImpl): List<LookupEntryInfo> {
+    private fun List<LookupElement>.toLookupInfos(lookup: LookupImpl): List<LookupEntryInfo> {
         val relevanceObjects = lookup.getRelevanceObjects(this, false)
         return this.map {
             val id = getElementId(it)!!
@@ -108,8 +97,8 @@ class CompletionFileLogger(private val installationUID: String,
                 lookupEntryInfos, selectedPosition = 0)
         
         event.isOneLineMode = lookup.editor.isOneLineMode
-        
-        logEvent(event)
+
+        eventLogger.log(event)
     }
 
     private fun calcPluginVersion(): String? {
@@ -127,7 +116,7 @@ class CompletionFileLogger(private val installationUID: String,
 
     override fun customMessage(message: String) {
         val event = CustomMessageEvent(installationUID, completionUID, message)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun afterCharTyped(c: Char, lookup: LookupImpl) {
@@ -138,7 +127,7 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = TypeEvent(installationUID, completionUID, ids, newItems, currentPosition)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun downPressed(lookup: LookupImpl) {
@@ -149,7 +138,7 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = DownPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun upPressed(lookup: LookupImpl) {
@@ -160,12 +149,12 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = UpPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun completionCancelled() {
         val event = CompletionCancelledEvent(installationUID, completionUID)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun itemSelectedByTyping(lookup: LookupImpl) {
@@ -173,7 +162,7 @@ class CompletionFileLogger(private val installationUID: String,
         val id = if (current != null) getElementId(current)!! else -1
         
         val event = TypedSelectEvent(installationUID, completionUID, id)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun itemSelectedCompletionFinished(lookup: LookupImpl) {
@@ -186,7 +175,7 @@ class CompletionFileLogger(private val installationUID: String,
         }
         
         val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index, id)
-        logEvent(event)
+        eventLogger.log(event)
     }
     
     override fun afterBackspacePressed(lookup: LookupImpl) {
@@ -197,7 +186,7 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = BackspaceEvent(installationUID, completionUID, ids, newInfos, currentPosition)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
 }

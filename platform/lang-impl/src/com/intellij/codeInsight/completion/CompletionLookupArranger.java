@@ -42,8 +42,7 @@ import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionLookupArranger");
-  private static final Key<PresentationInvariant> GLOBAL_PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
-  private final Key<PresentationInvariant> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  private static final Key<PresentationInvariant> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = (o1, o2) -> {
     PresentationInvariant invariant = PRESENTATION_INVARIANT.get(o1);
     assert invariant != null;
@@ -153,7 +152,6 @@ public class CompletionLookupArranger extends LookupArranger {
 
     PresentationInvariant invariant = new PresentationInvariant(presentation.getItemText(), presentation.getTailText(), presentation.getTypeText());
     element.putUserData(PRESENTATION_INVARIANT, invariant);
-    element.putUserData(GLOBAL_PRESENTATION_INVARIANT, invariant);
 
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -200,7 +198,17 @@ public class CompletionLookupArranger extends LookupArranger {
 
       // restart completion on any prefix change
       myProcess.addWatchedPrefix(0, StandardPatterns.string());
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) printTestWarning();
     }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private void printTestWarning() {
+    System.err.println("Your test might miss some lookup items, because only " + (myLimit / 2) + " most relevant items are guaranteed to be shown in the lookup. You can:");
+    System.err.println("1. Make the prefix used for completion longer, so that there are less suggestions.");
+    System.err.println("2. Increase 'ide.completion.variant.limit' (using RegistryValue#setValue with a test root disposable).");
+    System.err.println("3. Ignore this warning.");
   }
 
   private void removeItem(LookupElement element, ProcessingContext context) {
@@ -377,7 +385,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
       for (int i = 0; i < items.size(); i++) {
         PresentationInvariant invariant = PRESENTATION_INVARIANT.get(items.get(i));
-        if (invariant != null && invariant.equals(GLOBAL_PRESENTATION_INVARIANT.get(lastSelection))) {
+        if (invariant != null && invariant.equals(PRESENTATION_INVARIANT.get(lastSelection))) {
           return i;
         }
       }

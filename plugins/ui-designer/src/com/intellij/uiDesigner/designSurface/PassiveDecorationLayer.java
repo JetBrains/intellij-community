@@ -59,7 +59,7 @@ class PassiveDecorationLayer extends JComponent{
     final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
     final Collection<RadButtonGroup> selectedGroups = componentTree != null
                                                       ? componentTree.getSelectedElements(RadButtonGroup.class)
-                                                      : Collections.<RadButtonGroup>emptyList();
+                                                      : Collections.emptyList();
 
     // Paint selection and dragger
     FormEditingUtil.iterate(

@@ -78,25 +78,22 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-      asyncResult.doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(DataContext dataContext) {
-          final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-          assert editor != null;
-          final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
-          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+      asyncResult.doWhenDone((Consumer<DataContext>)dataContext -> {
+        final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+        assert editor != null;
+        final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
+        editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
 
-          final String word = editor.getSelectionModel().getSelectedText();
+        final String word = editor.getSelectionModel().getSelectedText();
 
-          if (word == null || StringUtil.isEmptyOrSpaces(word)) {
-            return;
-          }
-          final List<LookupElement> items = new ArrayList<>();
-          for (String variant : myUnboundParams) {
-            items.add(LookupElementBuilder.create(variant));
-          }
-          LookupManager.getInstance(project).showLookup(editor, items.toArray(new LookupElement[items.size()]));
+        if (word == null || StringUtil.isEmptyOrSpaces(word)) {
+          return;
         }
+        final List<LookupElement> items = new ArrayList<>();
+        for (String variant : myUnboundParams) {
+          items.add(LookupElementBuilder.create(variant));
+        }
+        LookupManager.getInstance(project).showLookup(editor, items.toArray(new LookupElement[items.size()]));
       });
     }
   }
@@ -138,16 +135,11 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
           }.execute();
         };
         final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-        asyncResult.doWhenDone(new Consumer<DataContext>() {
-          @Override
-          public void consume(DataContext dataContext) {
-            new PopupChooserBuilder(list).
-              setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
-              setItemChoosenCallback(runnable).
-              createPopup().
-              showInBestPositionFor(dataContext);
-          }
-        });
+        asyncResult.doWhenDone((Consumer<DataContext>)dataContext -> new PopupChooserBuilder(list).
+          setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
+          setItemChoosenCallback(runnable).
+          createPopup().
+          showInBestPositionFor(dataContext));
       }
     }
   }

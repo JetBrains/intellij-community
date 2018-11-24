@@ -50,9 +50,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 21/03/14
- */
 public class GrAccessibilityChecker {
   private static final Logger LOG = Logger.getInstance(GrAccessibilityChecker.class);
 

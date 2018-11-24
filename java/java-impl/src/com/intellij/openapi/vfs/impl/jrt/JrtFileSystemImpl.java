@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl.jrt;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -154,6 +155,6 @@ public class JrtFileSystemImpl extends JrtFileSystem {
 
   @Override
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
-    return isModularJdk(FileUtil.toSystemDependentName(local.getPath()));
+    return JdkUtil.isModularRuntime(local.getPath());
   }
 }

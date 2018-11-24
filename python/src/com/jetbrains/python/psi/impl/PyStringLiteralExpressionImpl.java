@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -34,10 +35,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
-import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +44,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost {
+public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost, PsiLiteralValue {
+  private static final Logger LOG = Logger.getInstance(PyStringLiteralExpressionImpl.class);
   public static final Pattern PATTERN_ESCAPE = Pattern
       .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-7]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))");
          //        -> 1                        ->   2      <-->     3          <-     ->   4     <-->    5      <-   ->  6           <-<-
@@ -115,7 +114,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return valueTextRanges;
   }
 
+  // TODO replace all usages with PyStringLiteralUtil.getStringValue(String)
   public static TextRange getNodeTextRange(final String text) {
+    LOG.assertTrue(PyStringLiteralUtil.isStringLiteralToken(text), "Text of a single string literal node expected: " + text);
     int startOffset = getPrefixLength(text);
     int delimiterLength = 1;
     final String afterPrefix = text.substring(startOffset);
@@ -258,6 +259,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       stringValue = out.toString();
     }
     return stringValue;
+  }
+
+  @Nullable
+  @Override
+  public Object getValue() {
+    return getStringValue();
   }
 
   @Override
@@ -456,6 +463,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
     return ref.isPythonNamedGroupRef();
+  }
+
+  @NotNull
+  @Override
+  public EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+    return EnumSet.of(RegExpGroup.Type.PYTHON_NAMED_GROUP);
   }
 
   @Override

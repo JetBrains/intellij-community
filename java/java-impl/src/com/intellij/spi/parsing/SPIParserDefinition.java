@@ -34,9 +34,6 @@ import com.intellij.spi.psi.SPIFile;
 import com.intellij.lang.spi.SPILanguage;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class SPIParserDefinition implements ParserDefinition {
   public static final IFileElementType SPI_FILE_ELEMENT_TYPE = new IFileElementType(SPILanguage.INSTANCE);
 

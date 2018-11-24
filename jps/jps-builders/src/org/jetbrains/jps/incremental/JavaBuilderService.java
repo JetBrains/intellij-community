@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ public class JavaBuilderService extends BuilderService {
   @NotNull
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
-    final ArrayList<BuildTargetType<?>> types = new ArrayList<>();
+    List<BuildTargetType<?>> types = new ArrayList<>();
     types.addAll(JavaModuleBuildTargetType.ALL_TYPES);
     types.addAll(ResourcesTargetType.ALL_TYPES);
     return types;
@@ -59,6 +60,6 @@ public class JavaBuilderService extends BuilderService {
   @NotNull
   @Override
   public List<? extends TargetBuilder<?, ?>> createBuilders() {
-    return Arrays.asList(new ResourcesBuilder());
+    return Collections.singletonList(new ResourcesBuilder());
   }
 }

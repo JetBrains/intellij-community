@@ -24,9 +24,6 @@ import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-/**
- * User: cdr
- */
 public class PsiConcatenationUtil {
 
   public static void buildFormatString(PsiExpression expression, StringBuilder formatString,

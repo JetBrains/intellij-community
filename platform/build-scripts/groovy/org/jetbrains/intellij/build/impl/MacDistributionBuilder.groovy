@@ -135,9 +135,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String fullName = buildContext.applicationInfo.productName
 
-    //todo[nik] why do we put vm options to separate places (some into Info.plist, some into vmoptions file)?
-    String vmOptions = "-Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none ${buildContext.productProperties.additionalIdeJvmArguments}".trim()
-
     //todo[nik] improve
     String minor = buildContext.applicationInfo.minorVersion
     boolean isNotRelease = buildContext.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
@@ -149,17 +146,17 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
 
-    String coreProperties = submapToXml(properties, coreKeys);
+    String coreProperties = submapToXml(properties, coreKeys)
 
     StringBuilder effectiveProperties = new StringBuilder()
     properties.each { k, v ->
       if (!coreKeys.contains(k)) {
-        effectiveProperties.append("$k=$v\n");
+        effectiveProperties.append("$k=$v\n")
       }
     }
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
-    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops"
+    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops -Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none ${buildContext.productProperties.additionalIdeJvmArguments} -XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log -XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof -Xbootclasspath/a:../lib/boot.jar".trim()
     if (buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP && macCustomizer.enableYourkitAgentInEAP) {
       ideaVmOptions += " " + VmOptionsGenerator.yourkitOptions(buildContext.systemSelector, "")
     }
@@ -198,7 +195,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </array>
 """
     }
-    String bundledHelpAttributes;
+    String bundledHelpAttributes
     if (helpId != null) {
       bundledHelpAttributes = """
         <key>CFBundleHelpBookName</key>
@@ -225,13 +222,11 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@min_year@@", value: "2000")
       replacefilter(token: "@@max_year@@", value: "$todayYear")
       replacefilter(token: "@@version@@", value: version)
-      replacefilter(token: "@@vmoptions@@", value: vmOptions)
       replacefilter(token: "@@idea_properties@@", value: coreProperties)
       replacefilter(token: "@@class_path@@", value: classPath)
       replacefilter(token: "@@help_id@@", value: helpId)
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
       replacefilter(token: "@@archs@@", value: archsString)
-      replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
       replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
       replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
     }
@@ -341,7 +336,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private Map<String, String> readIdeaProperties(File propertiesFile, Map<String, String> customProperties = [:]) {
     Map<String, String> ideaProperties = [:]
     propertiesFile.withReader {
-      Properties loadedProperties = new Properties();
+      Properties loadedProperties = new Properties()
       loadedProperties.load(it)
       ideaProperties.putAll(loadedProperties as Map<String, String>)
     }

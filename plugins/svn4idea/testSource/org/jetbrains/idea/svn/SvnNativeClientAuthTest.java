@@ -47,12 +47,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/4/13
- * Time: 9:55 PM
- */
 public class SvnNativeClientAuthTest extends Svn17TestCase {
   private SvnVcs myVcs;
   private int myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;

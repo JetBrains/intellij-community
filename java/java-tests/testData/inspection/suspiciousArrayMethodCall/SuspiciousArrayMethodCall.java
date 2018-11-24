@@ -1,4 +1,4 @@
-import java.util.Arrays;
+import java.util.*;
 
 public class SuspiciousArrayMethodCall {
   void test() {
@@ -26,5 +26,21 @@ public class SuspiciousArrayMethodCall {
   boolean testEquality(String[] arr, Integer[] arr2) {
     return Arrays.<warning descr="Array types are incompatible: arrays are always different">equals</warning>(arr, arr2) ||
            Arrays.<warning descr="Array types are incompatible: arrays are always different">equals</warning>(arr2, arr);
+  }
+
+  static class TestOptional {
+    private Optional<Boolean>[] optionals =
+      (Optional<Boolean>[])new Optional[2];
+
+
+    public TestOptional() {
+      Arrays.fill(optionals, Optional.empty());  //IDEA-172742
+    }
+
+    public static void main(String[] args) {
+      TestOptional t = new TestOptional();
+      System.out.println(t.optionals[0].isPresent());
+      System.out.println(t.optionals[1].isPresent());
+    }
   }
 }

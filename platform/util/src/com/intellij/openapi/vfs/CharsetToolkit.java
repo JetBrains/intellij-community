@@ -79,6 +79,8 @@ public class CharsetToolkit {
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
   public static final Charset UTF_16_CHARSET = Charset.forName("UTF-16");
   public static final Charset US_ASCII_CHARSET = Charset.forName("US-ASCII");
+  public static final Charset ISO_8859_1_CHARSET = Charset.forName("ISO-8859-1");
+  public static final Charset WIN_1251_CHARSET = Charset.forName("windows-1251");
   private static final byte FF = (byte)0xff;
   private static final byte FE = (byte)0xfe;
   private static final byte EF = (byte)0xef;
@@ -98,7 +100,7 @@ public class CharsetToolkit {
   public static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
   @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
-  @NonNls private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new THashMap<Charset, byte[]>(2);
+  @NonNls private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new THashMap<Charset, byte[]>(4);
   static {
     CHARSET_TO_MANDATORY_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
     CHARSET_TO_MANDATORY_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
@@ -272,12 +274,12 @@ public class CharsetToolkit {
    *
    * @return the Charset recognized.
    */
-  public Charset guessEncoding(int guess_length, @NotNull Charset defaultCharset) {
+  public Charset guessEncoding(int startOffset, int endOffset, @NotNull Charset defaultCharset) {
     // if the file has a Byte Order Marker, we can assume the file is in UTF-xx
     // otherwise, the file would not be human readable
     Charset charset = guessFromBOM();
     if (charset != null) return charset;
-    GuessedEncoding encoding = guessFromContent(guess_length);
+    GuessedEncoding encoding = guessFromContent(startOffset, endOffset);
     switch (encoding) {
       case SEVEN_BIT:
         // if no byte with an high order bit set, the encoding is US-ASCII
@@ -312,7 +314,7 @@ public class CharsetToolkit {
 
   @NotNull
   public static String tryDecodeString(@NotNull byte[] bytes, @NotNull final Charset charset) throws CharacterCodingException {
-    int bomLength = CharsetToolkit.getBOMLength(bytes, charset);
+    int bomLength = getBOMLength(bytes, charset);
     ByteBuffer buffer = ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength);
     CharsetDecoder decoder = charset.newDecoder()
       .onMalformedInput(CodingErrorAction.REPORT)
@@ -329,6 +331,11 @@ public class CharsetToolkit {
 
   @NotNull
   public GuessedEncoding guessFromContent(int guess_length) {
+    return guessFromContent(0, guess_length);
+  }
+
+  @NotNull
+  public GuessedEncoding guessFromContent(int startOffset, int endOffset) {
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding
     // otherwise, the file is in US-ASCII
     boolean highOrderBit = false;
@@ -340,15 +347,15 @@ public class CharsetToolkit {
     // true if char bytes < BINARY_THRESHOLD occurred
     boolean hasBinary = false;
 
-    int length = Math.min(buffer.length, guess_length);
-    int i = 0;
-    while (i < length) {
+    int end = Math.min(buffer.length, endOffset);
+    int i = startOffset;
+    while (i < end) {
       byte b0 = buffer[i];
-      byte b1 = i + 1 >= length ? 0 : buffer[i + 1];
-      byte b2 = i + 2 >= length ? 0 : buffer[i + 2];
-      byte b3 = i + 3 >= length ? 0 : buffer[i + 3];
-      byte b4 = i + 4 >= length ? 0 : buffer[i + 4];
-      byte b5 = i + 5 >= length ? 0 : buffer[i + 5];
+      byte b1 = i + 1 >= end ? 0 : buffer[i + 1];
+      byte b2 = i + 2 >= end ? 0 : buffer[i + 2];
+      byte b3 = i + 3 >= end ? 0 : buffer[i + 3];
+      byte b4 = i + 4 >= end ? 0 : buffer[i + 4];
+      byte b5 = i + 5 >= end ? 0 : buffer[i + 5];
       if (b0 < 0) {
         // a high order bit was encountered, thus the encoding is not US-ASCII
         // it may be either an 8-bit encoding or UTF-8
@@ -452,7 +459,7 @@ public class CharsetToolkit {
   }
 
   public Charset guessEncoding(int guess_length) {
-    return guessEncoding(guess_length, defaultCharset);
+    return guessEncoding(0,guess_length, defaultCharset);
   }
 
   public static Charset guessEncoding(@NotNull File f, int bufferLength, @NotNull Charset defaultCharset) throws IOException {
@@ -476,7 +483,7 @@ public class CharsetToolkit {
    * @return true if it's a continuation char.
    */
   private static boolean isContinuationChar(byte b) {
-    return -128 <= b && b <= -65;
+    return b <= -65;
   }
 
   /**

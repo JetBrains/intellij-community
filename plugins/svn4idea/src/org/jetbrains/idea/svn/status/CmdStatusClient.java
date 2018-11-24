@@ -42,12 +42,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 5:21 PM
- */
 public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override

@@ -6,7 +6,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import com.intellij.tasks.redmine.model.RedmineProject;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +66,7 @@ public class RedmineTask extends Task {
   @NotNull
   @Override
   public Icon getIcon() {
-    return TasksIcons.Redmine;
+    return TasksCoreIcons.Redmine;
   }
 
   @NotNull

@@ -17,13 +17,6 @@ package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 03.02.2003
- * Time: 17:31:05
- * To change this template use Options | File Templates.
- */
 public class FalseFilter implements ElementFilter{
   public static final FalseFilter INSTANCE = new FalseFilter();
 

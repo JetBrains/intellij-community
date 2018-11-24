@@ -16,20 +16,27 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.notification.*;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.config.TaskRepositoriesConfigurable;
+import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.StringTokenizer;
+
+import static com.intellij.tasks.impl.TaskUtil.filterTasks;
 
 /**
  * @author Dmitry Avdeev
@@ -48,22 +55,23 @@ public class TaskSearchSupport {
     return filteredTasks;
   }
 
-  public static List<Task> filterTasks(final String pattern, final List<Task> tasks) {
-    final Matcher matcher = getMatcher(pattern);
-    return ContainerUtil.mapNotNull(tasks,
-                                    (NullableFunction<Task, Task>)task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);
-  }
-
-  public static List<Task> getRepositoriesTasks(final TaskManager myManager,
+  public static List<Task> getRepositoriesTasks(Project project,
                                                 String pattern,
                                                 int offset,
                                                 int limit,
                                                 boolean forceRequest,
                                                 final boolean withClosed,
                                                 @NotNull final ProgressIndicator cancelled) {
-    List<Task> tasks = myManager.getIssues(pattern, offset, limit, withClosed, cancelled, forceRequest);
-    ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
-    return tasks;
+    try {
+      TaskManager manager = TaskManager.getManager(project);
+      List<Task> tasks = manager.getIssues(pattern, offset, limit, withClosed, cancelled, forceRequest);
+      ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+      return tasks;
+    }
+    catch (RequestFailedException e) {
+      notifyAboutConnectionFailure(e, project);
+      return Collections.emptyList();
+    }
   }
 
   public static List<Task> getItems(final TaskManager myManager,
@@ -73,21 +81,32 @@ public class TaskSearchSupport {
     return filterTasks(pattern, getTasks(pattern, cached, autopopup, myManager));
   }
 
-
-  private static Matcher getMatcher(String pattern) {
-    StringTokenizer tokenizer = new StringTokenizer(pattern, " ");
-    StringBuilder builder = new StringBuilder();
-    while (tokenizer.hasMoreTokens()) {
-      String word = tokenizer.nextToken();
-      builder.append('*');
-      builder.append(word);
-      builder.append("* ");
-    }
-
-    return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
-  }
-
   private static List<Task> getTasks(String pattern, boolean cached, boolean autopopup, final TaskManager myManager) {
     return cached ? myManager.getCachedIssues() : myManager.getIssues(pattern, !autopopup);
+  }
+
+  static final String TASKS_NOTIFICATION_GROUP = "Task Group";
+
+  private static void notifyAboutConnectionFailure(RequestFailedException e, Project project) {
+    String details = e.getMessage();
+    TaskRepository repository = e.getRepository();
+    Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
+    String content = "<p><a href=\"\">Configure server...</a></p>";
+    if (!StringUtil.isEmpty(details)) {
+      content = "<p>" + details + "</p>" + content;
+    }
+    Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
+                                              content, NotificationType.WARNING,
+                                              new NotificationListener() {
+                                                public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                            @NotNull HyperlinkEvent event) {
+                                                  TaskRepositoriesConfigurable configurable =
+                                                    new TaskRepositoriesConfigurable(project);
+                                                  ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+                                                  if (!ArrayUtil.contains(repository, TaskManager.getManager(project).getAllRepositories())) {
+                                                    notification.expire();
+                                                  }
+                                                }
+                                              }), project);
   }
 }

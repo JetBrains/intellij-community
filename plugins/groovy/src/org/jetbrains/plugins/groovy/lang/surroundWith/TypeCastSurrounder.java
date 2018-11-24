@@ -24,10 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class TypeCastSurrounder extends GroovyExpressionSurrounder {
   @Override
   protected TextRange surroundExpression(@NotNull GrExpression expression, PsiElement context) {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.ModificationTracker;
@@ -23,6 +24,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author yole
@@ -83,6 +87,12 @@ public class DefaultFileIndexFacade extends FileIndexFacade {
   @Override
   public ModificationTracker getRootModificationTracker() {
     return ModificationTracker.NEVER_CHANGED;
+  }
+
+  @NotNull
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+    return Collections.emptySet();
   }
 
   private VirtualFile getBaseDir() {

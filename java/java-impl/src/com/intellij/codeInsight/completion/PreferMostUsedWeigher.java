@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -32,6 +33,7 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
   private static final PsiMethodPattern OBJECT_METHOD_PATTERN = psiMethod().withName(
     StandardPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
     inClass(CommonClassNames.JAVA_LANG_OBJECT);
+  private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
 
   private final CompilerReferenceService myCompilerReferenceService;
   private final boolean myConstructorSuggestion;
@@ -46,7 +48,7 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
   @Nullable
   static PreferMostUsedWeigher create(@NotNull PsiElement position) {
     final CompilerReferenceService service = CompilerReferenceService.getInstance(position.getProject());
-    return service.isActive() ? new PreferMostUsedWeigher(service, JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) : null;
+    return service.isActive() || UNIT_TEST_MODE ? new PreferMostUsedWeigher(service, JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) : null;
   }
 
   @Nullable

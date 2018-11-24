@@ -1,4 +1,3 @@
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -28,12 +27,7 @@ public class JsonParserTest extends IpnbTestCase {
     final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText, new LightVirtualFile());
     assertNotNull(ipnbFile);
     final List<IpnbCell> cells = ipnbFile.getCells();
-    Iterables.removeIf(cells, new Predicate<IpnbCell>() {
-      @Override
-      public boolean apply(IpnbCell cell) {
-        return !(cell instanceof IpnbMarkdownCell);
-      }
-    });
+    Iterables.removeIf(cells, cell -> !(cell instanceof IpnbMarkdownCell));
     assertEquals(7, cells.size());
   }
 

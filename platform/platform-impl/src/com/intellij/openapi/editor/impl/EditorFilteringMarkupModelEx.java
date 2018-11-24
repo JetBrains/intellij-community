@@ -40,9 +40,9 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @NotNull private final EditorImpl myEditor;
   @NotNull private final MarkupModelEx myDelegate;
 
-  private final Condition<RangeHighlighter> IS_AVAILABLE = highlighter -> isAvailable(highlighter);
+  private final Condition<RangeHighlighter> IS_AVAILABLE = this::isAvailable;
 
-  public EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
+  EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
     myEditor = editor;
     myDelegate = delegate;
   }
@@ -94,9 +94,9 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   private class MyFilteringIterator extends FilteringIterator<RangeHighlighterEx, RangeHighlighterEx>
     implements MarkupIterator<RangeHighlighterEx> {
-    private MarkupIterator<RangeHighlighterEx> myDelegate;
+    private final MarkupIterator<RangeHighlighterEx> myDelegate;
 
-    public MyFilteringIterator(@NotNull MarkupIterator<RangeHighlighterEx> delegate) {
+    MyFilteringIterator(@NotNull MarkupIterator<RangeHighlighterEx> delegate) {
       super(delegate, IS_AVAILABLE);
       myDelegate = delegate;
     }

@@ -16,9 +16,9 @@ import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalPyTestFactory;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.PyTestConfiguration;
+import com.jetbrains.python.testing.PyTestFactory;
+import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -106,6 +106,44 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
 
+  /**
+   * See https://github.com/JetBrains/teamcity-messages/issues/131
+   */
+  @Test
+  public void testTestNameBeforeTestStarted() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testNameBeforeTestStarted", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("test_test.py", 0);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+          Assert.assertEquals("Test name before message broke output",
+                              "Test tree:\n" +
+                              "[root]\n" +
+                              ".test_test\n" +
+                              "..SampleTest1\n" +
+                              "...test_sample_1(+)\n" +
+                              "...test_sample_2(+)\n" +
+                              "...test_sample_3(+)\n" +
+                              "...test_sample_4(+)\n" +
+                              "..SampleTest2\n" +
+                              "...test_sample_5(+)\n" +
+                              "...test_sample_6(+)\n" +
+                              "...test_sample_7(+)\n" +
+                              "...test_sample_8(+)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
+
   // Ensure test survives patched strftime
   @Test
   public void testMonkeyPatch() throws Exception {
@@ -139,7 +177,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
           return new PyTestTestProcessRunner("test_with_markers.py", 0) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setAdditionalArguments("-m 'not slow'");
             }
@@ -168,8 +206,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testClosestSrcIsWorkDirOnNewConfig() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask<PyUniversalPyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
-                                                                      PyUniversalPyTestConfiguration.class) {
+      new CreateConfigurationTestTask<PyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                           PyTestConfiguration.class) {
         @NotNull
         @Override
         protected List<PsiElement> getPsiElementsToRightClickOn() {
@@ -182,7 +220,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         }
 
         @Override
-        protected void checkConfiguration(@NotNull PyUniversalPyTestConfiguration configuration,
+        protected void checkConfiguration(@NotNull PyTestConfiguration configuration,
                                           @NotNull PsiElement elementToRightClickOn) {
           super.checkConfiguration(configuration, elementToRightClickOn);
           Assert
@@ -203,7 +241,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
           return new PyTestTestProcessRunner(TEST_TARGET_PREFIX + "test_test.test_test", 0) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               // Reset dir to check it is calculated correctly
               configuration.setWorkingDirectory(null);
@@ -238,13 +276,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyTestConfiguration.class));
   }
 
   @Test
   public void testMultipleCases() throws Exception {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyTestConfiguration.class));
   }
 
   /**
@@ -260,7 +298,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
           return new PyTestTestProcessRunner(toFullPath("tests"), 0) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setWorkingDirectory(getWorkingFolderForScript());
             }
@@ -281,7 +319,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
           return new PyTestTestProcessRunner(toFullPath("tests"), 0) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setWorkingDirectory(getWorkingFolderForScript());
             }
@@ -293,12 +331,12 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Exception {
 
-    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalPyTestConfiguration> task =
-      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalPyTestConfiguration>() {
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration>() {
         @NotNull
         @Override
-        protected PyUniversalPyTestFactory createFactory() {
-          return PyUniversalPyTestFactory.INSTANCE;
+        protected PyTestFactory createFactory() {
+          return PyTestFactory.INSTANCE;
         }
       };
     runPythonTest(task);
@@ -309,14 +347,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PY_TEST_NAME,
-                                                                                     PyUniversalPyTestConfiguration.class));
+                                                                                     PyTestConfiguration.class));
   }
 
   @Test
   public void testProduceConfigurationOnFile() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyUniversalPyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
-                                                                        PyUniversalPyTestConfiguration.class, "spam.py") {
+      new CreateConfigurationByFileTask<PyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                             PyTestConfiguration.class, "spam.py") {
         @NotNull
         @Override
         protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {
@@ -330,7 +368,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PY_TEST_NAME,
-        PyUniversalPyTestConfiguration.class));
+        PyTestConfiguration.class));
   }
 
   /**
@@ -390,7 +428,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
         return new PyTestTestProcessRunner("", 0) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalPyTestConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setWorkingDirectory(null);
             final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
@@ -455,7 +493,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         else {
           return new PyTestTestProcessRunner(toFullPath("folder_no_init_py/test_test.py"), 2) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setWorkingDirectory(getWorkingFolderForScript());
             }

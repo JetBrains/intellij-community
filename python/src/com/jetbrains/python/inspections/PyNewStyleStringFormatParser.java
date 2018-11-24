@@ -258,7 +258,7 @@ public class PyNewStyleStringFormatParser {
                   int endOffset,
                   int autoPosition,
                   int depth) {
-      super(leftBraceOffset);
+      super(leftBraceOffset, endOffset);
       myNodeText = nodeText;
       myLeftBraceOffset = leftBraceOffset;
       myAttributesAndLookups = attrAndLookupBounds;
@@ -269,7 +269,6 @@ public class PyNewStyleStringFormatParser {
       myEndOffset = endOffset;
       myDepth = depth;
 
-      setEndIndex(myEndOffset);
       final String name = getFirstName();
       if (name.isEmpty()) {
         setAutoPosition(autoPosition);

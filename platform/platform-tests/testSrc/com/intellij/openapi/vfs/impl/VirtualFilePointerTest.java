@@ -615,7 +615,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         myVirtualFilePointerManager.createContainer(parent);
       }
       Disposer.dispose(parent);
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   private static void doVfsRefresh(File dir) {
@@ -983,7 +983,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       LOG.info("i = " + i);
       assertTrue(file.createNewFile());
       refreshVFS();
-      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> ReadAction.run(() -> {
         for (int k=0;k<100;k++) {
           vTemp.getChildren();
         }

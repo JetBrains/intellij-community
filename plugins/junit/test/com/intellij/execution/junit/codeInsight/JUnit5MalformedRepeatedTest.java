@@ -32,7 +32,7 @@ public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public @interface RepeatedTest {}");
+                        "public @interface RepeatedTest {int value(); }");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public @interface Test {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
@@ -44,6 +44,7 @@ public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
   }
 
   public void testMalformed() { doTest(); }
+  public void testPositiveRepetitions() { doTest(); }
 
   @Override
   protected String getBasePath() {

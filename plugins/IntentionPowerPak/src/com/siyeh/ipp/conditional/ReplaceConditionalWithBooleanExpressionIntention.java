@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
 import static com.siyeh.ig.psiutils.ParenthesesUtils.AND_PRECEDENCE;
@@ -57,7 +58,10 @@ public class ReplaceConditionalWithBooleanExpressionIntention extends Intention 
     PsiReplacementUtil.replaceExpression((PsiExpression)element, replacementText);
   }
 
-  private static String getText(PsiExpression expression) {
+  private static String getText(@Nullable PsiExpression expression) {
+    if (expression == null) {
+      return "";
+    }
     if (ParenthesesUtils.getPrecedence(expression) > AND_PRECEDENCE) {
       return '(' + expression.getText() + ')';
     }

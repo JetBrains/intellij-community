@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -57,10 +57,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/15/11
- */
 public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner, E extends PsiElement> extends
                                                                                                         InplaceVariableIntroducer<E> {
   protected V myLocalVariable;
@@ -74,7 +70,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   private EditorEx myPreview;
   private final JComponent myPreviewComponent;
 
-  private DocumentAdapter myDocumentAdapter;
+  private DocumentListener myDocumentAdapter;
   protected final JPanel myWholePanel;
   protected boolean myFinished = false;
 
@@ -204,7 +200,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         started = super.performInplaceRefactoring(nameSuggestions);
         if (started) {
           onRenameTemplateStarted();
-          myDocumentAdapter = new DocumentAdapter() {
+          myDocumentAdapter = new DocumentListener() {
             @Override
             public void documentChanged(DocumentEvent e) {
               if (myPreview == null) return;
@@ -376,13 +372,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     if (isReplaceAllOccurrences()) {
       for (E expression : getOccurrences()) {
         LOG.assertTrue(expression.isValid(), expression.getText());
-        stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
+        stringUsages.add(Pair.create(expression, new TextRange(0, expression.getTextLength())));
       }
     }  else if (getExpr() != null) {
       correctExpression();
       final E expr = getExpr();
       LOG.assertTrue(expr.isValid(), expr.getText());
-      stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
+      stringUsages.add(Pair.create(expr, new TextRange(0, expr.getTextLength())));
     }
 
     final V localVariable = getLocalVariable();
@@ -390,7 +386,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       final PsiElement nameIdentifier = localVariable.getNameIdentifier();
       if (nameIdentifier != null) {
         int length = nameIdentifier.getTextLength();
-        stringUsages.add(Pair.<PsiElement, TextRange>create(nameIdentifier, new TextRange(0, length)));
+        stringUsages.add(Pair.create(nameIdentifier, new TextRange(0, length)));
       }
     }
   }

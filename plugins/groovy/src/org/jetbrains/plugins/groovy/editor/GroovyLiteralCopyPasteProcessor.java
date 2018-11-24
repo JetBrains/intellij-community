@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,12 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
            (TokenSets.STRING_LITERALS.contains(node.getElementType()) ||
             node.getElementType() == GroovyElementTypes.GSTRING_INJECTION ||
             node.getElementType() == GroovyElementTypes.GSTRING_CONTENT);
+  }
+
+  @Nullable
+  @Override
+  protected TextRange getEscapedRange(@NotNull PsiElement token) {
+    return isStringLiteral(token) ? token.getTextRange() : null; // TODO: calculate correct ranges for different types of literals
   }
 
   @Override

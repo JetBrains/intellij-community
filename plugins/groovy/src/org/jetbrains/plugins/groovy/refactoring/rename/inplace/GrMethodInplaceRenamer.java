@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-/**
- * Created by Max Medvedev on 26/03/14
- */
 public class GrMethodInplaceRenamer extends MemberInplaceRenamer {
   public GrMethodInplaceRenamer(PsiNamedElement elementToRename, PsiElement substituted, Editor editor) {
     super(elementToRename, substituted, editor);

@@ -145,11 +145,12 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     for (LookupElement base : suggestQualifierItems(parameters, (PsiJavaCodeReferenceElement)qualifier, filter)) {
       PsiType type = JavaCompletionUtil.getLookupElementType(base);
       if (type != null && !PsiType.VOID.equals(type)) {
-        PsiReferenceExpression ref = ReferenceExpressionCompletionContributor.createMockReference(position, type, base);
+        String separator = parent instanceof PsiMethodReferenceExpression ? "::" : ".";
+        PsiReferenceExpression ref = ReferenceExpressionCompletionContributor.createMockReference(position, type, base, separator);
         if (ref != null) {
-          for (final LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
-                                                                                           result.getPrefixMatcher())) {
-            qualifiedCollector.addElement(JavaCompletionUtil.highlightIfNeeded(null, new JavaChainLookupElement(base, item), item.getObject(), position));
+          for (LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
+                                                                                     result.getPrefixMatcher())) {
+            qualifiedCollector.addElement(JavaCompletionUtil.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject(), position));
           }
         }
       }

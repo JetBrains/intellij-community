@@ -72,11 +72,15 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     }
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     List<Object> targetQualifiers = new ArrayList<>();
+    boolean classTypesFound = false;
+    boolean resolvableClassesFound = false;
     for (final PsiParameter parameter : parameters) {
       final PsiType type = parameter.getType();
       if (type instanceof PsiClassType) {
+        classTypesFound = true;
         final PsiClass psiClass = ((PsiClassType)type).resolve();
         if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
+          resolvableClassesFound = true;
           if (method.getManager().isInProject(psiClass)) {
             targetQualifiers.add(parameter);
           }
@@ -93,6 +97,23 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
       targetQualifiers.add("this / new " + className + "()");
     }
 
+    if (targetQualifiers.isEmpty()) {
+      String message;
+      if (!classTypesFound) {
+        message = RefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
+      }
+      else if (!resolvableClassesFound) {
+        message = RefactoringBundle.message("convertToInstanceMethod.all.reference.type.parametres.have.unknown.types");
+      }
+      else {
+        message = RefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
+      }
+      message += " and containing class doesn't have default constructor";
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.CONVERT_TO_INSTANCE_METHOD);
+      return;
+    }
+    
     new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
   }
 }

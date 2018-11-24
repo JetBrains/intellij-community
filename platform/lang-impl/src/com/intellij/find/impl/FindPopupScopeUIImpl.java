@@ -15,7 +15,9 @@
  */
 package com.intellij.find.impl;
 
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.openapi.module.Module;
@@ -33,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +83,10 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
     Arrays.sort(names, String.CASE_INSENSITIVE_ORDER);
     myModuleComboBox = new ComboBox<>(names);
+    SwingHelper.setLongestAsPrototype(myModuleComboBox, Arrays.asList(names));
+    if (myModuleComboBox.getPrototypeDisplayValue() != null) {
+      myModuleComboBox.setMinLength(myModuleComboBox.getPrototypeDisplayValue().length());
+    }
     ActionListener restartSearchListener = e -> scheduleResultsUpdate();
     myModuleComboBox.addActionListener(restartSearchListener);
 

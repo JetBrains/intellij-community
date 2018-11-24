@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Set;
 
-/**
- * User: ktisha
- */
 public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
   private final Set<PyFunction> myToImplement;

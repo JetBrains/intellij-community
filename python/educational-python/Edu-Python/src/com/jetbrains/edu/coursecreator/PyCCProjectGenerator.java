@@ -27,7 +27,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
-import icons.InteractiveLearningPythonIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSet
   @Nullable
   @Override
   public Icon getLogo() {
-    return InteractiveLearningPythonIcons.CourseCreationProjectType;
+    return EducationalCoreIcons.CourseCreationProjectType;
   }
 
   @Override

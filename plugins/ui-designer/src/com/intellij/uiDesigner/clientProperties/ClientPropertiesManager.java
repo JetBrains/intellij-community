@@ -21,8 +21,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.uiDesigner.LoaderFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "ClientPropertiesManager")
+import static com.intellij.util.JdomKt.loadElement;
+
+@State(name = "ClientPropertiesManager", defaultStateAsResource = true)
 public class ClientPropertiesManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ClientPropertiesManager.class);
 
@@ -50,7 +52,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     protected ClientPropertiesManager compute() {
       ClientPropertiesManager result = new ClientPropertiesManager();
       try {
-        result.loadState(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
+        result.loadState(loadElement(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
       }
       catch (Exception e) {
         LOG.error(e);
@@ -182,11 +184,11 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     }
   }
 
-  public List<Class> getConfiguredClasses() {
+  public List<Class> getConfiguredClasses(@NotNull Project project) {
     List<Class> result = new ArrayList<>();
     for(String className: myPropertyMap.keySet()) {
       try {
-        result.add(Class.forName(className));
+        result.add(Class.forName(className, true, LoaderFactory.getInstance(project).getProjectClassLoader()));
       }
       catch (ClassNotFoundException e) {
         // TODO: do something better than ignore?

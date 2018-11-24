@@ -72,6 +72,8 @@ public class SuspiciousArrayMethodCallInspection extends BaseJavaBatchLocalInspe
         PsiType arrayElementType = ((PsiArrayType)arrayType).getComponentType();
         // incompatible primitive array will be reported anyways as compilation error
         if (arrayElementType instanceof PsiPrimitiveType) return;
+        elementType = TypeConversionUtil.erasure(elementType);
+        arrayElementType = TypeConversionUtil.erasure(arrayElementType);
         if (!TypeConversionUtil.areTypesConvertible(elementType, arrayElementType)) {
           holder.registerProblem(element, InspectionsBundle.message("inspection.suspicious.array.method.call.problem.element"));
         }
@@ -85,6 +87,8 @@ public class SuspiciousArrayMethodCallInspection extends BaseJavaBatchLocalInspe
         PsiType array2ElementType = ((PsiArrayType)array2Type).getComponentType();
         // incompatible primitive array will be reported anyways as compilation error
         if (array1ElementType instanceof PsiPrimitiveType || array2ElementType instanceof PsiPrimitiveType) return;
+        array1ElementType = TypeConversionUtil.erasure(array1ElementType);
+        array2ElementType = TypeConversionUtil.erasure(array2ElementType);
         if (!TypeConversionUtil.areTypesConvertible(array1ElementType, array2ElementType) ||
             !TypeConversionUtil.areTypesConvertible(array2ElementType, array1ElementType)) {
           holder.registerProblem(context, InspectionsBundle.message("inspection.suspicious.array.method.call.problem.arrays"));

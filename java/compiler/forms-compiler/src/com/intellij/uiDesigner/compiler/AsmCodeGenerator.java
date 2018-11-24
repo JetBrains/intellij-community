@@ -59,6 +59,7 @@ public class AsmCodeGenerator {
   public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";
   public static final String LOAD_LABEL_TEXT_METHOD = "$$$loadLabelText$$$";
   public static final String LOAD_BUTTON_TEXT_METHOD = "$$$loadButtonText$$$";
+  public static final String GET_FONT_METHOD_NAME = "$$$getFont$$$";
 
   private static final Type ourButtonGroupType = Type.getType(ButtonGroup.class);
   private static final Type ourBorderFactoryType = Type.getType(BorderFactory.class);

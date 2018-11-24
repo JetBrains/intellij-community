@@ -11,6 +11,11 @@ class Contracts {
     System.out.println(o.hashCode());
   }
 
+  private void checkIsNotNullValue(@Nullable Object o) {
+    assertThat(o, CoreMatchers.is(CoreMatchers.<Object>notNullValue()));
+    System.out.println(o.hashCode());
+  }
+
   private void checkNotEqualToNull(@Nullable String test) {
     assertThat("String is null", test, not(equalTo(null)));
     int length = test.length();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,17 +183,12 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
       }
 
       if (isSortByDownloads()) {
-        String count1 = o1.getDownloads();
-        String count2 = o2.getDownloads();
-        if (count1 != null && count2 != null) {
-          final Long result = Long.valueOf(count2);
-          if (result != 0) {
-            return result.compareTo(Long.valueOf(count1));
-          }
-        }
-        else {
-          return count1 != null ? -1 : 1;
-        }
+        String d1 = o1.getDownloads();
+        String d2 = o2.getDownloads();
+        Long count1 = d1 == null ? 0 : Long.valueOf(d1);
+        Long count2 = d2 == null ? 0 : Long.valueOf(d2);
+        int result = count2.compareTo(count1);
+        if (result != 0) return result;
       }
 
       return StringUtil.compare(o1.getName(), o2.getName(), true);

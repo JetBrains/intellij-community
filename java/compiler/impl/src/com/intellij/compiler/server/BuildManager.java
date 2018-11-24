@@ -44,21 +44,15 @@ import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
@@ -80,6 +74,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.NettyKt;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -115,6 +110,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -150,7 +147,6 @@ public class BuildManager implements Disposable {
     s -> !(s.contains(IDEA_PROJECT_DIR_PATTERN) || s.endsWith(IWS_EXTENSION) || s.endsWith(IPR_EXTENSION)) :
     s -> !(StringUtil.endsWithIgnoreCase(s, IWS_EXTENSION) || StringUtil.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
 
-  private final File mySystemDirectory;
   private final List<String> myFallbackJdkParams = new SmartList<>();
   private final ProjectManager myProjectManager;
 
@@ -201,19 +197,26 @@ public class BuildManager implements Disposable {
     if (unusedThresholdDays <= 0) {
       return;
     }
-    final File buildSystemDir = getBuildSystemDirectory();
-    final File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
+    final Path buildSystemDir = getBuildSystemDirectory();
+    final List<Path> dirs;
+    try {
+      dirs = Files.list(buildSystemDir).filter(pathname -> Files.isDirectory(pathname) && !TEMP_DIR_NAME.equals(pathname.getFileName().toString())).collect(Collectors.toList());
+    }
+    catch (IOException e) {
+      return;
+    }
+
     if (dirs != null) {
       final Date now = new Date();
-      for (File buildDataProjectDir : dirs) {
-        final File usageFile = getUsageFile(buildDataProjectDir);
-        if (usageFile.exists()) {
+      for (Path buildDataProjectDir : dirs) {
+        final Path usageFile = getUsageFile(buildDataProjectDir);
+        if (Files.exists(usageFile)) {
           final Pair<Date, File> usageData = readUsageFile(usageFile);
           if (usageData != null) {
             final File projectFile = usageData.second;
             if (projectFile != null && !projectFile.exists() || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
-              LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir.getPath());
-              FileUtil.delete(buildDataProjectDir);
+              LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir);
+              PathKt.delete(buildDataProjectDir);
             }
           }
         }
@@ -236,15 +239,6 @@ public class BuildManager implements Disposable {
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
     myProjectManager = projectManager;
-    final String systemPath = PathManager.getSystemPath();
-    File system = new File(systemPath);
-    try {
-      system = system.getCanonicalFile();
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    mySystemDirectory = system;
 
     final String fallbackSdkHome = getFallbackSdkHome();
     if (fallbackSdkHome != null) {
@@ -252,10 +246,9 @@ public class BuildManager implements Disposable {
       myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
     }
 
-    projectManager.addProjectManagerListener(new ProjectWatcher());
-
-    final MessageBusConnection conn = application.getMessageBus().connect();
-    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    MessageBusConnection connection = application.getMessageBus().connect();
+    connection.subscribe(ProjectManager.TOPIC, new ProjectWatcher());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!IS_UNIT_TEST_MODE && shouldTriggerMake(events)) {
@@ -302,7 +295,7 @@ public class BuildManager implements Disposable {
 
     });
 
-    conn.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
       @Override
       public void batchChangeStarted(Project project) {
         myFileChangeCounter++;
@@ -315,7 +308,7 @@ public class BuildManager implements Disposable {
       }
     });
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         final Document document = e.getDocument();
@@ -336,18 +329,16 @@ public class BuildManager implements Disposable {
 
   @Nullable
   private static String getFallbackSdkHome() {
-    final String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
-    if (home == null) {
-      return null;
-    }
-    File javaHome = new File(home);
-    if (!JavaSdk.checkForJdk(javaHome)) {
-      final File parent = javaHome.getParentFile();
-      if (parent != null && JavaSdk.checkForJdk(parent)) {
-        javaHome = parent;
+    String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
+    if (home == null) return null;
+
+    if (!JdkUtil.checkForJdk(home)) {
+      String parent = new File(home).getParent();
+      if (parent != null && JdkUtil.checkForJdk(parent)) {
+        home = parent;
       }
     }
-    return FileUtil.toSystemIndependentName(javaHome.getAbsolutePath());
+    return FileUtil.toSystemIndependentName(home);
   }
 
   private List<Project> getOpenProjects() {
@@ -503,7 +494,7 @@ public class BuildManager implements Disposable {
       myAutoMakeTask.schedule();
     }
   }
-   
+
   @NotNull
   private static String getThreadTrace(Thread thread, final int depth) { // debugging
     final StringBuilder buf = new StringBuilder();
@@ -1035,7 +1026,7 @@ public class BuildManager implements Disposable {
     });
   }
 
-  private OSProcessHandler launchBuildProcess(Project project, final int port, final UUID sessionId, boolean requestProjectPreload) throws ExecutionException {
+  private OSProcessHandler launchBuildProcess(@NotNull Project project, final int port, final UUID sessionId, boolean requestProjectPreload) throws ExecutionException {
     String compilerPath;
     final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
@@ -1145,6 +1136,10 @@ public class BuildManager implements Disposable {
       cmdLine.addParameter("-Dpreload.config.path=" + FileUtil.toCanonicalPath(PathManager.getOptionsPath()));
     }
 
+    if (ProjectUtilCore.isExternalStorageEnabled(project)) {
+      cmdLine.addParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + "=" + ProjectUtil.getExternalConfigurationDir(project));
+    }
+
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
@@ -1208,9 +1203,13 @@ public class BuildManager implements Disposable {
 
     cmdLine.addParameter("-Dio.netty.noUnsafe=true");
 
-    final File workDirectory = getBuildSystemDirectory();
-    //noinspection ResultOfMethodCallIgnored
-    workDirectory.mkdirs();
+    final Path workDirectory = getBuildSystemDirectory();
+    try {
+      Files.createDirectories(workDirectory);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
 
     final File projectSystemRoot = getProjectSystemDirectory(project);
     if (projectSystemRoot != null) {
@@ -1240,7 +1239,7 @@ public class BuildManager implements Disposable {
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.addAll(myClasspathManager.getBuildProcessPluginsClasspath(project));
     if (isProfilingMode) {
-      cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
+      cp.add(workDirectory.resolve("yjp-controller-api-redist.jar").toString());
     }
     cmdLine.addParameter(classpathToString(cp));
 
@@ -1249,9 +1248,9 @@ public class BuildManager implements Disposable {
     cmdLine.addParameter(Integer.toString(port));
     cmdLine.addParameter(sessionId.toString());
 
-    cmdLine.addParameter(FileUtil.toSystemIndependentName(workDirectory.getPath()));
+    cmdLine.addParameter(PathKt.getSystemIndependentPath(workDirectory));
 
-    cmdLine.setWorkDirectory(workDirectory);
+    cmdLine.setWorkDirectory(workDirectory.toFile());
 
     try {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).beforeBuildProcessStarted(project, sessionId);
@@ -1305,8 +1304,9 @@ public class BuildManager implements Disposable {
     return true;
   }
 
-  public File getBuildSystemDirectory() {
-    return new File(mySystemDirectory, SYSTEM_ROOT);
+  @NotNull
+  public Path getBuildSystemDirectory() {
+    return PathManagerEx.getAppSystemDir().resolve(SYSTEM_ROOT);
   }
 
   public File getBuildLogDirectory() {
@@ -1316,15 +1316,16 @@ public class BuildManager implements Disposable {
   @Nullable
   public File getProjectSystemDirectory(Project project) {
     final String projectPath = getProjectPath(project);
-    return projectPath != null? Utils.getDataStorageRoot(getBuildSystemDirectory(), projectPath) : null;
+    return projectPath != null ? Utils.getDataStorageRoot(getBuildSystemDirectory().toFile(), projectPath) : null;
   }
 
-  private static File getUsageFile(@NotNull File projectSystemDir) {
-    return new File(projectSystemDir, "ustamp");
+  @NotNull
+  private static Path getUsageFile(@NotNull Path projectSystemDir) {
+    return projectSystemDir.resolve("ustamp");
   }
 
-  private static void updateUsageFile(@Nullable Project project, @NotNull File projectSystemDir) {
-    final File usageFile = getUsageFile(projectSystemDir);
+  private static void updateUsageFile(@Nullable Project project, @NotNull Path projectSystemDir) {
+    final Path usageFile = getUsageFile(projectSystemDir);
     StringBuilder content = new StringBuilder();
     try {
       synchronized (USAGE_STAMP_DATE_FORMAT) {
@@ -1336,7 +1337,7 @@ public class BuildManager implements Disposable {
           content.append("\n").append(FileUtil.toCanonicalPath(projectFilePath));
         }
       }
-      FileUtil.writeToFile(usageFile, content.toString());
+      PathKt.write(usageFile, content.toString());
     }
     catch (Throwable e) {
       LOG.info(e);
@@ -1344,9 +1345,9 @@ public class BuildManager implements Disposable {
   }
 
   @Nullable
-  private static Pair<Date, File> readUsageFile(File usageFile) {
+  private static Pair<Date, File> readUsageFile(@NotNull Path usageFile) {
     try {
-      final List<String> lines = FileUtil.loadLines(usageFile, CharsetToolkit.UTF8_CHARSET.name());
+      final List<String> lines = Files.readAllLines(usageFile);
       if (!lines.isEmpty()) {
         final String dateString = lines.get(0);
         final Date date;
@@ -1562,7 +1563,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private class ProjectWatcher extends ProjectManagerAdapter {
+  private class ProjectWatcher implements ProjectManagerListener {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
 
     @Override
@@ -1686,7 +1687,7 @@ public class BuildManager implements Disposable {
         runCommand(() -> {
           final File projectSystemDir = getProjectSystemDirectory(project);
           if (projectSystemDir != null) {
-            updateUsageFile(project, projectSystemDir);
+            updateUsageFile(project, projectSystemDir.toPath());
           }
         });
         scheduleAutoMake(); // run automake after project opened
@@ -1694,9 +1695,8 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public boolean canCloseProject(Project project) {
+    public void projectClosingBeforeSave(@NotNull Project project) {
       cancelAutoMakeTasks(project);
-      return super.canCloseProject(project);
     }
 
     @Override

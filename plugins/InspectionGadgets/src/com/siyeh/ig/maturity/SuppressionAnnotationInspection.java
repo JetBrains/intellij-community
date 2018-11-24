@@ -34,10 +34,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 10/24/13
- */
 public class SuppressionAnnotationInspection extends SuppressionAnnotationInspectionBase {
   @Override
   public JComponent createOptionsPanel() {

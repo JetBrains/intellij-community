@@ -73,7 +73,7 @@ public class HgLogProvider implements VcsLogProvider {
   public DetailedLogData readFirstBlock(@NotNull VirtualFile root,
                                         @NotNull Requirements requirements) throws VcsException {
     List<VcsCommitMetadata> commits = HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
-                                                                 Collections.<String>emptyList());
+                                                                 Collections.emptyList());
     return new LogDataImpl(readAllRefs(root), commits);
   }
 
@@ -82,7 +82,7 @@ public class HgLogProvider implements VcsLogProvider {
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
     List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<>(userRegistry),
-                                                               Collections.<String>emptyList());
+                                                               Collections.emptyList());
     for (TimedVcsCommit commit : commits) {
       commitConsumer.consume(commit);
     }

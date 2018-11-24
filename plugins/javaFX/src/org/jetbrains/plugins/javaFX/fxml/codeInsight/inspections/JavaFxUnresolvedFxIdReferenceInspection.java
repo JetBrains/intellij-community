@@ -43,9 +43,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInTagDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxFieldIdReferenceProvider;
 
-/**
- * User: anna
- */
 public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInspectionTool {
   @NotNull
   @Override

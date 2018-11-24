@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 03.08.2006
- * Time: 14:01:20
- */
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.text.StringUtil;
 
 public class JreVersionDetector {
   private String myLastAlternativeJrePath ; //awful hack
@@ -47,25 +41,29 @@ public class JreVersionDetector {
 
   public boolean isJre50Configured(final CommonJavaRunConfigurationParameters configuration) {
     if (configuration.isAlternativeJrePathEnabled()) {
-      if (Comparing.equal(configuration.getAlternativeJrePath(), myLastAlternativeJrePath)) {
+      String alternativeJrePath = configuration.getAlternativeJrePath();
+      if (!StringUtil.isEmptyOrSpaces(alternativeJrePath)) {
+        if (Comparing.equal(alternativeJrePath, myLastAlternativeJrePath)) {
+          return myLastIsJre50;
+        }
+
+        myLastAlternativeJrePath = alternativeJrePath;
+        String versionString = SdkVersionUtil.detectJdkVersion(myLastAlternativeJrePath);
+        myLastIsJre50 = versionString != null && isJre50(versionString);
         return myLastIsJre50;
       }
-      myLastAlternativeJrePath = configuration.getAlternativeJrePath();
-      final String versionString = JavaSdk.getJdkVersion(myLastAlternativeJrePath);
-      myLastIsJre50 = versionString != null && isJre50(versionString);
-      return myLastIsJre50;
     }
+
     return false;
   }
 
-  private static boolean isJre50(final Sdk jdk) {
-    if (jdk == null) return false;
-    return JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_5);
+  private static boolean isJre50(Sdk jdk) {
+    return JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_5);
   }
 
-  private static boolean isJre50(final @Nullable String versionString) {
+  private static boolean isJre50(String versionString) {
     if (versionString == null) return false;
-    JavaSdkVersion version = JavaSdk.getInstance().getVersion(versionString);
+    JavaSdkVersion version = JavaSdkVersion.fromVersionString(versionString);
     return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_5);
   }
 }

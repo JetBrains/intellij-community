@@ -44,12 +44,10 @@ public class RefreshAction extends AnAction implements DumbAware {
     FileDocumentManager.getInstance().saveAllDocuments();
     invokeCustomRefreshes(project);
 
-    VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
-      public void run() {
-        // already called in EDT or under write action
-        if (!project.isDisposed()) {
-          VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
-        }
+    VirtualFileManager.getInstance().asyncRefresh(() -> {
+      // already called in EDT or under write action
+      if (!project.isDisposed()) {
+        VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
       }
     });
   }

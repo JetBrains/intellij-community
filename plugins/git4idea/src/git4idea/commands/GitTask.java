@@ -267,12 +267,7 @@ public class GitTask {
 
     public final void runAlone() {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            justRun();
-          }
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> justRun());
       } else {
         justRun();
       }

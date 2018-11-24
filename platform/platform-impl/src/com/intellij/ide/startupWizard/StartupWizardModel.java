@@ -60,7 +60,7 @@ public class StartupWizardModel extends WizardModel {
       add(myOtherStep);
     }
 
-    myAllPlugins = PluginManager.loadDescriptors(null, ContainerUtil.<String>newArrayList());
+    myAllPlugins = PluginManager.loadDescriptors(null, ContainerUtil.newArrayList());
     for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
       if (pluginDescriptor.getPluginId().getIdString().equals("com.intellij")) {
         // skip 'IDEA CORE' plugin

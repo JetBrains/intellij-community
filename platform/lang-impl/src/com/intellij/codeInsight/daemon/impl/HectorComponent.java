@@ -62,10 +62,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Jun 27, 2005
- */
 public class HectorComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.HectorComponent");
 

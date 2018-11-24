@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -28,7 +29,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
-import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.EventDispatcher;
@@ -44,7 +44,7 @@ import static java.util.Collections.singletonList;
 public class CommitMessageInspectionDetails implements UnnamedConfigurable {
   @NotNull private final Project myProject;
   @NotNull private final InspectionProfileImpl myProfile;
-  @NotNull private final ToolDescriptors myToolDescriptors;
+  @NotNull private final Descriptor myDefaultDescriptor;
   @NotNull private final ScopeToolState myToolState;
   private JPanel mySeverityChooserPanel;
   private LevelChooserAction mySeverityChooser;
@@ -55,11 +55,11 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
 
   public CommitMessageInspectionDetails(@NotNull Project project,
                                         @NotNull InspectionProfileImpl profile,
-                                        @NotNull ToolDescriptors toolDescriptors) {
+                                        @NotNull Descriptor defaultDescriptor) {
     myProject = project;
     myProfile = profile;
-    myToolDescriptors = toolDescriptors;
-    myToolState = myToolDescriptors.getDefaultDescriptor().getState();
+    myDefaultDescriptor = defaultDescriptor;
+    myToolState = myDefaultDescriptor.getState();
 
     init();
     reset();
@@ -67,7 +67,7 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
 
   @NotNull
   public HighlightDisplayKey getKey() {
-    return myToolDescriptors.getDefaultDescriptor().getKey();
+    return myDefaultDescriptor.getKey();
   }
 
   public void update() {
@@ -142,7 +142,7 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
     protected void onChosen(@NotNull HighlightSeverity severity) {
       HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
 
-      myProfile.setErrorLevel(myToolDescriptors.getDefaultDescriptor().getKey(), level, null, myProject);
+      myProfile.setErrorLevel(myDefaultDescriptor.getKey(), level, null, myProject);
       myEventDispatcher.getMulticaster().onSeverityChanged(severity);
     }
 

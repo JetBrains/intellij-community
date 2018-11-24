@@ -46,10 +46,6 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil.hasMaskModifier;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 02.06.2009
- */
 public class GrStubUtils {
   private static final Logger LOG = Logger.getInstance(GrStubUtils.class);
   public static final int TOO_LONG = -1;

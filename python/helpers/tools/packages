@@ -1380,7 +1380,7 @@ organizations django-organizations
 gtfsscheduleviewer transitfeed 
 django_js_utils django-js-utils-nextgen 
 avsubmit django-avsubmit 
-captcha django-recaptcha-mozilla 
+captcha django-simple-captcha django-recaptcha-mozilla
 cas django-cas-client 
 encodingcom encodingcom-py3 
 dselector django-selector 
@@ -2417,7 +2417,7 @@ init Auto_Python_2014
 clifa_launch clifa 
 clipy clipy-dl 
 batchapps azure-batch-apps 
-zmq pyzmq-ctypes 
+zmq pyzmq pyzmq-ctypes
 crest Python-Crest 
 wmd django-wmd-editor 
 inetutils pyip 
@@ -4753,4 +4753,9 @@ dev_email django-dev-email
 canvas_api_token django-canvas-api-token 
 pods django-pods 
 blogg django-blogg 
-teamrubber teamrubber.theoracle 
+teamrubber teamrubber.theoracle
+jenkins python-jenkins
+pipeline django-pipeline
+PIL Pillow
+robot robotframework
+cv2 opencv-python

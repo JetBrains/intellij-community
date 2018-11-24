@@ -91,6 +91,16 @@ public class HighlightingSessionImpl implements HighlightingSession {
     return session;
   }
 
+  static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
+    ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+    if (map != null) {
+      for (HighlightingSession session : map.values()) {
+        ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
+      }
+    }
+  }
+
+
   @NotNull
   @Override
   public PsiFile getPsiFile() {

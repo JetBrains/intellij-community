@@ -19,11 +19,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LexerTestCase;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 26.04.11
-*/
 public class XPathLexerTest extends LexerTestCase {
   @Override
   protected Lexer createLexer() {

@@ -8,7 +8,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
-import com.intellij.openapi.project.DefaultProjectFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -31,8 +30,8 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
-import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
-import com.jetbrains.edu.learning.stepic.LoginDialog;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.OAuthDialog;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
@@ -193,7 +192,19 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                        });
               }
               else if (LOGIN_TO_STEPIC.equals(selectedValue)) {
-                showLoginDialog(true, "Signing In And Getting Stepik Course List");
+                EduStepicConnector.doAuthorize(() -> showLoginDialog());
+                StepicUser stepicUser = StudySettings.getInstance().getUser();
+                if (stepicUser != null) {
+                  ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                    () -> myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser)),
+                    "Getting Enrolled Courses", true, DefaultProjectFactory.getInstance().getDefaultProject());
+
+                  final List<Course> courses = myGenerator.getCourses(true);
+                  if (courses != null) {
+                    ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
+                  }
+                }
+
               }
             });
           }
@@ -204,9 +215,13 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     });
   }
 
-  public void showLoginDialog(final boolean refreshCourseList, @NotNull final String progressTitle) {
-    final AddRemoteDialog dialog = new AddRemoteDialog(refreshCourseList, progressTitle);
-    dialog.show();
+  public void showLoginDialog() {
+    OAuthDialog dialog = new OAuthDialog();
+    if (dialog.showAndGet()) {
+      StepicUser stepicUser = dialog.getStepicUser();
+      StudySettings.getInstance().setUser(stepicUser);
+      setOK();
+    }
   }
 
   private void initListeners() {
@@ -235,7 +250,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     }
   }
 
-  private void setOK() {
+  public void setOK() {
     myGenerator.fireStateChanged(ValidationResult.OK);
     if (myValidationManager != null) {
       myValidationManager.validate();
@@ -335,44 +350,5 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
 
   public JPanel getInfoPanel() {
     return myInfoPanel;
-  }
-
-  private class AddRemoteDialog extends LoginDialog {
-
-    private final boolean myRefreshCourseList;
-    private final String myProgressTitle;
-
-    protected AddRemoteDialog(final boolean refreshCourseList, @NotNull final String progressTitle) {
-      super();
-      myRefreshCourseList = refreshCourseList;
-      myProgressTitle = progressTitle;
-    }
-
-    @Override
-    protected void doOKAction() {
-      if (!validateLoginAndPasswordFields()) return;
-
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-
-        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(myLoginPanel.getLogin(),
-                                                                                                      myLoginPanel.getPassword()));
-        if (stepicUser != null) {
-          stepicUser.setEmail(myLoginPanel.getLogin());
-          stepicUser.setPassword(myLoginPanel.getPassword());
-          StudySettings.getInstance().setUser(stepicUser);
-          myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser));
-          final List<Course> courses = myGenerator.getCourses(true);
-          if (courses != null && myRefreshCourseList) {
-            ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
-          }
-          ApplicationManager.getApplication().invokeLater(() -> super.doJustOkAction());
-          setOK();
-        }
-        else {
-          this.setErrorText("Failed to login");
-        }
-      }, myProgressTitle, true, new DefaultProjectFactoryImpl().getDefaultProject());
-    }
   }
 }

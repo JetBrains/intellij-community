@@ -1,6 +1,5 @@
 package com.jetbrains.env.python;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,12 +61,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
       return Collections.emptyList();
     }
 
-    return Collections2.transform(PsiTreeUtil.findChildrenOfType(psi, PsiErrorElement.class), new Function<PsiErrorElement, String>() {
-      @Override
-      public String apply(PsiErrorElement input) {
-        return input.getErrorDescription();
-      }
-    });
+    return Collections2.transform(PsiTreeUtil.findChildrenOfType(psi, PsiErrorElement.class), input -> input.getErrorDescription());
   }
 
   @Test

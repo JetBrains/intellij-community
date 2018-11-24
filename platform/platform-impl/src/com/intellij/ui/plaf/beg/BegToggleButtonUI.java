@@ -22,9 +22,6 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.awt.*;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class BegToggleButtonUI extends MetalToggleButtonUI{
   private final static BegToggleButtonUI begToggleButtonUI = new BegToggleButtonUI();
 

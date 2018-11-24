@@ -40,14 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: May 2, 2003
- * Time: 8:35:34 PM
- * To change this template use Options | File Templates.
- */
-
 public class JavaDocExternalFilter extends AbstractExternalFilter {
   private final Project myProject;  
   private PsiElement myElement;
@@ -142,13 +134,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
 
     if (element instanceof PsiMethod) {
       final String className = ApplicationManager.getApplication().runReadAction(
-        new NullableComputable<String>() {
-          @Override
-          @Nullable
-          public String compute() {
-            PsiClass aClass = ((PsiMethod)element).getContainingClass();
-            return aClass == null ? null : aClass.getQualifiedName();
-          }
+        (NullableComputable<String>)() -> {
+          PsiClass aClass = ((PsiMethod)element).getContainingClass();
+          return aClass == null ? null : aClass.getQualifiedName();
         }
       );
       Matcher matcher = ourMethodHeading.matcher(externalDoc);

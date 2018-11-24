@@ -24,10 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class WithExprSurrounder extends GroovyConditionSurrounder {
   @Override
   protected TextRange surroundExpression(@NotNull GrExpression expression, PsiElement context) {

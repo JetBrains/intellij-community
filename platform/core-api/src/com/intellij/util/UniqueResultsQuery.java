@@ -33,7 +33,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   @NotNull private final Function<T, M> myMapper;
 
   public UniqueResultsQuery(@NotNull Query<T> original) {
-    this(original, ContainerUtil.<M>canonicalStrategy(), (Function<T, M>)FunctionUtil.<M>id());
+    this(original, ContainerUtil.canonicalStrategy(), (Function<T, M>)FunctionUtil.<M>id());
   }
 
   public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy) {

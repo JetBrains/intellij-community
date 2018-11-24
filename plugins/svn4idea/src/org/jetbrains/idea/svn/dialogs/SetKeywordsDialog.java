@@ -30,12 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: Jun 21, 2006
- * Time: 6:37:41 PM
- */
 public class SetKeywordsDialog extends DialogWrapper {
 
   private static final List<String> KNOWN_KEYWORDS =

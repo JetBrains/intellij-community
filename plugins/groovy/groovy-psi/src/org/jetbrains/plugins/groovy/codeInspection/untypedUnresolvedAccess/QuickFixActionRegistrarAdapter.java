@@ -25,9 +25,6 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* Created by Max Medvedev on 21/03/14
-*/
 class QuickFixActionRegistrarAdapter implements QuickFixActionRegistrar {
   private final HighlightInfo myInfo;
   private HighlightDisplayKey myKey;

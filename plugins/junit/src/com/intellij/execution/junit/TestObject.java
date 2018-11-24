@@ -32,6 +32,7 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -41,6 +42,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
@@ -134,6 +136,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected void configureRTClasspath(JavaParameters javaParameters) {
     final String path = System.getProperty(DEBUG_RT_PATH);
     javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
+
+    //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
+    javaParameters.getClassPath().add(getJUnit5RtFile());
+  }
+
+  public static File getJUnit5RtFile() {
+    File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
+    String junit5Name = junit4Rt.getName().replace("junit", "junit5");
+    return new File(junit4Rt.getParent(), junit5Name);
   }
 
   @Override
@@ -160,11 +171,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), sourceScope, project);
     String preferredRunner = getPreferredRunner(globalSearchScope);
     if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
-      //detect junit 5 rt without dependency on junit5_rt module
-      File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
-      String junit5Name = junit4Rt.getName().replace("junit", "junit5");
-      javaParameters.getClassPath().add(new File(junit4Rt.getParent(), junit5Name));
-
       final PathsList classPath = javaParameters.getClassPath();
       File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
       File[] files = lib.listFiles();
@@ -183,11 +189,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
             classPath.add(file.getAbsolutePath());
           }
           else if (fileName.startsWith("junit-vintage-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope)) {
-            try {
-              JUnitUtil.getTestCaseClass(sourceScope);
+            if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
               classPath.add(file.getAbsolutePath());
-            }
-            catch (JUnitUtil.NoJUnitException ignore) {
             }
           }
         }
@@ -262,6 +265,31 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       final List<String> testNames = new ArrayList<>();
 
+      if (elements.isEmpty() && perModule != null) {
+        final SourceScope sourceScope = getSourceScope();
+        Project project = getConfiguration().getProject();
+        if (sourceScope != null && packageName != null 
+            && !ReadAction.compute(() -> isJUnit5(getConfiguration().getConfigurationModule().getModule(),
+                                                  sourceScope,
+                                                  getConfiguration().getProject()))) {
+          final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
+          if (aPackage != null) {
+            final TestSearchScope scope = getScope();
+            if (scope != null) {
+              final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project)
+                .intersectWith(sourceScope.getGlobalSearchScope());
+              final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
+              for (PsiDirectory directory : directories) {
+                Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
+                if (module != null) {
+                  perModule.put(module, Collections.emptyList());
+                }
+              }
+            }
+          }
+        }
+      }
+      
       for (final T element : elements) {
         final String name = nameFunction.fun(element);
         if (name == null) {

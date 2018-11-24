@@ -21,10 +21,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
-/**
- * User: anna
- * Date: 16-Dec-2005
- */
 public class TextFieldWithStoredHistory extends TextFieldWithHistory {
   private final String myPropertyName;
 

@@ -156,12 +156,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
           content = escapeSingleQuotedStringContent(content);
         }
         final PsiElement replacement = new JsonElementGenerator(project).createValue("\"" + content + "\"");
-        CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
-          @Override
-          public void run() {
-            element.replace(replacement);
-          }
-        });
+        CodeStyleManager.getInstance(project).performActionWithFormatterDisabled((Runnable)() -> element.replace(replacement));
       }
       else {
         LOG.error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());

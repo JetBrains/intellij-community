@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.ReferenceQueue;
@@ -339,7 +337,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     for (AnAction action : rightAligned) {
       JComponent button = action instanceof CustomComponentAction ? getCustomComponent(action) : createToolbarButton(action);
-      button.putClientProperty(RIGHT_ALIGN_KEY, Boolean.TRUE);
+      if (!isInsideNavBar()) {
+        button.putClientProperty(RIGHT_ALIGN_KEY, Boolean.TRUE);
+      }
       add(button);
     }
     //if ((ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace))) {
@@ -384,7 +384,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public ActionButton createToolbarButton(final AnAction action, final ActionButtonLook look, final String place, final Presentation presentation, final Dimension minimumSize) {
     if (action.displayTextInToolbar()) {
-      return new ActionButtonWithText(action, presentation, place, minimumSize);
+      int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
+
+      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
+      if (mnemonic != KeyEvent.VK_UNDEFINED) {
+        buttonWithText.registerKeyboardAction(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            buttonWithText.click();
+          }
+        }, KeyStroke.getKeyStroke(mnemonic,
+                                /*SystemInfo.isMac
+                                ? InputEvent.CTRL_DOWN_MASK |
+                                  InputEvent.ALT_DOWN_MASK
+                                :*/ InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
+      }
+      tweakActionComponentUI(buttonWithText);
+      return buttonWithText;
     }
 
     final ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
@@ -777,10 +793,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         maxHeight = Math.max(maxHeight, bounds.get(i).height);
       }
 
+      int rightOffset = 0;
+      Insets insets = getInsets();
       for (int i = getComponentCount() - 1, j = 1; i > 0; i--, j++) {
         final Component component = getComponent(i);
         if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
-          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * JBUI.scale(25), 0, JBUI.scale(25), maxHeight));
+          rightOffset += bounds.get(i).width;
+          Rectangle r = bounds.get(bounds.size() - j);
+          r.x = size2Fit.width - rightOffset;
+          r.y = insets.top + (getHeight() - insets.top - insets.bottom - bounds.get(i).height) / 2;
         }
       }
     }
@@ -805,7 +826,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     final Dimension dimension = new Dimension(xRight - xLeft, yBottom - yTop);
 
-    if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myReservePlaceAutoPopupIcon) {
+    if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myReservePlaceAutoPopupIcon && !isInsideNavBar()) {
       if (myOrientation == SwingConstants.HORIZONTAL) {
         dimension.width += AllIcons.Ide.Link.getIconWidth();
       }
@@ -1278,14 +1299,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setBorder(JBUI.Borders.empty());
       setOpaque(false);
     } else {
-      if (isInsideNavBar()) {
-        setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+      if (UIUtil.isUnderWin10LookAndFeel()) {
+        setBorder(JBUI.Borders.empty(1));
+        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : JBUI.size(25, 22));
+      } else {
+        setBorder(JBUI.Borders.empty(2));
+        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       }
-      else {
-        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-      }
-
-      setMinimumButtonSize(myDecorateButtons ? new Dimension(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }

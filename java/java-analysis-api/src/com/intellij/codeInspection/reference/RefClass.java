@@ -22,10 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 27-Dec-2005
- */
 public interface RefClass extends RefJavaElement {
 
   @NotNull

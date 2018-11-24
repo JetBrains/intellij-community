@@ -37,10 +37,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 21.09.2007
- */
 public class ChangeExtendsImplementsQuickFix implements IntentionAction {
   @Nullable
   private final GrExtendsClause myExtendsClause;

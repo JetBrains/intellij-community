@@ -46,10 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 3/12/13
- */
 public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactProperties> {
 
   private String myTitle;

@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +43,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
 
   @Nullable
   public PsiElement resolve() {
-    final PsiClass cls = PsiUtil.getTopLevelClass(getElement());
+    final PsiClass cls = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
     if (cls != null) {
       PsiMethod[] methods = cls.findMethodsByName(getValue(), false);
       return Arrays.stream(methods)
@@ -58,7 +57,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
   @NotNull
   public Object[] getVariants() {
     final List<Object> list = new ArrayList<>();
-    final PsiClass topLevelClass = PsiUtil.getTopLevelClass(getElement());
+    final PsiClass topLevelClass = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
     if (topLevelClass != null) {
       final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
       final PsiMethod[] methods = topLevelClass.getMethods();

@@ -21,11 +21,10 @@ import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -37,10 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * User: cdr
- */
-class SliceNullnessAnalyzer {
+public class SliceNullnessAnalyzer {
   private static void groupByNullness(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = createNewTree(result, oldRoot, map);
 
@@ -49,7 +45,7 @@ class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
+  public static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
     assert oldRoot.myCachedChildren.size() == 1;
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
@@ -156,9 +152,9 @@ class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
-                                               @NotNull AbstractTreeStructure treeStructure,
-                                               @NotNull final Map<SliceNode, NullAnalysisResult> map) {
+  public static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
+                                                      @NotNull AbstractTreeStructure treeStructure,
+                                                      @NotNull final Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
@@ -170,18 +166,8 @@ class SliceNullnessAnalyzer {
           node(element, map).add(node(duplicate, map));
         }
         else {
-          final PsiElement value = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-            @Override
-            public PsiElement compute() {
-              return element.getValue().getElement();
-            }
-          });
-          Nullness nullness = ApplicationManager.getApplication().runReadAction(new Computable<Nullness>() {
-            @Override
-            public Nullness compute() {
-              return checkNullness(value);
-            }
-          });
+          final PsiElement value = ReadAction.compute(() -> element.getValue().getElement());
+          Nullness nullness = ReadAction.compute(() -> checkNullness(value));
           if (nullness == Nullness.NULLABLE) {
             group(element, map, NullAnalysisResult.NULLS).add(value);
           }
@@ -189,13 +175,7 @@ class SliceNullnessAnalyzer {
             group(element, map, NullAnalysisResult.NOT_NULLS).add(value);
           }
           else {
-            Collection<? extends AbstractTreeNode> children = ApplicationManager.getApplication().runReadAction(
-              new Computable<Collection<? extends AbstractTreeNode>>() {
-                @Override
-                public Collection<? extends AbstractTreeNode> compute() {
-                  return element.getChildren();
-                }
-              });
+            Collection<? extends AbstractTreeNode> children = ReadAction.compute(() -> element.getChildren());
             if (children.isEmpty()) {
               group(element, map, NullAnalysisResult.UNKNOWNS).add(value);
             }
@@ -270,7 +250,7 @@ class SliceNullnessAnalyzer {
     return Nullness.UNKNOWN;
   }
 
-  static class NullAnalysisResult {
+  public static class NullAnalysisResult {
     static final int NULLS = 0;
     static final int NOT_NULLS = 1;
     static final int UNKNOWNS = 2;

@@ -28,7 +28,9 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +69,7 @@ public class FileTypeChooser extends DialogWrapper {
     }
     myList.setModel(model);
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
+    new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getName());
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();

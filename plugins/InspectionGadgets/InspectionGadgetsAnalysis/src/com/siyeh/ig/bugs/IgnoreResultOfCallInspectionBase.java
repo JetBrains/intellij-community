@@ -17,27 +17,37 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodMatcher;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
+  private static final CallMatcher STREAM_COLLECT =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
+  private static final CallMatcher COLLECTOR_TO_COLLECTION =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1);
 
   /**
    * @noinspection PublicField
@@ -168,11 +178,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
 
-      final PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
-      final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
-      if (anno != null &&
-          (honorInferred || !AnnotationUtil.isInferredAnnotation(anno)) &&
-          Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) {
+      if (isPureMethod(method)) {
         registerMethodCallOrRefError(call, aClass);
         return;
       }
@@ -187,7 +193,42 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
 
+      if (isHardcodedException(call)) {
+        return;
+      }
+
       registerMethodCallOrRefError(call, aClass);
+    }
+
+    private boolean isHardcodedException(PsiExpression expression) {
+      if (!(expression instanceof PsiMethodCallExpression)) return false;
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (STREAM_COLLECT.test(call)) {
+        PsiMethodCallExpression collector =
+          ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);
+        if (COLLECTOR_TO_COLLECTION.test(collector)) {
+          PsiLambdaExpression lambda = ObjectUtils
+            .tryCast(PsiUtil.skipParenthesizedExprDown(collector.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
+          if (lambda != null) {
+            PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
+            if (body instanceof PsiReferenceExpression && ((PsiReferenceExpression)body).resolve() instanceof PsiVariable) {
+              // .collect(toCollection(() -> var)) : the result is written into given collection
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    }
+
+    private boolean isPureMethod(PsiMethod method) {
+      final PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+      if (anno == null) return false;
+      final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
+      if (!honorInferred && AnnotationUtil.isInferredAnnotation(anno)) return false;
+      return Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure")) &&
+             !SideEffectChecker.mayHaveExceptionalSideEffect(method);
     }
 
     private void registerMethodCallOrRefError(PsiExpression call, PsiClass aClass) {
@@ -221,7 +262,22 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
           if (aPackage == null) {
             return null;
           }
-          return AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+          PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+          if(annotation != null) {
+            // Check that annotation actually belongs to the same library/source root
+            // which could be important in case of split-packages
+            VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
+            VirtualFile currentFile = classOwner.getVirtualFile();
+            if(annotationFile != null && currentFile != null) {
+              ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
+              VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
+              VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
+              if (!Objects.equals(annotationClassRoot, currentClassRoot)) {
+                return null;
+              }
+            }
+          }
+          return annotation;
         }
 
         element = element.getContext();

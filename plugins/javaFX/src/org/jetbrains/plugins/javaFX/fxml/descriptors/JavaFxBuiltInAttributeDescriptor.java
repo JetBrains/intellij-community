@@ -27,10 +27,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private static final Logger LOG = Logger.getInstance(JavaFxBuiltInAttributeDescriptor.class);
 

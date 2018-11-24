@@ -144,16 +144,12 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   @Override
   public VcsFileRevision getLastRevision(FilePath filePath) throws VcsException {
     List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, "--max-count=1");
-    if (history == null || history.isEmpty()) return null;
+    if (history.isEmpty()) return null;
     return history.get(0);
   }
 
   @Override
-  public boolean getBaseVersionContent(FilePath filePath,
-                                       Processor<CharSequence> processor,
-                                       final String beforeVersionId,
-                                       List<String> warnings)
-    throws VcsException {
+  public boolean getBaseVersionContent(FilePath filePath, Processor<String> processor, String beforeVersionId) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
     // apply if base revision id matches revision
     final VirtualFile root = GitUtil.getGitRoot(filePath);

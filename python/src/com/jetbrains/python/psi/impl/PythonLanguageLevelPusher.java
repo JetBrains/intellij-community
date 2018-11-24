@@ -230,7 +230,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         if (project.isDisposed()) {
           return;
         }
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
       });
     }
   }

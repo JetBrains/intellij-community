@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * User: cdr
- */
 @Deprecated // use one of com.intellij.util.containers.Concurrent* class instead
 public final class StripedReentrantLocks extends StripedLockHolder<ReentrantLock> {
   private StripedReentrantLocks() {

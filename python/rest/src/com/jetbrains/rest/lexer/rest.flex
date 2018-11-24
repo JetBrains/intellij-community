@@ -19,7 +19,7 @@ CRLF=\R
 SPACE=[\ \t]
 
 ADORNMENT_SYMBOL="="|"-"|"`"|":"|"."|"'"|\"|"~"|"^"|"_"|"*"|"+"|"#"|">"
-ADORNMENT=("="{4, 80}|"-"{4, 80}|"`"{4, 80}|":"{4, 80}|"."{4, 80}|"'"{4, 80}|\"{4, 80}|"~"{4, 80}|"^"{4, 80}|"_"{4, 80}|"*"{4, 80}|"+"{4, 80}|"#"{4, 80})" "*{CRLF}
+ADORNMENT=("="+|"-"+|"`"+|":"+|"."+|"'"+|\"+|"~"+|"^"+|"_"+|"*"+|"+"+|"#"+)" "*{CRLF}
 SEPARATOR=[\n .:,()\{\}\[\]\-]
 USUAL_TYPES="attention"|"caution"|"danger"|"error"|"hint"|"important"|"note"|"tip"|"warning"|"admonition"|"image"|"figure"|"topic"|"sidebar"|"parsed-literal"|"rubric"|"epigraph"|"highlights"|"pull-quote"|"compound"|"container"|"table"|"csv-table"|"list-table"|"contents"|"sectnum"|"section-autonumbering"|"header"|"footer"|"target-notes"|"footnotes"|"citations"|"meta"|"replace"|"unicode"|"date"|"include"|"raw"|"class"|"role"|"default-role"|"title"|"restructuredtext-test-directive"
 HIGHLIGHT_TYPES= "highlight" | "sourcecode" | "code-block"
@@ -83,7 +83,7 @@ NOT_BACKQUOTE = [^`]
 
 "http"s?"://"[^\n\r ]+                              {return DIRECT_HYPERLINK;}
 
-"`"[^`\n\r ][^`\n\r]*[^`\n\r ]"`"                   { return INTERPRETED;}
+"`"[^`\n\r ][^`\n\r]*"`"                            { return INTERPRETED;}
 "`"{NOT_BACKQUOTE}+"`_""_"?{SEPARATOR}              {yypushback(1); return REFERENCE_NAME;}
 [0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?{SEPARATOR}                  {yypushback(1); return REFERENCE_NAME;}
 //"["([0-9]* | #?[0-9A-Za-z]* | "*")"]_"{SEPARATOR}   {yypushback(1); return REFERENCE_NAME;}

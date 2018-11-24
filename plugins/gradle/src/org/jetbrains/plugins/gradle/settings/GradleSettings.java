@@ -19,6 +19,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.project.Project;
@@ -123,6 +125,12 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     }
     if (old.getDistributionType() != current.getDistributionType()) {
       getPublisher().onGradleDistributionTypeChange(current.getDistributionType(), current.getExternalProjectPath());
+    }
+    if (old.isResolveModulePerSourceSet() != current.isResolveModulePerSourceSet()) {
+      ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
+    }
+    if (old.isStoreProjectFilesExternally() != current.isStoreProjectFilesExternally()) {
+      ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(current.isStoreProjectFilesExternally());
     }
   }
 

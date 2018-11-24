@@ -24,8 +24,8 @@ import java.util.Objects;
 
 /**
  * e.g.
- * a.equals(b)  → (a == b)
- * !a.equals(b) → (a != b)
+ * a.equals(b)  -> (a == b)
+ * !a.equals(b) -> (a != b)
  */
 abstract class BinaryTransformation extends Transformation {
 

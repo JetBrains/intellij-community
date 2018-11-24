@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 17.07.2006
- * Time: 13:49:57
- */
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;

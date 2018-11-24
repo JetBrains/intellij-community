@@ -24,10 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * User: ktisha
- */
 public abstract class PyQuickFixTestCase extends PyTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.setCaresAboutInjection(false);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {

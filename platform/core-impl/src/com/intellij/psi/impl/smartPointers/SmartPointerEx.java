@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
 
-interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
+public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
 
   @Nullable
   PsiElement getCachedElement();

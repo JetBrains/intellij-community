@@ -130,7 +130,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
                                                                   targetMethodName + parameters, targetClass);
       PsiCodeBlock targetMethodBody = emptyMethod.getBody();
       LOG.assertTrue(targetMethodBody != null);
-      targetMethodBody.addRange(elements[0], elements[elements.length - 1]);
+      if (elements.length > 0) targetMethodBody.addRange(elements[0], elements[elements.length - 1]);
 
       PsiMethod method = (PsiMethod)CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(targetClass.add(emptyMethod)));
       PsiMethodReferenceExpression methodReference =

@@ -112,15 +112,12 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
     for (Module m : chunk.getModules()) {
       if (LibrariesUtil.hasGroovySdk(m)) {
         final Set<String> scriptExtensions = GroovyFileTypeLoader.getCustomGroovyScriptExtensions();
-        final ContentIterator groovyFileSearcher = new ContentIterator() {
-          @Override
-          public boolean processFile(VirtualFile fileOrDir) {
-            ProgressManager.checkCanceled();
-            if (isCompilableGroovyFile(fileOrDir, scriptExtensions)) {
-              return false;
-            }
-            return true;
+        final ContentIterator groovyFileSearcher = fileOrDir -> {
+          ProgressManager.checkCanceled();
+          if (isCompilableGroovyFile(fileOrDir, scriptExtensions)) {
+            return false;
           }
+          return true;
         };
 
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(m);

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.ImagesBundle;
+import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
@@ -82,4 +83,12 @@ public interface ThumbnailView extends Disposable, ImageComponentDecorator {
    */
   @Nullable
   ThemeFilter getFilter();
+
+  void setTagFilter(TagFilter filter);
+
+  /**
+   * null means all files accepted
+   */
+  @Nullable
+  TagFilter getTagFilter();
 }

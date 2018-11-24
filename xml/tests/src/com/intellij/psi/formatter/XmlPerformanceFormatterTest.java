@@ -59,13 +59,13 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
 
   public void testReformatCodeFragment() throws Exception {
     PlatformTestUtil.startPerformanceTest("reformat code fragment is slow", 6300,
-                                          () -> checkFormattingDoesNotProduceException("performance")).cpuBound().useLegacyScaling().assertTiming();
+                                          () -> checkFormattingDoesNotProduceException("performance")).useLegacyScaling().assertTiming();
   }
 
   public void testPerformance3() throws Exception {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("Fix xml formatter performance problem 3", 6800, createTestRunnable()).cpuBound().useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("Fix xml formatter performance problem 3", 6800, createTestRunnable()).useLegacyScaling().assertTiming();
 
       highlight();
 

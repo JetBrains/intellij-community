@@ -102,7 +102,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       if (var.getInherentNullability() == Nullness.NULLABLE && !memState.isNotNull(dfaSource) && instruction.isVariableInitializer()) {
         DfaMemoryStateImpl stateImpl = (DfaMemoryStateImpl)memState;
-        stateImpl.setVariableState(var, stateImpl.getVariableState(var).withNullability(Nullness.NULLABLE));
+        stateImpl.setVariableState(var, stateImpl.getVariableState(var).withFact(DfaFactType.CAN_BE_NULL, true));
       }
 
     } else if (dfaDest instanceof DfaTypeValue && ((DfaTypeValue)dfaDest).isNotNull()) {
@@ -121,6 +121,39 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final DfaValue retValue = memState.pop();
     checkNotNullable(memState, retValue, NullabilityProblem.nullableReturn, instruction.getReturn());
     return nextInstruction(instruction, runner, memState);
+  }
+
+  @Override
+  public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    DfaValue index = memState.pop();
+    DfaValue array = memState.pop();
+    PsiArrayAccessExpression arrayExpression = instruction.getExpression();
+    if (!checkNotNullable(memState, array, NullabilityProblem.fieldAccessNPE, arrayExpression.getArrayExpression())) {
+      forceNotNull(runner, memState, array);
+    }
+    boolean alwaysOutOfBounds = false;
+    if (index != DfaUnknownValue.getInstance()) {
+      DfaValueFactory factory = runner.getFactory();
+      DfaValue indexNonNegative =
+        factory.createCondition(index, RelationType.GE, factory.getConstFactory().createFromValue(0, PsiType.INT, null));
+      if (!memState.applyCondition(indexNonNegative)) {
+        alwaysOutOfBounds = true;
+      }
+      DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, array);
+      if(dfaLength != null) {
+        DfaValue indexLessThanLength = factory.createCondition(index, RelationType.LT, dfaLength);
+        if (!memState.applyCondition(indexLessThanLength)) {
+          alwaysOutOfBounds = true;
+        }
+      }
+    }
+    processArrayAccess(arrayExpression, alwaysOutOfBounds);
+    memState.push(instruction.getValue());
+    return nextInstruction(instruction, runner, memState);
+  }
+
+  protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
+
   }
 
   @Override
@@ -461,13 +494,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return qualifier;
   }
 
-  private static LinkedHashSet<DfaMemoryState> addContractResults(DfaCallArguments callParameters,
+  private static LinkedHashSet<DfaMemoryState> addContractResults(DfaCallArguments callArguments,
                                                                   MethodContract contract,
                                                                   LinkedHashSet<DfaMemoryState> states,
                                                                   DfaValueFactory factory,
                                                                   Set<DfaMemoryState> finalStates,
                                                                   DfaValue returnValue) {
-    List<DfaValue> conditions = contract.getConditions(factory, callParameters.myQualifier, callParameters.myArguments);
+    List<DfaValue> conditions = ContainerUtil.map(contract.getConditions(), cv -> cv.makeDfaValue(factory, callArguments));
     if (StreamEx.of(conditions).allMatch(factory.getConstFactory().getTrue()::equals)) {
       for (DfaMemoryState state : states) {
         state.push(returnValue);
@@ -546,8 +579,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {
       Nullness nullability = myReturnTypeNullability.get(instruction);
-      if (nullability == Nullness.UNKNOWN && factory.isUnknownMembersAreNullable()) {
-        nullability = Nullness.NULLABLE;
+      PsiMethod targetMethod = instruction.getTargetMethod();
+      if (nullability == Nullness.UNKNOWN && targetMethod != null) {
+        nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
       }
       return factory.createTypeValue(type, nullability);
     }
@@ -603,8 +637,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     DfaValue result = null;
     if (JavaTokenType.AND == opSign) {
-      LongRangeSet left = memState.getRange(dfaLeft);
-      LongRangeSet right = memState.getRange(dfaRight);
+      LongRangeSet left = memState.getValueFact(DfaFactType.RANGE, dfaLeft);
+      LongRangeSet right = memState.getValueFact(DfaFactType.RANGE, dfaRight);
       if(left != null && right != null) {
         result = runner.getFactory().getRangeFactory().create(left.bitwiseAnd(right));
       }

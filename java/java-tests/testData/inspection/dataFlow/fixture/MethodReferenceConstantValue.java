@@ -28,6 +28,10 @@ public class MethodReferenceConstantValue {
     }
   }
 
+  public void test(List<@foo.NotNull String> list) {
+    list.removeIf(<warning descr="Method reference result is always 'false'">Objects::isNull</warning>);
+  }
+
   interface X {
     boolean action(@Nullable MethodReferenceConstantValue a, @NotNull String b);
   }

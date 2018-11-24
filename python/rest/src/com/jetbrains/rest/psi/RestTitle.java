@@ -16,6 +16,7 @@
 package com.jetbrains.rest.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.jetbrains.rest.validation.RestElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ import java.text.StringCharacterIterator;
  * User : catherine
  */
 public class RestTitle extends RestElement {
+  private static String ourAdornmentSymbols = "=-`:.'\\~^_*+#>";
+
   public RestTitle(@NotNull final ASTNode node) {
     super(node);
   }
@@ -64,10 +67,26 @@ public class RestTitle extends RestElement {
   }
 
   @Nullable
+  public String getOverline() {
+    final String text = getNode().getText().trim();
+    final Pair<Character, Character> adornments = getAdornments();
+    final Character overlineChar = adornments.getFirst();
+    if (overlineChar == null) return null;
+    int end = 0;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) != overlineChar) {
+        end = i;
+        break;
+      }
+    }
+    return text.substring(0, end);
+  }
+
+  @Nullable
   public String getUnderline() {
     final String text = getNode().getText().trim();
     if (text.length() < 2) return null;
-    final char adorn = text.charAt(text.length()-2);
+    final char adorn = text.charAt(text.length()-1);
     final CharacterIterator it = new StringCharacterIterator(text);
     int start = 0;
     for (char ch = it.last(); ch != CharacterIterator.DONE; ch = it.previous()) {
@@ -77,6 +96,17 @@ public class RestTitle extends RestElement {
       }
     }
     return text.substring(start, text.length());
+  }
+
+  public Pair<Character, Character> getAdornments() {
+    final String text = getNode().getText().trim();
+    if (text.length() < 2) return Pair.empty();
+    Character overline = text.charAt(0);
+    if (ourAdornmentSymbols.indexOf(overline) < 0) {
+      overline = null;
+    }
+    final char underline = text.charAt(text.length()-2);
+    return Pair.create(overline, underline);
   }
 
   @Override

@@ -28,9 +28,6 @@ import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 
-/**
- * User: anna
- */
 public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
   private final SmartPsiElementPointer<PsiClass> myParentClass;
   protected final OccurrenceManager myOccurrenceManager;

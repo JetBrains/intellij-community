@@ -17,6 +17,8 @@ package com.intellij.codeInspection.inheritance
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -56,11 +58,13 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val smartPointerManager = SmartPointerManager.getInstance(aClass.project)
 
+    val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(aClass.language)
+
     for ((method, description) in methodsToOverride) {
       if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
         methodsToAttachToClassFix?.add(smartPointerManager.createSmartPsiElementPointer(method, method.containingFile))
 
-        val methodFixes = arrayOf<LocalQuickFix>(MakeExtendableFix(method, method.name))
+        val methodFixes = createFixesIfApplicable(actionsFactory, method, method.name)
         problemTargets(method, methodHighlightableModifiersSet).forEach {
           problems.add(manager.createProblemDescriptor(
             it, description, isOnTheFly,
@@ -77,7 +81,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
           problems.add(manager.createProblemDescriptor(
             it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicit.subclass.display.forClass", aClass.name),
             isOnTheFly,
-            arrayOf<LocalQuickFix>(MakeExtendableFix(aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList())),
+            createFixesIfApplicable(actionsFactory, aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           )
         }
@@ -85,6 +89,16 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     }
 
     return problems.toTypedArray()
+  }
+
+  private fun createFixesIfApplicable(actionsFactory: JvmCommonIntentionActionsFactory?,
+                                      aClass: UDeclaration,
+                                      hintTargetName: String,
+                                      methodsToAttachToClassFix: List<SmartPsiElementPointer<UDeclaration>> = emptyList()): Array<LocalQuickFix> {
+    if (actionsFactory == null) return emptyArray()
+    val fix = MakeExtendableFix(aClass, hintTargetName, actionsFactory, methodsToAttachToClassFix)
+    if (!fix.hasActionsToPerform) return emptyArray()
+    return arrayOf(fix)
   }
 
   private fun problemTargets(declaration: UDeclaration, highlightableModifiersSet: Set<String>): List<PsiElement> {
@@ -106,6 +120,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
   private class MakeExtendableFix(uDeclaration: UDeclaration,
                                   hintTargetName: String,
+                                  val actionsFactory: JvmCommonIntentionActionsFactory,
                                   val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
     : LocalQuickFixOnPsiElement(uDeclaration) {
 
@@ -113,18 +128,32 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
       private val LOG = Logger.getInstance("#com.intellij.codeInspection.inheritance.MakeExtendableFix")
     }
 
+    private val actionsToPerform = SmartList<IntentionAction>()
+
+    val hasActionsToPerform: Boolean
+      get() = actionsToPerform.isNotEmpty()
+
+    init {
+      collectMakeExtendable(uDeclaration, actionsToPerform)
+      for (sibling in siblings) {
+        sibling.element?.let {
+          collectMakeExtendable(it, actionsToPerform, checkParent = false)
+        }
+      }
+    }
+
     override fun getFamilyName(): String = QuickFixBundle.message("fix.modifiers.family")
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
       try {
-        makeExtendable(startElement as UDeclaration)
-        for (sibling in siblings) {
-          sibling.element?.let {
-            makeExtendable(it)
-          }
+        for (intentionAction in actionsToPerform) {
+          if (intentionAction.isAvailable(project, null, file))
+            intentionAction.invoke(project, null, file)
         }
       }
       catch (e: IncorrectOperationException) {
+        if (ApplicationManager.getApplication().isUnitTestMode)
+          throw e
         ApplicationManager.getApplication().invokeLater {
           Messages.showErrorDialog(project, e.message, CommonBundle.getErrorTitle())
         }
@@ -132,29 +161,51 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
       }
     }
 
-    private fun makeExtendable(declaration: UDeclaration) {
+    private fun collectMakeExtendable(declaration: UDeclaration,
+                                      actionsList: SmartList<IntentionAction>,
+                                      checkParent: Boolean = true) {
       val isClassMember = !(declaration is UClass)
       declaration.modifierList?.apply {
-        setModifierProperty(PsiModifier.FINAL, false)
-        setModifierProperty(PsiModifier.PRIVATE, false)
+        addIfApplicable(declaration, PsiModifier.FINAL, false, actionsList)
+        addIfApplicable(declaration, PsiModifier.PRIVATE, false, actionsList)
         if (isClassMember) {
-          setModifierProperty(PsiModifier.STATIC, false)
+          addIfApplicable(declaration, PsiModifier.STATIC, false, actionsList)
         }
       }
-      if (isClassMember) {
-        (declaration.uastParent as? UClass)?.modifierList?.apply {
-          setModifierProperty(PsiModifier.FINAL, false)
-          setModifierProperty(PsiModifier.PRIVATE, false)
+      if (checkParent && isClassMember) {
+        (declaration.uastParent as? UClass)?.apply {
+          addIfApplicable(this, PsiModifier.FINAL, false, actionsList)
+          addIfApplicable(this, PsiModifier.PRIVATE, false, actionsList)
         }
       }
     }
 
+    private fun addIfApplicable(declaration: UDeclaration,
+                                name: String,
+                                shouldPresent: Boolean,
+                                actionsList: SmartList<IntentionAction>) {
+      if (declaration.modifierList?.hasModifierProperty(name) != shouldPresent) {
+        (actionsFactory.createChangeModifierAction(declaration, name, shouldPresent))?.let {
+          actionsList.add(it)
+        }
+      }
+    }
+
+    private val MAX_MESSAGES_TO_COMBINE = 3
+
     private val text = when (uDeclaration) {
-      is UClass -> InspectionsBundle.message("inspection.implicit.subclass.make.class.extendable",
-                                             hintTargetName,
-                                             siblings.size,
-                                             siblingsDescription())
-      else -> InspectionsBundle.message("inspection.implicit.subclass.extendable", hintTargetName)
+      is UClass ->
+        if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
+          actionsToPerform.joinToString { it.text }
+        else InspectionsBundle.message("inspection.implicit.subclass.make.class.extendable",
+                                       hintTargetName,
+                                       siblings.size,
+                                       siblingsDescription())
+      else ->
+        if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
+          actionsToPerform.joinToString { it.text }
+        else
+          InspectionsBundle.message("inspection.implicit.subclass.extendable", hintTargetName)
     }
 
     private fun siblingsDescription() =

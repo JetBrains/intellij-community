@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -15,7 +16,7 @@ import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
-import javafx.application.Platform;
+import com.sun.javafx.application.PlatformImpl;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -77,7 +78,7 @@ public class StudyBrowserWindow extends JFrame {
   }
 
   private void updateIntellijAndGTKLaf() {
-    Platform.runLater(() -> {
+    runLater(() -> {
       final URL scrollBarStyleUrl = getClass().getResource("/style/javaFXBrowserScrollBar.css");
       final URL engineStyleUrl = getClass().getResource("/style/javaFXBrowser.css");
       myPane.getStylesheets().add(scrollBarStyleUrl.toExternalForm());
@@ -88,7 +89,7 @@ public class StudyBrowserWindow extends JFrame {
   }
 
   private void updateLafDarcula() {
-    Platform.runLater(() -> {
+    runLater(() -> {
       final URL engineStyleUrl = getClass().getResource("/style/javaFXBrowserDarcula.css");
       final URL scrollBarStyleUrl = getClass().getResource("/style/javaFXBrowserDarculaScrollBar.css");
       myEngine.setUserStyleSheetLocation(engineStyleUrl.toExternalForm());
@@ -100,7 +101,7 @@ public class StudyBrowserWindow extends JFrame {
   }
 
   private void initComponents() {
-    Platform.runLater(() -> {
+    runLater(() -> {
       myPane = new StackPane();
       myWebComponent = new WebView();
       myWebComponent.setOnDragDetected(event -> {});
@@ -128,14 +129,6 @@ public class StudyBrowserWindow extends JFrame {
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
   }
 
-
-  public void load(@NotNull final String url) {
-    Platform.runLater(() -> {
-      updateLookWithProgressBarIfNeeded();
-      myEngine.load(url);
-    });
-  }
-
   public void loadContent(@NotNull final String content) {
     Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course == null) {
@@ -143,11 +136,11 @@ public class StudyBrowserWindow extends JFrame {
     }
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
     if (configurator == null) {
-      Platform.runLater(() -> myEngine.loadContent(content));
+      runLater(() -> myEngine.loadContent(content));
     }
     else {
       String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator.getLanguageScriptUrl(), configurator.getDefaultHighlightingMode());
-      Platform.runLater(() -> {
+      runLater(() -> {
         updateLookWithProgressBarIfNeeded();
         myEngine.loadContent(withCodeHighlighting);
       });
@@ -298,8 +291,12 @@ public class StudyBrowserWindow extends JFrame {
     });
   }
 
+  private static void runLater(@NotNull Runnable r) {
+    ApplicationManager.getApplication().invokeLater(() -> IdeEventQueue.unsafeNonblockingExecute(() -> PlatformImpl.runLater(r)));
+  }
+
   private void addButtonsAvailabilityListeners(JButton backButton, JButton forwardButton) {
-    Platform.runLater(() -> myEngine.getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+    runLater(() -> myEngine.getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
       if (newState == Worker.State.SUCCEEDED) {
         final WebHistory history = myEngine.getHistory();
         boolean isGoBackAvailable = history.getCurrentIndex() > 0;
@@ -319,7 +316,7 @@ public class StudyBrowserWindow extends JFrame {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 1) {
-          Platform.runLater(() -> myEngine.getHistory().go(direction));
+          runLater(() -> myEngine.getHistory().go(direction));
         }
       }
     });

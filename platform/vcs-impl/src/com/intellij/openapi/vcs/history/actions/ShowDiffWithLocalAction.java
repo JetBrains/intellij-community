@@ -16,8 +16,11 @@
 package com.intellij.openapi.vcs.history.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.actionSystem.ExtendableAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -27,10 +30,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowDiffWithLocalAction extends DumbAwareAction {
+public class ShowDiffWithLocalAction extends ExtendableAction implements DumbAware {
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider");
+
+  public ShowDiffWithLocalAction() {
+    super(EP_NAME);
+  }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
+  public void defaultActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
@@ -48,7 +57,7 @@ public class ShowDiffWithLocalAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
+  public void defaultUpdate(@NotNull AnActionEvent e) {
     VcsFileRevision[] selectedRevisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);

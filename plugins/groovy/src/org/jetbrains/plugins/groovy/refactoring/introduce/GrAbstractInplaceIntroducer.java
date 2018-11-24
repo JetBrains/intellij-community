@@ -41,9 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import java.util.List;
 
 
-/**
- * Created by Max Medvedev on 10/28/13
- */
 public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSettings> extends AbstractInplaceIntroducer<GrVariable, PsiElement> {
 
   private SmartTypePointer myTypePointer;

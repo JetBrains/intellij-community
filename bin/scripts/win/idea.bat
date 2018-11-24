@@ -8,7 +8,7 @@
 :: Ensure IDE_HOME points to the directory where the IDE is installed.
 :: ---------------------------------------------------------------------
 SET IDE_BIN_DIR=%~dp0
-SET IDE_HOME=%IDE_BIN_DIR%\..
+FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET IDE_HOME=%%~fi
 
 :: ---------------------------------------------------------------------
 :: Locate a JDK installation directory which will be used to run the IDE.
@@ -49,9 +49,8 @@ IF EXIST "%JAVA_HOME%" SET JDK=%JAVA_HOME%
 SET JAVA_EXE=%JDK%\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" SET JAVA_EXE=%JDK%\jre\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" (
-  ECHO ERROR: cannot start IntelliJ IDEA.
+  ECHO ERROR: cannot start @@product_full@@.
   ECHO No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
-  ECHO
   EXIT /B
 )
 
@@ -64,11 +63,27 @@ IF EXIST "%JRE%\lib\amd64" SET BITS=64
 :: ---------------------------------------------------------------------
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
-SET USER_VM_OPTIONS_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.vmoptions
-SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
-IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
-IF EXIST %USER_VM_OPTIONS_FILE% SET VM_OPTIONS_FILE=%USER_VM_OPTIONS_FILE%
-IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
+:: explicit
+SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
+IF NOT EXIST "%VM_OPTIONS_FILE%" (
+  :: Toolbox
+  SET VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
+)
+IF NOT EXIST "%VM_OPTIONS_FILE%" (
+  :: user-overridden
+  SET VM_OPTIONS_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.vmoptions
+)
+IF NOT EXIST "%VM_OPTIONS_FILE%" (
+  :: default, standard installation
+  SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+)
+IF NOT EXIST "%VM_OPTIONS_FILE%" (
+  :: default, universal package
+  SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
+)
+IF NOT EXIST "%VM_OPTIONS_FILE%" (
+  ECHO ERROR: cannot find VM options file.
+)
 
 SET ACC=
 FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"

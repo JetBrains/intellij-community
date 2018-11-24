@@ -1,4 +1,9 @@
 <root>
+    <item name='org.apache.velocity.runtime.ParserPoolImpl ParserPoolImpl()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.ParserPoolImpl void initialize(org.apache.velocity.runtime.RuntimeServices) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -38,7 +43,7 @@
     </item>
     <item name='org.apache.velocity.runtime.RuntimeInstance boolean render(org.apache.velocity.context.Context, java.io.Writer, java.lang.String, org.apache.velocity.runtime.parser.node.SimpleNode)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_,_-&gt;true;_,!null,_,_-&gt;true;_,_,!null,_-&gt;true;_,_,_,!null-&gt;true;_,_,_,null-&gt;true;_,_,null,_-&gt;true;_,null,_,_-&gt;true;null,_,_,_-&gt;true&quot;"/>
+            <val val="&quot;_,_,_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.RuntimeInstance java.lang.Object getProperty(java.lang.String)'>
@@ -161,7 +166,7 @@
     </item>
     <item name='org.apache.velocity.runtime.VelocimacroManager boolean addVM(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_,_,_-&gt;true;_,!null,_,_,_-&gt;true;_,_,!null,_,_-&gt;true;_,_,_,!null,_-&gt;true;_,_,_,null,_-&gt;true;_,_,null,_,_-&gt;true;null,_,_,_,_-&gt;true&quot;"/>
+            <val val="&quot;_,_,_,_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.VelocimacroManager boolean addVM(java.lang.String, org.apache.velocity.runtime.parser.node.Node, java.lang.String[], java.lang.String, boolean) 1'>

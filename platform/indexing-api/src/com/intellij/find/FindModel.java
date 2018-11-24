@@ -15,6 +15,7 @@
  */
 package com.intellij.find;
 
+import com.intellij.Patches;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,17 +46,18 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
+  @FunctionalInterface
   public interface FindModelObserver {
     void findModelChanged(FindModel findModel);
   }
 
   private final List<FindModelObserver> myObservers = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public void addObserver(FindModelObserver observer) {
+  public void addObserver(@NotNull FindModelObserver observer) {
     myObservers.add(observer);
   }
 
-  public void removeObserver(FindModelObserver observer) {
+  public void removeObserver(@NotNull FindModelObserver observer) {
     myObservers.remove(observer);
   }
 
@@ -67,32 +69,32 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   private String myStringToFind = "";
   private String myStringToReplace = "";
-  private boolean isSearchHighlighters = false;
-  private boolean isReplaceState = false;
-  private boolean isWholeWordsOnly = false;
+  private boolean isSearchHighlighters;
+  private boolean isReplaceState;
+  private boolean isWholeWordsOnly;
   private SearchContext searchContext = SearchContext.ANY;
   private boolean isFromCursor = true;
   private boolean isForward = true;
   private boolean isGlobal = true;
-  private boolean isRegularExpressions = false;
-  private boolean isCaseSensitive = false;
-  private boolean isMultipleFiles = false;
+  private boolean isRegularExpressions;
+  private boolean isCaseSensitive;
+  private boolean isMultipleFiles;
   private boolean isPromptOnReplace = true;
-  private boolean isReplaceAll = false;
-  private boolean isOpenNewTab = false;
-  private boolean isOpenInNewTabEnabled = false;
-  private boolean isOpenNewTabVisible = false;
+  private boolean isReplaceAll;
+  private boolean isOpenNewTab;
+  private boolean isOpenInNewTabEnabled;
+  private boolean isOpenNewTabVisible;
   private boolean isProjectScope = true;
-  private boolean isFindAll = false;
-  private boolean isFindAllEnabled = false;
+  private boolean isFindAll;
+  private boolean isFindAllEnabled;
   private String moduleName;
-  private String directoryName = null;
+  private String directoryName;
   private boolean isWithSubdirectories = true;
   private String fileFilter;
   private String customScopeName;
   private SearchScope customScope;
-  private boolean isCustomScope = false;
-  private boolean isMultiline = false;
+  private boolean isCustomScope;
+  private boolean isMultiline;
   private boolean mySearchInProjectFiles;
 
   public boolean isMultiline() {
@@ -131,7 +133,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  private boolean isPreserveCase = false;
+  private boolean isPreserveCase;
 
   /**
    * Copies all the settings from the specified model.
@@ -936,8 +938,19 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
     Pattern pattern = myPattern;
     if (pattern == PatternUtil.NOTHING) {
+      int flags = isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+
+      if (toFind.contains("\\n") && Patches.JDK_SOE_IN_REGEXP) { // if needed use DOT_ALL for modified pattern to avoid SOE
+        String modifiedStringToFind = StringUtil.replace(toFind, "\\n|.", ".");
+        modifiedStringToFind = StringUtil.replace(modifiedStringToFind, ".|\\n", ".");
+        
+        if (!modifiedStringToFind.equals(toFind)) {
+          flags |= Pattern.DOTALL;
+          toFind = modifiedStringToFind;
+        }
+      }
       try {
-        myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+        myPattern = pattern = Pattern.compile(toFind, flags);
       }
       catch (PatternSyntaxException e) {
         myPattern = pattern = null;

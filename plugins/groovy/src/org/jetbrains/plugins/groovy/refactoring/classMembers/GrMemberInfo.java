@@ -110,7 +110,7 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
 
 
     if (extractInterfacesDeep) {
-      extractSuperInterfaces(subclass, filter, result, ContainerUtil.<PsiClass>newHashSet());
+      extractSuperInterfaces(subclass, filter, result, ContainerUtil.newHashSet());
     }
     else {
       PsiClass[] interfaces = subclass.getInterfaces();

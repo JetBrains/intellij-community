@@ -24,10 +24,6 @@ import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: zolotov
- * Date: 8/9/13
- */
 public class EmmetAbbreviationCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,

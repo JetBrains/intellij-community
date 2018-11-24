@@ -29,9 +29,6 @@ import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.lang.reflect.Field;
 
-/**
- * User: spLeaner
- */
 public class MacUIUtil {
 
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));

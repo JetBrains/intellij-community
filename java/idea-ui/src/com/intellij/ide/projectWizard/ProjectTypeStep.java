@@ -81,12 +81,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
 
   public static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
-    new Convertor<FrameworkSupportInModuleProvider, String>() {
-      @Override
-      public String convert(FrameworkSupportInModuleProvider o) {
-        return o.getId();
-      }
-    };
+    o -> o.getId();
   public static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";

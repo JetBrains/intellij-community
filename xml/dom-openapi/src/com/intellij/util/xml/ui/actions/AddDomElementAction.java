@@ -39,9 +39,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class AddDomElementAction extends AnAction {
 
   public AddDomElementAction() {

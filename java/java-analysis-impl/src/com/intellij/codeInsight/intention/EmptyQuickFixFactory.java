@@ -73,6 +73,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(PsiAssignmentExpression expr) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass psiClass) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -385,6 +391,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createInsertThisFix(@NotNull PsiMethod constructor) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createInsertSuperFix(@NotNull PsiMethod psiMethod) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -679,6 +691,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
     return QuickFixes.EMPTY_FIX;
   }
 }

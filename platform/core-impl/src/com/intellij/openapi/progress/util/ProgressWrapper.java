@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Sep 26, 2007
- * Time: 1:56:28 PM
- */
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ModalityState;

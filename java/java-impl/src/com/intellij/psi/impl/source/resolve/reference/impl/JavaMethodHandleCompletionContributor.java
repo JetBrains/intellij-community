@@ -190,14 +190,12 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
                                    @NotNull Consumer<LookupElement> result) {
     final PsiField field = psiClass.findFieldByName(fieldName, false);
     if (field != null) {
-      final String typeText = getTypeText(field.getType(), field);
-      if (typeText != null) {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-        final PsiExpression expression = factory.createExpressionFromText(typeText + ".class", context);
+      final String typeText = getTypeText(field.getType());
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+      final PsiExpression expression = factory.createExpressionFromText(typeText + ".class", context);
 
-        final String shortType = PsiNameHelper.getShortClassName(typeText);
-        result.consume(lookupExpression(expression, PlatformIcons.CLASS_ICON, shortType + ".class", shortType));
-      }
+      final String shortType = PsiNameHelper.getShortClassName(typeText);
+      result.consume(lookupExpression(expression, PlatformIcons.CLASS_ICON, shortType + ".class", shortType));
     }
   }
 

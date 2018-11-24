@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,19 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
+import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.externalSystem.util.CompositeRunnable;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectFileStoreOptionManager;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,7 +61,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
  * @since 10/23/2014
  */
 @State(name = "ExternalProjectsManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
+public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable, ProjectFileStoreOptionManager {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
 
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
@@ -70,7 +76,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
   private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
-  private ExternalSystemProjectsWatcher myWatcher;
+  private ExternalSystemProjectsWatcherImpl myWatcher;
 
   public ExternalProjectsManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -85,6 +91,26 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     return (ExternalProjectsManagerImpl)service;
   }
 
+  @Override
+  public boolean isStoredExternally() {
+    return myState.storeExternally;
+  }
+
+  public void setStoreExternally(boolean value) {
+    myState.storeExternally = value;
+    // force re-save
+    try {
+      for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+        if (!module.isDisposed()) {
+          ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).stateChanged();
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+  }
+
   @NotNull
   @Override
   public Project getProject() {
@@ -97,6 +123,11 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
   public ExternalSystemTaskActivator getTaskActivator() {
     return myTaskActivator;
+  }
+
+  @Override
+  public ExternalSystemProjectsWatcher getExternalProjectsWatcher() {
+    return myWatcher;
   }
 
   public void registerView(@NotNull ExternalProjectsView externalProjectsView) {
@@ -122,7 +153,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   public void init() {
     if (isInitializationStarted.getAndSet(true)) return;
 
-    myWatcher = new ExternalSystemProjectsWatcher(myProject);
+    myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
     myWatcher.start();
 
     // load external projects data

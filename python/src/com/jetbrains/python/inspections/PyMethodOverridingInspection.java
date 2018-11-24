@@ -69,7 +69,7 @@ public class PyMethodOverridingInspection extends PyInspection {
             final String msg = PyBundle.message("INSP.signature.mismatch",
                                                 cls.getName() + "." + name + "()",
                                                 baseClass != null ? baseClass.getName() : "");
-            registerProblem(function.getParameterList(), msg, new PyChangeSignatureQuickFix(true));
+            registerProblem(function.getParameterList(), msg, PyChangeSignatureQuickFix.forMismatchingMethods(function, baseMethod));
           }
         }
       }

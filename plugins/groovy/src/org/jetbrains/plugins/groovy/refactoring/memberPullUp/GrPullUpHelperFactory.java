@@ -19,9 +19,6 @@ import com.intellij.refactoring.memberPullUp.PullUpData;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.memberPullUp.PullUpHelperFactory;
 
-/**
- * Created by Max Medvedev on 10/4/13
- */
 public class GrPullUpHelperFactory implements PullUpHelperFactory{
   @Override
   public PullUpHelper createPullUpHelper(PullUpData data) {

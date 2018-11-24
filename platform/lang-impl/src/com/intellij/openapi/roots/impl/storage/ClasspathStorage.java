@@ -255,23 +255,11 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
 
     provider = getProvider(storageId);
-    if (provider == null) {
-      module.clearOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
-      module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
-    }
-    else {
-      module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, storageId);
-      String root = provider.getContentRoot(model);
-      if (root == null) {
-        module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
-      }
-      else {
-        module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, root);
-      }
-    }
+    module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, provider == null ? null : storageId);
+    module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider == null ? null : provider.getContentRoot(model));
   }
 
-  public static void modulePathChanged(Module module, String newPath) {
+  public static void modulePathChanged(@NotNull Module module) {
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
     if (provider != null) {
       provider.modulePathChanged(module);
@@ -289,10 +277,6 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     @Override
     public ExternalizationSession startExternalization() {
       return new ExternalizationSession() {
-        @Override
-        public void setState(@Nullable Object component, @NotNull String componentName, @NotNull Object state) {
-        }
-
         @Nullable
         @Override
         public SaveSession createSaveSession() {

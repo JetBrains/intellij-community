@@ -141,17 +141,8 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
         if (id == null) {
           return;
         }
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-          @Override
-          public void consume(final DataContext context) {
-            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                ToolAction.runTool(id, context);
-              }
-            });
-          }
-        });
+        DataManager.getInstance().getDataContextFromFocus().doWhenDone(
+          (Consumer<DataContext>)context -> UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ToolAction.runTool(id, context)));
       }
     };
   }

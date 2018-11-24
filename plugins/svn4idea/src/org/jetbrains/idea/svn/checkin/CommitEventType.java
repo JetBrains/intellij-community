@@ -15,12 +15,6 @@
  */
 package org.jetbrains.idea.svn.checkin;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/25/13
- * Time: 6:51 PM
- */
 public enum CommitEventType {
   unknown("Unknown"),
   adding("Adding"),

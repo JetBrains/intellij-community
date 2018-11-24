@@ -201,7 +201,7 @@ public class MethodBytecodeUtil {
       dos.write(bytecodes); // code
       dos.writeShort(0); // exception_table_length
       List<Location> locations = withLineNumbers ? DebuggerUtilsEx.allLineLocations(method) : Collections.emptyList();
-      if (!locations.isEmpty()) {
+      if (!ContainerUtil.isEmpty(locations)) {
         dos.writeShort(1); // attributes_count
         dos.writeShort(cw.newUTF8("LineNumberTable"));
         dos.writeInt(2 * locations.size() + 2);

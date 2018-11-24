@@ -27,10 +27,8 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,8 +36,10 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Denis Zhdanov
@@ -141,5 +141,21 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     }
 
     return orderEntryDataMap;
+  }
+
+  @Override
+  protected void removeData(@NotNull Collection<? extends ExportableOrderEntry> toRemove,
+                            @NotNull Module module,
+                            @NotNull IdeModifiableModelsProvider modelsProvider) {
+
+    // do not remove 'invalid' module dependencies on unloaded modules
+    List<? extends ExportableOrderEntry> filteredList = toRemove.stream().filter(o -> {
+      if (o instanceof ModuleOrderEntry) {
+        String moduleName = ((ModuleOrderEntry)o).getModuleName();
+        return ModuleManager.getInstance(module.getProject()).getUnloadedModuleDescription(moduleName) == null;
+      }
+      return true;
+    }).collect(Collectors.toList());
+    super.removeData(filteredList, module, modelsProvider);
   }
 }

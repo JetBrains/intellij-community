@@ -39,12 +39,12 @@ public interface PatchEP {
    * @param path - before path, if exist, otherwise after path
    * @param commitContext
    */
-  void consumeContent(@NotNull final String path, @NotNull final CharSequence content, CommitContext commitContext);
+  void consumeContent(@NotNull final String path, @NotNull final CharSequence content, @Nullable CommitContext commitContext);
   /**
    * @param path - before path, if exist, otherwise after path
    * @param commitContext
    */
   void consumeContentBeforePatchApplied(@NotNull final String path,
                                         @NotNull final CharSequence content,
-                                        CommitContext commitContext);
+                                        @Nullable CommitContext commitContext);
 }

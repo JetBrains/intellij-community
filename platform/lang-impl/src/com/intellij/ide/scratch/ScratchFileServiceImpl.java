@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -124,20 +123,15 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
         return FileDocumentManager.getInstance().getDocument(file) != null;
       }
     };
-    ProjectManagerAdapter projectListener = new ProjectManagerAdapter() {
-      @Override
-      public void projectOpened(Project project) {
-        project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
-        FileEditorManager editorManager = FileEditorManager.getInstance(project);
-        for (VirtualFile virtualFile : editorManager.getOpenFiles()) {
-          editorListener.fileOpened(editorManager, virtualFile);
-        }
-      }
-    };
+
+    // handle all previously opened projects (as we are service, lazily created)
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      projectListener.projectOpened(project);
+      FileEditorManager editorManager = FileEditorManager.getInstance(project);
+      for (VirtualFile virtualFile : editorManager.getOpenFiles()) {
+        editorListener.fileOpened(editorManager, virtualFile);
+      }
     }
-    messageBus.connect().subscribe(ProjectManager.TOPIC, projectListener);
+    messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
   }
 
   @NotNull
@@ -295,7 +289,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
         return VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, StringUtil.notNullize(ext));
       }
       else {
-        return dir.createChildData(LocalFileSystem.getInstance(), fileNameExt);
+        return dir.findOrCreateChildData(LocalFileSystem.getInstance(), fileNameExt);
       }
     });
   }

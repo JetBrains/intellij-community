@@ -31,10 +31,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.Arrays;
 
-/**
- * User: anna
- * Date: 1/16/13
- */
 class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReferenceProvider {
   private static final Logger LOG = Logger.getInstance(JavaFxEventHandlerReferenceProvider.class);
 

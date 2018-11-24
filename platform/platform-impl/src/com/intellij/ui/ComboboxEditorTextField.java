@@ -31,9 +31,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * User: spLeaner
- */
 public class ComboboxEditorTextField extends EditorTextField {
 
   public static final Border EDITOR_TEXTFIELD_BORDER = new FixedComboBoxEditor.MacComboBoxEditorBorder(false) {

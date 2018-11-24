@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 30-Apr-2008
- */
 package com.intellij.refactoring;
 
 import com.intellij.psi.*;

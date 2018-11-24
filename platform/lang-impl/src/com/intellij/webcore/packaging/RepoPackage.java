@@ -5,9 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * User: catherine
- */
 public class RepoPackage implements Comparable {
   private final String myName;
   @Nullable final String myRepoUrl;

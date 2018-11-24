@@ -12,10 +12,7 @@ import java.util.function.Function;
 
 class Test {
   {
-    valueOf(processFirst(<error descr="no instance(s) of type variable(s)  exist so that Integer conforms to char[]
-inference variable V has incompatible bounds:
- lower bounds: Integer
-upper bounds: Object, char[]">x -> x</error>));
+    valueOf(processFirst(x -> <error descr="Bad return type in lambda expression: Integer cannot be converted to V">x</error>));
   }
 
   public static <V> V processFirst(Function<Integer,V> f){

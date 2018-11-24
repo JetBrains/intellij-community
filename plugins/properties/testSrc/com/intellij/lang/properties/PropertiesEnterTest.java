@@ -16,6 +16,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -44,12 +45,15 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
   public void testValue() throws Exception { doTest(); }
   public void testBackslash() throws Exception { doTest(); }
   public void testBeforeComment() throws Exception { doTest(); }
-  public void testPerformance() throws Exception {
-    configureByFile(BASE_PATH + getTestName(false)+".properties");
-    PlatformTestUtil.startPerformanceTest("Property files editing", 1000, () -> {
+
+  public void testPerformance() {
+    String line = "some.relatively.long.property.name=And here's some property value for that really unique key, nice to have\n";
+    String text = StringUtil.repeat(line, 20000) + "<caret>\n" + StringUtil.repeat(line, 10000);
+    configureFromFileText("performance.properties", text);
+    PlatformTestUtil.startPerformanceTest("Property files editing", 2500, () -> {
       type("aaaa=bbb");
       PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   private void doTest() throws Exception {

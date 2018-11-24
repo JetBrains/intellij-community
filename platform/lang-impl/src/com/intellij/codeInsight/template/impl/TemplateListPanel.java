@@ -164,9 +164,25 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     templateSettings.setTemplates(mutatorHelper.apply(templateGroups, (original, copied) -> {
-      if (!original.getElements().equals(copied.getElements())) {
+      if (original.isModified()) {
+        return;
+      }
+
+      List<TemplateImpl> originalElements = original.getElements();
+      List<TemplateImpl> copiedElements = copied.getElements();
+      if (!originalElements.equals(copiedElements)) {
         original.setModified(true);
       }
+      else {
+        // TemplateImpl.equals doesn't compare context and  I (develar) don't want to risk and change this behavior, so, we compare it explicitly
+        for (int i = 0; i < originalElements.size(); i++) {
+          if (originalElements.get(i).getTemplateContext().getDifference(copiedElements.get(i).getTemplateContext()) != null) {
+            original.setModified(true);
+            break;
+          }
+        }
+      }
+
     }));
     templateSettings.setDefaultShortcutChar(myExpandByDefaultPanel.getSelectedChar());
   }

@@ -79,7 +79,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final Sdk sdk = getSdk();
 
     final String condaExecutable = PyCondaPackageService.getCondaExecutable(sdk.getHomeDirectory());
-    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
+    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
 
     final String path = getCondaDirectory();
     if (path == null) throw new PyExecutionException("Empty conda name for " + sdk.getHomePath(), command, arguments);
@@ -140,7 +140,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       if (line.startsWith("#")) continue;
       final List<String> fields = StringUtil.split(line, "=");
       if (fields.size() < 3) {
-        throw new PyExecutionException("Invalid conda output format", "conda", Collections.<String>emptyList());
+        throw new PyExecutionException("Invalid conda output format", "conda", Collections.emptyList());
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
@@ -169,7 +169,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @NotNull
   public static String createVirtualEnv(@NotNull String destinationDir, String version) throws ExecutionException {
     final String condaExecutable = PyCondaPackageService.getSystemCondaExecutable();
-    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
+    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir, "-y",
                                                             "python=" + version);

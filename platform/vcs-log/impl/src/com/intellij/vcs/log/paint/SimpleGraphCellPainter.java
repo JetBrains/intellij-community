@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.paint;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -239,12 +238,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       }
     }
 
-    List<PrintElement> selected = ContainerUtil.filter(printElements, new Condition<PrintElement>() {
-      @Override
-      public boolean value(PrintElement printElement) {
-        return printElement.isSelected();
-      }
-    });
+    List<PrintElement> selected = ContainerUtil.filter(printElements, printElement -> printElement.isSelected());
     for (PrintElement printElement : selected) {
       drawElement(g2, printElement, true);
     }

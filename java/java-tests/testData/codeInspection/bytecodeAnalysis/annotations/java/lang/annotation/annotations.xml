@@ -1,4 +1,24 @@
 <root>
+    <item name='java.lang.annotation.Annotation java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.annotation.AnnotationFormatError AnnotationFormatError(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.annotation.AnnotationFormatError AnnotationFormatError(java.lang.String, java.lang.Throwable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.annotation.AnnotationFormatError AnnotationFormatError(java.lang.Throwable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.annotation.AnnotationTypeMismatchException java.lang.String foundType()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

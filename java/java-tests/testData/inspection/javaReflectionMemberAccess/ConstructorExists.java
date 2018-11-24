@@ -24,6 +24,10 @@ class ConstructorExists {
 
     C.class.getConstructor(int.class);
     C.class.getConstructor<warning descr="Cannot resolve constructor with specified argument types">(boolean.class)</warning>;
+
+    A.class.getConstructor(Integer.TYPE);
+    A.class.getConstructor<warning descr="Constructor is not public">(Boolean.TYPE)</warning>;
+    A.class.getConstructor<warning descr="Cannot resolve constructor with specified argument types">(Double.TYPE)</warning>;
   }
 
   static class A {

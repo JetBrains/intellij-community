@@ -398,7 +398,9 @@ public class BreakpointManager {
         }
       }
 
-      DebuggerInvocationUtil.invokeLater(myProject, this::updateBreakpointsUI);
+      if (!myProject.isDefault()) {
+        DebuggerInvocationUtil.invokeLater(myProject, this::updateBreakpointsUI);
+      }
     });
 
     myUIProperties.clear();

@@ -43,25 +43,19 @@ import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   private boolean myCanExpand;
 
-  private static final Convertor<TreePath, String> TO_STRING = new Convertor<TreePath, String>() {
-    @Override
-    public String convert(TreePath object) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
-      return node.toString();
-    }
+  private static final Convertor<TreePath, String> TO_STRING = object -> {
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
+    return node.toString();
   };
   private final Convertor<TreePath, String> myToStringConvertor;
-  public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = new Convertor<TreePath, String>() {
-    @Override
-    public String convert(TreePath path) {
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      final Object userObject = node.getUserObject();
-      if (userObject instanceof NodeDescriptor) {
-        NodeDescriptor descr = (NodeDescriptor)userObject;
-        return descr.toString();
-      }
-      return TO_STRING.convert(path);
+  public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = path -> {
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+    final Object userObject = node.getUserObject();
+    if (userObject instanceof NodeDescriptor) {
+      NodeDescriptor descr = (NodeDescriptor)userObject;
+      return descr.toString();
     }
+    return TO_STRING.convert(path);
   };
 
   public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toStringConvertor) {

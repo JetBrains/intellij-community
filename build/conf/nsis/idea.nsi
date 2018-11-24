@@ -1,6 +1,7 @@
 !verbose 2
 
 Unicode true
+ManifestDPIAware true
 !addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
 !addincludedir "${NSIS_DIR}\Include"
 
@@ -755,7 +756,7 @@ createRegistration:
   call OMWriteRegStr
   StrCpy $1 "Applications\${PRODUCT_EXE_FILE}\shell\open\command"
   StrCpy $2 ""
-  StrCpy $3 '$productLauncher "%1"'
+  StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
 FunctionEnd
 
@@ -775,7 +776,7 @@ skip_backup:
 command_exists:
  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" " $productLauncher,0"
  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
-                  '$productLauncher "%1"'
+                  '"$productLauncher" "%1"'
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -858,7 +859,7 @@ done:
 "${Index}-Skip:"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$productLauncher,0"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" \
-    '$productLauncher "%1"'
+    '"$productLauncher" "%1"'
 !undef Index
 
 skip_ipr:
@@ -1142,6 +1143,19 @@ FunctionEnd
 
 
 Section "Uninstall"
+  StrCpy $0 $baseRegKey
+  StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
+  StrCpy $2 "InstallLocation"
+  Call un.OMReadRegStr
+  StrCmp $INSTDIR "$3\bin" check_if_IDE_in_use invalid_installation_dir
+invalid_installation_dir:
+  ;check if uninstaller runs from not installation folder
+  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" check_if_IDE_in_use 0
+  goto end_of_uninstall
+check_if_IDE_in_use:
   ;check if the uninstalled application is running
   Call un.checkIfIDEInUse
   ; Uninstaller is in the \bin directory, we need upper level dir

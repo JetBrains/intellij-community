@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="external-system-rt" exported="" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

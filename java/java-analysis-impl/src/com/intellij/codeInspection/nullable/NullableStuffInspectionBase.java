@@ -19,10 +19,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -97,6 +100,14 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       @Override
       public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
         checkMethodReference(expression, holder);
+
+        JavaResolveResult result = expression.advancedResolve(false);
+        PsiElement target = result.getElement();
+        if (target instanceof PsiMethod) {
+          checkCollectionNullityOnAssignment(expression, 
+                                             LambdaUtil.getFunctionalInterfaceReturnType(expression),
+                                             result.getSubstitutor().substitute(((PsiMethod)target).getReturnType()));
+        }
       }
 
       @Override
@@ -155,6 +166,128 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           }
         }
         return false;
+      }
+
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+
+        checkNullableNotNullInstantiationConflict(reference);
+      }
+
+      private void checkNullableNotNullInstantiationConflict(PsiJavaCodeReferenceElement reference) {
+        PsiElement element = reference.resolve();
+        if (element instanceof PsiClass) {
+          PsiTypeParameter[] typeParameters = ((PsiClass)element).getTypeParameters();
+          PsiTypeElement[] typeArguments = getReferenceTypeArguments(reference);
+          if (typeParameters.length > 0 && typeParameters.length == typeArguments.length) {
+            for (int i = 0; i < typeParameters.length; i++) {
+              if (isNullityConflict(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i]), typeArguments[i].getType())) {
+                holder.registerProblem(typeArguments[i],
+                                       "Nullable type argument where non-null one is expected",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                
+              }
+            }
+          }
+        }
+      }
+
+      private PsiTypeElement[] getReferenceTypeArguments(PsiJavaCodeReferenceElement reference) {
+        PsiReferenceParameterList typeArgList = reference.getParameterList();
+        return typeArgList == null ? PsiTypeElement.EMPTY_ARRAY : typeArgList.getTypeParameterElements();
+      }
+
+      @Override
+      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        checkCollectionNullityOnAssignment(expression.getOperationSign(), expression.getLExpression().getType(), expression.getRExpression());
+      }
+
+      @Override
+      public void visitLocalVariable(PsiLocalVariable variable) {
+        PsiIdentifier identifier = variable.getNameIdentifier();
+        if (identifier != null) {
+          checkCollectionNullityOnAssignment(identifier, variable.getType(), variable.getInitializer());
+        }
+      }
+
+      @Override
+      public void visitReturnStatement(PsiReturnStatement statement) {
+        PsiExpression returnValue = statement.getReturnValue();
+        if (returnValue == null) return;
+
+        checkCollectionNullityOnAssignment(statement.getReturnValue(), PsiTypesUtil.getMethodReturnType(statement), returnValue);
+      }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+        super.visitLambdaExpression(lambda);
+        PsiElement body = lambda.getBody();
+        if (body instanceof PsiExpression) {
+          checkCollectionNullityOnAssignment(body, LambdaUtil.getFunctionalInterfaceReturnType(lambda), (PsiExpression)body);
+        }
+      }
+
+      @Override
+      public void visitCallExpression(PsiCallExpression callExpression) {
+        PsiExpressionList argList = callExpression.getArgumentList();
+        JavaResolveResult result = callExpression.resolveMethodGenerics();
+        PsiMethod method = (PsiMethod)result.getElement();
+        if (method == null || argList == null) return;
+
+        PsiSubstitutor substitutor = result.getSubstitutor();
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        PsiExpression[] arguments = argList.getExpressions();
+        for (int i = 0; i < arguments.length; i++) {
+          PsiExpression argument = arguments[i];
+          if (i < parameters.length &&
+              (i < parameters.length - 1 || !MethodCallInstruction.isVarArgCall(method, substitutor, arguments, parameters))) {
+            checkCollectionNullityOnAssignment(argument, substitutor.substitute(parameters[i].getType()), argument);
+          }
+        }
+      }
+
+      private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
+                                                      @Nullable PsiType expectedType, 
+                                                      @Nullable PsiExpression assignedExpression) {
+        if (assignedExpression == null) return;
+
+        checkCollectionNullityOnAssignment(errorElement, expectedType, assignedExpression.getType());
+      }
+
+      private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
+                                                      @Nullable PsiType expectedType,
+                                                      @Nullable PsiType assignedType) {
+        if (isNullableNotNullCollectionConflict(errorElement, expectedType, assignedType)) {
+          holder.registerProblem(errorElement,
+                                 "Assigning a collection of nullable elements into a collection of non-null elements",
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+
+        }
+      }
+
+      private boolean isNullableNotNullCollectionConflict(PsiElement place,
+                                                          @Nullable PsiType expectedType,
+                                                          @Nullable PsiType assignedType) {
+
+        if (isNullityConflict(JavaGenericsUtil.getCollectionItemType(expectedType, place.getResolveScope()),
+                              JavaGenericsUtil.getCollectionItemType(assignedType, place.getResolveScope()))) {
+          return true;
+        }
+
+        for (int i = 0; i <= 1; i++) {
+          PsiType expectedArg = PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
+          PsiType assignedArg = PsiUtil.substituteTypeParameter(assignedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
+          if (isNullityConflict(expectedArg, assignedArg)) {
+            return true;
+          }
+        }
+        
+        return false;
+      }
+
+      private boolean isNullityConflict(PsiType expected, PsiType assigned) {
+        return DfaPsiUtil.getTypeNullability(expected) == Nullness.NOT_NULL && DfaPsiUtil.getTypeNullability(assigned) == Nullness.NULLABLE;
       }
     };
   }
@@ -390,6 +523,19 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       PsiAnnotation annotation = isDeclaredNotNull == null ? isDeclaredNullable : isDeclaredNotNull;
       reportPrimitiveType(holder, annotation, annotation, parameter);
     }
+    if (parameter.getParent() instanceof PsiForeachStatement) {
+      PsiExpression iteratedValue = ((PsiForeachStatement)parameter.getParent()).getIteratedValue();
+      Nullness itemTypeNullability = DfaPsiUtil.getTypeNullability(iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue));
+      if (isDeclaredNotNull != null && itemTypeNullability == Nullness.NULLABLE) {
+        holder.registerProblem(isDeclaredNotNull, "Loop parameter can be null",
+                               new RemoveAnnotationQuickFix(isDeclaredNotNull, null));
+      }
+      else if (isDeclaredNullable != null && itemTypeNullability == Nullness.NOT_NULL) {
+        holder.registerProblem(isDeclaredNullable, "Loop parameter is always not-null",
+                               new RemoveAnnotationQuickFix(isDeclaredNullable, null));
+      }
+    }
+
     return new Annotated(isDeclaredNotNull != null,isDeclaredNullable != null);
   }
 
@@ -722,6 +868,12 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     @NotNull
     public String getName() {
       return InspectionsBundle.message("annotate.overridden.methods.as.notnull", ClassUtil.extractClassName(myAnnotation));
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
     }
   }
 }

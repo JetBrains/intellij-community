@@ -23,7 +23,9 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.PsiTestUtil
 import groovy.transform.CompileStatic
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 /**
  * @author peter
  */
@@ -35,7 +37,7 @@ class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
     PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
     addGroovyLibrary(myModule)
     PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir('src'))
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir('res'), JavaResourceRootType.RESOURCE)
+    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir('res'), (JpsModuleSourceRootType<JavaResourceRootProperties>)JavaResourceRootType.RESOURCE)
   }
 
   private List<CompilerMessage> checkResources() {
@@ -58,7 +60,7 @@ class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
     ModuleRootModificationUtil.addDependency(myModule, depModule)
     addGroovyLibrary(depModule)
     PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/src'))
-    PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/res'), JavaResourceRootType.RESOURCE)
+    PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/res'), (JpsModuleSourceRootType<JavaResourceRootProperties>)JavaResourceRootType.RESOURCE)
 
     myFixture.addFileToProject('src/a.groovy', 'class SrcClass {}')
     myFixture.addFileToProject('res/b.groovy', 'interface ThisResource {}')
@@ -81,7 +83,7 @@ class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
     Module depModule = addModule("dependent", false)
     ModuleRootModificationUtil.addDependency(depModule, myModule)
     addGroovyLibrary(depModule)
-    PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/res'), JavaResourceRootType.RESOURCE)
+    PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/res'), (JpsModuleSourceRootType<JavaResourceRootProperties>)JavaResourceRootType.RESOURCE)
 
     myFixture.addFileToProject('res/Util.groovy', '@groovy.transform.CompileStatic class C1 {{ println Xxx1.name }}')
     myFixture.addFileToProject('dependent/res/Usage.groovy', '@groovy.transform.CompileStatic class C2 {{ println Xxx2.name }}')

@@ -18,9 +18,8 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,8 +35,9 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     myProviders = Collections.singletonList(new MyJsonSchemaFileProvider());
   }
 
+  @NotNull
   @Override
-  public List<JsonSchemaFileProvider> getProviders(@Nullable Project project) {
+  public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
     return myProviders;
   }
 
@@ -47,7 +47,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
     @Override
     public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
-      return JsonSchemaFileType.INSTANCE.equals(file.getFileType());
+      return JsonSchemaService.Impl.get(project).isSchemaFile(file);
     }
 
     @NotNull
@@ -64,11 +64,6 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     @Override
     public SchemaType getSchemaType() {
       return SchemaType.schema;
-    }
-
-    @Override
-    public int getOrder() {
-      return Orders.CORE;
     }
   }
 }

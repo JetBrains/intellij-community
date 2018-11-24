@@ -51,6 +51,9 @@ public class JdkBundle {
   @NotNull
   private static final Pattern ARCH_64_BIT_PATTERN = Pattern.compile(".*64-Bit.*", Pattern.MULTILINE);
 
+  @NotNull
+  private static final Pattern BUILD_STR_PATTERN = Pattern.compile(".*\\([^-]*-(.*)\\).*", Pattern.MULTILINE);
+
   @NotNull public static final Bitness runtimeBitness = is64BitJVM(System.getProperty("java.vm.name")) ? Bitness.x64 : Bitness.x32;
 
   private static boolean is64BitRuntime() { return runtimeBitness == Bitness.x64; }
@@ -152,10 +155,12 @@ public class JdkBundle {
   }
 
   public String getVisualRepresentation() {
-    StringBuilder representation = new StringBuilder(myBundleName);
+    StringBuilder representation = new StringBuilder();
     if (myVersionUpdate != null) {
-      representation.append(myVersionUpdate.first).append(myVersionUpdate.second > 0 ? "_" + myVersionUpdate.second : "");
+      representation.append(myVersionUpdate.first).append(myVersionUpdate.second > 0 ? "_" + myVersionUpdate.second : "").append(" ");
     }
+
+    representation.append(myBundleName);
 
     if (myBoot || myBundled) {
       representation.append(" [");
@@ -206,7 +211,7 @@ public class JdkBundle {
 
   @NotNull
   String getNameVersion() {
-    return myBundleName + (myVersionUpdate != null ? myVersionUpdate.first.toString() : "");
+    return myBundleName.replaceFirst("\\(.*\\)", "") + (myVersionUpdate != null ? myVersionUpdate.first.toString() : "");
   }
 
   private static Pair<Pair<String, Boolean>, Pair<Version, Integer>> getJDKNameArchVersionAndUpdate(File jvm, String homeSubPath) {
@@ -245,6 +250,13 @@ public class JdkBundle {
       String versionLine = outputLines.get(0);
       versionAndUpdate = VersionUtil.parseNewVersionAndUpdate(versionLine, LINE_TO_VERSION_PATTERNS);
       displayVersion = versionLine.replaceFirst("\".*\"", "");
+      displayVersion = displayVersion.replaceFirst("version", "");
+      if (outputLines.size() >= 2) {
+        Matcher matcher = BUILD_STR_PATTERN.matcher(outputLines.get(1));
+        if (matcher.find()) {
+          displayVersion += "(" + matcher.group(1) + ")";
+        }
+      }
       if (outputLines.size() >= 3) {
         is64Bit = is64BitJVM(outputLines.get(2));
       }

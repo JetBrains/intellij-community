@@ -22,9 +22,6 @@ import com.jetbrains.python.PyBundle;
 
 import java.util.List;
 
-/**
- * User: catherine
- */
 
 public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   public static final String PYTHONS_UNITTEST_NAME = PyBundle.message("runcfg.unittest.display_name");

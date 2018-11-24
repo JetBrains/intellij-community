@@ -90,7 +90,7 @@ public class ClosureGenerator {
     final GrParameter[] parameters = block.getAllParameters();
     GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider(), context);
 
-    Collection<GrStatement> myExitPoints = !PsiType.VOID.equals(returnType) ? ControlFlowUtils.collectReturns(block) : Collections.<GrStatement>emptySet();
+    Collection<GrStatement> myExitPoints = !PsiType.VOID.equals(returnType) ? ControlFlowUtils.collectReturns(block) : Collections.emptySet();
     boolean shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType) &&
                                      MissingReturnInspection.methodMissesSomeReturns(block, MissingReturnInspection.ReturnStatus.shouldNotReturnValue);
 

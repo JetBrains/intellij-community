@@ -22,12 +22,14 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
@@ -46,6 +48,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class MavenFoldersImporter {
   private final MavenProject myMavenProject;
@@ -98,7 +101,11 @@ public class MavenFoldersImporter {
       configSourceFolders();
       configOutputFolders();
     }
-    configGeneratedAndExcludedFolders();
+    configGeneratedFolders();
+    if (!FileUtil.namesEqual("pom", myMavenProject.getFile().getNameWithoutExtension())) {
+      generateNewContentRoots();
+    }
+    configExcludedFolders();
   }
 
   private void configSourceFolders() {
@@ -172,7 +179,7 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void configGeneratedAndExcludedFolders() {
+  private void configGeneratedFolders() {
     File targetDir = new File(myMavenProject.getBuildDirectory());
 
     String generatedDir = myMavenProject.getGeneratedSourcesDirectory(false);
@@ -197,7 +204,43 @@ public class MavenFoldersImporter {
         else if (FileUtil.pathsEqual(generatedDirTest, f.getPath())) {
           configGeneratedSourceFolder(f, JavaSourceRootType.TEST_SOURCE);
         }
-        else {
+      }
+    }
+  }
+
+  private void generateNewContentRoots() {
+    ModifiableRootModel rootModel = myModel.getRootModel();
+    for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+      rootModel.removeContentEntry(contentEntry);
+    }
+
+    String[] sourceRoots = myModel.getSourceRootUrls(true);
+    ContainerUtil.sort(sourceRoots, FileUtil::comparePaths);
+
+    Set<String> topLevelSourceRoots = ContainerUtil.newHashSet();
+    for (String sourceRoot : sourceRoots) {
+      if (topLevelSourceRoots.stream().noneMatch(root -> FileUtil.isAncestor(root, sourceRoot, false))) {
+        topLevelSourceRoots.add(sourceRoot);
+      }
+    }
+
+    for (String sourceRoot : topLevelSourceRoots) {
+      rootModel.addContentEntry(sourceRoot);
+    }
+  }
+
+  private void configExcludedFolders() {
+    File targetDir = new File(myMavenProject.getBuildDirectory());
+
+    String generatedDir = myMavenProject.getGeneratedSourcesDirectory(false);
+    String generatedDirTest = myMavenProject.getGeneratedSourcesDirectory(true);
+
+    File[] targetChildren = targetDir.listFiles();
+    if (targetChildren != null) {
+      for (File f : targetChildren) {
+        if (!f.isDirectory()) continue;
+
+        if (!FileUtil.pathsEqual(generatedDir, f.getPath()) && !FileUtil.pathsEqual(generatedDirTest, f.getPath())) {
           if (myImportingSettings.isExcludeTargetFolder()) {
             if (myModel.hasRegisteredSourceSubfolder(f)) continue;
             if (myModel.isAlreadyExcluded(f)) continue;

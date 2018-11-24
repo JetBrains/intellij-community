@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,15 @@ public class PyRemoveParameterQuickFixTest extends PyQuickFixTestCase {
     finally {
       PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
+  }
 
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementation() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON35);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClass() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON35);
   }
 }

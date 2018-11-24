@@ -25,7 +25,10 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,7 +189,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   @NotNull
   @Override
   public Collection<KeyType> getExpandedItems() {
-    return myKey == null ? Collections.<KeyType>emptyList() : Collections.singleton(myKey);
+    return myKey == null ? Collections.emptyList() : Collections.singleton(myKey);
   }
 
   protected void updateCurrentSelection() {

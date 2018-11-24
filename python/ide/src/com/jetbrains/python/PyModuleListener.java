@@ -16,7 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.ProjectTopics;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
@@ -33,7 +33,7 @@ public class PyModuleListener {
     messageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
-        final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
+        final RunManager runManager = RunManager.getInstance(project);
         for (RunnerAndConfigurationSettings configuration : runManager.getAllSettings()) {
           if (configuration.getConfiguration() instanceof AbstractPythonRunConfiguration) {
             final Module configModule = ((AbstractPythonRunConfiguration)configuration.getConfiguration()).getModule();

@@ -16,6 +16,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.NullnessUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -189,8 +191,12 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       return isOptionalGetCall(e.getParent().getParent(), optionalVariable);
     });
     if(!hasNoBadRefs) return ProblemType.NONE;
-    if(hasOptionalReference.get() && lambdaCandidate instanceof PsiExpression) return ProblemType.WARNING;
-    return ProblemType.INFO;
+    if (!hasOptionalReference.get() || !(lambdaCandidate instanceof PsiExpression)) return ProblemType.INFO;
+    PsiExpression expression = (PsiExpression)lambdaCandidate;
+    if (!PsiType.VOID.equals(expression.getType()) && NullnessUtil.getExpressionNullness(expression) != Nullness.NOT_NULL) {
+      return ProblemType.INFO;
+    }
+    return ProblemType.WARNING;
   }
 
   @NotNull

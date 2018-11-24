@@ -40,14 +40,11 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Key;
@@ -75,7 +72,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware {
+public class AnnotateDiffViewerAction {
   private static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
 
   private static final Key<boolean[]> ANNOTATIONS_SHOWN_KEY = Key.create("Diff.AnnotateAction.AnnotationShown");
@@ -84,19 +81,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     new TwosideAnnotatorFactory(), new OnesideAnnotatorFactory(), new UnifiedAnnotatorFactory(),
     new ThreesideAnnotatorFactory(), new TextMergeAnnotatorFactory()
   };
-
-  public AnnotateDiffViewerAction() {
-    ActionUtil.copyFrom(this, "Annotate");
-    setEnabledInModalContext(true);
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    boolean enabled = isEnabled(e);
-    e.getPresentation().setVisible(enabled);
-    e.getPresentation().setEnabled(enabled && !isSuspended(e));
-  }
 
   @Nullable
   @SuppressWarnings("unchecked")
@@ -164,17 +148,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     else {
       doAnnotate(data.annotator);
     }
-  }
-
-  @Override
-  public boolean isSelected(AnActionEvent e) {
-    EventData data = collectEventData(e);
-    return data != null && data.annotator.isAnnotationShown();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    perform(e, state);
   }
 
   private static void doAnnotate(@NotNull final ViewerAnnotator annotator) {

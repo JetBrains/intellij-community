@@ -26,6 +26,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -46,6 +47,13 @@ public class _LastInSuiteTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     Disposer.setDebugMode(true);
+  }
+
+  @Override
+  public String getName() {
+    String name = super.getName();
+    String buildConf = System.getProperty("teamcity.buildConfName");
+    return buildConf == null ? name : name + "[" + buildConf + "]";
   }
 
   public void testProjectLeak() throws Exception {
@@ -71,8 +79,8 @@ public class _LastInSuiteTest extends TestCase {
         throw new RuntimeException(e);
       }
 
-      // disposes default projects too
       PlatformTestUtil.cleanupAllProjects();
+      
       ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
       System.out.println(application.writeActionStatistics());
       System.out.println(ActionUtil.ActionPauses.STAT.statistics());
@@ -80,19 +88,21 @@ public class _LastInSuiteTest extends TestCase {
       System.out.println("ProcessIOExecutorService threads created: " +
                          ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
 
-      application.setDisposeInProgress(true);
-      LightPlatformTestCase.disposeApplication();
-      UIUtil.dispatchAllInvocationEvents();
+      try {
+        LeakHunter.checkNonDefaultProjectLeak();
+      }
+      catch (AssertionError | Exception e) {
+        captureMemorySnapshot();
+        ExceptionUtil.rethrowAllAsUnchecked(e);
+      }
+      finally {
+        application.setDisposeInProgress(true);
+        LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
+      }
+
     });
 
-    try {
-      LeakHunter.checkProjectLeak();
-      Disposer.assertIsEmpty(true);
-    }
-    catch (AssertionError | Exception e) {
-      captureMemorySnapshot();
-      throw e;
-    }
     try {
       Disposer.assertIsEmpty(true);
     }

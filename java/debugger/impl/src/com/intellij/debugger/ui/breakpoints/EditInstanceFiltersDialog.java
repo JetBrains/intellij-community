@@ -27,11 +27,6 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: lex
- * Date: Aug 29, 2003
- * Time: 2:44:38 PM
- */
 public class EditInstanceFiltersDialog extends DialogWrapper{
   private InstanceFilterEditor myInstanceFilterEditor;
   private final Project myProject;

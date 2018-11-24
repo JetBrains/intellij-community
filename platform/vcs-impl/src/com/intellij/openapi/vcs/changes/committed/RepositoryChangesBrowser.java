@@ -55,7 +55,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   private EditSourceAction myEditSourceAction;
 
   public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
-    this(project, changeLists, Collections.<Change>emptyList(), null);
+    this(project, changeLists, Collections.emptyList(), null);
   }
 
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,

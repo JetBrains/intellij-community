@@ -42,10 +42,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 10/7/11
- */
 public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myTagMode;

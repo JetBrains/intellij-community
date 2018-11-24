@@ -3,6 +3,11 @@ package com.jetbrains.edu.coursecreator.stepik;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -10,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudySerializationUtils;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -17,10 +23,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
-import com.jetbrains.edu.learning.stepic.EduStepicNames;
-import com.jetbrains.edu.learning.stepic.StepicUser;
-import com.jetbrains.edu.learning.stepic.StepicWrappers;
+import com.jetbrains.edu.learning.stepic.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -38,8 +41,11 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.edu.learning.StudyUtils.showOAuthDialog;
+
 public class CCStepicConnector {
   private static final Logger LOG = Logger.getInstance(CCStepicConnector.class.getName());
+  private static final String FAILED_TITLE = "Failed to publish ";
 
   private CCStepicConnector() {
   }
@@ -67,9 +73,12 @@ public class CCStepicConnector {
   }
 
   private static void postCourse(final Project project, @NotNull Course course) {
+    if (!checkIfAuthorized(project, "post course")) return;
+
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText("Uploading course to " + EduStepicNames.STEPIC_URL);
+      indicator.setIndeterminate(false);
     }
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/courses");
 
@@ -101,7 +110,9 @@ public class CCStepicConnector {
       final StatusLine line = response.getStatusLine();
       EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
-        LOG.error("Failed to push " + responseString);
+        final String message = FAILED_TITLE + "course ";
+        LOG.error(message + responseString);
+        showErrorNotification(project, FAILED_TITLE, responseString);
         return;
       }
       final RemoteCourse postedCourse = new Gson().fromJson(responseString, StepicWrappers.CoursesContainer.class).courses.get(0);
@@ -109,34 +120,55 @@ public class CCStepicConnector {
       postedCourse.setAuthors(course.getAuthors());
       postedCourse.setCourseMode(CCUtils.COURSE_MODE);
       postedCourse.setLanguage(course.getLanguageID());
-      final int sectionId = postModule(postedCourse.getId(), 1, String.valueOf(postedCourse.getName()));
+      final int sectionId = postModule(postedCourse.getId(), 1, String.valueOf(postedCourse.getName()), project);
       int position = 1;
       for (Lesson lesson : course.getLessons()) {
         if (indicator != null) {
           indicator.checkCanceled();
+          indicator.setText2("Publishing lesson " + lesson.getIndex());
         }
         final int lessonId = postLesson(project, lesson);
-        postUnit(lessonId, position, sectionId);
+        postUnit(lessonId, position, sectionId, project);
+        if (indicator != null) {
+          indicator.setFraction((double)lesson.getIndex()/course.getLessons().size());
+          indicator.checkCanceled();
+        }
         position += 1;
       }
       ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(course, project, postedCourse.getId()));
       StudyTaskManager.getInstance(project).setCourse(postedCourse);
+      showNotification(project, "Course published");
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
     }
   }
 
+  private static boolean checkIfAuthorized(@NotNull Project project, @NotNull String failedActionName) {
+    boolean isAuthorized = StudySettings.getInstance().getUser() != null;
+    if (!isAuthorized) {
+      showStepicNotification(project, NotificationType.ERROR, failedActionName);
+      return false;
+    }
+    return true;
+  }
+
   private static void postAdditionalFiles(Course course, @NotNull final Project project, int id) {
     final Lesson lesson = CCUtils.createAdditionalLesson(course, project);
     if (lesson != null) {
-      final int sectionId = postModule(id, 2, EduNames.PYCHARM_ADDITIONAL);
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText2("Publishing additional files");
+      }
+      final int sectionId = postModule(id, 2, EduNames.PYCHARM_ADDITIONAL, project);
       final int lessonId = postLesson(project, lesson);
-      postUnit(lessonId, 1, sectionId);
+      postUnit(lessonId, 1, sectionId, project);
     }
   }
 
-  public static void postUnit(int lessonId, int position, int sectionId) {
+  public static void postUnit(int lessonId, int position, int sectionId, Project project) {
+    if (!checkIfAuthorized(project, "postTask")) return;
+
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.UNITS);
     final StepicWrappers.UnitWrapper unitWrapper = new StepicWrappers.UnitWrapper();
     final StepicWrappers.Unit unit = new StepicWrappers.Unit();
@@ -157,7 +189,8 @@ public class CCStepicConnector {
       final StatusLine line = response.getStatusLine();
       EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
-        LOG.error("Failed to push " + responseString);
+        LOG.error(FAILED_TITLE + responseString);
+        showErrorNotification(project, FAILED_TITLE, responseString);
       }
     }
     catch (IOException e) {
@@ -165,7 +198,7 @@ public class CCStepicConnector {
     }
   }
 
-  private static int postModule(int courseId, int position, @NotNull final String title) {
+  private static int postModule(int courseId, int position, @NotNull final String title, Project project) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/sections");
     final StepicWrappers.Section section = new StepicWrappers.Section();
     section.setCourse(courseId);
@@ -185,7 +218,8 @@ public class CCStepicConnector {
       final StatusLine line = response.getStatusLine();
       EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
-        LOG.error("Failed to push " + responseString);
+        LOG.error(FAILED_TITLE + responseString);
+        showErrorNotification(project, FAILED_TITLE, responseString);
         return -1;
       }
       final StepicWrappers.Section
@@ -199,11 +233,13 @@ public class CCStepicConnector {
   }
 
   public static int updateTask(@NotNull final Project project, @NotNull final Task task) {
+    if (!checkIfAuthorized(project, "update task")) return -1;
     final Lesson lesson = task.getLesson();
     final int lessonId = lesson.getId();
 
     final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepId()));
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
     ApplicationManager.getApplication().invokeLater(() -> {
       task.addTestsTexts("tests.py", task.getTestsText(project));
       final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
@@ -218,7 +254,12 @@ public class CCStepicConnector {
         EntityUtils.consume(responseEntity);
         final StatusLine line = response.getStatusLine();
         if (line.getStatusCode() != HttpStatus.SC_OK) {
-          LOG.error("Failed to push " + responseString);
+          final String message = "Failed to update task ";
+          LOG.error(message + responseString);
+          showErrorNotification(project, message, responseString);
+        }
+        else {
+          showNotification(project, "Task updated");
         }
       }
       catch (IOException e) {
@@ -229,6 +270,8 @@ public class CCStepicConnector {
   }
 
   public static int updateLesson(@NotNull final Project project, @NotNull final Lesson lesson) {
+    if(!checkIfAuthorized(project, "update lesson")) return -1;
+
     final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + EduStepicNames.LESSONS + String.valueOf(lesson.getId()));
 
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
@@ -243,12 +286,18 @@ public class CCStepicConnector {
       final StatusLine line = response.getStatusLine();
       EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_OK) {
-        LOG.error("Failed to push " + responseString);
+        final String message = "Failed to update lesson ";
+        LOG.error(message + responseString);
+        showErrorNotification(project, message, responseString);
         return -1;
       }
+      else {
+        showNotification(project, "Lesson updated");
+      }
+
       final Lesson postedLesson = new Gson().fromJson(responseString, RemoteCourse.class).getLessons().get(0);
       for (Integer step : postedLesson.steps) {
-        deleteTask(step);
+        deleteTask(step, project);
       }
 
       for (Task task : lesson.getTaskList()) {
@@ -266,7 +315,39 @@ public class CCStepicConnector {
     return -1;
   }
 
+  private static void showErrorNotification(@NotNull Project project, String message, String responseString) {
+    final JsonObject details = new JsonParser().parse(responseString).getAsJsonObject();
+    final String detailString = details.get("detail").getAsString();
+    final Notification notification =
+      new Notification("Push.course", message, detailString, NotificationType.ERROR);
+    notification.notify(project);
+  }
+
+  private static void showNotification(@NotNull Project project, String message) {
+    final Notification notification =
+      new Notification("Push.course", message, message, NotificationType.INFORMATION);
+    notification.notify(project);
+  }
+
+  private static void showStepicNotification(@NotNull Project project,
+                                             @NotNull NotificationType notificationType, @NotNull String failedActionName) {
+    String text = "Log in to Stepik to " + failedActionName;
+    Notification notification = new Notification("Stepik", "Failed to " + failedActionName, text, notificationType);
+    notification.addAction(new AnAction("Log in") {
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        EduStepicConnector.doAuthorize(() -> showOAuthDialog());
+        notification.expire();
+      }
+    });
+
+    notification.notify(project);
+  }
+
   public static int postLesson(@NotNull final Project project, @NotNull final Lesson lesson) {
+    if (!checkIfAuthorized(project, "postLesson")) return -1;
+
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/lessons");
 
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
@@ -281,7 +362,9 @@ public class CCStepicConnector {
       final StatusLine line = response.getStatusLine();
       EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
-        LOG.error("Failed to push " + responseString);
+        final String message = FAILED_TITLE + "lesson ";
+        LOG.error(message + responseString);
+        showErrorNotification(project, message, responseString);
         return 0;
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, RemoteCourse.class).getLessons(true).get(0);
@@ -301,7 +384,7 @@ public class CCStepicConnector {
     return -1;
   }
 
-  public static void deleteTask(@NotNull final Integer task) {
+  public static void deleteTask(@NotNull final Integer task, Project project) {
     final HttpDelete request = new HttpDelete(EduStepicNames.STEPIC_API_URL + EduStepicNames.STEP_SOURCES + task);
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
@@ -314,6 +397,7 @@ public class CCStepicConnector {
         final StatusLine line = response.getStatusLine();
         if (line.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
           LOG.error("Failed to delete task " + responseString);
+          showErrorNotification(project, "Failed to delete task ", responseString);
         }
       }
       catch (IOException e) {
@@ -323,6 +407,8 @@ public class CCStepicConnector {
   }
 
   public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
+    if (!checkIfAuthorized(project, "postTask")) return;
+
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/step-sources");
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
       registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
@@ -339,7 +425,9 @@ public class CCStepicConnector {
         final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
         EntityUtils.consume(responseEntity);
         if (line.getStatusCode() != HttpStatus.SC_CREATED) {
-          LOG.error("Failed to push " + responseString);
+          final String message = FAILED_TITLE + "task ";
+          LOG.error(message + responseString);
+          showErrorNotification(project, message, responseString);
           return;
         }
 

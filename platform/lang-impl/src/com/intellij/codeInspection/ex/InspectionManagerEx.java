@@ -25,7 +25,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -35,12 +34,12 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class InspectionManagerEx extends InspectionManagerBase {
   private final NotNullLazyValue<ContentManager> myContentManager;
@@ -106,27 +105,6 @@ public class InspectionManagerEx extends InspectionManagerBase {
       };
     }
   }
-
-  @Nullable
-  public static SuppressIntentionAction[] getSuppressActions(@NotNull InspectionToolWrapper toolWrapper) {
-    final InspectionProfileEntry tool = toolWrapper.getTool();
-    if (tool instanceof CustomSuppressableInspectionTool) {
-      return ((CustomSuppressableInspectionTool)tool).getSuppressActions(null);
-    }
-    final List<LocalQuickFix> actions = new ArrayList<>(Arrays.asList(tool.getBatchSuppressActions(null)));
-    if (actions.isEmpty()) {
-      final Language language = Language.findLanguageByID(toolWrapper.getLanguage());
-      if (language != null) {
-        final List<InspectionSuppressor> suppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(language);
-            for (InspectionSuppressor suppressor : suppressors) {
-          final SuppressQuickFix[] suppressActions = suppressor.getSuppressActions(null, toolWrapper.getID());
-          Collections.addAll(actions, suppressActions);
-        }
-      }
-    }
-    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, fix -> SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix));
-  }
-
 
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,

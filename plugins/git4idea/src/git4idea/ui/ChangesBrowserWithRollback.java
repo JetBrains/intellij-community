@@ -16,7 +16,6 @@
 package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
@@ -55,11 +54,6 @@ public class ChangesBrowserWithRollback extends ChangesBrowser {
   @NotNull
   private static List<Change> filterActualChanges(@NotNull Project project, @NotNull List<Change> originalChanges) {
     final Collection<Change> allChanges = ChangeListManager.getInstance(project).getAllChanges();
-    return ContainerUtil.filter(originalChanges, new Condition<Change>() {
-      @Override
-      public boolean value(Change change) {
-        return allChanges.contains(change);
-      }
-    });
+    return ContainerUtil.filter(originalChanges, change -> allChanges.contains(change));
   }
 }

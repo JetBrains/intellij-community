@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,36 +24,33 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
+import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User : ktisha
  */
 
 public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProcessor {
-
-  private boolean useKeywords = false;
-  private boolean isMethod = false;
-  private boolean isAfterStar = false;
 
   @Override
   public UsageInfo[] findUsages(ChangeInfo info) {
@@ -101,8 +98,13 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       RenameUtil.doRenameGenericNamedElement(method, changeInfo.getNewName(), usages, null);
     }
     if (element == null) return false;
+
     if (element.getParent() instanceof PyCallExpression) {
       final PyCallExpression call = (PyCallExpression)element.getParent();
+      // Don't modify the call that was the cause of Change Signature invocation
+      if (call.getUserData(PyChangeSignatureQuickFix.CHANGE_SIGNATURE_ORIGINAL_CALL) != null) {
+        return true;
+      }
       final PyArgumentList argumentList = call.getArgumentList();
       if (argumentList != null) {
         final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
@@ -112,8 +114,9 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         if (call instanceof PyDecorator) {
           newCall = elementGenerator.createDecoratorList("@" + builder.toString()).getDecorators()[0];
         }
-        else
+        else {
           newCall = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());
+        }
         call.replace(newCall);
 
         return true;
@@ -125,14 +128,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return false;
   }
 
-  private StringBuilder buildSignature(PyChangeInfo changeInfo, PyCallExpression call) {
+  @NotNull
+  private static StringBuilder buildSignature(@NotNull PyChangeInfo changeInfo, @NotNull PyCallExpression call) {
     final PyArgumentList argumentList = call.getArgumentList();
     final PyExpression callee = call.getCallee();
     String name = callee != null ? callee.getText() : changeInfo.getNewName();
     StringBuilder builder = new StringBuilder(name + "(");
     if (argumentList != null) {
-      final PyParameterInfo[] newParameters = changeInfo.getNewParameters();
-      List<String> params = collectParameters(newParameters, argumentList);
+      List<String> params = collectParameters(changeInfo, call);
       builder.append(StringUtil.join(params, ","));
     }
     builder.append(")");
@@ -140,150 +143,105 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
 
-  private List<String> collectParameters(final PyParameterInfo[] newParameters,
-                                                @NotNull final PyArgumentList argumentList) {
-    useKeywords = false;
-    isMethod = false;
-    isAfterStar = false;
-    List<String> params = new ArrayList<>();
+  @NotNull
+  private static List<String> collectParameters(@NotNull PyChangeInfo changeInfo, @NotNull PyCallExpression call) {
+    boolean keywordArgsRequired = false;
+    final List<String> newArguments = new ArrayList<>();
 
-    int currentIndex = 0;
-    final PyExpression[] arguments = argumentList.getArguments();
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(call.getProject(), null);
+    final PyFunction function = changeInfo.getMethod();
 
-    for (PyParameterInfo info : newParameters) {
-      int oldIndex = calculateOldIndex(info);
-      final String parameterName = info.getName();
-      if (parameterName.equals(PyNames.CANONICAL_SELF) || parameterName.equals("*")) {
+    final List<PyCallableParameter> allOrigParams = function.getParameters(typeEvalContext);
+    final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(call, function, typeEvalContext);
+
+    MultiMap<Integer, PyExpression> oldParamIndexToArgs = MultiMap.create();
+    for (Map.Entry<PyExpression, PyCallableParameter> entry : mapping.getMappedParameters().entrySet()) {
+      final PyCallableParameter param = entry.getValue();
+      oldParamIndexToArgs.putValue(allOrigParams.indexOf(param), entry.getKey());
+    }
+    assert oldParamIndexToArgs.keySet().stream().allMatch(index -> index >= 0);
+
+    PyParameterInfo[] newParamInfos = changeInfo.getNewParameters();
+    
+    final int posVarargIndex = JBIterable.of(newParamInfos).indexOf(info -> isPositionalVarargName(info.getName()));
+    final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos[posVarargIndex].getOldIndex()).isEmpty();
+    for (int paramIndex = 0; paramIndex < newParamInfos.length; paramIndex++) {
+      PyParameterInfo info = newParamInfos[paramIndex];
+      final String paramName = info.getName();
+      final boolean isKeywordVararg = isKeywordVarargName(paramName);
+      final boolean isPositionalVararg = isPositionalVarargName(paramName);
+      if (paramName.equals(PyNames.CANONICAL_SELF)) {
         continue;
       }
-
-      if (parameterName.startsWith("**")) {
-        currentIndex = addKwArgs(params, arguments, currentIndex);
+      if (paramName.equals("*")) {
+        keywordArgsRequired = true;
+        continue;
       }
-      else if (parameterName.startsWith("*")) {
-        currentIndex = addPositionalContainer(params, arguments, currentIndex);
-      }
-      else if (oldIndex < 0) {
-        addNewParameter(params, info);
-        currentIndex += 1;
-      }
-      else {
-        currentIndex = moveParameter(params, argumentList, info, currentIndex, oldIndex, arguments);
-      }
-    }
-    return params;
-  }
-
-  private int calculateOldIndex(ParameterInfo info) {
-    if (info.getName().equals(PyNames.CANONICAL_SELF)) {
-      isMethod = true;
-    }
-    if (info.getName().equals("*")) {
-      isAfterStar = true;
-      useKeywords = true;
-    }
-    int oldIndex = info.getOldIndex();
-    oldIndex = isMethod ? oldIndex - 1 : oldIndex;
-    oldIndex = isAfterStar ? oldIndex - 1 : oldIndex;
-    return oldIndex;
-  }
-
-
-  private static int addPositionalContainer(List<String> params,
-                                            PyExpression[] arguments,
-                                            int index) {
-    for (int i = index; i != arguments.length; ++i) {
-      if (!(arguments[i] instanceof PyKeywordArgument)) {
-        params.add(arguments[i].getText());
-        index += 1;
-      }
-    }
-    return index;
-  }
-
-  private static int addKwArgs(List<String> params, PyExpression[] arguments, int index) {
-    for (int i = index; i < arguments.length; ++i) {
-      if (arguments[i] instanceof PyKeywordArgument) {
-        params.add(arguments[i].getText());
-        index += 1;
-      }
-    }
-    return index;
-  }
-
-  private void addNewParameter(List<String> params, PyParameterInfo info) {
-    if (info.getDefaultInSignature()) {
-      useKeywords = true;
-    }
-    else {
-      params.add(useKeywords ? info.getName() + " = " + info.getDefaultValue() : info.getDefaultValue());
-    }
-  }
-
-  /**
-   * @return current index in argument list
-   */
-  private int moveParameter(List<String> params,
-                             PyArgumentList argumentList,
-                             PyParameterInfo info,
-                             int currentIndex,
-                             int oldIndex,
-                             PyExpression[] arguments) {
-    final String paramName = info.getOldName();
-    final PyKeywordArgument keywordArgument = argumentList.getKeywordArgument(paramName);
-    if (keywordArgument != null) {
-      params.add(keywordArgument.getText());
-      useKeywords = true;
-      return currentIndex + 1;
-    }
-    else if (currentIndex < arguments.length) {
-      final PyExpression currentParameter = arguments[currentIndex];
-      if (currentParameter instanceof PyKeywordArgument && info.isRenamed()) {
-        params.add(currentParameter.getText());
-      }
-      else if (oldIndex < arguments.length && (
-        !(info.getDefaultInSignature() && arguments[oldIndex].getText().equals(info.getDefaultValue())) || !(currentParameter instanceof PyKeywordArgument))) {
-        return addOldPositionParameter(params, arguments[oldIndex], info, currentIndex);
-      }
-      else
-        return currentIndex;
-    }
-    else if (oldIndex < arguments.length) {
-      return addOldPositionParameter(params, arguments[oldIndex], info, currentIndex);
-    }
-    else if (!info.getDefaultInSignature()) {
-      params.add( useKeywords ? paramName + " = " + info.getDefaultValue()
-                              : info.getDefaultValue());
-    }
-    else {
-      useKeywords = true;
-      return currentIndex;
-    }
-    return currentIndex + 1;
-  }
-
-  private int addOldPositionParameter(List<String> params,
-                                      PyExpression argument,
-                                      PyParameterInfo info, int currentIndex) {
-    final String paramName = info.getName();
-    if (argument instanceof PyKeywordArgument) {
-      final PyExpression valueExpression = ((PyKeywordArgument)argument).getValueExpression();
-
-      if (!paramName.equals(argument.getName()) && !StringUtil.isEmptyOrSpaces(info.getDefaultValue())) {
-        if (!info.getDefaultInSignature())
-          params.add(useKeywords ? info.getName() + " = " + info.getDefaultValue() : info.getDefaultValue());
-        else
-          return currentIndex;
+      final String paramDefault = StringUtil.notNullize(info.getDefaultValue());
+      final int oldIndex = info.getOldIndex();
+      if (oldIndex < 0) {
+        if (!info.getDefaultInSignature()) {
+          newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
+        }
+        else {
+          // If the next argument was passed by position it would match with this new default. 
+          // Imagine "def f(x, y=None): ..." -> "def f(x, foo=None, y=None): ..." and a call "f(1, 2)" 
+          keywordArgsRequired = true;
+        }
       }
       else {
-        params.add(valueExpression == null ? paramName : paramName + " = " + valueExpression.getText());
-        useKeywords = true;
+        final Collection<PyExpression> existingArgs = oldParamIndexToArgs.get(oldIndex);
+        if (!existingArgs.isEmpty()) {
+          for (PyExpression arg : existingArgs) {
+            PyExpression argValue;
+            String argName;
+            if (arg instanceof PyKeywordArgument) {
+              argValue = ((PyKeywordArgument)arg).getValueExpression();
+              argName = StringUtil.notNullize(((PyKeywordArgument)arg).getKeyword());
+            }
+            else {
+              argValue = arg;
+              argName = "";
+            }
+            // Keep format of existing keyword arguments unless it's illegal in their new position
+            if (!argName.isEmpty() && !(paramIndex < posVarargIndex && !posVarargEmpty)) {
+              keywordArgsRequired = true;
+            }
+            assert !(isPositionalVararg && keywordArgsRequired);
+            final String argValueText = argValue != null ? argValue.getText() : "";
+            final String newArgumentName = isKeywordVararg ? argName : paramName;
+            newArguments.add(formatArgument(newArgumentName, argValueText, keywordArgsRequired));
+          }
+        }
+        else if (!info.getDefaultInSignature() && !isPositionalVararg && !isKeywordVararg) {
+          // Existing ordinary parameter without default value. Perhaps, the default value was propagated to calls 
+          newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
+        }
+      }
+      // Keyword-only arguments should follow (Python 3) 
+      if (isPositionalVararg) {
+        keywordArgsRequired = true;
       }
     }
-    else {
-      params.add(useKeywords && !argument.getText().equals(info.getDefaultValue())? paramName + " = " + argument.getText() : argument.getText());
+    return newArguments;
+  }
+
+  private static boolean isPositionalVarargName(@NotNull String paramName) {
+    return !isKeywordVarargName(paramName) && !paramName.equals("*") && paramName.startsWith("*");
+  }
+
+  private static boolean isKeywordVarargName(@NotNull String paramName) {
+    return paramName.startsWith("**");
+  }
+
+  @NotNull
+  private static String formatArgument(@NotNull String name, @NotNull String value, boolean keywordArgument) {
+    if (keywordArgument) {
+      return name + "=" + value;
     }
-    return currentIndex + 1;
+    else {
+      return value;
+    }
   }
 
   private static boolean isPythonUsage(UsageInfo info) {

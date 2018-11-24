@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-/**
- * User: cdr
- */
 public interface MutableInterval extends Interval {
   int setIntervalStart(int start);
   int setIntervalEnd(int end);

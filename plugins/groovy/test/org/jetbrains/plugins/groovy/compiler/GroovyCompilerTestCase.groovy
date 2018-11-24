@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,18 +36,14 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.CompilerTester
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.io.PathKt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -55,7 +51,6 @@ import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.jetbrains.plugins.groovy.util.Slow
-
 /**
  * @author aalmiray
  * @author peter
@@ -103,9 +98,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tearDown() throws Exception {
-    final File systemRoot = BuildManager.getInstance().getBuildSystemDirectory()
     try {
-      UIUtil.invokeAndWaitIfNeeded {
+      EdtTestUtil.runInEdtAndWait {
         try {
           myCompilerTester.tearDown()
           myCompilerTester = null
@@ -119,7 +113,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       }
     }
     finally {
-      FileUtil.delete(systemRoot)
+      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory())
     }
   }
 

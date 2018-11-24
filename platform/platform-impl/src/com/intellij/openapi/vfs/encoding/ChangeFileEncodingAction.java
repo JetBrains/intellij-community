@@ -111,8 +111,6 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
                                               final Document document,
                                               final byte[] bytes,
                                               @Nullable final String clearItemText) {
-    final String text = document == null ? null : document.getText();
-
     return new ChooseFileEncodingAction(myFile) {
      @Override
      public void update(final AnActionEvent e) {

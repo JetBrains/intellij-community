@@ -17,6 +17,7 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +27,6 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -48,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.Gray;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -70,7 +72,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
+import static com.intellij.ui.RelativeFont.SMALL;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
+import static com.intellij.util.ui.UIUtil.getLabelFont;
 
 /**
  * @author spleaner
@@ -108,13 +112,13 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     manager.addFileStatusListener(new FileStatusListener() {
       @Override
       public void fileStatusesChanged() {
-        updateCrumbs();
+        queueUpdate();
       }
     }, this);
 
-    myInfoProvider = findInfoProvider(myFile, myProject);
+    myInfoProvider = findInfoProvider(myEditor, myFile);
 
-    final CaretListener caretListener = new CaretAdapter() {
+    final CaretListener caretListener = new CaretListener() {
       @Override
       public void caretPositionChanged(final CaretEvent e) {
         if (myUserCaretChange) {
@@ -170,7 +174,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     breadcrumbs.onHover(this::itemHovered);
     breadcrumbs.onSelect(this::itemSelected);
-    breadcrumbs.setFont(getEditorFont(myEditor));
+    breadcrumbs.setFont(getNewFont(myEditor));
 
     JScrollPane pane = createScrollPane(breadcrumbs, true);
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -192,7 +196,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
         @Override
         public void componentResized(ComponentEvent event) {
           breadcrumbs.updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
-          breadcrumbs.setFont(getEditorFont(myEditor));
+          breadcrumbs.setFont(getNewFont(myEditor));
         }
       };
 
@@ -217,7 +221,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void updateCrumbs() {
     if (breadcrumbs != null && myEditor != null && !myEditor.isDisposed()) {
-      breadcrumbs.setFont(getEditorFont(myEditor));
+      breadcrumbs.setFont(getNewFont(myEditor));
       updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
     }
   }
@@ -237,15 +241,17 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element, BreadcrumbsProvider defaultProvider) {
-    final BreadcrumbsProvider provider = getInfoProvider(element.getLanguage());
+    Language language = element.getLanguage();
+    if (!EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(language.getID())) return defaultProvider;
+    BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
     return provider == null ? defaultProvider : provider;
   }
 
-  private static PsiElement[] toPsiElementArray(Collection<PsiCrumb> items) {
-    final PsiElement[] elements = new PsiElement[items.size()];
+  private static PsiElement[] toPsiElementArray(Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs) {
+    PsiElement[] elements = new PsiElement[pairs.size()];
     int index = 0;
-    for (PsiCrumb item : items) {
-      elements[index++] = item.element;
+    for (Pair<PsiElement, BreadcrumbsProvider> pair : pairs) {
+      elements[index++] = pair.first;
     }
     return elements;
   }
@@ -271,18 +277,20 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
                                                                final Editor editor,
                                                                final Project project,
                                                                final BreadcrumbsProvider defaultInfoProvider) {
-    final LinkedList<PsiCrumb> result =
+    Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =
       getLineElements(editor.logicalPositionToOffset(position), file, project, defaultInfoProvider);
 
-    if (result == null) return null;
+    if (pairs == null) return null;
 
-    final PsiElement[] elements = toPsiElementArray(result);
-    final CrumbPresentation[] presentations = getCrumbPresentations(elements);
-    if (presentations != null) {
-      int i = 0;
-      for (PsiCrumb item : result) {
-        item.presentation = presentations[i++];
+    ArrayList<PsiCrumb> result = new ArrayList<>(pairs.size());
+    CrumbPresentation[] presentations = getCrumbPresentations(toPsiElementArray(pairs));
+    int index = 0;
+    for (Pair<PsiElement, BreadcrumbsProvider> pair : pairs) {
+      PsiCrumb crumb = new PsiCrumb(pair.first, pair.second);
+      if (presentations != null && 0 <= index && index < presentations.length) {
+        crumb.presentation = presentations[index++];
       }
+      result.add(crumb);
     }
 
     return result;
@@ -290,24 +298,24 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   public static PsiElement[] getLinePsiElements(int offset, VirtualFile file, Project project, BreadcrumbsProvider infoProvider) {
-    final LinkedList<PsiCrumb> lineElements = getLineElements(offset, file, project, infoProvider);
-    return lineElements != null ? toPsiElementArray(lineElements) : null;
+    Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs = getLineElements(offset, file, project, infoProvider);
+    return pairs == null ? null : toPsiElementArray(pairs);
   }
 
   @Nullable
-  private static LinkedList<PsiCrumb> getLineElements(final int offset,
-                                                      VirtualFile file,
-                                                      Project project,
-                                                      BreadcrumbsProvider defaultInfoProvider) {
+  private static Collection<Pair<PsiElement, BreadcrumbsProvider>> getLineElements(int offset,
+                                                                                   VirtualFile file,
+                                                                                   Project project,
+                                                                                   BreadcrumbsProvider defaultInfoProvider) {
     PsiElement element = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider);
     if (element == null) return null;
 
-    final LinkedList<PsiCrumb> result = new LinkedList<>();
+    LinkedList<Pair<PsiElement, BreadcrumbsProvider>> result = new LinkedList<>();
     while (element != null) {
       BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider);
 
       if (provider != null && provider.acceptElement(element)) {
-        result.addFirst(new PsiCrumb(element, provider));
+        result.addFirst(Pair.create(element, provider));
       }
 
       element = getParent(element, provider);
@@ -364,7 +372,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   private static FileViewProvider findViewProvider(final VirtualFile file, final Project project) {
-    if (file == null) return null;
+    if (file == null || file.isDirectory()) return null;
     return PsiManager.getInstance(project).findViewProvider(file);
   }
 
@@ -380,8 +388,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  static BreadcrumbsProvider findInfoProvider(VirtualFile file, Project project) {
-    return project == null ? null : findInfoProvider(findViewProvider(file, project));
+  static BreadcrumbsProvider findInfoProvider(@NotNull Editor editor, VirtualFile file) {
+    Project project = editor.getProject();
+    return project == null ? null : findInfoProvider(editor, findViewProvider(file, project));
   }
 
   private static VirtualFile getVirtualFile(@NotNull Editor editor) {
@@ -390,6 +399,10 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void updateCrumbs(final LogicalPosition position) {
     if (myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
+      if (!breadcrumbs.isShowing()) {
+        breadcrumbs.setCrumbs(null);
+        return;
+      }
       if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         return;
       }
@@ -398,20 +411,26 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  public static BreadcrumbsProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
+  public static BreadcrumbsProvider findInfoProvider(@NotNull Editor editor, @Nullable FileViewProvider viewProvider) {
     if (viewProvider == null) return null;
 
+    Boolean shown = ToggleBreadcrumbsAction.getForcedShown(editor);
+    return shown != null && !shown ? null : findInfoProvider(shown == null, viewProvider);
+  }
+
+  @Nullable
+  static BreadcrumbsProvider findInfoProvider(boolean checkSettings, @NotNull FileViewProvider viewProvider) {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (!settings.isBreadcrumbsShown()) return null;
+    if (checkSettings && !settings.isBreadcrumbsShown()) return null;
 
     Language baseLang = viewProvider.getBaseLanguage();
-    if (!settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
+    if (checkSettings && !settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
 
-    BreadcrumbsProvider provider = getInfoProvider(baseLang);
+    BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(baseLang);
     if (provider == null) {
       for (Language language : viewProvider.getLanguages()) {
-        if (settings.isBreadcrumbsShownFor(language.getID())) {
-          provider = getInfoProvider(language);
+        if (!checkSettings || settings.isBreadcrumbsShownFor(language.getID())) {
+          provider = BreadcrumbsUtil.getInfoProvider(language);
           if (provider != null) break;
         }
       }
@@ -480,19 +499,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     breadcrumbs.setCrumbs(null);
   }
 
-  @Nullable
-  private static BreadcrumbsProvider getInfoProvider(@NotNull Language language) {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {
-      for (Language supported : provider.getLanguages()) {
-        if (settings.isBreadcrumbsShownFor(language.getID()) && supported.isKindOf(language)) {
-          return provider;
-        }
-      }
-    }
-    return null;
-  }
-
   private static class MyUpdate extends Update {
     private final BreadcrumbsXmlWrapper myBreadcrumbsComponent;
 
@@ -515,6 +521,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void updateEditorFont(PropertyChangeEvent event) {
     if (EditorEx.PROP_FONT_SIZE.equals(event.getPropertyName())) queueUpdate();
+  }
+
+  private static Font getNewFont(Editor editor) {
+    Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? getLabelFont() : getEditorFont(editor);
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? SMALL.derive(font) : font;
   }
 
   private static Font getEditorFont(Editor editor) {

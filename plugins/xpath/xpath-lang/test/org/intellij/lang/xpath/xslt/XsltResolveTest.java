@@ -28,11 +28,6 @@ import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 17.12.2008
-*/
 public class XsltResolveTest extends TestBase {
 
     public void testResolveSingleVariableGlobal() throws Throwable {

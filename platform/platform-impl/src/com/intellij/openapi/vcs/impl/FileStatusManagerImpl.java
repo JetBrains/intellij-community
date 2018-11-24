@@ -26,8 +26,8 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -109,20 +109,18 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     if (project.isDefault()) return;
 
     startupManager.registerPreStartupActivity(() -> {
-      DocumentAdapter documentListener = new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent event) {
-          if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
-          VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-          if (file != null) {
-            refreshFileStatusFromDocument(file, event.getDocument());
-          }
-        }
-      };
-
       final EditorFactory factory = EditorFactory.getInstance();
       if (factory != null) {
-        factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
+        factory.getEventMulticaster().addDocumentListener(new DocumentListener() {
+          @Override
+          public void documentChanged(DocumentEvent event) {
+            if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
+            VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
+            if (file != null) {
+              refreshFileStatusFromDocument(file, event.getDocument());
+            }
+          }
+        }, myProject);
       }
     });
     startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
@@ -185,12 +183,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return;
     }
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          fileStatusesChanged();
-        }
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> fileStatusesChanged(), ModalityState.NON_MODAL);
       return;
     }
 
@@ -222,12 +215,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   public void fileStatusChanged(final VirtualFile file) {
     final Application application = ApplicationManager.getApplication();
     if (!application.isDispatchThread() && !application.isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          fileStatusChanged(file);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> fileStatusChanged(file));
       return;
     }
 

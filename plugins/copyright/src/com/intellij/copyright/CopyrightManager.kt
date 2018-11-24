@@ -25,8 +25,8 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.DocumentAdapter
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
@@ -215,7 +215,7 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
   override fun runActivity(project: Project) {
     Disposer.register(project, Disposable { newFileTracker.clear() })
 
-    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentAdapter() {
+    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
         val virtualFile = FileDocumentManager.getInstance().getFile(e.document) ?: return
         val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return

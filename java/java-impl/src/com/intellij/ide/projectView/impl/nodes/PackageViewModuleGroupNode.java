@@ -31,10 +31,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Feb 22, 2005
- */
 public class PackageViewModuleGroupNode extends ModuleGroupNode {
   public PackageViewModuleGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
     super(project, value, viewSettings);

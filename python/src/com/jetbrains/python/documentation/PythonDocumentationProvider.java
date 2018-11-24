@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -138,14 +137,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final ChainIterable<String> cat = new ChainIterable<>();
     final String name = fun.getName();
     cat.addItem("def ").addWith(funcNameWrapper, $(name));
-    final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getProject(), fun.getContainingFile());
-    final List<PyParameter> parameters = PyUtil.getParameters(fun, context);
-    final String paramStr = "(" +
-                            StringUtil.join(parameters,
-                                            parameter -> PyUtil.getReadableRepr(parameter, false),
-                                            ", ") +
-                            ")";
-    cat.addItem(escaper.apply(paramStr));
+    cat.addItem(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
     if (!PyNames.INIT.equals(name)) {
       cat.addItem(escaper.apply("\nInferred type: "));
       describeTypeWithLinks(fun, cat);
@@ -318,6 +310,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   // provides ctrl+Q doc
+  @Override
   public String generateDoc(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
     if (element != null && PydevConsoleRunner.isInPydevConsole(element) ||
         originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {

@@ -170,7 +170,7 @@ public class StringEnumeratorTest extends TestCase {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
     myEnumerator.close();
     System.out.printf("File size = %d bytes\n", myFile.length());
   }

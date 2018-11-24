@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import java.awt.*;
  * @author spleaner
  */
 public interface StatusBar extends StatusBarInfo, Disposable {
-
   @SuppressWarnings({"AbstractClassNeverImplemented"})
   abstract class Info implements StatusBarInfo {
     public static final Topic<StatusBarInfo> TOPIC = Topic.create("IdeStatusBar.Text", StatusBarInfo.class);
@@ -96,5 +95,4 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   IdeFrame getFrame();
 
   void install(IdeFrame frame);
-
 }

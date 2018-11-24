@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,8 @@ public interface LibraryTable {
     Library createLibrary(String name);
 
     Library createLibrary(String name, @Nullable PersistentLibraryKind type);
+
+    Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource);
 
     void removeLibrary(@NotNull Library library);
 

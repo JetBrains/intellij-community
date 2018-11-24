@@ -36,12 +36,6 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/7/12
- * Time: 7:15 PM
- */
 public class SvnBusyOnAddTest extends TestCase {
   public static final String filename = "abc/test.txt";
 

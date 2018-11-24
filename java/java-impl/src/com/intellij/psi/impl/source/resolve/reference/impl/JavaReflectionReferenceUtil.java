@@ -15,15 +15,16 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -69,6 +70,7 @@ public class JavaReflectionReferenceUtil {
   public static final String FIND_STATIC_VAR_HANDLE = "findStaticVarHandle";
 
   public static final String FIND_CONSTRUCTOR = "findConstructor";
+  public static final String FIND_CLASS = "findClass";
 
   public static final String[] HANDLE_FACTORY_METHOD_NAMES = {
     FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,
@@ -89,6 +91,7 @@ public class JavaReflectionReferenceUtil {
   public static final String LOAD_CLASS = "loadClass";
   public static final String GET_CLASS = "getClass";
   public static final String NEW_INSTANCE = "newInstance";
+  public static final String TYPE = "TYPE";
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
@@ -100,7 +103,7 @@ public class JavaReflectionReferenceUtil {
     }
     if (context instanceof PsiClassObjectAccessExpression) { // special case for JDK 1.4
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)context).getOperand();
-      return ReflectiveType.create(operand.getType(), context);
+      return ReflectiveType.create(operand.getType());
     }
 
     if (context instanceof PsiMethodCallExpression) {
@@ -142,13 +145,24 @@ public class JavaReflectionReferenceUtil {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass resolvedElement = resolveResult.getElement();
       if (!isJavaLangClass(resolvedElement)) return null;
+
+      if (context instanceof PsiReferenceExpression && TYPE.equals(((PsiReferenceExpression)context).getReferenceName())) {
+        final PsiElement resolved = ((PsiReferenceExpression)context).resolve();
+        if (resolved instanceof PsiField) {
+          final PsiField field = (PsiField)resolved;
+          if (field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
+            final PsiPrimitiveType unboxedType = tryUnbox(field.getContainingClass(), (PsiClassType)type);
+            if (unboxedType != null) {
+              return ReflectiveType.create(unboxedType);
+            }
+          }
+        }
+      }
       final PsiTypeParameter[] parameters = resolvedElement.getTypeParameters();
       if (parameters.length == 1) {
-        PsiType typeArgument = resolveResult.getSubstitutor().substitute(parameters[0]);
-        if (typeArgument instanceof PsiCapturedWildcardType) {
-          typeArgument = ((PsiCapturedWildcardType)typeArgument).getUpperBound();
-        }
-        final PsiClass argumentClass = unwrapTypeParameter(PsiTypesUtil.getPsiClass(typeArgument));
+        final PsiType typeArgument = resolveResult.getSubstitutor().substitute(parameters[0]);
+        final PsiType erasure = TypeConversionUtil.erasure(typeArgument);
+        final PsiClass argumentClass = PsiTypesUtil.getPsiClass(erasure);
         if (argumentClass != null && !isJavaLangObject(argumentClass)) {
           return ReflectiveType.create(argumentClass);
         }
@@ -197,18 +211,7 @@ public class JavaReflectionReferenceUtil {
         }
       }
     }
-    return ReflectiveType.create(expression.getType(), expression);
-  }
-
-  @Contract("null -> null")
-  @Nullable
-  private static PsiClass unwrapTypeParameter(@Nullable PsiClass psiClass) {
-    int preventEndlessLoop = 5;
-    while (psiClass instanceof PsiTypeParameter && --preventEndlessLoop > 0) {
-      final PsiClassType[] extendsList = psiClass.getExtendsListTypes();
-      psiClass = extendsList.length != 0 ? extendsList[0].resolve() : null;
-    }
-    return psiClass;
+    return ReflectiveType.create(expression.getType());
   }
 
   @Contract("null,_->null")
@@ -222,7 +225,7 @@ public class JavaReflectionReferenceUtil {
   @Nullable
   public static PsiClass getReflectiveClass(PsiExpression context) {
     final ReflectiveType reflectiveType = getReflectiveType(context);
-    return reflectiveType != null ? reflectiveType.myPsiClass : null;
+    return reflectiveType != null ? reflectiveType.getPsiClass() : null;
   }
 
   @Nullable
@@ -257,6 +260,7 @@ public class JavaReflectionReferenceUtil {
 
   @Nullable
   private static PsiExpression findFinalFieldDefinition(@NotNull PsiReferenceExpression referenceExpression, @NotNull PsiField field) {
+    if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
     final PsiClass psiClass = ObjectUtils.tryCast(field.getParent(), PsiClass.class);
     if (psiClass != null) {
       final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
@@ -283,34 +287,25 @@ public class JavaReflectionReferenceUtil {
     return null;
   }
 
+  @Nullable
   private static PsiExpression getAssignedExpression(@NotNull PsiMember maybeContainsAssignment, @NotNull PsiField field) {
-    final Ref<PsiExpression> refResult = new Ref<>();
-    maybeContainsAssignment.accept(new JavaRecursiveElementVisitor() {
-      boolean stopped = false;
+    final PsiAssignmentExpression assignment = SyntaxTraverser.psiTraverser(maybeContainsAssignment)
+      .filter(PsiAssignmentExpression.class)
+      .find(expression -> VariableAccessUtils.evaluatesToVariable(expression.getLExpression(), field));
+    return assignment != null ? assignment.getRExpression() : null;
+  }
 
-      @Override
-      public void visitElement(PsiElement element) {
-        if (!stopped) {
-          super.visitElement(element);
-        }
+  @Nullable
+  private static PsiPrimitiveType tryUnbox(@Nullable PsiClass psiClass, @NotNull PsiClassType originalType) {
+    if (psiClass != null && TypeConversionUtil.isPrimitiveWrapper(psiClass.getQualifiedName())) {
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+      final PsiClassType classType = factory.createType(psiClass, PsiSubstitutor.EMPTY, originalType.getLanguageLevel());
+      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(classType);
+      if (unboxedType != null) {
+        return unboxedType;
       }
-
-      @Override
-      public void visitExpression(PsiExpression expression) {
-        // do nothing
-      }
-
-      @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        super.visitAssignmentExpression(expression);
-
-        if (VariableAccessUtils.evaluatesToVariable(expression.getLExpression(), field)) {
-          refResult.set(expression.getRExpression());
-          stopped = true;
-        }
-      }
-    });
-    return refResult.get();
+    }
+    return null;
   }
 
   private static PsiClass findClass(@NotNull String qualifiedName, @NotNull PsiElement context) {
@@ -329,7 +324,7 @@ public class JavaReflectionReferenceUtil {
   }
 
   @Contract("null, _ -> false")
-  private static boolean isClassWithName(@Nullable PsiClass aClass, @NotNull String name) {
+  public static boolean isClassWithName(@Nullable PsiClass aClass, @NotNull String name) {
     return aClass != null && name.equals(aClass.getQualifiedName());
   }
 
@@ -346,8 +341,7 @@ public class JavaReflectionReferenceUtil {
   static String getParameterTypesText(@NotNull PsiMethod method) {
     final StringJoiner joiner = new StringJoiner(", ");
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      final String typeText = getTypeText(parameter.getType(), method);
-      if (typeText == null) return null;
+      final String typeText = getTypeText(parameter.getType());
       joiner.add(typeText + ".class");
     }
     return joiner.toString();
@@ -386,6 +380,17 @@ public class JavaReflectionReferenceUtil {
     return JavaLookupElementBuilder.forField(field);
   }
 
+  @Nullable
+  static LookupElement lookupMethod(@NotNull PsiMethod method, @Nullable InsertHandler<LookupElement> insertHandler) {
+    final ReflectiveSignature signature = getMethodSignature(method);
+    return signature != null
+           ? LookupElementBuilder.create(signature, method.getName())
+             .withIcon(signature.getIcon())
+             .withTailText(signature.getShortArgumentTypes())
+             .withInsertHandler(insertHandler)
+           : null;
+  }
+
   static void replaceText(@NotNull InsertionContext context, @NotNull String text) {
     final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
     final PsiElement params = newElement.getParent().getParent();
@@ -397,10 +402,10 @@ public class JavaReflectionReferenceUtil {
     shortenArgumentsClassReferences(context);
   }
 
-  @Nullable
-  public static String getTypeText(@Nullable PsiType type, @NotNull PsiElement context) {
-    final ReflectiveType reflectiveType = ReflectiveType.create(type, context);
-    return reflectiveType != null ? reflectiveType.getQualifiedName() : null;
+  @NotNull
+  public static String getTypeText(@NotNull PsiType type) {
+    final ReflectiveType reflectiveType = ReflectiveType.create(type);
+    return reflectiveType.getQualifiedName();
   }
 
   @Nullable
@@ -414,11 +419,11 @@ public class JavaReflectionReferenceUtil {
   public static ReflectiveSignature getMethodSignature(@Nullable PsiMethod method) {
     if (method != null) {
       final List<String> types = new ArrayList<>();
-      final PsiType returnType = !method.isConstructor() ? method.getReturnType() : PsiType.VOID;
-      types.add(getTypeText(returnType, method));
+      final PsiType returnType = method.getReturnType();
+      types.add(getTypeText(returnType != null ? returnType : PsiType.VOID)); // null return type means it's a constructor
 
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
-        types.add(getTypeText(parameter.getType(), method));
+        types.add(getTypeText(parameter.getType()));
       }
       final Icon icon = method.getIcon(Iconable.ICON_FLAG_VISIBILITY);
       return ReflectiveSignature.create(icon, types);
@@ -438,97 +443,49 @@ public class JavaReflectionReferenceUtil {
 
 
   public static class ReflectiveType {
-    final PsiClass myPsiClass;
-    final PsiPrimitiveType myPrimitiveType;
-    final int myArrayDimensions;
+    final PsiType myType;
 
-    public ReflectiveType(PsiClass psiClass, PsiPrimitiveType primitiveType, int arrayDimensions) {
-      myPsiClass = psiClass;
-      myPrimitiveType = primitiveType;
-      myArrayDimensions = arrayDimensions;
+    private ReflectiveType(@NotNull PsiType erasedType) {
+      myType = erasedType;
     }
 
-    @Nullable
+    @NotNull
     public String getQualifiedName() {
-      String text = null;
-      if (myPrimitiveType != null) {
-        text = myPrimitiveType.getCanonicalText();
-      }
-      else if (myPsiClass != null) {
-        text = myPsiClass.getQualifiedName();
-      }
-      if (myArrayDimensions == 0 || text == null) {
-        return text;
-      }
-      final StringBuilder sb = new StringBuilder(text);
-      for (int i = 0; i < myArrayDimensions; i++) {
-        sb.append("[]");
-      }
-      return sb.toString();
+      return myType.getCanonicalText();
     }
 
     @Override
     public String toString() {
-      final String name = getQualifiedName();
-      return name != null ? name : "null";
+      return myType.getCanonicalText();
     }
 
     public boolean isEqualTo(@Nullable PsiType otherType) {
-      if (otherType == null || myArrayDimensions != otherType.getArrayDimensions()) {
-        return false;
-      }
-      final PsiType otherComponentType = otherType.getDeepComponentType();
-      if (myPrimitiveType != null) {
-        return myPrimitiveType.equals(otherComponentType);
-      }
-      if (myPsiClass != null) {
-        final PsiClass otherClass = PsiUtil.resolveClassInType(otherComponentType);
-        if (otherClass != null) {
-          final String otherClassName = otherClass instanceof PsiTypeParameter
-                                        ? CommonClassNames.JAVA_LANG_OBJECT : otherClass.getQualifiedName();
-          if (otherClassName != null) {
-            return otherClassName.equals(myPsiClass.getQualifiedName());
-          }
-        }
-      }
-      return false;
+      return otherType != null && myType.equals(erasure(otherType));
     }
 
     public boolean isAssignableFrom(@NotNull PsiType type) {
-      if (type.equals(PsiType.NULL)) {
-        return myPsiClass != null || myArrayDimensions != 0;
-      }
-      PsiType otherType = type;
-      for (int i = 0; i < myArrayDimensions; i++) {
-        if (!(otherType instanceof PsiArrayType)) {
-          return false;
-        }
-        otherType = ((PsiArrayType)otherType).getComponentType();
-      }
-      if (myPrimitiveType != null) {
-        return myPrimitiveType.isAssignableFrom(otherType);
-      }
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
-      return factory.createType(myPsiClass).isAssignableFrom(otherType);
+      return myType.isAssignableFrom(type);
     }
 
-    @Contract("null, _ -> null")
+    public boolean isPrimitive() {
+      return myType instanceof PsiPrimitiveType;
+    }
+
+    @NotNull
+    public PsiType getType() {
+      return myType;
+    }
+
     @Nullable
-    public static ReflectiveType create(@Nullable PsiType originalType, @NotNull PsiElement context) {
-      if (originalType == null) {
-        return null;
-      }
-      final int arrayDimensions = originalType.getArrayDimensions();
-      final PsiType type = originalType.getDeepComponentType();
-      if (type instanceof PsiPrimitiveType) {
-        return new ReflectiveType(null, (PsiPrimitiveType)type, arrayDimensions);
-      }
-      PsiClass psiClass = PsiUtil.resolveClassInType(type);
-      if (psiClass instanceof PsiTypeParameter) {
-        psiClass = findClass(CommonClassNames.JAVA_LANG_OBJECT, context);
-      }
-      if (psiClass != null) {
-        return new ReflectiveType(psiClass, null, arrayDimensions);
+    public PsiClass getPsiClass() {
+      return PsiTypesUtil.getPsiClass(myType);
+    }
+
+    @Contract("!null -> !null; null -> null")
+    @Nullable
+    public static ReflectiveType create(@Nullable PsiType originalType) {
+      if (originalType != null) {
+        return new ReflectiveType(erasure(originalType));
       }
       return null;
     }
@@ -536,16 +493,29 @@ public class JavaReflectionReferenceUtil {
     @Contract("!null -> !null; null -> null")
     @Nullable
     public static ReflectiveType create(@Nullable PsiClass psiClass) {
-      return psiClass != null ? new ReflectiveType(psiClass, null, 0) : null;
+      if (psiClass != null) {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+        return new ReflectiveType(factory.createType(psiClass));
+      }
+      return null;
     }
 
     @Contract("!null -> !null; null -> null")
     @Nullable
     public static ReflectiveType arrayOf(@Nullable ReflectiveType itemType) {
       if (itemType != null) {
-        return new ReflectiveType(itemType.myPsiClass, itemType.myPrimitiveType, itemType.myArrayDimensions + 1);
+        return new ReflectiveType(itemType.myType.createArrayType());
       }
       return null;
+    }
+
+    @NotNull
+    private static PsiType erasure(@NotNull PsiType type) {
+      final PsiType erasure = TypeConversionUtil.erasure(type);
+      if (erasure instanceof PsiEllipsisType) {
+        return ((PsiEllipsisType)erasure).toArrayType();
+      }
+      return erasure;
     }
   }
 

@@ -21,12 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/25/13
- * Time: 5:44 PM
- */
 public class SSLProtocolExceptionParser {
   private final String myMessage;
   private String myParsedMessage;

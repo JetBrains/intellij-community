@@ -16,9 +16,5 @@
 
 package com.intellij.codeInspection.ex;
 
-/**
- * User: anna
- * Date: 22-Feb-2006
- */
 public interface UnfairLocalInspectionTool  {
 }

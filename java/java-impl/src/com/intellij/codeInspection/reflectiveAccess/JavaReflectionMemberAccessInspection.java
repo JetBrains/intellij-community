@@ -272,13 +272,18 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
   @Nullable
   private static PsiMethod matchMethod(PsiMethod[] methods, PsiExpression[] arguments, int argumentOffset) {
     final JavaReflectionInvocationInspection.Arguments methodArguments =
-      JavaReflectionInvocationInspection.getActualMethodArguments(arguments, argumentOffset);
+      JavaReflectionInvocationInspection.getActualMethodArguments(arguments, argumentOffset, true);
     if (methodArguments == null) {
       return null;
     }
     final List<ReflectiveType> argumentTypes =
       ContainerUtil.map(methodArguments.expressions, JavaReflectionReferenceUtil::getReflectiveType);
 
+    return matchMethod(methods, argumentTypes);
+  }
+
+  @Nullable
+  public static PsiMethod matchMethod(@NotNull PsiMethod[] methods, @NotNull List<ReflectiveType> argumentTypes) {
     int mismatchCount = Integer.MAX_VALUE;
     PsiMethod bestGuess = null;
     for (PsiMethod method : methods) {

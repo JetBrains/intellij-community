@@ -41,6 +41,7 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
@@ -355,12 +356,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (!isEnabled(node) || reference == null || reference.isSoft()) {
         return;
       }
-      HighlightSeverity severity = HighlightSeverity.ERROR;
-      if (reference instanceof PsiReferenceEx) {
-        severity = ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
-        if (severity == null) return;
-      }
-      PyExceptPart guard = getImportErrorGuard(node);
+      final PyExceptPart guard = getImportErrorGuard(node);
       if (guard != null) {
         processReferenceInImportGuard(node, guard);
         return;
@@ -374,7 +370,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       PsiElement target = null;
-      boolean unresolved;
+      final boolean unresolved;
       if (reference instanceof PsiPolyVariantReference) {
         final PsiPolyVariantReference poly = (PsiPolyVariantReference)reference;
         final ResolveResult[] resolveResults = poly.multiResolve(false);
@@ -404,6 +400,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
         if (!ignoreUnresolved) {
+          final HighlightSeverity severity = reference instanceof PsiReferenceEx
+                                             ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
+                                             : HighlightSeverity.ERROR;
+          if (severity == null) return;
           registerUnresolvedReferenceProblem(node, reference, severity);
         }
         // don't highlight unresolved imports as unused
@@ -635,17 +635,17 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final Module module = ModuleUtilCore.findModuleForPsiElement(node);
           final Sdk sdk = PythonSdkType.findPythonSdk(module);
           if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk)) {
-            if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
-              addInstallPackageAction(actions, packageName, module, sdk);
-            }
-            else {
-              if (PyPIPackageUtil.PACKAGES_TOPLEVEL.containsKey(packageName)) {
-                final String suggestedPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL.get(packageName);
-                addInstallPackageAction(actions, suggestedPackage, module, sdk);
-              }
-            }
+            StreamEx
+              .of(packageName)
+              .append(PyPIPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList()))
+              .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
+              .forEach(pkg -> addInstallPackageAction(actions, pkg, module, sdk));
           }
         }
+      }
+
+      if (reference instanceof PySubstitutionChunkReference) {
+        return;
       }
 
       registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
@@ -751,7 +751,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private boolean ignoreUnresolvedMemberForType(@NotNull PyType type, PsiReference reference, String name) {
-      if (type instanceof PyNoneType || PyTypeChecker.isUnknown(type)) {
+      if (type instanceof PyNoneType || PyTypeChecker.isUnknown(type, myTypeEvalContext)) {
         // this almost always means that we don't know the type, so don't show an error in this case
         return true;
       }

@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -45,9 +46,8 @@ public class LibraryTableImplUtil {
   }
 
   @NotNull
-  public static Library createModuleLevelLibrary(@Nullable String name,
-                                                 PersistentLibraryKind kind,
-                                                 @NotNull RootModelImpl rootModel) {
-    return new LibraryImpl(name, kind, null, rootModel);
+  public static Library createModuleLevelLibrary(@Nullable String name, PersistentLibraryKind kind, @NotNull RootModelImpl rootModel,
+                                                 @Nullable ProjectModelExternalSource externalSource) {
+    return new LibraryImpl(name, kind, null, rootModel, externalSource);
   }
 }

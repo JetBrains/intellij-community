@@ -1,4 +1,4 @@
-from typing import List, Any, TypeVar
+from typing import List, Any, TypeVar, Type
 
 class Enum:
     def __new__(cls, value: Any) -> None: ...
@@ -12,8 +12,9 @@ class Enum:
     name = ...  # type: str
     value = ...  # type: Any
 
-class IntEnum(int, Enum): ...
-
 _T = TypeVar('_T')
+
+class IntEnum(int, Enum):  # type: ignore
+    def __new__(cls: Type[_T], value: Any) -> _T: ...
 
 def unique(enumeration: _T) -> _T: ...

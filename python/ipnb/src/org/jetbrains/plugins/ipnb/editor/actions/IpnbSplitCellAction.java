@@ -3,8 +3,6 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
@@ -24,8 +22,10 @@ public class IpnbSplitCellAction extends AnAction {
     }
   }
 
-  public static void splitCell(IpnbFilePanel filePanel) {
-    CommandProcessor.getInstance().executeCommand(filePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
-      () -> filePanel.splitCell()), "Ipnb.splitCell", new Object());
+  private static void splitCell(IpnbFilePanel filePanel) {
+    filePanel.executeUndoableCommand(() -> {
+      filePanel.splitCell();
+      filePanel.saveToFile(false);
+    }, "Split Cell");
   }
 }

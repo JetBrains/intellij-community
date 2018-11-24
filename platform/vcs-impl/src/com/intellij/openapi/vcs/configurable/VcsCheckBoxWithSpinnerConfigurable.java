@@ -25,12 +25,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/28/12
- * Time: 2:41 PM
- */
 public abstract class VcsCheckBoxWithSpinnerConfigurable implements Configurable {
   protected final Project myProject;
   private final String myCheckboxText;

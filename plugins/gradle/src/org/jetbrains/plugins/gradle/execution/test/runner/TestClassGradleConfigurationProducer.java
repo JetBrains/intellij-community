@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.PatternConfigurationProducer;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -138,9 +138,8 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        if (!StringUtil.equals(
-          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
-          GradleConstants.SYSTEM_ID.toString())) {
+        if (!StringUtil.equals(ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
+                               GradleConstants.SYSTEM_ID.toString())) {
           return;
         }
 
@@ -155,7 +154,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
                                  ConfigurationContext context,
                                  Runnable performRunnable) {
         if (!StringUtil.equals(
-          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
+          ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
           GradleConstants.SYSTEM_ID.toString())) {
           return;
         }

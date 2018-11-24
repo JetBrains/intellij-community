@@ -128,7 +128,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     };
   }
 
-  private abstract static class MainClassBrowser extends ClassBrowser {
+  public abstract static class MainClassBrowser extends ClassBrowser {
     protected final Project myProject;
     private final ConfigurationModuleSelector myModuleSelector;
 

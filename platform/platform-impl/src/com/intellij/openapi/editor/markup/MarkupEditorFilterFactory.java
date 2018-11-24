@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.editor.Editor;
 
 /**
  * @author max
@@ -26,12 +25,7 @@ public class MarkupEditorFilterFactory {
   private static final MarkupEditorFilter NOT_DIFF_FILTER = createNotFilter(IS_DIFF_FILTER);
 
   public static MarkupEditorFilter createNotFilter(final MarkupEditorFilter filter) {
-    return new MarkupEditorFilter() {
-      @Override
-      public boolean avaliableIn(Editor editor) {
-        return !filter.avaliableIn(editor);
-      }
-    };
+    return editor -> !filter.avaliableIn(editor);
   }
 
   public static MarkupEditorFilter createIsDiffFilter() {

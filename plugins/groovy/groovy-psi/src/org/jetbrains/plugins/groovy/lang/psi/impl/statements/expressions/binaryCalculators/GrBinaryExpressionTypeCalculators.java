@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 
 import java.util.Map;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
 public class GrBinaryExpressionTypeCalculators {
   private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
 

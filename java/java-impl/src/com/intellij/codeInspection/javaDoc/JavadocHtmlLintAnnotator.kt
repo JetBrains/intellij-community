@@ -27,9 +27,11 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
@@ -94,10 +96,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
         if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment::class.java) != null) {
           val range = adjust(element, text, offset)
           val description = StringUtil.capitalize(message)
-          val annotation = when (error) {
-            true -> holder.createErrorAnnotation(range, description)
-            false -> holder.createWarningAnnotation(range, description)
-          }
+          val annotation = if (error) holder.createErrorAnnotation(range, description) else holder.createWarningAnnotation(range, description)
           registerFix(annotation)
         }
       }
@@ -105,12 +104,6 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   }
 
   //<editor-fold desc="Helpers">
-
-  private val jdk = lazy {
-    var jdkHome = File(System.getProperty("java.home"))
-    if (jdkHome.name == "jre") jdkHome = jdkHome.parentFile
-    JavaSdk.getInstance().createJdk("(internal JDK)", jdkHome.path)
-  }
 
   private val key = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
 
@@ -133,8 +126,10 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     val jdk = findJdk(file, project)
     parameters.jdk = jdk
 
-    val toolsJar = File("${jdk.homePath}/lib/tools.jar")
-    if (toolsJar.exists()) parameters.classPath.add(toolsJar.path)
+    if (!JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
+      val toolsJar = FileUtil.findFirstThatExist("${jdk.homePath}/lib/tools.jar", "${jdk.homePath}/../lib/tools.jar")
+      if (toolsJar != null) parameters.classPath.add(toolsJar.path)
+    }
 
     parameters.charset = file.charset
     parameters.vmParametersList.addProperty("user.language", "en")
@@ -142,11 +137,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     parameters.programParametersList.add(lintOptions)
     parameters.programParametersList.add(copy.path)
 
-    val cmd = parameters.toCommandLine()
-    val exeFile = File(cmd.exePath)
-    if (!exeFile.exists()) cmd.exePath = File(exeFile.parentFile.parentFile, "jre/bin/${exeFile.name}").path
-
-    return cmd
+    return parameters.toCommandLine()
   }
 
   private fun findJdk(file: VirtualFile, project: Project): Sdk {
@@ -161,13 +152,11 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     val sdk = rootManager.projectSdk
     if (isJdk8(sdk)) return sdk!!
 
-    return jdk.value
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
   }
 
   private fun isJdk8(sdk: Sdk?) =
-      sdk != null &&
-      sdk.sdkType is JavaSdk && (sdk.sdkType as JavaSdk).isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_8) &&
-      JavaSdk.checkForJdk(File(sdk.homePath))
+    sdk != null && JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_8) && JdkUtil.checkForJre(sdk.homePath!!)
 
   private fun parse(lines: List<String>): List<Anno> {
     val result = mutableListOf<Anno>()

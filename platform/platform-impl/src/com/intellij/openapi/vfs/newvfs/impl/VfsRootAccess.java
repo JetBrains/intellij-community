@@ -19,13 +19,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -73,7 +73,7 @@ public class VfsRootAccess {
         return;
       }
 
-      Set<String> allowed = ApplicationManager.getApplication().runReadAction((Computable<Set<String>>)VfsRootAccess::allowedRoots);
+      Set<String> allowed = ReadAction.compute(VfsRootAccess::allowedRoots);
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {

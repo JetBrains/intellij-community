@@ -72,12 +72,14 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myIcon = factory.getIcon();
   }
 
+  @Override
   @NotNull
   @Transient
   public List<BeforeRunTask> getBeforeRunTasks() {
     return myBeforeRunTasks;
   }
 
+  @Override
   public void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
     myBeforeRunTasks = value;
   }

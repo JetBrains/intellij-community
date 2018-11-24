@@ -74,6 +74,15 @@ public final class TreeUtil {
     return treePathTraverser(tree).expandAndFilter(tree::isExpanded).toList();
   }
 
+  @Nullable
+  public static <T> T findObjectInPath(@Nullable TreePath path, @NotNull Class<T> clazz) {
+    for (TreePath p = path; p != null; p = p.getParentPath()) {
+      Object o = p.getLastPathComponent();
+      if (clazz.isInstance(o)) return (T)o;
+    }
+    return null;
+  }
+
   @NotNull
   public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> clazz) {
     final TreePath[] selections = tree.getSelectionPaths();

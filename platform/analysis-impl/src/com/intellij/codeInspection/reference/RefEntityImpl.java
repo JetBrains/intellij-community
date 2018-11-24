@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Nov 15, 2001
- * Time: 5:14:35 PM
- * To change template for new interface use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +34,7 @@ abstract class RefEntityImpl implements RefEntity {
   protected List<RefEntity> myChildren;  // guarded by this
   private final String myName;
   private Map<Key, Object> myUserMap;    // guarded by this
-  protected long myFlags;
+  protected long myFlags; // guarded by this
   protected final RefManagerImpl myManager;
 
   RefEntityImpl(@NotNull String name, @NotNull RefManager manager) {
@@ -78,11 +70,11 @@ abstract class RefEntityImpl implements RefEntity {
   }
 
   public synchronized void add(@NotNull final RefEntity child) {
-    if (myChildren == null) {
-      myChildren = new ArrayList<>(1);
+    List<RefEntity> children = myChildren;
+    if (children == null) {
+      myChildren = children = new ArrayList<>(1);
     }
-
-    myChildren.add(child);
+    children.add(child);
     ((RefEntityImpl)child).setOwner(this);
   }
 
@@ -115,28 +107,29 @@ abstract class RefEntityImpl implements RefEntity {
   @Override
   public <T> void putUserData(@NotNull Key<T> key, T value){
     synchronized(this){
-      if (myUserMap == null){
+      Map<Key, Object> userMap = myUserMap;
+      if (userMap == null){
         if (value == null) return;
-        myUserMap = new THashMap<>();
+        myUserMap = userMap = new THashMap<>();
       }
       if (value != null){
         //noinspection unchecked
-        myUserMap.put(key, value);
+        userMap.put(key, value);
       }
       else{
-        myUserMap.remove(key);
-        if (myUserMap.isEmpty()){
+        userMap.remove(key);
+        if (userMap.isEmpty()){
           myUserMap = null;
         }
       }
     }
   }
 
-  public boolean checkFlag(long mask) {
+  public synchronized boolean checkFlag(long mask) {
     return BitUtil.isSet(myFlags, mask);
   }
 
-  public void setFlag(final boolean value, final long mask) {
+  public synchronized void setFlag(final boolean value, final long mask) {
     myFlags = BitUtil.set(myFlags, mask, value);
   }
 

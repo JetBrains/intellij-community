@@ -91,6 +91,9 @@ public class RestBlock implements ASTBlock {
       childType == RestTokenTypes.LINE) {
       childIndent = Indent.getNormalIndent();
     }
+    if (parentType == RestElementTypes.DIRECTIVE_BLOCK && childType == RestTokenTypes.FIELD) {
+      childIndent = Indent.getNormalIndent();
+    }
     return new RestBlock(this, child, childAlignment, childIndent, wrap);
   }
 

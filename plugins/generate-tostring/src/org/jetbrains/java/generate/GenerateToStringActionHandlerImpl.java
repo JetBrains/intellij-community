@@ -120,14 +120,12 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation());
                 // decide what to do if the method already exists
                 ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
-                WriteAction.run(() -> {
-                    try {
-                        worker.execute(selectedMembers, template, resolutionPolicy);
-                    }
-                    catch (Exception e) {
-                        GenerationUtil.handleException(project, e);
-                    }
-                });
+                try {
+                    WriteAction.run(() -> worker.execute(selectedMembers, template, resolutionPolicy));
+                }
+                catch (Exception e) {
+                    GenerationUtil.handleException(project, e);
+                }
             }
             else {
                 HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");

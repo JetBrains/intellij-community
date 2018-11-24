@@ -359,9 +359,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         LOG.debug("ignore updating of changed node: ", object);
         return;
       }
-      boolean isLoadingRequired = entry.isLoadingRequired();
       MapBasedTree.UpdateResult<Object> update = tree.update(entry, children);
-      if (isLoadingRequired) return;
 
       boolean removed = !update.getRemoved().isEmpty();
       boolean inserted = !update.getInserted().isEmpty();
@@ -380,7 +378,11 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
           return;
         }
       }
-      treeStructureChanged(entry, null, null);
+      if (!listeners.isEmpty()) {
+        if (removed) listeners.treeNodesRemoved(update.getEvent(AsyncTreeModel.this, entry, update.getRemoved()));
+        if (inserted) listeners.treeNodesInserted(update.getEvent(AsyncTreeModel.this, entry, update.getInserted()));
+        if (contained) listeners.treeNodesChanged(update.getEvent(AsyncTreeModel.this, entry, update.getContained()));
+      }
       for (Entry<Object> entry : update.getContained()) {
         if (!entry.isLoadingRequired()) {
           loadChildren(entry, false);

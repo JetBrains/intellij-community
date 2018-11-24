@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.project.Project
 import com.jetbrains.edu.coursecreator.actions.CCEditHintAction
+import com.jetbrains.edu.learning.StudySettings
 import com.jetbrains.edu.learning.StudyTaskManager
 import com.jetbrains.edu.learning.StudyUtils
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder
@@ -25,8 +26,7 @@ open class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
   protected var isEditingMode = false
 
   init {
-    val taskManager = StudyTaskManager.getInstance(myProject)
-    if (StudyUtils.hasJavaFx() && taskManager.shouldUseJavaFx()) {
+    if (StudyUtils.hasJavaFx() && StudySettings.getInstance().shouldUseJavaFx()) {
       studyToolWindow = StudyJavaFxToolWindow()
     }
     else {
@@ -39,7 +39,7 @@ open class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
       studyToolWindow.setActionToolbar(DefaultActionGroup())
     }
 
-    val course = taskManager.course
+    val course = StudyTaskManager.getInstance(myProject).course
     if (course != null) {
       val group = DefaultActionGroup()
       val hints = myPlaceholder?.hints

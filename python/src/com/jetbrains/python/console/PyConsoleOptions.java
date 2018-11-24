@@ -100,6 +100,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myAddSourceRoots;
     @NotNull
     private PathMappingSettings myMappings = new PathMappingSettings();
+    private boolean myUseSoftWraps = false;
 
     public PyConsoleSettings(){
     }
@@ -281,6 +282,14 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void setMappings(@Nullable PathMappingSettings mappings) {
       myMappings = mappings != null ? mappings : new PathMappingSettings();
+    }
+
+    public boolean isUseSoftWraps() {
+      return myUseSoftWraps;
+    }
+
+    public void setUseSoftWraps(boolean useSoftWraps) {
+      myUseSoftWraps = useSoftWraps;
     }
   }
 }

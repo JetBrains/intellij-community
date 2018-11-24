@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.dashboard.*;
+import com.intellij.execution.dashboard.DashboardNode;
+import com.intellij.execution.dashboard.DashboardTreeAction;
+import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 

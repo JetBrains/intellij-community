@@ -29,6 +29,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +44,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -457,19 +458,18 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   @Override
   public void projectOpened() {
     EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), myProject);
-    ProjectManagerAdapter projectManagerListener = new ProjectManagerAdapter() {
+    myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
+        if (project != myProject) {
+          return;
+        }
+
         synchronized (myLock) {
           myIsProjectClosing = true;
         }
       }
-    };
-    ProjectManager.getInstance().addProjectManagerListener(myProject, projectManagerListener);
-  }
-
-  @Override
-  public void projectClosed() {
+    });
   }
 
   @Override
@@ -676,15 +676,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
       final Editor editor = event.getEditor();
       if (editor.getProject() != myProject) return;
-      final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-        @Nullable
-        @Override
-        public PsiFile compute() {
-          if (myProject.isDisposed()) return null;
-          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-          final Document document = editor.getDocument();
-          return documentManager.getPsiFile(document);
-        }
+      final PsiFile psiFile = ReadAction.compute(() -> {
+        if (myProject.isDisposed()) return null;
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        final Document document = editor.getDocument();
+        return documentManager.getPsiFile(document);
       });
 
       if (psiFile != null && myCurrentSuitesBundle != null && psiFile.isPhysical()) {

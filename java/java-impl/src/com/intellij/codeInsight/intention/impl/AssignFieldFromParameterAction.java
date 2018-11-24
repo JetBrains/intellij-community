@@ -46,8 +46,26 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
       return false;
     }
     final PsiField field = findFieldToAssign(project, myParameter);
-    if (field == null) return false;
+    if (field == null || type == null || !field.getType().isAssignableFrom(type)) return false;
     if (!field.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
+    PsiElement scope = myParameter.getDeclarationScope();
+    if (scope instanceof PsiMethod && field.hasModifierProperty(PsiModifier.FINAL)) {
+      if (((PsiMethod)scope).isConstructor()) {
+        PsiCodeBlock body = ((PsiMethod)scope).getBody();
+        LOG.assertTrue(body != null);
+        PsiStatement[] statements = body.getStatements();
+        if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
+          PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+          if (expression instanceof PsiMethodCallExpression && 
+              PsiKeyword.THIS.equals(((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName())) {
+            return false;
+          }
+        }
+      }
+      else {
+        return false;
+      }
+    }
     setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 
     return true;

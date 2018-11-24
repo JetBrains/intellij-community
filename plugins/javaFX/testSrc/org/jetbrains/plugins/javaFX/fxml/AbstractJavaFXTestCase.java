@@ -29,10 +29,6 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
 import java.io.File;
 
-/**
- * User: anna
- * Date: 3/20/13
- */
 public abstract class AbstractJavaFXTestCase extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override

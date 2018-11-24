@@ -56,6 +56,7 @@ public class AsyncHighlighterUpdater extends ReadTask {
     if (!isEverythingValid()) return null;
 
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile);
+    highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
     return new Continuation(() -> ((EditorEx)myEditor).setHighlighter(highlighter));
   }
 

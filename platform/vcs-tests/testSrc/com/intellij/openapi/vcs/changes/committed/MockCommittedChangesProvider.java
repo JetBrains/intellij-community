@@ -51,7 +51,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
 
   @Override
   public ChangesBrowserSettingsEditor createFilterUI(final boolean showDateFilter) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
@@ -111,7 +111,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
 
   @Override
   public ChangeListColumn[] getColumns() {
-    return new ChangeListColumn[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return new ChangeListColumn[0];
   }
 
   @Override

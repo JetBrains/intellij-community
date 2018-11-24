@@ -19,16 +19,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Processor;
 
-import java.util.List;
-
-/**
- * @author irengrig
- *         Date: 6/6/11
- *         Time: 5:28 PM
- */
 public interface VcsBaseRevisionAdviser {
   /**
    * @return true if base revision was found by this provider
    */
-  boolean getBaseVersionContent(final FilePath filePath, Processor<CharSequence> processor, String beforeVersionId, List<String> warnings) throws VcsException;
+  boolean getBaseVersionContent(final FilePath filePath, Processor<String> processor, String beforeVersionId) throws VcsException;
 }

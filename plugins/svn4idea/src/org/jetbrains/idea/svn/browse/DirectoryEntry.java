@@ -95,6 +95,6 @@ public class DirectoryEntry extends BaseNodeDescription implements Comparable<Di
   public int compareTo(@NotNull DirectoryEntry o) {
     int result = getKind().compareTo(o.getKind());
 
-    return result != 0 ? result : myUrl.toString().compareTo(o.getUrl().toString());
+    return result != 0 ? result : myUrl.toString().compareToIgnoreCase(o.getUrl().toString());
   }
 }

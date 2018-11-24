@@ -24,11 +24,6 @@ import javax.rmi.PortableRemoteObject;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 28.05.2007
- */
 class RemoteFrameImpl extends PortableRemoteObject implements RemoteDebugger.Frame {
   private final Frame myFrame;
 

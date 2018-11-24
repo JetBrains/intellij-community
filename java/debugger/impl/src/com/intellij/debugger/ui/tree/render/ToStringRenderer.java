@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.Type;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -133,8 +130,8 @@ public class ToStringRenderer extends NodeRendererImpl {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
-      return !CommonClassNames.JAVA_LANG_OBJECT
-        .equals(((ClassType)type).concreteMethodByName("toString", "()Ljava/lang/String;").declaringType().name());
+      Method toStringMethod = ((ClassType)type).concreteMethodByName("toString", "()Ljava/lang/String;");
+      return toStringMethod != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(toStringMethod.declaringType().name());
     }
     return false;
   }

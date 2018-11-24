@@ -27,5 +27,14 @@
     <orderEntry type="library" name="markdown4j-2.2" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="python-community-configure" />
+    <orderEntry type="module-library">
+      <library name="commons-lang">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/commons-lang-2.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

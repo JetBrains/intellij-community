@@ -15,11 +15,10 @@
  */
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -101,28 +100,25 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   public static List<PsiFile> findFormsBoundToClass(final Project project,
                                                     final String className,
                                                     final GlobalSearchScope scope) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
-      @Override
-      public List<PsiFile> compute() {
-        final Collection<VirtualFile> files;
-        try {
-          files = FileBasedIndex.getInstance().getContainingFiles(NAME, className,
-                                                                  GlobalSearchScope.projectScope(project).intersectWith(scope));
-        }
-        catch (IndexNotReadyException e) {
-          return Collections.emptyList();
-        }
-        if (files.isEmpty()) return Collections.emptyList();
-        List<PsiFile> result = new ArrayList<>();
-        for(VirtualFile file: files) {
-          if (!file.isValid()) continue;
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          if (psiFile != null) {
-            result.add(psiFile);
-          }
-        }
-        return result;
+    return ReadAction.compute(() -> {
+      final Collection<VirtualFile> files;
+      try {
+        files = FileBasedIndex.getInstance().getContainingFiles(NAME, className,
+                                                                GlobalSearchScope.projectScope(project).intersectWith(scope));
       }
+      catch (IndexNotReadyException e) {
+        return Collections.emptyList();
+      }
+      if (files.isEmpty()) return Collections.emptyList();
+      List<PsiFile> result = new ArrayList<>();
+      for (VirtualFile file : files) {
+        if (!file.isValid()) continue;
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        if (psiFile != null) {
+          result.add(psiFile);
+        }
+      }
+      return result;
     });
   }
 

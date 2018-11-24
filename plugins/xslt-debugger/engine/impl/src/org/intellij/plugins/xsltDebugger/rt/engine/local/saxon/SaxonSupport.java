@@ -7,11 +7,6 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.LocalDebugger;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 12.01.2009
-*/
 public class SaxonSupport {
   public static boolean init(Transformer transformer, LocalDebugger dbg) {
     if (transformer instanceof Controller) {

@@ -1,8 +1,6 @@
 package git4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
@@ -55,18 +53,10 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
   @NotNull
   protected List<VcsRef> expect(@NotNull String... refNames) {
     final Set<VcsRef> refs = GitTestUtil.readAllRefs(myProjectRoot, ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
-    return ContainerUtil.map2List(refNames, new Function<String, VcsRef>() {
-      @Override
-      public VcsRef fun(@NotNull final String refName) {
-        VcsRef item = ContainerUtil.find(refs, new Condition<VcsRef>() {
-          @Override
-          public boolean value(VcsRef ref) {
-            return ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName));
-          }
-        });
-        assertNotNull("Ref " + refName + " not found among " + refs, item);
-        return item;
-      }
+    return ContainerUtil.map2List(refNames, refName -> {
+      VcsRef item = ContainerUtil.find(refs, ref -> ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName)));
+      assertNotNull("Ref " + refName + " not found among " + refs, item);
+      return item;
     });
   }
 
@@ -91,12 +81,7 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
     for (final VcsRef ref : refs) {
       if (ref.getType() == GitRefManager.LOCAL_BRANCH) {
         final String localBranch = ref.getName();
-        if (ContainerUtil.exists(refs, new Condition<VcsRef>() {
-          @Override
-          public boolean value(VcsRef remoteRef) {
-            return remoteRef.getType() == GitRefManager.REMOTE_BRANCH && remoteRef.getName().replace("origin/", "").equals(localBranch);
-          }
-        })) {
+        if (ContainerUtil.exists(refs, remoteRef -> remoteRef.getType() == GitRefManager.REMOTE_BRANCH && remoteRef.getName().replace("origin/", "").equals(localBranch))) {
           git("config branch." + localBranch + ".remote origin");
           git("config branch." + localBranch + ".merge refs/heads/" + localBranch);
         }

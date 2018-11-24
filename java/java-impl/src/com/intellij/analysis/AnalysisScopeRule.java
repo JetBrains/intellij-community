@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 15-Jan-2008
- */
 package com.intellij.analysis;
 
 import com.intellij.ide.impl.dataRules.GetDataRule;

@@ -139,9 +139,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       final String typeCommentAnnotation = node.getTypeCommentAnnotation();
       if (annotation != null || typeCommentAnnotation != null) {
         if (!PyUtil.isEmptyFunction(node)) {
-          final PyStatementList statements = node.getStatementList();
-          ReturnVisitor visitor = new ReturnVisitor(node);
-          statements.accept(visitor);
+          final ReturnVisitor visitor = new ReturnVisitor(node);
+          node.getStatementList().accept(visitor);
           if (!visitor.myHasReturns) {
             final PyType expected = getExpectedReturnType(node);
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
@@ -150,6 +149,11 @@ public class PyTypeCheckerInspection extends PyInspection {
                               String.format("Expected to return '%s', got no return", expectedName));
             }
           }
+        }
+
+        if (PyUtil.isInit(node) && !(getExpectedReturnType(node) instanceof PyNoneType)) {
+          registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
+                          PyNames.INIT + " should return " + PyNames.NONE);
         }
       }
     }
@@ -181,9 +185,10 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private void checkCallSite(@NotNull PyCallSiteExpression callSite) {
       final List<AnalyzeCalleeResults> calleesResults = StreamEx
-        .of(PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext))
-        .filter(Visitor::callDoesNotHaveUnmappedArgumentsAndUnfilledParameters)
-        .map(this::analyzeCallee)
+        .of(mapArguments(callSite, getResolveContext()))
+        .filter(mapping -> mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty())
+        .map(mapping -> analyzeCallee(callSite, mapping))
+        .nonNull()
         .toList();
 
       if (!matchedCalleeResultsExist(calleesResults)) {
@@ -197,7 +202,9 @@ public class PyTypeCheckerInspection extends PyInspection {
         final PyType type = myTypeEvalContext.getType(iteratedValue);
         final String iterableClassName = isAsync ? PyNames.ASYNC_ITERABLE : PyNames.ITERABLE;
 
-        if (type != null && !PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
+        if (type != null &&
+            !PyTypeChecker.isUnknown(type, myTypeEvalContext) &&
+            !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
           final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
 
           registerProblem(iteratedValue, String.format("Expected 'collections.%s', got '%s' instead", iterableClassName, typeName));
@@ -205,37 +212,38 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    private static boolean callDoesNotHaveUnmappedArgumentsAndUnfilledParameters(@NotNull PyTypeChecker.AnalyzeCallResults callResults) {
-      final ArgumentMappingResults mapping = callResults.getMapping();
-      return mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty();
-    }
+    @Nullable
+    private AnalyzeCalleeResults analyzeCallee(@NotNull PyCallSiteExpression callSite, @NotNull PyCallExpression.PyArgumentsMapping mapping) {
+      final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
+      if (markedCallee == null) return null;
 
-    @NotNull
-    private AnalyzeCalleeResults analyzeCallee(@NotNull PyTypeChecker.AnalyzeCallResults results) {
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
-      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(results.getReceiver(), myTypeEvalContext);
-      final Map<PyExpression, PyNamedParameter> mapping = results.getMapping().getMappedParameters();
-      for (Map.Entry<PyExpression, PyNamedParameter> entry : getRegularMappedParameters(mapping).entrySet()) {
+
+      final PyExpression receiver = callSite.getReceiver(markedCallee.getCallable());
+      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
+      final Map<PyExpression, PyCallableParameter> mappedParameters = mapping.getMappedParameters();
+
+      for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(mappedParameters).entrySet()) {
         final PyExpression argument = entry.getKey();
-        final PyNamedParameter parameter = entry.getValue();
+        final PyCallableParameter parameter = entry.getValue();
         final PyType expected = parameter.getArgumentType(myTypeEvalContext);
         final PyType actual = myTypeEvalContext.getType(argument);
         final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
-      final PyNamedParameter positionalContainer = getMappedPositionalContainer(mapping);
+      final PyCallableParameter positionalContainer = getMappedPositionalContainer(mappedParameters);
       if (positionalContainer != null) {
-        result.addAll(analyzeContainerMapping(positionalContainer, getArgumentsMappedToPositionalContainer(mapping), substitutions));
+        result.addAll(analyzeContainerMapping(positionalContainer, getArgumentsMappedToPositionalContainer(mappedParameters), substitutions));
       }
-      final PyNamedParameter keywordContainer = getMappedKeywordContainer(mapping);
+      final PyCallableParameter keywordContainer = getMappedKeywordContainer(mappedParameters);
       if (keywordContainer != null) {
-        result.addAll(analyzeContainerMapping(keywordContainer, getArgumentsMappedToKeywordContainer(mapping), substitutions));
+        result.addAll(analyzeContainerMapping(keywordContainer, getArgumentsMappedToKeywordContainer(mappedParameters), substitutions));
       }
-      return new AnalyzeCalleeResults(results.getCallable(), result);
+      return new AnalyzeCalleeResults(markedCallee.getCallableType(), markedCallee.getCallable(), result);
     }
 
     @NotNull
-    private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyNamedParameter container, @NotNull List<PyExpression> arguments,
+    private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyCallableParameter container, @NotNull List<PyExpression> arguments,
                                                                 @NotNull Map<PyGenericType, PyType> substitutions) {
       final PyType expected = container.getArgumentType(myTypeEvalContext);
       final PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
@@ -296,6 +304,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -305,18 +314,28 @@ public class PyTypeCheckerInspection extends PyInspection {
   static class AnalyzeCalleeResults {
 
     @NotNull
+    private final PyCallableType myCallableType;
+
+    @Nullable
     private final PyCallable myCallable;
 
     @NotNull
     private final List<AnalyzeArgumentResult> myResults;
 
-    public AnalyzeCalleeResults(@NotNull PyCallable callable,
+    public AnalyzeCalleeResults(@NotNull PyCallableType callableType,
+                                @Nullable PyCallable callable,
                                 @NotNull List<AnalyzeArgumentResult> results) {
+      myCallableType = callableType;
       myCallable = callable;
       myResults = results;
     }
 
     @NotNull
+    public PyCallableType getCallableType() {
+      return myCallableType;
+    }
+
+    @Nullable
     public PyCallable getCallable() {
       return myCallable;
     }

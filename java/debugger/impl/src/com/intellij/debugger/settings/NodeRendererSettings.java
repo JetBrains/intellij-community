@@ -41,7 +41,6 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.InternalIterator;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -240,12 +239,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     final List<NodeRenderer> allRenderers = new ArrayList<>();
 
     // user defined renderers must come first
-    myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
-      @Override
-      public boolean visit(final NodeRenderer renderer) {
-        allRenderers.add(renderer);
-        return true;
-      }
+    myCustomRenderers.iterateRenderers(renderer -> {
+      allRenderers.add(renderer);
+      return true;
     });
 
     // plugins registered renderers come after that

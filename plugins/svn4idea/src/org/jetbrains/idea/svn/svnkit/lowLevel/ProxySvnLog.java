@@ -22,12 +22,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Level;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 5:41 PM
- */
 public class ProxySvnLog implements ISVNDebugLog {
   private final ISVNDebugLog myLog;
 

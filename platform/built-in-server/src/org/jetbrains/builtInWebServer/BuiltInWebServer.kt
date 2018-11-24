@@ -24,7 +24,7 @@ import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -235,7 +235,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   }
 
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
         return true
       }
@@ -254,7 +254,7 @@ fun HttpRequest.isSignedRequest(): Boolean {
       ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
       ?: referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
 
-  // we don't invalidate token — allow to make subsequent requests using it (it is required for our javadoc DocumentationComponent)
+  // we don't invalidate token - allow to make subsequent requests using it (it is required for our javadoc DocumentationComponent)
   return token != null && tokens.getIfPresent(token) != null
 }
 

@@ -15,12 +15,12 @@
  */
 package com.jetbrains.jsonSchema.schemaFile;
 
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
+import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import org.junit.Assert;
 
 import java.util.Collections;
@@ -55,9 +55,9 @@ public class JsonSchemaFileResolveTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void registerSchemes() {
-        final String path = VfsUtil.getRelativePath(myFile.getVirtualFile(), myProject.getBaseDir());
-        final JsonSchemaMappingsConfigurationBase.SchemaInfo info =
-          new JsonSchemaMappingsConfigurationBase.SchemaInfo("test", path, false, Collections.emptyList());
+        final String path = VfsUtilCore.getRelativePath(myFile.getVirtualFile(), myProject.getBaseDir());
+        final UserDefinedJsonSchemaConfiguration info =
+          new UserDefinedJsonSchemaConfiguration("test", path, false, Collections.emptyList());
         JsonSchemaFileResolveTest.this.addSchema(info);
       }
     });

@@ -284,7 +284,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   private void markInvoked(@NotNull IntentionAction action) {
-    ShowIntentionsPass.markActionInvoked(myFile.getProject(), myEditor, action);
+    if (myEditor != null) {
+      ShowIntentionsPass.markActionInvoked(myFile.getProject(), myEditor, action);
+    }
   }
 
   private void removeActionFromCached(@NotNull IntentionActionWithTextCaching action) {

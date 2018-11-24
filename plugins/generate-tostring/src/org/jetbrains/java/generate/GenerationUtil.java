@@ -141,7 +141,7 @@ public class GenerationUtil {
                                             int sortElements,
                                             boolean useFullyQualifiedName)
     throws GenerateCodeException {
-    return velocityGenerateCode(clazz, selectedMembers, Collections.<PsiMember>emptyList(), params, Collections.<String, Object>emptyMap(), templateMacro, sortElements, useFullyQualifiedName, false);
+    return velocityGenerateCode(clazz, selectedMembers, Collections.emptyList(), params, Collections.emptyMap(), templateMacro, sortElements, useFullyQualifiedName, false);
   }
 
   /**

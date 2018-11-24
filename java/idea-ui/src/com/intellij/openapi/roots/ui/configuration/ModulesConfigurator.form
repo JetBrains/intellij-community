@@ -33,9 +33,7 @@
         <children>
           <component id="1f983" class="com.intellij.openapi.roots.ui.configuration.LanguageLevelCombo" binding="myLanguageLevelCombo" custom-create="true">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                <minimum-size width="310" height="28"/>
-              </grid>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>

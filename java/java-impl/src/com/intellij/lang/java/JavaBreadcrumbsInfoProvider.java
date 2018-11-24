@@ -67,7 +67,7 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
   @Override
   public Icon getElementIcon(@NotNull PsiElement element) {
     return Registry.is("editor.breadcrumbs.java.icon")
-           ? element.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS)
+           ? element.getIcon(0)
            : null;
   }
 

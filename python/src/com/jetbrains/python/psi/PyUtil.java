@@ -72,10 +72,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -580,7 +577,7 @@ public class PyUtil {
         return name;
       }
     }
-    return element.getNode().getText();
+    return element.getNode() != null ? element.getNode().getText() : element.getText();
   }
 
   public static boolean isOwnScopeComprehension(@NotNull PyComprehensionElement comprehension) {
@@ -941,8 +938,30 @@ public class PyUtil {
     }
   }
 
+  @Nullable
+  public static PyType getReturnTypeToAnalyzeAsCallType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    if (isInit(function)) {
+      final PyClass cls = function.getContainingClass();
+      if (cls != null) {
+        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType providedClassType = provider.getGenericType(cls, context);
+          if (providedClassType != null) {
+            return providedClassType;
+          }
+        }
+
+        final PyInstantiableType classType = as(context.getType(cls), PyInstantiableType.class);
+        if (classType != null) {
+          return classType.toInstance();
+        }
+      }
+    }
+
+    return context.getReturnType(function);
+  }
+
   public static class KnownDecoratorProviderHolder {
-    public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
+    public static final PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
     private KnownDecoratorProviderHolder() {
     }
@@ -1561,19 +1580,10 @@ public class PyUtil {
     return element;
   }
 
-  @NotNull
-  public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    return Optional
-      .ofNullable(as(context.getType(callable), PyCallableType.class))
-      .map(callableType -> callableType.getParameters(context))
-      .map(callableParameters -> ContainerUtil.map(callableParameters, PyCallableParameter::getParameter))
-      .orElse(Arrays.asList(callable.getParameterList().getParameters()));
-  }
-
   public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,
                                                 @NotNull TypeEvalContext context) {
-    final List<PyParameter> parameters = getParameters(callable, context);
-    final List<PyParameter> otherParameters = getParameters(otherCallable, context);
+    final List<PyCallableParameter> parameters = callable.getParameters(context);
+    final List<PyCallableParameter> otherParameters = otherCallable.getParameters(context);
     final int optionalCount = optionalParametersCount(parameters);
     final int otherOptionalCount = optionalParametersCount(otherParameters);
     final int requiredCount = requiredParametersCount(callable, parameters);
@@ -1589,9 +1599,9 @@ public class PyUtil {
     return requiredCount <= otherRequiredCount && parameters.size() >= otherParameters.size() && optionalCount >= otherOptionalCount;
   }
 
-  private static int optionalParametersCount(@NotNull List<PyParameter> parameters) {
+  private static int optionalParametersCount(@NotNull List<PyCallableParameter> parameters) {
     int n = 0;
-    for (PyParameter parameter : parameters) {
+    for (PyCallableParameter parameter : parameters) {
       if (parameter.hasDefaultValue()) {
         n++;
       }
@@ -1599,11 +1609,11 @@ public class PyUtil {
     return n;
   }
 
-  private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyParameter> parameters) {
+  private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
     return parameters.size() - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
   }
 
-  private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyParameter> parameters) {
+  private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
     int n = 0;
     if (hasPositionalContainer(parameters)) {
       n++;
@@ -1616,7 +1626,7 @@ public class PyUtil {
     }
     else {
       if (parameters.size() > 0) {
-        final PyParameter first = parameters.get(0);
+        final PyCallableParameter first = parameters.get(0);
         if (PyNames.CANONICAL_SELF.equals(first.getName())) {
           n++;
         }
@@ -1625,18 +1635,18 @@ public class PyUtil {
     return n;
   }
 
-  private static boolean hasPositionalContainer(@NotNull List<PyParameter> parameters) {
-    for (PyParameter parameter : parameters) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isPositionalContainer()) {
+  private static boolean hasPositionalContainer(@NotNull List<PyCallableParameter> parameters) {
+    for (PyCallableParameter parameter : parameters) {
+      if (parameter.isPositionalContainer()) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean hasKeywordContainer(@NotNull List<PyParameter> parameters) {
-    for (PyParameter parameter : parameters) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
+  private static boolean hasKeywordContainer(@NotNull List<PyCallableParameter> parameters) {
+    for (PyCallableParameter parameter : parameters) {
+      if (parameter.isKeywordContainer()) {
         return true;
       }
     }
@@ -1790,24 +1800,30 @@ public class PyUtil {
       return true;
     }
     else if (statements.length == 1) {
-      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturn(statements[0])) {
+      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturnOrEllipsis(statements[0])) {
         return true;
       }
     }
     else if (statements.length == 2) {
-      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturn(statements[1]))) {
+      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturnOrEllipsis(statements[1]))) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean isPassOrRaiseOrEmptyReturn(PyStatement stmt) {
+  private static boolean isPassOrRaiseOrEmptyReturnOrEllipsis(PyStatement stmt) {
     if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
       return true;
     }
     if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
       return true;
+    }
+    if (stmt instanceof PyExpressionStatement) {
+      final PyExpression expression = ((PyExpressionStatement)stmt).getExpression();
+      if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {
+        return true;
+      }
     }
     return false;
   }

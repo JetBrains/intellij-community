@@ -72,10 +72,7 @@ public final class BundledFileTemplate extends FileTemplateBase {
   @Override
   public boolean isDefault() {
     // todo: consider isReformat option here?
-    if (!getText().equals(getDefaultText())) {
-      return false;
-    }
-    return true;
+    return getText().equals(getDefaultText());
   }
 
   @Override

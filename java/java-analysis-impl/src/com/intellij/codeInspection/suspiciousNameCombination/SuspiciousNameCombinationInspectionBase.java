@@ -48,6 +48,13 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
     .add("java.sql.PreparedStatement", "set.*")
     .add("java.sql.ResultSet", "update.*")
     .add("java.sql.SQLOutput", "write.*")
+    // parameters for compare methods are x and y which is also unrelated to coordinates
+    .add("java.lang.Integer", "compare.*")
+    .add("java.lang.Long", "compare.*")
+    .add("java.lang.Short", "compare")
+    .add("java.lang.Byte", "compare")
+    .add("java.lang.Character", "compare")
+    .add("java.lang.Boolean", "compare")
     // parameter names for addExact, multiplyFull, floorDiv, hypot etc. are x and y,
     // but either unlikely to be related to coordinates or their order does not matter (like in hypot)
     .add("java.lang.Math", ".*")

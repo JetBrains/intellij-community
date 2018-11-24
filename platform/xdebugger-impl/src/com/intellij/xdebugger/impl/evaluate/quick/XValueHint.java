@@ -45,6 +45,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
@@ -76,28 +77,55 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class XValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(XValueHint.class);
 
+  private final XDebuggerEditorsProvider myEditorsProvider;
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession myDebugSession;
   private final boolean myFromKeyboard;
   private final String myExpression;
   private final String myValueName;
-  private final @Nullable XSourcePosition myExpressionPosition;
-  private final ExpressionInfo myExpressionInfo;
+  private final XSourcePosition myExpressionPosition;
   private Disposable myDisposable;
 
   private static final Key<XValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
 
-  public XValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type,
-                    @NotNull ExpressionInfo expressionInfo, @NotNull XDebuggerEvaluator evaluator,
-                    @NotNull XDebugSession session, boolean fromKeyboard) {
-    super(project, editor, point, type, expressionInfo.getTextRange());
+  public XValueHint(@NotNull Project project,
+                    @NotNull Editor editor,
+                    @NotNull Point point,
+                    @NotNull ValueHintType type,
+                    @NotNull ExpressionInfo expressionInfo,
+                    @NotNull XDebuggerEvaluator evaluator,
+                    @NotNull XDebugSession session,
+                    boolean fromKeyboard) {
+    this(project, session.getDebugProcess().getEditorsProvider(), editor, point, type, expressionInfo, evaluator, session, fromKeyboard);
+  }
 
+  protected XValueHint(@NotNull Project project,
+                       @NotNull XDebuggerEditorsProvider editorsProvider,
+                       @NotNull Editor editor,
+                       @NotNull Point point,
+                       @NotNull ValueHintType type,
+                       @NotNull ExpressionInfo expressionInfo,
+                       @NotNull XDebuggerEvaluator evaluator,
+                       boolean fromKeyboard) {
+    this(project, editorsProvider, editor, point, type, expressionInfo, evaluator, null, fromKeyboard);
+  }
+
+  private XValueHint(@NotNull Project project,
+                     @NotNull XDebuggerEditorsProvider editorsProvider,
+                     @NotNull Editor editor,
+                     @NotNull Point point,
+                     @NotNull ValueHintType type,
+                     @NotNull ExpressionInfo expressionInfo,
+                     @NotNull XDebuggerEvaluator evaluator,
+                     @Nullable XDebugSession session,
+                     boolean fromKeyboard) {
+    super(project, editor, point, type, expressionInfo.getTextRange());
+    myEditorsProvider = editorsProvider;
     myEvaluator = evaluator;
     myDebugSession = session;
     myFromKeyboard = fromKeyboard;
     myExpression = XDebuggerEvaluateActionHandler.getExpressionText(expressionInfo, editor.getDocument());
     myValueName = XDebuggerEvaluateActionHandler.getDisplayText(expressionInfo, editor.getDocument());
-    myExpressionInfo = expressionInfo;
 
     VirtualFile file;
     ConsoleView consoleView = ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW.get(editor);
@@ -178,13 +206,7 @@ public class XValueHint extends AbstractValueHint {
             XValueNodeImpl.buildText(valuePresenter, text);
 
             if (!hasChildren) {
-              SimpleColoredComponent component = HintUtil.createInformationComponent();
-              text.appendToComponent(component);
-              if (myFullValueEvaluator != null) {
-                component.append(myFullValueEvaluator.getLinkText(), XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES,
-                                 (Consumer<MouseEvent>)event -> DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, getProject(), getEditor()));
-                LinkMouseListenerBase.installSingleTagOn(component);
-              }
+              JComponent component = createHintComponent(text, valuePresenter, myFullValueEvaluator);
               showHint(component);
             }
             else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
@@ -242,6 +264,23 @@ public class XValueHint extends AbstractValueHint {
     }, myExpressionPosition);
   }
 
+  @NotNull
+  protected JComponent createHintComponent(@NotNull SimpleColoredText text,
+                                           @NotNull XValuePresentation presentation,
+                                           @Nullable XFullValueEvaluator evaluator) {
+    SimpleColoredComponent component = HintUtil.createInformationComponent();
+    text.appendToComponent(component);
+    if (evaluator != null) {
+      component.append(
+        evaluator.getLinkText(),
+        XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES,
+        (Consumer<MouseEvent>)event -> DebuggerUIUtil.showValuePopup(evaluator, event, getProject(), getEditor())
+      );
+      LinkMouseListenerBase.installSingleTagOn(component);
+    }
+    return component;
+  }
+
   private void disposeVisibleHint() {
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
@@ -253,9 +292,9 @@ public class XValueHint extends AbstractValueHint {
     if (myCurrentHint != null) {
       myCurrentHint.hide();
     }
-    XValueMarkers<?,?> valueMarkers = ((XDebugSessionImpl)myDebugSession).getValueMarkers();
-    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(myDebugSession.getProject(), myDebugSession.getDebugProcess().getEditorsProvider(),
-                                                            myDebugSession.getCurrentPosition(), valueMarkers);
+    XValueMarkers<?,?> valueMarkers = myDebugSession == null ? null : ((XDebugSessionImpl)myDebugSession).getValueMarkers();
+    XSourcePosition position = myDebugSession == null ? null : myDebugSession.getCurrentPosition();
+    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(getProject(), myEditorsProvider, position, valueMarkers);
     showTreePopup(creator, Pair.create(value, myValueName));
   }
 

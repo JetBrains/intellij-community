@@ -36,12 +36,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/28/13
- * Time: 11:59 AM
- */
 public class SvnCommitTest extends Svn17TestCase {
   private SvnVcs myVcs;
   private VcsDirtyScopeManager myDirtyScopeManager;

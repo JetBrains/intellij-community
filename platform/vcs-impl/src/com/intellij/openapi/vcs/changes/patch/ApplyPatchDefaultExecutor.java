@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -80,12 +79,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     for (VirtualFile base : patchGroups.keySet()) {
       appliers.add(new PatchApplier<BinaryFilePatch>(myProject, base,
                                                      ContainerUtil
-                                                       .map(patchGroups.get(base), new Function<AbstractFilePatchInProgress, FilePatch>() {
-                                                         @Override
-                                                         public FilePatch fun(AbstractFilePatchInProgress patchInProgress) {
-                                                           return patchInProgress.getPatch();
-                                                         }
-                                                       }), localList, null, commitContext));
+                                                       .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList, null, commitContext));
     }
     return appliers;
   }
@@ -93,29 +87,21 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
   public static void applyAdditionalInfoBefore(final Project project,
                                                @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
-                                               CommitContext commitContext) {
-    applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
-      @Override
-      public void consume(InfoGroup infoGroup) {
-        infoGroup.myPatchEP.consumeContentBeforePatchApplied(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
-      }
-    });
+                                               @Nullable CommitContext commitContext) {
+    applyAdditionalInfoImpl(project, additionalInfo, commitContext,
+                            infoGroup -> infoGroup.myPatchEP.consumeContentBeforePatchApplied(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext));
   }
 
   private static void applyAdditionalInfo(final Project project,
                                           @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                           CommitContext commitContext) {
-    applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
-      @Override
-      public void consume(InfoGroup infoGroup) {
-        infoGroup.myPatchEP.consumeContent(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
-      }
-    });
+    applyAdditionalInfoImpl(project, additionalInfo, commitContext,
+                            infoGroup -> infoGroup.myPatchEP.consumeContent(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext));
   }
 
   private static void applyAdditionalInfoImpl(final Project project,
                                               @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
-                                              CommitContext commitContext, final Consumer<InfoGroup> worker) {
+                                              @Nullable CommitContext commitContext, final Consumer<InfoGroup> worker) {
     final PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, project);
     if (extensions.length == 0) return;
     if (additionalInfo != null) {
@@ -143,9 +129,9 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     private final PatchEP myPatchEP;
     private final String myPath;
     private final CharSequence myContent;
-    private final CommitContext myCommitContext;
+   @Nullable private final CommitContext myCommitContext;
 
-    private InfoGroup(PatchEP patchEP, String path, CharSequence content, CommitContext commitContext) {
+    private InfoGroup(PatchEP patchEP, String path, CharSequence content, @Nullable CommitContext commitContext) {
       myPatchEP = patchEP;
       myPath = path;
       myContent = content;

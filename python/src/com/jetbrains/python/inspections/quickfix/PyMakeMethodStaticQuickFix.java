@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
   public PyMakeMethodStaticQuickFix() {
   }

@@ -31,6 +31,11 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   public SchemesPanel(ColorAndFontOptions options) {
+    this(options, DEFAULT_VGAP);
+  }
+
+  public SchemesPanel(ColorAndFontOptions options, int vGap) {
+    super(vGap);
     myOptions = options;
   }
 

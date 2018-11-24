@@ -66,7 +66,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
       fun handleError(e: Throwable) {
         if (e !is ProcessCanceledException) {
           ExecutionUtil.handleExecutionError(project, contentManager.getToolWindowIdByEnvironment(environment), environment.runProfile.name, e)
-          LOG.info(e)
+          LOG.debug(e)
         }
         processNotStarted()
       }

@@ -341,6 +341,11 @@ common.attrs.other =
 			}+
 		}
 
+## color for <link rel="mask-icon"> and <meta name="theme-color">
+
+	common.data.color =
+		w:color
+
 ## MIME types
 
 	common.data.mimetype =

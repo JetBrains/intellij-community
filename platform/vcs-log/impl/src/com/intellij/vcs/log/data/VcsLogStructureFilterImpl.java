@@ -70,12 +70,7 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
   }
 
   private boolean matches(@NotNull final String path) {
-    return ContainerUtil.find(myFiles, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return FileUtil.isAncestor(file.getPath(), path, false);
-      }
-    }) != null;
+    return ContainerUtil.find(myFiles, (Condition<VirtualFile>)file -> FileUtil.isAncestor(file.getPath(), path, false)) != null;
   }
 
   @Override

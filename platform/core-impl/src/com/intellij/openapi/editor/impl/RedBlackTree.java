@@ -20,20 +20,28 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * User: cdr
- */
-public abstract class RedBlackTree<K> {
+
+public abstract class RedBlackTree<K> extends AtomicInteger {
+  // this "extends AtomicInteger" thing is for supporting modCounter.
+  // I couldn't make it "volatile int" field because Unsafe.getAndAddInt is since jdk8 only, and "final AtomicInteger" field would be too many indirections
+
   public static boolean VERIFY;
   private static final int INDENT_STEP = 4;
   private int nodeSize; // number of nodes
-  protected int modCount;
   protected Node<K> root;
 
-  public RedBlackTree() {
+  RedBlackTree() {
     root = null;
     verifyProperties();
+  }
+
+  void incModCount() {
+    incrementAndGet();
+  }
+  int getModCount() {
+    return get();
   }
 
   protected void rotateLeft(@NotNull Node<K> n) {
@@ -141,7 +149,7 @@ public abstract class RedBlackTree<K> {
   }
 
   protected void deleteNode(@NotNull Node<K> n) {
-    modCount++;
+    incModCount();
 
     Node<K> e = n;
     while (e.getParent() != null) e = e.getParent();
@@ -307,10 +315,9 @@ public abstract class RedBlackTree<K> {
       return BitUtil.isSet(myFlags, mask);
     }
 
-    protected void setFlag(byte mask, boolean value) {
+    void setFlag(byte mask, boolean value) {
       myFlags = BitUtil.set(myFlags, mask, value);
     }
-
 
     public Node<K> grandparent() {
       assert getParent() != null; // Not the root node
@@ -445,7 +452,8 @@ public abstract class RedBlackTree<K> {
   }
 
   public void clear() {
-    modCount++;
+    incModCount();
+
     root = null;
     nodeSize = 0;
   }

@@ -17,11 +17,13 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +48,10 @@ public interface IdeModelsProvider {
 
   @Nullable
   Module findIdeModule(@NotNull String ideModuleName);
+
+  @ApiStatus.Experimental
+  @Nullable
+  UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData);
 
   @Nullable
   Library findIdeLibrary(@NotNull LibraryData libraryData);

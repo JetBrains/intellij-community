@@ -25,10 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: Mar 17, 2005
- */
 public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private CustomizableActionsPanel myPanel;
 

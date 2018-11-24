@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-May-2007
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
@@ -100,7 +96,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     final RunProfile configuration = properties.getConfiguration();
     if (configuration instanceof RunConfiguration) {
-      myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), (RunConfiguration)configuration);
+      myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), (RunConfiguration)configuration, parent);
       actionGroup.addAction(myExportAction);
     }
 

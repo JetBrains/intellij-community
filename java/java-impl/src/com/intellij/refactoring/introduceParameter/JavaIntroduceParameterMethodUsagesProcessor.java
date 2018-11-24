@@ -42,7 +42,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,24 +145,22 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, TIntArrayList parametersToRemove, PsiMethod method) {
     final int parametersCount = method.getParameterList().getParametersCount();
     final PsiExpression[] exprs = argList.getExpressions();
-    parametersToRemove.forEachDescending(new TIntProcedure() {
-      public boolean execute(int paramNum) {
-        try {
-          //parameter was introduced before varargs
-          if (method.isVarArgs() && paramNum == parametersCount - 1) {
-            for (int i = paramNum + 1; i < exprs.length; i++) {
-              exprs[i].delete();
-            }
-          }
-          else if (paramNum < exprs.length) {
-            exprs[paramNum].delete();
+    parametersToRemove.forEachDescending(paramNum -> {
+      try {
+        //parameter was introduced before varargs
+        if (method.isVarArgs() && paramNum == parametersCount - 1) {
+          for (int i = paramNum + 1; i < exprs.length; i++) {
+            exprs[i].delete();
           }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        else if (paramNum < exprs.length) {
+          exprs[paramNum].delete();
         }
-        return true;
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
   }
 
@@ -197,13 +194,11 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
             (!method.isVarArgs() && actualParamLength < parametersCount)) {
           conflicts.putValue(call, "Incomplete call(" + call.getText() +"): " + parametersCount + " parameters expected but only " + actualParamLength + " found");
         }
-        data.getParametersToRemove().forEach(new TIntProcedure() {
-          public boolean execute(int paramNum) {
-            if (paramNum >= actualParamLength) {
-              conflicts.putValue(call, "Incomplete call(" + call.getText() +"): expected to delete the " + paramNum + " parameter but only " + actualParamLength + " parameters found");
-            }
-            return true;
+        data.getParametersToRemove().forEach(paramNum -> {
+          if (paramNum >= actualParamLength) {
+            conflicts.putValue(call, "Incomplete call(" + call.getText() +"): expected to delete the " + paramNum + " parameter but only " + actualParamLength + " parameters found");
           }
+          return true;
         });
       }
     }
@@ -226,21 +221,19 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
     final PsiParameterList parameterList = method.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
-    data.getParametersToRemove().forEachDescending(new TIntProcedure() {
-      public boolean execute(final int paramNum) {
-        try {
-          PsiParameter param = parameters[paramNum];
-          PsiDocTag tag = javaDocHelper.getTagForParameter(param);
-          if (tag != null) {
-            tag.delete();
-          }
-          param.delete();
+    data.getParametersToRemove().forEachDescending(paramNum -> {
+      try {
+        PsiParameter param = parameters[paramNum];
+        PsiDocTag tag = javaDocHelper.getTagForParameter(param);
+        if (tag != null) {
+          tag.delete();
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        return true;
+        param.delete();
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
 
     final PsiParameter anchorParameter = getAnchorParameter(method);

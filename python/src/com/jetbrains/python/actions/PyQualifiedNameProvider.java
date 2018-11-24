@@ -29,10 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 
-/**
- * User: anna
- * Date: 3/29/11
- */
 public class PyQualifiedNameProvider implements QualifiedNameProvider {
   @Override
   public PsiElement adjustElementToCopy(PsiElement element) {

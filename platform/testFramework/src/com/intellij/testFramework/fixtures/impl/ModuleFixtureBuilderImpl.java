@@ -17,7 +17,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,7 +115,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected abstract T instantiateFixture();
 
   Module buildModule() {
-    return ApplicationManager.getApplication().runWriteAction((Computable<Module>)() -> {
+    return WriteAction.compute(() -> {
       Module module = createModule();
       initModule(module);
       return module;

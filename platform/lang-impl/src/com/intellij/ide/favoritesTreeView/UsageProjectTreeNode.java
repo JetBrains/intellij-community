@@ -29,12 +29,6 @@ import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/6/12
- * Time: 7:24 PM
- */
 public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageInfo> {
   private final UsagePresentation myUsagePresentation;
 

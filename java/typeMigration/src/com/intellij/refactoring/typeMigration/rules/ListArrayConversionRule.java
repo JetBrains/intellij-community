@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 08-Aug-2008
- */
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.Pair;

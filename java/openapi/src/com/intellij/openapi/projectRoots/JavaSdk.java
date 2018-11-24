@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,15 +47,17 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType {
 
   public abstract boolean isOfVersionOrHigher(@NotNull Sdk sdk, @NotNull JavaSdkVersion version);
 
+  /** @deprecated use {@link JdkUtil#checkForJdk} (to be removed in IDEA 2019) */
   public static boolean checkForJdk(@NotNull File file) {
     return JdkUtil.checkForJdk(file);
   }
 
+  /** @deprecated use {@link JdkUtil#checkForJre} (to be removed in IDEA 2019) */
   public static boolean checkForJre(@NotNull String file) {
     return JdkUtil.checkForJre(file);
   }
 
-  @Nullable
+  /** @deprecated use {@link SdkVersionUtil#detectJdkVersion} (to be removed in IDEA 2019) */
   public static String getJdkVersion(@NotNull String sdkHome) {
     return SdkVersionUtil.detectJdkVersion(sdkHome);
   }

@@ -46,6 +46,8 @@ interface Vm : UserDataHolderEx {
 
   var captureAsyncStackTraces: Boolean
 
-  val name: String?
-    get() = null
+  val presentableName: String
+    get() = "main loop"
+
+  val childVMs: MutableList<Vm>
 }

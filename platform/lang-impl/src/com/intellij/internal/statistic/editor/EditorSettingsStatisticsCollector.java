@@ -83,6 +83,11 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, es.isSmartHome(), true, "smartHome");
     addIfDiffers(set, es.isCamelWords(), false, "camelWords");
     addIfDiffers(set, es.isShowParameterNameHints(), true, "editor.inlay.parameter.hints");
+    addIfDiffers(set, es.isBreadcrumbsAbove(), false, "noBreadcrumbsBelow");
+    addIfDiffers(set, es.isBreadcrumbsShown(), true, "breadcrumbs");
+    for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
+      addIfDiffers(set, es.isBreadcrumbsShownFor(language), true, "breadcrumbsFor" + language);
+    }
 
     RichCopySettings rcs = RichCopySettings.getInstance();
     addIfDiffers(set, rcs.isEnabled(), true, "richCopy");

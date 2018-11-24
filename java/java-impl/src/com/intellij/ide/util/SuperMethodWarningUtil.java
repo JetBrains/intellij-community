@@ -47,7 +47,7 @@ public class SuperMethodWarningUtil {
 
   @NotNull
   public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
-    return checkSuperMethods(method, actionString, Collections.<PsiElement>emptyList());
+    return checkSuperMethods(method, actionString, Collections.emptyList());
   }
 
   @NotNull
@@ -86,7 +86,7 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
+  public static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
     final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
     superMethods.removeAll(ignore);
 

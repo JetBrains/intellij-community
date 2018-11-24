@@ -27,13 +27,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/23/11
- * Time: 2:07 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ToggleActionCommand extends AbstractCommand {
   
   public static final String PREFIX = CMD_PREFIX + "toggle";

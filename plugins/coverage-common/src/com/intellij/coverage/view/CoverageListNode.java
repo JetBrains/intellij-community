@@ -6,9 +6,9 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -16,15 +16,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
-* User: anna
-* Date: 1/2/12
-*/
 public class CoverageListNode extends AbstractTreeNode {
   protected CoverageSuitesBundle myBundle;
   protected CoverageViewManager.StateBean myStateBean;
@@ -35,12 +30,7 @@ public class CoverageListNode extends AbstractTreeNode {
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean) {
     super(project, classOrPackage);
-    myName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return classOrPackage.getName(); 
-      }
-    });
+    myName = ReadAction.compute(() -> classOrPackage.getName());
     myBundle = bundle;
     myStateBean = stateBean;
     myFileStatusManager = FileStatusManager.getInstance(myProject);
@@ -74,16 +64,12 @@ public class CoverageListNode extends AbstractTreeNode {
 
   @Override
   public FileStatus getFileStatus() {
-    final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-      @Nullable
-      @Override
-      public PsiFile compute() {
-        Object value = getValue();
-        if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
-          return ((PsiElement)value).getContainingFile();
-        }
-        return null;
+    final PsiFile containingFile = ReadAction.compute(() -> {
+      Object value = getValue();
+      if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
+        return ((PsiElement)value).getContainingFile();
       }
+      return null;
     });
     return containingFile != null ? myFileStatusManager.getStatus(containingFile.getVirtualFile()) : super.getFileStatus();
   }
@@ -114,14 +100,11 @@ public class CoverageListNode extends AbstractTreeNode {
 
   @Override
   public int getWeight() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        //todo weighted
-        final Object value = getValue();
-        if (value instanceof PsiElement && ((PsiElement)value).getContainingFile() != null) return 40;
-        return 30;
-      }
+    return ReadAction.compute(() -> {
+      //todo weighted
+      final Object value = getValue();
+      if (value instanceof PsiElement && ((PsiElement)value).getContainingFile() != null) return 40;
+      return 30;
     });
   }
 

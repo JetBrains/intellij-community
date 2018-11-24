@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -44,11 +43,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
@@ -81,6 +82,7 @@ import static java.util.stream.Collectors.toList;
 public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
+  private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
   private JPanel myProgressLabel;
@@ -95,16 +97,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
 
-  private JBSplitter mySplitter;
-
-  private boolean myDetailsOn;
-  @NotNull private final NotNullLazyValue<MyChangeProcessor> myDiffDetails = new NotNullLazyValue<MyChangeProcessor>() {
-    @NotNull
-    @Override
-    protected MyChangeProcessor compute() {
-      return new MyChangeProcessor(myProject);
-    }
-  };
+  private PreviewDiffSplitterComponent mySplitterComponent;
 
   @NotNull private final TreeSelectionListener myTsl;
   private Content myContent;
@@ -134,7 +127,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
             LOG.debug(message);
           }
         }
-        SwingUtilities.invokeLater(() -> changeDetails());
+        ApplicationManager.getApplication().invokeLater(() -> updatePreview());
       }
     };
   }
@@ -157,9 +150,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
                                                   () -> ApplicationManager.getApplication().invokeLater(() -> refreshView(), ModalityState.NON_MODAL, myProject.getDisposed()));
-
-    myDetailsOn = VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
-    changeDetails();
+    updatePreview();
   }
 
   @Override
@@ -184,7 +175,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), panel);
     EmptyAction.registerWithShortcutSet("ChangesView.Rename",CommonShortcuts.getRename() , panel);
     EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.Diff", CommonShortcuts.getDiff(), panel);
+    EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
 
     DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewToolbar");
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
@@ -219,45 +210,21 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     panel.setToolbar(toolbarPanel);
 
     final JPanel content = new JPanel(new BorderLayout());
-    mySplitter = new JBSplitter(false, "ChangesViewManager.DETAILS_SPLITTER_PROPORTION", 0.5f);
-    mySplitter.setHonorComponentsMinimumSize(false);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(scrollPane, BorderLayout.CENTER);
-    mySplitter.setFirstComponent(wrapper);
-    content.add(mySplitter, BorderLayout.CENTER);
+    MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
+    mySplitterComponent =
+      new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                       VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+
+    content.add(mySplitterComponent, BorderLayout.CENTER);
     content.add(myProgressLabel, BorderLayout.SOUTH);
     panel.setContent(content);
 
     ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
     return panel;
-  }
-
-  private void changeDetails() {
-    if (!myDetailsOn) {
-      if (myDiffDetails.isComputed()) {
-        myDiffDetails.getValue().clear();
-
-        if (mySplitter.getSecondComponent() != null) {
-          setChangeDetailsPanel(null);
-        }
-      }
-    }
-    else {
-      myDiffDetails.getValue().refresh();
-
-      if (mySplitter.getSecondComponent() == null) {
-        setChangeDetailsPanel(myDiffDetails.getValue().getComponent());
-      }
-    }
-  }
-
-  private void setChangeDetailsPanel(@Nullable JComponent component) {
-    mySplitter.setSecondComponent(component);
-    mySplitter.getFirstComponent().setBorder(component == null ? null : IdeBorderFactory.createBorder(SideBorder.RIGHT));
-    mySplitter.revalidate();
-    mySplitter.repaint();
   }
 
   @JdkConstants.InputEventMask
@@ -330,7 +297,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       treeModelBuilder.build()
     );
 
-    changeDetails();
+    updatePreview();
+  }
+
+  private void updatePreview() {
+    if (mySplitterComponent != null) {
+      mySplitterComponent.updatePreview();
+    }
   }
 
   @NotNull
@@ -501,25 +474,20 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  private class ToggleDetailsAction extends ToggleAction implements DumbAware {
-    private ToggleDetailsAction() {
-      super("Preview Diff", null, AllIcons.Actions.DiffPreview);
+  private class ToggleDetailsAction extends ShowDiffPreviewAction {
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      mySplitterComponent.setDetailsOn(state);
+      VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myDetailsOn;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myDetailsOn = state;
-      VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = myDetailsOn;
-      changeDetails();
+      return VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
   }
 
-  private class MyChangeProcessor extends CacheChangeProcessor {
+  private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.CHANGES_VIEW);
       Disposer.register(project, this);

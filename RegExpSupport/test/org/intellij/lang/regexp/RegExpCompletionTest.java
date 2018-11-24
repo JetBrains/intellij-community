@@ -26,12 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: vnikolaenko
- * Date: 25.09.2008
- * Time: 15:10:10
- */
 public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
 
   // util methods

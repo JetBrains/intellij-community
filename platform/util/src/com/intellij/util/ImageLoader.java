@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 public class ImageLoader implements Serializable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
 
+  public static final int CACHED_IMAGE_MAX_SIZE = (int)Math.round(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
   private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private static class ImageDesc {
@@ -96,7 +97,7 @@ public class ImageLoader implements Serializable {
         if (stream == null) return null;
       }
       if (stream == null) {
-        cacheKey = path;
+        cacheKey = path + (type == Type.SVG ? "_@" + scale + "x" : "");
         Image image = ourCache.get(cacheKey);
         if (image != null) return image;
 
@@ -109,7 +110,9 @@ public class ImageLoader implements Serializable {
         stream = connection.getInputStream();
       }
       Image image = type.load(url, stream, scale);
-      if (image != null && cacheKey != null) {
+      if (image != null && cacheKey != null &&
+          image.getWidth(null) * image.getHeight(null) * 4 <= CACHED_IMAGE_MAX_SIZE)
+      {
         ourCache.put(cacheKey, image);
       }
       return image;

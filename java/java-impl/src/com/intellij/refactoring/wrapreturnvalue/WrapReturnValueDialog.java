@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,10 +77,12 @@ class WrapReturnValueDialog extends RefactoringDialog {
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "RefactorJ.WrapReturnValue";
   }
 
+  @Override
   protected void doAction() {
     final boolean useExistingClass = useExistingClassButton.isSelected();
     final boolean createInnerClass = myCreateInnerClassButton.isSelected();
@@ -151,10 +153,12 @@ class WrapReturnValueDialog extends RefactoringDialog {
     return classNameField.getText().trim();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     sourceMethodTextField.setEditable(false);
 
     final DocumentListener docListener = new DocumentAdapter() {
+      @Override
       protected void textChanged(final DocumentEvent e) {
         validateButtons();
       }
@@ -162,6 +166,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
     classNameField.getDocument().addDocumentListener(docListener);
     myFieldsCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         validateButtons();
       }
@@ -187,6 +192,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     buttonGroup.add(myCreateInnerClassButton);
     createNewClassButton.setSelected(true);
     final ActionListener enableListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent actionEvent) {
         toggleRadioEnablement();
       }
@@ -208,7 +214,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
         }
       }
     });
-    existingClassField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    existingClassField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
@@ -252,16 +258,19 @@ class WrapReturnValueDialog extends RefactoringDialog {
   }
 
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return classNameField;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.WrapReturnValue);
   }
 
   private void createUIComponents() {
-    final com.intellij.openapi.editor.event.DocumentAdapter adapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
+    final com.intellij.openapi.editor.event.DocumentListener adapter = new com.intellij.openapi.editor.event.DocumentListener() {
+      @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         validateButtons();
       }
@@ -272,6 +281,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     packageTextField.getChildComponent().getDocument().addDocumentListener(adapter);
 
     existingClassField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject())
           .createWithInnerClassesScopeChooser(RefactorJBundle.message("select.wrapper.class"), GlobalSearchScope.allScope(myProject), null, null);

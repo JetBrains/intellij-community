@@ -42,6 +42,7 @@ public class ReformatCommitMessageAction extends DumbAwareAction {
   public static final String NAME = "Reformat commit message";
 
   public ReformatCommitMessageAction() {
+    super(NAME);
     setEnabledInModalContext(true);
   }
 

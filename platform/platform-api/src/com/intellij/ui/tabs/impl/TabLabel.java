@@ -46,6 +46,8 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel implements Accessible {
+  // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
+  private static final String BUTTON_ON_THE_LEFT_KEY = "closeTabButtonOnTheLeft";
   protected final SimpleColoredComponent myLabel;
 
   private final LayeredIcon myIcon;
@@ -219,7 +221,12 @@ public class TabLabel extends JPanel implements Accessible {
   public Insets getInsets() {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton()) {
+      if (Boolean.getBoolean(BUTTON_ON_THE_LEFT_KEY)) {
+        insets.left = 3;
+      }
+      else {
         insets.right = 3;
+      }
     }
     return insets;
   }
@@ -506,7 +513,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     toggleShowActions(false);
 
-    add(myActionPanel, BorderLayout.EAST);
+    add(myActionPanel, Boolean.getBoolean(BUTTON_ON_THE_LEFT_KEY) ? BorderLayout.WEST : BorderLayout.EAST);
 
     myTabs.revalidateAndRepaint(false);
   }

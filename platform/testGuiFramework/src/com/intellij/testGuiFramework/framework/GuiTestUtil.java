@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SwitchBootJdkAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -41,14 +42,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
-import com.intellij.testGuiFramework.impl.FirstStart;
+import com.intellij.testGuiFramework.impl.FirstStartToRemove;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.*;
 import org.fest.swing.core.Robot;
@@ -192,7 +195,7 @@ GuiTestUtil {
   }
 
   public static void setUpDefaultProjectCreationLocationPath() {
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(getProjectCreationDirPath().getPath());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(getProjectCreationDirPath().getPath()));
   }
 
   // Called by IdeTestApplication via reflection.
@@ -204,12 +207,14 @@ GuiTestUtil {
     Robot robot = null;
     try {
       robot = BasicRobot.robotWithCurrentAwtHierarchy();
-      final MyProjectManagerListener listener = new MyProjectManagerListener();
 
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
 
-      if(isFirstStart) (new FirstStart(robot)).completeBefore();
+      if(isFirstStart) (new FirstStartToRemove(robot)).completeBefore();
+
+      final MyProjectManagerListener listener = new MyProjectManagerListener();
+      final Ref<MessageBusConnection> connection = new Ref<>();
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
@@ -217,7 +222,8 @@ GuiTestUtil {
           if (frame instanceof IdeFrame) {
             if (frame instanceof IdeFrameImpl) {
               listener.myActive = true;
-              ProjectManager.getInstance().addProjectManagerListener(listener);
+              connection.set(ApplicationManager.getApplication().getMessageBus().connect());
+              connection.get().subscribe(ProjectManager.TOPIC, listener);
             }
             return true;
           }
@@ -225,7 +231,7 @@ GuiTestUtil {
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
 
-      if(isFirstStart) (new FirstStart(robot)).completeAfter();
+      if(isFirstStart) (new FirstStartToRemove(robot)).completeAfter();
 
       //TODO: clarify why we are skipping event here?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which
@@ -250,7 +256,11 @@ GuiTestUtil {
                                !progressManager.hasProgressIndicator() &&
                                !progressManager.hasUnsafeProgressIndicator();
               if (isIdle) {
-                ProjectManager.getInstance().removeProjectManagerListener(listener);
+                MessageBusConnection busConnection = connection.get();
+                if (busConnection != null) {
+                  connection.set(null);
+                  busConnection.disconnect();
+                }
               }
               return isIdle;
             }
@@ -298,12 +308,7 @@ GuiTestUtil {
       execute(new GuiTask() {
         @Override
         protected void executeInEDT() throws Throwable {
-          EdtInvocationManager.getInstance().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              acceptButton.doClick();
-            }
-          });
+          EdtInvocationManager.getInstance().invokeLater(() -> acceptButton.doClick());
         }
       });
     }
@@ -730,7 +735,7 @@ GuiTestUtil {
     return s == null ? System.getenv(name) : s;
   }
 
-  private static class MyProjectManagerListener extends ProjectManagerAdapter {
+  private static class MyProjectManagerListener implements ProjectManagerListener {
     boolean myActive;
     boolean myNotified;
 
@@ -881,5 +886,9 @@ GuiTestUtil {
         return produce;
       }
     }, timeout);
+  }
+
+  public static Component getListCellRendererComponent(JList list, Object value, int index) {
+    return list.getCellRenderer().getListCellRendererComponent(list, value, index, true, true);
   }
 }

@@ -19,9 +19,6 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/PyProtectedMemberInspection")
 public class PyProtectedMemberInspectionTest extends PyTestCase {
 
@@ -50,6 +47,7 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
   }
 
   public void testTest() {
+    myFixture.configureByFile("unittest.py");
     doTest();
   }
 

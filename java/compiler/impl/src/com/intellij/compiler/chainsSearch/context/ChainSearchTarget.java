@@ -15,16 +15,20 @@
  */
 package com.intellij.compiler.chainsSearch.context;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
-/**
- * @author Dmitry Batkovich
- */
+import java.util.Set;
+
 public class ChainSearchTarget {
+  private static final Set<String> EXCLUDED_PACKAGES = ContainerUtil.set("java.lang", "java.util.function");
+
   private final String myClassQName;
   private final byte[] myAcceptedArrayKinds;
   private final PsiType myPsiType;
@@ -94,17 +98,18 @@ public class ChainSearchTarget {
   @Nullable
   private static ChainSearchTarget create(PsiClassType classType) {
     PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
-    byte iteratorKind = SignatureData.ZERO_DIM;
     if (resolvedClass == null) return null;
+    byte iteratorKind = SignatureData.ZERO_DIM;
     String iteratorClass = getIteratorKind(resolvedClass);
     if (iteratorClass != null) {
       resolvedClass = PsiUtil.resolveClassInClassTypeOnly(PsiUtil.substituteTypeParameter(classType, iteratorClass, 0, false));
       if (resolvedClass == null) return null;
       iteratorKind = SignatureData.ITERATOR_ONE_DIM;
     }
-    if (resolvedClass.hasTypeParameters()) {
-      return null;
-    }
+    if (resolvedClass.hasTypeParameters() || resolvedClass instanceof PsiTypeParameter || AnnotationUtil.isAnnotated(resolvedClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) return null;
+    String packageName = JavaHierarchyUtil.getPackageName(resolvedClass);
+    if (packageName == null || EXCLUDED_PACKAGES.contains(packageName)) return null;
+
     String classQName = resolvedClass.getQualifiedName();
     if (classQName == null) {
       return null;

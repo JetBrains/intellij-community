@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -38,7 +39,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -104,7 +104,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   final LookupCellRenderer myCellRenderer;
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private PrefixChangeListener myPrefixChangeListener = new PrefixChangeListener.Adapter() {};
+  private List<PrefixChangeListener> myPrefixChangeListeners = ContainerUtil.newSmartList();
   private final LookupPreview myPreview = new LookupPreview(this);
   // keeping our own copy of editor's font preferences, which can be used in non-EDT threads (to avoid race conditions)
   private final FontPreferences myFontPreferences = new FontPreferencesImpl();
@@ -312,6 +312,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   void appendPrefix(char c) {
     checkValid();
+    myPrefixChangeListeners.forEach((listener -> listener.beforeAppend(c)));
     myOffsets.appendPrefix(c);
     withLock(() -> {
       myPresentableArranger.prefixChanged(this);
@@ -320,7 +321,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     requestResize();
     refreshUi(false, true);
     ensureSelectionVisible(true);
-    myPrefixChangeListener.afterAppend(c);
+    myPrefixChangeListeners.forEach((listener -> listener.afterAppend(c)));
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
@@ -359,6 +360,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!myOffsets.truncatePrefix()) {
       return false;
     }
+    myPrefixChangeListeners.forEach((listener -> listener.beforeTruncate()));
 
     if (preserveSelection) {
       markSelectionTouched();
@@ -374,7 +376,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       ensureSelectionVisible(true);
     }
 
+    myPrefixChangeListeners.forEach((listener -> listener.afterTruncate()));
     return true;
+  }
+
+  void moveToCaretPosition() {
+    myOffsets.destabilizeLookupStart();
+    refreshUi(false, true);
   }
 
   private boolean updateList(boolean onExplicitAction, boolean reused) {
@@ -675,6 +683,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     myAdComponent.showRandomText();
+    if (Boolean.TRUE.equals(myEditor.getUserData(AutoPopupController.NO_ADS))) {
+      myAdComponent.clearAdvertisements();
+    }
 
     myUi = new LookupUi(this, myAdComponent, myList, myProject);
     myUi.setCalculating(myCalculating);
@@ -704,7 +715,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void addListeners() {
-    myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+    myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         if (!myChangeGuard && !myFinishing) {
@@ -713,7 +724,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     }, this);
 
-    final CaretListener caretListener = new CaretAdapter() {
+    final CaretListener caretListener = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (!myChangeGuard && !myFinishing) {
@@ -1088,6 +1099,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myOffsets.disposeMarkers();
     myDisposed = true;
     disposeTrace = DebugUtil.currentStackTrace() + "\n============";
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Disposing lookup:\n" + disposeTrace);
+    }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     staticDisposeTrace = disposeTrace;
   }
@@ -1175,7 +1189,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @SuppressWarnings("unused")
   public void setPrefixChangeListener(PrefixChangeListener listener) {
-    myPrefixChangeListener = listener;
+    myPrefixChangeListeners.add(listener);
   }
 
   FontPreferences getFontPreferences() {

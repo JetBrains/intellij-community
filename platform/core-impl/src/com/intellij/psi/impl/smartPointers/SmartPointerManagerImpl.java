@@ -74,6 +74,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
                                                                                         PsiFile containingFile,
                                                                                         boolean forInjected) {
     if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
+      if (containingFile != null) {
+        PsiUtilCore.ensureValid(containingFile);
+      }
       PsiUtilCore.ensureValid(element);
       LOG.error("Invalid element:" + element);
     }

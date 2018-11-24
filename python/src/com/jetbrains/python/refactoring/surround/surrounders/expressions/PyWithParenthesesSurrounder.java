@@ -24,12 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 27, 2009
- * Time: 6:03:59 PM
- */
 public class PyWithParenthesesSurrounder extends PyExpressionSurrounder {
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.parenthesis.template");

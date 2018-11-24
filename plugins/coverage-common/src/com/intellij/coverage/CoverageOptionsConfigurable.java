@@ -27,10 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 12/16/10
- */
 public class CoverageOptionsConfigurable implements SearchableConfigurable {
   private CoverageOptionsPanel myPanel;
   private final CoverageOptionsProvider myManager;

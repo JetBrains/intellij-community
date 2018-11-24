@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
@@ -51,14 +50,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
 
 /**
  * @author ven
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class TypeInferenceHelper {
-  private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
 
   private static <T> T doInference(@NotNull Map<String, PsiType> bindings, @NotNull Computable<T> computation) {
@@ -174,15 +172,16 @@ public class TypeInferenceHelper {
       return ((GrAssignmentExpression)parent).getType();
     }
 
-    if (parent instanceof GrTupleExpression) {
-      GrTupleExpression list = (GrTupleExpression)parent;
-      if (list.getParent() instanceof GrAssignmentExpression) { // multiple assignment
-        final GrExpression rValue = ((GrAssignmentExpression) list.getParent()).getRValue();
+    if (parent instanceof GrTuple) {
+      GrTuple list = (GrTuple)parent;
+      GrTupleAssignmentExpression assignment = list.getParent();
+      if (assignment != null) {
+        final GrExpression rValue = assignment.getRValue();
         int idx = list.indexOf(element);
         if (idx >= 0 && rValue != null) {
           PsiType rType = rValue.getType();
           if (rType instanceof GrTupleType) {
-            PsiType[] componentTypes = ((GrTupleType) rType).getComponentTypes();
+            PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
             if (idx < componentTypes.length) return componentTypes[idx];
             return null;
           }
@@ -202,12 +201,12 @@ public class TypeInferenceHelper {
   public static GrExpression getInitializerFor(GrExpression lValue) {
     final PsiElement parent = lValue.getParent();
     if (parent instanceof GrAssignmentExpression) return ((GrAssignmentExpression)parent).getRValue();
-    if (parent instanceof GrTupleExpression) {
-      final int i = ((GrTupleExpression)parent).indexOf(lValue);
-      final PsiElement pparent = parent.getParent();
-      org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.LOG.assertTrue(pparent instanceof GrAssignmentExpression);
+    if (parent instanceof GrTuple) {
+      final int i = ((GrTuple)parent).indexOf(lValue);
+      final GrTupleAssignmentExpression pparent = ((GrTuple)parent).getParent();
+      LOG.assertTrue(pparent != null);
 
-      final GrExpression rValue = ((GrAssignmentExpression)pparent).getRValue();
+      final GrExpression rValue = pparent.getRValue();
       if (rValue instanceof GrListOrMap && !((GrListOrMap)rValue).isMap()) {
         final GrExpression[] initializers = ((GrListOrMap)rValue).getInitializers();
         if (initializers.length < i) return initializers[i];
@@ -402,7 +401,7 @@ public class TypeInferenceHelper {
     @Nullable
     private static PsiElement findDependencyScope(@Nullable PsiElement element) {
       return PsiTreeUtil.findFirstParent(element,
-                                         element1 -> org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement(element1) ||
+                                         element1 -> isExpressionStatement(element1) ||
                                                      !(element1.getParent() instanceof GrExpression));
     }
 

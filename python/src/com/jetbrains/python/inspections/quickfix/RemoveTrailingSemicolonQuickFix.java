@@ -22,12 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Jul 30, 2009
- * Time: 2:57:42 PM
- */
 public class RemoveTrailingSemicolonQuickFix implements LocalQuickFix {
   @NotNull
   public String getFamilyName() {

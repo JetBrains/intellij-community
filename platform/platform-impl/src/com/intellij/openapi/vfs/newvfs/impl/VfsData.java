@@ -308,7 +308,7 @@ public class VfsData {
     }
 
     List<String> getAdoptedNames() {
-      return myAdoptedNames == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(myAdoptedNames);
+      return myAdoptedNames == null ? Collections.emptyList() : ContainerUtil.newArrayList(myAdoptedNames);
     }
 
     void clearAdoptedNames() {

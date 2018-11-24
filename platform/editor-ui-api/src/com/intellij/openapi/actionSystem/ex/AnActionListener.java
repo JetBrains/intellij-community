@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 15, 2002
- * Time: 9:58:27 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.AnAction;

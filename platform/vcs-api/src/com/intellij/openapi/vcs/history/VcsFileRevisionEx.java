@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-/**
- * User: spLeaner
- */
 public abstract class VcsFileRevisionEx implements VcsFileRevision {
 
   @Nullable

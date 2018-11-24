@@ -119,9 +119,12 @@ public class LineSet{
     endOffset = getLineEnd(endLine);
     if (!isLastEmptyLine(endLine)) endLine++;
 
-    replacement = new MergingCharSequence(
-      new MergingCharSequence(prevText.subSequence(startOffset, _start), replacement),
-      prevText.subSequence(_end, endOffset));
+    if (startOffset < _start) {
+      replacement = new MergingCharSequence(prevText.subSequence(startOffset, _start), replacement);
+    }
+    if (_end < endOffset) {
+      replacement = new MergingCharSequence(replacement, prevText.subSequence(_end, endOffset));
+    }
 
     LineSet patch = createLineSet(replacement, true);
     return applyPatch(startOffset, endOffset, startLine, endLine, patch);

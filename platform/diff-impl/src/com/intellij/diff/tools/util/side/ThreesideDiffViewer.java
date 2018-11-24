@@ -205,31 +205,31 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Left";
-          if (!hasFourSides) icon = AllIcons.Diff.LeftDiff;
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftMiddle;
           break;
         case RIGHT_MIDDLE:
           mySide1 = ThreeSide.RIGHT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Right";
-          if (!hasFourSides) icon = AllIcons.Diff.RightDiff;
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3MiddleRight;
           break;
         case MIDDLE_LEFT:
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.LEFT;
           id = "Diff.ComparePartial.Base.Left";
-          if (!hasFourSides) icon = AllIcons.Diff.LeftDiff;
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftMiddle;
           break;
         case MIDDLE_RIGHT:
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Base.Right";
-          if (!hasFourSides) icon = AllIcons.Diff.RightDiff;
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3MiddleRight;
           break;
         case LEFT_RIGHT:
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Left.Right";
-          if (!hasFourSides) icon = AllIcons.Diff.BranchDiff;
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftRight;
           break;
         default:
           throw new IllegalArgumentException();

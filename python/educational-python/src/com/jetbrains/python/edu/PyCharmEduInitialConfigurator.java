@@ -25,9 +25,6 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.customize.AbstractCustomizeWizardStep;
-import com.intellij.ide.customize.CustomizeIDEWizardDialog;
-import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.UISettings;
@@ -56,11 +53,13 @@ import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -75,6 +74,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -90,7 +90,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -103,6 +102,7 @@ public class PyCharmEduInitialConfigurator {
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
   @NonNls private static final String CONFIGURED_V2 = "PyCharmEDU.InitialConfiguration.V2";
+  @NonNls private static final String CONFIGURED_V3 = "PyCharmEDU.InitialConfiguration.V3";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -189,28 +189,33 @@ public class PyCharmEduInitialConfigurator {
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     editorColorsScheme.setEditorFontSize(14);
 
-    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-
-      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-        @Override
-        public void welcomeScreenDisplayed() {
-
+    MessageBusConnection connection = bus.connect();
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void welcomeScreenDisplayed() {
+        if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
               GeneralSettings.getInstance().setShowTipsOnStartup(false);
               patchKeymap();
-              showInitialConfigurationDialog();
               propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
             }
           });
         }
-      });
-    }
+      }
 
-    bus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+      @Override
+      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+        if (!propertiesComponent.isValueSet(CONFIGURED_V3)) {
+          showInitialConfigurationDialog();
+          propertiesComponent.setValue(CONFIGURED_V3, "true");
+        }
+      }
+    });
+
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(final Project project) {
-        if (project.isDefault()) return;
         if (FileChooserUtil.getLastOpenedFile(project) == null) {
           FileChooserUtil.setLastOpenedFile(project, VfsUtil.getUserHomeDir());
         }
@@ -401,11 +406,11 @@ public class PyCharmEduInitialConfigurator {
     }
   }
   private static void showInitialConfigurationDialog() {
-    new CustomizeIDEWizardDialog(new CustomizeIDEWizardStepsProvider() {
-      @Override
-      public void initSteps(@NotNull CustomizeIDEWizardDialog dialog, @NotNull List<AbstractCustomizeWizardStep> steps) {
-        steps.add(new CustomizeEduStepPanel());
-      }
-    }).show();
+    DialogBuilder dialog = new DialogBuilder();
+    final CustomizeEduStepPanel panel = new CustomizeEduStepPanel();
+    dialog.setPreferredFocusComponent(panel.getStudentButton());
+    dialog.title("Are you Student or Teacher?").centerPanel(panel);
+    dialog.addOkAction().setText("Start using Pycharm Edu");
+    dialog.show();
   }
 }

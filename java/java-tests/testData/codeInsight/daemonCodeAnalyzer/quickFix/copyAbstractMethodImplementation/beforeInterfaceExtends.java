@@ -1,4 +1,4 @@
-// "Use existing implementation of 'foo'" "false"
+// "Use existing implementation of 'foo'" "true"
 interface I {
     void <caret>foo();
 }

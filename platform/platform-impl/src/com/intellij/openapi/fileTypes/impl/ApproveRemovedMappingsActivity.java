@@ -45,33 +45,30 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
 
     final Map<FileNameMatcher,Pair<FileType,Boolean>> map = ((FileTypeManagerImpl)FileTypeManager.getInstance()).getRemovedMappings();
     if (!map.isEmpty()) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          for (Iterator<Map.Entry<FileNameMatcher, Pair<FileType, Boolean>>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
-            Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry = iterator.next();
-            if (entry.getValue().getSecond()) {
-              continue;
-            }
-            final FileNameMatcher matcher = entry.getKey();
-            final FileType fileType = entry.getValue().getFirst();
-            Notification notification = new Notification("File type recognized", "File type recognized",
-                                                         "File extension " + matcher.getPresentableString() +
-                                                         " was reassigned to " + fileType.getName() + " <a href='revert'>Revert</a>",
-                                                         NotificationType.WARNING, new NotificationListener.Adapter() {
-              @Override
-              protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                ApplicationManager.getApplication().runWriteAction(() -> {
-                  FileTypeManager.getInstance().associate(PlainTextFileType.INSTANCE, matcher);
-                  map.put(matcher, Pair.create(fileType, true));
-                });
-                notification.expire();
-              }
-            });
-            Notifications.Bus.notify(notification, project);
-            ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().associate(fileType, matcher));
-            iterator.remove();
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        for (Iterator<Map.Entry<FileNameMatcher, Pair<FileType, Boolean>>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
+          Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry = iterator.next();
+          if (entry.getValue().getSecond()) {
+            continue;
           }
+          final FileNameMatcher matcher = entry.getKey();
+          final FileType fileType = entry.getValue().getFirst();
+          Notification notification = new Notification("File type recognized", "File type recognized",
+                                                       "File extension " + matcher.getPresentableString() +
+                                                       " was reassigned to " + fileType.getName() + " <a href='revert'>Revert</a>",
+                                                       NotificationType.WARNING, new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              ApplicationManager.getApplication().runWriteAction(() -> {
+                FileTypeManager.getInstance().associate(PlainTextFileType.INSTANCE, matcher);
+                map.put(matcher, Pair.create(fileType, true));
+              });
+              notification.expire();
+            }
+          });
+          Notifications.Bus.notify(notification, project);
+          ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().associate(fileType, matcher));
+          iterator.remove();
         }
       });
     }

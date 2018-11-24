@@ -35,13 +35,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 27.03.2003
- * Time: 17:30:38
- * To change this template use Options | File Templates.
- */
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
 
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =

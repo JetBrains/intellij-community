@@ -43,7 +43,10 @@ import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author cdr
@@ -422,7 +425,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         return true;
       }
     }
-    else if (parent instanceof PsiPolyadicExpression) {
+    else if (parent instanceof PsiPolyadicExpression || 
+             parent instanceof PsiParenthesizedExpression ||
+             parent instanceof PsiConditionalExpression) {
       return true;
     }
     return false;

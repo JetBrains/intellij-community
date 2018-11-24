@@ -20,7 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -59,9 +59,9 @@ import java.util.LinkedList;
 public final class SwingCleanuper {
   private final Alarm myAlarm;
 
-  public SwingCleanuper(@NotNull Application application, ProjectManager projectManager) {
+  public SwingCleanuper(@NotNull Application application) {
     myAlarm = new Alarm(application);
-    projectManager.addProjectManagerListener(new ProjectManagerAdapter(){
+    application.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectOpened(final Project project) {
           myAlarm.cancelAllRequests();

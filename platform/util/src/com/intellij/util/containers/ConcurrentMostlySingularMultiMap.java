@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,14 +38,18 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
       if (current == null) {
         if (ConcurrencyUtil.cacheOrGet(map, key, value) == value) break;
       }
-      else if (current instanceof Object[]) {
-        Object[] curArr = (Object[])current;
-        Object[] newArr = ArrayUtil.append(curArr, value, ArrayUtil.OBJECT_ARRAY_FACTORY);
-        if (map.replace(key, curArr, newArr)) break;
+      else if (current instanceof MostlySingularMultiMap.ValueList) {
+        ValueList<?> curList = (ValueList)current;
+        ValueList<Object> newList = new ValueList<Object>(curList.size() + 1);
+        newList.addAll(curList);
+        newList.add(value);
+        if (map.replace(key, curList, newList)) break;
       }
       else {
-        Object[] newArr = {current, value};
-        if (map.replace(key, current, newArr)) break;
+        ValueList<Object> newList = new ValueList<Object>(2);
+        newList.add(current);
+        newList.add(value);
+        if (map.replace(key, current, newList)) break;
       }
     }
   }
@@ -58,8 +61,7 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
 
   public boolean replace(@NotNull K key, @NotNull Collection<V> expectedValue, @NotNull Collection<V> newValue) {
     ConcurrentMap<K, Object> map = (ConcurrentMap<K, Object>)myMap;
-    Object[] newArray = ArrayUtil.toObjectArray(newValue);
-    Object newValueToPut = newArray.length == 0 ? null : newArray.length == 1 ? newArray[0] : newArray;
+    Object newValueToPut = newValue.isEmpty() ? null : newValue.size() == 1 ? newValue.iterator().next() : new ValueList<Object>(newValue);
 
     Object oldValue = map.get(key);
     List<V> oldCollection = rawValueToCollection(oldValue);
@@ -72,5 +74,15 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
       return map.remove(key, oldValue);
     }
     return map.replace(key, oldValue, newValueToPut);
+  }
+
+  @Override
+  public void addAll(MostlySingularMultiMap<K, V> other) {
+    throw new AbstractMethodError("Not yet re-implemented for concurrency");
+  }
+
+  @Override
+  public boolean remove(@NotNull K key, @NotNull V value) {
+    throw new AbstractMethodError("Not yet re-implemented for concurrency");
   }
 }

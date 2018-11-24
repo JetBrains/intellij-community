@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
-* User: ktisha
-*/
 public class SimpleMatch {
   PsiElement myStartElement;
   PsiElement myEndElement;

@@ -21,16 +21,10 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 public abstract class JrtFileSystem extends ArchiveFileSystem {
   public static final String PROTOCOL = StandardFileSystems.JRT_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.JRT_PROTOCOL_PREFIX;
   public static final String SEPARATOR = URLUtil.JAR_SEPARATOR;
-
-  public static boolean isModularJdk(@NotNull String homePath) {
-    return new File(homePath, "lib/jrt-fs.jar").isFile();
-  }
 
   public static boolean isRoot(@NotNull VirtualFile file) {
     return file.getParent() == null && file.getFileSystem() instanceof JrtFileSystem;

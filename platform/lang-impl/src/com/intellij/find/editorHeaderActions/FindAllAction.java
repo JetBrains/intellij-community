@@ -33,13 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
-* Created by IntelliJ IDEA.
-* User: zajac
-* Date: 05.03.11
-* Time: 10:53
-* To change this template use File | Settings | File Templates.
-*/
 public class FindAllAction extends AnAction implements ShortcutProvider, DumbAware {
   public FindAllAction() {
     getTemplatePresentation().setDescription("Export matches to Find tool window");

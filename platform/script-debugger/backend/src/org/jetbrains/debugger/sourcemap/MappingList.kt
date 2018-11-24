@@ -98,7 +98,7 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
         }
         else {
           // https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
-          // We skipIfColumnEquals because GWT has two entries — source position equals, but generated no. We must use first entry (at least, in case of GWT it is correct)
+          // We skipIfColumnEquals because GWT has two entries - source position equals, but generated no. We must use first entry (at least, in case of GWT it is correct)
           val nextMapping = getNextOnTheSameLine(middle)
           if (nextMapping == null) {
             return middle

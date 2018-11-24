@@ -1397,7 +1397,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitGStringInjection(@NotNull GrStringInjection injection) {
     if (((GrString)injection.getParent()).isPlainString()) {
-      if (StringUtil.indexOf(injection.getText(), '\n') != -1) {
+      if (injection.getText().indexOf('\n') != -1) {
         myHolder.createErrorAnnotation(injection, GroovyBundle.message("injection.should.not.contain.line.feeds"));
       }
     }

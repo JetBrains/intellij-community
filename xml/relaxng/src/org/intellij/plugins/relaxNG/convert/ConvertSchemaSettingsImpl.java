@@ -45,11 +45,6 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 16.11.2007
-*/
 public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   static final String OUTPUT_TYPE = "output-type";
   static final String OUTPUT_PATH = "output-path";

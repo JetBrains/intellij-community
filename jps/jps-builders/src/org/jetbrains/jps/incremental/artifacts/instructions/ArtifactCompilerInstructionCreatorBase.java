@@ -62,7 +62,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
-    addExtractDirectoryInstruction(jarFile, pathInJar, Conditions.<String>alwaysTrue());
+    addExtractDirectoryInstruction(jarFile, pathInJar, Conditions.alwaysTrue());
   }
 
   @Override

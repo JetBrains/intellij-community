@@ -56,7 +56,7 @@ public abstract class JavaPostfixTemplatesUtils {
       public List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         return PsiUtil.isLanguageLevel8OrHigher(context)
                ? selector.getExpressions(context, document, offset)
-               : Collections.<PsiElement>emptyList();
+               : Collections.emptyList();
       }
 
       @NotNull
@@ -68,14 +68,14 @@ public abstract class JavaPostfixTemplatesUtils {
   }
   
   public static PostfixTemplateExpressionSelector selectorTopmost() {
-    return selectorTopmost(Conditions.<PsiElement>alwaysTrue());
+    return selectorTopmost(Conditions.alwaysTrue());
   }
 
   public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-        return ContainerUtil.<PsiElement>createMaybeSingletonList(getTopmostExpression(context));
+        return ContainerUtil.createMaybeSingletonList(getTopmostExpression(context));
       }
 
       @Override
@@ -92,15 +92,15 @@ public abstract class JavaPostfixTemplatesUtils {
   }
 
   public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset() {
-    return selectorAllExpressionsWithCurrentOffset(Conditions.<PsiElement>alwaysTrue());
+    return selectorAllExpressionsWithCurrentOffset(Conditions.alwaysTrue());
   }
 
   public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(final Condition<PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-        return ContainerUtil.<PsiElement>newArrayList(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document,
-                                                                                               Math.max(offset - 1, 0), false));
+        return ContainerUtil.newArrayList(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document,
+                                                                                   Math.max(offset - 1, 0), false));
       }
 
       @NotNull

@@ -217,7 +217,7 @@ public class XLineBreakpointManager {
     });
   }
 
-  private class MyDocumentListener extends DocumentAdapter {
+  private class MyDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(final DocumentEvent e) {
       final Document document = e.getDocument();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
+import com.jetbrains.python.packaging.requirement.PyRequirementVersion;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -271,7 +273,7 @@ public class PyRequirement {
     if (o == this) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    PyRequirement that = (PyRequirement)o;
+    final PyRequirement that = (PyRequirement)o;
 
     if (!myName.equals(that.myName)) return false;
     if (!myVersionSpecs.equals(that.myVersionSpecs)) return false;
@@ -334,10 +336,12 @@ public class PyRequirement {
 
   @NotNull
   public static PyRequirementVersionSpec calculateVersionSpec(@NotNull String version, @NotNull PyRequirementRelation expectedRelation) {
-    final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
+    if (expectedRelation == PyRequirementRelation.STR_EQ) return new PyRequirementVersionSpec(version);
+
+    final PyRequirementVersion normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
 
     return normalizedVersion == null ?
-           new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ, version) :
+           new PyRequirementVersionSpec(version) :
            new PyRequirementVersionSpec(expectedRelation, normalizedVersion);
   }
 
@@ -412,14 +416,12 @@ public class PyRequirement {
       visitedFiles.add(containingFile);
     }
 
-    return splitByLinesAndCollapse(text)
-      .stream()
-      .map(line -> parseLine(line, containingFile, visitedFiles))
-      .flatMap(Collection::stream)
-      .filter(req -> req != null)
-      .collect(Collectors.toCollection(LinkedHashSet::new))
-      .stream()
-      .collect(Collectors.toList());
+    return StreamEx
+      .of(splitByLinesAndCollapse(text))
+      .flatCollection(line -> parseLine(line, containingFile, visitedFiles))
+      .nonNull()
+      .distinct()
+      .toList();
   }
 
   @NotNull
@@ -477,7 +479,7 @@ public class PyRequirement {
     return new PyRequirement(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions);
   }
 
-  @Nullable
+  @NotNull
   private static PyRequirement createVcsRequirement(@NotNull Matcher matcher) {
     final String path = matcher.group(PATH_IN_VCS_GROUP);
     final String egg = getEgg(matcher);
@@ -675,13 +677,7 @@ public class PyRequirement {
 
     if (relation != null) {
       final int versionIndex = findFirstNotWhiteSpaceAfter(versionSpec, relation.toString().length());
-      final String version = versionSpec.substring(versionIndex);
-
-      if (relation == PyRequirementRelation.STR_EQ) {
-        return new PyRequirementVersionSpec(relation, version);
-      }
-
-      return calculateVersionSpec(version, relation);
+      return calculateVersionSpec(versionSpec.substring(versionIndex), relation);
     }
 
     return null;

@@ -31,8 +31,8 @@ public class FontPreferencesTest {
 
   @Test
   public void testDefaults() {
-    checkState(Collections.<String>emptyList(),
-               Collections.<String>emptyList(),
+    checkState(Collections.emptyList(),
+               Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
   }

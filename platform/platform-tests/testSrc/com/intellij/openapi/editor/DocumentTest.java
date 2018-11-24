@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -31,7 +31,7 @@ public class DocumentTest extends LightPlatformTestCase {
       protected void run() throws Throwable {
         final Document doc = new DocumentImpl("");
         final StringBuilder b = new StringBuilder();
-        doc.addDocumentListener(new DocumentAdapter() {
+        doc.addDocumentListener(new DocumentListener() {
           @Override
           public void beforeDocumentChange(DocumentEvent e) {
             b.append("before1 ");
@@ -43,20 +43,20 @@ public class DocumentTest extends LightPlatformTestCase {
           }
         });
 
-        doc.addDocumentListener(new DocumentAdapter() {
+        doc.addDocumentListener(new DocumentListener() {
           @Override
           public void beforeDocumentChange(DocumentEvent event) {
             doc.removeDocumentListener(this);
           }
         });
-        doc.addDocumentListener(new DocumentAdapter() {
+        doc.addDocumentListener(new DocumentListener() {
           @Override
           public void documentChanged(DocumentEvent e) {
             doc.removeDocumentListener(this);
           }
         });
 
-        doc.addDocumentListener(new DocumentAdapter() {
+        doc.addDocumentListener(new DocumentListener() {
           @Override
           public void beforeDocumentChange(DocumentEvent e) {
             b.append("before2 ");
@@ -116,7 +116,7 @@ public class DocumentTest extends LightPlatformTestCase {
       ApplicationManager.getApplication().runWriteAction(runnable);
       fail("Must throw IncorrectOperationException");
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException ignored) {
     }
   }
 }

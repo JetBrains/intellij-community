@@ -20,10 +20,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/20/13
- */
 public abstract class AbstractJavaFXQuickFixTest extends AbstractJavaFXTestCase {
   protected abstract String getHint(String tagName);
 

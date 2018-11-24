@@ -22,7 +22,11 @@ public class HideableTitledPanel extends JPanel {
   }
 
   public HideableTitledPanel(String title, JComponent content, boolean on) {
-    this(title);
+    this(title, true, content, on);
+  }
+
+  public HideableTitledPanel(String title, boolean adjustWindow, JComponent content, boolean on) {
+    this(title, adjustWindow);
     setContentComponent(content);
     setOn(on);
   }

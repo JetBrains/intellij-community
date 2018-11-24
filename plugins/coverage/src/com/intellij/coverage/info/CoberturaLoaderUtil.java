@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 16-Nov-2007
- */
 package com.intellij.coverage.info;
 
 import com.intellij.openapi.diagnostic.Logger;

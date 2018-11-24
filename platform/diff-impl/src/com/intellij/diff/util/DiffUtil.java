@@ -20,7 +20,10 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.SuppressiveDiffTool;
-import com.intellij.diff.comparison.*;
+import com.intellij.diff.comparison.ByWord;
+import com.intellij.diff.comparison.ComparisonMergeUtil;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DiffPsiFileSupport;
 import com.intellij.diff.contents.DocumentContent;
@@ -31,7 +34,6 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
@@ -50,7 +52,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
-import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -131,7 +132,7 @@ public class DiffUtil {
   //
 
   public static boolean isDiffEditor(@NotNull Editor editor) {
-    return editor.getUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY) != null;
+    return editor.getEditorKind() == EditorKind.DIFF;
   }
 
   @Nullable
@@ -207,9 +208,8 @@ public class DiffUtil {
   @NotNull
   public static EditorEx createEditor(@NotNull Document document, @Nullable Project project, boolean isViewer, boolean enableFolding) {
     EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
-
-    editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
+    EditorKind kind = EditorKind.DIFF;
+    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project, kind) : factory.createEditor(document, project, kind));
 
     editor.getSettings().setShowIntentionBulb(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
@@ -711,7 +711,7 @@ public class DiffUtil {
                                         @NotNull ComparisonPolicy comparisonPolicy) {
     if (chunk1 == null) chunk1 = "";
     if (chunk2 == null) chunk2 = "";
-    return ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy);
+    return ComparisonUtil.isEquals(chunk1, chunk2, comparisonPolicy);
   }
 
   @NotNull
@@ -900,6 +900,12 @@ public class DiffUtil {
     return Math.min(start + column, end);
   }
 
+  /**
+   * Document.getLineCount() returns 0 for empty text.
+   * <p>
+   * This breaks an assumption "getLineCount() == StringUtil.countNewLines(text) + 1"
+   * and adds unnecessary corner case into line ranges logic.
+   */
   public static int getLineCount(@NotNull Document document) {
     return Math.max(document.getLineCount(), 1);
   }
@@ -1121,7 +1127,7 @@ public class DiffUtil {
 
       CharSequence content1 = getLinesContent(sequence1, offsets1, line1, line1 + 1);
       CharSequence content2 = getLinesContent(sequence2, offsets2, line2, line2 + 1);
-      if (!ComparisonManager.getInstance().isEquals(content1, content2, policy)) return false;
+      if (!ComparisonUtil.isEquals(content1, content2, policy)) return false;
     }
 
     return true;
@@ -1344,7 +1350,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static List<JComponent> getCustomNotifications(@NotNull DiffContext context, @NotNull DiffRequest request) {
+  public static List<JComponent> getCustomNotifications(@NotNull UserDataHolder context, @NotNull UserDataHolder request) {
     List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     return ContainerUtil.concat(ContainerUtil.notNullize(contextComponents), ContainerUtil.notNullize(requestComponents));

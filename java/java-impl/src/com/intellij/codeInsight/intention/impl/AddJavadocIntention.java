@@ -37,7 +37,9 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
       return false;
     }
     final PsiElement parent = element.getParent();
-    return parent instanceof PsiDocCommentOwner && !(parent instanceof PsiTypeParameter);
+    return parent instanceof PsiDocCommentOwner &&
+           ((PsiDocCommentOwner)parent).getDocComment() == null &&
+           !(parent instanceof PsiTypeParameter);
   }
 
   @NotNull

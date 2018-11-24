@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: spleaner
- * Date: Aug 7, 2007
- * Time: 2:44:37 PM
- */
 package com.intellij.xml.refactoring;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;

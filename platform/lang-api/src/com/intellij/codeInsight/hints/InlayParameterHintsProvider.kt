@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 
 
@@ -49,7 +50,12 @@ class InlayInfo(val text: String, val offset: Int, val isShowOnlyIfExistedBefore
 
 sealed class HintInfo {
 
-  open class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>) : HintInfo() {
+  /**
+   * @language in case you want to put this method into blacklist of another language
+   */
+  open class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>, val language: Language?) : HintInfo() {
+    constructor(fullyQualifiedName: String, paramNames: List<String>): this(fullyQualifiedName, paramNames, null)
+
     open fun getMethodName(): String {
       val start = fullyQualifiedName.lastIndexOf('.') + 1
       return fullyQualifiedName.substring(start)
@@ -67,6 +73,9 @@ sealed class HintInfo {
     }
     
     open val optionName = option.name
+
+    fun isOptionEnabled(): Boolean = option.isEnabled()
+
   }
 
 }
@@ -74,6 +83,8 @@ sealed class HintInfo {
 data class Option(val id: String,
                   val name: String,
                   val defaultValue: Boolean) {
+
+  fun isEnabled() = get()
 
   fun get(): Boolean {
     return ParameterNameHintsSettings.getInstance().getOption(id) ?: defaultValue

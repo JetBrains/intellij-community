@@ -30,9 +30,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 28/02/14
- */
 public class FromStringHintProcessor extends SignatureHintProcessor {
 
   @Override

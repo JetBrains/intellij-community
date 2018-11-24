@@ -45,10 +45,17 @@ import java.util.Set;
 abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsoleTestTask<PyUnitTestProcessRunner> {
   @NotNull
   protected final String myScriptName;
+  private final int myRerunFailedTests;
 
   PyUnitTestProcessWithConsoleTestTask(@NotNull final String relativePathToTestData, @NotNull final String scriptName) {
+    this(relativePathToTestData, scriptName, 0);
+  }
+  PyUnitTestProcessWithConsoleTestTask(@NotNull final String relativePathToTestData,
+                                       @NotNull final String scriptName,
+                                       final int rerunFailedTests) {
     super(relativePathToTestData, SdkCreationType.SDK_PACKAGES_ONLY);
     myScriptName = scriptName;
+    myRerunFailedTests= rerunFailedTests;
   }
 
   @Nullable
@@ -60,7 +67,7 @@ abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsole
   @NotNull
   @Override
   protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-    return new PyUnitTestProcessRunner(myScriptName, 0);
+    return new PyUnitTestProcessRunner(myScriptName, myRerunFailedTests);
   }
 
 

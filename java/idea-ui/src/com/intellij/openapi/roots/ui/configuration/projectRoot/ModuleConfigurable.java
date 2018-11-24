@@ -35,10 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 04-Jun-2006
- */
 public class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {
   private final Module myModule;
   private final ModuleGrouper myModuleGrouper;

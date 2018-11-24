@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Apr-2007
- */
 package com.intellij.codeInspection.unusedLibraries;
 
 import com.intellij.analysis.AnalysisScope;

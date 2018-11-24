@@ -37,18 +37,19 @@ public class SwitchHelper {
       List<List<Exprent>> caseValues = switchStatement.getCaseValues();
       Map<Exprent, Exprent> mapping = new HashMap<>(caseValues.size());
       ArrayExprent array = (ArrayExprent)value;
+      FieldExprent arrayField = (FieldExprent)array.getArray();
       ClassesProcessor.ClassNode classNode =
-        DecompilerContext.getClassProcessor().getMapRootClasses().get(((FieldExprent)array.getArray()).getClassname());
+        DecompilerContext.getClassProcessor().getMapRootClasses().get(arrayField.getClassname());
       if (classNode != null) {
         MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
-        if (wrapper != null) {
+        if (wrapper != null && wrapper.root != null) {
           wrapper.getOrBuildGraph().iterateExprents(new DirectGraph.ExprentIterator() {
             @Override
             public int processExprent(Exprent exprent) {
               if (exprent instanceof AssignmentExprent) {
                 AssignmentExprent assignment = (AssignmentExprent)exprent;
                 Exprent left = assignment.getLeft();
-                if (isEnumArray(left)) {
+                if (left.type == Exprent.EXPRENT_ARRAY && ((ArrayExprent)left).getArray().equals(arrayField)) {
                   mapping.put(assignment.getRight(), ((InvocationExprent)((ArrayExprent)left).getIndex()).getInstance());
                 }
               }

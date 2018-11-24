@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -67,7 +69,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
   public static void editNew(@NotNull XValueNodeImpl parentNode) {
     ValueDescriptorImpl descriptor = ((JavaValue)parentNode.getValueContainer()).getDescriptor();
     EnumerationChildrenRenderer renderer = EnumerationChildrenRenderer.getCurrent(descriptor);
-    XDebuggerTreeNode newNode = parentNode.addTemporaryEditorNode();
+    XDebuggerTreeNode newNode = parentNode.addTemporaryEditorNode(AllIcons.Debugger.Watch, null);
     DebuggerUIUtil.invokeLater(() -> new CustomFieldInplaceEditor(newNode, null, renderer) {
       @Override
       public void cancelEditing() {
@@ -138,5 +140,18 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
       public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       }
     }).getPath();
+  }
+
+  @Nullable
+  @Override
+  protected Rectangle getEditorBounds() {
+    Rectangle bounds = super.getEditorBounds();
+    if (bounds == null) {
+      return null;
+    }
+    int afterIconX = getAfterIconX();
+    bounds.x += afterIconX;
+    bounds.width -= afterIconX;
+    return bounds;
   }
 }

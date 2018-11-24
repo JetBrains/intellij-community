@@ -142,7 +142,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
-  static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
+  public static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
+  public static final Key<Boolean> SOFT_WRAPS_EXIST = Key.create("soft.wraps.exist");
   public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   static final Key<Boolean> DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION = Key.create("editor.disable.caret.shift.on.whitespace.insertion");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
@@ -233,7 +234,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final int MOUSE_SELECTION_STATE_WORD_SELECTED = 1;
   private static final int MOUSE_SELECTION_STATE_LINE_SELECTED = 2;
 
-  private EditorHighlighter myHighlighter;
+  private volatile EditorHighlighter myHighlighter; // updated in EDT, but can be accessed from other threads (under read action)
   private Disposable myHighlighterDisposable = Disposer.newDisposable();
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
@@ -327,14 +328,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myBackgroundImageSet;
 
-  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
+  private final EditorKind myKind;
+
+  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind) {
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
     myScheme = createBoundColorSchemeDelegate(null);
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myIsViewer = viewer;
-    mySettings = new SettingsImpl(this, project);
+    myKind = kind;
+    mySettings = new SettingsImpl(this, project, kind);
     if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
       mySettings.setUseSoftWrapsQuiet();
       putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
@@ -551,7 +555,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetbrainsJvm && Registry.is("ide.mac.forceTouch")) {
+    if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
       new MacGestureSupportForEditor(getComponent());
     }
   }
@@ -750,6 +754,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myInlayModel;
   }
 
+  @NotNull
+  @Override
+  public EditorKind getEditorKind() {
+    return myKind;
+  }
+
   @Override
   @NotNull
   public EditorSettings getSettings() {
@@ -808,6 +818,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     for (Caret caret : getCaretModel().getAllCarets()) {
       caret.moveToOffset(caret.getOffset());
     }
+
+    if (myVirtualFile != null && myProject != null) EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
   }
 
   /**
@@ -1136,7 +1148,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.dispose(myHighlighterDisposable);
 
     document.addDocumentListener(highlighter);
-    myHighlighter = highlighter;
     myHighlighterDisposable = () -> document.removeDocumentListener(highlighter);
     Disposer.register(myDisposable, myHighlighterDisposable);
     highlighter.setEditor(this);
@@ -1144,6 +1155,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!(highlighter instanceof EmptyEditorHighlighter)) {
       EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
     }
+    myHighlighter = highlighter;
 
     if (myPanel != null) {
       reinitSettings();
@@ -1227,11 +1239,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.xyToVisualPosition(p);
   }
 
+  @Override
   @NotNull
-  Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets) {
-    return myView.offsetToXY(offset, leanTowardsLargerOffsets, false);
+  public Point2D offsetToPoint2D(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
+    return myView.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
-  
+
+  @Override
+  @NotNull
+  public Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
+    Point2D point2D = offsetToPoint2D(offset, leanForward, beforeSoftWrap);
+    return new Point((int)point2D.getX(), (int)point2D.getY());
+  }
+
   @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset) {
@@ -1689,6 +1709,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myHeaderPanel.revalidate();
+    myHeaderPanel.repaint();
   }
 
   @Override
@@ -2130,12 +2151,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
         int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
         if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {
-          myEditorComponent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          UIUtil.setCursor(myEditorComponent, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
           return;
         }
       }
       if (!IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) {
-        myEditorComponent.setCursor(UIUtil.getTextCursor(getBackgroundColor()));
+        UIUtil.setCursor(myEditorComponent, UIUtil.getTextCursor(getBackgroundColor()));
       }
     }
   }
@@ -3504,13 +3525,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void runMouseReleasedCommand(@NotNull final MouseEvent e) {
       myMultiSelectionInProgress = false;
-
       myDragOnGutterSelectionStartLine = -1;
+      myScrollingTimer.stop();
+
       if (e.isConsumed()) {
         return;
       }
 
-      myScrollingTimer.stop();
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       invokePopupIfNeeded(event);
       if (event.isConsumed()) {

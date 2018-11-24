@@ -39,7 +39,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -253,8 +252,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
      *
      * A single-static-import declaration d in a compilation unit c of package p that imports a type named n shadows, throughout c, the declarations of:
      * - any static type named n imported by a static-import-on-demand declaration in c;
-     * - any top level type (§7.6) named n declared in another compilation unit (§7.3) of p;
-     * - any type named n imported by a type-import-on-demand declaration (§7.5.2) in c.
+     * - any top level type (p7.6) named n declared in another compilation unit (p7.3) of p;
+     * - any type named n imported by a type-import-on-demand declaration (p7.5.2) in c.
      */
     private void registerSingleStaticImportHiding(JavaResolveResult result, String referenceName) {
       getHiddenMembers(result.getElement()).add(referenceName);

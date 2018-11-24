@@ -166,6 +166,12 @@ public class LongRangeBasics {
     }
   }
 
+  void testDouble(double d) {
+    if(d > 0 && d < 1) {
+      System.out.println("ok");
+    }
+  }
+
   private int getState() {
     return (int)(Math.random() * 100);
   }

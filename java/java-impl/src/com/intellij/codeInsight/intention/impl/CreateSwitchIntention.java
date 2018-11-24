@@ -33,40 +33,33 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
   public static final String TEXT = "Create switch statement";
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-    final PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    PsiSwitchStatement switchStatement = (PsiSwitchStatement)elementFactory
-      .createStatementFromText(String.format("switch (%s) {}", expressionStatement.getExpression().getText()), null);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    String valueToSwitch = expressionStatement.getExpression().getText();
+    PsiSwitchStatement switchStatement = (PsiSwitchStatement)elementFactory.createStatementFromText("switch (" + valueToSwitch + ") {}", null);
     switchStatement = (PsiSwitchStatement)expressionStatement.replace(switchStatement);
     CodeStyleManager.getInstance(project).reformat(switchStatement);
 
-    final PsiJavaToken lBrace = switchStatement.getBody().getLBrace();
+    PsiJavaToken lBrace = switchStatement.getBody().getLBrace();
     editor.getCaretModel().moveToOffset(lBrace.getTextOffset() + lBrace.getTextLength());
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    final PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
-    return expressionStatement != null && isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
+    return expressionStatement != null &&
+           expressionStatement.getParent() instanceof PsiCodeBlock &&
+           isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
   }
 
-  private static PsiExpressionStatement resolveExpressionStatement(final PsiElement element) {
-    if (element instanceof PsiExpressionStatement) {
-      return (PsiExpressionStatement)element;
-    } else {
-      final PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-      return psiStatement instanceof PsiExpressionStatement ? (PsiExpressionStatement)psiStatement : null;
-    }
-  }
-
-  private static boolean isValidTypeForSwitch(@Nullable final PsiType type, final PsiElement context) {
+  private static boolean isValidTypeForSwitch(@Nullable PsiType type, PsiElement context) {
     if (type == null) {
       return false;
     }
 
     if (type instanceof PsiClassType) {
-      final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+      PsiClass resolvedClass = ((PsiClassType)type).resolve();
       if (resolvedClass == null) {
         return false;
       }

@@ -72,6 +72,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+  private static final String INSTALL_PLUGIN_FROM_DISK_BUTTON_LABEL = "Install plugin from disk...";
 
   public InstalledPluginsManagerMain(PluginManagerUISettings uiSettings) {
     super(uiSettings);
@@ -89,7 +90,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     browse.addActionListener(new BrowseRepoListener(null));
     myActionsPanel.add(browse);
 
-    JButton installFromDisk = new JButton("Install plugin from disk...");
+    JButton installFromDisk = new JButton(INSTALL_PLUGIN_FROM_DISK_BUTTON_LABEL);
     installFromDisk.setMnemonic('d');
     installFromDisk.addActionListener(new ActionListener() {
       @Override
@@ -512,7 +513,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     @Nullable
     @Override
     public AnAction provide(@NotNull OptionDescription description) {
-      String name = "Install plugin from disk...";
+      String name = INSTALL_PLUGIN_FROM_DISK_BUTTON_LABEL;
       if (name.equals(description.getHit()) && "preferences.pluginManager".equals(description.getConfigurableId())) {
         return new InstalledPluginsManagerMain.InstallFromDiskAction(name);
       }

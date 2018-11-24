@@ -24,12 +24,15 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class WebDeploymentCredentialsHolder {
+  private static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
+
+  public static final String WEB_SERVER_CREDENTIALS_ID = "WEB_SERVER_CREDENTIALS_ID";
   public static final String WEB_SERVER_CONFIG_ID = "WEB_SERVER_CONFIG_ID";
   public static final String WEB_SERVER_CONFIG_NAME = "WEB_SERVER_CONFIG_NAME";
 
 
+  private String myCredentialsId;
   private String myWebServerConfigId;
-  private final RemoteCredentialsHolder myRemoteCredentials = new RemoteCredentialsHolder();
   private String myWebServerConfigName;
 
 
@@ -39,7 +42,11 @@ public class WebDeploymentCredentialsHolder {
   public WebDeploymentCredentialsHolder(@NotNull String webServerConfigId, String name, @NotNull RemoteCredentials remoteCredentials) {
     myWebServerConfigId = webServerConfigId;
     myWebServerConfigName = name;
-    myRemoteCredentials.copyFrom(remoteCredentials);
+    myCredentialsId = constructSftpCredentialsFullPath(remoteCredentials);
+  }
+
+  public String getCredentialsId() {
+    return myCredentialsId;
   }
 
   @Nullable
@@ -60,20 +67,34 @@ public class WebDeploymentCredentialsHolder {
   }
 
   public void load(Element element) {
-    myRemoteCredentials.load(element);
     setWebServerConfigId(element.getAttributeValue(WEB_SERVER_CONFIG_ID));
     setWebServerConfigName(StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CONFIG_NAME)));
+    myCredentialsId = StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CREDENTIALS_ID));
+    if (StringUtil.isEmpty(myCredentialsId)) {
+      // loading old settings -> convert previously saved credentials to id
+      final RemoteCredentialsHolder credentials = new RemoteCredentialsHolder();
+      credentials.load(element);
+      myCredentialsId = constructSftpCredentialsFullPath(credentials);
+    }
   }
 
   public void save(Element element) {
     element.setAttribute(WEB_SERVER_CONFIG_ID, getWebServerConfigId());
     element.setAttribute(WEB_SERVER_CONFIG_NAME, getWebServerConfigName());
-
-    myRemoteCredentials.save(element);
+    element.setAttribute(WEB_SERVER_CREDENTIALS_ID, StringUtil.notNullize(getCredentialsId()));
   }
 
-  public RemoteCredentials getSshCredentials() {
-    return myRemoteCredentials;
+  @NotNull
+  public WebDeploymentCredentialsHolder copyFrom(@NotNull WebDeploymentCredentialsHolder holder) {
+    setWebServerConfigId(holder.getWebServerConfigId());
+    setWebServerConfigName(holder.getWebServerConfigName());
+    myCredentialsId = holder.getCredentialsId();
+    return this;
+  }
+
+  @NotNull
+  private static String constructSftpCredentialsFullPath(@NotNull RemoteCredentials cred) {
+    return SFTP_DEPLOYMENT_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 
   @Override

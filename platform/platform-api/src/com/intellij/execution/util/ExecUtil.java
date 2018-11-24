@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -105,7 +106,8 @@ public class ExecUtil {
     try {
       return readFirstLine(commandLine.createProcess().getInputStream(), commandLine.getCharset());
     }
-    catch (ExecutionException ignored) {
+    catch (ExecutionException e) {
+      Logger.getInstance(ExecUtil.class).debug(e);
       return null;
     }
   }
@@ -115,7 +117,8 @@ public class ExecUtil {
     try (BufferedReader reader = new BufferedReader(cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs))) {
       return reader.readLine();
     }
-    catch (IOException ignored) {
+    catch (IOException e) {
+      Logger.getInstance(ExecUtil.class).debug(e);
       return null;
     }
   }
@@ -144,8 +147,17 @@ public class ExecUtil {
     command.add(commandLine.getExePath());
     command.addAll(commandLine.getParametersList().getList());
 
-    GeneralCommandLine sudoCommandLine;
-    if (SystemInfo.isMac) {
+    final GeneralCommandLine sudoCommandLine;
+    if (SystemInfo.isWinVistaOrNewer) {
+      // launcher.exe process with elevated permissions on UAC.
+      final File launcherExe = PathManager.findBinFileWithException("launcher.exe");
+      sudoCommandLine = new GeneralCommandLine(launcherExe.getPath());
+      sudoCommandLine.setWorkDirectory(commandLine.getWorkDirectory());
+      sudoCommandLine.addParameter(commandLine.getExePath());
+      sudoCommandLine.addParameters(commandLine.getParametersList().getParameters());
+      sudoCommandLine.getEnvironment().putAll(commandLine.getEffectiveEnvironment());
+    }
+    else if (SystemInfo.isMac) {
       String escapedCommandLine = StringUtil.join(command, ExecUtil::escapeAppleScriptArgument, " & \" \" & ");
       String escapedScript = "tell current application\n" +
                              "   activate\n" +
@@ -216,14 +228,15 @@ public class ExecUtil {
   @NotNull
   public static List<String> getTerminalCommand(@Nullable String title, @NotNull String command) {
     if (SystemInfo.isWindows) {
-      title = title != null ? title.replace("\"", "'") : "";
+      title = title != null ? title.replace('"', '\'') : "";
       return Arrays.asList(getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(title), command);
     }
     else if (SystemInfo.isMac) {
       return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command);
     }
     else if (hasKdeTerminal.getValue()) {
-      return Arrays.asList("konsole", "-e", command);
+      return title != null ? Arrays.asList("konsole", "-p", "tabtitle=\"" + title.replace('"', '\'') + "\"", "-e", command)
+                           : Arrays.asList("konsole", "-e", command);
     }
     else if (hasGnomeTerminal.getValue()) {
       return title != null ? Arrays.asList("gnome-terminal", "-t", title, "-x", command)

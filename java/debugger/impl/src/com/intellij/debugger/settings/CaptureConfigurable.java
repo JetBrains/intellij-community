@@ -370,18 +370,22 @@ public class CaptureConfigurable implements SearchableConfigurable {
       capturePointsFromAnnotations.add(capturePoint);
     }
 
+    @Override
     public String getColumnName(int column) {
       return COLUMN_NAMES[column];
     }
 
+    @Override
     public int getRowCount() {
       return myCapturePoints.size();
     }
 
+    @Override
     public int getColumnCount() {
       return COLUMN_NAMES.length;
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
       switch (col) {
@@ -403,10 +407,12 @@ public class CaptureConfigurable implements SearchableConfigurable {
       return null;
     }
 
+    @Override
     public boolean isCellEditable(int row, int column) {
       return true;
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
       switch (col) {
@@ -435,6 +441,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
       fireTableCellUpdated(row, col);
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       switch (columnIndex) {
         case ENABLED_COLUMN:
@@ -477,6 +484,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
       add(new CapturePoint());
     }
 
+    @Override
     public void removeRow(final int row) {
       myCapturePoints.remove(row);
       fireTableRowsDeleted(row, row);
@@ -507,11 +515,5 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @Override
   public String getDisplayName() {
     return DebuggerBundle.message("async.stacktraces.configurable.display.name");
-  }
-
-  @Nullable
-  @Override
-  public String getHelpTopic() {
-    return null;
   }
 }

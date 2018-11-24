@@ -34,12 +34,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/1/12
- * Time: 5:13 PM
- */
 public class UpdateOutputLineConverter {
 
   private final static String MERGING = "--- Merging";

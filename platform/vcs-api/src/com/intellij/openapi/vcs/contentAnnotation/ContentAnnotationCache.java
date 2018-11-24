@@ -23,13 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/8/11
- * Time: 8:14 PM
- * To change this template use File | Settings | File Templates.
- */
 public interface ContentAnnotationCache {
   @Nullable
   ThreeState isRecent(VirtualFile vf, VcsKey vcsKey, VcsRevisionNumber number, TextRange range, long boundTime);

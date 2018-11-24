@@ -57,6 +57,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import static com.intellij.ide.impl.ProjectUtil.closeAndDispose;
@@ -71,7 +74,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.*;
 
 
-@RunWith(GuiTestRunner.class)
+@RunWith(GuiTestLocalRunner.class)
 public abstract class GuiTestBase {
   protected Robot myRobot;
 
@@ -83,37 +86,46 @@ public abstract class GuiTestBase {
 
     @Override
     protected void failed(Throwable e, Description description) {
-      String fileName = description.getTestClass().getSimpleName() + "." + description.getMethodName() + ".png";
-
-      try {
-        File file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), fileName);
-        //noinspection ResultOfMethodCallIgnored
-        file.delete();
-        LOG.error(getHierarchy() + "\n" + "caused by:", e);
-        myScreenshotTaker.saveDesktopAsPng(file.getPath());
-        LOG.info("Screenshot: " + file);
-      }
-      catch (Throwable t) {
-        LOG.error("Screenshot failed. " + t.getMessage());
-      }
+      String screenshotName = description.getTestClass().getSimpleName() + "." + description.getMethodName();
+      takeScreenshotOnFailure(e, screenshotName);
     }
   };
+
+  protected void takeScreenshotOnFailure(Throwable e, String screenshotName) {
+
+
+    try {
+      File file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), screenshotName + ".png");
+      if (file.exists()) {
+        String dateAndTime = getDateAndTime();
+        file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), screenshotName + "." + dateAndTime + ".png");
+      }
+      //noinspection ResultOfMethodCallIgnored
+      file.delete();
+      LOG.error(getHierarchy() + "\n" + "caused by:", e);
+      myScreenshotTaker.saveDesktopAsPng(file.getPath());
+      LOG.info("Screenshot: " + file);
+    }
+    catch (Throwable t) {
+      LOG.error("Screenshot failed. " + t.getMessage());
+    }
+  }
 
   protected IdeFrameFixture myProjectFrame;
 
   /**
-   * @return the name of the test method being executed.
+   * @return the name of the test class being executed.
    */
   protected String getTestName() {
     return this.getClass().getSimpleName();
   }
 
 
-  public void setRobot(Robot robot){
+  public void setRobot(Robot robot) {
     myRobot = robot;
   }
 
-  public GuiTestBase(){
+  public GuiTestBase() {
 
   }
 
@@ -123,20 +135,17 @@ public abstract class GuiTestBase {
 
   @Before
   public void setUp() throws Exception {
+    //if test is local -> create control test and run it inside
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
   }
 
   @After
   public void tearDown() throws InvocationTargetException, InterruptedException {
-    GuiTestUtil.failIfIdeHasFatalErrors();
+    failIfIdeHasFatalErrors();
     if (myProjectFrame != null) {
-      DumbService.getInstance(myProjectFrame.getProject()).repeatUntilPassesInSmartMode(new Runnable() {
-        @Override
-        public void run() {
-          myProjectFrame.waitForBackgroundTasksToFinish();
-        }
-      });
+      DumbService.getInstance(myProjectFrame.getProject()).repeatUntilPassesInSmartMode(
+        () -> myProjectFrame.waitForBackgroundTasksToFinish());
       myProjectFrame = null;
     }
     if (myRobot != null) {
@@ -353,15 +362,19 @@ public abstract class GuiTestBase {
     return new String(out.toByteArray());
   }
 
+  private static String getDateAndTime() {
+    DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd.HH_mm_ss_SSS");
+    Date date = new Date();
+    return dateFormat.format(date); //2016/11/16 12:08:43
+  }
+
   @NotNull
   protected IdeFrameFixture findIdeFrame(@NotNull File projectPath) {
     return IdeFrameFixture.find(myRobot, projectPath, null);
   }
 
 
-  protected IdeFrameFixture findIdeFrame(){
+  protected IdeFrameFixture findIdeFrame() {
     return IdeFrameFixture.find(myRobot, null, null);
   }
-
-
 }

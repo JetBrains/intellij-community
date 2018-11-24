@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.commit;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -57,12 +56,6 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
   @Override
   public String getStaticDescription() {
     return "";
-  }
-
-  @NotNull
-  @Override
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
   }
 
   @Override

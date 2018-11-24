@@ -29,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +58,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
-  private static final int VERSION = 15;
+  private static final int VERSION = 15 + (SharedIndicesData.ourFileSharedIndicesEnabled ? 15 : 0) + (SharedIndicesData.DO_CHECKS ? 15 : 0);
   private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
   static final int INVALID_FILE_ID = 0;
 
@@ -118,7 +117,7 @@ public class IndexingStamp {
       @Override
       public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
         try {
-          return new DataOutputStream(new FileOutputStream(file));
+          return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         }
         catch (FileNotFoundException ex) {
           if (lastAttempt) throw ex;
@@ -396,12 +395,9 @@ public class IndexingStamp {
         Timestamps stamp = createOrGetTimeStamp(fileId);
         if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
           final SmartList<ID<?, ?>> retained = new SmartList<>();
-          stamp.myIndexStamps.forEach(new TObjectProcedure<ID<?, ?>>() {
-            @Override
-            public boolean execute(ID<?, ?> object) {
-              retained.add(object);
-              return true;
-            }
+          stamp.myIndexStamps.forEach(object -> {
+            retained.add(object);
+            return true;
           });
           return retained;
         }

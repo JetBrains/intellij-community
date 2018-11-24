@@ -25,13 +25,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Mar 26, 2004
- * Time: 7:11:30 PM
- * To change this template use File | Settings | File Templates.
- */
 public class DuplocatorHashCallback implements FragmentsCollector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.treeHash.DuplocatorHashCallback");
 

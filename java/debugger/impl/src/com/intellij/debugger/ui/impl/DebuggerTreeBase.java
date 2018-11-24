@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,8 +167,6 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
       return myCurrentTooltip;
     }
 
-    myCurrentTooltipNode = node;
-
     final String toolTipText = getTipText(node);
     if (toolTipText == null) {
       return null;
@@ -229,6 +227,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     toolTip.setPreferredSize(tipRectangle.getSize());
 
     myCurrentTooltip = toolTip;
+    myCurrentTooltipNode = node;
 
     return myCurrentTooltip;
   }

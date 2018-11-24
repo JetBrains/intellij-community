@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private final PsiExpression myExpression;
   private PsiType myT;
@@ -129,12 +126,16 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
                                                                          PsiExpression expression,
                                                                          PsiType targetType,
                                                                          boolean registerErrorOnFailure) {
+    if (!PsiPolyExpressionUtil.isPolyExpression(expression)) {
+      return session;
+    }
     final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
     if (argumentList != null) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);
       PsiType returnType = null;
       PsiTypeParameter[] typeParams = null;
-      final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCall)expression);
+      final JavaResolveResult resolveResult = candidateProperties != null ? null : PsiDiamondType
+        .getDiamondsAwareResolveResult((PsiCall)expression);
       final PsiMethod method = InferenceSession.getCalledMethod((PsiCall)expression);
 
       if (method != null && !method.isConstructor()) {

@@ -19,12 +19,12 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaReference;
@@ -43,36 +43,29 @@ import java.util.*;
 /**
  * @author cdr
  */
-class SliceLeafAnalyzer {
-  static final TObjectHashingStrategy<PsiElement> LEAF_ELEMENT_EQUALITY = new TObjectHashingStrategy<PsiElement>() {
+public class SliceLeafAnalyzer {
+  public static final TObjectHashingStrategy<PsiElement> LEAF_ELEMENT_EQUALITY = new TObjectHashingStrategy<PsiElement>() {
     @Override
     public int computeHashCode(final PsiElement element) {
       if (element == null) return 0;
-      String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          PsiElement elementToCompare = element;
-          if (element instanceof PsiJavaReference) {
-            PsiElement resolved = ((PsiJavaReference)element).resolve();
-            if (resolved != null) {
-              elementToCompare = resolved;
-            }
+      String text = ReadAction.compute(() -> {
+        PsiElement elementToCompare = element;
+        if (element instanceof PsiJavaReference) {
+          PsiElement resolved = ((PsiJavaReference)element).resolve();
+          if (resolved != null) {
+            elementToCompare = resolved;
           }
-          return elementToCompare instanceof PsiNamedElement ? ((PsiNamedElement)elementToCompare).getName()
-                                                             : AstBufferUtil.getTextSkippingWhitespaceComments(elementToCompare.getNode());
         }
+        return elementToCompare instanceof PsiNamedElement ? ((PsiNamedElement)elementToCompare).getName()
+                                                           : AstBufferUtil.getTextSkippingWhitespaceComments(elementToCompare.getNode());
       });
       return Comparing.hashcode(text);
     }
 
     @Override
     public boolean equals(final PsiElement o1, final PsiElement o2) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return o1 != null && o2 != null && PsiEquivalenceUtil.areElementsEquivalent(o1, o2);
-        }
-      });
+      return ReadAction
+        .compute(() -> o1 != null && o2 != null && PsiEquivalenceUtil.areElementsEquivalent(o1, o2));
     }
   };
 
@@ -110,9 +103,9 @@ class SliceLeafAnalyzer {
   }
 
   @NotNull
-  static SliceRootNode createTreeGroupedByValues(@NotNull Collection<PsiElement> leaves,
-                                                 @NotNull SliceRootNode oldRoot,
-                                                 @NotNull Map<SliceNode, Collection<PsiElement>> map) {
+  public static SliceRootNode createTreeGroupedByValues(@NotNull Collection<PsiElement> leaves,
+                                                        @NotNull SliceRootNode oldRoot,
+                                                        @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceRootNode root = oldRoot.copy();
     root.setChanged();
@@ -232,9 +225,9 @@ class SliceLeafAnalyzer {
   }
 
   @NotNull
-  static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
-                                                    @NotNull AbstractTreeStructure treeStructure,
-                                                    @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
+  public static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
+                                                           @NotNull AbstractTreeStructure treeStructure,
+                                                           @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override

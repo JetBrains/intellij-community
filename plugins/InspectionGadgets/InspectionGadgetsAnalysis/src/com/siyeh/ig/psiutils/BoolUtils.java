@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,15 +68,19 @@ public class BoolUtils {
 
   @NotNull
   public static String getNegatedExpressionText(@Nullable PsiExpression expression, int precedence) {
-    expression = ParenthesesUtils.stripParentheses(expression);
     if (expression == null) {
       return "";
+    }
+    if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      return '(' + getNegatedExpressionText(parenthesizedExpression.getExpression()) + ')';
     }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
       final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;
-      final String text = conditionalExpression.getCondition().getText() + '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
-                                                                           ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+      final String text = conditionalExpression.getCondition().getText() +
+                          '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
+                          ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
       return needParenthesis ? "(" + text + ")" : text;
     }
     if (isNegation(expression)) {

@@ -68,4 +68,25 @@ public class TestPrimitives {
     printByte((byte)getInt());
     printShort((short)getInt());
   }
+
+  public void constructor() {
+    new Byte((byte)1);
+  }
+
+  private boolean compare(char c) {
+    boolean res = (c > -1);
+    res = (c > 0);
+    res = (c > 1);
+    res = (c > '\b');
+    res = (c > '\t');
+    res = (c > '\n');
+    res = (c > '\f');
+    res = (c > '\r');
+    res = (c > ' ');
+    res = (c > 'a');
+    res = (c > 'Z');
+    res = (c > 127);
+    res = (c > 255);
+    return res;
+  }
 }

@@ -19,6 +19,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -68,16 +69,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       builder.allowBootstrapResources();
     }
 
-    if (SystemInfo.IS_AT_LEAST_JAVA9) {
-      // on Java 8, 'tools.jar' is on a classpath; on Java 9, its classes are available via the platform loader
-      try {
-        ClassLoader platformCl = (ClassLoader)ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
-        builder.parent(platformCl);
-      }
-      catch (Exception e) {
-        getLogger().warn(e);
-      }
-    }
+    ClassLoaderUtil.addPlatformLoaderParentIfOnJdk9(builder);
 
     UrlClassLoader newClassLoader = builder.get();
 
@@ -177,7 +169,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   private static void parseClassPathString(String pathString, Collection<URL> classpath) {
     if (pathString != null && !pathString.isEmpty()) {
       try {
-        StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator, false);
+        StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator + ',', false);
         while (tokenizer.hasMoreTokens()) {
           String pathItem = tokenizer.nextToken();
           classpath.add(new File(pathItem).toURI().toURL());

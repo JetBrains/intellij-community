@@ -55,6 +55,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<>();
   private final Set<ExcludeFolder> myExcludeFolders = new TreeSet<>(ContentFolderComparator.INSTANCE);
   @NonNls public static final String URL_ATTRIBUTE = JpsModuleRootModelSerializer.URL_ATTRIBUTE;
+  private List<String> myExcludePatterns;
 
   ContentEntryImpl(@NotNull VirtualFile file, @NotNull RootModelImpl m) {
     this(file.getUrl(), m);
@@ -69,6 +70,9 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     this(getUrlFrom(e), m);
     initSourceFolders(e);
     initExcludeFolders(e);
+    for (Element element : e.getChildren(JpsModuleRootModelSerializer.EXCLUDE_PATTERN_TAG)) {
+      addExcludePattern(element.getAttributeValue(JpsModuleRootModelSerializer.EXCLUDE_PATTERN_ATTRIBUTE));
+    }
   }
 
   private static String getUrlFrom(@NotNull Element e) throws InvalidDataException {
@@ -312,6 +316,46 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     myExcludeFolders.clear();
   }
 
+  @NotNull
+  @Override
+  public List<String> getExcludePatterns() {
+    return myExcludePatterns != null ? Collections.unmodifiableList(myExcludePatterns) : Collections.emptyList();
+  }
+
+  @Override
+  public void addExcludePattern(@NotNull String pattern) {
+    if (myExcludePatterns == null) {
+      myExcludePatterns = new SmartList<>();
+    }
+    myExcludePatterns.add(pattern);
+  }
+
+  @Override
+  public void removeExcludePattern(@NotNull String pattern) {
+    if (myExcludePatterns != null) {
+      myExcludePatterns.remove(pattern);
+      if (myExcludePatterns.isEmpty()) {
+        myExcludePatterns = null;
+      }
+    }
+  }
+
+  @Override
+  public void setExcludePatterns(@NotNull List<String> patterns) {
+    if (patterns.isEmpty()) {
+      myExcludePatterns = null;
+    }
+    else {
+      if (myExcludePatterns == null) {
+        myExcludePatterns = new SmartList<>();
+      }
+      else {
+        myExcludePatterns.clear();
+      }
+      myExcludePatterns.addAll(patterns);
+    }
+  }
+
   private ExcludeFolder addExcludeFolder(ExcludeFolder f) {
     Disposer.register(this, (Disposable)f);
     myExcludeFolders.add(f);
@@ -355,6 +399,10 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
       }
     }
 
+    for (String pattern : getExcludePatterns()) {
+      cloned.addExcludePattern(pattern);
+    }
+
     return cloned;
   }
 
@@ -375,6 +423,10 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
         element.addContent(subElement);
       }
     }
+
+    for (String pattern : getExcludePatterns()) {
+      element.addContent(new Element(JpsModuleRootModelSerializer.EXCLUDE_PATTERN_TAG).setAttribute(JpsModuleRootModelSerializer.EXCLUDE_PATTERN_ATTRIBUTE, pattern));
+    }
   }
 
   private static final class ContentFolderComparator implements Comparator<ContentFolder> {
@@ -392,6 +444,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     if (i != 0) return i;
     i = ArrayUtil.lexicographicCompare(getSourceFolders(), other.getSourceFolders());
     if (i != 0) return i;
-    return ArrayUtil.lexicographicCompare(getExcludeFolders(), other.getExcludeFolders());
+    i = ArrayUtil.lexicographicCompare(getExcludeFolders(), other.getExcludeFolders());
+    if (i != 0) return i;
+    return ContainerUtil.compareLexicographically(getExcludePatterns(), other.getExcludePatterns());
   }
 }

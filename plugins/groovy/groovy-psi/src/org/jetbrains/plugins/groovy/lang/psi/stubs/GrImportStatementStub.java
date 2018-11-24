@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
-/**
- * Created by Max Medvedev on 11/29/13
- */
 public class GrImportStatementStub extends StubBase<GrImportStatement> implements StubElement<GrImportStatement> {
   private static final byte STATIC_MASK = 0x1;
   private static final byte ON_DEMAND_MASK = 0x2;

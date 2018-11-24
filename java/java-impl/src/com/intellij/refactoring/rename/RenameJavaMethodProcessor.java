@@ -125,7 +125,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     qualifyStaticImportReferences(staticImportHides);
     
     if (!method.isConstructor() && method.findDeepestSuperMethods().length == 0) {
-      PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, CommonClassNames.JAVA_LANG_OVERRIDE);
       if (annotation != null && annotation.isPhysical()) {
         annotation.delete();
       }

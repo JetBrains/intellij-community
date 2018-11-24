@@ -442,6 +442,11 @@ public class ClassWriter {
       }
       else {
         buffer.append(" = ");
+
+        if (initializer.type == Exprent.EXPRENT_CONST) {
+          ((ConstExprent) initializer).adjustConstType(fieldType);
+        }
+
         // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode intruction.
         buffer.append(initializer.toJava(indent, tracer));
       }
@@ -524,7 +529,9 @@ public class ClassWriter {
             buffer.append(root.toJava(indent, tracer));
           }
           catch (Throwable ex) {
-            DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.", ex);
+            DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.",
+                                                       IFernflowerLogger.Severity.WARN,
+                                                       ex);
             methodWrapper.decompiledWithErrors = true;
           }
         }
@@ -624,7 +631,7 @@ public class ClassWriter {
 
       appendModifiers(buffer, flags, METHOD_ALLOWED, isInterface, METHOD_EXCLUDED);
 
-      if (isInterface && mt.containsCode()) {
+      if (isInterface && !mt.hasModifier(CodeConstants.ACC_STATIC) && mt.containsCode()) {
         // 'default' modifier (Java 8)
         buffer.append("default ");
       }
@@ -827,7 +834,10 @@ public class ClassWriter {
             buffer.append(code);
           }
           catch (Throwable ex) {
-            DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.", ex);
+            DecompilerContext.getLogger()
+              .writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.",
+                            IFernflowerLogger.Severity.WARN,
+                            ex);
             methodWrapper.decompiledWithErrors = true;
           }
         }

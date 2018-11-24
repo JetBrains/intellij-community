@@ -107,7 +107,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   public void documentChanged(DocumentEvent event) {
     super.documentChanged(event);
     // optimisation: avoid documents piling up during batch processing
-    if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
+    if (isUncommited(event.getDocument()) && FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
       if (myUnitTestMode) {
         myStopTrackingDocuments = true;
         try {
@@ -121,7 +121,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
         }
       }
       // must not commit during document save
-      if (PomModelImpl.isAllowPsiModification()) {
+      if (PomModelImpl.isAllowPsiModification()
+          // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
+          && ApplicationManager.getApplication().isWriteAccessAllowed()) {
         commitAllDocuments();
       }
     }
@@ -129,7 +131,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
 
   @Override
   protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
-    PostprocessReformattingAspect.getInstance(myProject).beforeDocumentChanged(viewProvider);
+    PostprocessReformattingAspect.getInstance(myProject).assertDocumentChangeIsAllowed(viewProvider);
     super.beforeDocumentChangeOnUnlockedDocument(viewProvider);
   }
 

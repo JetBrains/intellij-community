@@ -33,10 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 4/12/13
- */
 public class JUnitRuleInspection extends BaseInspection {
   public static final String RULE_FQN = "org.junit.Rule";
   public static final String CLASS_RULE_FQN = "org.junit.ClassRule";

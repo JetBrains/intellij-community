@@ -126,6 +126,12 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
                                               @NotNull byte[] content,
+                                              @NotNull FileType fileType,
+                                              @NotNull String fileName) throws IOException;
+
+  @NotNull
+  public abstract DiffContent createFromBytes(@Nullable Project project,
+                                              @NotNull byte[] content,
                                               @NotNull VirtualFile highlightFile) throws IOException;
 
   @NotNull

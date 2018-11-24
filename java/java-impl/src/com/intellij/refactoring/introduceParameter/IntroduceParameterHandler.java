@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 06.05.2002
- * Time: 13:36:30
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.introduceParameter;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -556,20 +548,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         return false;
       }
 
-      final PsiElement[] elementsCopy;
-      if (!elements[0].isPhysical()) {
-        elementsCopy = elements;
-      }
-      else {
-        final PsiFile copy = PsiFileFactory.getInstance(project)
-          .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
-        final TextRange range = new TextRange(elements[0].getTextRange().getStartOffset(),
-                                              elements[elements.length - 1].getTextRange().getEndOffset());
-        final PsiExpression exprInRange = CodeInsightUtil.findExpressionInRange(copy, range.getStartOffset(), range.getEndOffset());
-        elementsCopy = exprInRange != null
-                       ? new PsiElement[]{exprInRange}
-                       : CodeInsightUtil.findStatementsInRange(copy, range.getStartOffset(), range.getEndOffset());
-      }
+      final PsiElement[] elementsCopy = getElementsInCopy(project, file, elements);
       final PsiMethod containingMethodCopy = Util.getContainingMethod(elementsCopy[0]);
       LOG.assertTrue(containingMethodCopy != null);
       final List<PsiMethod> enclosingMethodsInCopy = getEnclosingMethods(containingMethodCopy);
@@ -621,6 +600,28 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return false;
   }
 
+  public static PsiElement[] getElementsInCopy(Project project, PsiFile file, PsiElement[] elements) {
+    final PsiElement[] elementsCopy;
+    if (!elements[0].isPhysical()) {
+      elementsCopy = elements;
+    }
+    else {
+      final PsiFile copy = PsiFileFactory.getInstance(project)
+        .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+      final TextRange range = new TextRange(elements[0].getTextRange().getStartOffset(),
+                                            elements[elements.length - 1].getTextRange().getEndOffset());
+      final PsiExpression exprInRange = CodeInsightUtil.findExpressionInRange(copy, range.getStartOffset(), range.getEndOffset());
+      elementsCopy = exprInRange != null
+                     ? new PsiElement[]{exprInRange}
+                     : CodeInsightUtil.findStatementsInRange(copy, range.getStartOffset(), range.getEndOffset());
+    }
+    if (elementsCopy.length == 1 && elementsCopy[0].getUserData(ElementToWorkOn.PARENT) == null) {
+        elementsCopy[0].putUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL, true);
+      }
+
+    return elementsCopy;
+  }
+
   private void functionalInterfaceSelected(final PsiType selectedType,
                                            final List<PsiMethod> enclosingMethods,
                                            final Project project,
@@ -636,8 +637,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                   PsiMethod methodToSearchFor, Editor editor,
                                                   final Project project,
                                                   final PsiType selectedType,
-                                                  final MyExtractMethodProcessor processor, 
+                                                  final ExtractMethodProcessor processor, 
                                                   final PsiElement[] elements) {
+    if (!elements[0].isValid()) {
+      return;
+    }
     final PsiElement commonParent = findCommonParent(elements);
     if (commonParent == null) {
       LOG.error("Should have common parent:" + Arrays.toString(elements));
@@ -665,11 +669,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       LOG.assertTrue(method != null);
       final String interfaceMethodName = method.getName();
       processor.setMethodName(interfaceMethodName);
-
-      if (copyElements.length == 1 && copyElements[0].getUserData(ElementToWorkOn.PARENT) == null) {
-        copyElements[0].putUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL, true);
-      }
-
       processor.doExtract();
 
       final PsiMethod extractedMethod = processor.getExtractedMethod();
@@ -736,10 +735,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     @Override
     protected boolean isNeedToChangeCallContext() {
       return false;
-    }
-
-    public void setMethodName(String methodName) {
-      myMethodName = methodName;
     }
 
     @Override

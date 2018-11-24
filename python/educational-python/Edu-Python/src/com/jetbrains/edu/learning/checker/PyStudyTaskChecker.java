@@ -111,11 +111,11 @@ public class PyStudyTaskChecker extends StudyTaskChecker<PyCharmTask> {
   }
 
   @Override
-  public StudyCheckResult checkOnRemote(@NotNull StepicUser user) {
+  public StudyCheckResult checkOnRemote(@Nullable StepicUser user) {
     StudyCheckResult result = check();
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     StudyStatus status = result.getStatus();
-    if (course != null && EduNames.STUDY.equals(course.getCourseMode()) && status != StudyStatus.Unchecked) {
+    if (user != null && course != null && EduNames.STUDY.equals(course.getCourseMode()) && status != StudyStatus.Unchecked) {
       EduStepicConnector.postSolution(myTask, status == StudyStatus.Solved, myProject);
     }
     return result;

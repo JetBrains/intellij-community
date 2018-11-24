@@ -21,10 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 7/4/13
- */
 
 public class InferenceVariablesOrder {
   public static List<InferenceVariable> resolveOrder(Collection<InferenceVariable> vars, InferenceSession session) {

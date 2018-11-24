@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -26,10 +28,12 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.IntArrayList;
@@ -45,6 +49,7 @@ import java.util.*;
  * @author max
  */
 public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter");
   private final Map<IElementType, LayerDescriptor> myTokensToLayer = new HashMap<>();
   private final Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<>();
 
@@ -107,9 +112,18 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         final int len = lengths.get(i);
         start += mySeparator.length();
         final int globalIndex = index2Global.get(i);
-        assert getSegments().myRanges[globalIndex] == null : myText;
+        checkNull(type, getSegments().myRanges[globalIndex]);
         getSegments().myRanges[globalIndex] = new MappedRange(mapper, document.createRangeMarker(start, start + len), type);
         start += len;
+      }
+    }
+
+    private void checkNull(IElementType type, MappedRange range) {
+      if (range != null) {
+        Document mainDocument = getDocument();
+        VirtualFile file = mainDocument == null ? null : FileDocumentManager.getInstance().getFile(mainDocument);
+        LOG.error("Expected null range on " + type + ", found " + range + "; highlighter=" + getSyntaxHighlighter(),
+                  new Attachment(file != null ? file.getName() : "editorText.txt", myText.toString()));
       }
     }
   }
@@ -153,12 +167,14 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   protected boolean updateLayers() { return false; }
+  
+  protected boolean updateLayers(@NotNull DocumentEvent e) { return updateLayers(); }
 
   @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
   @Override
   public void documentChanged(DocumentEvent e) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    boolean changed = updateLayers();
+    boolean changed = updateLayers(e);
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
@@ -174,17 +190,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    final boolean changed = updateLayers();
-
     //noinspection SynchronizeOnThis
     synchronized (this) {
-      if (changed) {
-        Document document = getDocument();
-        if (document != null) {
-          resetText(document.getImmutableCharSequence());
-        }
-      }
       return new LayeredHighlighterIteratorImpl(startOffset);
     }
   }
@@ -455,6 +462,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       this.range = range;
       this.outerToken = outerToken;
       assert mapper.doc == range.getDocument();
+    }
+
+    @Override
+    public String toString() {
+      return "MappedRange{range=" + range + ", outerToken=" + outerToken + '}';
     }
   }
 

@@ -44,8 +44,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
           .showOkCancelDialog(ApplicationBundle.message("settings.code.style.reset.to.defaults.message"),
                               ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), Messages.getQuestionIcon()) ==
         Messages.OK) {
-      scheme.resetToDefaults();
-      getModel().fireSchemeChanged(scheme);
+      getModel().restoreDefaults(scheme);
     }
   }
 
@@ -72,7 +71,6 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
       false,
       newName -> {
         CodeStyleScheme newScheme = getModel().exportProjectScheme(newName);
-        getModel().setUsePerProjectSettings(false);
         getModel().selectScheme(newScheme, null);
       }
     );
@@ -172,7 +170,6 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
                        Messages.getQuestionIcon());
     if (copyToProjectConfirmation == Messages.YES) {
       getModel().copyToProject(scheme);
-      getModel().setUsePerProjectSettings(true, true);
     }
   }
 

@@ -70,7 +70,6 @@ public class PyiTypeTest extends PyTestCase {
     final String fileName = getTestName(false) + ".py";
     myFixture.configureByFile(fileName);
     final PsiElement element = myFixture.getElementAtCaret();
-    assertNotNull("Could not find element at caret in: " + myFixture.getFile());
     assertInstanceOf(element, PyTypedElement.class);
     final PyTypedElement typedElement = (PyTypedElement)element;
     final Project project = element.getProject();

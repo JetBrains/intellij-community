@@ -72,11 +72,12 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
     final List<Chunk<Node>> chunks = new ArrayList<>(components.size());
     final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<>();
     for (Collection<Node> component : components) {
-      final Set<Node> chunkNodes = new LinkedHashSet<>();
+      final Set<Node> chunkNodes = component.size() == 1
+                                   ? Collections.singleton(component.iterator().next())
+                                   : new LinkedHashSet<>(component);
       final Chunk<Node> chunk = new Chunk<>(chunkNodes);
       chunks.add(chunk);
       for (Node node : component) {
-        chunkNodes.add(node);
         nodeToChunkMap.put(node, chunk);
       }
     }

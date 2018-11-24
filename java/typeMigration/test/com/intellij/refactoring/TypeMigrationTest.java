@@ -870,6 +870,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
   }
 
+  public void testTypeParameterMigrationInInvalidCode() {
+    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+  }
+
   private void doTestReturnType(final String methodName, final String migrationType) {
     start(new RulesProvider() {
       @Override

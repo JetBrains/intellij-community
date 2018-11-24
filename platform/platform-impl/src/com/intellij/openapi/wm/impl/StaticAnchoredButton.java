@@ -22,12 +22,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.event.MouseEvent;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/19/11
- * Time: 3:52 PM
- */
 public class StaticAnchoredButton extends AnchoredButton {
   @NotNull
   private ToolWindowAnchor myToolWindowAnchor;

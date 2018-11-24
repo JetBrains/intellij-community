@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: 11/11/2006
- * Time: 16:15:10
- */
 package com.intellij.execution.junit.codeInsight.references;
 
 import com.intellij.patterns.PlatformPatterns;
@@ -27,6 +21,7 @@ import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +37,12 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new MethodSourceReference[]{new MethodSourceReference((PsiLiteral)element)};
+      }
+    });
+    registrar.registerReferenceProvider(getElementPattern("org.junit.jupiter.params.provider.CsvFileSource", "resources"), new PsiReferenceProvider() {
+      @NotNull
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        return FileReferenceSet.createSet(element, false, false, false).getAllReferences();
       }
     });
   }

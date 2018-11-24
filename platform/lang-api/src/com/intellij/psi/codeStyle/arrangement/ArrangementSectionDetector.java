@@ -106,18 +106,22 @@ public class ArrangementSectionDetector {
       myText = text;
     }
 
+    @NotNull
     public PsiElement getElement() {
       return myElement;
     }
 
+    @NotNull
     public ArrangementSettingsToken getToken() {
       return myToken;
     }
 
+    @NotNull
     public TextRange getTextRange() {
       return myTextRange;
     }
 
+    @NotNull
     public String getText() {
       return myText;
     }

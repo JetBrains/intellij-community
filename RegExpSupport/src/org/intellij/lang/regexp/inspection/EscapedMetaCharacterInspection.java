@@ -66,24 +66,14 @@ public class EscapedMetaCharacterInspection extends LocalInspectionTool {
         return;
       }
       final char c = text.charAt(1);
-      switch (c) {
-        case '{':
-        case '}':
-        case '(':
-        case ')':
-        case '.':
-        case '*':
-        case '+':
-        case '?':
-        case '|':
-        case '$':
-          final ASTNode node = ch.getNode().getFirstChildNode();
-          if (node != null && node.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
-            return;
-          }
-          myHolder.registerProblem(ch, "Escaped meta character <code>" + c + "</code>", new EscapedMetaCharacterFix(c));
-          break;
+      if ("{}().*+?|$".indexOf(c) < 0) {
+        return;
       }
+      final ASTNode node = ch.getNode().getFirstChildNode();
+      if (node != null && node.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
+        return;
+      }
+      myHolder.registerProblem(ch, "Escaped meta character <code>" + c + "</code>", new EscapedMetaCharacterFix(c));
     }
   }
 

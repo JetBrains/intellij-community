@@ -271,13 +271,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
         final Component target =
           SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
         if (target != null) {
-          setCursor(target.getCursor());
+          UIUtil.setCursor(this, target.getCursor());
           cursorSet = true;
         }
       }
 
       if (!cursorSet) {
-        setCursor(Cursor.getDefaultCursor());
+        UIUtil.setCursor(this, Cursor.getDefaultCursor());
       }
     }
 
@@ -356,18 +356,18 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
                 if (target instanceof JComponent) {
                   ((JComponent)target).putClientProperty(PREPROCESSED_CURSOR_KEY, Boolean.TRUE);
                 }
-                target.setCursor(cursor);
+                UIUtil.setCursor(target, cursor);
               }
             }
 
-            getRootPane().setCursor(cursor);
+            UIUtil.setCursor(getRootPane(), cursor);
           }
         }
         else if (!e.isConsumed() && e.getID() != MouseEvent.MOUSE_DRAGGED) {
           cursor = Cursor.getDefaultCursor();
           JRootPane rootPane = getRootPane();
           if (rootPane != null) {
-            rootPane.setCursor(cursor);
+            UIUtil.setCursor(rootPane, cursor);
           } else {
             LOG.warn("Root pane is null. Event: " + e);
           }
@@ -403,7 +403,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private void restoreLastComponent(Component newC) {
     if (myLastCursorComponent != null && myLastCursorComponent != newC) {
-      myLastCursorComponent.setCursor(myLastOriginalCursor);
+      UIUtil.setCursor(myLastCursorComponent, myLastOriginalCursor);
       if (myLastCursorComponent instanceof JComponent) {
         ((JComponent)myLastCursorComponent).putClientProperty(PREPROCESSED_CURSOR_KEY, null);
       }

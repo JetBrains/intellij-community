@@ -18,9 +18,6 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.ui.mac.foundation.Foundation;
 
-/**
- * User: spLeaner
- */
 public class FoundationLoader implements ApplicationComponent {
   @Override
   public void initComponent() {

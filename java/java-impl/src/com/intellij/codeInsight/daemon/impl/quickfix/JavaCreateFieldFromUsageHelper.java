@@ -17,13 +17,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Max Medvedev
@@ -38,7 +41,8 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
                                     PsiElement context,
                                     boolean createConstantField,
                                     PsiSubstitutor substitutor) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
+    Project project = field.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
@@ -57,7 +61,13 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     }
     editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());
     Template template = builder.buildInlineTemplate();
-    if (((ExpectedTypeInfo[])expectedTypes).length > 1) template.setToShortenLongNames(false);
+    if (ExpectedTypesProvider.processExpectedTypes((ExpectedTypeInfo[])expectedTypes, new PsiTypeVisitor<PsiType>() {
+      @Nullable
+      @Override
+      public PsiType visitType(PsiType type) {
+        return type;
+      }
+    }, project).length > 1) template.setToShortenLongNames(false);
     return template;
   }
 

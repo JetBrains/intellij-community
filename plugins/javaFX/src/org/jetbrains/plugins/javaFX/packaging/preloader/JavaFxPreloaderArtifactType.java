@@ -25,10 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 3/12/13
- */
 public class JavaFxPreloaderArtifactType extends ArtifactType {
   public static JavaFxPreloaderArtifactType getInstance() {
     return EP_NAME.findExtension(JavaFxPreloaderArtifactType.class);

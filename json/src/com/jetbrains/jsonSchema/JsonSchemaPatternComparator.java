@@ -37,14 +37,14 @@ public class JsonSchemaPatternComparator {
   }
 
   @NotNull
-  public ThreeState isSimilar(@NotNull JsonSchemaMappingsConfigurationBase.Item itemLeft,
-                              @NotNull JsonSchemaMappingsConfigurationBase.Item itemRight) {
+  public ThreeState isSimilar(@NotNull UserDefinedJsonSchemaConfiguration.Item itemLeft,
+                              @NotNull UserDefinedJsonSchemaConfiguration.Item itemRight) {
     if (itemLeft.isPattern() != itemRight.isPattern()) return ThreeState.NO;
     if (itemLeft.isPattern()) return comparePatterns(itemLeft, itemRight);
     return comparePaths(itemLeft, itemRight);
   }
 
-  private ThreeState comparePaths(JsonSchemaMappingsConfigurationBase.Item left, JsonSchemaMappingsConfigurationBase.Item right) {
+  private ThreeState comparePaths(UserDefinedJsonSchemaConfiguration.Item left, UserDefinedJsonSchemaConfiguration.Item right) {
     final File leftFile = new File(myProject.getBasePath(), left.getPath());
     final File rightFile = new File(myProject.getBasePath(), right.getPath());
 
@@ -57,28 +57,27 @@ public class JsonSchemaPatternComparator {
     return FileUtil.filesEqual(leftFile, rightFile) && left.isDirectory() == right.isDirectory() ? ThreeState.YES : ThreeState.NO;
   }
 
-  private static ThreeState comparePatterns(JsonSchemaMappingsConfigurationBase.Item left, JsonSchemaMappingsConfigurationBase.Item right) {
-    if (left.getPath().equals(right.getPath())) return ThreeState.YES;
-    final BeforeAfter<String> beforeAfterLeft = getBeforeAfterAroundWildCards(left.getPath());
-    final BeforeAfter<String> beforeAfterRight = getBeforeAfterAroundWildCards(right.getPath());
-    if (beforeAfterLeft == null || beforeAfterRight == null) {
-      if (beforeAfterLeft == null && beforeAfterRight == null) return left.getPath().equals(right.getPath()) ? ThreeState.YES : ThreeState.NO;
-      if (beforeAfterLeft == null) {
-        return checkOneSideWithoutWildcard(left, beforeAfterRight);
+  private static ThreeState comparePatterns(@NotNull final UserDefinedJsonSchemaConfiguration.Item leftItem,
+                                            @NotNull final UserDefinedJsonSchemaConfiguration.Item rightItem) {
+    if (leftItem.getPath().equals(rightItem.getPath())) return ThreeState.YES;
+    final BeforeAfter<String> left = getBeforeAfterAroundWildCards(leftItem.getPath());
+    final BeforeAfter<String> right = getBeforeAfterAroundWildCards(rightItem.getPath());
+    if (left == null || right == null) {
+      if (left == null && right == null) return leftItem.getPath().equals(rightItem.getPath()) ? ThreeState.YES : ThreeState.NO;
+      if (left == null) {
+        return checkOneSideWithoutWildcard(leftItem, right);
       }
-      return checkOneSideWithoutWildcard(right, beforeAfterLeft);
+      return checkOneSideWithoutWildcard(rightItem, left);
     }
-    if (!StringUtil.isEmptyOrSpaces(beforeAfterLeft.getBefore()) && !StringUtil.isEmptyOrSpaces(beforeAfterRight.getBefore())) {
-      if (beforeAfterLeft.getBefore().startsWith(beforeAfterRight.getBefore()) ||
-          beforeAfterRight.getBefore().startsWith(beforeAfterLeft.getBefore())) {
+    if (!StringUtil.isEmptyOrSpaces(left.getBefore()) && !StringUtil.isEmptyOrSpaces(right.getBefore())) {
+      if (left.getBefore().startsWith(right.getBefore()) || right.getBefore().startsWith(left.getBefore())) {
         return ThreeState.YES;
       }
       // otherwise they are different
       return ThreeState.NO;
     }
-    if (!StringUtil.isEmptyOrSpaces(beforeAfterLeft.getAfter()) && !StringUtil.isEmptyOrSpaces(beforeAfterRight.getAfter())) {
-      if (beforeAfterLeft.getAfter().endsWith(beforeAfterRight.getAfter()) ||
-          beforeAfterRight.getAfter().endsWith(beforeAfterLeft.getAfter())) {
+    if (!StringUtil.isEmptyOrSpaces(left.getAfter()) && !StringUtil.isEmptyOrSpaces(right.getAfter())) {
+      if (left.getAfter().endsWith(right.getAfter()) || right.getAfter().endsWith(left.getAfter())) {
         return ThreeState.YES;
       }
       // otherwise they are different
@@ -88,7 +87,7 @@ public class JsonSchemaPatternComparator {
   }
 
   @NotNull
-  private static ThreeState checkOneSideWithoutWildcard(JsonSchemaMappingsConfigurationBase.Item item, BeforeAfter<String> beforeAfter) {
+  private static ThreeState checkOneSideWithoutWildcard(UserDefinedJsonSchemaConfiguration.Item item, BeforeAfter<String> beforeAfter) {
     if (!StringUtil.isEmptyOrSpaces(beforeAfter.getBefore()) && item.getPath().startsWith(beforeAfter.getBefore())) {
       return ThreeState.YES;
     }

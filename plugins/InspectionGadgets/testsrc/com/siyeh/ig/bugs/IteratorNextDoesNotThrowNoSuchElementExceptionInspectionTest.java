@@ -17,7 +17,6 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -56,6 +55,24 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
            "    public void remove() {" +
            "    }" +
            "}");
+  }
+
+  public void testCompiledMethodCall() {
+    doTest("import java.util.*;\n" +
+           "\n" +
+           "class MyIterator implements Iterator<String> {\n" +
+           "  @Override\n" +
+           "  public boolean hasNext() {\n" +
+           "    return true;\n" +
+           "  }\n" +
+           "\n" +
+           "  @Override\n" +
+           "  public String /*'Iterator.next()' which can't throw 'NoSuchElementException'*/next/**/() {\n" +
+           "    return \"xyz\".trim();\n" + // cannot analyze compiled library method
+           "  }\n" +
+           "  \n" +
+           "  public void remove() {}\n" +
+           "}\n");
   }
 
   @Nullable

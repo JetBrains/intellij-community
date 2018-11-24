@@ -255,8 +255,8 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   protected byte[] readBytes(int record) throws IOException {
     synchronized (myLock) {
       final int length = myRecordsTable.getSize(record);
-      if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
-      assert length > 0;
+      if (length == 0 || AbstractRecordsTable.isSizeOfRemovedRecord(length)) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      assert length > 0:length;
 
       final long address = myRecordsTable.getAddress(record);
       byte[] result = new byte[length];

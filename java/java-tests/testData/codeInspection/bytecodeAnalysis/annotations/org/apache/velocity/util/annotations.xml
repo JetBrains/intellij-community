@@ -7,6 +7,16 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.util.ArrayIterator void remove()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.util.ArrayListWrapper ArrayListWrapper(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.ClassUtils ClassUtils()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -24,6 +34,11 @@
     <item name='org.apache.velocity.util.ClassUtils org.apache.velocity.util.introspection.VelMethod getMethod(java.lang.String, java.lang.Object[], java.lang.Class[], java.lang.Object, org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.SimpleNode, boolean) 4'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.util.EnumerationIterator EnumerationIterator(java.util.Enumeration)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.EnumerationIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -40,6 +55,11 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.util.MapFactory MapFactory()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.util.SimplePool SimplePool(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -151,7 +171,7 @@
     </item>
     <item name='org.apache.velocity.util.StringUtils java.lang.String sub(java.lang.String, java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;!null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.util.StringUtils java.lang.String sub(java.lang.String, java.lang.String, java.lang.String) 0'>

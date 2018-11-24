@@ -427,5 +427,12 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
     }
   }
+
+  @NotNull
+  protected PsiElement getElementAtCaret() {
+    final PsiFile file = myFixture.getFile();
+    assertNotNull(file);
+    return file.findElementAt(myFixture.getCaretOffset());
+  }
 }
 

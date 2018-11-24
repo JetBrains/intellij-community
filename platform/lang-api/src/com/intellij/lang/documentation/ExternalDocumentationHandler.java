@@ -20,9 +20,6 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: spLeaner
- */
 public interface ExternalDocumentationHandler {
   boolean handleExternal(PsiElement element, PsiElement originalElement);
   boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context);

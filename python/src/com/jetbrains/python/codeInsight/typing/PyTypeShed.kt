@@ -62,9 +62,10 @@ object PyTypeShed {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return true
       }
-      val pyPIPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: topLevelPackage
+      val pyPIPackages = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: emptyList()
       val packages = PyPackageManagers.getInstance().forSdk(sdk).packages ?: return true
-      return PyPackageUtil.findPackage(packages, pyPIPackage) != null
+      return PyPackageUtil.findPackage(packages, topLevelPackage) != null ||
+             pyPIPackages.any { PyPackageUtil.findPackage(packages, it) != null }
     }
     return false
   }

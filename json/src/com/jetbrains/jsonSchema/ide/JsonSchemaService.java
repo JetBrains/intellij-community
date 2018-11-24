@@ -1,44 +1,56 @@
 package com.jetbrains.jsonSchema.ide;
 
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 
 public interface JsonSchemaService {
-
   class Impl {
     public static JsonSchemaService get(@NotNull Project project) {
       return ServiceManager.getService(project, JsonSchemaService.class);
     }
-    public static JsonSchemaServiceEx getEx(@NotNull Project project) {
-      return (JsonSchemaServiceEx) get(project);
-    }
   }
 
-  @Nullable
-  Annotator getAnnotator(@Nullable VirtualFile file);
+  static boolean isSchemaFile(@NotNull PsiFile psiFile) {
+    final VirtualFile file = psiFile.getViewProvider().getVirtualFile();
+    return Impl.get(psiFile.getProject()).isSchemaFile(file);
+  }
+
+  boolean isSchemaFile(@NotNull VirtualFile file);
+
+  @NotNull
+  Collection<VirtualFile> getSchemaFilesForFile(@NotNull VirtualFile file);
 
   @Nullable
-  CompletionContributor getCompletionContributor(@Nullable VirtualFile file);
-
-  boolean isSchemaFile(@NotNull VirtualFile file, @NotNull Consumer<String> errorConsumer);
+  JsonSchemaObject getSchemaObject(@NotNull VirtualFile file);
 
   @Nullable
-  DocumentationProvider getDocumentationProvider(@Nullable VirtualFile file);
+  JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile);
 
   @Nullable
-  List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file);
+  VirtualFile findSchemaFileByReference(@NotNull String reference, VirtualFile referent);
+
+  @Nullable
+  JsonSchemaFileProvider getSchemaProvider(@NotNull final VirtualFile schemaFile);
 
   void reset();
+
+  ModificationTracker getAnySchemaChangeTracker();
+
+  @NotNull
+  static String normalizeId(@NotNull String id) {
+    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+    return id.startsWith("#") ? id.substring(1) : id;
+  }
 }

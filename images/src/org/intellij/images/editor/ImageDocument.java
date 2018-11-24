@@ -18,19 +18,33 @@ package org.intellij.images.editor;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.function.Function;
 
 /**
  * Image document to show or edit in {@link ImageEditor}.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
+ * @author tav
  */
 public interface ImageDocument {
+    /**
+     * A scaled image provider.
+     */
+    interface ScaledImageProvider extends Function<Double/* scale */, BufferedImage> {}
+
     /**
      * Return image for rendering
      *
      * @return Image renderer
      */
     Image getRenderer();
+
+    /**
+     * Returns an image in the provided scale for rendering
+     *
+     * @return Image renderer
+     */
+    Image getRenderer(double scale);
 
     /**
      * Return current image.
@@ -40,11 +54,23 @@ public interface ImageDocument {
     BufferedImage getValue();
 
     /**
+     * Returns an image represented in the provided scale.
+     */
+    BufferedImage getValue(double scale);
+
+    /**
      * Set image value
      *
      * @param image Value
      */
     void setValue(BufferedImage image);
+
+    /**
+     * Sets the scaled image provider.
+     *
+     * @param imageProvider the image provider
+     */
+    void setValue(ScaledImageProvider imageProvider);
 
     /**
      * Return image format.

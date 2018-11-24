@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Oct-2008
- */
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;

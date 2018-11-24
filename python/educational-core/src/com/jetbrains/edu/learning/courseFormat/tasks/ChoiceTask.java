@@ -4,13 +4,16 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.checker.StudyCheckResult;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +64,10 @@ public class ChoiceTask extends Task {
   public StudyTaskChecker getChecker(@NotNull Project project) {
     return new StudyTaskChecker<ChoiceTask>(this, project) {
       @Override
-      public StudyCheckResult checkOnRemote(@NotNull StepicUser user) {
+      public StudyCheckResult checkOnRemote(@Nullable StepicUser user) {
+        if (user == null) {
+          return new StudyCheckResult(StudyStatus.Unchecked, StudyCheckAction.FAILED_CHECK_LAUNCH);
+        }
         return EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask, user);
       }
 

@@ -16,11 +16,12 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-interface ApplyPatchRequest {
+interface ApplyPatchRequest extends UserDataHolder{
   @NotNull
   DocumentContent getResultContent();
 

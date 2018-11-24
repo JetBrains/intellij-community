@@ -25,7 +25,10 @@ import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.vcs.log.graph.impl.permanent.DuplicateParentFixer.fixDuplicateParentCommits;
 
@@ -152,12 +155,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   private void fixUnderdoneEdges(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
     List<CommitId> commitIds = ContainerUtil.newArrayList(upAdjacentNodes.keySet());
-    ContainerUtil.sort(commitIds, new Comparator<CommitId>() {
-      @Override
-      public int compare(@NotNull CommitId o1, @NotNull CommitId o2) {
-        return Collections.min(upAdjacentNodes.get(o1)) - Collections.min(upAdjacentNodes.get(o2));
-      }
-    });
+    ContainerUtil.sort(commitIds, (o1, o2) -> Collections.min(upAdjacentNodes.get(o1)) - Collections.min(upAdjacentNodes.get(o2)));
     for (CommitId notLoadCommit : commitIds) {
       int notLoadId = notLoadedCommitToId.fun(notLoadCommit);
       for (int upNodeIndex : upAdjacentNodes.get(notLoadCommit)) {
@@ -180,12 +178,6 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   @NotNull
   public PermanentLinearGraphImpl build() {
-    return build(new NotNullFunction<CommitId, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(CommitId dom) {
-        return Integer.MIN_VALUE;
-      }
-    });
+    return build(dom -> Integer.MIN_VALUE);
   }
 }

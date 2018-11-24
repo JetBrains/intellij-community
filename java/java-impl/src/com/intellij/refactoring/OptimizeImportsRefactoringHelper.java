@@ -51,12 +51,8 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
 
   @Override
   public void performOperation(final Project project, final Set<PsiJavaFile> javaFiles) {
-    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }
-    });
+    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
+      (Runnable)() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
     final List<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new ArrayList<>();
     final Runnable findRedundantImports = () -> ReadAction.run(() -> {

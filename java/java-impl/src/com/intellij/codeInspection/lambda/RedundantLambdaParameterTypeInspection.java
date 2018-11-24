@@ -29,9 +29,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaParameterTypeInspection.class);
 

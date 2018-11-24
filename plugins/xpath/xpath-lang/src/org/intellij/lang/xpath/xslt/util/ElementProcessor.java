@@ -34,7 +34,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
 
     protected final T myRoot;
 
-  private final Set<PsiElement> myHistory = ContainerUtil.<PsiElement>newIdentityTroveSet();
+  private final Set<PsiElement> myHistory = ContainerUtil.newIdentityTroveSet();
 
     public ElementProcessor(T root) {
         myRoot = root;

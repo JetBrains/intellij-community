@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.DefaultRepositoryLocation;
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import org.jetbrains.annotations.NotNull;
@@ -155,7 +154,7 @@ public class CommittedListsSequencesZipperTest {
 
   @NotNull
   private static CommittedChangeList create(long number, @NotNull String comment) {
-    return new CommittedChangeListImpl("", comment, "", number, null, Collections.<Change>emptyList()) {
+    return new CommittedChangeListImpl("", comment, "", number, null, Collections.emptyList()) {
       @Override
       public String toString() {
         return getNumber() + " " + getComment();

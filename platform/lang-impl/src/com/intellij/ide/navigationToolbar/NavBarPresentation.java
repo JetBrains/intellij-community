@@ -18,7 +18,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -31,8 +31,6 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,12 +42,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -71,12 +67,8 @@ public class NavBarPresentation {
     if (object instanceof Module) return ModuleType.get(((Module)object)).getIcon();
     try {
       if (object instanceof PsiElement) {
-        Icon icon = ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
-          @Override
-          public Icon compute() {
-            return ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(0) : null;
-          }
-        });
+        Icon icon = ReadAction
+          .compute(() -> ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(0) : null);
 
         if (icon != null && (icon.getIconHeight() > 16 * 2 || icon.getIconWidth() > 16 * 2)) {
           icon = IconUtil.cropIcon(icon, 16 * 2, 16 * 2);
@@ -114,12 +106,7 @@ public class NavBarPresentation {
   protected SimpleTextAttributes getTextAttributes(final Object object, final boolean selected) {
     if (!NavBarModel.isValid(object)) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
     if (object instanceof PsiElement) {
-      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return ((PsiElement)object).isValid();
-        }
-      }).booleanValue()) return SimpleTextAttributes.GRAYED_ATTRIBUTES;
+      if (!ReadAction.compute(() -> ((PsiElement)object).isValid()).booleanValue()) return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       PsiFile psiFile = ((PsiElement)object).getContainingFile();
       if (psiFile != null) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -149,14 +136,7 @@ public class NavBarPresentation {
     }
     else if (object instanceof Project) {
       final Project project = (Project)object;
-      final Module[] modules = ApplicationManager.getApplication().runReadAction(
-          new Computable<Module[]>() {
-            @Override
-            public Module[] compute() {
-              return  ModuleManager.getInstance(project).getModules();
-            }
-          }
-      );
+      final Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
       for (Module module : modules) {
         if (WolfTheProblemSolver.getInstance(project).hasProblemFilesBeneath(module)) {
           return WOLFED;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.fstrings.PyFStringAwareRecursiveVisitor;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionFromMethodQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakeMethodStaticQuickFix;
 import com.jetbrains.python.psi.*;
@@ -78,10 +79,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (!attributes.isEmpty()) return;
       if (isTestElement(node)) return;
 
-      final PyStatementList statementList = node.getStatementList();
-      final PyStatement[] statements = statementList.getStatements();
-
-      if (statements.length == 1 && statements[0] instanceof PyPassStatement) return;
+      if (PyUtil.isEmptyFunction(node)) return;
 
       final PyParameter[] parameters = node.getParameterList().getParameters();
 
@@ -95,7 +93,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       }
 
       final boolean[] mayBeStatic = {true};
-      PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
+      PyRecursiveElementVisitor visitor = new PyFStringAwareRecursiveVisitor() {
         @Override
         public void visitPyRaiseStatement(PyRaiseStatement node) {
           super.visitPyRaiseStatement(node);
@@ -115,8 +113,10 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
 
         @Override
         public void visitPyReferenceExpression(PyReferenceExpression node) {
-          super.visitPyReferenceExpression(node);
-          if (selfName.equals(node.getName())) {
+          if (node.isQualified()) {
+            super.visitPyReferenceExpression(node);
+          }
+          else if (selfName.equals(node.getName())) {
             mayBeStatic[0] = false;
           }
         }

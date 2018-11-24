@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData.SourceRoot;
@@ -146,7 +147,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       AbstractExternalSystemSettings externalSystemSettings =
         ExternalSystemApiUtil.getSettings(module.getProject(), projectSystemId);
 
-      String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+      String path = ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath();
       if (path != null) {
         ExternalProjectSettings projectSettings = externalSystemSettings.getLinkedProjectSettings(path);
         createEmptyContentRootDirectories = projectSettings != null && projectSettings.isCreateEmptyContentRootDirectories();

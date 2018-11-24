@@ -63,7 +63,8 @@ public class DeleteAction extends PatchAction {
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     Runner.logger().info("Delete action. File: " + toFile.getAbsolutePath());
     //NOTE: a folder can be deleted only in case if it does not contain any user's files/folders.
-    if (!toFile.isDirectory() || Utils.isEmptyDirectory(toFile)) {
+    String[] children;
+    if (!toFile.isDirectory() || (children = toFile.list()) != null && children.length == 0) {
       Runner.logger().info("Delete: " + toFile.getAbsolutePath());
       Utils.delete(toFile);
     }

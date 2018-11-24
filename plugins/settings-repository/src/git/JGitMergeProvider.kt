@@ -46,7 +46,7 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
   override fun conflictResolvedForFile(file: VirtualFile) {
     // we can postpone dir cache update (on merge dialog close) to reduce number of flush, but it can leads to data loss (if app crashed during merge - nothing will be saved)
     // update dir cache
-    val bytes = (file as RepositoryVirtualFile).content
+    val bytes = (file as RepositoryVirtualFile).byteContent
     // not null if user accepts some revision (virtual file will be directly modified), otherwise document will be modified
     if (bytes == null) {
       val chars = FileDocumentManager.getInstance().getCachedDocument(file)!!.immutableCharSequence

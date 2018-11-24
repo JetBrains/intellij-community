@@ -34,10 +34,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 import static com.intellij.patterns.StandardPatterns.string;
 
-/**
- * User: anna
- * Date: 1/14/13
- */
 public class FxmlReferencesContributor extends PsiReferenceContributor {
   public static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 

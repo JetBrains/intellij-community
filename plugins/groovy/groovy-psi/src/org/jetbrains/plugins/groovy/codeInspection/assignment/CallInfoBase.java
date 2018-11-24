@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
   private final T myCall;
   private final NullableLazyValue<PsiType[]> myArgTypes = new NullableLazyValue<PsiType[]>() {

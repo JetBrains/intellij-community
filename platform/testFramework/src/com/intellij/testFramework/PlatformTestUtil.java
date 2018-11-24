@@ -22,6 +22,8 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
@@ -64,6 +66,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -542,7 +545,7 @@ public class PlatformTestUtil {
     private int usedReferenceCpuCores = 1;
     private int attempts = 4;             // number of retries if performance failed
     private final String message;         // to print on fail
-    private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
+    private boolean adjustForIO = false;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
     private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
     private boolean useLegacyScaling;
 
@@ -555,11 +558,28 @@ public class PlatformTestUtil {
 
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
+
+    /**
+     * Invoke this method if and only if the code under performance tests is using all CPU cores.
+     * The "standard" expected time then should be given for a machine which has 8 CPU cores.
+     * Actual test expected time will be adjusted according to the number of cores the actual computer has.
+     */
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
+
+    /**
+     * Invoke this method if and only if the code under performance tests is using {@code maxCores} CPU cores (or less if the computer has less).
+     * The "standard" expected time then should be given for a machine which has {@code maxCores} CPU cores.
+     * Actual test expected time will be adjusted according to the number of cores the actual computer has.
+     */
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usedReferenceCpuCores = maxCores; return this; }
+
+    /**
+     * @deprecated tests are CPU-bound by default, so no need to call this method. 
+     */
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+    @Deprecated
     public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
@@ -858,12 +878,22 @@ public class PlatformTestUtil {
     assertDirectoriesEqual(dirAfter, dirBefore);
   }
 
+  /**
+   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static void assertElementsEqual(final Element expected, final Element actual) {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
       Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
+  /**
+   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static void assertElementEquals(final String expected, final Element actual) {
     try {
       assertElementsEqual(JdomKt.loadElement(expected), actual);
@@ -982,5 +1012,62 @@ public class PlatformTestUtil {
       each.run();
     }
     ourProjectCleanups.clear();
+  }
+
+  public static <T> void assertComparisonContractNotViolated(@NotNull List<T> values,
+                                                             @NotNull Comparator<T> comparator,
+                                                             @NotNull Equality<T> equality) {
+    for (int i1 = 0; i1 < values.size(); i1++) {
+      for (int i2 = i1; i2 < values.size(); i2++) {
+        T value1 = values.get(i1);
+        T value2 = values.get(i2);
+
+        int result12 = comparator.compare(value1, value2);
+        int result21 = comparator.compare(value2, value1);
+        if (equality.equals(value1, value2)) {
+          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
+          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
+        }
+        else {
+          if (result12 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));
+          if (result21 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value2, value1));
+          if (Integer.signum(result12) == Integer.signum(result21)) {
+            Assert.fail(String.format("Not symmetrical: '%s' - '%s'", value1, value2));
+          }
+        }
+
+        for (int i3 = i2; i3 < values.size(); i3++) {
+          T value3 = values.get(i3);
+
+          int result23 = comparator.compare(value2, value3);
+          int result31 = comparator.compare(value3, value1);
+
+          if (!isTransitive(result12, result23, result31)) {
+            Assert.fail(String.format("Not transitive: '%s' - '%s' - '%s'", value1, value2, value3));
+          }
+        }
+      }
+    }
+  }
+
+  private static boolean isTransitive(int result12, int result23, int result31) {
+    if (result12 == 0 && result23 == 0 && result31 == 0) return true;
+
+    if (result12 > 0 && result23 > 0 && result31 > 0) return false;
+    if (result12 < 0 && result23 < 0 && result31 < 0) return false;
+
+    if (result12 == 0 && Integer.signum(result23) * Integer.signum(result31) >= 0) return false;
+    if (result23 == 0 && Integer.signum(result12) * Integer.signum(result31) >= 0) return false;
+    if (result31 == 0 && Integer.signum(result23) * Integer.signum(result12) >= 0) return false;
+
+    return true;
+  }
+
+  public static void setLongMeaninglessFileIncludeTemplateTemporarilyFor(@NotNull Project project, @NotNull Disposable parentDisposable) {
+    FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(project);
+    templateManager.setDefaultFileIncludeTemplateTextTemporarilyForTest(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
+    "/**\n" +
+    " * Created by ${USER} on ${DATE}.\n" +
+    " */\n", parentDisposable);
   }
 }

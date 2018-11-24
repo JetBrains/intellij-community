@@ -62,8 +62,22 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
 
 /**
  * Resolves qname of any symbol to appropriate PSI element.
+ * Shortcut for [getElementAndResolvableName]
+ * @see [getElementAndResolvableName]
  */
 fun QualifiedName.resolveToElement(context: QNameResolveContext): PsiElement? {
+  return getElementAndResolvableName(context)?.element
+}
+
+
+data class NameAndElement(val name:QualifiedName, val element:PsiElement)
+
+/**
+ * Resolves qname of any symbol to PSI element popping tail until element becomes resolved.
+ * @return element and longest name that was resolved successfully.
+ * @see [resolveToElement]
+ */
+fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext): NameAndElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 
 
@@ -106,7 +120,7 @@ fun QualifiedName.resolveToElement(context: QNameResolveContext): PsiElement? {
     //TODO: Support nested classes
     val method = element.findMethodByName(lastElement, true, context.evalContext)
     if (method != null) {
-      return method
+      return NameAndElement(currentName.append(lastElement), method)
     }
 
   }
@@ -122,7 +136,7 @@ fun QualifiedName.resolveToElement(context: QNameResolveContext): PsiElement? {
     } else {
       pyFile.virtualFile.parent
     }
-    return resolveToElement(context.copy(folderToStart = folder))
+    return getElementAndResolvableName(context.copy(folderToStart = folder))
   }
-  return element
+  return if (element != null) NameAndElement(currentName, element) else null
 }

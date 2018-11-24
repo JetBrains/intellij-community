@@ -26,7 +26,7 @@ import java.util.*;
 
 public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
   private final PackageReferenceSet myReferenceSet;
-  private final int myIndex;
+  protected final int myIndex;
 
   public PsiPackageReference(PackageReferenceSet set, TextRange range, int index) {
     super(set.getElement(), range, set.isSoft());
@@ -35,7 +35,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   }
 
   @NotNull
-  private Set<PsiPackage> getContext() {
+  protected Set<PsiPackage> getContext() {
     if (myIndex == 0) return myReferenceSet.getInitialContext();
     Set<PsiPackage> psiPackages = new HashSet<>();
     for (ResolveResult resolveResult : myReferenceSet.getReference(myIndex - 1).doMultiResolve()) {

@@ -43,6 +43,8 @@ class LocalCompiler {
 
   private val LOG by lazy { Logger.getInstance("#${LocalCompiler::class.qualifiedName}") }
 
+  var codeHash: Int? = null
+
   val TEST_CLASS_NAME = "CurrentTest"
 
   val helloKtText = "fun main(args: Array<String>) { \n println(\"Hello, World!\") \n }"
@@ -63,20 +65,26 @@ class LocalCompiler {
   }
 
   fun compileAndRunOnPooledThread(code: String, classpath: List<String>) {
-    ApplicationManager.getApplication().executeOnPooledThread({
-                                                                try {
-                                                                  compile(code, classpath)
-                                                                  run2()
-                                                                }
-                                                                catch (ce: CompilationException) {
-                                                                  LOG.error(ce.message)
-                                                                }
-                                                              })
+    val taskFuture = ApplicationManager.getApplication().executeOnPooledThread({
+                                                                                 try {
+                                                                                   if (codeHash == null || codeHash != code.hashCode()) {
+                                                                                     compile(code, classpath)
+                                                                                     codeHash = code.hashCode()
+                                                                                   }
+                                                                                   run2()
+                                                                                 }
+                                                                                 catch (ce: CompilationException) {
+                                                                                   LOG.error(ce.message)
+                                                                                 }
+                                                                               })
+    GuiRecorderComponent.setCurrentTask(taskFuture)
+
   }
 
 
   //alternative way to run compiled code with pluginClassloader built especially for this file
   private fun run2() {
+    Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Script running...")
     val testUrl = tempDir.toURI().toURL()
     var classLoadersArray: Array<ClassLoader>
     try {
@@ -93,7 +101,6 @@ class LocalCompiler {
     val testCase = currentTest.newInstance()
     val setUpMethod = currentTest.getMethod("setUp")
     val testMethod = currentTest.getMethod(ScriptGenerator.ScriptWrapper.TEST_METHOD_NAME)
-    Notifier.updateStatus("<long>Script running...")
     GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING)
     try {
       setUpMethod.invoke(testCase)
@@ -127,7 +134,7 @@ class LocalCompiler {
     val testCase = currentTest.newInstance()
     val setUpMethod = currentTest.getMethod("setUp")
     val testMethod = currentTest.getMethod(ScriptGenerator.ScriptWrapper.TEST_METHOD_NAME)
-    Notifier.updateStatus("<long>Script running...")
+    Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Script running...")
     GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING)
     try {
       setUpMethod.invoke(testCase)
@@ -159,7 +166,7 @@ class LocalCompiler {
     val kotlinCompilerJar = getKotlinCompilerJar()
     val libDirLocation = getApplicationLibDir().parentFile
 
-    Notifier.updateStatus("<long>Compiling...")
+    Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Compiling...")
     GuiRecorderComponent.setState(GuiRecorderComponent.States.COMPILING)
 
 
@@ -204,10 +211,10 @@ class LocalCompiler {
   private fun getPluginKotlincDir(): File {
 
 //    if (ApplicationManager.getApplication().isUnitTestMode || (this.javaClass.classLoader.javaClass.name == "sun.misc.Launcher\$AppClassLoader")) {
-      val tempPath = PathManager.getTempPath()
-      val tempDirFile = File(tempPath)
-      FileUtil.ensureExists(tempDirFile)
-      return tempDirFile
+    val tempPath = PathManager.getTempPath()
+    val tempDirFile = File(tempPath)
+    FileUtil.ensureExists(tempDirFile)
+    return tempDirFile
 //    }
 //
 //    val pluginId = (this.javaClass.classLoader as PluginClassLoader).pluginId
@@ -226,7 +233,7 @@ class LocalCompiler {
 
   fun downloadKotlinCompilerJar(destDirPath: String?): File {
 
-    Notifier.updateStatus("<long>Downloading kotlin-compiler.jar...")
+    Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Downloading kotlin-compiler.jar...")
     val downloader = DownloadableFileService.getInstance()
     val description = downloader.createFileDescription(kotlinCompilerJarUrl, kotlinCompilerJarName)
     ApplicationManager.getApplication().invokeAndWait({

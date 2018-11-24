@@ -148,7 +148,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
           }
         }
       }
-      float scaleFactor = settings.getPresentationModeFontSize() / UIUtil.DEF_SYSTEM_FONT_SIZE;
+      float scaleFactor = JBUI.getFontScale(settings.getPresentationModeFontSize());
       ourSavedScaleFactor = JBUI.scale(1f);
       JBUI.setUserScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {

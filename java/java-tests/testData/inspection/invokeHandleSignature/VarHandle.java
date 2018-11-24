@@ -30,7 +30,16 @@ class Main {
 
     l.<warning descr="Field 'myString' is not static">findStaticVarHandle</warning>(Test.class, "myString", String.class);
     l.<warning descr="Field 'ourString' is static">findVarHandle</warning>(Test.class, "ourString", String.class);
+
+    MethodHandles.arrayElementVarHandle(Test[].class);
+    MethodHandles.arrayElementVarHandle(int[].class);
+    MethodHandles.arrayElementVarHandle(cloneable().getClass());
+
+    MethodHandles.arrayElementVarHandle(<warning descr="Argument is not an array type">Test.class</warning>);
+    MethodHandles.arrayElementVarHandle(<warning descr="Argument is not an array type">int.class</warning>);
   }
+
+  static Cloneable cloneable() {return null;}
 }
 
 class Test {

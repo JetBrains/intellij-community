@@ -1,1 +1,0 @@
-print("{<warning descr="Unresolved reference 'foo'">foo</warning>}".format(**{}))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 06-Jun-2007
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -81,18 +77,15 @@ public class ConfigurationsTest {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myProjectFixture.tearDown();
-          myProjectFixture = null;
-          myFixture.tearDown();
-          myFixture = null;
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myProjectFixture.tearDown();
+        myProjectFixture = null;
+        myFixture.tearDown();
+        myFixture = null;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -225,7 +218,7 @@ public class ConfigurationsTest {
   }
 
   private static TestNGConfiguration createConfiguration(final Project project) {
-    final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+    final RunManager manager = RunManager.getInstance(project);
     final RunnerAndConfigurationSettings settings =
       manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
     manager.addConfiguration(settings, false);

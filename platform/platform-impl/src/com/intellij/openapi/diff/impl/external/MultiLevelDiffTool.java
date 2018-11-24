@@ -40,12 +40,6 @@ import java.util.TreeMap;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/13/12
- * Time: 3:17 PM
- */
 public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   public final static String ourDefaultTab = "Contents";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.MultiLevelDiffTool");

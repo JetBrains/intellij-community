@@ -29,6 +29,9 @@ import java.awt.*;
 class PanelContentUI implements ContentUI {
   private JPanel myPanel;
 
+  PanelContentUI() {
+  }
+
   @Override
   public JComponent getComponent() {
     initUI();

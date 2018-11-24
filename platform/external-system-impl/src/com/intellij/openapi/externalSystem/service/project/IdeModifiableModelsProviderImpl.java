@@ -17,7 +17,7 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.Computable;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jetbrains.annotations.NotNull;
@@ -49,33 +48,18 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   @Override
   protected ModifiableArtifactModel doGetModifiableArtifactModel() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ModifiableArtifactModel>() {
-      @Override
-      public ModifiableArtifactModel compute() {
-        return ArtifactManager.getInstance(myProject).createModifiableModel();
-      }
-    });
+    return ReadAction.compute(() -> ArtifactManager.getInstance(myProject).createModifiableModel());
   }
 
   @Override
   protected ModifiableModuleModel doGetModifiableModuleModel() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ModifiableModuleModel>() {
-      @Override
-      public ModifiableModuleModel compute() {
-        return ModuleManager.getInstance(myProject).getModifiableModel();
-      }
-    });
+    return ReadAction.compute(() -> ModuleManager.getInstance(myProject).getModifiableModel());
   }
 
   @Override
   @NotNull
   protected ModifiableRootModel doGetModifiableRootModel(@NotNull final Module module) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>() {
-      @Override
-      public ModifiableRootModel compute() {
-        return ModuleRootManager.getInstance(module).getModifiableModel();
-      }
-    });
+    return ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
   }
 
   @Override

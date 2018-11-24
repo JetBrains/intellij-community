@@ -52,7 +52,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   protected final ForwardIndex<Key, Value> myForwardIndex;
 
-  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock myLock = createLock();
   private volatile boolean myDisposed;
 
   private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
@@ -91,12 +91,20 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return myStorage;
   }
 
+  @NotNull
+  protected ReentrantReadWriteLock createLock() {
+    return new ReentrantReadWriteLock();
+  }
+
+  public final ReentrantReadWriteLock getLock() {
+    return myLock;
+  }
+
   @Override
   public void clear() throws StorageException {
     try {
       getWriteLock().lock();
-      myStorage.clear();
-      if (myForwardIndex != null) myForwardIndex.clear();
+      doClear();
     }
     catch (StorageException e) {
       LOG.error(e);
@@ -109,12 +117,16 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
+  protected void doClear() throws StorageException, IOException {
+    myStorage.clear();
+    if (myForwardIndex != null) myForwardIndex.clear();
+  }
+
   @Override
   public void flush() throws StorageException{
     try {
       getReadLock().lock();
-      if (myForwardIndex != null) myForwardIndex.flush();
-      myStorage.flush();
+      doFlush();
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -133,23 +145,18 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
+  protected void doFlush() throws IOException, StorageException {
+    if (myForwardIndex != null) myForwardIndex.flush();
+    myStorage.flush();
+  }
+
   @Override
   public void dispose() {
     myLowMemoryFlusher.stop();
     final Lock lock = getWriteLock();
     try {
       lock.lock();
-      try {
-        myStorage.close();
-      }
-      finally {
-        try {
-          if (myForwardIndex != null) myForwardIndex.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
+      doDispose();
     }
     catch (StorageException e) {
       LOG.error(e);
@@ -157,6 +164,20 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     finally {
       myDisposed = true;
       lock.unlock();
+    }
+  }
+
+  protected void doDispose() throws StorageException {
+    try {
+      myStorage.close();
+    }
+    finally {
+      try {
+        if (myForwardIndex != null) myForwardIndex.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 

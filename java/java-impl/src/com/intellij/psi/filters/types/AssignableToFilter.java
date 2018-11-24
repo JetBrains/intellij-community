@@ -23,13 +23,6 @@ import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 20:53:38
- * To change this template use Options | File Templates.
- */
 public class AssignableToFilter implements ElementFilter {
   private final PsiType myType;
 

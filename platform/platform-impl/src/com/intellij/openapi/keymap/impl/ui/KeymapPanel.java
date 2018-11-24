@@ -62,10 +62,12 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAllToolbarsImmediately;
+
 public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
   private JCheckBox preferKeyPositionOverCharOption;
 
-  private final KeymapSelector myKeymapSelector = new KeymapSelector(this::currentKeymapChanged);
+  private final KeymapSchemeManager myManager = new KeymapSelector(this::currentKeymapChanged).getManager();
   private final ActionsTree myActionsTree = new ActionsTree();
   private FilterComponent myFilterComponent;
   private TreeExpansionMonitor myTreeExpansionMonitor;
@@ -77,7 +79,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   public KeymapPanel() {
     setLayout(new BorderLayout());
     JPanel keymapPanel = new JPanel(new BorderLayout());
-    keymapPanel.add(myKeymapSelector, BorderLayout.NORTH);
+    keymapPanel.add(myManager.getSchemesPanel(), BorderLayout.NORTH);
     keymapPanel.add(createKeymapSettingsPanel(), BorderLayout.CENTER);
 
     IdeFrame ideFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
@@ -85,15 +87,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       preferKeyPositionOverCharOption = new JCheckBox(new AbstractAction(" " + KeyMapBundle.message("prefer.key.position")) {
         @Override
         public void actionPerformed(ActionEvent e) {
+          KeyboardSettingsExternalizable.getInstance().setPreferKeyPositionOverCharOption(preferKeyPositionOverCharOption.isSelected());
           VMOptions.writeOption("com.jetbrains.use.old.keyevent.processing", "=",
-                                Boolean.toString(preferKeyPositionOverCharOption.isSelected()));
+                                Boolean.toString(KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption()));
           ApplicationManager.getApplication().invokeLater(
             () -> ApplicationManager.getApplication().restart(),
             ModalityState.NON_MODAL
           );
         }
       });
-      //preferKeyPositionOverCharOption.setSelected();
       preferKeyPositionOverCharOption.setBorder(new EmptyBorder(0, 0, 0, 0));
       keymapPanel.add(preferKeyPositionOverCharOption, BorderLayout.SOUTH);
     }
@@ -127,7 +129,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public void quickListRenamed(final QuickList oldQuickList, final QuickList newQuickList) {
-    myKeymapSelector.visitMutableKeymaps(keymap -> {
+    myManager.visitMutableKeymaps(keymap -> {
       String actionId = oldQuickList.getActionId();
       Shortcut[] shortcuts = keymap.getShortcuts(actionId);
       if (shortcuts.length != 0) {
@@ -158,7 +160,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private void currentKeymapChanged() {
-    currentKeymapChanged(myKeymapSelector.getSelectedKeymap());
+    currentKeymapChanged(myManager.getSelectedKeymap());
   }
 
   private void currentKeymapChanged(Keymap selectedKeymap) {
@@ -206,7 +208,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private JPanel createToolbarPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     DefaultActionGroup group = new DefaultActionGroup();
-    final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    final JComponent toolbar = ActionManager.getInstance().createActionToolbar("KeymapEdit", group, true).getComponent();
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
     final TreeExpander treeExpander = new TreeExpander() {
       @Override
@@ -251,7 +253,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     panel.add(toolbar, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0), 0, 0));
     group = new DefaultActionGroup();
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Keymap", group, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
@@ -422,7 +424,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private static Keymap createKeymapCopyIfNeededAndPossible(Component parent, Keymap keymap) {
     if (parent instanceof KeymapPanel) {
       KeymapPanel panel = (KeymapPanel)parent;
-      return panel.myKeymapSelector.getMutableKeymap(keymap);
+      return panel.myManager.getMutableKeymap(keymap);
     }
     return keymap;
   }
@@ -436,20 +438,21 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   @Override
   public void reset() {
     if (preferKeyPositionOverCharOption != null) {
-      preferKeyPositionOverCharOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
+      preferKeyPositionOverCharOption.setSelected(KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption());
     }
-    myKeymapSelector.reset();
+    myManager.reset();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    String error = myKeymapSelector.apply();
+    String error = myManager.apply();
     if (error != null) throw new ConfigurationException(error);
+    updateAllToolbarsImmediately();
   }
 
   @Override
   public boolean isModified() {
-    return myKeymapSelector.isModified();
+    return myManager.isModified();
   }
 
   public void selectAction(String actionId) {
@@ -488,7 +491,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Nullable
   public Shortcut[] getCurrentShortcuts(@NotNull String actionId) {
-    Keymap keymap = myKeymapSelector.getSelectedKeymap();
+    Keymap keymap = myManager.getSelectedKeymap();
     return keymap == null ? null : keymap.getShortcuts(actionId);
   }
 
@@ -496,7 +499,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) return;
 
-    Keymap selectedKeymap = myKeymapSelector.getSelectedKeymap();
+    Keymap selectedKeymap = myManager.getSelectedKeymap();
     if (selectedKeymap == null) return;
 
     DefaultActionGroup group = createEditActionGroup(actionId, selectedKeymap);
@@ -566,7 +569,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new DumbAwareAction("Remove " + KeymapUtil.getShortcutText(shortcut)) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Keymap keymap = myKeymapSelector.getMutableKeymap(selectedKeymap);
+          Keymap keymap = myManager.getMutableKeymap(selectedKeymap);
           keymap.removeShortcut(actionId, shortcut);
           if (StringUtil.startsWithChar(actionId, '$')) {
             keymap.removeShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), shortcut);
@@ -587,12 +590,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         });
       }
     }
-    if (myKeymapSelector.canResetActionInKeymap(selectedKeymap, actionId)) {
+    if (myManager.canResetActionInKeymap(selectedKeymap, actionId)) {
       group.add(new Separator());
       group.add(new DumbAwareAction("Reset Shortcuts") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent event) {
-          myKeymapSelector.resetActionInKeymap(selectedKeymap, actionId);
+          myManager.resetActionInKeymap(selectedKeymap, actionId);
           repaintLists();
         }
       });

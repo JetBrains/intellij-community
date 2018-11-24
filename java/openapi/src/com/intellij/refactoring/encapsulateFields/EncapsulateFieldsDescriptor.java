@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 23-Oct-2009
- */
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.psi.PsiClass;

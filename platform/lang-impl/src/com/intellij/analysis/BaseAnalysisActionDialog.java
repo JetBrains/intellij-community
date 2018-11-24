@@ -52,10 +52,6 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Jul 6, 2005
- */
 public class BaseAnalysisActionDialog extends DialogWrapper {
   private JPanel myPanel;
   private final String myFileName;

@@ -16,11 +16,11 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: Jan 30, 2005
- */
+import java.util.Collection;
+import java.util.Collections;
+
 public abstract class ProductivityFeaturesProvider {
   public static final ExtensionPointName<ProductivityFeaturesProvider> EP_NAME = ExtensionPointName.create("com.intellij.productivityFeaturesProvider");
   
@@ -29,4 +29,12 @@ public abstract class ProductivityFeaturesProvider {
   public abstract GroupDescriptor[] getGroupDescriptors();
 
   public abstract ApplicabilityFilter[] getApplicabilityFilters();
+
+  /**
+   * @return list of xml file urls with features configurations
+   */
+  @NotNull
+  public Collection<String> getXmlFilesUrls() {
+    return Collections.emptyList();
+  }
 }

@@ -21,7 +21,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -85,7 +84,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       return;
     }
 
-    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.<Change>emptyList(), true, null).show();
+    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.emptyList(), true, null).show();
   }
 
   private static void showNoChangesDialog(Project project) {
@@ -118,12 +117,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           myInfoCalculator.update(allChanges, ContainerUtil.newArrayList(includedChanges));
           myCommitLegendPanel.update();
 
-          boolean hasNewFiles = ContainerUtil.exists(includedChanges, new Condition<Change>() {
-            @Override
-            public boolean value(Change change) {
-              return change.getType() == Change.Type.NEW;
-            }
-          });
+          boolean hasNewFiles = ContainerUtil.exists(includedChanges, change -> change.getType() == Change.Type.NEW);
           myDeleteLocallyAddedFiles.setEnabled(hasNewFiles);
         }
       }

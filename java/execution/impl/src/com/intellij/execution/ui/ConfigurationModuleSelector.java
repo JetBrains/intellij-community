@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
@@ -36,23 +37,39 @@ import java.util.Collection;
 import java.util.List;
 
 public class ConfigurationModuleSelector {
+  public static final String NO_MODULE_TEXT = "<no module>";
   private final Project myProject;
+  /** this field is {@code null} if and only if {@link #myModulesList} is not null */
+  private final ModuleDescriptionsComboBox myModulesDescriptionsComboBox;
+  /** this field is {@code null} if and only if {@link #myModulesDescriptionsComboBox} is not null */
   private final JComboBox<Module> myModulesList;
 
   /**
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox)} instead
    */
   public ConfigurationModuleSelector(final Project project, final JComboBox<Module> modulesList) {
-    this(project, modulesList, "<no module>");
+    this(project, modulesList, NO_MODULE_TEXT);
   }
 
   public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox) {
-    this(project, modulesComboBox, "<no module>");
+    this(project, modulesComboBox, NO_MODULE_TEXT);
+  }
+
+  public ConfigurationModuleSelector(Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox) {
+    this(project, modulesDescriptionsComboBox, NO_MODULE_TEXT);
+  }
+
+  public ConfigurationModuleSelector(Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox, String emptySelectionText) {
+    myProject = project;
+    myModulesDescriptionsComboBox = modulesDescriptionsComboBox;
+    myModulesList = null;
+    modulesDescriptionsComboBox.allowEmptySelection(emptySelectionText);
   }
 
   public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox, String noModule) {
     myProject = project;
     myModulesList = modulesComboBox;
+    myModulesDescriptionsComboBox = null;
     modulesComboBox.allowEmptySelection(noModule);
   }
 
@@ -62,6 +79,7 @@ public class ConfigurationModuleSelector {
   public ConfigurationModuleSelector(final Project project, final JComboBox<Module> modulesList, final String noModule) {
     myProject = project;
     myModulesList = modulesList;
+    myModulesDescriptionsComboBox = null;
     new ComboboxSpeedSearch(modulesList){
       protected String getElementText(Object element) {
         if (element instanceof Module){
@@ -77,7 +95,12 @@ public class ConfigurationModuleSelector {
   }
 
   public void applyTo(final ModuleBasedConfiguration configurationModule) {
-    configurationModule.setModule((Module)myModulesList.getSelectedItem());
+    if (myModulesList != null) {
+      configurationModule.setModule((Module)myModulesList.getSelectedItem());
+    }
+    else {
+      configurationModule.setModuleName(myModulesDescriptionsComboBox.getSelectedModuleName());
+    }
   }
 
   public void reset(final ModuleBasedConfiguration configuration) {
@@ -87,7 +110,12 @@ public class ConfigurationModuleSelector {
       if (isModuleAccepted(module)) list.add(module);
     }
     setModules(list);
-    myModulesList.setSelectedItem(configuration.getConfigurationModule().getModule());
+    if (myModulesList != null) {
+      myModulesList.setSelectedItem(configuration.getConfigurationModule().getModule());
+    }
+    else {
+      myModulesDescriptionsComboBox.setSelectedModule(myProject, configuration.getConfigurationModule().getModuleName());
+    }
   }
 
   public boolean isModuleAccepted(final Module module) {
@@ -105,7 +133,10 @@ public class ConfigurationModuleSelector {
   }
 
   private void setModules(final Collection<Module> modules) {
-    if (myModulesList instanceof ModulesComboBox) {
+    if (myModulesDescriptionsComboBox != null) {
+      myModulesDescriptionsComboBox.setModules(modules);
+    }
+    else if (myModulesList instanceof ModulesComboBox) {
       ((ModulesComboBox)myModulesList).setModules(modules);
     }
     else {
@@ -116,7 +147,7 @@ public class ConfigurationModuleSelector {
   }
 
   public Module getModule() {
-    return (Module)myModulesList.getSelectedItem();
+    return myModulesDescriptionsComboBox != null ? myModulesDescriptionsComboBox.getSelectedModule() : (Module) myModulesList.getSelectedItem();
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -221,7 +221,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
       }
     }.apply(editorTextField);
 
-    editorTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    editorTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         setOKActionEnabled(!StringUtil.isEmptyOrSpaces(e.getDocument().getText()));

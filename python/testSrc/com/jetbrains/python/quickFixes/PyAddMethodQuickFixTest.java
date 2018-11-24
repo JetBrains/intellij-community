@@ -20,9 +20,6 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyClassHasNoInitInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 
-/**
- * User: ktisha
- */
 public class PyAddMethodQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddInit() {

@@ -2,13 +2,6 @@ import java.util.*;
 import java.util.Comparator;
 
 
-/**
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: Mar 25, 2004
- * Time: 8:08:44 PM
- * To change this template use File | Settings | File Templates.
- */
 class VarianceTesting {
     void method(List<? extends VarianceTesting> l) {
 //        l.add(new VarianceTesting());

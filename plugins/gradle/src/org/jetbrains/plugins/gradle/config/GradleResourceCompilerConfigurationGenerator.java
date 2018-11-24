@@ -30,9 +30,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.JdomKt;
@@ -205,6 +207,9 @@ public class GradleResourceCompilerConfigurationGenerator {
         LOG.debug("Unable to find source sets config for module: " + module.getName());
         continue;
       }
+
+      VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(true);
+      if (sourceRoots.length == 0) continue;
 
       GradleModuleResourceConfiguration resourceConfig = new GradleModuleResourceConfiguration();
       resourceConfig.id = new ModuleVersion(

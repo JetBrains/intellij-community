@@ -92,12 +92,10 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
           return;
         }
         DvcsUtil.addMappingIfSubRoot(project, FileUtil.join(parentDirectory, directoryName), GitVcs.NAME);
-        destinationParent.refresh(true, true, new Runnable() {
-          public void run() {
-            if (project.isOpen() && (!project.isDisposed()) && (!project.isDefault())) {
-              final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-              mgr.fileDirty(destinationParent);
-            }
+        destinationParent.refresh(true, true, () -> {
+          if (project.isOpen() && (!project.isDisposed()) && (!project.isDefault())) {
+            final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
+            mgr.fileDirty(destinationParent);
           }
         });
         listener.directoryCheckedOut(new File(parentDirectory, directoryName), GitVcs.getKey());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -62,8 +61,9 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
       }
 
       List<Runnable> tasks = new ArrayList<>();
-      tasks.add(() -> myProjectFileIndex.iterateContent(processor));
+      final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
 
+      tasks.add(() -> myProjectFileIndex.iterateContent(processor, file -> !file.isDirectory() || visitedRoots.add(file)));
       /*
       Module[] modules = ModuleManager.getInstance(project).getModules();
       for(final Module module: modules) {
@@ -76,7 +76,6 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
         });
       }*/
 
-      final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
       JBIterable<VirtualFile> contributedRoots = JBIterable.empty();
       for (IndexableSetContributor contributor : Extensions.getExtensions(IndexableSetContributor.EP_NAME)) {
         //important not to depend on project here, to support per-project background reindex
@@ -87,18 +86,29 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
         contributedRoots = contributedRoots.append(IndexableSetContributor.getRootsToIndex(contributor));
         contributedRoots = contributedRoots.append(IndexableSetContributor.getProjectRootsToIndex(contributor, myProject));
       }
-      for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
-        if (myProject.isDisposed()) {
-          return tasks;
-        }
-        contributedRoots = contributedRoots.append(provider.getAdditionalProjectLibraries(myProject), SyntheticLibrary::getSourceRoots);
-      }
       for (VirtualFile root : contributedRoots) {
         if (visitedRoots.add(root)) {
           tasks.add(() -> {
             if (myProject.isDisposed() || !root.isValid()) return;
             FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, null);
           });
+        }
+      }
+
+      // iterate synthetic project libraries
+      for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+        if (myProject.isDisposed()) {
+          return tasks;
+        }
+        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
+          for (VirtualFile root : library.getSourceRoots()) {
+            if (visitedRoots.add(root)) {
+              tasks.add(() -> {
+                if (myProject.isDisposed() || !root.isValid()) return;
+                FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex);
+              });
+            }
+          }
         }
       }
 
@@ -126,10 +136,6 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
         }
       }
 
-      for(int i = 0, size = tasks.size(); i < size; ++i) {
-        Runnable runnable = tasks.get(i);
-        tasks.set(i, () -> ApplicationManager.getApplication().runReadAction(runnable));
-      }
       return tasks;
     }
   }

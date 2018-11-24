@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,14 +53,18 @@ import java.util.List;
  */
 public class ExpressionInputComponent extends EvaluationInputComponent {
   private final XDebuggerExpressionEditor myExpressionEditor;
-  private final JPanel myMainPanel;
+  private final JPanel myMainPanel = JBUI.Panels.simplePanel();
 
-  public ExpressionInputComponent(final @NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, final @Nullable XSourcePosition sourcePosition,
-                                  @Nullable XExpression expression, Disposable parentDisposable) {
+  public ExpressionInputComponent(final @NotNull Project project,
+                                  @NotNull XDebuggerEditorsProvider editorsProvider,
+                                  @Nullable String historyId,
+                                  final @Nullable XSourcePosition sourcePosition,
+                                  @Nullable XExpression expression,
+                                  @NotNull Disposable parentDisposable,
+                                  boolean showHelp) {
     super(XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"));
-    myMainPanel = new JPanel(new BorderLayout());
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
-    myExpressionEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateExpression", sourcePosition,
+    myExpressionEditor = new XDebuggerExpressionEditor(project, editorsProvider, historyId, sourcePosition,
                                                        expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
     myMainPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
     JButton historyButton = new FixedSizeButton(myExpressionEditor.getComponent());
@@ -80,6 +84,8 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     help.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     help.setFontColor(UIUtil.FontColor.BRIGHTER);
     myMainPanel.add(help, BorderLayout.SOUTH);
+    help.setVisible(showHelp);
+
     if (expression != null) {
       myExpressionEditor.setExpression(expression);
     }
@@ -130,8 +136,12 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     contentPanel.add(myMainPanel, BorderLayout.NORTH);
   }
 
+  public JPanel getMainComponent() {
+    return myMainPanel;
+  }
+
   @NotNull
-  protected XDebuggerEditorBase getInputEditor() {
+  public XDebuggerEditorBase getInputEditor() {
     return myExpressionEditor;
   }
 }

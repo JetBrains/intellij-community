@@ -1,7 +1,7 @@
 public class FieldTest {
-    public final int integer;
+    public final int ii;
 
     void foo() {
-        integer = new Integer(0);
+        ii = new Integer(0);
     }
 }

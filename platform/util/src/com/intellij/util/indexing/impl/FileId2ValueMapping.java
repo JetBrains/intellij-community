@@ -22,9 +22,6 @@ import gnu.trove.TIntObjectHashMap;
 
 import java.util.List;
 
-/**
-* Created by Maxim.Mossienko on 7/4/2014.
-*/
 class FileId2ValueMapping<Value> {
   private TIntObjectHashMap<Value> id2ValueMap;
   private ValueContainerImpl<Value> valueContainer;

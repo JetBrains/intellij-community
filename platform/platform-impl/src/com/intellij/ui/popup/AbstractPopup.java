@@ -69,6 +69,11 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 public class AbstractPopup implements JBPopup {
   public static final String SHOW_HINTS = "ShowHints";
 
+  // Popup size stored with DimensionService is null first time
+  // In this case you can put Dimension in content client properties to adjust size
+  // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from preferred size)
+  public static final String FIRST_TIME_SIZE = "FirstTimeSize";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
   private static final Object SUPPRESS_MAC_CORNER = new Object();
@@ -384,7 +389,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showInCenterOf(@NotNull Component aContainer) {
-    final Point popupPoint = getCenterOf(aContainer, myContent);
+    final Point popupPoint = getCenterOf(aContainer, getPreferredContentSize());
     show(aContainer, popupPoint.x, popupPoint.y, false);
   }
 
@@ -421,6 +426,10 @@ public class AbstractPopup implements JBPopup {
   }
 
   public static Point getCenterOf(final Component aContainer, final JComponent content) {
+    return getCenterOf(aContainer, content.getPreferredSize());
+  }
+
+  private static Point getCenterOf(final Component aContainer, final Dimension contentSize) {
     final JComponent component = getTargetComponent(aContainer);
 
     Rectangle visibleBounds = component != null
@@ -430,7 +439,7 @@ public class AbstractPopup implements JBPopup {
     Point containerScreenPoint = visibleBounds.getLocation();
     SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
     visibleBounds.setLocation(containerScreenPoint);
-    return UIUtil.getCenterPoint(visibleBounds, content.getPreferredSize());
+    return UIUtil.getCenterPoint(visibleBounds, contentSize);
   }
 
   @Override
@@ -455,7 +464,9 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    show(new RelativePoint(aComponent, new Point(0, aComponent.getHeight())));
+    show(new RelativePoint(aComponent, UIUtil.isUnderWin10LookAndFeel() ?
+              new Point(1, aComponent.getHeight() + JBUI.scale(1)) :
+              new Point(0, aComponent.getHeight())));
   }
 
   @Override
@@ -574,13 +585,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private RelativePoint relativePointWithDominantRectangle(final JLayeredPane layeredPane, final Rectangle bounds) {
-    Dimension preferredSize = getComponent().getPreferredSize();
-    if (myDimensionServiceKey != null) {
-      final Dimension dimension = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
-      if (dimension != null) {
-        preferredSize = dimension;
-      }
-    }
+    Dimension preferredSize = getPreferredContentSize();
     final Point leftTopCorner = new Point(bounds.x + bounds.width, bounds.y);
     final Point leftTopCornerScreen = (Point)leftTopCorner.clone();
     SwingUtilities.convertPointToScreen(leftTopCornerScreen, layeredPane);
@@ -609,6 +614,17 @@ public class AbstractPopup implements JBPopup {
       }
     }
     return relativePoint;
+  }
+
+  private Dimension getPreferredContentSize() {
+    if (myForcedSize != null) {
+      return myForcedSize;
+    }
+    if (myDimensionServiceKey != null) {
+      final Dimension dimension = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+      if (dimension != null) return dimension;
+    }
+    return myComponent.getPreferredSize();
   }
 
   @Override
@@ -767,7 +783,16 @@ public class AbstractPopup implements JBPopup {
 
     Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
     if (myLocateWithinScreen) {
-      Dimension size = sizeToSet != null ? sizeToSet : myContent.getPreferredSize();
+      Dimension preferredSize = myContent.getPreferredSize();
+      Object o = myContent.getClientProperty(FIRST_TIME_SIZE);
+      if (sizeToSet == null && o instanceof Dimension) {
+        int w = ((Dimension)o).width;
+        int h = ((Dimension)o).height;
+        if (w > 0) preferredSize.width = w;
+        if (h > 0) preferredSize.height = h;
+        sizeToSet = preferredSize;
+      }
+      Dimension size = sizeToSet != null ? sizeToSet : preferredSize;
       if (size.width > screen.width) {
         size.width = screen.width;
         sizeToSet = size;
@@ -1018,6 +1043,8 @@ public class AbstractPopup implements JBPopup {
           return result;
         }
       }, true).doWhenRejected(() -> afterShow.run());
+
+      delayKeyEventsUntilFocusSettlesDown();
     } else {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
@@ -1040,6 +1067,12 @@ public class AbstractPopup implements JBPopup {
     }
     debugState("popup shown", State.SHOWING);
     myState = State.SHOWN;
+  }
+
+  private void delayKeyEventsUntilFocusSettlesDown() {
+    ActionCallback typeAhead = new ActionCallback();
+    getFocusManager().typeAheadUntil(typeAhead, "AbstractPopup");
+    getFocusManager().doWhenFocusSettlesDown(() -> typeAhead.setDone());
   }
 
   public void focusPreferredComponent() {
@@ -1428,8 +1461,18 @@ public class AbstractPopup implements JBPopup {
         myWindow.removeWindowListener(myWindowListener);
       }
 
-      if (myWindow instanceof JWindow) {
-        ((JWindow)myWindow).getRootPane().putClientProperty(KEY, null);
+      if (myWindow instanceof RootPaneContainer) {
+        RootPaneContainer container = (RootPaneContainer)myWindow;
+        JRootPane root = container.getRootPane();
+        root.putClientProperty(KEY, null);
+        if (root.getGlassPane() instanceof IdeGlassPaneImpl) {
+          // replace installed glass pane with the default one: JRootPane.createGlassPane()
+          JPanel glass = new JPanel();
+          glass.setName(root.getName() + ".glassPane");
+          glass.setVisible(false);
+          glass.setOpaque(false);
+          root.setGlassPane(glass);
+        }
       }
 
       myWindow = null;

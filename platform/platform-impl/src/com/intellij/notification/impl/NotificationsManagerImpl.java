@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
@@ -31,7 +32,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
@@ -56,6 +57,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -71,7 +73,8 @@ import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.*;
-import javax.swing.text.html.*;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.ParagraphView;
 import java.awt.*;
 import java.awt.event.*;
@@ -89,8 +92,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
   public static final Color BORDER_COLOR = new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205));
 
   public NotificationsManagerImpl() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new MyNotificationListener(null));
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(Notifications.TOPIC, new MyNotificationListener(null));
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(Project project) {
         for (Notification notification : getNotificationsOfType(Notification.class, project)) {
@@ -139,12 +143,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
-      final Runnable runnable = new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          showNotification(notification, project);
-        }
-      };
+      final Runnable runnable = (DumbAwareRunnable)() -> showNotification(notification, project);
       if (project == null) {
         UIUtil.invokeLaterIfNeeded(runnable);
       }
@@ -805,7 +804,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
           public void linkSelected(LinkLabel aSource, AnAction action) {
-            Notification.fire(notification, action);
+            Notification.fire(notification, action, DataManager.getInstance().getDataContext(aSource));
           }
         }, action));
     }

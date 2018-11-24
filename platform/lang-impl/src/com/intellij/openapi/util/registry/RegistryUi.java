@@ -136,7 +136,7 @@ public class RegistryUi implements Disposable {
     tbGroup.add(new EditAction());
     tbGroup.add(new RevertAction());
 
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, tbGroup, true);
+    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("Registry", tbGroup, true);
     tb.setTargetComponent(myTable);
 
     myContent.add(tb.getComponent(), BorderLayout.NORTH);

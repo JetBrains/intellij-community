@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -75,12 +74,7 @@ public class AnnotateVcsVirtualFileAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
     List<Editor> editors = VcsAnnotateUtil.getEditors(project, file);
-    return ContainerUtil.exists(editors, new Condition<Editor>() {
-      @Override
-      public boolean value(Editor editor) {
-        return editor.getGutter().isAnnotationsShown();
-      }
-    });
+    return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
   }
 
   private static void perform(AnActionEvent e, boolean selected) {

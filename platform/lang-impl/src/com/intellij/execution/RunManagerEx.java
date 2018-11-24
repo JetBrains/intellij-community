@@ -30,8 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class RunManagerEx extends RunManager {
-  public static RunManagerEx getInstanceEx(final Project project) {
-    return (RunManagerEx)project.getComponent(RunManager.class);
+  @NotNull
+  public static RunManagerEx getInstanceEx(@NotNull Project project) {
+    return (RunManagerEx)RunManager.getInstance(project);
   }
 
   /**
@@ -41,8 +42,6 @@ public abstract class RunManagerEx extends RunManager {
   public final void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
     setSelectedConfiguration(configuration);
   }
-
-  public abstract void setTemporaryConfiguration(@Nullable RunnerAndConfigurationSettings tempConfiguration);
 
   @NotNull
   public abstract RunManagerConfig getConfig();
@@ -80,8 +79,6 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderId);
 
-  public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable String name);
-
   public Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings) {
     return getConfigurationIcon(settings, false);
   }
@@ -97,11 +94,12 @@ public abstract class RunManagerEx extends RunManager {
     return getAllSettings();
   }
 
-  public abstract void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings);
-
-  public abstract void addRunManagerListener(@NotNull RunManagerListener listener);
-
-  public abstract void removeRunManagerListener(@NotNull RunManagerListener listener);
+  /**
+   * @deprecated Use {@link RunManagerListener#TOPIC} instead.
+   */
+  @Deprecated
+  public void addRunManagerListener(@NotNull RunManagerListener listener) {
+  }
 
   @NotNull
   public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);

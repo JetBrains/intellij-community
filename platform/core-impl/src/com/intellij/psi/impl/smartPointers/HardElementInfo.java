@@ -23,9 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* User: cdr
-*/
 class HardElementInfo extends SmartPointerElementInfo {
   @NotNull
   private final PsiElement myElement;

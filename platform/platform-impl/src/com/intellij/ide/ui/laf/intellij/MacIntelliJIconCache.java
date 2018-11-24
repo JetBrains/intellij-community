@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
@@ -37,7 +38,7 @@ public class MacIntelliJIconCache {
     else if (!enabled) key+="Disabled";
 
     if (IntelliJLaf.isGraphite()) key= "graphite/" + key;
-    if (IntelliJLaf.isWindowsNativeLook()) key = "win10/" + key;
+    if (UIUtil.isUnderWin10LookAndFeel()) key = "win10/" + key;
 
     Icon icon = cache.get(key);
     if (icon == null) {

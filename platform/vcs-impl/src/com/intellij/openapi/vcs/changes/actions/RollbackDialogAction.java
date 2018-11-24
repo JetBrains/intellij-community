@@ -47,12 +47,10 @@ public class RollbackDialogAction extends AnAction implements DumbAware {
     if (browser != null) {
       browser.setDataIsDirty(true);
     }
-    RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes), true, new Runnable() {
-      public void run() {
-        if (browser != null) {
-          browser.rebuildList();
-          browser.setDataIsDirty(false);
-        }
+    RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes), true, () -> {
+      if (browser != null) {
+        browser.rebuildList();
+        browser.setDataIsDirty(false);
       }
     });
   }

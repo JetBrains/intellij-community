@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 22-Jun-2009
- */
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
@@ -90,6 +86,10 @@ public class InputVariables {
 
     myInputVariables.clear();
     myInputVariables.addAll(wrapInputVariables(myInitialParameters));
+  }
+
+  public boolean isPassFields() {
+    return myPassFields;
   }
 
   public ArrayList<VariableData> wrapInputVariables(final List<? extends PsiVariable> inputVariables) {

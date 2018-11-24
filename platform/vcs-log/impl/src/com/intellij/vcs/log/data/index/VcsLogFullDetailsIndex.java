@@ -31,7 +31,6 @@ import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -130,11 +129,6 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     if (myDisposed) throw new ProcessCanceledException();
   }
 
-  @NotNull
-  public static File getStorageFile(@NotNull String kind, @NotNull String id) {
-    return PersistentUtil.getStorageFile(INDEX, kind, id, getVersion(), false);
-  }
-
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, VcsFullCommitDetails> {
     public MyMapReduceIndex(@NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
                             @NotNull DataExternalizer<T> externalizer,
@@ -157,7 +151,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
     public MyMapIndexStorage(@NotNull String name, @NotNull String logId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
-      super(VcsLogFullDetailsIndex.getStorageFile(name, logId), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+      super(PersistentUtil.getStorageFile(INDEX, name, logId, getVersion()), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
     }
 
     @Override

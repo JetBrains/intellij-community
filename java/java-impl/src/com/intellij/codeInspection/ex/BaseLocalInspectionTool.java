@@ -17,10 +17,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 
-/**
- * User: anna
- * Date: Dec 27, 2004
- */
 public abstract class BaseLocalInspectionTool extends BaseJavaLocalInspectionTool {
   @Override
   public boolean isEnabledByDefault() {

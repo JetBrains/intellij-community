@@ -198,6 +198,17 @@ public class SheetController implements Disposable {
     });
   }
 
+  void setDefaultResult () {
+     myResult = myDefaultButton.getName();
+  }
+
+  void setFocusedResult () {
+    if (myFocusedComponent instanceof JButton) {
+      JButton focusedButton = (JButton)myFocusedComponent;
+      myResult = focusedButton.getName();
+    }
+  }
+
   JPanel getPanel(final JDialog w) {
     w.getRootPane().setDefaultButton(myDefaultButton);
 

@@ -30,8 +30,8 @@ import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,10 +44,12 @@ import java.util.List;
 @State(name = ModuleManagerImpl.COMPONENT_NAME, storages = @Storage("modules.xml"))
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerComponent");
+  private final MessageBusConnection myMessageBusConnection;
 
   public ModuleManagerComponent(@NotNull Project project) {
     super(project);
 
+    myMessageBusConnection = project.getMessageBus().connect(this);
     myMessageBusConnection.setDefaultHandler(new MessageHandler() {
       @Override
       public void handle(Method event, Object... params) {
@@ -109,13 +111,13 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @NotNull
   @Override
   protected ModuleEx createModule(@NotNull String filePath) {
-    return new ModuleImpl(filePath, myProject);
+    return new ModuleImpl(ModulePathKt.getModuleNameByFilePath(filePath), myProject);
   }
 
   @NotNull
   @Override
-  protected ModuleEx createAndLoadModule(@NotNull String filePath, @NotNull VirtualFile file) {
-    return new ModuleImpl(filePath, myProject);
+  protected ModuleEx createAndLoadModule(@NotNull String filePath) {
+    return createModule(filePath);
   }
 
   @Override

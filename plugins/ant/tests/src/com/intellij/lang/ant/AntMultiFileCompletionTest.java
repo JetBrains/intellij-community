@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jul 27, 2006
- * Time: 7:49:54 PM
- */
 package com.intellij.lang.ant;
 
 import com.intellij.openapi.application.PluginPathManager;

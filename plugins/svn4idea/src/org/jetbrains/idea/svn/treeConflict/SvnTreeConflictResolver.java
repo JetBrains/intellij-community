@@ -37,12 +37,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 
-/**
-* Created with IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 5/2/12
-* Time: 1:03 PM
-*/
 public class SvnTreeConflictResolver {
 
   @NotNull private final SvnVcs myVcs;

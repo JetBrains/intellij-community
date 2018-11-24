@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,7 +201,7 @@ public final class SocketLock {
     args = checkForJetBrainsProtocolCommand(args);
     try {
       try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber)) {
-        socket.setSoTimeout(1000);
+        socket.setSoTimeout(5000);
 
         boolean result = false;
         @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream in = new DataInputStream(socket.getInputStream());

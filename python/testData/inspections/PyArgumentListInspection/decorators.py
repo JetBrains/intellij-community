@@ -13,7 +13,7 @@ def f7():
 def f8():
   pass
 
-@deco(1, <warning descr="Unexpected argument">2</warning>) # fail: extra param
+@deco<warning descr="Unexpected argument(s)">(1, <warning descr="Unexpected argument">2</warning>)</warning> # fail: extra param
 def f9():
   pass
 
@@ -57,7 +57,7 @@ class Dec2:
   def __init__(self, p1, p2):
     pass
 
-@Dec2(<warning descr="Parameter 'p2' unfilled"><warning descr="Parameter 'p1' unfilled">)</warning></warning> # fail: no p1, p2
+@Dec2(<warning descr="Parameter 'p1' unfilled"><warning descr="Parameter 'p2' unfilled">)</warning></warning> # fail: no p1, p2
 def f17():
   pass
 

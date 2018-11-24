@@ -329,10 +329,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
-  }
-
-  @Override
   public int getPriority() {
     return EditorDocumentPriorities.LEXER_EDITOR;
   }
@@ -393,12 +389,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     if(myEditor != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          myEditor.repaint(0, textLength);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded((DumbAwareRunnable)() -> myEditor.repaint(0, textLength));
     }
   }
 

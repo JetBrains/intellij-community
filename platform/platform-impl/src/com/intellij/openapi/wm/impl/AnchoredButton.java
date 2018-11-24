@@ -19,12 +19,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/19/11
- * Time: 3:49 PM
- */
 public abstract class AnchoredButton extends JToggleButton {
   protected AnchoredButton(String text, Icon icon, boolean selected) {
     super(text, icon, selected);

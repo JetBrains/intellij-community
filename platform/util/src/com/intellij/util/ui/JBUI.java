@@ -184,7 +184,7 @@ public class JBUI {
       try {
         gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
       } catch (HeadlessException ignore) {}
-      if (gd != null) {
+      if (gd != null && gd.getDefaultConfiguration() != null) {
         return sysScale(gd.getDefaultConfiguration());
       }
       return 1.0f;
@@ -198,16 +198,16 @@ public class JBUI {
     Pair<String, Integer> fdata = UIUtil.getSystemFontData();
 
     int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
-    return size / UIUtil.DEF_SYSTEM_FONT_SIZE;
+    return getFontScale(size);
   }
 
   /**
-   * Returns the system scale factor based on the JBUIScaleTrackable.
+   * Returns the system scale factor based on the JBUIScaleUpdatable.
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
-  public static float sysScale(JBUIScaleTrackable trackable) {
-    if (UIUtil.isJreHiDPIEnabled() && trackable != null) {
-      return trackable.getJBUIScale(ScaleType.SYS);
+  public static float sysScale(JBUIScaleUpdatable updatable) {
+    if (UIUtil.isJreHiDPIEnabled() && updatable != null) {
+      return updatable.getJBUIScale(ScaleType.SYS);
     }
     return sysScale();
   }
@@ -218,19 +218,12 @@ public class JBUI {
    */
   public static float sysScale(@Nullable GraphicsConfiguration gc) {
     if (UIUtil.isJreHiDPIEnabled() && gc != null) {
-      if (SystemInfo.isMac) {
-        switch (gc.getDevice().getType()) {
-          case GraphicsDevice.TYPE_RASTER_SCREEN:
-            if (UIUtil.isJreHiDPI_earlierVersion()) {
-              return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
-            }
-            break;
-          case GraphicsDevice.TYPE_PRINTER:
-            // workaround for mac: default tx for PrinterGraphicsConfig may be uninitialized yet
-            return sysScale();
+      if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
+        if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
+          return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
         }
+        return (float)gc.getDefaultTransform().getScaleX();
       }
-      return (float)gc.getDefaultTransform().getScaleX();
     }
     return sysScale();
   }
@@ -243,7 +236,10 @@ public class JBUI {
   public static float sysScale(@Nullable Graphics2D g) {
     if (UIUtil.isJreHiDPIEnabled() && g != null) {
       GraphicsConfiguration gc = g.getDeviceConfiguration();
-      if (gc == null || gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER) {
+      if (gc == null ||
+          gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER ||
+          gc.getDevice().getType() == GraphicsDevice.TYPE_PRINTER)
+      {
         // in this case gc doesn't provide a valid scale
         return (float)g.getTransform().getScaleX();
       }
@@ -285,10 +281,10 @@ public class JBUI {
   }
 
   /**
-   * Returns the pixel scale factor based on the JBUIScaleTrackable.
+   * Returns the pixel scale factor based on the JBUIScaleUpdatable.
    */
-  public static float pixScale(@NotNull JBUIScaleTrackable trackable) {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale(trackable) * trackable.getJBUIScale(ScaleType.USR) : trackable.getJBUIScale(ScaleType.USR);
+  public static float pixScale(@NotNull JBUIScaleUpdatable updatableable) {
+    return UIUtil.isJreHiDPIEnabled() ? sysScale(updatableable) * updatableable.getJBUIScale(ScaleType.USR) : updatableable.getJBUIScale(ScaleType.USR);
   }
 
   /**
@@ -367,6 +363,14 @@ public class JBUI {
     if (userScaleFactor == 1.25f) return (int)(fontSize * 1.34f);
     if (userScaleFactor == 1.75f) return (int)(fontSize * 1.67f);
     return (int)scale(fontSize);
+  }
+
+  /**
+   * @param fontSize
+   * @return the scale factor of {@code fontSize} relative to the standard font size (currently 12pt)
+   */
+  public static float getFontScale(float fontSize) {
+    return fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
   public static JBDimension size(int width, int height) {
@@ -752,9 +756,9 @@ public class JBUI {
   }
 
   /**
-   * An interface to track JBUI scale factors.
+   * An interface to update JBUI scale factors.
    */
-  public interface JBUIScaleTrackable {
+  public interface JBUIScaleUpdatable {
     /**
      * Checks if tracked user scale should be updated and updates it.
      *
@@ -803,9 +807,9 @@ public class JBUI {
   }
 
   /**
-   * A helper class to track JBUI scale factors.
+   * A helper class to update JBUI scale factors.
    */
-  private static class JBUIScaleTracker implements JBUIScaleTrackable {
+  private static class JBUIScaleUpdater implements JBUIScaleUpdatable {
     // ScaleType.USR - tracked
     // ScaleType.SYS - tracked
     // ScaleType.PIX - derived
@@ -875,12 +879,12 @@ public class JBUI {
   }
 
   /**
-   * A JBIcon lazily tracking JBUI scale factors change.
+   * A JBIcon lazily updating JBUI scale factors change.
    *
    * @author tav
    */
-  public abstract static class AuxJBIcon extends JBIcon implements JBUIScaleTrackable {
-    private final JBUIScaleTracker myJBUIScaleDelegate = new JBUIScaleTracker();
+  public abstract static class UpdatingJBIcon extends JBIcon implements JBUIScaleUpdatable {
+    private final JBUIScaleUpdater myJBUIScaleDelegate = new JBUIScaleUpdater();
 
     @Override
     public boolean updateJBUIScale() {
@@ -919,16 +923,18 @@ public class JBUI {
   }
 
   /**
-   * A ScalableJBIcon lazily tracking JBUI scale factors change.
+   * A ScalableJBIcon lazily updating JBUI scale factors change.
    *
    * @author tav
    */
-  public abstract static class AuxScalableJBIcon extends CachingScalableJBIcon implements JBUIScaleTrackable {
-    private final JBUIScaleTracker myJBUIScaleDelegate = new JBUIScaleTracker();
+  public abstract static class UpdatingScalableJBIcon<T extends UpdatingScalableJBIcon>
+    extends CachingScalableJBIcon<T> implements JBUIScaleUpdatable {
 
-    protected AuxScalableJBIcon() {}
+    private final JBUIScaleUpdater myJBUIScaleDelegate = new JBUIScaleUpdater();
 
-    protected AuxScalableJBIcon(AuxScalableJBIcon icon) {
+    protected UpdatingScalableJBIcon() {}
+
+    protected UpdatingScalableJBIcon(UpdatingScalableJBIcon icon) {
       super(icon);
     }
 

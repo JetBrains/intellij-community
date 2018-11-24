@@ -17,10 +17,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.LocatableConfigurationBase;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -35,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -43,15 +41,23 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -62,16 +68,16 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
-public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
-  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
+public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
+  public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
 
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
 
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
@@ -143,6 +149,24 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()), this, env);
     copyUserDataTo(runnableState);
     return runnableState;
+  }
+
+  @Nullable
+  @Override
+  public GlobalSearchScope getSearchScope() {
+    GlobalSearchScope scope = null;
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(mySettings.getExternalSystemId());
+    if (manager != null) {
+      scope = manager.getSearchScope(getProject(), mySettings);
+    }
+    if (scope == null) {
+      VirtualFile file = VfsUtil.findFileByIoFile(new File(mySettings.getExternalProjectPath()), false);
+      if (file != null) {
+        Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
+        scope = SearchScopeProvider.createSearchScope(ContainerUtil.ar(module));
+      }
+    }
+    return scope;
   }
 
   public static class MyRunnableState extends UserDataHolderBase implements RunProfileState {
@@ -329,9 +353,19 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   private static class MyProcessHandler extends ProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
     private final ExternalSystemExecuteTaskTask myTask;
     private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+    @Nullable
+    private OutputStream myProcessInput;
 
     public MyProcessHandler(ExternalSystemExecuteTaskTask task) {
       myTask = task;
+      try {
+        PipedInputStream inputStream = new PipedInputStream();
+        myProcessInput = new PipedOutputStream(inputStream);
+        task.putUserData(RUN_INPUT_KEY, inputStream);
+      }
+      catch (IOException e) {
+        LOG.warn("Unable to setup process input", e);
+      }
     }
 
     @Override
@@ -341,33 +375,41 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
 
     @Override
     protected void destroyProcessImpl() {
+      myTask.cancel();
+      closeInput();
     }
 
     @Override
     protected void detachProcessImpl() {
-      myTask.cancel();
       notifyProcessDetached();
+      closeInput();
     }
 
     @Override
     public boolean detachIsDefault() {
-      return true;
+      return false;
     }
 
     @Nullable
     @Override
     public OutputStream getProcessInput() {
-      return null;
+      return myProcessInput;
     }
 
     @Override
     public void notifyProcessTerminated(int exitCode) {
       super.notifyProcessTerminated(exitCode);
+      closeInput();
     }
 
     @Override
     public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
       super.notifyTextAvailable(text, attributes);
+    }
+
+    private void closeInput() {
+      StreamUtil.closeStream(myProcessInput);
+      myProcessInput = null;
     }
   }
 

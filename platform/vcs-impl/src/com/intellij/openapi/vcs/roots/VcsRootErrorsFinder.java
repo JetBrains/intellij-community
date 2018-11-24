@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -115,11 +114,6 @@ public class VcsRootErrorsFinder {
   private boolean isRoot(@NotNull final VcsDirectoryMapping mapping) {
     VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
     final String pathToCheck = mapping.isDefaultMapping() ? myProject.getBasePath() : mapping.getDirectory();
-    return ContainerUtil.find(checkers, new Condition<VcsRootChecker>() {
-      @Override
-      public boolean value(VcsRootChecker checker) {
-        return checker.getSupportedVcs().getName().equalsIgnoreCase(mapping.getVcs()) && checker.isRoot(pathToCheck);
-      }
-    }) != null;
+    return ContainerUtil.find(checkers, checker -> checker.getSupportedVcs().getName().equalsIgnoreCase(mapping.getVcs()) && checker.isRoot(pathToCheck)) != null;
   }
 }

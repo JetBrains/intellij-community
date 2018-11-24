@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -737,13 +738,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       LOG.debug("Documentation fetched successfully:\n", text);
 
-      final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-        @Override
-        @Nullable
-        public PsiElement compute() {
-          return provider.getElement();
-        }
-      });
+      final PsiElement element = ReadAction.compute(() -> provider.getElement());
       if (element == null) {
         LOG.debug("Element for which documentation was requested is not available anymore");
         return;
@@ -1107,29 +1102,20 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Override
     @Nullable
     public String getDocumentation() throws Exception {
-      final DocumentationProvider provider = ApplicationManager.getApplication().runReadAction(
-          new Computable<DocumentationProvider>() {
-            @Override
-            public DocumentationProvider compute() {
-              return getProviderFromElement(myElement, myOriginalElement);
-            }
-          }
-      );
+      final DocumentationProvider provider =
+        ReadAction.compute(() -> getProviderFromElement(myElement, myOriginalElement));
       LOG.debug("Using provider ", provider);
 
       if (provider instanceof ExternalDocumentationProvider) {
         final List<String> urls = ApplicationManager.getApplication().runReadAction(
-            new NullableComputable<List<String>>() {
-              @Override
-              public List<String> compute() {
-                final SmartPsiElementPointer originalElementPtr = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
-                final PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
-                if (((ExternalDocumentationProvider)provider).hasDocumentationFor(myElement, originalElement)) {
-                  return provider.getUrlFor(myElement, originalElement);
-                }
-                return null;
-              }
+          (NullableComputable<List<String>>)() -> {
+            final SmartPsiElementPointer originalElementPtr = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
+            final PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
+            if (((ExternalDocumentationProvider)provider).hasDocumentationFor(myElement, originalElement)) {
+              return provider.getUrlFor(myElement, originalElement);
             }
+            return null;
+          }
         );
         LOG.debug("External documentation URLs: ", urls);
         if (urls != null) {

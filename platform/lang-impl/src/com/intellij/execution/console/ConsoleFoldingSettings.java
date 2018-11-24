@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.console;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -23,7 +22,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -95,12 +93,7 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
   }
 
   private Collection<String> filterEmptyStringsFromCollection(Collection<String> collection) {
-    return Collections2.filter(collection, new Predicate<String>() {
-      @Override
-      public boolean apply(@Nullable String input) {
-        return !StringUtil.isEmpty(input);
-      }
-    });
+    return Collections2.filter(collection, input -> !StringUtil.isEmpty(input));
   }
 
   @Override

@@ -29,13 +29,15 @@ public class FoldersCutDownWorker {
   }
 
   public boolean addCurrent(final VirtualFile file) {
+    String filePath = file.getPath();
+
     for (String path : myPaths) {
-      if (FileUtil.startsWith(file.getPath(), path)) {
+      if (FileUtil.startsWith(filePath, path)) {
         return false;
       }
     }
 
-    myPaths.add(file.getPath());
+    myPaths.add(filePath);
     return true;
   }
 }

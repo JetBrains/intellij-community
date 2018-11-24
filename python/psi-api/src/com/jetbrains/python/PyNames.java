@@ -38,6 +38,7 @@ public class PyNames {
    * int type
    */
   public static final String TYPE_INT = "int";
+  public static final String TYPE_LONG = "long";
   /**
    * unicode string type (see {@link #TYPE_STRING_TYPES}
    */
@@ -62,6 +63,12 @@ public class PyNames {
    * time type
    */
   public static final String TYPE_TIME = "datetime.time";
+
+  public static final String TYPE_BYTES = "bytes";
+
+  public static final String TYPE_BYTEARRAY = "bytearray";
+
+  public static final String TYPE_ENUM = "enum.Enum";
 
   private PyNames() {
   }
@@ -112,6 +119,7 @@ public class PyNames {
   public static final String ISINSTANCE = "isinstance";
   public static final String ASSERT_IS_INSTANCE = "assertIsInstance";
   public static final String HAS_ATTR = "hasattr";
+  public static final String ISSUBCLASS = "issubclass";
 
   public static final String DOC = "__doc__";
   public static final String DOCFORMAT = "__docformat__";
@@ -212,6 +220,8 @@ public class PyNames {
   public static final String UNKNOWN_TYPE = "Any";
 
   public static final String UNNAMED_ELEMENT = "<unnamed>";
+
+  public static final String UNDERSCORE = "_";
 
   /**
    * Contains all known predefined names of "__foo__" form.

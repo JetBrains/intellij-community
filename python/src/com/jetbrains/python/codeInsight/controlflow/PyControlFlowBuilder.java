@@ -730,7 +730,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         else {
           myBuilder.startNode(condition);
         }
+        final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
         condition.accept(this);
+        condition.accept(assertionEvaluator);
+        InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
 
         // Condition is true for nested "for" and "if" constructs, next startNode() should create a conditional node
         prevCondition = condition;

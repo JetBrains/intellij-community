@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 03-Sep-2008
- */
 package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;

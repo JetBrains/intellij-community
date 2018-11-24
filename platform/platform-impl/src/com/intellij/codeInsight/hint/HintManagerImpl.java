@@ -27,14 +27,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -108,7 +107,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myAnActionListener = new MyAnActionListener();
     actionManagerEx.addAnActionListener(myAnActionListener);
 
-    myCaretMoveListener = new CaretAdapter() {
+    myCaretMoveListener = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         hideHints(HIDE_BY_ANY_KEY, false, false);
@@ -119,7 +118,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
     for (Project project : projectManager.getOpenProjects()) {
       projectManagerListener.projectOpened(project);
     }
-    projectManager.addProjectManagerListener(projectManagerListener);
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, projectManagerListener);
 
     myEditorMouseListener = new EditorMouseAdapter() {
       @Override
@@ -168,7 +168,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     };
 
-    myEditorDocumentListener = new DocumentAdapter() {
+    myEditorDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         LOG.assertTrue(SwingUtilities.isEventDispatchThread());
@@ -908,10 +908,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * We have to spy for all opened projects to register MyEditorManagerListener into
    * all opened projects.
    */
-  private final class MyProjectManagerListener extends ProjectManagerAdapter {
+  private final class MyProjectManagerListener implements ProjectManagerListener {
     @Override
     public void projectOpened(Project project) {
-      project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
     }
 
     @Override

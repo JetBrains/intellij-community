@@ -62,7 +62,7 @@ class CompilerReferenceReader {
     }
     else {
       LightRef.LightClassHierarchyElementDef hierarchyElement = ((LightRef.LightMember)ref).getOwner();
-      hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
+      hierarchy = getHierarchy(hierarchyElement, checkBaseClassAmbiguity, false, -1);
     }
     if (hierarchy == null) return null;
     TIntHashSet set = new TIntHashSet();
@@ -106,7 +106,7 @@ class CompilerReferenceReader {
   @Nullable
   Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions) {
     try {
-      if (checkDefinitions && hasMultipleDefinitions(classDef)) {
+      if (checkDefinitions && getDefinitionCount(classDef) != DefCount.ONE) {
         return null;
       }
       final int[] count = {0};
@@ -222,22 +222,28 @@ class CompilerReferenceReader {
   }
 
   @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-  LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity) {
+  LightRef.LightClassHierarchyElementDef[] getHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement,
+                                                        boolean checkBaseClassAmbiguity,
+                                                        boolean includeAnonymous,
+                                                        int interruptNumber) {
     try {
-      Set<LightRef.NamedLightRef> result = new THashSet<>();
-      Queue<LightRef.NamedLightRef> q = new Queue<>(10);
+      Set<LightRef.LightClassHierarchyElementDef> result = new THashSet<>();
+      Queue<LightRef.LightClassHierarchyElementDef> q = new Queue<>(10);
       q.addLast(hierarchyElement);
       while (!q.isEmpty()) {
-        LightRef.NamedLightRef curClass = q.pullFirst();
+        LightRef.LightClassHierarchyElementDef curClass = q.pullFirst();
+        if (interruptNumber != -1 && result.size() > interruptNumber) {
+          break;
+        }
         if (result.add(curClass)) {
-          if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
+          if (!(curClass instanceof LightRef.LightAnonymousClassDef) && (checkBaseClassAmbiguity || curClass != hierarchyElement)) {
             if (hasMultipleDefinitions(curClass)) {
               return null;
             }
           }
           myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
             for (LightRef child : children) {
-              if (child instanceof LightRef.LightClassHierarchyElementDef && !(child instanceof LightRef.LightAnonymousClassDef)) {
+              if (child instanceof LightRef.LightClassHierarchyElementDef && (includeAnonymous || !(child instanceof LightRef.LightAnonymousClassDef))) {
                 q.addLast((LightRef.LightClassHierarchyElementDef)child);
               }
             }
@@ -245,15 +251,40 @@ class CompilerReferenceReader {
           });
         }
       }
-      return result.toArray(new LightRef.NamedLightRef[result.size()]);
+      return result.toArray(LightRef.LightClassHierarchyElementDef.EMPTY_ARRAY);
     }
     catch (StorageException e) {
       throw new RuntimeException(e);
     }
   }
 
+  @NotNull
+  LightRef.LightClassHierarchyElementDef[] getDirectInheritors(LightRef.LightClassHierarchyElementDef hierarchyElement) throws StorageException {
+    Set<LightRef.LightClassHierarchyElementDef> result = new THashSet<>();
+    myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(hierarchyElement).forEach((id, children) -> {
+      for (LightRef child : children) {
+        if (child instanceof LightRef.LightClassHierarchyElementDef && !(child instanceof LightRef.LightAnonymousClassDef)) {
+          result.add((LightRef.LightClassHierarchyElementDef)child);
+        }
+      }
+      return true;
+    });
+    return result.toArray(LightRef.LightClassHierarchyElementDef.EMPTY_ARRAY);
+  }
+
   private enum DefCount { NONE, ONE, MANY}
   private boolean hasMultipleDefinitions(LightRef.NamedLightRef def) throws StorageException {
+    DefCount count = getDefinitionCount(def);
+    if (count == DefCount.NONE) {
+      //diagnostic
+      String name = def instanceof LightRef.LightAnonymousClassDef ? String.valueOf(def.getName()) : getNameEnumerator().getName(def.getName());
+      LOG.error("Can't get definition files for: " + name + ", class: " + def.getClass());
+    }
+    return count == DefCount.MANY;
+  }
+
+  @NotNull
+  private DefCount getDefinitionCount(LightRef.NamedLightRef def) throws StorageException {
     DefCount[] result = new DefCount[]{DefCount.NONE};
     myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach(new ValueContainer.ContainerAction<Void>() {
       @Override
@@ -269,11 +300,6 @@ class CompilerReferenceReader {
         return false;
       }
     });
-    if (result[0] == DefCount.NONE) {
-      //diagnostic
-      String name = def instanceof LightRef.LightAnonymousClassDef ? String.valueOf(def.getName()) : getNameEnumerator().getName(def.getName());
-      LOG.error("Can't get definition files for: " + name + ", class: " + def.getClass());
-    }
-    return result[0] == DefCount.MANY;
+    return result[0];
   }
 }

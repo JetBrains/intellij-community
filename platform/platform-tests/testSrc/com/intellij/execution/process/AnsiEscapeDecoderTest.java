@@ -187,7 +187,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
           handler.notifyTextAvailable(i + "Plain\u001B[32mGreen\u001B[39mNormal\u001B[1A\u001B[2K\u001B[31mRed\u001B[39m\n",
                                       ProcessOutputTypes.SYSTEM);
         }
-      }).cpuBound().assertTiming();
+      }).assertTiming();
     });
   }
 

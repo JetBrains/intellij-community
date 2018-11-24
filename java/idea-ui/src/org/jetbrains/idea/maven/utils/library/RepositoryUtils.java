@@ -131,6 +131,7 @@ public class RepositoryUtils {
             if (!library.isDisposed()) {
               WriteAction.run(() -> {
                 final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
+                editor.setKeepInvalidUrls(false);
                 editor.removeAllRoots();
                 editor.addRoots(roots);
                 final Library.ModifiableModel model = library.getModifiableModel();

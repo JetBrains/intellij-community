@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -71,7 +71,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
         checkFiles();
       }
     };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         VirtualFile file = myDocumentManager.getFile(e.getDocument());
@@ -121,6 +121,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     }
     final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
     new ReadAction() {
+      @Override
       protected void run(final @NotNull Result result) {
         if (myProject.isDisposed()) return;
         for (VirtualFile file : files) {

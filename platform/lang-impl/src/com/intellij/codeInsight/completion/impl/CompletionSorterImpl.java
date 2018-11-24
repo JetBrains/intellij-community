@@ -89,12 +89,7 @@ public class CompletionSorterImpl extends CompletionSorter {
 
 
   private int idIndex(final String id) {
-    return ContainerUtil.indexOf(myMembers, new Condition<ClassifierFactory<LookupElement>>() {
-      @Override
-      public boolean value(ClassifierFactory<LookupElement> factory) {
-        return id.equals(factory.getId());
-      }
-    });
+    return ContainerUtil.indexOf(myMembers, (Condition<ClassifierFactory<LookupElement>>)factory -> id.equals(factory.getId()));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,7 +298,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       urls.add(0, myDefaultRepoUrl);
     }
     myRepositoryURL.setHistory(ArrayUtil.toObjectArray(urls, String.class));
-    myRepositoryURL.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    myRepositoryURL.addDocumentListener(new com.intellij.openapi.editor.event.DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         // enable test button only if something is entered in repository URL

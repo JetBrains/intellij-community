@@ -42,7 +42,6 @@ import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.io.IOException
-import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -56,10 +55,8 @@ open class FileBasedStorage(file: Path,
                             roamingType: RoamingType? = null,
                             provider: StreamProvider? = null) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
   private @Volatile var cachedVirtualFile: VirtualFile? = null
-  private var lineSeparator: LineSeparator? = null
-  private var blockSavingTheContent = false
-
-  var resolveVirtualFileOnlyOnWrite = false
+  protected var lineSeparator: LineSeparator? = null
+  protected var blockSavingTheContent = false
 
   @Volatile var file = file
     private set
@@ -115,28 +112,9 @@ open class FileBasedStorage(file: Path,
       return cachedVirtualFile
     }
 
-  override fun loadLocalData(): Element? {
-    blockSavingTheContent = false
+  protected inline fun <T> runAndHandleExceptions(task: () -> T): T? {
     try {
-      // use VFS to load module file because it is refreshed and loaded into VFS in any case
-      if (fileSpec != StoragePathMacros.MODULE_FILE) {
-        return loadLocalDataUsingIo()
-      }
-
-      val file = if (resolveVirtualFileOnlyOnWrite) cachedVirtualFile else virtualFile
-      if (file == null || file.isDirectory || !file.isValid) {
-        LOG.debug { "Document was not loaded for $fileSpec, not a file" }
-      }
-      else if (file.length == 0L) {
-        processReadException(null)
-      }
-      else {
-        val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray()))
-        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        @Suppress("DEPRECATION")
-        return loadElement(charBuffer)
-      }
-      return null
+      return task()
     }
     catch (e: JDOMException) {
       processReadException(e)
@@ -145,6 +123,20 @@ open class FileBasedStorage(file: Path,
       processReadException(e)
     }
     return null
+  }
+
+  fun preloadStorageData(isEmpty: Boolean) {
+    if (isEmpty) {
+      storageDataRef.set(StateMap.EMPTY)
+    }
+    else {
+      getStorageData()
+    }
+  }
+
+  override fun loadLocalData(): Element? {
+    blockSavingTheContent = false
+    return runAndHandleExceptions { loadLocalDataUsingIo() }
   }
 
   private fun loadLocalDataUsingIo(): Element? {
@@ -171,7 +163,7 @@ open class FileBasedStorage(file: Path,
     return null
   }
 
-  private fun processReadException(e: Exception?) {
+  protected fun processReadException(e: Exception?) {
     val contentTruncated = e == null
     blockSavingTheContent = !contentTruncated && (PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)
     if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
@@ -200,7 +192,7 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
   if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
     val content = element.toBufferExposingByteArray(lineSeparator.separatorString)
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
-      throw IllegalStateException("Content equals, but it must be handled not on this level: ${result.name}")
+      throw IllegalStateException("Content equals, but it must be handled not on this level: file ${result.name}, content\n${content.toByteArray().toString(StandardCharsets.UTF_8)}")
     }
     else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
       DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"

@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * User: Dmitry.Krasilschikov
- */
 public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnotationMethod {
 
   public GrAnnotationMethodImpl(@NotNull ASTNode node) {

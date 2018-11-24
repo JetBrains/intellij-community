@@ -594,16 +594,6 @@ void IncRef(PyObject* object) {
     object->ob_refcnt++;
 }
 
-// Structure for our shared memory communication, aligned to be identical on 64-bit and 32-bit
-struct MemoryBuffer {
-    int PortNumber;             // offset 0-4
-    __declspec(align(8)) HANDLE AttachStartingEvent;  // offset 8 - 16
-    __declspec(align(8)) HANDLE AttachDoneEvent;  // offset 16 - 24
-    __declspec(align(8)) int ErrorNumber;            // offset 24-28
-    int VersionNumber;          // offset 28-32
-    char DebugId[1];            // null terminated string
-};
-
 
 // Ensures handles are closed when they go out of scope
 class HandleHolder {
@@ -623,8 +613,8 @@ long GetPythonThreadId(PythonVersion version, PyThreadState* curThread) {
         threadId = ((PyThreadState_25_27*)curThread)->thread_id;
     } else if (PyThreadState_30_33::IsFor(version)) {
         threadId = ((PyThreadState_30_33*)curThread)->thread_id;
-    } else if (PyThreadState_34::IsFor(version)) {
-        threadId = ((PyThreadState_34*)curThread)->thread_id;
+    } else if (PyThreadState_34_36::IsFor(version)) {
+        threadId = ((PyThreadState_34_36*)curThread)->thread_id;
     }
     return threadId;
 }
@@ -1201,8 +1191,8 @@ extern "C"
                             frame = ((PyThreadState_25_27*)curThread)->frame;
                         } else if (PyThreadState_30_33::IsFor(version)) {
                             frame = ((PyThreadState_30_33*)curThread)->frame;
-                        } else if (PyThreadState_34::IsFor(version)) {
-                            frame = ((PyThreadState_34*)curThread)->frame;
+                        } else if (PyThreadState_34_36::IsFor(version)) {
+                            frame = ((PyThreadState_34_36*)curThread)->frame;
                         }else{
                             if(showDebugInfo){
                                 std::cout << "Python version not handled! " << version << std::endl << std::flush;

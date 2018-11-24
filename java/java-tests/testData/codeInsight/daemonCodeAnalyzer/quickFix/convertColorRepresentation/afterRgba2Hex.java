@@ -1,9 +1,9 @@
-// "Convert to 'new Color(0x2564788c,true)'" "true"
+// "Convert to 'new Color(0x8c256478,true)'" "true"
 
 package java.awt;
 
 class A {
-  private Color color = new Color(0x2564788c, true);
+  private Color color = new Color(0x8c256478, true);
 }
 
 class Color {

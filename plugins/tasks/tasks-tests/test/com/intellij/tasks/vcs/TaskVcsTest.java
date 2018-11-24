@@ -500,7 +500,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myTaskManager.setRepositories(Collections.<TaskRepository>emptyList());
+      myTaskManager.setRepositories(Collections.emptyList());
       AllVcses.getInstance(getProject()).unregisterManually(myVcs);
     }
     finally {

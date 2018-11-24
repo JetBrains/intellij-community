@@ -143,7 +143,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
         @Override
         public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
           if (instruction.getMethodType() == MethodCallInstruction.MethodType.CAST && instruction.getContext() == operand) {
-            LongRangeSet curRange = memState.getRange(memState.peek());
+            LongRangeSet curRange = memState.getValueFact(DfaFactType.RANGE, memState.peek());
             if (curRange == null) {
               range.set(LongRangeSet.all());
             }

@@ -126,7 +126,10 @@ class PyTypeCheckerInspectionProblemRegistrar {
                                                                     @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
                                                                     @NotNull TypeEvalContext context) {
     final Predicate<PyTypeCheckerInspection.AnalyzeCalleeResults> isRightOperatorResults =
-      calleeResults -> PyNames.isRightOperatorName(calleeResults.getCallable().getName());
+      calleeResults -> {
+        final PyCallable callable = calleeResults.getCallable();
+        return callable != null && PyNames.isRightOperatorName(callable.getName());
+      };
 
     final boolean allCalleesAreRightOperators = calleesResults.stream().allMatch(isRightOperatorResults);
 

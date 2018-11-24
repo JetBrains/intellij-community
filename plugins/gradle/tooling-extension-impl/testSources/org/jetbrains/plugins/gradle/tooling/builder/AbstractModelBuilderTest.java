@@ -211,13 +211,10 @@ public abstract class AbstractModelBuilderTest {
     final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
     final String filterKey = "to_filter";
-    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
-      @Override
-      public Pair<String, T> fun(IdeaModule module) {
-        final T value = allModels.getExtraProject(module, aClass);
-        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
-        return Pair.create(key, value);
-      }
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, (Function<IdeaModule, Pair<String, T>>)module -> {
+      final T value = allModels.getExtraProject(module, aClass);
+      final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+      return Pair.create(key, value);
     });
 
     map.remove(filterKey);

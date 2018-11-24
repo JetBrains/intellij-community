@@ -27,7 +27,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -266,19 +265,19 @@ public class HighlightInfo implements Segment {
   }
 
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
-                @Nullable TextAttributesKey forcedTextAttributesKey,
-                @NotNull HighlightInfoType type,
-                int startOffset,
-                int endOffset,
-                @Nullable String escapedDescription,
-                @Nullable String escapedToolTip,
-                @NotNull HighlightSeverity severity,
-                boolean afterEndOfLine,
-                @Nullable Boolean needsUpdateOnTyping,
-                boolean isFileLevelAnnotation,
-                int navigationShift,
-                ProblemGroup problemGroup,
-                GutterMark gutterIconRenderer) {
+                          @Nullable TextAttributesKey forcedTextAttributesKey,
+                          @NotNull HighlightInfoType type,
+                          int startOffset,
+                          int endOffset,
+                          @Nullable String escapedDescription,
+                          @Nullable String escapedToolTip,
+                          @NotNull HighlightSeverity severity,
+                          boolean afterEndOfLine,
+                          @Nullable Boolean needsUpdateOnTyping,
+                          boolean isFileLevelAnnotation,
+                          int navigationShift,
+                          ProblemGroup problemGroup,
+                          GutterMark gutterIconRenderer) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
@@ -629,7 +628,7 @@ public class HighlightInfo implements Segment {
   static HighlightInfo fromAnnotation(@NotNull Annotation annotation, @Nullable TextRange fixedRange, boolean batchMode) {
     final TextAttributes forcedAttributes = annotation.getEnforcedTextAttributes();
     TextAttributesKey key = annotation.getTextAttributes();
-    final TextAttributesKey forcedAttributesKey = forcedAttributes == null ? (key == HighlighterColors.NO_HIGHLIGHTING ? null : key) : null;
+    final TextAttributesKey forcedAttributesKey = forcedAttributes == null ? key == HighlighterColors.NO_HIGHLIGHTING ? null : key : null;
 
     HighlightInfo info = new HighlightInfo(forcedAttributes, forcedAttributesKey, convertType(annotation),
                                            fixedRange != null? fixedRange.getStartOffset() : annotation.getStartOffset(),
@@ -924,11 +923,6 @@ public class HighlightInfo implements Segment {
   }
 
   public void unregisterQuickFix(@NotNull Condition<IntentionAction> condition) {
-    for (Iterator<Pair<IntentionActionDescriptor, TextRange>> it = quickFixActionRanges.iterator(); it.hasNext();) {
-      Pair<IntentionActionDescriptor, TextRange> pair = it.next();
-      if (condition.value(pair.first.getAction())) {
-        it.remove();
-      }
-    }
+    quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
   }
 }

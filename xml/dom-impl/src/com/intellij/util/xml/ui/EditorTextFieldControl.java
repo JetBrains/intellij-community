@@ -22,7 +22,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -59,7 +58,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
     }
   };
   private final boolean myCommitOnEveryChange;
-  private final DocumentListener myListener = new DocumentAdapter() {
+  private final DocumentListener myListener = new DocumentListener() {
     @Override
     public void documentChanged(DocumentEvent e) {
       setModified();

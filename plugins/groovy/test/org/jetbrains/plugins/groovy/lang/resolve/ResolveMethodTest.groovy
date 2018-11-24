@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper
@@ -2291,5 +2292,35 @@ BigDecimal b = 1
     assert resolved instanceof GrGdkMethod
     fixture.enableInspections GroovyAssignabilityCheckInspection
     fixture.checkHighlighting()
+  }
+
+  void 'test resolve AutoImplement'() {
+    myFixture.addClass("package groovy.transform; public @interface AutoImplement {}")
+    def method = resolveByText '''
+import groovy.transform.AutoImplement
+
+@AutoImplement
+class SomeClass extends List<Integer> {
+}
+
+new SomeClass().si<caret>ze()
+''', GrLightMethodBuilder
+    assert (method as GrLightMethodBuilder).originInfo.contains("@AutoImplement")
+  }
+
+  void 'test resolve AutoImplement implemented'() {
+    myFixture.addClass("package groovy.transform; public @interface AutoImplement {}")
+    resolveByText '''
+import groovy.transform.AutoImplement
+
+@AutoImplement
+class SomeClass extends List<Integer> {
+  @Override
+  public int size() {return 0}
+}
+
+new SomeClass().si<caret>ze()
+''', GrMethodImpl
+
   }
 }

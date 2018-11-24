@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Set;
@@ -38,6 +39,18 @@ public interface FileIndex {
   boolean iterateContent(@NotNull ContentIterator processor);
 
   /**
+   * Same as {@link #iterateContent(ContentIterator)} but allows to pass {@code filter} to
+   * provide filtering in condition for directories.
+   * <p>
+   * If <code>filter</code> returns false on a directory, the directory won't be processed, but iteration will go on.
+   * <p>
+   * {@code null} filter means that all directories should be processed.
+   *
+   * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
+   */
+  boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter);
+
+  /**
    * Processes all files and directories in the content under directory <code>dir</code> (including the directory itself) skipping excluded
    * and ignored files and directories. Does nothing if <code>dir</code> is not in the content.
    *
@@ -49,10 +62,12 @@ public interface FileIndex {
    * Same as {@link #iterateContentUnderDirectory(VirtualFile, ContentIterator)} but allows to pass additional <code>customFilter</code> to
    * the iterator, in case you need to skip some file system branches using your own logic. If <code>customFilter</code> returns false on
    * a directory, it won't be processed, but iteration will go on.
+   * <p>
+   * {@code null} filter means that all directories should be processed.
    */
   boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
                                        @NotNull ContentIterator processor,
-                                       @NotNull VirtualFileFilter customFilter);
+                                       @Nullable VirtualFileFilter customFilter);
 
   /**
    * Returns {@code true} if {@code fileOrDir} is a file or directory under a content root of this project or module and not excluded or

@@ -27,12 +27,6 @@ import java.io.File;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/19/12
- * Time: 8:24 PM
- */
 public class DirectoryDataTest extends FileBasedTest {
   @Test
   public void testVisitRecursively() throws Exception {

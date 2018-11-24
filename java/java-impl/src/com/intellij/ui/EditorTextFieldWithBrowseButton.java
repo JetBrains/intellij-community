@@ -22,9 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.psi.*;
 
-/**
- * User: anna
- */
 public class EditorTextFieldWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
   public EditorTextFieldWithBrowseButton(Project project, boolean isClassAccepted) {
     this(project, isClassAccepted, JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);

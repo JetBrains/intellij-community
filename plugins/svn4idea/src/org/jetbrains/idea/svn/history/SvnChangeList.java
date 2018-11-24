@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.11.2006
- * Time: 17:20:32
- */
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -339,7 +333,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
       final File file = urlMapping.getLocalPath(fullPath);
       if (file != null) {
-        return VcsUtil.getFilePathForDeletedFile(file.getAbsolutePath(), isDir || file.isDirectory());
+        return VcsUtil.getFilePath(file.getAbsolutePath(), isDir || file.isDirectory());
       }
 
       return null;

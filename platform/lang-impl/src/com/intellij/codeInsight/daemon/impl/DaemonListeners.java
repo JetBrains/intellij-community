@@ -155,7 +155,9 @@ public class DaemonListeners implements Disposable {
     myTooltipController = tooltipController;
 
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
-    LOG.assertTrue(replaced, "Daemon listeners already initialized for the project "+myProject);
+    if (!replaced) {
+      LOG.error("Daemon listeners already initialized for the project " + myProject);
+    }
 
     MessageBus messageBus = myProject.getMessageBus();
     myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
@@ -169,7 +171,7 @@ public class DaemonListeners implements Disposable {
       }
     });
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
-    eventMulticaster.addDocumentListener(new DocumentAdapter() {
+    eventMulticaster.addDocumentListener(new DocumentListener() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(final DocumentEvent e) {
@@ -184,7 +186,7 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    eventMulticaster.addCaretListener(new CaretAdapter() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();

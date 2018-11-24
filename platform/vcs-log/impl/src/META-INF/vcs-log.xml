@@ -34,13 +34,15 @@
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
                         serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
-    <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryActionProvider"/>
+    <openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryActionProvider"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider"/>
   </extensions>
 
   <actions>
-    <action class="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchAction" id="Vcs.Log.CreatePatch"
-            use-shortcut-of="ChangesView.CreatePatch"/>
     <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Menu_find"
             use-shortcut-of="Find"
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
@@ -79,16 +81,6 @@
             use-shortcut-of="EditSource"
             text="Open Repository Version" description="Open editor with selected revision of the file"
             icon="AllIcons.Actions.EditSource"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryAction" id="Vcs.Log.ShowDiff"
-            use-shortcut-of="Diff.ShowDiff" text="Show Diff" description="Show diff with previous version"
-            icon="AllIcons.Actions.Diff"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryAction" id="Vcs.Log.ShowDiffWithLocal"
-            use-shortcut-of="Vcs.ShowDiffWithLocal"
-            text="Show Diff with Local" description="Compare selected revision with the local version of the file"
-            icon="AllIcons.Actions.DiffWithCurrent"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryAction" id="Vcs.Log.CreatePatchFromHistory"
-            use-shortcut-of="ChangesView.CreatePatch" text="Create Patch..." description="Create patch for selected changes"
-            icon="AllIcons.Vcs.Patch"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
             use-shortcut-of="Vcs.GetVersion"
             text="Get" description="Get version from repository" icon="AllIcons.Actions.Get"/>
@@ -125,13 +117,13 @@
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
-      <reference id="Vcs.Log.CreatePatch"/>
+      <reference id="ChangesView.CreatePatchFromChanges"/>
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Vcs.Log.ShowDiff"/>
-      <reference id="Vcs.Log.ShowDiffWithLocal"/>
-      <reference id="Vcs.Log.CreatePatchFromHistory"/>
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
@@ -139,9 +131,9 @@
       <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
-      <reference id="Vcs.Log.ShowDiff"/>
-      <reference id="Vcs.Log.ShowDiffWithLocal"/>
-      <reference id="Vcs.Log.CreatePatchFromHistory"/>
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
@@ -155,7 +147,7 @@
     </group>
 
     <group id="Log.KeymapGroup" text="Log">
-      <reference ref="Vcs.Log.CreatePatch"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
       <separator/>
       <reference ref="Vcs.Log.GoToRef"/>
       <reference ref="Vcs.Log.FocusTextFilter"/>
@@ -183,9 +175,9 @@
 
     <group id="Log.FileHistory.KeymapGroup" popup="false">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Vcs.Log.ShowDiff"/>
-      <reference id="Vcs.Log.ShowDiffWithLocal"/>
-      <reference id="Vcs.Log.CreatePatchFromHistory"/>
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="Vcs.Log.ShowAllAffected"/>

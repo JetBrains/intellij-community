@@ -37,11 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Oct 24, 2003
- * Time: 8:23:06 PM
- */
 public abstract class SourcePosition implements Navigatable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition");
   @NotNull

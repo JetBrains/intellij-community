@@ -30,7 +30,9 @@ import com.intellij.psi.search.PsiElementProcessor.FindElement;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -662,6 +664,32 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  public static PsiElement findSiblingForward(@NotNull final PsiElement element,
+                                              @NotNull final IElementType elementType,
+                                              @Nullable final Consumer<PsiElement> consumer) {
+    for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+      if (elementType.equals(e.getNode().getElementType())) {
+        return e;
+      }
+      if (consumer != null) consumer.consume(e);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement findSiblingBackward(@NotNull final PsiElement element,
+                                               @NotNull final IElementType elementType,
+                                               @Nullable final Consumer<PsiElement> consumer) {
+    for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+      if (elementType.equals(e.getNode().getElementType())) {
+        return e;
+      }
+      if (consumer != null) consumer.consume(e);
+    }
+    return null;
+  }
+
+  @Nullable
   @Contract("null, _ -> null")
   public static PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class... elementClasses) {
     if (element == null) return null;
@@ -1151,5 +1179,23 @@ public class PsiTreeUtil {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  @Nullable
+  public static PsiElement getDeepestVisibleFirst(@NotNull PsiElement psiElement) {
+    PsiElement first = getDeepestFirst(psiElement);
+    if (StringUtil.isEmptyOrSpaces(first.getText())) {
+      first = nextVisibleLeaf(first);
+    }
+    return first;
+  }
+
+  @Nullable
+  public static PsiElement getDeepestVisibleLast(@NotNull PsiElement psiElement) {
+    PsiElement last = getDeepestLast(psiElement);
+    if (StringUtil.isEmptyOrSpaces(last.getText())) {
+      last = prevVisibleLeaf(last);
+    }
+    return last;
   }
 }

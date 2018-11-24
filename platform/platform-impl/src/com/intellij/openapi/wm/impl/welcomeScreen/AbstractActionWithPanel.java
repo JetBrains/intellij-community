@@ -24,4 +24,5 @@ public abstract class AbstractActionWithPanel extends AnAction implements DumbAw
 
   public abstract JPanel createPanel();
 
+  public void onPanelSelected() {}
 }

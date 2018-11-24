@@ -142,6 +142,6 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   }
 
   private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<PsiReference> composite) {
-    return new UniqueResultsQuery<>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ContainerUtil.canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 }

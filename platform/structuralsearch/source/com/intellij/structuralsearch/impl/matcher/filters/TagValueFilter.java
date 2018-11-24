@@ -19,13 +19,6 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 
-/**
- * Created by IntelliJ IDEA.
- * User: maxim.mossienko
- * Date: Oct 12, 2005
- * Time: 4:44:19 PM
- * To change this template use File | Settings | File Templates.
- */
 public class TagValueFilter implements NodeFilter {
 
   private static final NodeFilter INSTANCE = new TagValueFilter();

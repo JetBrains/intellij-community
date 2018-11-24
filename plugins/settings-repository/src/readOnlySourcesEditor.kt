@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.progress.runModalTask
@@ -119,7 +119,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
           indicator.text = "Deleting old repositories"
           for (path in toDelete) {
             indicator.checkCanceled()
-            LOG.catchAndLog {
+            LOG.runAndLogException {
               indicator.text2 = path
               root.resolve(path).delete()
             }
@@ -129,7 +129,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         if (toCheckout.isNotEmpty()) {
           for (source in toCheckout) {
             indicator.checkCanceled()
-            LOG.catchAndLog {
+            LOG.runAndLogException {
               indicator.text = "Cloning ${source.url!!.trimMiddle(255)}"
               val dir = root.resolve(source.path!!)
               if (dir.exists()) {

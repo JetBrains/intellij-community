@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 19, 2007
- * Time: 5:53:46 PM
- */
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.icons.AllIcons;

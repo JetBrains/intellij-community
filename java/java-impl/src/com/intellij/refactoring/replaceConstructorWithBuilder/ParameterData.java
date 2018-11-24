@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 04-Feb-2009
- */
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.openapi.diagnostic.Logger;

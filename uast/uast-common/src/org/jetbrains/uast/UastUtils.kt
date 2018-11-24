@@ -76,7 +76,9 @@ fun <T : UElement> UElement.getParentOfType(
     }
 }
 
-fun UElement.getContainingFile() = getParentOfType<UFile>(UFile::class.java)
+@Deprecated(message = "This function is deprecated, use getContainingUFile", replaceWith = ReplaceWith("getContainingUFile()"))
+fun UElement.getContainingFile() = getContainingUFile()
+fun UElement.getContainingUFile() = getParentOfType<UFile>(UFile::class.java)
 
 fun UElement.getContainingUClass() = getParentOfType<UClass>(UClass::class.java)
 fun UElement.getContainingUMethod() = getParentOfType<UMethod>(UMethod::class.java)
@@ -145,4 +147,4 @@ tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
     return (uastParent ?: error("PsiElement should exist at least for UFile")).getLanguagePlugin()
 }
 
-fun Collection<UElement>.toPsiElements() = mapNotNull { it.psi }
+fun Collection<UElement?>.toPsiElements() = mapNotNull { it?.psi }

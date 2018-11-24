@@ -127,17 +127,13 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   }
 
   @Nullable
-  protected JRootPane considerShowingDialog(long now) {
-    if (isReadyShowing(now)) {
+  private JRootPane considerShowingDialog(long now) {
+    if (now - myLastUiUpdate > myDelayInMillis) {
       getDialog().myRepaintRunnable.run();
       showDialog();
       return getDialog().getPanel().getRootPane();
     }
     return null;
-  }
-
-  protected boolean isReadyShowing(long now) {
-    return now - myLastUiUpdate > myDelayInMillis;
   }
 
   private boolean timeToPaint(long now) {

@@ -93,13 +93,13 @@ class TestGitImpl : GitImpl() {
     }
   }
 
-  override fun configureEditor(project: Project, root: VirtualFile, handler: GitLineHandler,
-                               commitListAware: Boolean): GitInteractiveRebaseEditorHandler {
-    if (myInteractiveRebaseEditor == null) return super.configureEditor(project, root, handler, commitListAware)
+  override fun createEditor(project: Project, root: VirtualFile, handler: GitLineHandler,
+                            commitListAware: Boolean): GitInteractiveRebaseEditorHandler {
+    if (myInteractiveRebaseEditor == null) return super.createEditor(project, root, handler, commitListAware)
 
     val service = GitRebaseEditorService.getInstance()
-    val editor = object: GitInteractiveRebaseEditorHandler(service, project, root, handler) {
-      override fun editCommits(path: String?): Int {
+    val editor = object: GitInteractiveRebaseEditorHandler(service, project, root) {
+      override fun editCommits(path: String): Int {
         try {
           val file = File(path)
           FileUtil.writeToFile(file, myInteractiveRebaseEditor!!(FileUtil.loadFile(file)))

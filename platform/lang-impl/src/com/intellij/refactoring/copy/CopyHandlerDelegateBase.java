@@ -17,10 +17,6 @@ package com.intellij.refactoring.copy;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * User: anna
- * Date: 11/30/11
- */
 public abstract class CopyHandlerDelegateBase implements CopyHandlerDelegate {
   public abstract boolean canCopy(PsiElement[] elements, boolean fromUpdate);
 

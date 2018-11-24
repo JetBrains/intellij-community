@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 06-May-2008
- */
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;

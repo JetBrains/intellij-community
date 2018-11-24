@@ -84,7 +84,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
     if (file == null) return null;
 
     if (file.isDirectory()) {
-      file = file.findChild("pom.xml");
+      file = MavenUtil.streamPomFiles(MavenActionUtil.getProject(dataContext), file).findFirst().orElse(null);
       if (file == null) return null;
     }
 

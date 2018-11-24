@@ -16,14 +16,13 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -41,10 +40,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- * Date: 3/18/11
- */
 public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceFieldPopup {
 
   private final String myInitializerText;
@@ -142,29 +137,27 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   @Override
   protected PsiVariable createFieldToStartTemplateOn(final String[] names, final PsiType psiType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
-      @Override
-      public PsiField compute() {
+    return WriteAction.compute(() -> {
 
-        PsiClass parentClass = getParentClass();
-        PsiField field = elementFactory.createFieldFromText(
-          psiType.getCanonicalText() + " " + (chooseName(names, parentClass.getLanguage())) + " = " + myInitializerText + ";", parentClass);
-        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-        myVisibility = getSelectedVisibility();
-        PsiUtil.setModifierProperty(field, myVisibility, true);
-        final PsiElement anchorElementIfAll = getAnchorElementIfAll();
-        PsiElement finalAnchorElement;
-        for (finalAnchorElement = anchorElementIfAll;
-             finalAnchorElement != null && finalAnchorElement.getParent() != parentClass;
-             finalAnchorElement = finalAnchorElement.getParent()) {
-        }
-        PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
-        field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
-          .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, parentClass, parentClass, field, anchorMember);
-        myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
-        return field;
+      PsiClass parentClass = getParentClass();
+      PsiField field = elementFactory.createFieldFromText(
+        psiType.getCanonicalText() + " " + (chooseName(names, parentClass.getLanguage())) + " = " + myInitializerText + ";", parentClass);
+      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
+      PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+      myVisibility = getSelectedVisibility();
+      PsiUtil.setModifierProperty(field, myVisibility, true);
+      final PsiElement anchorElementIfAll = getAnchorElementIfAll();
+      PsiElement finalAnchorElement;
+      for (finalAnchorElement = anchorElementIfAll;
+           finalAnchorElement != null && finalAnchorElement.getParent() != parentClass;
+           finalAnchorElement = finalAnchorElement.getParent()) {
       }
+      PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
+      field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
+        .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, parentClass, parentClass, field,
+                     anchorMember);
+      myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
+      return field;
     });
   }
 

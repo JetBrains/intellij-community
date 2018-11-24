@@ -40,6 +40,10 @@ public class ModuleRootModificationUtil {
     updateModel(module, model -> model.addContentEntry(VfsUtilCore.pathToUrl(path)));
   }
 
+  public static void addContentRoot(@NotNull Module module, @NotNull VirtualFile path) {
+    updateModel(module, model -> model.addContentEntry(path));
+  }
+
   public static void addModuleLibrary(@NotNull Module module,
                                       @Nullable String libName,
                                       @NotNull List<String> classesRoots,
@@ -136,9 +140,10 @@ public class ModuleRootModificationUtil {
       task.consume(model);
       ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(model::commit));
     }
-    catch (RuntimeException | Error e) {
-      model.dispose();
-      throw e;
+    finally {
+      if (!model.isDisposed()) {
+        model.dispose();
+      }
     }
   }
 

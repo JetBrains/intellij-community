@@ -31,9 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- */
 public class PsiMethodReferenceCompatibilityConstraint implements ConstraintFormula {
   private static final Logger LOG = Logger.getInstance(PsiMethodReferenceCompatibilityConstraint.class);
   private final PsiMethodReferenceExpression myExpression;
@@ -244,7 +241,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         else if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor() || member instanceof PsiClass) {
           //15.13.1
           //If ClassType is a raw type, but is not a non-static member type of a raw type, 
-          //the candidate notional member methods are those specified in §15.9.3 for a class instance creation expression that uses <> 
+          //the candidate notional member methods are those specified in p15.9.3 for a class instance creation expression that uses <>
           //to elide the type arguments to a class.
           final PsiResolveHelper helper = JavaPsiFacade.getInstance(methodReferenceExpression.getProject()).getResolveHelper();
           final PsiType[] paramTypes =
@@ -252,6 +249,10 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           LOG.assertTrue(paramTypes.length == signature.getParameterTypes().length, "expr: " + methodReferenceExpression + "; " +
                                                                                     paramTypes.length + "; " +
                                                                                     Arrays.toString(signature.getParameterTypes()));
+          if (Arrays.deepEquals(signature.getParameterTypes(), paramTypes)) {
+            return PsiSubstitutor.EMPTY;
+          }
+
           psiSubstitutor = helper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(qContainingClass.getTypeParameters(), paramTypes),
                                                      paramTypes,
                                                      signature.getParameterTypes(),

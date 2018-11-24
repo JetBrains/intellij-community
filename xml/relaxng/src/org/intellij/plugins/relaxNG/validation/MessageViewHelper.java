@@ -39,11 +39,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.11.2007
- */
 public class MessageViewHelper {
   private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.MessageViewHelper");
 

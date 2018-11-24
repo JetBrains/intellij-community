@@ -20,9 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
-/**
- * Created by Max Medvedev on 14/03/14
- */
 public class GrClosableSignatureWithErasedParameters extends GrClosableSignatureImpl {
   public GrClosableSignatureWithErasedParameters(GrClosableBlock block) {
     super(block);

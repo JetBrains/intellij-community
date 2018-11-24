@@ -59,7 +59,7 @@ object IdeaGuiTestUtil{
   }
 
   fun setJdkPath(path: File) {
-    if (JavaSdk.checkForJdk(path)) {
+    if (JdkUtil.checkForJdk(path)) {
       ApplicationManager.getApplication().assertWriteAccessAllowed()
       var chosenJdk: Sdk? = null
 

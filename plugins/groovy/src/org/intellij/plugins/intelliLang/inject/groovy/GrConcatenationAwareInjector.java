@@ -57,9 +57,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 9/9/13
- */
 public class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   private final LanguageInjectionSupport mySupport;
   private final Configuration myConfiguration;

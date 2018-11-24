@@ -319,6 +319,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return true;
   }
 
+  @NotNull
   @Override
   protected String getText(@NotNull UsageView view) {
     return getGroup().getText(view);

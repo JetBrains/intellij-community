@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 20, 2007
- * Time: 2:57:38 PM
- */
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;

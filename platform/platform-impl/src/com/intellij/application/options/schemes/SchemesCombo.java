@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.*;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +77,10 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
   protected boolean isProjectScheme(@NotNull T scheme) {
     throw new UnsupportedOperationException();
+  }
+
+  protected int getIndent(@NotNull T scheme) {
+    return 0;
   }
 
   @NotNull
@@ -151,6 +156,8 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
           }
         }
       }
+      int indent = index < 0 || scheme == null ? 0 : getIndent(scheme);
+      setIpad(JBUI.insetsLeft(indent > 0 ? indent * 10 : 0));
     }
   }
 

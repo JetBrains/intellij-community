@@ -41,7 +41,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -111,10 +110,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   }
 
   @Override
-  public void init(@NotNull String path, @Nullable VirtualFile file, @Nullable Runnable beforeComponentCreation) {
-  }
-
-  @Override
   public void clearScopesCache() {
     myModuleScopeProvider.clearCache();
   }
@@ -149,11 +144,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   @Override
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clearOption(@NotNull String optionName) {
     throw new UnsupportedOperationException();
   }
 

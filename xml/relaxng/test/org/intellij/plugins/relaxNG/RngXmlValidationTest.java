@@ -20,11 +20,6 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import org.intellij.plugins.testUtil.CopyFile;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.07.2007
- */
 public class RngXmlValidationTest extends HighlightingTestBase {
 
   public void testValidDocument() throws Throwable {

@@ -16,6 +16,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.icons.AllIcons;
@@ -23,13 +24,13 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,6 +39,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -61,7 +63,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -71,10 +72,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,6 +136,8 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
   private JBTable myResultsPreviewTable;
   private UsagePreviewPanel myUsagePreviewPanel;
   private JBPopup myBalloon;
+  private LoadingDecorator myLoadingDecorator;
+  private int myLoadingHash;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
@@ -180,6 +180,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         .setCancelCallback(() -> {
           if (!myCanClose.get()) return false;
           if (!ApplicationManager.getApplication().isActive()) return false;
+          if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
           List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
           if (!popups.isEmpty()) {
             for (JBPopup popup : popups) {
@@ -216,6 +217,8 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       WindowMoveListener windowListener = new WindowMoveListener(this);
       myTitleLabel.addMouseListener(windowListener);
       myTitleLabel.addMouseMotionListener(windowListener);
+      myLoadingDecorator.getComponent().addMouseListener(windowListener);
+      myLoadingDecorator.getComponent().addMouseMotionListener(windowListener);
       Dimension panelSize = getPreferredSize();
       Dimension prev = DimensionService.getInstance().getSize(SERVICE_KEY);
       if (!myCbPreserveCase.isVisible()) {
@@ -267,7 +270,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
   private void initComponents() {
     myTitleLabel = new JBLabel(FindBundle.message("find.in.path.dialog.title"), UIUtil.ComponentStyle.REGULAR);
     myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(Font.BOLD));
-    myTitleLabel.setBorder(JBUI.Borders.empty(0, 4, 0, 16));
+    myTitleLabel.setBorder(JBUI.Borders.empty(0, 0, 0, 16));
+    myLoadingDecorator = new LoadingDecorator(new JLabel("  ", EmptyIcon.ICON_16, SwingConstants.LEADING), getDisposable(), 250, true, new AsyncProcessIcon("FindInPathLoading"));
+    myLoadingDecorator.setLoadingText("");
     myCbCaseSensitive = createCheckBox("find.popup.case.sensitive");
     ItemListener liveResultsPreviewUpdateListener = new ItemListener() {
       @Override
@@ -305,15 +310,24 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     myCbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
     myFileMaskField =
       new TextFieldWithAutoCompletion<String>(myProject, new TextFieldWithAutoCompletion.StringsCompletionProvider(myFileMasks, null),
-                                              false, null) {
+                                              true, null) {
         @Override
         public void setEnabled(boolean enabled) {
           super.setEnabled(enabled);
           setBackground(enabled ? JBColor.background() : UIUtil.getComboBoxDisabledBackground());
         }
+
+        @Override
+        protected EditorEx createEditor() {
+          EditorEx editor = super.createEditor();
+          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, Boolean.TRUE);
+          editor.putUserData(AutoPopupController.NO_ADS, Boolean.TRUE);
+          editor.putUserData(AutoPopupController.AUTO_POPUP_ON_FOCUS_GAINED, Boolean.TRUE);
+          return editor;
+        }
       };
     myFileMaskField.setPreferredWidth(JBUI.scale(100));
-    myFileMaskField.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    myFileMaskField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         scheduleResultsUpdate();
@@ -463,6 +477,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       myScopeDetailsPanel.add(scopeType.name, scopeComponent.second);
     }
     myScopeSelectionToolbar = createToolbar(scopeActions.toArray(AnAction.EMPTY_ARRAY));
+    myScopeSelectionToolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     mySelectedScope = scopeComponents[0].first;
 
     myResultsPreviewTable = new JBTable() {
@@ -519,9 +534,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         if (e.getValueIsAdjusting()) return;
         int index = myResultsPreviewTable.getSelectedRow();
         if (index != -1) {
-          UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
-          myUsagePreviewPanel.updateLayout(usageInfo.isValid() ? Collections.singletonList(usageInfo) : null);
-          VirtualFile file = usageInfo.getVirtualFile();
+          UsageInfo2UsageAdapter adapter = (UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0);
+          myUsagePreviewPanel.updateLayout(adapter.isValid() ? Arrays.asList(adapter.getMergedInfos()) : null);
+          VirtualFile file = adapter.getFile();
           String path = "";
           if (file != null) {
             String relativePath = VfsUtilCore.getRelativePath(file, myProject.getBaseDir());
@@ -571,7 +586,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     int cbGapLeft = myCbCaseSensitive.getInsets().left;
     int cbGapRight = myCbCaseSensitive.getInsets().right;
     String cbGap = cbGapLeft + cbGapRight < 16 ? "gapright " + (16 - cbGapLeft - cbGapRight) : "";
-    add(myTitleLabel, "sx 2, growx, pushx, growy");
+    JPanel titlePanel = new JPanel(new BorderLayout());
+    titlePanel.add(myLoadingDecorator.getComponent(), BorderLayout.WEST);
+    titlePanel.add(myTitleLabel, BorderLayout.CENTER);
+    add(titlePanel, "sx 2, growx, pushx, growy");
     add(myCbCaseSensitive, cbGap);
     add(myCbPreserveCase, cbGap);
     add(myCbWholeWordsOnly, cbGap);
@@ -720,6 +738,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       ApplicationManager.getApplication().invokeLater(
         () -> IdeFocusManager.getInstance(myProject).requestFocus(firstFocusableComponent, true));
     }
+    if (firstFocusableComponent == null && !mySearchComponent.isFocusOwner() && !myReplaceComponent.isFocusOwner()) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> IdeFocusManager.getInstance(myProject).requestFocus(mySearchComponent, true));
+    }
   }
 
   public void scheduleResultsUpdate() {
@@ -756,8 +778,15 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
     ValidationInfo result = getValidationInfo(myHelper.getModel());
 
-    final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
+    final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase() {
+      @Override
+      public void stop() {
+        super.stop();
+        onStop(System.identityHashCode(this));
+      }
+    };
     myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
+    final int hash = System.identityHashCode(myResultsPreviewSearchProgress);
 
     final DefaultTableModel model = new DefaultTableModel() {
       @Override
@@ -788,6 +817,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
     if (result != null) {
       myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow") + " ("+result.message+")");
+      onStop(hash);
       return;
     }
 
@@ -796,23 +826,26 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(
       new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false, scope));
     myResultsPreviewTable.getEmptyText().setText("Searching...");
+    onStart(hash);
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) {
         final UsageViewPresentation presentation =
           FindInProjectUtil.setupViewPresentation(findSettings.isShowResultsInSeparateView(), /*findModel*/myHelper.getModel().clone());
         final boolean showPanelIfOnlyOneUsage = !findSettings.isSkipResultsWithOneUsage();
 
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-        Ref<VirtualFile> lastUsageFileRef = new Ref<>();
+        ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
+        ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 
         FindInProjectUtil.findUsages(myHelper.getModel().clone(), myProject, info -> {
           if(isCancelled()) {
+            onStop(hash);
             return false;
           }
           final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
@@ -824,17 +857,35 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             resultsFilesCount.incrementAndGet();
             lastUsageFileRef.set(usageFile);
           }
+          final boolean merged;
+          Usage recent = recentUsageRef.get();
+          UsageInfo2UsageAdapter recentAdapter =
+            recent != null && recent instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)recent : null;
+          UsageInfo2UsageAdapter currentAdapter = usage instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)usage : null;
+          if (currentAdapter != null && recentAdapter != null) {
+            merged = recentAdapter.merge(currentAdapter);
+          } else {
+            merged = false;
+          }
+          if (!merged) {
+            recentUsageRef.set(usage);
+          }
+
 
           ApplicationManager.getApplication().invokeLater(() -> {
-            if(isCancelled()) {
+            if (isCancelled()) {
+              onStop(hash);
               return;
             }
-            model.addRow(new Object[]{usage});
+            if (!merged) {
+              model.addRow(new Object[]{usage});
+            } else {
+              model.fireTableRowsUpdated(model.getRowCount() - 1, model.getRowCount() - 1);
+            }
             myCodePreviewComponent.setVisible(true);
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
-
             int occurrences = resultsCount.get();
             int filesWithOccurrences = resultsFilesCount.get();
             if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -857,8 +908,19 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             mySearchTextArea.setInfoText(stringBuilder.toString());
           }, state);
 
-          return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
+          boolean continueSearch = resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
+          if (!continueSearch) {
+            onStop(hash);
+          }
+          return continueSearch;
         }, processPresentation, filesToScanInitially);
+
+        return new Continuation(() -> {
+          if (!isCancelled()) {
+            if (resultsCount.get() == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+          }
+          onStop(hash);
+        }, state);
       }
 
       boolean isCancelled() {
@@ -871,6 +933,21 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
           scheduleResultsUpdate();
         }
       }
+    });
+  }
+
+  private void onStart(int hash) {
+    myLoadingHash = hash;
+    myLoadingDecorator.startLoading(false);
+  }
+
+
+  private void onStop(int hash) {
+    if (hash != myLoadingHash) {
+      return;
+    }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myLoadingDecorator.stopLoading();
     });
   }
 
@@ -1056,7 +1133,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     }
   }
 
-  private class MySelectScopeToggleAction extends ToggleAction implements CustomComponentAction {
+  private class MySelectScopeToggleAction extends ToggleAction {
     private final FindPopupScopeUI.ScopeType myScope;
 
     public MySelectScopeToggleAction(FindPopupScopeUI.ScopeType scope) {
@@ -1064,11 +1141,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       getTemplatePresentation().setHoveredIcon(scope.icon);
       getTemplatePresentation().setDisabledIcon(scope.icon);
       myScope = scope;
-    }
-
-    @Override
-    public JComponent createCustomComponent(Presentation presentation) {
-      return new ActionButtonWithText(this, presentation, ActionPlaces.EDITOR_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     @Override

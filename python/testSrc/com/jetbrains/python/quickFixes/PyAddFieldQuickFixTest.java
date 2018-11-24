@@ -21,9 +21,6 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/AddFieldQuickFixTest/")
 public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
 

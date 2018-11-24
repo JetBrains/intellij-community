@@ -19,6 +19,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -31,9 +32,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.project.rootManager
 import com.intellij.util.PlatformUtils
-import com.intellij.util.containers.computeOrNull
+import com.intellij.util.containers.computeIfAny
 
 internal data class SuitableRoot(val file: VirtualFile, val moduleQualifier: String?) 
 
@@ -50,7 +50,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         if (module != null && !module.isDisposed) {
           effectivePath = effectivePath.substring(index + 1)
           val resolver = pathToFileManager.getResolver(effectivePath)
-          val result = RootProvider.values().computeOrNull { findByRelativePath(effectivePath, it.getRoots(module.rootManager), resolver, moduleName, pathQuery) }
+          val result = RootProvider.values().computeIfAny { findByRelativePath(effectivePath, it.getRoots(module.rootManager), resolver, moduleName, pathQuery) }
             ?: findInModuleLibraries(effectivePath, module, resolver, pathQuery)
           if (result != null) {
             return result
@@ -134,7 +134,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       val directoryIndex = DirectoryIndex.getInstance(project)
       val info = directoryIndex.getInfoForFile(file)
       // we serve excluded files
-      if (!info.isExcluded && !info.isInProject) {
+      if (!info.isExcluded(file) && !info.isInProject(file)) {
         // javadoc jars is "not under project", but actually is, so, let's check library or SDK
         if (file.fileSystem == JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
       }
@@ -156,7 +156,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
           }
         }
         else {
-          isLibrary = info.isInLibrarySource
+          isLibrary = info.isInLibrarySource(file)
           isRootNameOptionalInPath = !isLibrary
         }
 
@@ -215,7 +215,7 @@ private fun findInModuleLibraries(path: String, module: Module, resolver: FileRe
 
   val libraryFileName = path.substring(0, index)
   val relativePath = path.substring(index + 1)
-  return ORDER_ROOT_TYPES.computeOrNull {
+  return ORDER_ROOT_TYPES.computeIfAny {
     findInModuleLevelLibraries(module, it) { root, module ->
       if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true, pathQuery = pathQuery) else null
     }
@@ -249,30 +249,30 @@ internal fun getModuleNameQualifier(project: Project, module: Module?): String? 
   return null
 }
 
-private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?, pathQuery: PathQuery) = roots.computeOrNull { resolver.resolve(path, it, moduleName, pathQuery = pathQuery) }
+private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?, pathQuery: PathQuery) = roots.computeIfAny { resolver.resolve(path, it, moduleName, pathQuery = pathQuery) }
 
 private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootType>, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
-  fun findInLibraryTable(table: LibraryTable, rootType: OrderRootType) = table.libraryIterator.computeOrNull { it.getFiles(rootType).computeOrNull { fileProcessor(it, null) } }
+  fun findInLibraryTable(table: LibraryTable, rootType: OrderRootType) = table.libraryIterator.computeIfAny { it.getFiles(rootType).computeIfAny { fileProcessor(it, null) } }
 
   fun findInProjectSdkOrInAll(rootType: OrderRootType): PathInfo? {
-    val inSdkFinder = { sdk: Sdk -> sdk.rootProvider.getFiles(rootType).computeOrNull { fileProcessor(it, null) } }
+    val inSdkFinder = { sdk: Sdk -> sdk.rootProvider.getFiles(rootType).computeIfAny { fileProcessor(it, null) } }
 
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-    return projectSdk?.let(inSdkFinder) ?: ProjectJdkTable.getInstance().allJdks.computeOrNull { if (it === projectSdk) null else inSdkFinder(it) }
+    return projectSdk?.let(inSdkFinder) ?: ProjectJdkTable.getInstance().allJdks.computeIfAny { if (it === projectSdk) null else inSdkFinder(it) }
   }
 
-  return rootTypes.computeOrNull { rootType ->
+  return rootTypes.computeIfAny { rootType ->
     runReadAction {
       findInLibraryTable(LibraryTablesRegistrar.getInstance().getLibraryTable(project), rootType)
         ?: findInProjectSdkOrInAll(rootType)
-        ?: ModuleManager.getInstance(project).modules.computeOrNull { if (it.isDisposed) null else findInModuleLevelLibraries(it, rootType, fileProcessor) }
+        ?: ModuleManager.getInstance(project).modules.computeIfAny { if (it.isDisposed) null else findInModuleLevelLibraries(it, rootType, fileProcessor) }
         ?: findInLibraryTable(LibraryTablesRegistrar.getInstance().libraryTable, rootType)
     }
   }
 }
 
 private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
-  return module.rootManager.orderEntries.computeOrNull {
-    if (it is LibraryOrderEntry && it.isModuleLevel) it.getFiles(rootType).computeOrNull { fileProcessor(it, module) } else null
+  return module.rootManager.orderEntries.computeIfAny {
+    if (it is LibraryOrderEntry && it.isModuleLevel) it.getFiles(rootType).computeIfAny { fileProcessor(it, module) } else null
   }
 }

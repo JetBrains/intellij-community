@@ -169,9 +169,9 @@ public class UsageViewImpl implements UsageView {
   private Usage myOriginUsage;
 
   public UsageViewImpl(@NotNull final Project project,
-                @NotNull UsageViewPresentation presentation,
-                @NotNull UsageTarget[] targets,
-                Factory<UsageSearcher> usageSearcherFactory) {
+                       @NotNull UsageViewPresentation presentation,
+                       @NotNull UsageTarget[] targets,
+                       Factory<UsageSearcher> usageSearcherFactory) {
     // fire events every 50 ms, not more often to batch requests
     myFireEventsFuture = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::fireEvents, 50, 50, TimeUnit.MILLISECONDS);
     Disposer.register(this, ()-> myFireEventsFuture.cancel(false));
@@ -1108,7 +1108,7 @@ public class UsageViewImpl implements UsageView {
         DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
         for (UsageNode node : nodes) {
           MutableTreeNode parent = (MutableTreeNode)node.getParent();
-          int childIndex = parent.getIndex(node);
+          int childIndex = parent == null ? -1 : parent.getIndex(node);
           if (childIndex != -1) {
             parent.remove(childIndex);
           }
@@ -1286,7 +1286,7 @@ public class UsageViewImpl implements UsageView {
     return mySearchInProgress;
   }
 
-  void setSearchInProgress(boolean searchInProgress) {
+  public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
@@ -1702,9 +1702,10 @@ public class UsageViewImpl implements UsageView {
       }
 
       else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
-        final Set<Usage> usages = getSelectedUsages();
-        Usage[] ua = usages != null ? usages.toArray(new Usage[usages.size()]) : null;
-        VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, getSelectedUsageTargets());
+        final Set<Usage> usages = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsages() : null;
+        Usage[] ua = usages == null ? null : usages.toArray(new Usage[usages.size()]);
+        UsageTarget[] usageTargets = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsageTargets() : null;
+        VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, usageTargets);
         sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, data);
       }
       else if (key == PlatformDataKeys.HELP_ID) {
@@ -1874,7 +1875,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   @TestOnly
-  public String getNodeText(TreeNode node) {
+  String getNodeText(@NotNull TreeNode node) {
     return myUsageViewTreeCellRenderer.getPlainTextForNode(node);
   }
 

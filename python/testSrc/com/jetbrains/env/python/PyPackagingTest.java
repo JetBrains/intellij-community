@@ -117,7 +117,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final List<PyPackage> packages1 = manager.refreshAndGetPackages(false);
           // TODO: Install Markdown from a local file
           manager.install(list(PyRequirement.fromLine("Markdown<2.2"),
-                               new PyRequirement("httplib2")), Collections.<String>emptyList());
+                               new PyRequirement("httplib2")), Collections.emptyList());
           final List<PyPackage> packages2 = manager.refreshAndGetPackages(false);
           final PyPackage markdown2 = findPackage("Markdown", packages2);
           assertNotNull(markdown2);

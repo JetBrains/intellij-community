@@ -18,9 +18,6 @@ package com.intellij.internal.inspector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
-/**
- * Created by jetbrains on 19/08/16.
- */
 public interface UiDropperActionExtension {
 
   ExtensionPointName<UiDropperActionExtension> EP_NAME = ExtensionPointName.create("com.intellij.uiDropperActions");

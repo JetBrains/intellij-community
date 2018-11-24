@@ -84,6 +84,8 @@
             text="Switch Task Description Panel">
     </action>
 
+    <action id="Edu.UpdateRecommendation" class="com.jetbrains.edu.learning.actions.StudyUpdateRecommendationAction"/>
+
     <!--course creator-->
     <action id="CreateLesson" class="com.jetbrains.edu.coursecreator.actions.CCCreateLesson">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
@@ -146,6 +148,10 @@
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
     <action id="GetCourse" class="com.jetbrains.edu.coursecreator.actions.stepik.CCGetCourseFromStepic"/>
 
+    <action id="Edu.StartCourse" class="com.jetbrains.edu.learning.newproject.EduBrowseCoursesAction">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+      <add-to-group group-id="FileMenu" anchor="first"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

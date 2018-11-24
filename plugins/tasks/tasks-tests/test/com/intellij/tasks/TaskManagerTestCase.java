@@ -46,7 +46,7 @@ public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCas
   @Override
   protected void tearDown() throws Exception {
     try {
-      myTaskManager.setRepositories(Collections.<TaskRepository>emptyList());
+      myTaskManager.setRepositories(Collections.emptyList());
       removeAllTasks();
     }
     finally {

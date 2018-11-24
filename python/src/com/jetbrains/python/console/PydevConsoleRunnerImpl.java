@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
@@ -39,6 +38,7 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -207,6 +207,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Help
     actions.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
 
+    actions.add(new SoftWrapAction());
+
     toolbarActions.addAll(actions);
 
 
@@ -286,12 +288,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           }
           catch (final Exception e) {
             LOG.warn("Error running console", e);
-            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                showErrorsInConsole(e);
-              }
-            });
+            UIUtil.invokeAndWaitIfNeeded((Runnable)() -> showErrorsInConsole(e));
           }
         }
       }));
@@ -301,7 +298,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(createRerunAction());
 
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunnerErrors",
                                                                                         actionGroup, false);
 
     // Runner creating
@@ -614,7 +611,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   protected void createContentDescriptorAndActions() {
     // Runner creating
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", toolbarActions, false);
 
     // Runner creating
     final JPanel panel = new JPanel(new BorderLayout());
@@ -778,6 +775,33 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     };
     stopAction.copyFrom(generalStopAction);
     return stopAction;
+  }
+
+  private class SoftWrapAction extends ToggleAction implements DumbAware {
+    private boolean isSelected = myConsoleSettings.isUseSoftWraps();
+
+    SoftWrapAction() {
+      super(ActionsBundle.actionText("EditorToggleUseSoftWraps"), ActionsBundle.actionDescription("EditorToggleUseSoftWraps"),
+            AllIcons.Actions.ToggleSoftWrap);
+      updateEditors();
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return isSelected;
+    }
+
+    private void updateEditors() {
+      myConsoleView.getEditor().getSettings().setUseSoftWraps(isSelected);
+      myConsoleView.getConsoleEditor().getSettings().setUseSoftWraps(isSelected);
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      isSelected = state;
+      updateEditors();
+      myConsoleSettings.setUseSoftWraps(isSelected);
+    }
   }
 
   private AnAction createCloseAction(final RunContentDescriptor descriptor) {

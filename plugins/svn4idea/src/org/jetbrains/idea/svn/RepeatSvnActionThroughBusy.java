@@ -23,12 +23,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/29/12
- * Time: 3:45 PM
- */
 public abstract class RepeatSvnActionThroughBusy {
   public static final int REPEAT = 10;
 

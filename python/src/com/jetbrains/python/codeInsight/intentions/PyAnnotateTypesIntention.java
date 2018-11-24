@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
@@ -63,12 +62,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
 
-    if (resolvesToFunction(elementAt, new Function<PyFunction, Boolean>() {
-      @Override
-      public Boolean apply(PyFunction input) {
-        return true;
-      }
-    })) {
+    if (resolvesToFunction(elementAt, input -> true)) {
       updateText();
       return true;
     }

@@ -19,7 +19,6 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Filter for lexical nodes
@@ -37,7 +36,8 @@ public final class LexicalNodesFilter implements NodeFilter {
   }
 
   @Override
-  public boolean accepts(@NotNull PsiElement element) {
+  public boolean accepts(PsiElement element) {
+    if (element == null) return false;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     return profile != null && profile.getLexicalNodesFilter().accepts(element);
   }

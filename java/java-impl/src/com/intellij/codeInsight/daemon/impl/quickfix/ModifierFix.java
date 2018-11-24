@@ -125,7 +125,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
            (variable == null || variable.isValid());
   }
 
-  private void changeModifierList (PsiModifierList modifierList) {
+  private void changeModifierList (@NotNull PsiModifierList modifierList) {
     try {
       modifierList.setModifierProperty(myModifier, myShouldHave);
     }
@@ -205,7 +205,10 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
           final PsiMethod method = (PsiMethod)owner;
           final PsiClass aClass = method.getContainingClass();
           if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            changeModifierList(aClass.getModifierList());
+            PsiModifierList classModifierList = aClass.getModifierList();
+            if (classModifierList != null) {
+              changeModifierList(classModifierList);
+            }
           }
         }
         else if (PsiModifier.PUBLIC.equals(myModifier) &&

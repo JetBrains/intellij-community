@@ -40,12 +40,6 @@ import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 12/3/12
- * Time: 1:28 PM
- */
 public class SvnRollbackTest extends Svn17TestCase {
 
   private VcsDirtyScopeManager myDirtyScopeManager;

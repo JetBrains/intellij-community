@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn16;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -23,15 +24,11 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 12/6/11
- * Time: 3:27 PM
- * To change this template use File | Settings | File Templates.
- */
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
 public class MultipleRefreshesTest {
+  private static final Logger LOG = getInstance(MultipleRefreshesTest.class);
 
   private SvnChangesCorrectlyRefreshedTest myTest;
 
@@ -55,7 +52,7 @@ public class MultipleRefreshesTest {
   }
 
   public MultipleRefreshesTest(int cnt) {
-    ChangeListManagerImpl.LOG.info("TEST " + cnt);
+    LOG.info("TEST " + cnt);
     myTest = new SvnChangesCorrectlyRefreshedTest();
   }
 

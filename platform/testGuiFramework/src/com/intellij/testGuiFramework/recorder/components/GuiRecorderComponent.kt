@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.recorder.components
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorFrame
+import java.util.concurrent.Future
 
 /**
  * @author Sergey Karashevich
@@ -33,6 +34,8 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
 
   private var myFrame: GuiScriptEditorFrame? = null
 
+  private var currentTask: Future<*>? = null
+
   override fun getComponentName() = "GuiRecorderComponent"
 
   override fun disposeComponent() {
@@ -41,6 +44,12 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
 
   override fun initComponent() {
 
+  }
+
+  fun setCurrentTask(task: Future<*>) { currentTask = task }
+
+  fun cancelCurrentTask() {
+    if (currentTask != null && !currentTask!!.isDone) currentTask!!.cancel(true)
   }
 
   fun getState() = myState

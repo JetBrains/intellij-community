@@ -15,8 +15,8 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.AtomicClearableLazyValue
 import com.intellij.util.containers.mapSmartNotNull
@@ -37,7 +37,7 @@ class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Pat
       }
 
       return icsManager.settings.readOnlySources.mapSmartNotNull { source ->
-        LOG.catchAndLog {
+        LOG.runAndLogException {
           if (!source.active) {
             return@mapSmartNotNull null
           }

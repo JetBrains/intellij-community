@@ -53,17 +53,6 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
   }
 
   @Override
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    if (value == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
-      Object previousElement = index > 0 ? list.getModel().getElementAt(index - 1) : null;
-      return ChooseByNameBase.renderNonPrefixSeparatorComponent(getBackgroundColor(previousElement));
-    }
-    else {
-      return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
-  }
-
-  @Override
   protected String getContainerText(PsiFileSystemItem element, String name) {
     PsiFileSystemItem parent = element.getParent();
     final PsiDirectory psiDirectory = parent instanceof PsiDirectory ? (PsiDirectory)parent : null;

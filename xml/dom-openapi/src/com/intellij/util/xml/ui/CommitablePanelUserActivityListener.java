@@ -24,9 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.util.Alarm;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class CommitablePanelUserActivityListener implements UserActivityListener, Disposable {
   private final Committable myPanel;
   private final Project myProject;

@@ -1209,7 +1209,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
   }
 
-  private class EditorListener extends CaretAdapter implements SelectionListener, DocumentListener {
+  private class EditorListener implements SelectionListener, DocumentListener, CaretListener {
     @Override
     public void caretPositionChanged(CaretEvent e) {
       if (!available() || myEditor.getSelectionModel().hasSelection()) return;
@@ -1267,10 +1267,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       return myLastParsedTextHashCode == myNewDocumentHashCode && myEditor.getContentComponent().hasFocus();
     }
 
-    @Override
-    public void beforeDocumentChange(DocumentEvent event) {
-
-    }
     @Override
     public void documentChanged(DocumentEvent event) {
       myNewDocumentHashCode = event.getDocument().getText().hashCode();

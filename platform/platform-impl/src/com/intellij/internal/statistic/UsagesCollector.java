@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -64,7 +65,7 @@ public abstract class UsagesCollector {
         GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
         if (!disabledGroups.contains(groupDescriptor.getId())) {
           try {
-            usageDescriptors.put(groupDescriptor, usagesCollector.getUsages());
+            usageDescriptors.merge(groupDescriptor, usagesCollector.getUsages(), ContainerUtil::union);
           }
           catch (CollectUsagesException e) {
             LOG.info(e);

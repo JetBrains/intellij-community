@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.intentions
 
+import groovy.transform.CompileStatic
+
 /**
  * @author Max Medvedev
  */
+@CompileStatic
 class GrAliasImportTest extends GrIntentionTestCase {
   GrAliasImportTest() {
     super(GroovyIntentionsBundle.message("gr.alias.import.intention.name"))
@@ -117,4 +120,23 @@ print setAliased(2)
 ''')
   }
 
+  void 'test on non-static import'() {
+    doAntiTest 'impor<caret>t java.lang.String'
+  }
+
+  void 'test on star import'() {
+    doAntiTest 'impor<caret>t static java.lang.String.*'
+  }
+
+  void 'test on aliased import'() {
+    doAntiTest 'impor<caret>t static java.lang.String.valueOf as alreadyAliased'
+  }
+
+  void 'test on import without reference'() {
+    doAntiTest 'impor<caret>t static '
+  }
+
+  void 'test on unresolved import'() {
+    doAntiTest 'impor<caret>t static foo.bar.Baz'
+  }
 }

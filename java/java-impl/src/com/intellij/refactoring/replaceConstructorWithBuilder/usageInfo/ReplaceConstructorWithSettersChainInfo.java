@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 02-Feb-2009
- */
 package com.intellij.refactoring.replaceConstructorWithBuilder.usageInfo;
 
 import com.intellij.openapi.util.Comparing;

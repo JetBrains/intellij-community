@@ -30,9 +30,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
- * User: anna
- */
 public class JavaFxScopeEnlarger extends UseScopeEnlarger {
   @Nullable
   @Override

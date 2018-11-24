@@ -26,12 +26,6 @@ import com.intellij.util.Consumer;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/28/12
- * Time: 6:06 PM
- */
 public class TodoForBaseRevision extends TodoForRanges {
   private final Getter<Object> myGetter;
   private final Consumer<Object> mySaver;

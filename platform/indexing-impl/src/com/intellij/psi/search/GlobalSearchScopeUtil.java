@@ -15,9 +15,8 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,29 +33,22 @@ public class GlobalSearchScopeUtil {
     if (scope instanceof GlobalSearchScope) {
       return (GlobalSearchScope)scope;
     }
-    return ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      @Override
-      public GlobalSearchScope compute() {
-        return GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope));
-      }
-    });
+    return ReadAction
+      .compute(() -> GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope)));
   }
 
   @NotNull
   public static Set<VirtualFile> getLocalScopeFiles(@NotNull final LocalSearchScope scope) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Set<VirtualFile>>() {
-      @Override
-      public Set<VirtualFile> compute() {
-        Set<VirtualFile> files = new LinkedHashSet<>();
-        for (PsiElement element : scope.getScope()) {
-          PsiFile file = element.getContainingFile();
-          if (file != null) {
-            ContainerUtil.addIfNotNull(files, file.getVirtualFile());
-            ContainerUtil.addIfNotNull(files, file.getNavigationElement().getContainingFile().getVirtualFile());
-          }
+    return ReadAction.compute(() -> {
+      Set<VirtualFile> files = new LinkedHashSet<>();
+      for (PsiElement element : scope.getScope()) {
+        PsiFile file = element.getContainingFile();
+        if (file != null) {
+          ContainerUtil.addIfNotNull(files, file.getVirtualFile());
+          ContainerUtil.addIfNotNull(files, file.getNavigationElement().getContainingFile().getVirtualFile());
         }
-        return files;
       }
+      return files;
     });
   }
 }

@@ -72,7 +72,7 @@ public class GroovyFacetUtil {
 
   public static File getBundledGroovyJar() {
     final File[] groovyJars = LibrariesUtil.getFilesInDirectoryByPattern(getLibDirectory(), GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
-    assert groovyJars.length == 1;
+    assert groovyJars.length == 1 : groovyJars;
     return groovyJars[0];
   }
 

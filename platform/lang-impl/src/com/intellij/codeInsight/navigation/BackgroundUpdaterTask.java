@@ -38,9 +38,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * User: anna
- */
 public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected AbstractPopup myPopup;
   protected T myComponent;
@@ -143,6 +140,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
+    myFinished = true;
     refreshModelImmediately();
     paintBusy(false);
   }

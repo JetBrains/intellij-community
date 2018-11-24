@@ -21,12 +21,6 @@ import com.intellij.openapi.ui.Splitter;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/12/11
- * Time: 12:05 PM
- */
 public class HorizontalDiffSplitter extends Splitter implements DiffSplitterI {
   public HorizontalDiffSplitter(final JComponent first, final JComponent second) {
     super(true);

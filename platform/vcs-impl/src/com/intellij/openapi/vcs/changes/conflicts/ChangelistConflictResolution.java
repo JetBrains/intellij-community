@@ -86,6 +86,6 @@ public enum ChangelistConflictResolution {
   public abstract boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected);
 
   private static ChangeListManagerImpl getManager(Project project) {
-    return (ChangeListManagerImpl)ChangeListManager.getInstance(project);
+    return ChangeListManagerImpl.getInstanceImpl(project);
   }
 }

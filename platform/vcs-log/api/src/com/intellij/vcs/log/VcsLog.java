@@ -63,7 +63,7 @@ public interface VcsLog {
   void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer);
 
   /**
-   * Returns names of branches which contain the given commit, or null if this information is unavailable.
+   * Returns names of branches which contain the given commit, or null if this information is unavailable yet.
    */
   @Nullable
   Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root);

@@ -459,7 +459,20 @@ public class FunctionExprent extends Exprent {
         .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
     }
 
+      // try to determine more accurate type for 'char' literals
     if (funcType >= FUNCTION_EQ) {
+      if (funcType <= FUNCTION_LE) {
+        Exprent left = lstOperands.get(0);
+        Exprent right = lstOperands.get(1);
+
+        if (right.type == EXPRENT_CONST) {
+          ((ConstExprent) right).adjustConstType(left.getExprType());
+        }
+        else if (left.type == EXPRENT_CONST) {
+          ((ConstExprent) left).adjustConstType(right.getExprType());
+        }
+      }
+
       return wrapOperandString(lstOperands.get(0), false, indent, tracer)
         .append(OPERATORS[funcType - FUNCTION_EQ + 11])
         .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));

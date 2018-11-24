@@ -17,14 +17,17 @@ package com.intellij.testGuiFramework.generators
 
 import com.intellij.framework.PresentableVersion
 import com.intellij.ide.plugins.PluginTable
+import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
@@ -34,13 +37,15 @@ import com.intellij.platform.ProjectTemplate
 import com.intellij.testGuiFramework.fixtures.MessageDialogFixture
 import com.intellij.testGuiFramework.fixtures.MessagesFixture
 import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.Utils.clicks
 import com.intellij.testGuiFramework.generators.Utils.convertSimpleTreeItemToPath
-import com.intellij.testGuiFramework.generators.Utils.getBoundedLabelForComboBox
+import com.intellij.testGuiFramework.generators.Utils.getBoundedLabel
 import com.intellij.testGuiFramework.generators.Utils.getCellText
 import com.intellij.testGuiFramework.generators.Utils.getJTreePath
-import com.intellij.testGuiFramework.generators.Utils.getLabel
+import com.intellij.testGuiFramework.generators.Utils.getJTreePathItemsString
+import com.intellij.testGuiFramework.generators.Utils.withRobot
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
@@ -54,6 +59,7 @@ import org.fest.reflect.core.Reflection.field
 import org.fest.swing.core.BasicRobot
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
+import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import java.awt.Component
 import java.awt.Container
@@ -88,17 +94,26 @@ class JButtonGenerator : ComponentCodeGenerator<JButton> {
 
 class ActionButtonGenerator : ComponentCodeGenerator<ActionButton> {
   override fun accept(cmp: Component) = cmp is ActionButton
-  override fun generate(cmp: ActionButton, me: MouseEvent, cp: Point) = "actionButton(\"${cmp.action.templatePresentation.text}\").click()"
+  override fun generate(cmp: ActionButton, me: MouseEvent, cp: Point) : String {
+    val text = cmp.action.templatePresentation.text
+    val simpleClassName = cmp.action.javaClass.simpleName
+    val result: String =  if (text.isNullOrEmpty())
+      "actionButtonByClass(\"$simpleClassName\").click()"
+    else
+      "actionButton(\"$text\").click()"
+    return result
+  }
 }
 
 class ActionLinkGenerator : ComponentCodeGenerator<ActionLink> {
+  override fun priority(): Int = 1
   override fun accept(cmp: Component) = cmp is ActionLink
   override fun generate(cmp: ActionLink, me: MouseEvent, cp: Point) = "actionLink(\"${cmp.text}\").click()"
 }
 
 class JTextFieldGenerator : ComponentCodeGenerator<JTextField> {
   override fun accept(cmp: Component) = cmp is JTextField
-  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = "textfield(\"${getLabel(cmp)?.text.orEmpty()}\").${clicks(
+  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = "textfield(\"${getBoundedLabel(3, cmp).text.orEmpty()}\").${clicks(
     me)}"
 }
 
@@ -111,6 +126,7 @@ class JBListGenerator : ComponentCodeGenerator<JBList<*>> {
     val cellText = getCellText(cmp, cp).orEmpty()
     if (cmp.isPopupList()) return "popupClick(\"$cellText\")"
     if (me.button == MouseEvent.BUTTON2) return "jList(\"$cellText\").item(\"$cellText\").rightClick()"
+    if (me.clickCount == 2) return "jList(\"$cellText\").doubleClickItem(\"$cellText\")"
     return "jList(\"$cellText\").clickItem(\"$cellText\")"
   }
 }
@@ -152,7 +168,7 @@ class JCheckBoxGenerator : ComponentCodeGenerator<JCheckBox> {
 
 class JComboBoxGenerator : ComponentCodeGenerator<JComboBox<*>> {
   override fun accept(cmp: Component) = cmp is JComboBox<*>
-  override fun generate(cmp: JComboBox<*>, me: MouseEvent, cp: Point) = "combobox(\"${getBoundedLabelForComboBox(cmp).text}\")"
+  override fun generate(cmp: JComboBox<*>, me: MouseEvent, cp: Point) = "combobox(\"${getBoundedLabel(3, cmp).text}\")"
 }
 
 class BasicArrowButtonDelegatedGenerator : ComponentCodeGenerator<BasicArrowButton> {
@@ -169,7 +185,7 @@ class JRadioButtonGenerator : ComponentCodeGenerator<JRadioButton> {
 
 class LinkLabelGenerator : ComponentCodeGenerator<LinkLabel<*>> {
   override fun accept(cmp: Component) = cmp is LinkLabel<*>
-  override fun generate(cmp: LinkLabel<*>, me: MouseEvent, cp: Point) = "radioButton(\"${cmp.text}\").select()"
+  override fun generate(cmp: LinkLabel<*>, me: MouseEvent, cp: Point) = "linkLabel(\"${cmp.text}\").click()"
 }
 
 class JTreeGenerator : ComponentCodeGenerator<JTree> {
@@ -177,8 +193,20 @@ class JTreeGenerator : ComponentCodeGenerator<JTree> {
   private fun JTree.getPath(cp: Point) = this.getClosestPathForLocation(cp.x, cp.y)
   override fun generate(cmp: JTree, me: MouseEvent, cp: Point): String {
     val path = getJTreePath(cmp, cmp.getPath(cp))
-    if (me.isRightButton()) return "jTree(\"$path\").rightClickPath(\"$path\")"
-    return "jTree(\"$path\").clickPath(\"$path\")"
+    if (me.isRightButton()) return "jTree($path).rightClickPath($path)"
+    return "jTree($path).clickPath($path)"
+  }
+}
+
+class ProjectViewTreeGenerator : ComponentCodeGenerator<ProjectViewTree> {
+  override fun priority() = 1
+  override fun accept(cmp: Component) = cmp is ProjectViewTree
+  private fun JTree.getPath(cp: Point) = this.getClosestPathForLocation(cp.x, cp.y)
+  override fun generate(cmp: ProjectViewTree, me: MouseEvent, cp: Point): String {
+    val path = getJTreePathItemsString(cmp, cmp.getPath(cp))
+    if (me.isRightButton()) return "path($path).rightClick()"
+    if (me.clickCount == 2) return "path($path).doubleClick()"
+    return "path($path).click()"
   }
 }
 
@@ -242,16 +270,16 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
   }
 
   private fun JWindow.findJBPopupMenu(jbPopupHashSet: MutableSet<Int>): JBPopupMenu {
-    val robot = BasicRobot.robotWithCurrentAwtHierarchy()
-    val resultJBPopupMenu = robot.finder().find(this, ComponentMatcher { component ->
-      (component is JBPopupMenu)
-      && component.isShowing
-      && component.isVisible
-      && !jbPopupHashSet.contains(component.hashCode())
-    }) as JBPopupMenu
-    jbPopupHashSet.add(resultJBPopupMenu.hashCode())
-    robot.cleanUpWithoutDisposingWindows()
-    return resultJBPopupMenu
+    return withRobot { robot ->
+      val resultJBPopupMenu = robot.finder().find(this, ComponentMatcher { component ->
+        (component is JBPopupMenu)
+        && component.isShowing
+        && component.isVisible
+        && !jbPopupHashSet.contains(component.hashCode())
+      }) as JBPopupMenu
+      jbPopupHashSet.add(resultJBPopupMenu.hashCode())
+      resultJBPopupMenu
+    }
   }
 
   private fun JBPopupMenu.findParentActionMenu(jbPopupHashSet: MutableSet<Int>): String {
@@ -294,50 +322,11 @@ class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
   override fun generate(cmp: JFrame, me: MouseEvent, cp: Point) = "ideFrame {"
 }
 
-class MacMessageGenerator : ComponentCodeGenerator<JDialog> {
-
-  override fun priority() = 1
-
-  override fun accept(cmp: Component): Boolean {
-    if (!(Messages.canShowMacSheetPanel() && (cmp as JComponent).rootPane.parent is JDialog)) return false
-    val panel = cmp.rootPane.contentPane as JPanel
-
-    if (panel.javaClass.name.startsWith(SheetController::class.java.name) && panel.isShowing()) {
-      val controller = MessagesFixture.findSheetController(panel)
-      val sheetPanel = field("mySheetPanel").ofType(JPanel::class.java).`in`(controller).get()
-      if (sheetPanel === panel) {
-        return true
-      }
-    }
-    return false
-  }
-
-  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
-    val panel = cmp.rootPane.contentPane as JPanel
-    val myRobot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    val title = MessagesFixture.getTitle(panel, myRobot)
-    myRobot.cleanUpWithoutDisposingWindows()
-    return "message(\"$title\") {"
-  }
-}
-
-class MessageGenerator : ComponentCodeGenerator<JDialog> {
-
-  override fun priority() = 1
-
-  override fun accept(cmp: Component): Boolean =
-    cmp is JDialog && MessageDialogFixture.isMessageDialog(cmp, Ref<DialogWrapper>())
-
-  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
-    return "message(\"${cmp.title}\") {"
-  }
-}
-
 //**********LOCAL CONTEXT GENERATORS**********
 
 class ProjectViewGenerator : LocalContextCodeGenerator<JPanel>() {
 
-  override fun priority() = 1
+  override fun priority() = 2
   override fun acceptor(): (Component) -> Boolean = { component -> component.javaClass.name.endsWith("ProjectViewImpl\$MyPanel") }
   override fun generate(cmp: JPanel, me: MouseEvent, cp: Point) = "projectView {"
 
@@ -430,6 +419,47 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
 
 }
 
+class MacMessageGenerator : LocalContextCodeGenerator<JDialog>() {
+
+  override fun priority() = 2
+
+  private fun acceptMacSheetPanel(cmp: Component): Boolean {
+    if (cmp !is JComponent) return false
+    if (!(Messages.canShowMacSheetPanel() && (cmp as JComponent).rootPane.parent is JDialog)) return false
+    val panel = cmp.rootPane.contentPane as JPanel
+
+    if (panel.javaClass.name.startsWith(SheetController::class.java.name) && panel.isShowing()) {
+      val controller = MessagesFixture.findSheetController(panel)
+      val sheetPanel = field("mySheetPanel").ofType(JPanel::class.java).`in`(controller).get()
+      if (sheetPanel === panel) {
+        return true
+      }
+    }
+    return false
+  }
+
+  override fun acceptor(): (Component) -> Boolean = { component -> acceptMacSheetPanel(component) }
+
+  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
+    val panel = cmp.rootPane.contentPane as JPanel
+    val title = withRobot { robot -> MessagesFixture.getTitle(panel, robot) }
+    return "message(\"$title\") {"
+  }
+}
+
+class MessageGenerator : LocalContextCodeGenerator<JDialog>() {
+
+  override fun priority() = 2
+
+  override fun acceptor(): (Component) -> Boolean = { cmp ->
+    cmp is JDialog && MessageDialogFixture.isMessageDialog(cmp, Ref<DialogWrapper>())
+  }
+
+  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
+    return "message(\"${cmp.title}\") {"
+  }
+}
+
 class EditorGenerator : LocalContextCodeGenerator<EditorComponentImpl>() {
 
   override fun acceptor(): (Component) -> Boolean = { component -> component is EditorComponentImpl }
@@ -493,14 +523,12 @@ object Generators {
 object Utils {
 
   fun getLabel(container: Container, jTextField: JTextField): JLabel? {
-    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    return GuiTestUtil.findBoundedLabel(container, jTextField, robot)
+    return withRobot { robot -> GuiTestUtil.findBoundedLabel(container, jTextField, robot) }
   }
 
   fun getLabel(jTextField: JTextField): JLabel? {
     val parentContainer = jTextField.rootPane.parent
-    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    return GuiTestUtil.findBoundedLabel(parentContainer, jTextField, robot)
+    return withRobot { robot -> GuiTestUtil.findBoundedLabel(parentContainer, jTextField, robot) }
   }
 
   fun clicks(me: MouseEvent): String {
@@ -517,7 +545,14 @@ object Utils {
       when (elementAt) {
         is PopupFactoryImpl.ActionItem -> return elementAt.text
         is ProjectTemplate -> return elementAt.name
-        else -> return elementAt.toString()
+        else -> {
+          val listCellRendererComponent = GuiTestUtil.getListCellRendererComponent(jbList, elementAt, index) as JComponent
+          if (listCellRendererComponent is JPanel) {
+            val labels = withRobot { robot -> robot.finder().findAll(listCellRendererComponent, ComponentMatcher { it is JLabel }) }
+            return labels.filterIsInstance(JLabel::class.java).filter { it.text.isNotEmpty() }.firstOrNull()?.text
+          }
+          return elementAt.toString()
+        }
       }
     }
     return null
@@ -528,6 +563,7 @@ object Utils {
     val cellBounds = jList.getCellBounds(index, index)
     if (cellBounds.contains(pointOnList)) {
       val elementAt = jList.model.getElementAt(index)
+      val listCellRendererComponent = GuiTestUtil.getListCellRendererComponent(jList, elementAt, index)
       when (elementAt) {
         is PopupFactoryImpl.ActionItem -> return elementAt.text
         is ProjectTemplate -> return elementAt.name
@@ -537,7 +573,16 @@ object Utils {
           val name = getNameMethod.invoke(elementAt)
           return name as String
         }
-        else -> return elementAt.toString()
+        else -> {
+          if (listCellRendererComponent is JPanel) {
+            if (!listCellRendererComponent.components.isEmpty() && listCellRendererComponent.components[0] is JLabel)
+              return (listCellRendererComponent.components[0] as JLabel).text
+          }
+          else
+            if (listCellRendererComponent is JLabel)
+              return listCellRendererComponent.text
+          return elementAt.toString()
+        }
       }
     }
     return null
@@ -546,7 +591,7 @@ object Utils {
   fun convertSimpleTreeItemToPath(tree: SimpleTree, itemName: String): String {
     val searchableNodeRef = Ref.create<TreeNode>();
     val searchableNode: TreeNode?
-    TreeUtil.traverse(tree.getModel().getRoot() as TreeNode) { node ->
+    TreeUtil.traverse(tree.model.root as TreeNode) { node ->
       val valueFromNode = SettingsTreeFixture.getValueFromNode(tree, node)
       if (valueFromNode != null && valueFromNode == itemName) {
         assert(node is TreeNode)
@@ -560,47 +605,65 @@ object Utils {
     return (0..path.pathCount - 1).map { path.getPathComponent(it).toString() }.filter(String::isNotEmpty).joinToString("/")
   }
 
-  fun getBoundedLabelForComboBox(cb: JComboBox<*>): JLabel {
-    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
+  /**
+   * @hierarchyLevel: started from 1 to see bounded label for a component itself
+   */
+  fun getBoundedLabel(hierarchyLevel: Int, component: Component): JLabel {
 
-    val findBoundedLabel: (Component) -> JLabel? = { component ->
-      try {
-        robot.finder().find(component.parent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
-          override fun isMatching(label: JLabel): Boolean {
-            return label.labelFor != null && label.labelFor == component
-          }
-        })
-      }
-      catch(e: ComponentLookupException) {
-        null
+    var currentComponent = component
+    if (hierarchyLevel < 1) throw Exception(
+      "Hierarchy level (actual is $hierarchyLevel) should starts from 1 to see bounded label for a component itself")
+
+    for (i in 1..hierarchyLevel) {
+      val boundedLabel = findBoundedLabel(currentComponent)
+      if (boundedLabel != null) return boundedLabel
+      else {
+        if (currentComponent.parent == null) break
+        currentComponent = currentComponent.parent
       }
     }
 
-    val bounded1 = findBoundedLabel(cb)
-    if (bounded1 !== null) return bounded1
+    throw ComponentLookupException("Unable to find bounded label in ${hierarchyLevel - 1} level(s) from ${component.toString()}")
 
-    val bounded2 = findBoundedLabel(cb.parent)
-    if (bounded2 !== null) return bounded2
+  }
 
-    val bounded3 = findBoundedLabel(cb.parent!!.parent)
-    if (bounded3 !== null) return bounded3
-
-    throw ComponentLookupException("Unable to find bounded label in 2 levels from JComboBox")
-
+  private fun findBoundedLabel(component: Component): JLabel? {
+    return withRobot { robot ->
+      var resultLabel: JLabel?
+      if (component is LabeledComponent<*>) resultLabel = component.label
+      else {
+        try {
+          resultLabel = robot.finder().find(component.parent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
+            override fun isMatching(label: JLabel) = (label.labelFor != null && label.labelFor == component)
+          })
+        }
+        catch(e: ComponentLookupException) {
+          resultLabel = null
+        }
+      }
+      resultLabel
+    }
   }
 
   fun getJTreePath(cmp: JTree, path: TreePath): String {
-    var treePath = path
-    val result = StringBuilder()
-    val bcr = org.fest.swing.driver.BasicJTreeCellReader()
-    while (treePath.pathCount != 1 || (cmp.isRootVisible && treePath.pathCount == 1)) {
-      val valueAt = bcr.valueAt(cmp, treePath.lastPathComponent)
-      result.insert(0, "$valueAt${if (!result.isEmpty()) "/" else ""}")
-      if (treePath.pathCount == 1) break
-      else treePath = treePath.parentPath
-    }
-    return result.toString()
+    val pathArray = getJTreePathArray(cmp, path)
+    return pathArray.joinToString(separator = ", ", transform = { str -> "\"$str\"" })
   }
 
+  fun getJTreePathItemsString(cmp: JTree, path: TreePath): String {
+    return getJTreePathArray(cmp, path)
+      .map { StringUtil.wrapWithDoubleQuote(it) }
+      .reduceRight({ s, s1 -> "$s, $s1" })
+  }
+
+  private fun getJTreePathArray(tree: JTree, path: TreePath): List<String>
+    = withRobot { robot -> ExtendedTreeFixture(robot, tree).getPath(path) }
+
+  fun <ReturnType> withRobot(robotFunction: (Robot) -> ReturnType): ReturnType {
+    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
+    val result = robotFunction(robot)
+    robot.cleanUpWithoutDisposingWindows()
+    return result
+  }
 }
 

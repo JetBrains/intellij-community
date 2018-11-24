@@ -20,20 +20,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsUser;
 import git4idea.DialogManager;
-import git4idea.history.GitHistoryUtils;
+import git4idea.history.GitLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -58,22 +54,12 @@ public class GitRebaseOverMergeProblem {
 
     @NotNull
     private static String[] getButtonTitles() {
-      return ContainerUtil.map2Array(values(), String.class, new Function<Decision, String>() {
-        @Override
-        public String fun(Decision decision) {
-          return decision.myButtonText;
-        }
-      });
+      return ContainerUtil.map2Array(values(), String.class, decision -> decision.myButtonText);
     }
 
     @NotNull
     public static Decision getOption(final int index) {
-      return ObjectUtils.assertNotNull(ContainerUtil.find(values(), new Condition<Decision>() {
-        @Override
-        public boolean value(Decision decision) {
-          return decision.ordinal() == index;
-        }
-      }));
+      return ObjectUtils.assertNotNull(ContainerUtil.find(values(), decision -> decision.ordinal() == index));
     }
 
     private static int getDefaultButtonIndex() {
@@ -90,17 +76,12 @@ public class GitRebaseOverMergeProblem {
                                    @NotNull String baseRef,
                                    @NotNull String currentRef) {
     final Ref<Boolean> mergeFound = Ref.create(Boolean.FALSE);
-    Consumer<TimedVcsCommit> detectingConsumer = new Consumer<TimedVcsCommit>() {
-      @Override
-      public void consume(TimedVcsCommit commit) {
-        mergeFound.set(true);
-      }
-    };
+    Consumer<TimedVcsCommit> detectingConsumer = commit -> mergeFound.set(true);
 
     String range = baseRef + ".." + currentRef;
     try {
-      GitHistoryUtils.readCommits(project, root, Arrays.asList(range, "--merges"),
-                                  EmptyConsumer.<VcsUser>getInstance(), EmptyConsumer.<VcsRef>getInstance(), detectingConsumer);
+      GitLogUtil.readTimedCommits(project, root, Arrays.asList(range, "--merges"),
+                                  EmptyConsumer.getInstance(), EmptyConsumer.getInstance(), detectingConsumer);
     }
     catch (VcsException e) {
       LOG.warn("Couldn't get git log --merges " + range, e);

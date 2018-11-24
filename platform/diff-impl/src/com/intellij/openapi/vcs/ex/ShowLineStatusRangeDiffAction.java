@@ -22,6 +22,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -32,6 +33,8 @@ import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
+
 public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   private final LineStatusTrackerBase myLineStatusTracker;
   private final Range myRange;
@@ -39,7 +42,7 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   public ShowLineStatusRangeDiffAction(@NotNull LineStatusTrackerBase lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
     myLineStatusTracker = lineStatusTracker;
     myRange = range;
-    ActionUtil.copyFrom(this, "ChangesView.Diff");
+    ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
   }
 
   public void update(final AnActionEvent e) {
@@ -77,7 +80,7 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   @NotNull
   private static Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
     boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
-    boolean canExpandAfter = range.getLine2() < document.getLineCount() && range.getVcsLine2() < uDocument.getLineCount();
+    boolean canExpandAfter = range.getLine2() < getLineCount(document) && range.getVcsLine2() < getLineCount(uDocument);
     int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
     int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
     int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);

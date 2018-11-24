@@ -60,6 +60,7 @@ public class GitCommand {
   public static final GitCommand REBASE = write("rebase");
   public static final GitCommand REMOTE = read("remote");
   public static final GitCommand RESET = write("reset");
+  public static final GitCommand REVERT = write("revert");
   public static final GitCommand REV_LIST = read("rev-list");
   public static final GitCommand REV_PARSE = read("rev-parse");
   public static final GitCommand RM = write("rm");

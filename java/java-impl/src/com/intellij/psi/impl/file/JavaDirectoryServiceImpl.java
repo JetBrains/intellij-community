@@ -72,7 +72,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
                               @NotNull String name,
                               @NotNull String templateName,
                               boolean askForUndefinedVariables) throws IncorrectOperationException {
-    return createClass(dir, name, templateName, askForUndefinedVariables, Collections.<String, String>emptyMap());
+    return createClass(dir, name, templateName, askForUndefinedVariables, Collections.emptyMap());
   }
 
   @Override
@@ -117,7 +117,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   private static PsiClass createClassFromTemplate(@NotNull PsiDirectory dir, String name, String templateName) throws IncorrectOperationException {
-    return createClassFromTemplate(dir, name, templateName, false, Collections.<String, String>emptyMap());
+    return createClassFromTemplate(dir, name, templateName, false, Collections.emptyMap());
   }
 
   private static PsiClass createClassFromTemplate(@NotNull PsiDirectory dir,

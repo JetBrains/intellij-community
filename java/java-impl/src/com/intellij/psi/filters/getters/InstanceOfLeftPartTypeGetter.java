@@ -20,13 +20,6 @@ import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 15.12.2003
- * Time: 17:39:34
- * To change this template use Options | File Templates.
- */
 public class InstanceOfLeftPartTypeGetter {
   @NotNull
   public static PsiType[] getLeftTypes(PsiElement context) {

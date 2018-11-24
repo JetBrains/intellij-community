@@ -13,10 +13,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Queue;
 
-/**
- * User: Andrey.Vokin
- * Date: 8/10/12
- */
 public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public static final String TEAMCITY_PREFIX = "##teamcity";
   public static final int MILLION = 1000000;

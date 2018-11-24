@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.compact.psi;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.08.2007
- */
 public interface RncFileReference extends RncElement {
   @Nullable
   RncFile getReferencedFile();

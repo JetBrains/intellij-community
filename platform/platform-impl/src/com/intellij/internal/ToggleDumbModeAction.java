@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,27 +29,34 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class ToggleDumbModeAction extends DumbAwareAction {
-  private volatile boolean myDumb = false;
+  private static final Key<Boolean> DUMB = Key.create("ToggleDumbModeAction");
 
   public void actionPerformed(AnActionEvent e) {
-    if (myDumb) {
-      myDumb = false;
-    }
-    else {
-      myDumb = true;
-      final Project project = e.getProject();
-      if (project == null) return;
+    Project project = e.getProject();
+    if (project == null) return;
 
+    if (isToggledDumb(project)) {
+      setToggledDumb(project, false);
+    } else {
+      setToggledDumb(project, true);
       DumbServiceImpl.getInstance(project).queueTask(new DumbModeTask() {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-          while (myDumb) {
+          while (isToggledDumb(project)) {
             indicator.checkCanceled();
             TimeoutUtil.sleep(100);
           }
         }
       });
     }
+  }
+
+  private static void setToggledDumb(Project project, boolean value) {
+    project.putUserData(DUMB, value);
+  }
+
+  private static boolean isToggledDumb(Project project) {
+    return project.getUserData(DUMB) == Boolean.TRUE;
   }
 
   @Override
@@ -59,9 +67,10 @@ public class ToggleDumbModeAction extends DumbAwareAction {
       return;
     }
     boolean dumb = DumbServiceImpl.getInstance(project).isDumb();
-    boolean enabled = !dumb || myDumb;
-    if (enabled && myDumb != dumb) myDumb = dumb;
-    e.getPresentation().setEnabled(enabled);
+    if (!dumb && isToggledDumb(project)) {
+      setToggledDumb(project, false);
+    }
+    e.getPresentation().setEnabled(!dumb || isToggledDumb(project));
     e.getPresentation().setText(dumb ? "Exit Dumb Mode" : "Enter Dumb Mode");
   }
 }

@@ -1,12 +1,12 @@
 class TestRefactoring {
-    public final Integer integer;
+    public final Integer toField;
 
     public TestRefactoring() {
-        integer = new Integer("0");
+        toField = new Integer("0");
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                System.out.println(integer);
+                System.out.println(toField);
             }
         };
     }
