@@ -62,6 +62,23 @@ public class ApplicationUtil {
       }
     }, indicator));
 
+    try {
+      runWithCheckCanceled(future, indicator);
+    }
+    catch (ProcessCanceledException e) {
+      future.cancel(true);
+      throw e;
+    }
+    return result.get();
+  }
+
+  /**
+   * Waits for {@code future} to be complete, or the current thread's indicator to be canceled
+   * Note that {@code future} will not be cancelled by this method
+   */
+  public static void runWithCheckCanceled(@NotNull Future<?> future, @NotNull final ProgressIndicator indicator) throws Exception {
+    final Ref<Throwable> error = Ref.create();
+
     while (true) {
       try {
         indicator.checkCanceled();
@@ -74,7 +91,7 @@ public class ApplicationUtil {
       try {
         future.get(25, TimeUnit.MILLISECONDS);
         ExceptionUtil.rethrowAll(error.get());
-        return result.get();
+        break;
       }
       catch (TimeoutException ignored) { }
     }
