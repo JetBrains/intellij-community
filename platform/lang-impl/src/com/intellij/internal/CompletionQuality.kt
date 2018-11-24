@@ -124,7 +124,8 @@ class CompletionQualityStatsAction : AnAction() {
                     if (indicator.isCanceled) {
                       break
                     }
-                    evalCompletionAt(project, file.path, newEditor, text, pair.first, pair.second, stats, indicator)
+                    val line = StringUtil.offsetToLineNumber(text, pair.first)
+                    evalCompletionAt(project, file.path + ":$line", newEditor, text, pair.first, pair.second, stats, indicator)
                   }
                 }
                 finally {
@@ -319,17 +320,18 @@ class CompletionQualityStatsAction : AnAction() {
     val total = Ref.create(0)
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       try {
-        WriteAction.run<Exception> {
-          editor.document.setText(newText)
-          FileDocumentManager.getInstance().saveDocument(editor.document)
-          editor.caretModel.moveToOffset(startIndex + 1 + charsTyped)
-          editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
-        }
 
         val ref: Ref<List<LookupElement>> = Ref.create()
 
         val start = System.currentTimeMillis()
         CommandProcessor.getInstance().executeCommand(project, {
+          WriteAction.run<Exception> {
+            editor.document.setText(newText)
+            FileDocumentManager.getInstance().saveDocument(editor.document)
+            editor.caretModel.moveToOffset(startIndex + 1 + charsTyped)
+            editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+          }
+
           val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
             override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
               super.completionFinished(indicator, hasModifiers)
