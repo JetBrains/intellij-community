@@ -538,7 +538,7 @@ public class Outer {
         foo: while (true) break <caret>
       }}""".stripIndent())
     complete()
-    assert myItems.length == 1
+    assert myFixture.lookupElementStrings == ['foo']
   }
 
   void testContinueLabel() {
@@ -547,7 +547,7 @@ public class Outer {
         foo: while (true) continue <caret>
       }}""".stripIndent())
     complete()
-    assert myItems.length == 1
+    assert myFixture.lookupElementStrings == ['foo']
   }
 
   void testContinueLabelTail() {
