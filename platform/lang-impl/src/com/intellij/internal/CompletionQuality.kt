@@ -176,7 +176,7 @@ class CompletionQualityStatsAction : AnAction() {
 
         if (el != null && el !is PsiComment) {
           val word = range.substring(text)
-          if (!word.isEmpty() && wordSet.getOrDefault(word, 0)<2) {
+          if (!word.isEmpty() && wordSet.getOrDefault(word, 0) < 2) {
             res.add(Pair(startIndex - 1, word))
             wordSet[word] = wordSet.getOrDefault(word, 0) + 1
           }
@@ -318,47 +318,58 @@ class CompletionQualityStatsAction : AnAction() {
 
     val result = Ref.create(-1)
     val total = Ref.create(0)
-    ApplicationManager.getApplication().invokeAndWait(Runnable {
-      WriteAction.run<Exception> {
-        editor.document.setText(newText)
-        FileDocumentManager.getInstance().saveDocument(editor.document)
-        editor.caretModel.moveToOffset(startIndex + 1 + charsTyped)
-        editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
-      }
-
-      val ref: Ref<List<LookupElement>> = Ref.create()
-
-      val start = System.currentTimeMillis()
-      CommandProcessor.getInstance().executeCommand(project, {
-        val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
-          override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
-            super.completionFinished(indicator, hasModifiers)
-            ref.set(indicator.lookup!!.items)
-          }
-
-          override fun isExecutedProgrammatically() = true
+    try {
+      ApplicationManager.getApplication().invokeAndWait(Runnable {
+        WriteAction.run<Exception> {
+          editor.document.setText(newText)
+          FileDocumentManager.getInstance().saveDocument(editor.document)
+          editor.caretModel.moveToOffset(startIndex + 1 + charsTyped)
+          editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
         }
-        handler.invokeCompletion(project, editor, 1)
 
-      }, null, null, editor.document)
+        val ref: Ref<List<LookupElement>> = Ref.create()
 
-      val lookup = LookupManager.getActiveLookup(editor)
-      if (lookup != null && lookup is LookupImpl) {
-        ScrollingUtil.moveUp(lookup.list, 0)
-        lookup.refreshUi(false, false)
-        ref.set(lookup.items)
-        lookup.hideLookup(true)
-      }
+        val start = System.currentTimeMillis()
+        CommandProcessor.getInstance().executeCommand(project, {
+          val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
+            override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
+              super.completionFinished(indicator, hasModifiers)
+              ref.set(indicator.lookup!!.items)
+            }
 
-      if (!ref.isNull) {
-        result.set(ref.get().indexOfFirst { it.lookupString == existingCompletion })
-        total.set(ref.get().size)
-      }
+            override fun isExecutedProgrammatically() = true
+          }
+          handler.invokeCompletion(project, editor, 1)
 
-      timeStats.cnt += 1
-      timeStats.time += System.currentTimeMillis() - start
+        }, null, null, editor.document)
 
-    }, ModalityState.NON_MODAL)
+        val lookup = LookupManager.getActiveLookup(editor)
+        if (lookup != null && lookup is LookupImpl) {
+          ScrollingUtil.moveUp(lookup.list, 0)
+          lookup.refreshUi(false, false)
+          ref.set(lookup.items)
+          lookup.hideLookup(true)
+        }
+
+        if (!ref.isNull) {
+          result.set(ref.get().indexOfFirst { it.lookupString == existingCompletion })
+          total.set(ref.get().size)
+        }
+
+        timeStats.cnt += 1
+        timeStats.time += System.currentTimeMillis() - start
+
+      }, ModalityState.NON_MODAL)
+    } catch (e: Exception) {
+      LOG.error(e)
+    }
+    finally {
+      ApplicationManager.getApplication().invokeAndWait(Runnable {
+        WriteAction.run<Exception> {
+          editor.document.setText(newText)
+        }
+      })
+    }
 
     return Pair(result.get(), total.get())
   }
