@@ -124,7 +124,8 @@ class CompletionQualityStatsAction : AnAction() {
                     if (indicator.isCanceled) {
                       break
                     }
-                    evalCompletionAt(project, file, newEditor, text, pair.first, pair.second, stats, indicator)
+                    val line = newEditor.document.getLineNumber(pair.first)
+                    evalCompletionAt(project, file.path + ":$line", newEditor, text, pair.first, pair.second, stats, indicator)
                   }
                 }
                 finally {
@@ -187,7 +188,7 @@ class CompletionQualityStatsAction : AnAction() {
   }
 
   private fun evalCompletionAt(project: Project,
-                               file: VirtualFile,
+                               path: String,
                                editor: Editor,
                                text: String,
                                startIndex: Int,
@@ -213,20 +214,18 @@ class CompletionQualityStatsAction : AnAction() {
     val cache = arrayOfNulls<Pair<Int, Int>>(maxChars)
 
     val charsToFirst = calcCharsToFirstN(rank0, rank1, rank3, 1, editor, text, startIndex, project, existingCompletion, completionTime,
-                                         file,
                                          indicator,
                                          maxChars,
                                          cache)
 
     val charsToFirst3 = calcCharsToFirstN(rank0, rank1, rank3, 3, editor, text, startIndex, project, existingCompletion, completionTime,
-                                          file,
                                           indicator,
-                                          maxChars, cache)
-
+                                          maxChars,
+                                          cache)
 
 
     stats.completions.add(
-      Completion(file.path, startIndex, existingCompletion, rank0, total0, rank1, total1, rank3, total3, charsToFirst, charsToFirst3,
+      Completion(path, startIndex, existingCompletion, rank0, total0, rank1, total1, rank3, total3, charsToFirst, charsToFirst3,
                  completionTime.cnt, completionTime.time))
   }
 
@@ -240,7 +239,6 @@ class CompletionQualityStatsAction : AnAction() {
                                 project: Project,
                                 existingCompletion: String,
                                 completionTime: CompletionTime,
-                                file: VirtualFile,
                                 indicator: ProgressIndicator,
                                 max: Int,
                                 cache: Array<Pair<Int, Int>?>): Int {
@@ -257,7 +255,7 @@ class CompletionQualityStatsAction : AnAction() {
         }
       }
       else -> {
-        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, 4, max, N, cache, completionTime)
+        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, indicator, 4, max, N, cache, completionTime)
       }
     }
   }
@@ -267,7 +265,6 @@ class CompletionQualityStatsAction : AnAction() {
                                      startIndex: Int,
                                      project: Project,
                                      existingCompletion: String,
-                                     file: VirtualFile,
                                      indicator: ProgressIndicator,
                                      from: Int,
                                      to: Int,
