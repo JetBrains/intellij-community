@@ -1,5 +1,6 @@
 package com.jetbrains.jsonSchema;
 
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -101,20 +102,23 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   }
 
   private void doValidation() throws ConfigurationException {
-    if (StringUtil.isEmptyOrSpaces(myDisplayName)) throw new ConfigurationException("Schema name is empty");
-    if (StringUtil.isEmptyOrSpaces(myView.getSchemaSubPath())) throw new ConfigurationException("Schema path is empty");
-    final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
     final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
     VirtualFile vFile = null;
-    if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null)
-      throw new ConfigurationException("Schema file does not exist");
+    if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null) {
+      throw new ConfigurationException((!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema file does not exist");
+    }
+    final String filename = file.getName();
+
+    if (StringUtil.isEmptyOrSpaces(myDisplayName)) throw new ConfigurationException(filename + ": Schema name is empty");
+    if (StringUtil.isEmptyOrSpaces(myView.getSchemaSubPath())) throw new ConfigurationException(filename + ": Schema path is empty");
+    final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
     final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
     if (service != null && !service.isSchemaFile(vFile, collectConsumer)) {
       final String message;
-      if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
-      else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
+      if (collectConsumer.getResult().isEmpty()) message = filename + ": Can not read JSON schema from file (Unknown reason)";
+      else message = filename + ": Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
       logErrorForUser(message);
-      throw new ConfigurationException(message);
+      throw new RuntimeConfigurationWarning(message);
     }
   }
 

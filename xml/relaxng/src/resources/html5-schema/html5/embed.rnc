@@ -429,7 +429,6 @@ namespace local = ""
 		&	iframe.attrs.width?
 		&	iframe.attrs.height?
 		&	iframe.attrs.sandbox?
-		&	iframe.attrs.seamless?
 		&	iframe.attrs.allowfullscreen?
 		&	(	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
@@ -457,10 +456,6 @@ namespace local = ""
 			attribute width {
 				common.data.integer.non-negative
 			}
-		iframe.attrs.seamless =
-			attribute seamless {
-				w:string "seamless" | w:string ""
-			} & v5only
 		iframe.attrs.sandbox =
 			attribute sandbox {
 				common.data.sandbox-allow-list

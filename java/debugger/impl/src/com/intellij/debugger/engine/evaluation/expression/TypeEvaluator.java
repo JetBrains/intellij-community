@@ -52,9 +52,12 @@ public class TypeEvaluator implements Evaluator {
    */
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     ClassLoaderReference classLoader = context.getClassLoader();
-    Object lastRes = SoftReference.dereference(myLastResult);
+    ReferenceType lastRes = SoftReference.dereference(myLastResult);
     if (lastRes != null && classLoader == SoftReference.dereference(myLastClassLoader)) {
-      return lastRes;
+      // if class loader is null, check that vms match
+      if (classLoader != null || lastRes.virtualMachine().equals(context.getDebugProcess().getVirtualMachineProxy().getVirtualMachine())) {
+        return lastRes;
+      }
     }
     DebugProcessImpl debugProcess = context.getDebugProcess();
     String typeName = myTypeName.getName(debugProcess);

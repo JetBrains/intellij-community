@@ -77,7 +77,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
     };
   }
 
-  static boolean isTagWithEmptyEndNotAllowed(final XmlTag tag) {
+  public static boolean isTagWithEmptyEndNotAllowed(final XmlTag tag) {
     String tagName = tag.getName();
     if (tag instanceof HtmlTag) tagName = tagName.toLowerCase();
 

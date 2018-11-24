@@ -21,7 +21,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
@@ -30,12 +29,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PsiTestUtil.setJavadocUrls(myModule, "file://" + getTestDataPath() + "/java/java-tests/testData/codeInsight/externalJavadoc/" + 
-                                         getJavadocFolder());
-  }
-
-  protected String getJavadocFolder() {
-    return "java8format";
+    PsiTestUtil.setJavadocUrls(myModule, "http://doc" );
   }
 
   public void testVarargs() {
@@ -43,7 +37,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "  void <caret>foo(Class<?>... cl) { }\n" +
            "}",
 
-           "foo-java.lang.Class...-");
+           "foo-java.lang.Class...-", "foo-java.lang.Class<?>...-", "foo(java.lang.Class...)", "foo(java.lang.Class<?>...)");
 
   }
 
@@ -53,7 +47,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "}\n" +
            "class Comparator<X>{}",
 
-           "sort-T:A-Comparator-");
+           "sort-T:A-Comparator-", "sort-T:A-Comparator<? super T>-", "sort(T[], Comparator)", "sort(T[], Comparator<? super T>)");
   }
 
   protected void doTest(String text, String... expected) {

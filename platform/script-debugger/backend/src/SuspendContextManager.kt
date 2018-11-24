@@ -38,7 +38,7 @@ interface SuspendContextManager<CALL_FRAME : CallFrame> {
    * *
    * @param stepCount steps to perform (not used if `stepAction == CONTINUE`)
    */
-  fun continueVm(stepAction: StepAction, stepCount: Int): Promise<*>
+  fun continueVm(stepAction: StepAction, stepCount: Int = 1): Promise<*>
 
   val isRestartFrameSupported: Boolean
 

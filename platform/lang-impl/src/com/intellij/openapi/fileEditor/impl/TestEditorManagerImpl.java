@@ -197,12 +197,14 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeAllFiles() {
-    final EditorFactory editorFactory = EditorFactory.getInstance();
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    TextEditorProvider editorProvider = TextEditorProvider.getInstance();
     Iterator<Editor> it = myVirtualFile2Editor.values().iterator();
     while (it.hasNext()) {
       Editor editor = it.next();
       it.remove();
       if (editor != null && !editor.isDisposed()){
+        editorProvider.disposeEditor(editorProvider.getTextEditor(editor));
         editorFactory.releaseEditor(editor);
       }
     }

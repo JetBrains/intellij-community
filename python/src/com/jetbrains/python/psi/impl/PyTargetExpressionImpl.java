@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -167,23 +169,26 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
         if (assignedValue != null) {
           if (assignedValue instanceof PyYieldExpression) {
-            return null;
+            PyYieldExpression assignedYield = (PyYieldExpression)assignedValue;
+            return assignedYield.isDelegating() ? context.getType(assignedValue) : null;
           }
           return context.getType(assignedValue);
         }
       }
       if (parent instanceof PyTupleExpression) {
         PsiElement nextParent = parent.getParent();
-        while (nextParent instanceof PyParenthesizedExpression) {
+        while (nextParent instanceof PyParenthesizedExpression || nextParent instanceof PyTupleExpression) {
           nextParent = nextParent.getParent();
         }
         if (nextParent instanceof PyAssignmentStatement) {
           final PyAssignmentStatement assignment = (PyAssignmentStatement)nextParent;
           final PyExpression value = assignment.getAssignedValue();
-          if (value != null) {
+          final PyExpression lhs = assignment.getLeftHandSideExpression();
+          final PyTupleExpression targetTuple = PsiTreeUtil.findChildOfType(lhs, PyTupleExpression.class, false);
+          if (value != null && targetTuple != null) {
             final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
             if (assignedType instanceof PyTupleType) {
-              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, (PyTupleExpression)parent, (PyTupleType)assignedType);
+              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, (PyTupleType)assignedType);
               if (t != null) {
                 return t;
               }
@@ -682,34 +687,21 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public PsiComment getTypeComment() {
-    final PsiElement commentContainer = PsiTreeUtil.getParentOfType(this,
-                                                                    PyAssignmentStatement.class,
-                                                                    PyWithStatement.class,
-                                                                    PyForPart.class);
-    if (commentContainer != null) {
-      final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
-      if (comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null) {
-        return comment;
+    PsiComment comment = null;
+    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
+    if (assignment != null) {
+      final PyExpression assignedValue = assignment.getAssignedValue();
+      if (assignedValue != null) {
+        comment = as(PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(assignedValue), PsiComment.class);
       }
     }
-    return null;
-  }
-
-  @Nullable
-  private static PsiComment getSameLineTrailingCommentChild(@NotNull PsiElement element) {
-    PsiElement child = element.getFirstChild();
-    while (true) {
-      if (child == null) {
-        return null;
+    else {
+      final PyStatementListContainer forOrWith = PsiTreeUtil.getParentOfType(this, PyForPart.class, PyWithStatement.class);
+      if (forOrWith != null) {
+        comment = PyUtil.getCommentOnHeaderLine(forOrWith);
       }
-      if (child instanceof PsiComment) {
-        return (PsiComment)child;
-      }
-      if (child.getText().contains("\n")) {
-        return null;
-      }
-      child = child.getNextSibling();
     }
+    return comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null ? comment : null;
   }
 
   @Nullable

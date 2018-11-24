@@ -370,7 +370,8 @@ public final class SocketLock {
             }
 
             if (StringUtil.startsWith(command, ACTIVATE_COMMAND)) {
-              List<String> args = StringUtil.split(command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString(), "\0");
+              String data = command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString();
+              List<String> args = StringUtil.split(data, data.contains("\0") ? "\0" : "\uFFFD");
 
               boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
               if (!tokenOK) {

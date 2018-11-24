@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
@@ -196,11 +197,21 @@ public class TransformationContextImpl implements TransformationContext {
   }
 
   @Override
+  public void setSuperType(@NotNull String fqn) {
+    setSuperType(TypesUtil.createType(fqn, getCodeClass()));
+  }
+
+  @Override
   public void setSuperType(@NotNull PsiClassType type) {
     if (!getCodeClass().isInterface()) {
       myExtendsTypes.clear();
       myExtendsTypes.add(type);
     }
+  }
+
+  @Override
+  public void addInterface(@NotNull String fqn) {
+    addInterface(TypesUtil.createType(fqn, getCodeClass()));
   }
 
   @Override

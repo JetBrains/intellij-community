@@ -37,7 +37,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -320,7 +319,10 @@ class RunConfigurable extends BaseConfigurable {
     final Enumeration enumeration = myRoot.breadthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      final Object userObject = node.getUserObject();
+      Object userObject = node.getUserObject();
+      if (userObject instanceof SettingsEditorConfigurable) {
+        userObject = ((SettingsEditorConfigurable)userObject).getSettings();
+      }
       if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
         final RunnerAndConfigurationSettings runnerAndConfigurationSettings = (RunnerAndConfigurationSettings)userObject;
         final ConfigurationType configurationType = configuration.getType();
@@ -651,51 +653,57 @@ class RunConfigurable extends BaseConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    updateActiveConfigurationFromSelected();
-
-    final RunManagerImpl manager = getRunManager();
-    final ConfigurationType[] types = manager.getConfigurationFactories();
-    List<ConfigurationType> configurationTypes = new ArrayList<ConfigurationType>();
-    for (int i = 0; i < myRoot.getChildCount(); i++) {
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
-      Object userObject = node.getUserObject();
-      if (userObject instanceof ConfigurationType) {
-        configurationTypes.add((ConfigurationType)userObject);
-      }
-    }
-    for (ConfigurationType type : types) {
-      if (!configurationTypes.contains(type))
-        configurationTypes.add(type);
-    }
-
-    for (ConfigurationType configurationType : configurationTypes) {
-      applyByType(configurationType);
-    }
-
+    getRunManager().fireBeginUpdate();
     try {
-      int i = Math.max(RunManagerConfig.MIN_RECENT_LIMIT, Integer.parseInt(myRecentsLimit.getText()));
-      int oldLimit = manager.getConfig().getRecentsLimit();
-      if (oldLimit != i) {
-        manager.getConfig().setRecentsLimit(i);
-        manager.checkRecentsLimit();
+      updateActiveConfigurationFromSelected();
+
+      final RunManagerImpl manager = getRunManager();
+      final ConfigurationType[] types = manager.getConfigurationFactories();
+      List<ConfigurationType> configurationTypes = new ArrayList<ConfigurationType>();
+      for (int i = 0; i < myRoot.getChildCount(); i++) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
+        Object userObject = node.getUserObject();
+        if (userObject instanceof ConfigurationType) {
+          configurationTypes.add((ConfigurationType)userObject);
+        }
       }
-    }
-    catch (NumberFormatException e) {
-      // ignore
-    }
-    manager.getConfig().setRestartRequiresConfirmation(myConfirmation.isSelected());
-
-    for (Configurable configurable : myStoredComponents.values()) {
-      if (configurable.isModified()){
-        configurable.apply();
+      for (ConfigurationType type : types) {
+        if (!configurationTypes.contains(type))
+          configurationTypes.add(type);
       }
-    }
 
-    for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
-      each.first.apply();
-    }
+      for (ConfigurationType configurationType : configurationTypes) {
+        applyByType(configurationType);
+      }
 
-    manager.saveOrder();
+      try {
+        int i = Math.max(RunManagerConfig.MIN_RECENT_LIMIT, Integer.parseInt(myRecentsLimit.getText()));
+        int oldLimit = manager.getConfig().getRecentsLimit();
+        if (oldLimit != i) {
+          manager.getConfig().setRecentsLimit(i);
+          manager.checkRecentsLimit();
+        }
+      }
+      catch (NumberFormatException e) {
+        // ignore
+      }
+      manager.getConfig().setRestartRequiresConfirmation(myConfirmation.isSelected());
+
+      for (Configurable configurable : myStoredComponents.values()) {
+        if (configurable.isModified()){
+          configurable.apply();
+        }
+      }
+
+      for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
+        each.first.apply();
+      }
+
+      manager.saveOrder();
+    }
+    finally {
+      getRunManager().fireEndUpdate();
+    }
 
     setModified(false);
     myTree.repaint();

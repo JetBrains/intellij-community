@@ -15,25 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.psi.*;
-import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ImportType;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -72,8 +67,11 @@ public class GroovyImportHelper {
     final LinkedHashSet<String> result = new LinkedHashSet<String>();
     ContainerUtil.addAll(result, GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES);
 
-    for (DefaultImportContributor contributor : DefaultImportContributor.EP_NAME.getExtensions()) {
-      result.addAll(contributor.appendImplicitlyImportedPackages(file));
+    for (GrImportContributor contributor : GrImportContributor.EP_NAME.getExtensions()) {
+      result.addAll(ContainerUtil.mapNotNull(
+        contributor.getImports(file),
+        i -> i.getType() == ImportType.STAR ? i.getName() : null
+      ));
     }
 
     return result;
@@ -91,38 +89,6 @@ public class GroovyImportHelper {
       if (getImportKind(imp) != kind) continue;
       if (processStatic != null && processStatic != imp.isStatic()) continue;
       if (!imp.processDeclarations(importProcessor, state, lastParent, place)) return false;
-    }
-    return true;
-  }
-
-  public static boolean processImplicitImports(@NotNull PsiScopeProcessor processor,
-                                               @NotNull ResolveState state,
-                                               @Nullable PsiElement lastParent,
-                                               @NotNull PsiElement place,
-                                               @NotNull GroovyFile file) {
-    if (!ResolveUtil.shouldProcessClasses(processor.getHint(ElementClassHint.KEY))) return true;
-
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
-
-    final PsiScopeProcessor packageSkipper = new PackageSkippingProcessor(processor);
-
-    for (final String implicitlyImported : getImplicitlyImportedPackages(file)) {
-      PsiPackage aPackage = facade.findPackage(implicitlyImported);
-      if (aPackage == null) continue;
-
-      if (!aPackage.processDeclarations(packageSkipper, state, lastParent, place)) {
-        return false;
-      }
-    }
-
-    List<PsiClass> implicitlyImportedClasses = CachedValuesManager.getCachedValue(file, () -> {
-      GlobalSearchScope scope = file.getResolveScope();
-      List<PsiClass> classes = ContainerUtil.mapNotNull(GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES, s -> facade.findClass(s, scope));
-      return CachedValueProvider.Result.create(classes, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
-
-    for (PsiClass clazz : implicitlyImportedClasses) {
-      if (!ResolveUtil.processElement(processor, clazz, state)) return false;
     }
     return true;
   }

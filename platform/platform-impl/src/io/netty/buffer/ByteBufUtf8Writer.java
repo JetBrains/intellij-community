@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.netty.buffer;
 
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.NettyKt;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,18 +39,13 @@ public final class ByteBufUtf8Writer extends Writer {
   }
 
   @Override
-  public void write(int c) {
-    buffer.writerIndex(ByteBufUtilEx.writeChar(ByteBufUtilEx.getBuf(buffer), buffer.writerIndex(), c));
-  }
-
-  @Override
   public void write(char[] chars, int off, int len) {
-    ByteBufUtilEx.writeUtf8(buffer, new CharArrayCharSequence(chars, off, off + len));
+    NettyKt.writeUtf8(buffer, new CharArrayCharSequence(chars, off, off + len));
   }
 
   @Override
   public void write(String str) {
-    ByteBufUtilEx.writeUtf8(buffer, str);
+    NettyKt.writeUtf8(buffer, str);
   }
 
   @Override
@@ -63,7 +59,7 @@ public final class ByteBufUtf8Writer extends Writer {
       ByteBufUtil.writeAscii(buffer, "null");
     }
     else {
-      ByteBufUtilEx.writeUtf8(buffer, csq);
+      NettyKt.writeUtf8(buffer, csq);
     }
     return this;
   }

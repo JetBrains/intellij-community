@@ -21,11 +21,10 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionListener;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +61,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Tree myTree;
   private final CardLayout myPropertiesPanelLayout;
   private final JPanel myPropertiesPanel;
-  private final JLabel myMessageLabel;
+  private final JBPanelWithEmptyText myMessagePanel;
   private final Map<String, JComponent> myLogComponents = new HashMap<String, JComponent>();
 
   private final DefaultTreeModel myTreeModel;
@@ -91,8 +90,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     myPropertiesPanelLayout = new CardLayout();
     myPropertiesPanel = new JPanel(myPropertiesPanelLayout);
-    myMessageLabel = new JLabel(EMPTY_SELECTION_MESSAGE, SwingConstants.CENTER);
-    myPropertiesPanel.add(MESSAGE_CARD, new Wrapper(myMessageLabel));
+    myMessagePanel = new JBPanelWithEmptyText().withEmptyText(EMPTY_SELECTION_MESSAGE);
+    myPropertiesPanel.add(MESSAGE_CARD, myMessagePanel);
     splitter.setSecondComponent(myPropertiesPanel);
     getMainPanel().add(splitter, BorderLayout.CENTER);
 
@@ -205,8 +204,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     }
   }
 
-  private void showMessageLabel(final String text) {
-    myMessageLabel.setText(UIUtil.toHtml(text));
+  private void showMessageLabel(String text) {
+    myMessagePanel.getEmptyText().setText(text);
     myPropertiesPanelLayout.show(myPropertiesPanel, MESSAGE_CARD);
   }
 

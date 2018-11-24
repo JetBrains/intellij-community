@@ -17,7 +17,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
-import com.intellij.util.Function;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CCMoveStudyItemDialog;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -25,7 +24,6 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +89,9 @@ public class CCTaskMoveHandlerDelegate extends MoveHandlerDelegate {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     final PsiDirectory sourceDirectory = (PsiDirectory)elements[0];
 
+    if (course == null) {
+      return;
+    }
     final Task taskToMove = EduUtils.getTask(sourceDirectory, course);
     if (taskToMove == null) {
       return;

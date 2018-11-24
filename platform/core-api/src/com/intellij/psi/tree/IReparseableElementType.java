@@ -25,6 +25,12 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A lazy-parseable element type which allows for incremental reparse. When the infrastructure detects
+ * that all the document's changes are inside an AST node with reparseable type,
+ * {@link #isParsable(ASTNode, CharSequence, Language, Project)} is invoked, and if it's successful,
+ * only the contents inside this element are reparsed instead of the whole file. This can speed up reparse dramatically.
+ */
 public class IReparseableElementType extends ILazyParseableElementType {
   public IReparseableElementType(@NonNls String debugName) {
     super(debugName);
@@ -34,6 +40,9 @@ public class IReparseableElementType extends ILazyParseableElementType {
     super(debugName, language);
   }
 
+  /**
+   * Allows to construct element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
+   */
   public IReparseableElementType(@NonNls String debugName, Language language, boolean register) {
     super(debugName, language, register);
   }
@@ -54,18 +63,18 @@ public class IReparseableElementType extends ILazyParseableElementType {
   }
 
   /**
-   * The same as {@link this#isParsable(CharSequence, com.intellij.lang.Language, com.intellij.openapi.project.Project)} 
+   * The same as {@link this#isParsable(CharSequence, Language, Project)}
    * but with parent ASTNode of the old node.
    * 
    * Override this method only if you really understand what are doing.
-   * In other cases override {@link this#isParsable(CharSequence, com.intellij.lang.Language, com.intellij.openapi.project.Project)}
+   * In other cases override {@link this#isParsable(CharSequence, Language, Project)}
    * 
    * Known valid use-case:
-   *  Indent-based languages. You should know about parent indent in order to decide if block is reparsable with given text.
+   *  Indent-based languages. You should know about parent indent in order to decide if block is reparseable with given text.
    *  Because if indent of some line became equals to parent indent then the block should have another parent or block is not block anymore.
    *  So it cannot be reparsed and whole file or parent block should be reparsed.
    * 
-   * @param parent parent node of old (or collapsed) reparsable node.
+   * @param parent parent node of old (or collapsed) reparseable node.
    * @param buffer the content to parse.
    * @param fileLanguage language of the file
    * @param project the project containing the content.  

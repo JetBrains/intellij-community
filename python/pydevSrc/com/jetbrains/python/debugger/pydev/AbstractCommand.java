@@ -50,6 +50,7 @@ public abstract class AbstractCommand<T> {
   public static final int STEP_INTO_MY_CODE = 144;
   public static final int LOG_CONCURRENCY_EVENT = 145;
   public static final int SHOW_RETURN_VALUES = 146;
+  public static final int INPUT_REQUESTED = 147;
 
   public static final int ERROR = 901;
 
@@ -195,6 +196,10 @@ public abstract class AbstractCommand<T> {
 
   public static boolean isWriteToConsole(final int command) {
     return command == WRITE_TO_CONSOLE;
+  }
+
+  public static boolean isInputRequested(final int command) {
+    return command == INPUT_REQUESTED;
   }
 
   public static boolean isExitEvent(final int command) {

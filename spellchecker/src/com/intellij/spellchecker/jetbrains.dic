@@ -610,6 +610,7 @@ sybase
 symlink
 symlinks
 sysdate
+sysroot
 systimestamp
 tablespace
 taglib

@@ -130,8 +130,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     if (myEditor.isDisposed() || myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
-      // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())
-      return myEditor.getVirtualFile() == null ? myEditor : null;
+      return myEditor;
     }
     if (CommonDataKeys.CARET.is(dataId)) {
       return myEditor.getCaretModel().getCurrentCaret();

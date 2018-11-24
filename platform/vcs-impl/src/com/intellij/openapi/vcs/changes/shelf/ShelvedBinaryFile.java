@@ -128,4 +128,8 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
     result = 31 * result + (SHELVED_PATH != null ? SHELVED_PATH.hashCode() : 0);
     return result;
   }
+
+  public String toString() {
+    return FileUtil.toSystemDependentName(BEFORE_PATH == null ? AFTER_PATH : BEFORE_PATH);
+  }
 }

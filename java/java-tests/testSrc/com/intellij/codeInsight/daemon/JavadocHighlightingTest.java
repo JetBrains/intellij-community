@@ -65,6 +65,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSee3() { doTest(); }
   public void testSee4() { doTest(); }
   public void testSee5() { doTest(); }
+  public void testSee6() { doTest(); }
   public void testLinkToItself() { doTest(); }
   public void testSeeConstants() { doTest(); }
   public void testSeeNonRefs() { doTest(); }
@@ -112,8 +113,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
     List<IssueNavigationLink> oldLinks = navigationConfiguration.getLinks();
     try {
-      IssueNavigationLink link = new IssueNavigationLink("ABC-\\d+", "http://example.com/$0");
-      navigationConfiguration.setLinks(ContainerUtil.newArrayList(link));
+      navigationConfiguration.setLinks(ContainerUtil.newArrayList(new IssueNavigationLink("ABC-\\d+", "http://example.com/$0"),
+                                                                  new IssueNavigationLink("INVALID-\\d+", "http://example.com/$0/$1")));
       configureByFile(getTestName(false) + ".java");
       List<String> expected = ContainerUtil.newArrayList(
         "http://example.com/ABC-1123", "http://example.com/ABC-2", "http://example.com/ABC-22", "http://example.com/ABC-11");

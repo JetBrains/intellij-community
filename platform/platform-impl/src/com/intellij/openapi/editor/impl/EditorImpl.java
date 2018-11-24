@@ -78,7 +78,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.*;
@@ -204,7 +203,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final SoftWrapModelImpl mySoftWrapModel;
 
   @NotNull private static final RepaintCursorCommand ourCaretBlinkingCommand = new RepaintCursorCommand();
-  private MessageBusConnection myConnection;
+  private DocumentBulkUpdateListener myBulkUpdateListener;
 
   @MouseSelectionState
   private int myMouseSelectionState;
@@ -365,9 +364,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myImmediatePainter = new ImmediatePainter(this);
 
-    if (project != null) {
-      myConnection = project.getMessageBus().connect();
-      myConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
+    if (project != null && myDocument instanceof DocumentImpl) {
+      myBulkUpdateListener = new EditorDocumentBulkUpdateAdapter();
+      ((DocumentImpl)myDocument).addInternalBulkModeListener(myBulkUpdateListener);
     }
 
     myMarkupModelListener = new MarkupModelListener() {
@@ -417,11 +416,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myUseNewRendering && start != end) {
           myView.invalidateRange(start, end);
         }
-        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+        if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
+          repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+        }
 
         // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
         if (errorStripeNeedsRepaint) {
-          ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
+          if (myFoldingModel.isInBatchFoldingOperation()) {
+            myErrorStripeNeedsRepaint = true;
+          }
+          else {
+            myMarkupModel.repaint(start, end);
+          }
         }
 
         if (!myUseNewRendering && renderersChanged) {
@@ -898,8 +904,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-    if (myConnection != null) {
-      myConnection.disconnect();
+    if (myBulkUpdateListener != null) {
+      ((DocumentImpl)myDocument).removeInternalBulkModeListener(myBulkUpdateListener);
     }
     if (myDocument instanceof DocumentImpl && !myUseNewRendering) {
       ((DocumentImpl)myDocument).giveUpTabTracking();
@@ -1918,6 +1924,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myImmediatePainter.beforeUpdate(e);
+  }
+
+  void invokeDelayedErrorStripeRepaint() {
+    if (myErrorStripeNeedsRepaint) {
+      myMarkupModel.repaint(-1, -1);
+      myErrorStripeNeedsRepaint = false;
+    }
   }
 
   private void changedUpdate(DocumentEvent e) {
@@ -6552,7 +6565,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final Component last = DnDManager.getInstance().getLastDropHandler();
 
-      if (last != null && !(last instanceof EditorComponentImpl)) return;
+      if (last != null && !(last instanceof EditorComponentImpl) && !(last instanceof EditorGutterComponentImpl)) return;
 
       final EditorImpl editor = getEditor(source);
       if (action == MOVE && !editor.isViewer() && editor.myDraggedRange != null) {

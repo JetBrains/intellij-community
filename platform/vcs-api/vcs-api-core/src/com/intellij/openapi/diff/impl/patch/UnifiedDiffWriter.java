@@ -52,18 +52,18 @@ public class UnifiedDiffWriter {
   private UnifiedDiffWriter() {
   }
 
-  public static void write(Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
+  public static void write(@Nullable Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
                            @Nullable final CommitContext commitContext) throws IOException {
     final PatchEP[] extensions = project == null ? new PatchEP[0] : Extensions.getExtensions(PatchEP.EP_NAME, project);
     write(project, patches, writer, lineSeparator, extensions, commitContext);
   }
 
-  public static void write(Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
+  public static void write(@Nullable Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
                            final PatchEP[] extensions, final CommitContext commitContext) throws IOException {
     write(project, project == null ? null : project.getBasePath(), patches, writer, lineSeparator, extensions, commitContext);
   }
 
-  public static void write(Project project,
+  public static void write(@Nullable Project project,
                            @Nullable String basePath,
                            Collection<FilePatch> patches,
                            Writer writer,
@@ -73,7 +73,9 @@ public class UnifiedDiffWriter {
     for(FilePatch filePatch: patches) {
       if (!(filePatch instanceof TextFilePatch)) continue;
       TextFilePatch patch = (TextFilePatch)filePatch;
-      String pathRelatedToProjectDir = getPathRelatedToDir(ObjectUtils.assertNotNull(project.getBasePath()), basePath, patch);
+      String path = ObjectUtils.assertNotNull(patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName());
+      String pathRelatedToProjectDir =
+        project == null ? path : getPathRelatedToDir(ObjectUtils.assertNotNull(project.getBasePath()), basePath, path);
       final Map<String, CharSequence> additionalMap = new HashMap<String, CharSequence>();
       for (PatchEP extension : extensions) {
         final CharSequence charSequence = extension.provideContent(pathRelatedToProjectDir, commitContext);
@@ -113,8 +115,7 @@ public class UnifiedDiffWriter {
   }
 
   @NotNull
-  private static String getPathRelatedToDir(@NotNull String newBaseDir, @Nullable String basePath, @NotNull TextFilePatch patch) {
-    final String path = ObjectUtils.assertNotNull(patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName());
+  private static String getPathRelatedToDir(@NotNull String newBaseDir, @Nullable String basePath, @NotNull String path) {
     if (basePath == null) return path;
     String result = FileUtil.getRelativePath(new File(newBaseDir), new File(basePath, path));
     return result == null ? path : result;

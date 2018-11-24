@@ -308,13 +308,7 @@ public class ResolveUtil {
     if (type instanceof PsiEllipsisType) {
       type = ((PsiEllipsisType)type).toArrayType();
     }
-    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
-      if (!NonCodeMembersContributor.runContributors(type, each, place, state)) {
-        return false;
-      }
-    }
-
-    return true;
+    return NonCodeMembersContributor.runContributors(type, processor, place, state);
   }
 
   private static final Key<PsiType> COMPARABLE = Key.create(CommonClassNames.JAVA_LANG_COMPARABLE);
@@ -761,7 +755,7 @@ public class ResolveUtil {
                                                           @Nullable String methodName,
                                                           @NotNull PsiElement place,
                                                           @Nullable PsiType... argumentTypes) {
-    return getMethodCandidates(thisType, methodName, place, true, false, false, argumentTypes);
+    return getMethodCandidates(thisType, methodName, place, true, false, argumentTypes);
   }
 
   @NotNull
@@ -770,7 +764,6 @@ public class ResolveUtil {
                                                           @NotNull PsiElement place,
                                                           boolean resolveClosures,
                                                           boolean allVariants,
-                                                          boolean byShape,
                                                           @Nullable PsiType... argumentTypes) {
     if (methodName == null) return GroovyResolveResult.EMPTY_ARRAY;
     thisType = TypesUtil.boxPrimitiveType(thisType, place.getManager(), place.getResolveScope());

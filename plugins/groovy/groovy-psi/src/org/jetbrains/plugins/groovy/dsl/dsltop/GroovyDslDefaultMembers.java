@@ -21,7 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
-import org.jetbrains.plugins.groovy.dsl.holders.DelegatedMembersHolder;
+import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -44,9 +44,6 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**
    * Find a class by its full-qualified name
-   *
-   * @param fqn
-   * @return
    */
   @Nullable
   public PsiClass findClass(String fqn, GdslMembersHolderConsumer consumer) {
@@ -63,7 +60,7 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
   public void delegatesTo(@Nullable PsiElement elem, GdslMembersHolderConsumer consumer) {
     if (elem instanceof PsiClass) {
       final PsiClass clazz = (PsiClass)elem;
-      final DelegatedMembersHolder holder = new DelegatedMembersHolder();
+      final NonCodeMembersHolder holder = new NonCodeMembersHolder();
 
       if (clazz instanceof GrTypeDefinition) {
         final PsiClassType type = JavaPsiFacade.getElementFactory(consumer.getProject()).createType(clazz);
@@ -73,16 +70,16 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
         for (GroovyResolveResult result : processor.getCandidates()) {
           final PsiElement element = result.getElement();
           if (element instanceof PsiMethod && !((PsiMethod)element).isConstructor() || element instanceof PsiField) {
-            holder.addMember((PsiMember)element);
+            holder.addDeclaration(element);
           }
         }
       }
       else {
         for (PsiMethod method : clazz.getAllMethods()) {
-          if (!method.isConstructor()) holder.addMember(method);
+          if (!method.isConstructor()) holder.addDeclaration(method);
         }
         for (PsiField field : clazz.getAllFields()) {
-          holder.addMember(field);
+          holder.addDeclaration(field);
         }
       }
       consumer.addMemberHolder(holder);
@@ -99,12 +96,10 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**
    * Add a member to a context's ctype
-   *
-   * @param member
    */
   public PsiMember add(PsiMember member, GdslMembersHolderConsumer consumer) {
-    final DelegatedMembersHolder holder = new DelegatedMembersHolder();
-    holder.addMember(member);
+    final NonCodeMembersHolder holder = new NonCodeMembersHolder();
+    holder.addDeclaration(member);
     consumer.addMemberHolder(holder);
     return member;
   }

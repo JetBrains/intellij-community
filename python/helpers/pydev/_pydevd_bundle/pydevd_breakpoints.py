@@ -44,11 +44,12 @@ class ExceptionBreakpoint:
 
 
 class LineBreakpoint(object):
-    def __init__(self, line, condition, func_name, expression):
+    def __init__(self, line, condition, func_name, expression, suspend_policy="NONE"):
         self.line = line
         self.condition = condition
         self.func_name = func_name
         self.expression = expression
+        self.suspend_policy = suspend_policy
 
 def get_exception_full_qname(exctype):
     if not exctype:

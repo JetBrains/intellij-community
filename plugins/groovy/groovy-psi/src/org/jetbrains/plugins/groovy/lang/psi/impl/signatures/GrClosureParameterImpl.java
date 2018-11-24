@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -25,25 +26,29 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
 /**
-* Created by Max Medvedev on 14/03/14
-*/
+ * Created by Max Medvedev on 14/03/14
+ */
 class GrClosureParameterImpl implements GrClosureParameter {
+
   private final PsiParameter myParameter;
   private final PsiSubstitutor mySubstitutor;
+  private final boolean myEraseType;
 
   public GrClosureParameterImpl(@NotNull PsiParameter parameter) {
-    this(parameter, PsiSubstitutor.EMPTY);
+    this(parameter, PsiSubstitutor.EMPTY, false);
   }
 
-  public GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
+  public GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor, boolean eraseType) {
     myParameter = parameter;
     mySubstitutor = substitutor;
+    myEraseType = eraseType;
   }
 
   @Nullable
   @Override
   public PsiType getType() {
-    return mySubstitutor.substitute(myParameter.getType());
+    PsiType type = mySubstitutor.substitute(myParameter.getType());
+    return myEraseType ? TypeConversionUtil.erasure(type) : type;
   }
 
   @Override

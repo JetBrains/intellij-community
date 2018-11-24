@@ -68,9 +68,7 @@ public class IDEARemoteTestNG extends TestNG {
           }
         }
 
-        final Object listener = createListener();
-        addListener((ISuiteListener)listener);
-        addListener((ITestListener)listener);
+        attachListeners(new IDEATestNGRemoteListener());
         super.run();
         System.exit(0);
       }
@@ -84,14 +82,15 @@ public class IDEARemoteTestNG extends TestNG {
     }
   }
 
-  private Object createListener() {
+  private void attachListeners(IDEATestNGRemoteListener listener) {
+    addListener((Object)new IDEATestNGSuiteListener(listener));
+    addListener((Object)new IDEATestNGTestListener(listener));
     try {
-      final Object listener = new IDEATestNGRemoteListenerEx();
-      addListener((IInvokedMethodListener)listener);
-      return listener;
+      final IDEATestNGConfigurationListener configurationListener = new IDEATestNGConfigurationListener(listener);
+      addListener((Object)configurationListener);
+      addListener((Object)new IDEATestNGInvokedMethodListener(listener));
+      configurationListener.setIgnoreStarted();
     }
-    catch (Throwable e) {
-      return new IDEATestNGRemoteListener();
-    }
+    catch (Throwable ignored) {}
   }
 }

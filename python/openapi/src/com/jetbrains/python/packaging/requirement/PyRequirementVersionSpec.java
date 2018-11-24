@@ -17,6 +17,8 @@ package com.jetbrains.python.packaging.requirement;
 
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR;
+
 public class PyRequirementVersionSpec {
 
   @NotNull
@@ -57,5 +59,28 @@ public class PyRequirementVersionSpec {
   @NotNull
   public String getVersion() {
     return myVersion;
+  }
+
+  public boolean matches(@NotNull String version) {
+    switch (myRelation) {
+      case LT:
+        return VERSION_COMPARATOR.compare(version, myVersion) < 0;
+      case LTE:
+        return VERSION_COMPARATOR.compare(version, myVersion) <= 0;
+      case GT:
+        return VERSION_COMPARATOR.compare(version, myVersion) > 0;
+      case GTE:
+        return VERSION_COMPARATOR.compare(version, myVersion) >= 0;
+      case EQ:
+        return VERSION_COMPARATOR.compare(version, myVersion) == 0;
+      case NE:
+        return VERSION_COMPARATOR.compare(version, myVersion) != 0;
+      case COMPATIBLE:
+        return false; // TODO: implement matching version against compatible relation
+      case STR_EQ:
+        return version.equals(myVersion);
+      default:
+        return false;
+    }
   }
 }

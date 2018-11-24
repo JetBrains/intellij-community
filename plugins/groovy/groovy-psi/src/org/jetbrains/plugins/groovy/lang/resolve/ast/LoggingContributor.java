@@ -33,6 +33,7 @@ public class LoggingContributor implements AstTransformationSupport {
     put("groovy.util.logging.Log", "java.util.logging.Logger").
     put("groovy.util.logging.Commons", "org.apache.commons.logging.Log").
     put("groovy.util.logging.Log4j", "org.apache.log4j.Logger").
+    put("groovy.util.logging.Log4j2", "org.apache.logging.log4j.core.Logger").
     put("groovy.util.logging.Slf4j", "org.slf4j.Logger").
     build();
 

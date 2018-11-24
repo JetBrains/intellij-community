@@ -634,12 +634,12 @@ public class UIUtil {
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
     JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
-      visibleOnly ? Conditions.<Component>alwaysTrue() : new Condition<Component>() {
+      visibleOnly ? new Condition<Component>() {
         @Override
         public boolean value(Component c) {
           return c.isVisible();
         }
-      }).traverse() : JBIterable.of(component);
+      } : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
     Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
     for (Component c : all) {
       c.setEnabled(enabled);
@@ -2780,14 +2780,20 @@ public class UIUtil {
   }
 
   @NotNull
+  public static JBIterable<Component> uiChildren(@Nullable Component component) {
+    if (!(component instanceof Container)) return JBIterable.empty();
+    Container container = (Container)component;
+    return JBIterable.of(container.getComponents());
+  }
+
+  @NotNull
   public static JBTreeTraverser<Component> uiTraverser(@Nullable Component component) {
     return new JBTreeTraverser<Component>(COMPONENT_CHILDREN).withRoot(component);
   }
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
-  private static final Function<Component, Iterable<Component>> COMPONENT_CHILDREN = new Function<Component, Iterable<Component>>() {
-    @NotNull
+  private static final Function<Component, JBIterable<Component>> COMPONENT_CHILDREN = new Function<Component, JBIterable<Component>>() {
     @Override
     public JBIterable<Component> fun(@NotNull Component c) {
       JBIterable<Component> result;
@@ -2799,11 +2805,8 @@ public class UIUtil {
         // Disabling these children results in ugly UI: WEB-10733
         result = JBIterable.empty();
       }
-      else if (c instanceof Container) {
-        result = JBIterable.of(((Container)c).getComponents());
-      }
       else {
-        result = JBIterable.empty();
+        result = uiChildren(c);
       }
       if (c instanceof JComponent) {
         JComponent jc = (JComponent)c;

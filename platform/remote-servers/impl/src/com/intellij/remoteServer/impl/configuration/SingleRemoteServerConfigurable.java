@@ -166,7 +166,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   @Nullable
   @Override
   public String getHelpTopic() {
-    return HELP_TOPIC_ID;
+    return myServer.getType().getHelpTopic();
   }
 
   @Override

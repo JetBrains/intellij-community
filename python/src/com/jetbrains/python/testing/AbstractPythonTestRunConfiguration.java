@@ -26,6 +26,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -64,6 +65,28 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
   protected AbstractPythonTestRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
+  }
+
+  @NotNull
+  @Override
+  public String getWorkingDirectorySafe() {
+    final String workingDirectoryFromConfig = getWorkingDirectory();
+    if (StringUtil.isNotEmpty(workingDirectoryFromConfig)) {
+      return workingDirectoryFromConfig;
+    }
+
+    final String folderName = myFolderName;
+    if (!StringUtil.isEmptyOrSpaces(folderName)) {
+      return folderName;
+    }
+    final String scriptName = myScriptName;
+    if (!StringUtil.isEmptyOrSpaces(scriptName)) {
+      final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(scriptName);
+      if (script != null) {
+        return script.getParent().getPath();
+      }
+    }
+    return super.getWorkingDirectorySafe();
   }
 
   @Override

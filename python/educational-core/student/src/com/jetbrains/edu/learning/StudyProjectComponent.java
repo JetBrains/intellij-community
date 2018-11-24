@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -9,12 +10,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,30 +26,33 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
+import com.jetbrains.edu.learning.actions.StudyActionWithShortcut;
+import com.jetbrains.edu.learning.actions.StudyNextWindowAction;
+import com.jetbrains.edu.learning.actions.StudyPrevWindowAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.actions.*;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
-import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
+import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
+import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.flushCourse;
 
 
 public class StudyProjectComponent implements ProjectComponent {
@@ -59,49 +66,57 @@ public class StudyProjectComponent implements ProjectComponent {
 
   @Override
   public void projectOpened() {
-    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    Course course = StudyTaskManager.getInstance(myProject).getCourse();
     // Check if user has javafx lib in his JDK. Now bundled JDK doesn't have this lib inside.
     if (StudyUtils.hasJavaFx()) {
       Platform.setImplicitExit(false);
     }
 
-    if (course != null && !course.isUpToDate()) {
-      course.setUpToDate(true);
-      updateCourse();
+    if (course != null && !course.isAdaptive() && !course.isUpToDate()) {
+      final Notification notification =
+        new Notification("Update.course", "Course Updates", "Course is ready to <a href=\"update\">update</a>", NotificationType.INFORMATION,
+                         new NotificationListener() {
+                           @Override
+                           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                             FileEditorManagerEx.getInstanceEx(myProject).closeAllFiles();
+
+                             ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+                               ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                               return execCancelable(() -> {
+                                 updateCourse();
+                                 return true;
+                               });
+                             }, "Updating Course", true, myProject);
+                             EduUtils.synchronize();
+                             course.setUpdated();
+
+                           }
+                         });
+      notification.notify(myProject);
+
     }
 
-    registerStudyToolWindow(course);
-    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+    StudyUtils.registerStudyToolWindow(course, myProject);
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new DumbAwareRunnable() {
           @Override
           public void run() {
+            Course course = StudyTaskManager.getInstance(myProject).getCourse();
             if (course != null) {
-              UISettings.getInstance().HIDE_TOOL_STRIPES = false;
-              UISettings.getInstance().fireUISettingsChanged();
+              final UISettings instance = UISettings.getInstance();
+              if (instance != null) {
+                instance.HIDE_TOOL_STRIPES = false;
+                instance.fireUISettingsChanged();
+              }
               registerShortcuts();
+              EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
             }
           }
         });
       }
-    });
-  }
-
-  public void registerStudyToolWindow(@Nullable final Course course) {
-    if (course != null && "PyCharm".equals(course.getCourseType())) {
-      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      registerToolWindows(toolWindowManager);
-      final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-      final ToolWindow progressToolWindow = toolWindowManager.getToolWindow(StudyProgressToolWindowFactory.ID);
-      if (studyToolWindow != null) {
-        studyToolWindow.show(null);
-      }
-      if (progressToolWindow != null) {
-        StudyUtils.initToolWindows(myProject);
-        progressToolWindow.show(null);
-      }
-    }
+    }));
   }
 
   private void registerShortcuts() {
@@ -118,6 +133,8 @@ public class StudyProjectComponent implements ProjectComponent {
             }
           }
         }
+        addShortcut(StudyNextWindowAction.ACTION_ID, new String[]{StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.SHORTCUT2});
+        addShortcut(StudyPrevWindowAction.ACTION_ID, new String[]{StudyPrevWindowAction.SHORTCUT});
       }
       else {
         LOG.warn("Actions on toolbar are nulls");
@@ -125,57 +142,86 @@ public class StudyProjectComponent implements ProjectComponent {
     }
   }
 
-  private void registerToolWindows(@NotNull final ToolWindowManager toolWindowManager) {
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-    if (toolWindow == null) {
-      toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
-    }
-    ToolWindow progressToolWindow = toolWindowManager.getToolWindow(StudyProgressToolWindowFactory.ID);
-    if (progressToolWindow == null) {
-      toolWindowManager.registerToolWindow(StudyProgressToolWindowFactory.ID, true, ToolWindowAnchor.LEFT, myProject, true, true);
-    }
-  }
-
   private void updateCourse() {
-    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-    if (course == null) {
-      return;
+    final Course currentCourse = StudyTaskManager.getInstance(myProject).getCourse();
+    final CourseInfo info = CourseInfo.fromCourse(currentCourse);
+    if (info == null) return;
+
+    final File resourceDirectory = new File(currentCourse.getCourseDirectory());
+    if (resourceDirectory.exists()) {
+      FileUtil.delete(resourceDirectory);
     }
-    final File resourceDirectory = new File(course.getCourseDirectory());
-    if (!resourceDirectory.exists()) {
-      return;
-    }
+
+    final Course course = EduStepicConnector.getCourse(myProject, info);
+
+    if (course == null) return;
+    flushCourse(myProject, course);
+    course.initCourse(false);
+
     StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
     if (manager == null) {
       LOG.info("Study Language Manager is null for " + course.getLanguageById().getDisplayName());
       return;
     }
-    final File[] files = resourceDirectory.listFiles();
-    if (files == null) return;
-    for (File file : files) {
-      String testHelper = manager.getTestHelperFileName();
-      if (file.getName().equals(testHelper)) {
-        copyFile(file, new File(myProject.getBasePath(), testHelper));
-      }
-      if (file.getName().startsWith(EduNames.LESSON)) {
-        final File[] tasks = file.listFiles();
-        if (tasks == null) continue;
-        for (File task : tasks) {
-          final File taskDescrFrom = StudyUtils.createTaskDescriptionFile(task);
-          if (taskDescrFrom != null) {
-            String testFileName = manager.getTestFileName();
-            final File taskTests = new File(task, testFileName);
-            final File taskDescrTo =
-              StudyUtils.createTaskDescriptionFile(new File(new File(myProject.getBasePath(), file.getName()), task.getName()));
-            if (taskDescrTo != null) {
-              copyFile(taskDescrFrom, taskDescrTo);
-              copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()),
-                                           testFileName));
-            }
-          }
+
+    final ArrayList<Lesson> updatedLessons = new ArrayList<>();
+
+    int lessonIndex = 0;
+    for (Lesson lesson : course.getLessons()) {
+      lessonIndex += 1;
+      Lesson studentLesson = currentCourse.getLesson(lesson.getId());
+      final String lessonDirName = EduNames.LESSON + String.valueOf(lessonIndex);
+
+      final File lessonDir = new File(myProject.getBasePath(), lessonDirName);
+      if (!lessonDir.exists()){
+        final File fromLesson = new File(resourceDirectory, lessonDirName);
+        try {
+          FileUtil.copyDir(fromLesson, lessonDir);
         }
+        catch (IOException e) {
+          LOG.warn("Failed to copy lesson " + fromLesson.getPath());
+        }
+        lesson.setIndex(lessonIndex);
+        lesson.initLesson(currentCourse, false);
+        for (int i = 1; i <= lesson.getTaskList().size(); i++) {
+          Task task = lesson.getTaskList().get(i - 1);
+          task.setIndex(i);
+        }
+        updatedLessons.add(lesson);
+        continue;
       }
+      studentLesson.setIndex(lessonIndex);
+      updatedLessons.add(studentLesson);
+
+      int index = 0;
+      final ArrayList<Task> tasks = new ArrayList<>();
+      for (Task task : lesson.getTaskList()) {
+        index += 1;
+        final Task studentTask = studentLesson.getTask(task.getStepicId());
+        if (studentTask != null && StudyStatus.Solved.equals(studentTask.getStatus())) {
+          studentTask.setIndex(index);
+          tasks.add(studentTask);
+          continue;
+        }
+        task.initTask(studentLesson, false);
+        task.setIndex(index);
+
+        final String taskDirName = EduNames.TASK + String.valueOf(index);
+        final File toTask = new File(lessonDir, taskDirName);
+
+        final String taskPath = FileUtil.join(resourceDirectory.getPath(), lessonDirName, taskDirName);
+        final File taskDir = new File(taskPath);
+        if (!taskDir.exists()) return;
+        final File[] taskFiles = taskDir.listFiles();
+        if (taskFiles == null) continue;
+        for (File fromFile : taskFiles) {
+          copyFile(fromFile, new File(toTask, fromFile.getName()));
+        }
+        tasks.add(task);
+      }
+      studentLesson.updateTaskList(tasks);
     }
+    currentCourse.setLessons(updatedLessons);
 
     final Notification notification =
       new Notification("Update.course", "Course update", "Current course is synchronized", NotificationType.INFORMATION);
@@ -220,10 +266,6 @@ public class StudyProjectComponent implements ProjectComponent {
       final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
       if (toolWindow != null) {
         toolWindow.getContentManager().removeAllContents(false);
-      }
-      final ToolWindow progressToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyProgressToolWindowFactory.ID);
-      if (progressToolWindow != null) {
-        progressToolWindow.getContentManager().removeAllContents(false);
       }
       KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
       for (Keymap keymap : keymapManager.getAllKeymaps()) {
@@ -312,6 +354,7 @@ public class StudyProjectComponent implements ProjectComponent {
               taskFile.setUserCreated(true);
               final String name = createdFile.getName();
               taskFile.name = name;
+              //TODO: put to other steps as well
               task.getTaskFiles().put(name, taskFile);
             }
           }

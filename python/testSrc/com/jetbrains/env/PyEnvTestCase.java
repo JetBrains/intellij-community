@@ -5,9 +5,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -15,6 +19,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.TestEnv;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,10 +30,7 @@ import org.junit.runner.Description;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author traff
@@ -48,6 +50,12 @@ public abstract class PyEnvTestCase {
   public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true);
 
   private static final boolean STAGING_ENV = SystemProperties.getBooleanProperty("pycharm.staging_env", false);
+
+
+  /**
+   * Logger to be used with {@link #startMessagesCapture()}
+   */
+  private PyTestMessagesLogger myLogger;
 
   /**
    * Tags that should exist between all tags, available on all interpreters for test to run.
@@ -70,10 +78,13 @@ public abstract class PyEnvTestCase {
       myStaging = isStaging(description);
     }
   };
+
   /**
-   * See {@link #configureSandbox()}
+   * Escape test output to prevent python test be processed as test result
    */
-  private File mySandboxRoot;
+  public static String escapeTestMessage(@NotNull final String message) {
+    return message.replace("##", "from test: \\[sharp][sharp]");
+  }
 
   protected boolean isStaging(Description description) {
     try {
@@ -110,7 +121,7 @@ public abstract class PyEnvTestCase {
 
   @Nullable
   public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
-    return PyPackageManager.getInstance(sdk).findPackage("django", false);
+    return PyPackageUtil.findPackage(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false), "django");
   }
 
   public static String norm(String testDataPath) {
@@ -126,39 +137,6 @@ public abstract class PyEnvTestCase {
         Matchers.hasItems(myRequiredTags)
       );
     }
-    configureSandbox();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    if (mySandboxRoot != null && mySandboxRoot.exists()) {
-      FileUtil.delete(mySandboxRoot);
-    }
-  }
-
-  /**
-   * Creates sandbox folder which may be used by tests by calling {@link #wrapPathWithSandbox(String)}.
-   * Files are copied there and dropped after all.
-   * If <pre>_PYCHARM_FAST_SANDBOX</pre> env var is set, it uses this folder to create sandbox (good idea to use RAM disk).
-   * If not set, temp folder is used.
-   */
-  private void configureSandbox() throws IOException {
-    final String sandboxRootPath = System.getenv().get("_PYCHARM_FAST_SANDBOX");
-    if (sandboxRootPath != null) {
-      LOG.info(String.format("_PYCHARM_FAST_SANDBOX points to %s", sandboxRootPath));
-      mySandboxRoot = new File(sandboxRootPath);
-      final File[] array = mySandboxRoot.listFiles();
-      if (array != null) {
-        LOG.info(String.format("Flushing %s", mySandboxRoot));
-        Arrays.stream(array).forEach(FileUtil::delete);
-      }
-    }
-    else {
-      LOG.info("No _PYCHARM_FAST_SANDBOX set");
-      mySandboxRoot = FileUtil.createTempDirectory("PyEnvText", null, true);
-    }
-    mySandboxRoot.deleteOnExit();
-    LOG.info(String.format("Sandbox is %s", mySandboxRoot.getAbsolutePath()));
   }
 
 
@@ -185,21 +163,6 @@ public abstract class PyEnvTestCase {
     else {
       runnable.run();
     }
-  }
-
-
-  /**
-   * Copies files to sandbox which will be deleted after test.
-   * @param path source
-   * @return sandbox
-   */
-  final String wrapPathWithSandbox(@NotNull final String path) throws IOException {
-    final File pathFile = new File(path);
-    assert pathFile.exists() : String.format("File %s does not exist", pathFile);
-    final File folderInSandbox = new File(mySandboxRoot, Long.toString(System.currentTimeMillis()));
-    assert folderInSandbox.mkdir() : "Failed to create " + folderInSandbox;
-    FileUtil.copyDir(pathFile, folderInSandbox, pathname -> !pathname.getName().endsWith(".pyc"));
-    return folderInSandbox.getAbsolutePath();
   }
 
 
@@ -335,6 +298,76 @@ public abstract class PyEnvTestCase {
 
   public static String joinStrings(Collection<String> roots, String rootsName) {
     return roots.size() > 0 ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
+  }
+
+  /**
+   * Capture all messages and error logs and store them to be obtained with {@link #getCapturesMessages()}
+   * and stopped with {@link #stopMessageCapture()}
+   */
+  protected final void startMessagesCapture() {
+    myLogger = new PyTestMessagesLogger();
+    LoggedErrorProcessor.setNewInstance(myLogger);
+    Messages.setTestDialog(myLogger);
+  }
+
+  /**
+   * @return captures messages (first start with {@link #startMessagesCapture()}).
+   * Logged exceptions -- list of messages to be displayed (never null)
+   */
+  @NotNull
+  protected final Pair<List<Throwable>, List<String>> getCapturesMessages() {
+    assert myLogger != null : "Capturing not enabled";
+    return Pair.create(Collections.unmodifiableList(myLogger.myExceptions), Collections.unmodifiableList(myLogger.myMessages));
+  }
+
+  /**
+   * Stop message capturing started with {@link #startMessagesCapture()}
+   */
+  protected final void stopMessageCapture() {
+    LoggedErrorProcessor.restoreDefaultProcessor();
+    Messages.setTestDialog(TestDialog.DEFAULT);
+    myLogger = null;
+  }
+
+  /**
+   * Always call parrent when overwrite
+   */
+  @After
+  public void tearDown() throws Exception {
+    // We can stop message capturing even if it was not started as cleanup process.
+    stopMessageCapture();
+  }
+
+  /**
+   * Logger to be used with {@link #startMessagesCapture()}
+   */
+  private static final class PyTestMessagesLogger extends LoggedErrorProcessor implements TestDialog {
+
+    private final List<String> myMessages = new ArrayList<>();
+    private final List<Throwable> myExceptions = new ArrayList<>();
+
+    @Override
+    public int show(final String message) {
+      myMessages.add(message);
+      return 0;
+    }
+
+    @Override
+    public void processWarn(final String message, final Throwable t, @NotNull final org.apache.log4j.Logger logger) {
+      if (t != null) {
+        myExceptions.add(t);
+      }
+    }
+
+    @Override
+    public void processError(final String message,
+                             final Throwable t,
+                             final String[] details,
+                             @NotNull final org.apache.log4j.Logger logger) {
+      if (t != null) {
+        myExceptions.add(t);
+      }
+    }
   }
 }
 

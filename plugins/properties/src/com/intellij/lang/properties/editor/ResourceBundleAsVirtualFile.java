@@ -22,8 +22,8 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ import java.util.List;
  * @author Alexey
  */
 @Presentation(icon = "AllIcons.Nodes.ResourceBundle")
-public class ResourceBundleAsVirtualFile extends VirtualFile {
+public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualFileWithoutContent {
   private final ResourceBundle myResourceBundle;
 
   public ResourceBundleAsVirtualFile(@NotNull final ResourceBundle resourceBundle) {

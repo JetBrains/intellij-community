@@ -27,8 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
  */
 class XmlMarkupBuilderTest extends LightGroovyTestCase {
 
-  final String basePath = ""
-
   public void testHighlighting() {
     myFixture.enableInspections(GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection)
     myFixture.configureByText "A.groovy", """\

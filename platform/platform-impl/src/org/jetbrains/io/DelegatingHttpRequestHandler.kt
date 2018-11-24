@@ -41,7 +41,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       return isSupported(request) && !request.isWriteFromBrowserWithoutOrigin() && isAccessible(request) && process(urlDecoder, request, context)
     }
 
-    val prevHandlerAttribute = context.attr(PREV_HANDLER)
+    val prevHandlerAttribute = context.channel().attr(PREV_HANDLER)
     val connectedHandler = prevHandlerAttribute.get()
     if (connectedHandler != null) {
       if (connectedHandler.checkAndProcess()) {
@@ -79,11 +79,13 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
     return false
   }
 
+  @Suppress("OverridingDeprecatedMember")
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     try {
-      context.attr(PREV_HANDLER).remove()
+      context.channel().attr(PREV_HANDLER).remove()
     }
     finally {
+      @Suppress("DEPRECATION")
       super.exceptionCaught(context, cause)
     }
   }

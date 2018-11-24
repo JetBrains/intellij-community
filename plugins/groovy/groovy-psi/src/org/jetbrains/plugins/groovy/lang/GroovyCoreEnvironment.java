@@ -94,7 +94,6 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.*;
-import org.jetbrains.plugins.groovy.transformations.impl.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.ExternalBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.InitializerBuilderStrategySupport;
@@ -108,6 +107,7 @@ import org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.impl.*;
 
 /**
  * Upsource
@@ -138,8 +138,7 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(NonCodeMembersContributor.EP_NAME, new DGMMemberContributor());
       appEnvironment.addExtension(NonCodeMembersContributor.EP_NAME, new SwingBuilderNonCodeMemberContributor());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), DefaultImportContributor.EP_NAME,
-                                                        DefaultImportContributor.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrImportContributor.EP_NAME, GrImportContributor.class);
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), AstTransformationSupport.EP_NAME, AstTransformationSupport.class);
 

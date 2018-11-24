@@ -22,6 +22,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -61,7 +62,7 @@ public class StudySwingToolWindow extends StudyToolWindow {
     return scrollPane;
   }
 
-  public void setText(String text) {
+  public void setText(@NotNull String text) {
     myTaskTextPane.setText(text);
   }
 }

@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -114,6 +113,24 @@ public class PyPsiUtils {
     return PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
   }
 
+  /**
+   * Finds first non-whitespace sibling after given PSI element but stops at first whitespace containing line feed.  
+   */
+  @Nullable
+  public static PsiElement getNextNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
+    PsiElement cur = element.getNextSibling();
+    while (cur != null) {
+      if (!(cur instanceof PsiWhiteSpace)) {
+        return cur;
+      }
+      else if (cur.textContains('\n')) {
+        break;
+      }
+      cur = cur.getNextSibling();
+    }
+    return null;
+  }
+  
   /**
    * Finds first non-whitespace sibling after given AST node.
    */
@@ -602,6 +619,14 @@ public class PyPsiUtils {
 
   public static void assertValid(@NotNull final Module module) {
     Preconditions.checkArgument(!module.isDisposed(), String.format("Module %s is disposed", module));
+  }
+
+  @NotNull
+  public static PsiFileSystemItem getFileSystemItem(@NotNull PsiElement element) {
+    if (element instanceof PsiFileSystemItem) {
+      return (PsiFileSystemItem)element;
+    }
+    return element.getContainingFile();
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

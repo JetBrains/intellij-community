@@ -28,8 +28,12 @@
     <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
   </extensions>
 
-  <extensions defaultExtensionNs="Pythonid">
-    <pyReferenceResolveProvider implementation="com.jetbrains.edu.coursecreator.PyCCReferenceResolveProvider"/>
-  </extensions>
+  <actions>
+    <action class="com.jetbrains.edu.coursecreator.PyCCCreateProjectFromArchive" id="PyCC.NewEdu">
+      <add-to-group group-id="CCFileGroup" anchor="last"/>
+      <add-to-group group-id="CCProjectViewGroup" anchor="last"/>
+    </action>
+    <action class="com.jetbrains.edu.coursecreator.PyCCChangeCourseInfo" id="ChangeCourseInfo" overrides="true"/>
+  </actions>
 
 </idea-plugin>

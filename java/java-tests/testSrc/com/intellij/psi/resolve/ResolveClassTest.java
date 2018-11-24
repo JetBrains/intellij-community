@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
@@ -203,10 +204,15 @@ public class ResolveClassTest extends ResolveTestCase {
 
   public void testStaticImportInTheSameClassPerformance() throws Exception {
     PsiReference ref = configure();
+    ensureIndexUpToDate();
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());
     long elapsed = System.currentTimeMillis() - start;
     PlatformTestUtil.assertTiming("exponent?", 500, elapsed);
+  }
+
+  private void ensureIndexUpToDate() {
+    getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_LIST, GlobalSearchScope.allScope(myProject));
   }
 
   public void testStaticImportNetworkPerformance() throws Exception {
@@ -222,6 +228,7 @@ public class ResolveClassTest extends ResolveTestCase {
       createFile(myModule, "Foo" + i + ".java", imports + "class Foo" + i + " extends Bar1, Bar2, Bar3 {}");
     }
 
+    ensureIndexUpToDate();
     System.gc();
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());

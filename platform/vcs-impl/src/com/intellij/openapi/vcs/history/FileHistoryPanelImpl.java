@@ -78,6 +78,8 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Position;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -88,6 +90,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
 
@@ -174,29 +177,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     };
     myCommentsStatus.setText("Commit message");
-    myComments = new JEditorPane(UIUtil.HTML_MIME, "") {
-      @Override
-      protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        myCommentsStatus.paint(this, g);
-      }
-
-      @Override
-      public Color getBackground() {
-        return UIUtil.getEditorPaneBackground();
-      }
-    };
+    myComments = new MyCommentsPane();
     myCommentsStatus.attachTo(myComments);
-    myComments.setPreferredSize(new Dimension(150, 100));
-    myComments.setEditable(false);
-    myComments.setOpaque(false);
-    myComments.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-    myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
     myRevisionsOrder = new HashMap<>();
     refreshRevisionsOrder();
-
-    replaceTransferable();
 
     myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
 
@@ -296,30 +281,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private static String getRevisionInfo(@NotNull VcsFileRevision revision) {
+  @NotNull
+  private static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
+    // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
-    // revision
-    sb.append(RevisionColumnInfo.toString(revision, true)).append(" ");
-
-    // author
-    sb.append(revision.getAuthor()).append(" ");
-
-    // date
-    sb.append(formatDateTime(revision.getRevisionDate().getTime()));
-
-    // committed by
+    sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision, true)).append(" ");
+    sb.append(revision.getAuthor());
+    long time = revision.getRevisionDate().getTime();
+    sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
     if (revision instanceof VcsFileRevisionEx) {
       if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
         sb.append(" (committed by ").append(((VcsFileRevisionEx)revision).getCommitterName()).append(")");
       }
     }
-
+    if (withMessage) {
+      sb.append(" ").append(MessageColumnInfo.getSubject(revision));
+    }
     return sb.toString();
-  }
-
-  @NotNull
-  private static String formatDateTime(long time) {
-    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
   }
 
   /**
@@ -340,66 +318,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @Nullable
   public VcsRevisionNumber getStartingRevision() {
     return myStartingRevision;
-  }
-
-  private void replaceTransferable() {
-    final TransferHandler originalTransferHandler = myComments.getTransferHandler();
-
-    final TransferHandler newHandler = new TransferHandler("copy") {
-      @Override
-      public void exportAsDrag(final JComponent comp, final InputEvent e, final int action) {
-        originalTransferHandler.exportAsDrag(comp, e, action);
-      }
-
-      @Override
-      public void exportToClipboard(final JComponent comp, final Clipboard clip, final int action) throws IllegalStateException {
-        if ((action == COPY || action == MOVE)
-            && (getSourceActions(comp) & action) != 0) {
-
-          String selectedText = myComments.getSelectedText();
-          final Transferable t;
-          if (selectedText == null) {
-            t = new TextTransferable(myComments.getText(), myOriginalComment);
-          }
-          else {
-            t = new TextTransferable(selectedText);
-          }
-          try {
-            clip.setContents(t, null);
-            exportDone(comp, t, action);
-            return;
-          }
-          catch (IllegalStateException ise) {
-            exportDone(comp, t, NONE);
-            throw ise;
-          }
-        }
-
-        exportDone(comp, null, NONE);
-      }
-
-      @Override
-      public boolean importData(final JComponent comp, final Transferable t) {
-        return originalTransferHandler.importData(comp, t);
-      }
-
-      @Override
-      public boolean canImport(final JComponent comp, final DataFlavor[] transferFlavors) {
-        return originalTransferHandler.canImport(comp, transferFlavors);
-      }
-
-      @Override
-      public int getSourceActions(final JComponent c) {
-        return originalTransferHandler.getSourceActions(c);
-      }
-
-      @Override
-      public Icon getVisualRepresentation(final Transferable t) {
-        return originalTransferHandler.getVisualRepresentation(t);
-      }
-    };
-
-    myComments.setTransferHandler(newHandler);
   }
 
   private DualViewColumnInfo[] createColumnList(Project project, VcsHistoryProvider provider, final VcsHistorySession session) {
@@ -519,7 +437,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         html.append("<br/><br/>");
       }
       if (addRevisionInfo) {
-        String revisionInfo = getRevisionInfo(revision.getRevision());
+        String revisionInfo = getPresentableText(revision.getRevision(), false);
         html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">")
           .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
         original.append(revisionInfo).append("\n");
@@ -878,8 +796,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    CopyPasteManager.getInstance().setContents(new StringSelection(
-      StringUtil.join(getSelectedRevisions(), revision -> getRevisionInfo(revision) + " " + MessageColumnInfo.getSubject(revision), "\n")));
+    String text = StringUtil.join(getSelectedRevisions(), revision -> getPresentableText(revision, true), "\n");
+    CopyPasteManager.getInstance().setContents(new StringSelection(text));
   }
 
   @Override
@@ -961,6 +879,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static class AuthorCellRenderer extends ColoredTableCellRenderer {
     private String myTooltipText;
 
+    /** @noinspection MethodNamesDifferingOnlyByCase*/
     public void setTooltipText(final String text) {
       myTooltipText = text;
     }
@@ -1019,9 +938,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
         if (revision instanceof VcsFileRevisionEx) {
           VcsFileRevisionEx ex = (VcsFileRevisionEx)revision;
-          StringBuilder sb = new StringBuilder(ex.getAuthor());
+          StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
           if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;");
-          if (ex.getCommitterName() != null && !ex.getAuthor().equals(ex.getCommitterName())) {
+          if (ex.getCommitterName() != null && !Comparing.equal(ex.getAuthor(), ex.getCommitterName())) {
             sb.append(", via ").append(ex.getCommitterName());
             if (ex.getCommitterEmail() != null) sb.append(" &lt;").append(ex.getCommitterEmail()).append("&gt;");
           }
@@ -1063,8 +982,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       if (originalMessage == null) return "";
 
       int index = StringUtil.indexOfAny(originalMessage, "\n\r");
-      if (index == -1) return originalMessage;
-      return originalMessage.substring(0, index) + "...";
+      return index == -1 ? originalMessage : originalMessage.substring(0, index);
     }
 
     protected String getDataOf(VcsFileRevision object) {
@@ -1232,17 +1150,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  abstract static class VcsColumnInfo<T extends Comparable> extends DualViewColumnInfo<VcsFileRevision, String>
+  abstract static class VcsColumnInfo<T extends Comparable<T>> extends DualViewColumnInfo<VcsFileRevision, String>
     implements Comparator<VcsFileRevision> {
     public VcsColumnInfo(String name) {
       super(name);
-    }
-
-    private static int compareObjects(Comparable data1, Comparable data2) {
-      if (data1 == data2) return 0;
-      if (data1 == null) return -1;
-      if (data2 == null) return 1;
-      return data1.compareTo(data2);
     }
 
     protected abstract T getDataOf(VcsFileRevision o);
@@ -1257,7 +1168,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-      return compareObjects(getDataOf(o1), getDataOf(o2));
+      return Comparing.compare(getDataOf(o1), getDataOf(o2));
     }
 
     public boolean shouldBeShownIsTheTree() {
@@ -1799,6 +1710,75 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public void setSelected(AnActionEvent e, boolean state) {
       getConfiguration().SHOW_FILE_HISTORY_DETAILS = state;
       setupDetails();
+    }
+  }
+
+  private class MyCommentsPane extends JEditorPane implements DataProvider, CopyProvider {
+    public MyCommentsPane() {
+      super(UIUtil.HTML_MIME, "");
+
+      setPreferredSize(new Dimension(150, 100));
+      setEditable(false);
+      setOpaque(false);
+      putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+      addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      myCommentsStatus.paint(this, g);
+    }
+
+    @Override
+    public Color getBackground() {
+      return UIUtil.getEditorPaneBackground();
+    }
+
+    @Override
+    public String getSelectedText() {
+      javax.swing.text.Document doc = getDocument();
+      int start = getSelectionStart();
+      int end = getSelectionEnd();
+
+      try {
+        Position p0 = doc.createPosition(start);
+        Position p1 = doc.createPosition(end);
+        StringWriter sw = new StringWriter(p1.getOffset() - p0.getOffset());
+        getEditorKit().write(sw, doc, p0.getOffset(), p1.getOffset() - p0.getOffset());
+
+        return StringUtil.removeHtmlTags(sw.toString());
+      }
+      catch (BadLocationException | IOException e) {
+        LOG.warn(e);
+      }
+      return super.getSelectedText();
+    }
+
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      String selectedText = getSelectedText();
+      if (selectedText == null || selectedText.isEmpty()) selectedText = myOriginalComment;
+      CopyPasteManager.getInstance().setContents(new StringSelection(selectedText));
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return true;
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return this;
+      }
+      return null;
     }
   }
 }

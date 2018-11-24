@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -274,6 +275,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       }
 
       myEditor.repaint(startOffset, repaintEnd);
+    }
+    catch (ProcessCanceledException ex) {
+      myText = null;
+      mySegments.removeAll();
+      throw ex;
     }
     catch (RuntimeException ex) {
       throw new IllegalStateException("Error updating " + this + " after " + e, ex);

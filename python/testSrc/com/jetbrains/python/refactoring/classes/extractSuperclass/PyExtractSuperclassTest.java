@@ -44,6 +44,17 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     super("extractsuperclass");
   }
 
+  // Checks if class explicitly extends object we shall move it even in Py3K (PY-19137)
+  public void testPy3ParentHasObject() throws Exception {
+    setLanguageLevel(LanguageLevel.PYTHON30);
+    doSimpleTest("Child", "Parent", null, true, false, ".spam");
+  }
+
+  // Ensures refactoring works even if memeberInfo has null element (no npe: PY-19136)
+  public void testFieldsNpe() throws Exception {
+    doSimpleTest("Basic", "Ancestor", null, true, false, ".__init__", "#a", "#b", ".func1");
+  }
+
   // Checks that moving methods between files moves imports as well
   public void testImportMultiFile() throws Throwable {
     multiFileTestHelper(".do_useful_stuff", false);

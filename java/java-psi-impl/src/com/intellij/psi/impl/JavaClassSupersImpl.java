@@ -94,6 +94,9 @@ public class JavaClassSupersImpl extends JavaClassSupers {
         }
       }
     }
+    else if (lowerBound instanceof PsiCapturedWildcardType) {
+      return processLowerBound(((PsiCapturedWildcardType)lowerBound).getUpperBound(), derivedClass, scope, derivedSubstitutor);
+    }
     return null;
   }
 

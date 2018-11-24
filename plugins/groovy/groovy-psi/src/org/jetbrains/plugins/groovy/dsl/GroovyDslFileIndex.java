@@ -25,10 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -36,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -62,7 +58,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.io.File;
 import java.util.*;
@@ -261,23 +256,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
 
-    final DelegatingScopeProcessor nameChecker = new DelegatingScopeProcessor(processor) {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-          return processor.execute(element, state);
-        }
-        else if (element instanceof PsiNamedElement) {
-          return ResolveUtil.processElement(processor, (PsiNamedElement)element, state);
-        }
-        else {
-          return processor.execute(element, state);
-        }
-      }
-    };
-
-    for (GroovyDslScript script : getDslScripts(place.getProject())) {
-      if (!script.processExecutor(nameChecker, psiType, place, placeFile, state)) {
+    NotNullLazyValue<String> typeText = NotNullLazyValue.createValue(() -> psiType.getCanonicalText(false));
+    for (GroovyDslScript script : getDslScripts(placeFile.getProject())) {
+      if (!script.processExecutor(processor, psiType, place, placeFile, state, typeText)) {
         return false;
       }
     }

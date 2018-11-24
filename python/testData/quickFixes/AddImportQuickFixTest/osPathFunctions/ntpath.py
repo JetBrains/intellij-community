@@ -1,0 +1,2 @@
+def join(*args):
+    pass

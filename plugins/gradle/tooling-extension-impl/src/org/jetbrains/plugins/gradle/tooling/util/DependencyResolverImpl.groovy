@@ -143,8 +143,10 @@ class DependencyResolverImpl implements DependencyResolver {
         Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap = [:];
         componentResults.each { componentResultsMap.put(it.id, it) }
 
+        Set<Configuration> processedConfigurations = new HashSet<>()
         def projectDeps
         projectDeps = { Configuration conf, map = ArrayListMultimap.create() ->
+          if(!processedConfigurations.add(conf)) return map
           conf.incoming.dependencies.findAll { it instanceof ProjectDependency }.each { it ->
             map.put(toComponentIdentifier(it.group, it.name, it.version), it as ProjectDependency)
             projectDeps((it as ProjectDependency).projectConfiguration, map)
@@ -155,9 +157,18 @@ class DependencyResolverImpl implements DependencyResolver {
 
         ResolutionResult resolutionResult = configuration.incoming.resolutionResult
         if(!configuration.resolvedConfiguration.hasError()) {
-          def fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
+          Collection<File> fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
           artifactMap.values().each {
             fileDeps.remove(it.file)
+          }
+          configurationProjectDependencies.values().each {
+            def intersect = fileDeps.intersect(it.resolve())
+            if(!intersect.isEmpty()) {
+              def fileCollectionDependency = new DefaultFileCollectionDependency(intersect)
+              fileCollectionDependency.scope = scope
+              result.add(fileCollectionDependency)
+              fileDeps.removeAll(intersect)
+            }
           }
           fileDeps.each {
             def fileCollectionDependency = new DefaultFileCollectionDependency([it])
@@ -740,7 +751,7 @@ class DependencyResolverImpl implements DependencyResolver {
     return result;
   }
 
-  static class DependencyResultsTransformer {
+  class DependencyResultsTransformer {
     Collection<DependencyResult> handledDependencyResults
     Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap
     Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap
@@ -779,21 +790,30 @@ class DependencyResolverImpl implements DependencyResolver {
             def selectionReason = componentResult.selectionReason.description
             if (componentSelector instanceof ProjectComponentSelector) {
               def projectDependencies = configurationProjectDependencies.get(componentIdentifier)
-              projectDependencies.each {
-                if (it.projectConfiguration.name == Dependency.DEFAULT_CONFIGURATION) {
+              Collection<Configuration> dependencyConfigurations;
+              if(projectDependencies.isEmpty()) {
+                def dependencyProject = myProject.findProject(componentSelector.projectPath)
+                def dependencyProjectConfiguration = dependencyProject.getConfigurations().getByName(Dependency.DEFAULT_CONFIGURATION)
+                dependencyConfigurations = [dependencyProjectConfiguration]
+              } else {
+                dependencyConfigurations = projectDependencies.collect {it.projectConfiguration}
+              }
+
+              dependencyConfigurations.each {
+                if (it.name == Dependency.DEFAULT_CONFIGURATION) {
                   final dependency = new DefaultExternalProjectDependency(
                     name: name,
                     group: group,
                     version: version,
                     scope: scope,
                     selectionReason: selectionReason,
-                    projectPath: componentSelector.projectPath,
-                    configurationName: it.projectConfiguration.name
+                    projectPath: (componentSelector as ProjectComponentSelector).projectPath,
+                    configurationName: it.name
                   )
-                  dependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.files
+                  dependency.projectDependencyArtifacts = it.allArtifacts.files.files
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
-                  if(it.projectConfiguration.artifacts.size() == 1) {
-                    def publishArtifact = it.projectConfiguration.allArtifacts.first()
+                  if(it.artifacts.size() == 1) {
+                    def publishArtifact = it.allArtifacts.first()
                     dependency.classifier = publishArtifact.classifier
                     dependency.packaging = publishArtifact.extension ?: 'jar'
                   }
@@ -812,13 +832,13 @@ class DependencyResolverImpl implements DependencyResolver {
                     version: version,
                     scope: scope,
                     selectionReason: selectionReason,
-                    projectPath: componentSelector.projectPath,
-                    configurationName: it.projectConfiguration.name
+                    projectPath: (componentSelector as ProjectComponentSelector).projectPath,
+                    configurationName: it.name
                   )
-                  dependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.files
+                  dependency.projectDependencyArtifacts = it.allArtifacts.files.files
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
-                  if(it.projectConfiguration.artifacts.size() == 1) {
-                    def publishArtifact = it.projectConfiguration.allArtifacts.first()
+                  if(it.artifacts.size() == 1) {
+                    def publishArtifact = it.allArtifacts.first()
                     dependency.classifier = publishArtifact.classifier
                     dependency.packaging = publishArtifact.extension ?: 'jar'
                   }
@@ -831,7 +851,7 @@ class DependencyResolverImpl implements DependencyResolver {
                   dependencies.add(dependency)
 
                   def files = []
-                  def artifacts = it.projectConfiguration.getArtifacts()
+                  def artifacts = it.getArtifacts()
                   if (artifacts && !artifacts.isEmpty()) {
                     def artifact = artifacts.first()
                     if (artifact.hasProperty("archiveTask") &&

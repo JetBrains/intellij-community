@@ -28,7 +28,6 @@ import static org.jetbrains.plugins.groovy.util.TestUtils.CARET_MARKER
 
 public class GrChangeToOperatorTest extends LightGroovyTestCase {
 
-  final String basePath = null
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   def inspection = new ChangeToOperatorInspection()
@@ -119,7 +118,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     assertValid(/a.compareTo(b) >= 0/, /a >= b/)
     assertValid(/a.compareTo(b) > 0/, /a > b/)
 
-    assertValid(/if (${_}(2-1).compareTo(b) > 0${_});/, /(2 - 1) > b/)
+    assertValid(/if (${_}(2-1).compareTo(3) > 0${_});/, /(2 - 1) > 3/)
   }
 
   void testCompareToOption() {

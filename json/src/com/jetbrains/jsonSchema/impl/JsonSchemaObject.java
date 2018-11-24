@@ -9,6 +9,7 @@ import java.util.Map;
  * @author Irina.Chernushina on 8/28/2015.
  */
 public class JsonSchemaObject {
+  private String myDefinitionAddress;
   private Map<String, JsonSchemaObject> myDefinitions;
   private Map<String, JsonSchemaObject> myProperties;
   private Map<String, JsonSchemaObject> myPatternProperties;
@@ -108,6 +109,7 @@ public class JsonSchemaObject {
     myAnyOf = other.myAnyOf;
     myOneOf = other.myOneOf;
     myNot = other.myNot;
+    myDefinitionAddress = other.myDefinitionAddress;
   }
 
   public void mergeValues(JsonSchemaObject other) {
@@ -479,5 +481,13 @@ public class JsonSchemaObject {
 
   public boolean hasSpecifiedType() {
     return myType != null || (myTypeVariants != null && !myTypeVariants.isEmpty());
+  }
+
+  public String getDefinitionAddress() {
+    return myDefinitionAddress;
+  }
+
+  public void setDefinitionAddress(String definitionAddress) {
+    myDefinitionAddress = definitionAddress;
   }
 }

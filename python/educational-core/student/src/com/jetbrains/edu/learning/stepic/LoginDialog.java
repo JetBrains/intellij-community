@@ -1,30 +1,31 @@
 package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.edu.learning.ui.LoginPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 
 public class LoginDialog extends DialogWrapper {
-  private final LoginPanel myLoginPanel;
+  protected final LoginPanel myLoginPanel;
 
   public LoginDialog() {
     super(false);
     myLoginPanel = new LoginPanel(this);
-    setTitle("Login to Stepic");
+    setTitle("Login to Stepik");
     setOKButtonText("Login");
     init();
   }
 
   @NotNull
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), new RegisterAction(), getCancelAction()};
+    return new Action[]{getOKAction(), getCancelAction()};
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    return myLoginPanel.getPanel();
+    return myLoginPanel.getContentPanel();
   }
 
   @Override
@@ -39,42 +40,33 @@ public class LoginDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    AuthDataHolder authData = myLoginPanel.getAuthData();
-    final boolean success = EduStepicConnector.login(authData.email, authData.password);
-    if (!success) {
-      setErrorText("Login failed");
+    if (!validateLoginAndPasswordFields()) return;
+    final StepicUser user = EduStepicConnector.login(myLoginPanel.getLogin(), myLoginPanel.getPassword());
+    if (user != null) {
+      doJustOkAction();
     }
     else {
-      StudySettings.getInstance().setLogin(authData.email);
-      StudySettings.getInstance().setPassword(authData.password);
-      super.doOKAction();
+      setErrorText("Login failed");
     }
+  }
+
+  public boolean validateLoginAndPasswordFields() {
+    if (StringUtil.isEmptyOrSpaces(myLoginPanel.getLogin())) {
+      setErrorText("Please, enter your login");
+      return false;
+    }
+    if (StringUtil.isEmptyOrSpaces(myLoginPanel.getPassword())) {
+      setErrorText("Please, enter your password");
+      return false;
+    }
+    return true;
+  }
+
+  protected void doJustOkAction() {
+    super.doOKAction();
   }
 
   public void clearErrors() {
     setErrorText(null);
   }
-
-  public static class AuthDataHolder {
-    String email;
-    String password;
-
-    public AuthDataHolder(String login, String password) {
-      email = login;
-      this.password = password;
-    }
-  }
-
-  protected class RegisterAction extends DialogWrapperAction {
-    private RegisterAction() {
-      super("Register");
-    }
-
-    @Override
-    protected void doAction(ActionEvent e) {
-      EduStepicConnector.createUser(myLoginPanel.getAuthData().email, myLoginPanel.getAuthData().password);
-      doOKAction();
-    }
-  }
-
 }

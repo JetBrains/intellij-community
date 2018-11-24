@@ -137,7 +137,14 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   
   private void checkValid() {
     PsiUtilCore.ensureValid(myInjectedFile);
-    if (!isValid()) throw new AssertionError();
+    if (!isValid()) {
+      StringBuilder reason = new StringBuilder("Not valid");
+      if (myDisposed) reason.append("; editorWindow: disposed");
+      if (!myDocumentWindow.isValid()) reason.append("; documentWindow: invalid");
+      if (myDelegate.isDisposed()) reason.append("; editor: disposed");
+      if (myInjectedFile.getProject().isDisposed()) reason.append("; project: disposed");
+      throw new AssertionError(reason.toString());
+    }
   }
 
   @Override

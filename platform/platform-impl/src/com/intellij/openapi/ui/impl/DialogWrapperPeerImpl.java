@@ -64,6 +64,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferStrategy;
+import java.awt.peer.DialogPeer;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -775,6 +776,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         setLocation(loc);
       }
       super.show();
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      if (SystemInfo.isMac && isModal() && Registry.is("osx.focus.fix.modal.dialog.first.activation") && getPeer() != null) {
+        ((DialogPeer)getPeer()).updateFocusableWindowState();
+      }
     }
 
     @Nullable

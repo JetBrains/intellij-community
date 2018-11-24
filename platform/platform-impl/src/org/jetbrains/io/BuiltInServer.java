@@ -41,7 +41,6 @@ public class BuiltInServer implements Disposable {
   private final EventLoopGroup eventLoopGroup;
   private final int port;
   private final ChannelRegistrar channelRegistrar;
-  private final boolean isOwnerOfEventLoopGroup;
 
   static {
     // IDEA-120811
@@ -54,12 +53,10 @@ public class BuiltInServer implements Disposable {
 
   private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
                         int port,
-                        @NotNull ChannelRegistrar channelRegistrar,
-                        boolean isOwnerOfEventLoopGroup) {
+                        @NotNull ChannelRegistrar channelRegistrar) {
     this.eventLoopGroup = eventLoopGroup;
     this.port = port;
     this.channelRegistrar = channelRegistrar;
-    this.isOwnerOfEventLoopGroup = isOwnerOfEventLoopGroup;
   }
 
   @NotNull
@@ -77,7 +74,7 @@ public class BuiltInServer implements Disposable {
 
   @Override
   public void dispose() {
-    channelRegistrar.close(isOwnerOfEventLoopGroup);
+    channelRegistrar.close();
     Logger.getInstance(BuiltInServer.class).info("web server stopped");
   }
 
@@ -118,8 +115,8 @@ public class BuiltInServer implements Disposable {
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     ServerBootstrap bootstrap = NettyKt.serverBootstrap(eventLoopGroup);
     configureChildHandler(bootstrap, channelRegistrar, handler);
-    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
-    return new BuiltInServer(eventLoopGroup, port, channelRegistrar, isEventLoopGroupOwner);
+    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar, isEventLoopGroupOwner);
+    return new BuiltInServer(eventLoopGroup, port, channelRegistrar);
   }
 
   static void configureChildHandler(@NotNull ServerBootstrap bootstrap,
@@ -138,7 +135,8 @@ public class BuiltInServer implements Disposable {
                           int portsCount,
                           boolean tryAnyPort,
                           @NotNull ServerBootstrap bootstrap,
-                          @NotNull ChannelRegistrar channelRegistrar) throws Exception {
+                          @NotNull ChannelRegistrar channelRegistrar,
+                          boolean isEventLoopGroupOwner) throws Exception {
     InetAddress address = InetAddress.getLoopbackAddress();
 
     for (int i = 0; i < portsCount; i++) {
@@ -150,7 +148,7 @@ public class BuiltInServer implements Disposable {
 
       ChannelFuture future = bootstrap.bind(address, port).awaitUninterruptibly();
       if (future.isSuccess()) {
-        channelRegistrar.add(future.channel());
+        channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner);
         return port;
       }
       else if (!tryAnyPort && i == portsCount - 1) {
@@ -161,7 +159,7 @@ public class BuiltInServer implements Disposable {
     Logger.getInstance(BuiltInServer.class).info("We cannot bind to our default range, so, try to bind to any free port");
     ChannelFuture future = bootstrap.bind(address, 0).awaitUninterruptibly();
     if (future.isSuccess()) {
-      channelRegistrar.add(future.channel());
+      channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner);
       return ((InetSocketAddress)future.channel().localAddress()).getPort();
     }
     ExceptionUtil.rethrowAll(future.cause());

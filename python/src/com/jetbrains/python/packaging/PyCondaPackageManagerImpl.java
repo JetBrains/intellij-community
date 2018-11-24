@@ -49,9 +49,8 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public void installManagement() throws ExecutionException {
   }
 
-
   @Override
-  public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
+  public boolean hasManagement() throws ExecutionException {
     final Sdk sdk = getSdk();
     return isCondaVEnv(sdk);
   }
@@ -126,10 +125,10 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @NotNull
   @Override
-  protected List<PyPackage> getPackages() throws ExecutionException {
+  protected List<PyPackage> collectPackages() throws ExecutionException {
     final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
     final Set<PyPackage> packages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
-    packages.addAll(super.getPackages());
+    packages.addAll(super.collectPackages());
     return Lists.newArrayList(packages);
   }
 

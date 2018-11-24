@@ -7,6 +7,7 @@ class Super {
   static Super USED_PRIVATE = new <warning descr="Referencing subclass MyUsedSub from superclass Super initializer might lead to class loading deadlock">MyUsedSub</warning>();
 
   static Object OK_INSIDE_ANONYMOUS = new Object() {{ Sub s = new Sub(); }};
+  static Runnable OK_INSIDE_LAMBDA = () -> { Sub s = new Sub(); };
   static Object OK_UNRELATED = "abc";
   static Super OK_SAME = new Super();
   static Super OK_SAME_ANONYMOUS = new Super(){};

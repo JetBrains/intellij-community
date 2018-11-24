@@ -523,6 +523,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setCharset(final Charset charset, @Nullable Runnable whenChanged) {
+    setCharset(charset, whenChanged, true);
+  }
+
+  public void setCharset(final Charset charset, @Nullable Runnable whenChanged, boolean fireEventsWhenChanged) {
     final Charset old = getStoredCharset();
     storeCharset(charset);
     if (Comparing.equal(charset, old)) return;
@@ -535,7 +539,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
     if (old != null) { //do not send on detect
       if (whenChanged != null) whenChanged.run();
-      VirtualFileManager.getInstance().notifyPropertyChanged(this, PROP_ENCODING, old, charset);
+      if (fireEventsWhenChanged) {
+        VirtualFileManager.getInstance().notifyPropertyChanged(this, PROP_ENCODING, old, charset);
+      }
     }
   }
 

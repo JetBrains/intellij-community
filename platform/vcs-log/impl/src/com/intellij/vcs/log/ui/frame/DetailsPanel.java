@@ -33,10 +33,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,7 +60,6 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
 
   @NotNull private final JBLoadingPanel myLoadingPanel;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final MigLayout myLayout;
 
   @NotNull private VisiblePack myDataPack;
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
@@ -77,8 +76,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
     myScrollPane.getHorizontalScrollBar().setUnitIncrement(JBUI.scale(10));
-    myLayout = new MigLayout("flowy, ins 0, hidemode 3, gap 0, fill");
-    myMainContentPanel = new ScrollablePanel(myLayout) {
+    myMainContentPanel = new ScrollablePanel() {
       @Override
       public boolean getScrollableTracksViewportWidth() {
         boolean expanded = false;
@@ -118,6 +116,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
         return StringUtil.isNotEmpty(getText());
       }
     };
+    myMainContentPanel.setLayout(new BoxLayout(myMainContentPanel, BoxLayout.Y_AXIS));
 
     myMainContentPanel.setOpaque(false);
     myScrollPane.setViewportView(myMainContentPanel);
@@ -181,7 +180,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
     int requiredCount = Math.min(selectionLength, MAX_ROWS);
     for (int i = existingCount; i < requiredCount; i++) {
       if (i > 0) {
-        myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null), "growx, wmax 100%, growy 0");
+        myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       }
       myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, myDataPack));
     }
@@ -205,10 +204,6 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
 
     mySelection = Ints.asList(Arrays.copyOf(selection, requiredCount));
 
-    for (int i = 0; i < mySelection.size(); i++) {
-      myLayout.setComponentConstraints(getCommitPanel(i), "growx, wmax 100%, growy" + (i == mySelection.size() - 1 ? ", push" : ""));
-    }
-
     repaint();
   }
 
@@ -227,7 +222,8 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
       for (int i = 0; i < mySelection.size(); i++) {
         CommitPanel commitPanel = getCommitPanel(i);
-        commitPanel.setCommit(detailsList.get(i));
+        Integer commit = myDataPack.getVisibleGraph().getRowInfo(mySelection.get(i)).getCommit();
+        commitPanel.setCommit(detailsList.get(i), ((RefsModel)myDataPack.getRefs()).refsToCommit(commit));
       }
 
       if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {

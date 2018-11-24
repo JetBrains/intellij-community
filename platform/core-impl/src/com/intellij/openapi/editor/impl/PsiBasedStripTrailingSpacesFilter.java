@@ -75,7 +75,7 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
   protected abstract void process(@NotNull PsiFile psiFile);
 
   @Nullable
-  private static Language getDocumentLanguage(@NotNull Document document) {
+  public static Language getDocumentLanguage(@NotNull Document document) {
     FileDocumentManager manager = FileDocumentManager.getInstance();
     VirtualFile file = manager.getFile(document);
     if (file != null && file.isValid()) {

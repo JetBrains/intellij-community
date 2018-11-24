@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
@@ -282,7 +281,7 @@ public class LineStatusTracker {
   }
 
   public void release() {
-    UIUtil.invokeLaterIfNeeded(() -> {
+    Runnable runnable = () -> {
       if (myReleased) return;
       LOG.assertTrue(!myDuringRollback);
 
@@ -293,7 +292,14 @@ public class LineStatusTracker {
 
         destroyRanges();
       }
-    });
+    };
+
+    if (myApplication.isDispatchThread() && !myDuringRollback) {
+      runnable.run();
+    }
+    else {
+      myApplication.invokeLater(runnable);
+    }
   }
 
   @NotNull

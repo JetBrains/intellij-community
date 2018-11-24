@@ -61,6 +61,7 @@ public class PyExecutionException extends ExecutionException {
     final String command = getCommand() + " " + StringUtil.join(getArgs(), " ");
     b.append(command);
     b.append("\n\n");
+    b.append("The exit code: ").append(myExitCode).append("\n");
     b.append("The error output of the command:\n\n");
     b.append(myStdout);
     b.append("\n");

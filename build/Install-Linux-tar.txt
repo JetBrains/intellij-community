@@ -21,7 +21,7 @@ INSTALLATION INSTRUCTIONS
 
   4. [OPTIONAL] To adjust the value of the JVM heap size, create
       ~/.@@system_selector@@/@@product@@.vmoptions (or @@product@@64.vmoptions
-      if using a 64-bit JDK), and set the -Xms and -Xms paramters. To see how
+      if using a 64-bit JDK), and set the -Xms and -Xmx parameters. To see how
       to do this, you can reference the vmoptions file under
       "{installation home}/bin" as a model.
 

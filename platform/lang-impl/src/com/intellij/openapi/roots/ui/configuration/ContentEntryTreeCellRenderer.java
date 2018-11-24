@@ -87,10 +87,8 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
   }
 
   protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon) {
-    for (VirtualFile excludePath : entry.getExcludeFolderFiles()) {
-      if (VfsUtilCore.isAncestor(excludePath, file, false)) {
-        return AllIcons.Modules.ExcludeRoot;
-      }
+    if (ContentEntryEditor.isExcludedOrUnderExcludedDirectory(myTreeEditor.getProject(), entry, file)) {
+      return AllIcons.Modules.ExcludeRoot;
     }
 
     final SourceFolder[] sourceFolders = entry.getSourceFolders();

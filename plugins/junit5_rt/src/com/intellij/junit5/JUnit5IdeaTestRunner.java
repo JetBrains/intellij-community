@@ -17,11 +17,11 @@ package com.intellij.junit5;
 
 import com.intellij.rt.execution.junit.IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import org.junit.gen5.launcher.Launcher;
-import org.junit.gen5.launcher.TestDiscoveryRequest;
-import org.junit.gen5.launcher.TestIdentifier;
-import org.junit.gen5.launcher.TestPlan;
-import org.junit.gen5.launcher.main.LauncherFactory;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
     Launcher launcher = LauncherFactory.create();
     launcher.registerTestExecutionListeners(myListener);
     final String[] packageNameRef = new String[1];
-    final TestDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
+    final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
     myTestPlan = launcher.discover(discoveryRequest);
     myListener.sendTree(myTestPlan, packageNameRef[0]);
     launcher.execute(discoveryRequest);
@@ -56,9 +56,9 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
 
   @Override
   public Object getTestToStart(String[] args, String name) {
-    final TestDiscoveryRequest request = JUnit5TestRunnerUtil.buildRequest(args, new String[1]);
+    final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1]);
     Launcher launcher = LauncherFactory.create();
-    myTestPlan = launcher.discover(request);
+    myTestPlan = launcher.discover(discoveryRequest);
     final Set<TestIdentifier> roots = myTestPlan.getRoots();
     
     return roots.isEmpty() ? null : roots.iterator().next();

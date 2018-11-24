@@ -72,7 +72,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
     void virtualEnvCreated(Sdk sdk, boolean associateWithProject);
   }
 
-  protected static void setupVirtualEnvSdk(final String path,
+  public static void setupVirtualEnvSdk(final String path,
                                            boolean associateWithProject,
                                            VirtualEnvCallback callback) {
     final VirtualFile sdkHome =

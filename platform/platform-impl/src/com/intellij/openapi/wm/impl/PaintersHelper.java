@@ -19,12 +19,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
@@ -163,12 +165,12 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public static void initWallpaperPainter(@NotNull String propertyName, @NotNull PaintersHelper painters) {
-    ModalityState modalityState = ModalityState.stateForComponent(painters.myRootComponent);
-    ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName, modalityState);
+    ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName, painters.myRootComponent);
     painters.addPainter(painter, null);
   }
 
-  private static AbstractPainter newWallpaperPainter(@NotNull final String propertyName, @NotNull final ModalityState modalityState) {
+  private static AbstractPainter newWallpaperPainter(@NotNull final String propertyName,
+                                                     @NotNull final JComponent rootComponent) {
     return new ImagePainter() {
       Image image;
       float alpha;
@@ -190,7 +192,9 @@ final class PaintersHelper implements Painter.Listener {
       }
 
       boolean ensureImageLoaded() {
-        String value = getBackgroundSpec(propertyName);
+        IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, rootComponent);
+        Project project = frame == null ? null : frame.getProject();
+        String value = getBackgroundSpec(project, propertyName);
         if (!Comparing.equal(value, current)) {
           current = value;
           loadImageAsync(value);
@@ -210,6 +214,7 @@ final class PaintersHelper implements Painter.Listener {
         place = newPlace;
         boolean newOk = newImage != null;
         if (prevOk || newOk) {
+          ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
           if (modalityState.dominates(ModalityState.NON_MODAL)) {
             UIUtil.getActiveWindow().repaint();
           }
@@ -236,6 +241,7 @@ final class PaintersHelper implements Painter.Listener {
                      : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             final Image m = ImageLoader.loadFromUrl(url);
+            ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
             ApplicationManager.getApplication().invokeLater(() -> resetImage(propertyValue, m, newAlpha, newFillType, newPlace), modalityState);
           });
         }

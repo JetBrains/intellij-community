@@ -38,6 +38,7 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.console.PydevConsoleRunnerFactory;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -315,6 +316,8 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (debuggerSettings.isLibrariesFilterEnabled()) {
       environment.put(PYDEVD_FILTER_LIBRARIES, "True");
     }
+
+    PydevConsoleRunnerFactory.putIPythonEnvFlag(project, environment);
 
     addProjectRootsToEnv(project, environment);
     addSdkRootsToEnv(project, environment);

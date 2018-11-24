@@ -160,7 +160,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private void scheduleAutomaticChangeListDeletionIfEmpty(final LocalChangeList oldList, final VcsConfiguration config) {
     if (oldList.isReadOnly() || !oldList.getChanges().isEmpty()) return;
-    
+
     invokeAfterUpdate(new Runnable() {
       @Override
       public void run() {
@@ -168,7 +168,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (actualList == null) {
           return; // removed already  
         }
-        
+
         if (myModalNotificationsBlocked &&
             config.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
           myListsToBeDeleted.add(oldList);
@@ -187,7 +187,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ChangeListRemoveConfirmation.processLists(myProject, false, lists, new ChangeListRemoveConfirmation() {
       @Override
       public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
-        return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION || 
+        return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION ||
                showRemoveEmptyChangeListsProposal(myConfig, toAsk);
       }
     });
@@ -385,6 +385,27 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   static class DisposedException extends RuntimeException {}
 
+  public void freeze(@NotNull String reason) {
+    myUpdater.setIgnoreBackgroundOperation(true);
+    Semaphore sem = new Semaphore();
+    sem.down();
+
+    invokeAfterUpdate(() -> {
+      myUpdater.setIgnoreBackgroundOperation(false);
+      myUpdater.pause();
+      myFreezeName.set(reason);
+      sem.up();
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
+
+    boolean free = false;
+    while (!free) {
+      ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+      if (pi != null) pi.checkCanceled();
+      free = sem.waitFor(500);
+    }
+  }
+
+  @Deprecated
   @Override
   public void freeze(final ContinuationPause context, final String reason) {
     myUpdater.setIgnoreBackgroundOperation(true);
@@ -395,7 +416,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         freezeImmediately(reason);
         context.ping();
       }
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.NON_MODAL);
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
     context.suspend();
   }
 
@@ -1174,6 +1195,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       return myWorker.getChangesIn(dirPath);
     }
+  }
+
+  @Override
+  @Nullable
+  public AbstractVcs getVcsFor(@NotNull Change change) {
+    VcsKey key;
+    synchronized (myDataLock) {
+      key = myWorker.getVcsFor(change);
+    }
+    return key != null ? ProjectLevelVcsManager.getInstance(myProject).findVcsByName(key.getName()) : null;
   }
 
   @Override

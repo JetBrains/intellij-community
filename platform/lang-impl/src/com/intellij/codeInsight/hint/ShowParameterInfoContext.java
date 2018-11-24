@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -259,12 +260,15 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                                    int offset,
                                                    final boolean awtTooltip,
                                                    short preferredPosition) {
-      final TextRange textRange = list.getTextRange();
-      offset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
+      if (list != null) {
+        TextRange range = list.getTextRange();
+        if (!range.contains(offset)) {
+          offset = range.getStartOffset() + 1;
+        }
+      }
       if (previousOffset == offset) return Pair.create(previousBestPoint, previousBestPosition);
 
-      String listText = list.getText();
-      final boolean isMultiline = listText.indexOf('\n') >= 0 || listText.indexOf('\r') >= 0;
+      final boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
       final LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
       Pair<Point, Short> position;
 

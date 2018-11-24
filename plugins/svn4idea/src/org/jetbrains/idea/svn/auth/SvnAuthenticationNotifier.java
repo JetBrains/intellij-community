@@ -346,7 +346,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     Proxy proxyToRelease = null;
     if (! interactive && configuration.isIsUseDefaultProxy()) {
       final HttpConfigurable instance = HttpConfigurable.getInstance();
-      if (instance.USE_HTTP_PROXY && instance.PROXY_AUTHENTICATION && (StringUtil.isEmptyOrSpaces(instance.PROXY_LOGIN) ||
+      if (instance.USE_HTTP_PROXY && instance.PROXY_AUTHENTICATION && (StringUtil.isEmptyOrSpaces(instance.getProxyLogin()) ||
                                                                        StringUtil.isEmptyOrSpaces(instance.getPlainProxyPassword()))) {
         return false;
       }

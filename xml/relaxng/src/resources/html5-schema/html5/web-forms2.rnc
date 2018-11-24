@@ -103,11 +103,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.size?
 		)
 
-	input.attrs.autocomplete = 
-		attribute autocomplete {
-			w:string "on" | w:string "off"
-		}
-	
 	input.attrs.list = 
 		attribute list {
 			common.data.idref
@@ -127,7 +122,26 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute multiple {
 			w:string "multiple" | w:string ""
 		}
-		
+
+## autocomplete
+
+	input.attrs.autocomplete.any =
+		attribute autocomplete {
+			(	w:string "on" | w:string "off"
+			|	common.data.autocomplete.any
+			)
+		}
+
+	input.attrs.autocomplete =
+		attribute autocomplete {
+			string
+		}
+
+## Hidden String: <input type='hidden'>, Extensions
+
+	input.hidden.attrs &=
+		input.attrs.autocomplete?
+
 ## Text Field: <input type='text'>, Extensions
 
 	input.text.attrs &=
@@ -673,6 +687,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 				)
 			)
 		&	shared-form.attrs.inputmode?
+		&	input.attrs.autocomplete.any?
 		)
 		textarea.attrs.wrap.hard =
 			attribute wrap {
@@ -749,11 +764,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 	fieldset.attrs &=
 		( common-form.attrs )
 
-## Label: <label>, extensions
-
-	label.attrs &=
-		( common-form.attrs.form? )
-
 ## Key-pair generator/input control: <keygen>
 
 	keygen.elem =
@@ -786,4 +796,5 @@ datatypes w = "http://whattf.org/datatype-draft"
 	select.attrs &=
 		(	shared-form.attrs.autofocus? 
 		&	shared-form.attrs.required? 
+		&	input.attrs.autocomplete.any?
 		)

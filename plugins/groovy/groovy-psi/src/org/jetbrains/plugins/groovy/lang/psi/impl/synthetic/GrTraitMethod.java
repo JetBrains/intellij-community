@@ -25,6 +25,7 @@ public class GrTraitMethod extends LightMethod implements PsiMirrorElement {
                        @NotNull PsiMethod method,
                        @NotNull PsiSubstitutor substitutor) {
     super(containingClass, method, substitutor);
+    setNavigationElement(method);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang
+
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -23,15 +24,22 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Sergey Evdokimov
  */
+@CompileStatic
 class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
@@ -451,4 +459,40 @@ class Test {
 """, true
   }
 
+  public void 'test completion within some map'() {
+    doTestCompletionWithinMap '[<caret>]', '[bar: <caret>]'
+  }
+
+  public void 'test completion within map in argument list'() {
+    doTestCompletionWithinMap 'foo(1, 2, 3, [<caret>])', 'foo(1, 2, 3, [bar: <caret>])'
+  }
+
+  private doTestCompletionWithinMap(String text, String text2 = null) {
+    PlatformTestUtil.registerExtension GroovyNamedArgumentProvider.EP_NAME, new GroovyNamedArgumentProvider() {
+      @Override
+      Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {
+        ['foo': NamedArgumentDescriptor.SIMPLE_NORMAL, 'bar': NamedArgumentDescriptor.SIMPLE_NORMAL]
+      }
+    }, testRootDisposable
+
+    myFixture.with {
+      configureByText '_.groovy', text
+
+      completeBasic()
+      lookupElementStrings.with {
+        assert 'foo' in it
+        assert 'bar' in it
+      }
+
+      type 'ba\n'
+      if (text2) checkResult text2
+
+      type ',' as char
+      completeBasic()
+      lookupElementStrings.with {
+        assert 'foo' in it
+        assert !('bar' in it)
+      }
+    }
+  }
 }

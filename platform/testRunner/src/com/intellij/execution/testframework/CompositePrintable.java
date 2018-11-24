@@ -353,10 +353,11 @@ public class CompositePrintable implements Printable, Disposable {
               if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
               final String line = IOUtil.readString(reader);
               boolean printed = false;
-              for (ConsoleViewContentType contentType : ConsoleViewContentType.OUTPUT_TYPES) {
+              for (ConsoleViewContentType contentType : ConsoleViewContentType.getRegisteredTypes()) {
                 final String prefix = contentType.toString();
                 if (line.startsWith(prefix)) {
-                  printer.printWithAnsiColoring(line.substring(prefix.length()), contentType);
+                  final String text = line.substring(prefix.length());
+                  printText(printer, text, contentType);
                   myLastSelected = contentType;
                   printed = true;
                   break;
@@ -368,7 +369,7 @@ public class CompositePrintable implements Printable, Disposable {
                     .printOn(printer);
                 }
                 else {
-                  printer.printWithAnsiColoring(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
+                  printText(printer, line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
                 }
               }
               lineNum++;
@@ -391,7 +392,16 @@ public class CompositePrintable implements Printable, Disposable {
       }
     }
 
-      private boolean wasPrintableChanged(Printer printer) {
+    private void printText(Printer printer, String text, ConsoleViewContentType contentType) {
+      if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
+        printer.printWithAnsiColoring(text, contentType);
+      }
+      else {
+        printer.print(text, contentType);
+      }
+    }
+
+    private boolean wasPrintableChanged(Printer printer) {
         return printer instanceof TestsOutputConsolePrinter && !((TestsOutputConsolePrinter)printer).isCurrent(CompositePrintable.this);
       }
   }

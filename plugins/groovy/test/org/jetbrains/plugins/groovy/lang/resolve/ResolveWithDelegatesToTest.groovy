@@ -23,8 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  * @author Max Medvedev
  */
 class ResolveWithDelegatesToTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() { null }
 
   @Override
   public void setUp() throws Exception {

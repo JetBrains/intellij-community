@@ -39,6 +39,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -269,6 +271,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public static PsiFile copyFile(@NotNull PsiFile file, @NotNull StringBuilder fileContentWithoutKey) {
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(file.getProject());
     PsiFile copy = psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
+
+    if (copy instanceof PsiFileImpl) {
+      ((PsiFileImpl) copy).setOriginalFile(TemplateLanguageUtil.getBaseFile(file));
+    }
+
     VirtualFile vFile = copy.getVirtualFile();
     if (vFile != null) {
       vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);

@@ -15,11 +15,10 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +55,7 @@ class TypeCorrector extends PsiTypeMapper {
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
         if (psiClass != null && classResolveResult.getSubstitutor() == PsiSubstitutor.EMPTY) {
-          final PsiClass mappedClass = mapClass(psiClass);
+          final PsiClass mappedClass = PsiSuperMethodUtil.correctClassByScope(psiClass, myResolveScope);
           if (mappedClass == null || mappedClass == psiClass) return (T) classType;
         }
       }
@@ -79,7 +78,7 @@ class TypeCorrector extends PsiTypeMapper {
 
     PsiUtilCore.ensureValid(psiClass);
 
-    final PsiClass mappedClass = mapClass(psiClass);
+    final PsiClass mappedClass = PsiSuperMethodUtil.correctClassByScope(psiClass, myResolveScope);
     if (mappedClass == null) return classType;
 
     PsiClassType mappedType = new PsiCorrectedClassType(classType.getLanguageLevel(),
@@ -87,31 +86,6 @@ class TypeCorrector extends PsiTypeMapper {
                                                         new CorrectedResolveResult(psiClass, mappedClass, substitutor, classResolveResult));
     myResultMap.put(classType, mappedType);
     return mappedType;
-  }
-
-  @Nullable
-  private PsiClass mapClass(@NotNull PsiClass psiClass) {
-    String qualifiedName = psiClass.getQualifiedName();
-    if (qualifiedName == null) {
-      return psiClass;
-    }
-
-    PsiFile file = psiClass.getContainingFile();
-    if (file == null || !file.getViewProvider().isPhysical()) {
-      return psiClass;
-    }
-
-    final VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) {
-      return psiClass;
-    }
-
-    final FileIndexFacade index = FileIndexFacade.getInstance(file.getProject());
-    if (!index.isInSource(vFile) && !index.isInLibrarySource(vFile) && !index.isInLibraryClasses(vFile)) {
-      return psiClass;
-    }
-
-    return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, myResolveScope);
   }
 
   @NotNull

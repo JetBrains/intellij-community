@@ -58,7 +58,14 @@ gradle.taskGraph.beforeTask { Task task ->
         def urls = task.classpath.files.findAll{
           it.name.equals('idea_rt.jar') || it.name.startsWith('junit')
         }.collect { it.toURI().toURL()}
-        Class.forName("org.gradle.launcher.daemon.bootstrap.DaemonMain").getClassLoader().addURLs(urls)
+        def classLoader = Class.forName("org.gradle.launcher.daemon.bootstrap.DaemonMain").getClassLoader()
+        if(classLoader instanceof URLClassLoader) {
+          for (URL url : urls) {
+            classLoader.addURL(url)
+          }
+        } else {
+          logger.error("unable to enhance gradle daemon classloader with idea_rt.jar")
+        }
       }
       catch (all) {
         logger.error("unable to enhance gradle daemon classloader with idea_rt.jar", all)

@@ -30,6 +30,7 @@ public class PyCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   @Override
   protected void initTabs(CodeStyleSettings settings) {
     super.initTabs(settings);
-    addTab(new PyCodeStylePanel(settings));
+    addTab(new PyImportsCodeStylePanel(settings));
+    addTab(new PyOtherCodeStylePanel(settings));
   }
 }

@@ -653,14 +653,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  @Nullable
-  public PsiQualifiedNamedElement getContainer() {
-    final PsiFile file = getContainingFile();
-    final PsiDirectory dir = file.getContainingDirectory();
-    return dir == null ? null : JavaDirectoryService.getInstance().getPackage(dir);
-  }
-
-  @Override
   public void putInfo(@NotNull Map<String, String> info) {
     putInfo(this, info);
   }

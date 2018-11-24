@@ -54,10 +54,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -349,6 +346,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
+  public void consoleInputRequested() {
+    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
+      ((PythonDebugLanguageConsoleView)myExecutionConsole).getPydevConsoleView().inputRequested();
+    }
+  }
+
   protected void afterConnect() {
   }
 
@@ -503,11 +507,47 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  public void suspendAllOtherThreads(PyThreadInfo thread) {
+    myDebugger.suspendOtherThreads(thread);
+  }
+
+  /**
+   * Check if there is the thread suspended on the breakpoint with "Suspend all" policy
+   *
+   * @return true if this thread exists
+   */
+  @Override
+  public boolean isSuspendedOnAllThreadsPolicy() {
+    if (getSession().isSuspended()) {
+      for (PyThreadInfo threadInfo : getThreads()) {
+        final List<PyStackFrameInfo> frames = threadInfo.getFrames();
+        if ((threadInfo.getState() == PyThreadInfo.State.SUSPENDED) && (frames != null)) {
+          XBreakpoint<?> breakpoint = null;
+          if (threadInfo.isStopOnBreakpoint()) {
+            final PySourcePosition position = frames.get(0).getPosition();
+            breakpoint = myRegisteredBreakpoints.get(position);
+          }
+          else if (threadInfo.isExceptionBreak()) {
+            String exceptionName = threadInfo.getMessage();
+            if (exceptionName != null) {
+              breakpoint = myRegisteredExceptionBreakpoints.get(exceptionName);
+            }
+          }
+          if ((breakpoint != null) && (breakpoint.getType().isSuspendThreadSupported()) &&
+              (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   private void passToAllThreads(final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
     if (isConnected()) {
-      for (PyThreadInfo suspendedThread : Lists.newArrayList(mySuspendedThreads)) {
-        myDebugger.resumeOrStep(suspendedThread.getId(), mode);
+      for (PyThreadInfo thread : myDebugger.getThreads()) {
+        myDebugger.resumeOrStep(thread.getId(), mode);
       }
     }
   }
@@ -645,7 +685,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     final PyStackFrame frame = currentFrame();
     PyDebugValue debugValue = var;
     if (var.isReturnedVal()) {
-      debugValue = var.setName(PyDebugValue.RETURN_VALUES_PREFIX + var.getName());
+      // return values are saved in dictionary on Python side, so the variable's name should be transformed
+      debugValue = var.setName(PyDebugValue.RETURN_VALUES_PREFIX + "[\"" + var.getName() + "\"]");
     }
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
   }
@@ -750,10 +791,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final String logExpression = breakpoint.getLogExpressionObject() == null
                                    ? null
                                    : breakpoint.getLogExpressionObject().getExpression();
-      myDebugger.setBreakpointWithFuncName(breakpoint.getType().getId(), position.getFile(), position.getLine(),
-                                           conditionExpression,
-                                           logExpression,
-                                           getFunctionName(breakpoint));
+      SuspendPolicy policy = breakpoint.getType().isSuspendThreadSupported()? breakpoint.getSuspendPolicy(): SuspendPolicy.NONE;
+      myDebugger.setBreakpoint(breakpoint.getType().getId(),
+                               position.getFile(),
+                               position.getLine(),
+                               conditionExpression,
+                               logExpression,
+                               getFunctionName(breakpoint),
+                               policy
+      );
     }
   }
 
@@ -792,7 +838,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void threadSuspended(final PyThreadInfo threadInfo) {
+  public void threadSuspended(final PyThreadInfo threadInfo, boolean updateSourcePosition) {
     if (!mySuspendedThreads.contains(threadInfo)) {
       mySuspendedThreads.add(threadInfo);
 
@@ -815,14 +861,21 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             breakpoint = myRegisteredExceptionBreakpoints.get(exceptionName);
           }
         }
-
         if (breakpoint != null) {
-          if (!getSession().breakpointReached(breakpoint, threadInfo.getMessage(), suspendContext)) {
-            resume(suspendContext);
+          if ((breakpoint.getType().isSuspendThreadSupported()) && (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
+            suspendAllOtherThreads(threadInfo);
           }
         }
-        else {
-          getSession().positionReached(suspendContext);
+
+        if (updateSourcePosition) {
+          if (breakpoint != null) {
+            if (!getSession().breakpointReached(breakpoint, threadInfo.getMessage(), suspendContext)) {
+              resume(suspendContext);
+            }
+          }
+          else {
+            getSession().positionReached(suspendContext);
+          }
         }
       }
     }

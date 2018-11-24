@@ -11,9 +11,10 @@ from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
-    dict_keys, dict_pop, RETURN_VALUES_PREFIX
+    dict_keys, dict_pop, RETURN_VALUES_DICT
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
+from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 
 try:
@@ -266,22 +267,36 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
             thread = None
 
     def manage_return_values(self, main_debugger, frame, event, arg):
+
+        def get_func_name(frame):
+            code_obj = frame.f_code
+            func_name = code_obj.co_name
+            try:
+                cls_name = get_clsname_for_code(code_obj, frame)
+                if cls_name is not None:
+                    return "%s.%s" % (cls_name, func_name)
+                else:
+                    return func_name
+            except:
+                traceback.print_exc()
+                return func_name
+
         try:
             if main_debugger.show_return_values:
                 if event == "return" and hasattr(frame, "f_code") and hasattr(frame.f_code, "co_name"):
-                    name = frame.f_code.co_name
                     if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
-                        frame.f_back.f_locals[RETURN_VALUES_PREFIX + name] = arg
+                        if RETURN_VALUES_DICT not in dict_keys(frame.f_back.f_locals):
+                            frame.f_back.f_locals[RETURN_VALUES_DICT] = {}
+                        name = get_func_name(frame)
+                        frame.f_back.f_locals[RETURN_VALUES_DICT][name] = arg
             if main_debugger.remove_return_values_flag:
                 # Showing return values was turned off, we should remove them from locals dict.
                 # The values can be in the current frame or in the back one
-                for var_name in dict_keys(frame.f_locals):
-                    if var_name.startswith(RETURN_VALUES_PREFIX):
-                        dict_pop(frame.f_locals, var_name)
+                if RETURN_VALUES_DICT in dict_keys(frame.f_locals):
+                    dict_pop(frame.f_locals, RETURN_VALUES_DICT)
                 if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
-                    for var_name in dict_keys(frame.f_back.f_locals):
-                        if var_name.startswith(RETURN_VALUES_PREFIX):
-                            dict_pop(frame.f_back.f_locals, var_name)
+                    if RETURN_VALUES_DICT in dict_keys(frame.f_back.f_locals):
+                        dict_pop(frame.f_back.f_locals, RETURN_VALUES_DICT)
                 main_debugger.remove_return_values_flag = False
         except:
             main_debugger.remove_return_values_flag = False
@@ -514,6 +529,8 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
                 if stop:
                     self.set_suspend(thread, CMD_SET_BREAK)
+                    if breakpoint and breakpoint.suspend_policy == "ALL":
+                        main_debugger.suspend_all_other_threads(thread)
                 elif flag and plugin_manager is not None:
                     result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:

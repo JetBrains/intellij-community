@@ -456,7 +456,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static TextAttributes getAttributes(@NotNull EditorColorsScheme scheme, @NotNull TextAttributesKey ... keys) {
     TextAttributes result = null;
     for (TextAttributesKey key : keys) {
-      TextAttributes attributes = scheme.getAttributes(key);
+      TextAttributes attributes = scheme.getAttributes(key).clone();
       if (attributes == null) {
         continue;
       }

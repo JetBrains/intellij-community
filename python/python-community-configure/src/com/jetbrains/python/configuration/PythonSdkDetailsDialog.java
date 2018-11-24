@@ -526,6 +526,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
           setSelectedRoots(added);
         }
       });
+
+      super.addToolbarButtons(toolbarDecorator);
     }
 
     @Override

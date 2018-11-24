@@ -16,6 +16,7 @@
 package com.jetbrains.python.configuration;
 
 import com.intellij.application.options.ModuleAwareProjectConfigurable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -53,10 +54,11 @@ public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurabl
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk != null) {
-        VFSTestFrameworkListener.getInstance().updateAllTestFrameworks(sdk);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          VFSTestFrameworkListener.getInstance().updateAllTestFrameworks(sdk);
+        });
         break;
       }
-
     }
   }
 }

@@ -19,6 +19,7 @@ package com.intellij.lang.documentation;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.util.List;
  * @see com.intellij.lang.LanguageDocumentation
  * @see DocumentationProviderEx
  * @see AbstractDocumentationProvider
+ * @see ExternalDocumentationProvider
  */
 public interface DocumentationProvider {
 
@@ -53,8 +55,11 @@ public interface DocumentationProvider {
    * @param element         the element for which the documentation is requested (for example, if the mouse is over
    *                        a method reference, this will be the method to which the reference is resolved).
    * @param originalElement the element under the mouse cursor
-   * @return the list of URLs to open in the browser. If the list contains a single URL, it will be opened.
-   *         If the list contains multiple URls, the user will be prompted to choose one of them.
+   * @return the list of URLs to open in the browser or to use for showing documentation internally ({@link ExternalDocumentationProvider}).
+   *         If the list contains a single URL, it will be opened.
+   *         If the list contains multiple URLs, the user will be prompted to choose one of them.
+   *         For {@link ExternalDocumentationProvider}, first URL, yielding non-empty result in
+   *         {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List)} will be used.
    */
   @Nullable
   List<String> getUrlFor(PsiElement element, PsiElement originalElement);

@@ -397,7 +397,7 @@
       <!-- Tools -->
       <group id="ToolsMenu" popup="true" compact="true">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
-        <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerForContextAction"/>
+        <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerAction$ForContext"/>
         <separator/>
         <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>

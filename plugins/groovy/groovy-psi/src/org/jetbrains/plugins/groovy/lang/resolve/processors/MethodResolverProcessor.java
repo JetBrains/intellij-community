@@ -105,7 +105,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
 
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
-      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, null, myPlace, true);
+      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, partialSubstitutor, myPlace, true);
       boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
       GroovyMethodResult candidate = new GroovyMethodResult(

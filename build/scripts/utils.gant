@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1169,6 +1169,9 @@ binding.setVariable("layoutUpdater", { String target, String jarName = "updater.
   layout(target) {
     jar(jarName) {
       module("updater")
+      manifest {
+        attribute(name: "Main-Class", value: "com.intellij.updater.Bootstrap")
+      }
     }
   }
 })

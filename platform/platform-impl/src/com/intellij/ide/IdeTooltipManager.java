@@ -30,18 +30,17 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.Html;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +56,8 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 
 public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
+  private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
+  private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<Void>(null);
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
@@ -141,7 +142,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           if (!myCurrentTipIsCentered) {
             myX = me.getX();
             myY = me.getY();
-            if (c instanceof JComponent && ((JComponent)c).getToolTipText(me) == null && (myQueuedTooltip == null || !myQueuedTooltip.isHint())) {
+            if (c instanceof JComponent && !isTooltipDefined((JComponent)c, me) && (myQueuedTooltip == null || !myQueuedTooltip.isHint())) {
               hideCurrent(me, null, null);//There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
             }
             else {
@@ -156,7 +157,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
     else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
       boolean clickOnTooltip = myCurrentTipUi != null && myCurrentTipUi == JBPopupFactory.getInstance().getParentBalloonFor(c);
-      if (c == myCurrentComponent || clickOnTooltip) {
+      if (c == myCurrentComponent || (clickOnTooltip && !myCurrentTipUi.isClickProcessor())) {
         hideCurrent(me, null, null, null, !clickOnTooltip);
       }
     }
@@ -176,9 +177,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       if (JBPopupFactory.getInstance().isChildPopupFocused(wnd)) return;
     }
 
-    String tooltipText = comp.getToolTipText(me);
-    if (tooltipText == null || tooltipText.trim().isEmpty()) return;
-
+    if (!isTooltipDefined(comp, me)) return;
 
     boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
     boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));
@@ -198,28 +197,50 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
   }
 
+  private boolean isTooltipDefined(JComponent comp, MouseEvent me) {
+    return !StringUtil.isEmpty(comp.getToolTipText(me)) || getCustomTooltip(comp) != null;
+  }
+
   private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter, int shift, int posChangeX, int posChangeY) {
-    String aText = String.valueOf(c.getToolTipText(me));
-    final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), null, /*new Object()*/c, aText) {
-      @Override
-      protected boolean beforeShow() {
-        myCurrentEvent = me;
+    IdeTooltip tooltip = getCustomTooltip(c);
+    if (tooltip == null) {
+      String aText = String.valueOf(c.getToolTipText(me));
+      tooltip = new IdeTooltip(c, me.getPoint(), null, /*new Object()*/c, aText) {
+        @Override
+        protected boolean beforeShow() {
+          myCurrentEvent = me;
 
-        if (!c.isShowing()) return false;
+          if (!c.isShowing()) return false;
 
-        String text = c.getToolTipText(myCurrentEvent);
-        if (text == null || text.trim().isEmpty()) return false;
+          String text = c.getToolTipText(myCurrentEvent);
+          if (text == null || text.trim().isEmpty()) return false;
 
-        JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
+          JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
 
-        final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
-        final Wrapper wrapper = new Wrapper(pane);
-        setTipComponent(wrapper);
-        return true;
-      }
-    }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
+          final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
+          final Wrapper wrapper = new Wrapper(pane);
+          setTipComponent(wrapper);
+          return true;
+        }
+      }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
+    }
 
     show(tooltip, false);
+  }
+
+  public void setCustomTooltip(JComponent component, IdeTooltip tooltip) {
+    UIUtil.putClientProperty(component, CUSTOM_TOOLTIP, tooltip);
+    // We need to register a dummy mouse listener to make sure events will be generated for this specific component, not its parent
+    component.removeMouseListener(DUMMY_LISTENER);
+    component.removeMouseMotionListener(DUMMY_LISTENER);
+    if (tooltip != null) {
+      component.addMouseListener(DUMMY_LISTENER);
+      component.addMouseMotionListener(DUMMY_LISTENER);
+    }
+  }
+
+  public IdeTooltip getCustomTooltip(JComponent component) {
+    return UIUtil.getClientProperty(component, CUSTOM_TOOLTIP);
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {

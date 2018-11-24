@@ -38,8 +38,6 @@ import java.awt.*;
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
 
-  protected String myLicenseInfo = null;
-
   protected AbstractUpdateDialog(boolean enableLink) {
     super(true);
     myEnableLink = enableLink;

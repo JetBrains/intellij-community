@@ -191,7 +191,7 @@ class ClassfileAnalyzer {
 
       @Override
       public AnnotationVisitor visitAnnotation(String name, String desc) {
-        return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), myTarget);
+        return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, desc), myTarget);
       }
 
       @Override
@@ -345,7 +345,7 @@ class ClassfileAnalyzer {
       }
 
       return new AnnotationCrawler(
-        (TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)),
+        (TypeRepr.ClassType)TypeRepr.getType(myContext, desc),
         (myAccess & Opcodes.ACC_ANNOTATION) > 0 ? ElemType.ANNOTATION_TYPE : ElemType.TYPE
       );
     }
@@ -364,7 +364,7 @@ class ClassfileAnalyzer {
       return new FieldVisitor(Opcodes.ASM5) {
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-          return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), ElemType.FIELD);
+          return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, desc), ElemType.FIELD);
         }
       };
     }
@@ -386,7 +386,7 @@ class ClassfileAnalyzer {
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
           return new AnnotationCrawler(
-            (TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), "<init>".equals(n) ? ElemType.CONSTRUCTOR : ElemType.METHOD
+            (TypeRepr.ClassType)TypeRepr.getType(myContext, desc), "<init>".equals(n) ? ElemType.CONSTRUCTOR : ElemType.METHOD
           );
         }
 
@@ -401,7 +401,7 @@ class ClassfileAnalyzer {
 
         @Override
         public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-          return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), ElemType.PARAMETER);
+          return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, desc), ElemType.PARAMETER);
         }
 
         @Override
@@ -415,7 +415,7 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitMultiANewArrayInsn(String desc, int dims) {
-          final TypeRepr.ArrayType typ = (TypeRepr.ArrayType)TypeRepr.getType(myContext, myContext.get(desc));
+          final TypeRepr.ArrayType typ = (TypeRepr.ArrayType)TypeRepr.getType(myContext, desc);
           final TypeRepr.AbstractType element = typ.getDeepElementType();
 
           if (element instanceof TypeRepr.ClassType) {
@@ -432,7 +432,7 @@ class ClassfileAnalyzer {
         @Override
         public void visitLocalVariable(String n, String desc, String signature, Label start, Label end, int index) {
           processSignature(signature);
-          TypeRepr.getType(myContext, myContext.get(desc)).updateClassUsages(myContext, myName, myUsages);
+          TypeRepr.getType(myContext, desc).updateClassUsages(myContext, myName, myUsages);
           super.visitLocalVariable(n, desc, signature, start, end, index);
         }
 
@@ -447,7 +447,7 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitTypeInsn(int opcode, String type) {
-          final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(myContext, myContext.get(type)) : TypeRepr.createClassType(
+          final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(myContext, type) : TypeRepr.createClassType(
             myContext, myContext.get(type));
 
           if (opcode == Opcodes.NEW) {

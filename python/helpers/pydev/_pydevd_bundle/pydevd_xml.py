@@ -153,13 +153,22 @@ def get_type(o):
     #no match return default
     return (type_object, type_name, pydevd_resolver.defaultResolver)
 
+
+def return_values_from_dict_to_xml(return_dict):
+    res = ""
+    for name in dict_keys(return_dict):
+        val = return_dict[name]
+        res += var_to_xml(val, name, return_value=True)
+    return res
+
+
 def frame_vars_to_xml(frame_f_locals):
     """ dumps frame variables to XML
     <var name="var_name" scope="local" type="type" value="value"/>
     """
     xml = ""
 
-    keys = frame_f_locals.keys()
+    keys = dict_keys(frame_f_locals)
     if hasattr(keys, 'sort'):
         keys.sort() #Python 3.0 does not have it
     else:
@@ -168,7 +177,10 @@ def frame_vars_to_xml(frame_f_locals):
     for k in keys:
         try:
             v = frame_f_locals[k]
-            xml += var_to_xml(v, str(k))
+            if k == RETURN_VALUES_DICT:
+                xml += return_values_from_dict_to_xml(v)
+            else:
+                xml += var_to_xml(v, str(k))
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
@@ -179,7 +191,7 @@ def frame_vars_to_xml(frame_f_locals):
 def get_type_qualifier(type):
     return getattr(type, "__module__", "")
 
-def var_to_xml(val, name, doTrim=True, additionalInXml=''):
+def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False):
     """ single variable or dictionary to xml representation """
 
     is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
@@ -239,8 +251,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
     except:
         pass
 
-    if name.startswith(RETURN_VALUES_PREFIX):
-        name = name.split(RETURN_VALUES_PREFIX)[1]
+    if return_value:
         xmlRetVal = ' isRetVal="True"'
     else:
         xmlRetVal = ''

@@ -138,6 +138,7 @@ CMD_GET_ARRAY = 143
 CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
 CMD_SHOW_RETURN_VALUES = 146
+CMD_INPUT_REQUESTED = 147
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -191,6 +192,7 @@ ID_TO_MEANING = {
     '144': 'CMD_STEP_INTO_MY_CODE',
     '145': 'CMD_GET_CONCURRENCY_EVENT',
     '146': 'CMD_SHOW_RETURN_VALUES',
+    '147': 'CMD_INPUT_REQUESTED',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -259,7 +261,7 @@ class PyDBDaemonThread(threading.Thread):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.killReceived = False
-        self.dontTraceMe = True
+        self.pydev_do_not_trace = True
         self.is_pydev_daemon_thread = True
 
     def run(self):
@@ -290,7 +292,7 @@ class PyDBDaemonThread(threading.Thread):
         self.killReceived = True
 
     def _stop_trace(self):
-        if self.dontTraceMe:
+        if self.pydev_do_not_trace:
 
             disable_tracing = True
 
@@ -779,6 +781,13 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
+    def make_input_requested_message(self):
+        try:
+            return NetCommand(CMD_INPUT_REQUESTED, 0, '')
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
+
     def make_exit_message(self):
         try:
             net = NetCommand(CMD_EXIT, 0, '')
@@ -988,17 +997,7 @@ class InternalGetArray(InternalThreadCommand):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             var = pydevd_vars.eval_in_context(self.name, frame.f_globals, frame.f_locals)
-
-            xml = "<xml>"
-
-            var, metaxml, rows, cols, format = pydevd_vars.array_to_meta_xml(var, self.name, self.format)
-            xml += metaxml
-            self.format = '%' + format
-            if self.rows == -1 and self.cols == -1:
-                self.rows = rows
-                self.cols = cols
-            xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
-            xml += "</xml>"
+            xml = pydevd_vars.table_like_struct_to_xml(var, self.name, self.roffset, self.coffset, self.rows, self.cols, self.format )
             cmd = dbg.cmd_factory.make_get_array_message(self.sequence, xml)
             dbg.writer.add_command(cmd)
         except:
@@ -1332,7 +1331,7 @@ class InternalConsoleExec(InternalThreadCommand):
                 #don't trace new threads created by console command
                 disable_trace_thread_modules()
 
-                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression)
+                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
                 xml = "<xml>"
                 xml += pydevd_vars.var_to_xml(result, "")
                 xml += "</xml>"

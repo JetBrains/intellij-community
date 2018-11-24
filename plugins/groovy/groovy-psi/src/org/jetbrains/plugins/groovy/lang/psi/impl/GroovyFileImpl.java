@@ -21,16 +21,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor.ResultWithContext;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -53,9 +55,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.resolve.ImplicitImportsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -78,9 +82,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private volatile GroovyScriptClass myScriptClass;
   private volatile GrParameter mySyntheticArgsParameter;
   private volatile PsiElement myContext;
+  private final CachedValue<MostlySingularMultiMap<String, ResultWithContext>> myResolveCache;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, GroovyLanguage.INSTANCE);
+    myResolveCache = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(
+      () -> CachedValueProvider.Result.create(buildDeclarationCache(), PsiModificationTracker.MODIFICATION_COUNT, this), false);
   }
 
   @Override
@@ -125,6 +132,51 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
+
+    if (isPhysical() && !isScript() &&
+        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
+      return processCachedDeclarations(processor, state, myResolveCache.getValue());
+    }
+
+    return processDeclarationsNoGuess(processor, state, lastParent, place);
+  }
+
+  private static boolean processCachedDeclarations(@NotNull PsiScopeProcessor processor,
+                                                   @NotNull ResolveState state,
+                                                   MostlySingularMultiMap<String, ResultWithContext> cache) {
+    String name = ResolveUtil.getNameHint(processor);
+    Processor<ResultWithContext> cacheProcessor = res ->
+      processor.execute(res.getElement(), state.put(ClassHint.RESOLVE_CONTEXT, res.getFileContext()));
+    return name != null ? cache.processForKey(name, cacheProcessor) : cache.processAllValues(cacheProcessor);
+  }
+
+  @NotNull
+  private MostlySingularMultiMap<String, ResultWithContext> buildDeclarationCache() {
+    MostlySingularMultiMap<String, ResultWithContext> results = new MostlySingularMultiMap<>();
+    processDeclarationsNoGuess(new BaseScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+        if (element instanceof PsiNamedElement) {
+          PsiElement context = state.get(ClassHint.RESOLVE_CONTEXT);
+          String name = getDeclarationName((PsiNamedElement)element, context);
+          if (name != null) {
+            results.add(name, new ResultWithContext((PsiNamedElement)element, context));
+          }
+        }
+        return true;
+      }
+
+      private String getDeclarationName(@NotNull PsiNamedElement element, @Nullable PsiElement context) {
+        String name = context instanceof GrImportStatement ? ((GrImportStatement)context).getImportedName() : null;
+        return name != null ? name : element.getName();
+      }
+    }, ResolveState.initial(), null, this);
+    return results;
+  }
+
+  private boolean processDeclarationsNoGuess(@NotNull PsiScopeProcessor processor,
+                                             @NotNull ResolveState state,
+                                             @Nullable PsiElement lastParent, @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     if (myContext != null) {
@@ -165,7 +217,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.SIMPLE, null)) return false;
     if (!processDeclarationsInPackage(processor, state, lastParent, place)) return false;
     if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ON_DEMAND, null)) return false;
-    if (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, this)) return false;
+    if (!ImplicitImportsKt.processImplicitImports(processor, state, lastParent, place, this)) return false;
 
     if (ResolveUtil.shouldProcessPackages(classHint)) {
 

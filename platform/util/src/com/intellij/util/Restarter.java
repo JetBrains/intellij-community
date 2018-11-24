@@ -113,7 +113,7 @@ public class Restarter {
     final int pid = kernel32.GetCurrentProcessId();
     final IntByReference argc = new IntByReference();
     Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    final String[] argv = argv_ptr.getStringArray(0, argc.getValue(), true);
+    final String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
     kernel32.LocalFree(argv_ptr);
 
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), new Consumer<List<String>>() {
@@ -121,7 +121,7 @@ public class Restarter {
       public void consume(List<String> commands) {
         Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
         Collections.addAll(commands, beforeRestart);
-        Collections.addAll(commands, String.valueOf(argc.getValue()));
+        Collections.addAll(commands, String.valueOf(argv.length));
         Collections.addAll(commands, argv);
       }
     });
@@ -145,6 +145,24 @@ public class Restarter {
         Collections.addAll(commands, beforeRestart);
       }
     });
+  }
+
+  private static String[] getRestartArgv(String[] argv) {
+    int countArgs = argv.length;
+    for (int i = argv.length-1; i >=0; i--) {
+      if (argv[i].endsWith("com.intellij.idea.Main") ||
+          argv[i].endsWith(".exe")) {
+        countArgs = i + 1;
+        if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separator) < 0) {
+          //absolute path
+          argv[i] = new File(PathManager.getBinPath(), argv[i]).getPath();
+        }
+        break;
+      }
+    }
+    String[] restartArg = new String[countArgs];
+    System.arraycopy(argv, 0, restartArg, 0, countArgs);
+    return restartArg;
   }
 
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {

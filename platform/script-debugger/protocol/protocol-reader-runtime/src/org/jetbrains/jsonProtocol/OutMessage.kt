@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import gnu.trove.TIntHashSet
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtf8Writer
-import io.netty.buffer.ByteBufUtilEx
 import org.jetbrains.io.JsonUtil
+import org.jetbrains.io.writeUtf8
 import java.io.IOException
 
 open class OutMessage() {
@@ -46,8 +46,8 @@ open class OutMessage() {
     beginArguments()
     writer.name(name)
     writer.beginObject()
-    for (entry in value.entries) {
-      writer.name(entry.key).value(entry.value)
+    for ((key, value1) in value) {
+      writer.name(key).value(value1)
     }
     writer.endObject()
   }
@@ -201,7 +201,7 @@ open class OutMessage() {
 
   fun writeNullableString(name: String, value: CharSequence?) {
     beginArguments()
-    writer.name(name).value(value!!.toString())
+    writer.name(name).value(value?.toString() ?: null)
   }
 
   companion object {
@@ -213,7 +213,7 @@ open class OutMessage() {
     }
 
     fun doWriteRaw(message: OutMessage, rawValue: String) {
-      ByteBufUtilEx.writeUtf8(message.buffer, rawValue)
+      message.buffer.writeUtf8(rawValue)
     }
   }
 }

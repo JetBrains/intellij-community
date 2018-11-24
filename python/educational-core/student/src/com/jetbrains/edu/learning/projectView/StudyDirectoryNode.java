@@ -24,6 +24,7 @@ import java.awt.*;
 import java.util.Map;
 
 public class StudyDirectoryNode extends PsiDirectoryNode {
+  public static final JBColor LIGHT_GREEN = new JBColor(new Color(0, 134, 0), new Color(98, 150, 85));
   protected final PsiDirectory myValue;
   protected final Project myProject;
 
@@ -43,7 +44,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     if (course == null) {
       return;
     }
-    if (valueName.equals(myProject.getName())) {
+    if (valueName.equals(myProject.getBaseDir().getName())) {
       data.clearText();
       data.setIcon(InteractiveLearningIcons.Course);
       data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
@@ -89,15 +90,14 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     return name.contains(EduNames.SANDBOX_DIR) ? 0 : 3;
   }
 
-  private void setStudyAttributes(Lesson lesson, PresentationData data, String additionalName) {
-    StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(lesson);
-    switch (taskStatus) {
+  private static void setStudyAttributes(Lesson lesson, PresentationData data, String additionalName) {
+    switch (lesson.getStatus()) {
       case Unchecked: {
         updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Lesson);
         break;
       }
       case Solved: {
-        updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)), InteractiveLearningIcons.LessonCompl);
+        updatePresentation(data, additionalName, LIGHT_GREEN, InteractiveLearningIcons.LessonCompl);
         break;
       }
       case Failed: {
@@ -106,27 +106,26 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
   }
 
-  protected void setStudyAttributes(Task task, PresentationData data, String additionalName) {
-    StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(task);
+  protected void setStudyAttributes(Task task, PresentationData data, String name) {
+    StudyStatus taskStatus = task.getStatus();
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Task);
+        updatePresentation(data, name, JBColor.BLACK, InteractiveLearningIcons.Task);
         break;
       }
       case Solved: {
-        updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)),
-                           InteractiveLearningIcons.TaskCompl);
+        updatePresentation(data, name, LIGHT_GREEN, InteractiveLearningIcons.TaskCompl);
         break;
       }
       case Failed: {
-        updatePresentation(data, additionalName, JBColor.RED, InteractiveLearningIcons.TaskProbl);
+        updatePresentation(data, name, JBColor.RED, InteractiveLearningIcons.TaskProbl);
       }
     }
   }
 
-  protected static void updatePresentation(PresentationData data, String additionalName, JBColor color, Icon icon) {
+  protected static void updatePresentation(PresentationData data, String name, JBColor color, Icon icon) {
     data.clearText();
-    data.addText(additionalName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
+    data.addText(name, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
     data.setIcon(icon);
   }
 
@@ -143,7 +142,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   public void navigate(boolean requestFocus) {
     final String myValueName = myValue.getName();
-    if (myValueName != null && myValueName.contains(EduNames.TASK)) {
+    if (myValueName.contains(EduNames.TASK)) {
       TaskFile taskFile = null;
       VirtualFile virtualFile =  null;
       for (PsiElement child : myValue.getChildren()) {
@@ -161,8 +160,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
           FileEditorManager.getInstance(myProject).closeFile(openFile);
         }
         VirtualFile child = null;
-        Map<String, TaskFile> taskFiles = task.getTaskFiles();
-        for (Map.Entry<String, TaskFile> entry: taskFiles.entrySet()) {
+        for (Map.Entry<String, TaskFile> entry: task.getTaskFiles().entrySet()) {
           VirtualFile file = taskDir.findChild(entry.getKey());
           if (file != null) {
             FileEditorManager.getInstance(myProject).openFile(file, true);
@@ -187,7 +185,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   public boolean expandOnDoubleClick() {
     final String myValueName = myValue.getName();
-    if (myValueName!= null && myValueName.contains(EduNames.TASK)) {
+    if (myValueName.contains(EduNames.TASK)) {
       return false;
     }
     return super.expandOnDoubleClick();

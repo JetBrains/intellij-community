@@ -242,9 +242,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element legend { legend.inner & legend.attrs }
 	legend.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)	
 	legend.inner =
 		( common.inner.phrasing )

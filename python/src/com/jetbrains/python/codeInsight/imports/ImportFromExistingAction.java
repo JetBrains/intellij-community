@@ -226,13 +226,6 @@ public class ImportFromExistingAction implements QuestionAction {
            Comparing.equal(fileIndex.getSourceRootForFile(vFile), vFile);
   }
 
-  public static boolean isResolved(PsiReference reference) {
-    if (reference instanceof PsiPolyVariantReference) {
-      return ((PsiPolyVariantReference)reference).multiResolve(false).length > 0;
-    }
-    return reference.resolve() != null;
-  }
-
   // Stolen from FQNameCellRenderer
   private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer {
     private final Font FONT;

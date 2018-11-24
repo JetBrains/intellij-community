@@ -15,18 +15,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.jetbrains.jsonSchema.JsonSchemaFileTypeManager;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
@@ -54,8 +54,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myLock = new Object();
     myProject = project;
-    myDefinitions = new JsonSchemaExportedDefinitions(
-      consumer -> iterateSchemas(consumer));
+    myDefinitions = new JsonSchemaExportedDefinitions(this::iterateSchemas);
     ApplicationManager
       .getApplication().getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(project, this));
     ensureSchemaFiles(project);
@@ -99,7 +98,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
         for (JsonSchemaProviderFactory factory : factories) {
           final List<JsonSchemaFileProvider> providers = factory.getProviders(project);
           for (JsonSchemaFileProvider provider : providers) {
-            mySchemaFiles.add(provider.getSchemaFile());
+            final VirtualFile schemaFile = provider.getSchemaFile();
+            if (schemaFile != null) {
+              mySchemaFiles.add(schemaFile);
+            }
           }
         }
         initialized = true;
@@ -111,7 +113,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public boolean isSchemaFile(@NotNull VirtualFile file, @NotNull final Consumer<String> errorConsumer) {
     final String text;
     try {
-      text = VfsUtil.loadText(file);
+      text = VfsUtilCore.loadText(file);
     }
     catch (IOException e) {
       errorConsumer.consume(e.getMessage());
@@ -120,7 +122,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     try {
       return JsonSchemaReader.isJsonSchema(getDefinitions(), file, text, errorConsumer);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       reset();
       errorConsumer.consume(e.getMessage());
       return false;
@@ -143,11 +145,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     return wrapper != null ? wrapper.getDocumentationProvider() : null;
   }
 
-  @Nullable
   @Override
-  public Convertor<String, PsiElement> getToPropertyResolver(@Nullable VirtualFile file) {
-    CodeInsightProviders wrapper = getWrapper(file);
-    return wrapper != null ? wrapper.getToPropertyResolver() : null;
+  public void iterateSchemaObjects(VirtualFile file, @NotNull Processor<JsonSchemaObject> consumer) {
+    final CodeInsightProviders wrapper = getWrapper(file);
+    if (wrapper == null) return;
+    wrapper.iterateSchemaObjects(consumer);
   }
 
   @Nullable
@@ -206,7 +208,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
       initialized = false;
       mySchemaFiles.clear();
     }
-    JsonSchemaFileTypeManager.getInstance().reset(myProject);
+    JsonSchemaFileTypeManager.getInstance().reset();
   }
 
   @Nullable
@@ -284,13 +286,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
     public CompositeCodeInsightProviderWithWarning(List<JsonSchemaObjectCodeInsightWrapper> wrappers) {
       final List<JsonSchemaObjectCodeInsightWrapper> userSchemaWrappers =
-        ContainerUtil.filter(wrappers, wrapper -> wrapper.isUserSchema());
+        ContainerUtil.filter(wrappers, JsonSchemaObjectCodeInsightWrapper::isUserSchema);
       // filter for the case when there are one system schema and one (several) user schemas
       // then do not use provided system schema: user schema will override it (maybe the user updated the version himself)
       // if there are 2 or more system schemas - just go the common way: it is unclear what happened and why
       if (!userSchemaWrappers.isEmpty() && ((userSchemaWrappers.size() + 1) == wrappers.size())) {
         myWrappers = userSchemaWrappers;
-      } else {
+      }
+      else {
         myWrappers = wrappers;
       }
       myContributor = new CompletionContributor() {
@@ -334,19 +337,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
       return myDocumentationProvider;
     }
 
-    @NotNull
     @Override
-    public Convertor<String, PsiElement> getToPropertyResolver() {
-      return new Convertor<String, PsiElement>() {
-        @Override
-        public PsiElement convert(String key) {
-          for (JsonSchemaObjectCodeInsightWrapper wrapper : myWrappers) {
-            PsiElement element = wrapper.getToPropertyResolver().convert(key);
-            if (element != null) return element;
-          }
-          return null;
-        }
-      };
+    public boolean iterateSchemaObjects(@NotNull Processor<JsonSchemaObject> consumer) {
+      for (JsonSchemaObjectCodeInsightWrapper wrapper : myWrappers) {
+        if (!wrapper.iterateSchemaObjects(consumer)) return false;
+      }
+      return true;
     }
   }
 

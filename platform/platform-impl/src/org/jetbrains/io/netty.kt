@@ -68,7 +68,7 @@ fun oioClientBootstrap(): Bootstrap {
 }
 
 inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
-  addListener(GenericFutureListener<io.netty.channel.ChannelFuture> { listener(it) })
+  addListener(GenericFutureListener<ChannelFuture> { listener(it) })
 }
 
 // if NIO, so, it is shared and we must not shutdown it
@@ -197,3 +197,7 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
   val method = method()
   return origin.isNullOrEmpty() && isRegularBrowser() && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
 }
+
+fun ByteBuf.readUtf8() = toString(Charsets.UTF_8)
+
+fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)

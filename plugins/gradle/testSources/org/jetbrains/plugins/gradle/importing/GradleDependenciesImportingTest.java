@@ -499,6 +499,59 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testNonDefaultProjectConfigurationDependencyWithMultipleArtifacts() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    tests.extendsFrom testRuntime\n" +
+      "  }\n" +
+      "  task testJar(type: Jar) {\n" +
+      "    classifier 'test'\n" +
+      "    from project.sourceSets.test.output\n" +
+      "  }\n" +
+      "\n" +
+      "  artifacts {\n" +
+      "    tests testJar\n" +
+      "    archives testJar\n" +
+      "  }\n" +
+      "\n" +
+      "  dependencies {\n" +
+      "    testCompile 'junit:junit:4.11'\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    testCompile project(path: ':project1', configuration: 'tests')\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleModuleDeps("project1_main");
+    assertModuleLibDeps("project1_main");
+    assertModuleLibDepScope("project1_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project1_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("project2_main");
+    assertModuleLibDeps("project2_main");
+    assertModuleLibDepScope("project2_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("project2_test", "project2_main", "project1_main", "project1_test");
+    assertModuleModuleDepScope("project2_test", "project2_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project1_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project1_test", DependencyScope.COMPILE);
+  }
+
+
+  @Test
   @TargetVersions("2.0+")
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput() throws Exception {
     createSettingsFile("include 'project1'\n" +
@@ -582,6 +635,65 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("2.0+")
+  public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput3() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "allprojects {\n" +
+      "  apply plugin: 'idea'\n" +
+      "  idea {\n" +
+      "    module {\n" +
+      "      inheritOutputDirs = false\n" +
+      "      outputDir = file(\"buildIdea/main\")\n" +
+      "      testOutputDir = file(\"buildIdea/test\")\n" +
+      "      excludeDirs += file('buildIdea')\n" +
+      "    }\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    testArtifacts\n" +
+      "  }\n" +
+      "\n" +
+      "  task testJar(type: Jar) {\n" +
+      "    classifier = 'tests'\n" +
+      "    from sourceSets.test.output\n" +
+      "  }\n" +
+      "\n" +
+      "  artifacts {\n" +
+      "    testArtifacts testJar\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    testCompile project(path: ':project1', configuration: 'testArtifacts')\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleOutput("project1_main", getProjectPath() + "/project1/buildIdea/main", "");
+    assertModuleOutput("project1_test", "", getProjectPath() + "/project1/buildIdea/test");
+
+    assertModuleOutput("project2_main", getProjectPath() + "/project2/buildIdea/main", "");
+    assertModuleOutput("project2_test", "", getProjectPath() + "/project2/buildIdea/test");
+
+    assertModuleModuleDeps("project2_main");
+    assertModuleModuleDeps("project2_test", "project2_main", "project1_test");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "project1", "project2");
+    assertModuleModuleDeps("project2", "project1");
+  }
+
+  @Test
   @TargetVersions("2.6+")
   public void testProjectSubstitutions() throws Exception {
     createSettingsFile("include 'core'\n" +
@@ -599,11 +711,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "  }\n" +
       "}\n" +
       "\n" +
-      "repositories { mavenCentral() }\n" +
-      "\n" +
       "project(':core') {\n" +
       "  apply plugin: 'java'\n" +
-      "  repositories { mavenCentral() }\n" +
       "  dependencies {\n" +
       "    compile project(':util')\n" +
       "  }\n" +
@@ -630,6 +739,76 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("service", "core", DependencyScope.COMPILE);
     assertModuleLibDepScope("service", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("service", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+  }
+
+  @Test
+  @TargetVersions("2.6+")
+  public void testProjectSubstitutionsWithTransitiveDeps() throws Exception {
+    createSettingsFile("include 'modA'\n" +
+                       "include 'modB'\n" +
+                       "include 'app'\n");
+
+    importProject(
+      "subprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "  version '1.0.0'\n" +
+      "}\n" +
+      "project(':app') {\n" +
+      "  dependencies {\n" +
+      "    runtime 'org.hamcrest:hamcrest-core:1.3'\n" +
+      "    testCompile 'project:modA:1.0.0'\n" +
+      "  }\n" +
+      "\n" +
+      "  configurations.all {\n" +
+      "    resolutionStrategy.dependencySubstitution {\n" +
+      "      substitute module('project:modA:1.0.0') with project(':modA')\n" +
+      "      substitute module('project:modB:1.0.0') with project(':cmodB')\n" +
+      "    }\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':modA') {\n" +
+      "  dependencies {\n" +
+      "    compile project(':modB')\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':modB') {\n" +
+      "  dependencies {\n" +
+      "    compile 'org.hamcrest:hamcrest-core:1.3'\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "app", "app_main", "app_test", "modA", "modA_main", "modA_test", "modB", "modB_main", "modB_test");
+
+    assertModuleLibDepScope("app_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME);
+    assertModuleModuleDeps("app_main");
+    assertModuleLibDepScope("app_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("app_test", "app_main", "modA_main", "modB_main");
+
+    assertModuleLibDepScope("modA_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("modA_main", "modB_main");
+    assertModuleLibDepScope("modA_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("modA_test", "modA_main", "modB_main");
+
+    assertModuleLibDepScope("modB_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("modB_main");
+    assertModuleLibDepScope("modB_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("modB_test", "modB_main");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "app", "modA", "modB");
+
+    assertModuleModuleDeps("app", "modA", "modB");
+    assertModuleModuleDepScope("app", "modA", DependencyScope.TEST);
+    assertModuleModuleDepScope("app", "modB", DependencyScope.TEST);
+    assertModuleLibDepScope("app", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME, DependencyScope.TEST);
+
+    assertModuleModuleDeps("modA", "modB");
+    assertModuleModuleDepScope("modA", "modB", DependencyScope.COMPILE);
+    assertModuleLibDepScope("modA", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("modB");
+    assertModuleLibDepScope("modB", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
   }
 
   @Test
@@ -722,5 +901,51 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       assertModuleModuleDepScope("projectC", "projectA", DependencyScope.PROVIDED);
     }
     assertModuleModuleDepScope("projectC", "projectB", DependencyScope.PROVIDED);
+  }
+
+  @Test
+  public void testProjectConfigurationDependencyWithDependencyOnTestOutput() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    testOutput\n" +
+      "    testOutput.extendsFrom (testCompile)\n" +
+      "  }\n" +
+      "\n" +
+      "  dependencies {\n" +
+      "    testOutput sourceSets.test.output\n" +
+      "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    compile project(path: ':project1')\n" +
+      "\n" +
+      "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
+      "    testCompile project(path: ':project1', configuration: 'testOutput')\n" +
+      "  }\n" +
+      "\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleModuleDepScope("project1_test", "project1_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project1_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project1_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+
+    assertModuleModuleDepScope("project2_main", "project1_main", DependencyScope.COMPILE);
+
+    assertModuleModuleDepScope("project2_test", "project2_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project1_test", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project1_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
   }
 }

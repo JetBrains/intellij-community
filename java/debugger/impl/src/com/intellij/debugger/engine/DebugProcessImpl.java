@@ -119,7 +119,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private JavaDebugProcess myXDebugProcess;
 
   private ConnectionServiceWrapper myConnectionService;
-  private Map<String, Connector.Argument> myArguments;
+  private volatile Map<String, Connector.Argument> myArguments;
 
   private final List<NodeRenderer> myRenderers = new ArrayList<>();
 
@@ -301,8 +301,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void stopConnecting() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-
     Map<String, Connector.Argument> arguments = myArguments;
     try {
       if (arguments == null) {
@@ -328,9 +326,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     catch (ExecutionException e) {
       LOG.error(e);
-    }
-    finally {
-      closeProcess(true);
     }
   }
 
@@ -1041,19 +1036,34 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               // See IDEA-63581
               // if vararg parameter array is of interface type and Object[] is expected, JDI wrap it into another array,
               // in this case we have to unroll the array manually and pass its elements to the method instead of array object
-              int lastIndex = myArgs.size() - 1;
-              if (lastIndex >= 0) {
-                final Object lastArg = myArgs.get(lastIndex);
-                if (lastArg instanceof ArrayReference) {
-                  final ArrayReference arrayRef = (ArrayReference)lastArg;
-                  if (((ArrayType)arrayRef.referenceType()).componentType() instanceof InterfaceType) {
-                    List<String> argTypes = myMethod.argumentTypeNames();
-                    if (argTypes.size() > lastIndex && argTypes.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
-                      // unwrap array of interfaces for vararg param
-                      myArgs.remove(lastIndex);
-                      myArgs.addAll(arrayRef.getValues());
+              int lastIndex = myMethod.argumentTypeNames().size() - 1;
+              if (lastIndex >= 0 && myArgs.size() > lastIndex) { // at least one varargs param
+                Object firstVararg = myArgs.get(lastIndex);
+                if (myArgs.size() == lastIndex + 1) { // only one vararg param
+                  if (firstVararg instanceof ArrayReference) {
+                    ArrayReference arrayRef = (ArrayReference)firstVararg;
+                    if (((ArrayType)arrayRef.referenceType()).componentType() instanceof InterfaceType) {
+                      List<String> argTypes = myMethod.argumentTypeNames();
+                      if (argTypes.size() > lastIndex && argTypes.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
+                        // unwrap array of interfaces for vararg param
+                        myArgs.remove(lastIndex);
+                        myArgs.addAll(arrayRef.getValues());
+                      }
                     }
                   }
+                }
+                else if (firstVararg == null) { // more than one vararg params and the first one is null
+                  // this is a workaround for a bug in jdi, see IDEA-157321
+                  int argCount = myArgs.size();
+                  List<Type> paramTypes = myMethod.argumentTypes();
+                  int paramCount = paramTypes.size();
+                  ArrayType lastParamType = (ArrayType)paramTypes.get(paramTypes.size() - 1);
+
+                  int count = argCount - paramCount + 1;
+                  ArrayReference argArray = lastParamType.newInstance(count);
+                  argArray.setValues(0, myArgs, paramCount - 1, count);
+                  myArgs.set(paramCount - 1, argArray);
+                  myArgs.subList(paramCount, argCount).clear();
                 }
               }
             }
@@ -1434,6 +1444,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void stop(boolean forceTerminate) {
+    stopConnecting(); // does this first place in case debugger manager hanged accepting debugger connection (forever)
     getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
 
@@ -1472,7 +1483,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
       }
       else {
-        stopConnecting();
+        try {
+          stopConnecting();
+        }
+        finally {
+          closeProcess(true);
+        }
       }
     }
   }

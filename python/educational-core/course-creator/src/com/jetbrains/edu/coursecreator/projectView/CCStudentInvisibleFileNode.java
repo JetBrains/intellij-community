@@ -11,11 +11,13 @@ import com.intellij.ui.SimpleTextAttributes;
  * represents a file which is invisible for student in student mode
  */
 public class CCStudentInvisibleFileNode extends PsiFileNode{
+
   public CCStudentInvisibleFileNode(Project project,
                                     PsiFile value,
                                     ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
+
 
   @Override
   protected void updateImpl(PresentationData data) {

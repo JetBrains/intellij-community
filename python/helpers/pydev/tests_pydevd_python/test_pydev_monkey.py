@@ -18,16 +18,14 @@ class TestCase(unittest.TestCase):
 
         try:
             SetupHolder.setup = {'client':'127.0.0.1', 'port': '0'}
-            check='''C:\\bin\\python.exe -u -c "
-connect(\\"127.0.0.1\\")
-"'''
+            check='''C:\\bin\\python.exe -u -c connect(\\"127.0.0.1\\")'''
             sys.original_argv = []
             self.assertEqual(
-                'C:\\bin\\python.exe -u -c "import sys; '
+                'C:\\bin\\python.exe -u -c import sys; '
                 'sys.path.append(r\'%s\'); '
                 'import pydevd; pydevd.settrace(host=\'127.0.0.1\', port=0, suspend=False, '
                     'trace_only_current_thread=False, patch_multiprocessing=True); '
-                    '\nconnect(\\"127.0.0.1\\")\n"' % pydev_src_dir,
+                    'connect("127.0.0.1")' % pydev_src_dir,
                 pydev_monkey.patch_arg_str_win(check)
             )
         finally:

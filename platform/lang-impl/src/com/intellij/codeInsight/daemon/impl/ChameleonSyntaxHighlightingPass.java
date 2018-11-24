@@ -31,7 +31,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -97,7 +96,7 @@ class ChameleonSyntaxHighlightingPass extends TextEditorHighlightingPass {
     TextAttributes defaultAttrs = scheme.getAttributes(HighlighterColors.TEXT);
 
     SyntaxTraverser<PsiElement> s = psiTraverser(myFile).
-      expand(compose(psiApi().TO_RANGE(), range -> range.intersects(myStartOffset, myEndOffset))).filterTypes(instanceOf(ILazyParseableElementType.class)).filterTypes(notInstanceOf(IFileElementType.class));
+      expand(compose(psiApi().TO_RANGE, range -> range.intersects(myStartOffset, myEndOffset))).filterTypes(instanceOf(ILazyParseableElementType.class)).filterTypes(notInstanceOf(IFileElementType.class));
     List<HighlightInfo> infos = ContainerUtil.newArrayList();
 
 

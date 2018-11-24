@@ -376,7 +376,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
     diff.setSilent(true);
     diff.setStdoutSuppressed(true);
-    diff.addParameters("--diff-filter=ADMRUX", "--name-status", "HEAD");
+    diff.addParameters("--diff-filter=ADMRUX", "--name-status", "--no-renames", "HEAD");
     diff.endOptions();
     String output;
     try {

@@ -141,5 +141,7 @@ public class UrlUtilTest {
     doUrlTest("not a site 1www.jetbrains.com", null);
     doUrlTest("not a site wwww.jetbrains.com", null);
     doUrlTest("not a site xxx.www.jetbrains.com", null);
+    doUrlTest("site https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage", 
+              "https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage");
   }
 }

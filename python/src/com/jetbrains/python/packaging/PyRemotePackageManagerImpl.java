@@ -214,7 +214,6 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         try {
           manager.runVagrant(myVagrantFolder, myMachineName);
           PythonSdkType.getInstance().setupSdkPaths(sdk);
-          clearCaches();
         }
         catch (ExecutionException e) {
           throw new RuntimeException(e);

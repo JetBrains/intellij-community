@@ -66,6 +66,8 @@ interface DebuggerViewSupport {
   fun transformErrorOnGetUsedReferenceValue(value: Value?, error: String?) = value
 
   fun isInLibraryContent(sourceInfo: SourceInfo, script: Script?) = false
+
+  fun computeReceiverVariable(context: VariableContext, callFrame: CallFrame, node: XCompositeNode): Promise<*>
 }
 
 open class PromiseDebuggerEvaluator(protected val context: VariableContext) : XDebuggerEvaluator() {

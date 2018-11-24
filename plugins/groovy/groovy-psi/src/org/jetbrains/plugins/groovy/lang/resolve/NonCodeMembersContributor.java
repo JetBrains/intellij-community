@@ -30,9 +30,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.Collection;
+import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.map;
 
 /**
  * @author peter
@@ -81,35 +85,42 @@ public abstract class NonCodeMembersContributor {
                                         @NotNull PsiScopeProcessor processor,
                                         @NotNull PsiElement place,
                                         @NotNull ResolveState state) {
-
-    MyDelegatingScopeProcessor delegatingProcessor = new MyDelegatingScopeProcessor(processor);
-
     ensureInit();
 
     final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
     if (TransformationUtilKt.isUnderTransformation(aClass)) return true;
 
+    List<MyDelegatingScopeProcessor> allDelegates = map(GroovyResolverProcessor.allProcessors(processor), MyDelegatingScopeProcessor::new);
+
     if (aClass != null) {
       for (String superClassName : ClassUtil.getSuperClassesWithCache(aClass).keySet()) {
         for (NonCodeMembersContributor enhancer : ourClassSpecifiedContributors.get(superClassName)) {
-          ProgressManager.checkCanceled();
-          enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
-          if (!delegatingProcessor.wantMore) {
-            return false;
-          }
+          if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, enhancer)) return false;
         }
       }
     }
 
     for (NonCodeMembersContributor contributor : ourAllTypeContributors) {
-      ProgressManager.checkCanceled();
-      contributor.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
+      if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, contributor)) return false;
+    }
+
+    return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
+  }
+
+  private static boolean invokeContributor(@NotNull PsiType qualifierType,
+                                           @NotNull PsiElement place,
+                                           @NotNull ResolveState state,
+                                           PsiClass aClass,
+                                           List<MyDelegatingScopeProcessor> allDelegates,
+                                           NonCodeMembersContributor enhancer) {
+    ProgressManager.checkCanceled();
+    for (MyDelegatingScopeProcessor delegatingProcessor : allDelegates) {
+      enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
       if (!delegatingProcessor.wantMore) {
         return false;
       }
     }
-
-    return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
+    return true;
   }
 
   private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor {

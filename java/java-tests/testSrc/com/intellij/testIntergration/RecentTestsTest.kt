@@ -28,6 +28,13 @@ import java.util.*
 fun String.suite() = "java:suite://$this"
 fun String.test() = "java:test://$this"
 
+fun mockConfiguration(name: String, uniqueID: String): RunnerAndConfigurationSettings {
+  val settings = mock(RunnerAndConfigurationSettings::class.java)
+  `when`(settings.uniqueID).thenAnswer { uniqueID }
+  `when`(settings.name).thenAnswer { name }
+  return settings
+}
+
 class RecentTestsStepTest: LightIdeaTestCase() {
 
   lateinit var data: RecentTestsData
@@ -37,9 +44,7 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   override fun setUp() {
     super.setUp()
     data = RecentTestsData()
-    allTests = mock(RunnerAndConfigurationSettings::class.java)
-    `when`(allTests.uniqueID).thenAnswer { "JUnit.all tests" }
-    `when`(allTests.name).thenAnswer { "all tests" }
+    allTests = mockConfiguration("all tests", "JUnit.all tests")
     now = Date()
   }
   
@@ -78,9 +83,16 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     
     val tests = data.getTestsToShow()
 
-    assertThat(tests).hasSize(2)
-    assertThat(tests[0].presentation).isEqualTo("JFSDTest")
-    assertThat(tests[1].presentation).isEqualTo("all tests")
+    assertThat(tests).hasSize(3)
+    
+    assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
+    assertThat(tests[0].magnitude).isEqualTo(FAILED_INDEX)
+    
+    assertThat(tests[1].presentation).isEqualTo("JFSDTest")
+    assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
+    
+    assertThat(tests[2].presentation).isEqualTo("all tests")
+    assertThat(tests[2].magnitude).isEqualTo(FAILED_INDEX)
   }
   
   

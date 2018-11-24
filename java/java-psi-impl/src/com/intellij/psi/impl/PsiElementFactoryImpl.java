@@ -21,6 +21,7 @@ import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -49,7 +50,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
-  private final NotNullLazyValue<PsiClass> myArrayClass = new NotNullLazyValue<PsiClass>() {
+  private final NotNullLazyValue<PsiClass> myArrayClass = new AtomicNotNullLazyValue<PsiClass>() {
     @NotNull
     @Override
     protected PsiClass compute() {
@@ -57,7 +58,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
   };
 
-  private final NotNullLazyValue<PsiClass> myArrayClass15 = new NotNullLazyValue<PsiClass>() {
+  private final NotNullLazyValue<PsiClass> myArrayClass15 = new AtomicNotNullLazyValue<PsiClass>() {
     @NotNull
     @Override
     protected PsiClass compute() {
@@ -182,11 +183,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (type instanceof PsiClassReferenceType) {
       return ((PsiClassReferenceType)type).getReference();
     }
-
-    final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
-    final PsiClass refClass = resolveResult.getElement();
-    assert refClass != null : type;
-    return new LightClassReference(myManager, type.getCanonicalText(true), refClass, resolveResult.getSubstitutor());
+    return new LightClassTypeReference(myManager, type);
   }
 
   @NotNull

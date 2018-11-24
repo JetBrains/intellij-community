@@ -934,6 +934,11 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20017
+  public void testAncestorHasDunderNewMethod() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

@@ -774,11 +774,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    */
   @Nullable
   public static PsiElement findElementAt(@Nullable PsiFile file, int offset) {
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-    }
-    if (file == null) return null;
-    return file.findElementAt(offset);
+    return file != null ? file.findElementAt(offset) : null;
   }
 
   public static String getLocationMethodQName(@NotNull Location location) {

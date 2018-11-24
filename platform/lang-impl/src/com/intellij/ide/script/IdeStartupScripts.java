@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -40,11 +41,13 @@ import org.jetbrains.ide.script.IdeScriptEngineManager;
 import org.jetbrains.ide.script.IdeScriptException;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 class IdeStartupScripts extends ApplicationComponent.Adapter {
   private static final Logger LOG = Logger.getInstance(IdeStartupScripts.class);
@@ -145,7 +148,8 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
     try {
       VirtualFile scriptDir = getScriptsRootDirectory();
       VirtualFile[] scriptDirChildren = scriptDir != null ? scriptDir.getChildren() : VirtualFile.EMPTY_ARRAY;
-      scripts = ContainerUtil.filter(scriptDirChildren, ExtensionsRootType.regularFileFilter());
+      Condition<VirtualFile> regularFileFilter = ExtensionsRootType.regularFileFilter();
+      scripts = Arrays.stream(scriptDirChildren).filter(regularFileFilter::value).collect(Collectors.toList());
     }
     catch (IOException ignore) {
       return Collections.emptyList();

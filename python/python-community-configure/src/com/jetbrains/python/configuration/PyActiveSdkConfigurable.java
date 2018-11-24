@@ -51,8 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -195,24 +194,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myInitialSdkSet = myProjectSdksModel.getProjectSdks().keySet();
     myProjectSdksModel.addListener(mySdkModelListener);
 
-    mySdkCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
+    mySdkCombo.addItemListener(e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
         final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
-        myPackagesPanel.updatePackages(selectedSdk != null ?
-                                       PyPackageManagers.getInstance().getManagementService(myProject, selectedSdk) : null);
+        final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
+        myPackagesPanel.updatePackages(selectedSdk != null ? packageManagers.getManagementService(myProject, selectedSdk) : null);
         myPackagesPanel.updateNotifications(selectedSdk);
       }
     });
     myAddSdkCallback = new SdkAddedCallback();
-    myDetailsButton.addActionListener(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                          showDetails();
-                                        }
-                                      }
-    );
-
+    myDetailsButton.addActionListener(e -> showDetails());
   }
 
   private void showDetails() {
@@ -295,8 +286,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     else {
       mySdkCombo.getModel().setSelectedItem(selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName()));
     }
-    myPackagesPanel.updatePackages(selectedSdk != null ? PyPackageManagers.getInstance().getManagementService(myProject, selectedSdk) : null);
-    myPackagesPanel.updateNotifications(selectedSdk);
   }
 
   private void rehighlightVersionSpecific(@Nullable final Sdk newSdk, @Nullable final Sdk prevSdk) {

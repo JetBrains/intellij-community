@@ -35,18 +35,17 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
@@ -57,7 +56,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -506,9 +508,17 @@ class PassExecutorService implements Disposable {
             pass.applyInformationToEditor();
           }
         }
-        catch (RuntimeException e) {
+        catch (ProcessCanceledException e) {
           log(updateProgress, pass, "Error " + e);
           throw e;
+        }
+        catch (RuntimeException e) {
+          Document document = pass.getDocument();
+          VirtualFile file = document == null ? null : FileDocumentManager.getInstance().getFile(document);
+          FileType fileType = file == null ? null : file.getFileType();
+          String message = "Exception while applying information to " + fileEditor + "("+fileType+")";
+          log(updateProgress, pass, message + e);
+          throw new RuntimeException(message, e);
         }
         if (threadsToStartCountdown.decrementAndGet() == 0) {
           log(updateProgress, pass, "Stopping ");

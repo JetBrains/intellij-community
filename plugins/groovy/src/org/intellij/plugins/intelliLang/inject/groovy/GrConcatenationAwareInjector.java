@@ -28,7 +28,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -112,16 +111,6 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
       return operand.getText();
     }
     return "missingValue";
-  }
-
-  @Nullable
-  private String findLanguage(PsiElement[] operands) {
-    PsiElement parent = PsiTreeUtil.findCommonParent(operands);
-    BaseInjection params = GrConcatenationInjector.findLanguageParams(parent, myConfiguration);
-    if (params != null) {
-      return params.getInjectedLanguageId();
-    }
-    return null;
   }
 
   static class InjectionProcessor {
@@ -296,7 +285,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     }
 
 
-    private boolean checkUnparsableReference(GrExpression expression) {
+    private static boolean checkUnparsableReference(GrExpression expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof GrAssignmentExpression) {
         final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)parent;

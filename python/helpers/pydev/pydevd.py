@@ -96,7 +96,7 @@ class PyDBCommandThread(PyDBDaemonThread):
             if self.killReceived:
                 return
 
-        if self.dontTraceMe:
+        if self.pydev_do_not_trace:
             self.py_db.SetTrace(None) # no debugging on this thread
 
         try:
@@ -129,7 +129,7 @@ class CheckOutputThread(PyDBDaemonThread):
         py_db.output_checker = self
 
     def _on_run(self):
-        if self.dontTraceMe:
+        if self.pydev_do_not_trace:
 
             disable_tracing = True
 
@@ -400,6 +400,30 @@ class PyDB:
                                          "matplotlib.pyplot": activate_pyplot,
                                          "pylab": activate_pylab }
 
+    def suspend_all_other_threads(self, thread_suspended_at_bp):
+        all_threads = threadingEnumerate()
+        for t in all_threads:
+            if getattr(t, 'is_pydev_daemon_thread', False):
+                pass # I.e.: skip the DummyThreads created from pydev daemon threads
+            elif hasattr(t, 'pydev_do_not_trace'):
+                pass  # skip some other threads, i.e. ipython history saving thread from debug console
+            else:
+                if t is thread_suspended_at_bp:
+                    continue
+                additional_info = None
+                try:
+                    additional_info = t.additional_info
+                except AttributeError:
+                    pass  # that's ok, no info currently set
+
+                if additional_info is not None:
+                    for frame in additional_info.iter_frames(t):
+                        self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                        del frame
+
+                    self.set_suspend(t, CMD_THREAD_SUSPEND)
+                else:
+                    sys.stderr.write("Can't suspend thread: %s\n" % (t,))
 
     def process_internal_commands(self):
         '''This function processes internal commands
@@ -1180,6 +1204,7 @@ def _locked_settrace(
         if bufferStdErrToServer:
             init_stderr_redirect()
 
+        patch_stdin(debugger)
         debugger.set_trace_for_frame_and_parents(get_frame(), False, overwrite_prev_trace=overwrite_prev_trace)
 
 
@@ -1282,7 +1307,7 @@ class Dispatcher(object):
         self.port = port
         self.client = start_client(self.host, self.port)
         self.reader = DispatchReader(self)
-        self.reader.dontTraceMe = False #we run reader in the same thread so we don't want to loose tracing
+        self.reader.pydev_do_not_trace = False #we run reader in the same thread so we don't want to loose tracing
         self.reader.run()
 
     def close(self):
@@ -1382,6 +1407,12 @@ def apply_debugger_options(setup_options):
         enable_qt_support()
 
 
+def patch_stdin(debugger):
+    from _pydev_bundle.pydev_console_utils import DebugConsoleStdIn
+    orig_stdin = sys.stdin
+    sys.stdin = DebugConsoleStdIn(debugger, orig_stdin)
+
+
 #=======================================================================================================================
 # main
 #=======================================================================================================================
@@ -1411,7 +1442,7 @@ if __name__ == '__main__':
 
     pydevd_vm_type.setup_type(setup.get('vm_type', None))
 
-    if os.getenv('PYCHARM_DEBUG') or os.getenv('PYDEV_DEBUG'):
+    if os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True':
         set_debug(setup)
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', DebugInfoHolder.DEBUG_RECORD_SOCKET_READS)
@@ -1512,6 +1543,7 @@ if __name__ == '__main__':
         pass  # It's ok not having stackless there...
 
     is_module = setup['module']
+    patch_stdin(debugger)
 
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")

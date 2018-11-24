@@ -385,7 +385,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         }
         curRangeStart += hostRangeLength;
         curRangeStart += shred.getSuffix().length();
-        if (curRangeStart >= endOffset) break;
+        if (curRangeStart > endOffset) break;
       }
     }
 

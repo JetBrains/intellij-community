@@ -240,6 +240,27 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
 
+    // resolve implicit __class__ inside class function
+    if (myElement instanceof PyReferenceExpression &&
+        PyNames.__CLASS__.equals(referencedName) &&
+        LanguageLevel.forElement(myElement).isAtLeast(LanguageLevel.PYTHON30)) {
+      final PyFunction containingFunction = PsiTreeUtil.getParentOfType(myElement, PyFunction.class);
+
+      if (containingFunction != null) {
+        final PyClass containingClass = containingFunction.getContainingClass();
+
+        if (containingClass != null) {
+          final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
+          PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, containingFunction);
+
+          if (processor.getElements().isEmpty()) {
+            ret.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, containingClass));
+            return ret;
+          }
+        }
+      }
+    }
+
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
@@ -247,9 +268,24 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
 
-    PsiElement roof = findResolveRoof(referencedName, realContext);
+    final PsiElement roof = findResolveRoof(referencedName, realContext);
     PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, roof);
-    return getResultsFromProcessor(referencedName, processor, realContext, roof);
+
+    final List<RatedResolveResult> resultsFromProcessor = getResultsFromProcessor(referencedName, processor, realContext, roof);
+
+    // resolve to module __doc__
+    if (resultsFromProcessor.isEmpty() && referencedName.equals(PyNames.DOC)) {
+      ret.addAll(
+        Optional
+          .ofNullable(PyBuiltinCache.getInstance(myElement).getObjectType())
+          .map(type -> type.resolveMember(referencedName, myElement, AccessDirection.of(myElement), myContext))
+          .orElse(Collections.emptyList())
+      );
+
+      return ret;
+    }
+
+    return resultsFromProcessor;
   }
 
   protected List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
@@ -494,7 +530,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           if (PyUtil.isClassAttribute(myElement) && (PyUtil.isClassAttribute(expr) || PyUtil.isInstanceAttribute(expr))) {
             final PyClass c1 = PsiTreeUtil.getParentOfType(element, PyClass.class);
             final PyClass c2 = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
-            if (c1 != null && c2 != null && (c1.isSubclass(c2, null) || c2.isSubclass(c1, null))) {
+            final TypeEvalContext context = myContext.getTypeEvalContext();
+            if (c1 != null && c2 != null && (c1.isSubclass(c2, context) || c2.isSubclass(c1, context))) {
               return true;
             }
           }

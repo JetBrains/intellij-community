@@ -59,7 +59,6 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -322,9 +321,11 @@ public final class PythonSdkType extends SdkType {
       final String version = getVersionString(sdk);
       if (flavor != null && version != null) {
         for (Sdk baseSdk : getAllSdks()) {
-          final PythonSdkFlavor baseFlavor = PythonSdkFlavor.getFlavor(baseSdk);
-          if (!isVirtualEnv(baseSdk) && flavor.equals(baseFlavor) && version.equals(getVersionString(baseSdk))) {
-            return baseSdk;
+          if (!isRemote(baseSdk)) {
+            final PythonSdkFlavor baseFlavor = PythonSdkFlavor.getFlavor(baseSdk);
+            if (!isVirtualEnv(baseSdk) && flavor.equals(baseFlavor) && version.equals(getVersionString(baseSdk))) {
+              return baseSdk;
+            }
           }
         }
       }
@@ -423,7 +424,7 @@ public final class PythonSdkType extends SdkType {
     return suggestSdkNameFromVersion(sdkHome, name);
   }
 
-  public static String suggestSdkNameFromVersion(String sdkHome, String version) {
+  private static String suggestSdkNameFromVersion(String sdkHome, String version) {
     sdkHome = FileUtil.toSystemDependentName(sdkHome);
     final String shortHomeName = FileUtil.getLocationRelativeToUserHome(sdkHome);
     if (version != null) {

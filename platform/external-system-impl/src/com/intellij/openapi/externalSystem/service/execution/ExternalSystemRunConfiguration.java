@@ -1,12 +1,9 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.AnsiEscapeDecoder;
@@ -28,6 +25,7 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecut
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -98,8 +96,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
 
   @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId());
+  public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
+    SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<ExternalSystemRunConfiguration>();
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<ExternalSystemRunConfiguration>());
+    return group;
   }
 
   @Nullable

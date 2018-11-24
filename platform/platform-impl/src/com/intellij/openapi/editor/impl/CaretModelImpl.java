@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -368,6 +367,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     LinkedList<CaretImpl> carets = new LinkedList<CaretImpl>(myCarets);
     Collections.sort(carets, CaretPositionComparator.INSTANCE);
     ListIterator<CaretImpl> it = carets.listIterator();
+    CaretImpl keepPrimary = getPrimaryCaret();
     while (it.hasNext()) {
       CaretImpl prevCaret = null;
       if (it.hasPrevious()) {
@@ -392,10 +392,19 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           it.previous();
           it.remove();
         }
+        if (toRemove == keepPrimary) {
+          keepPrimary = toRetain;
+        }
         removeCaret(toRemove);
         if (newSelectionStart < newSelectionEnd) {
           toRetain.setSelection(newSelectionStart, newSelectionEnd);
         }
+      }
+    }
+    if (keepPrimary != getPrimaryCaret()) {
+      synchronized (myCarets) {
+        myCarets.remove(keepPrimary);
+        myCarets.add(keepPrimary);
       }
     }
   }

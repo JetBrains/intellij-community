@@ -19,7 +19,7 @@ public class PyDebugValue extends XNamedValue {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
   public static final int MAX_VALUE = 256;
 
-  public static final String RETURN_VALUES_PREFIX = "__pydevd_ret_val_";
+  public static final String RETURN_VALUES_PREFIX = "__pydevd_ret_val_dict";
 
   private String myTempName = null;
   private final String myType;

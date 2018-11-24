@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.panels.HorizontalLayout;
@@ -50,7 +51,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class EditorNotificationPanel extends JPanel implements IntentionActionProvider {
+public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
   protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
@@ -123,7 +124,12 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     MyIntentionAction action = new MyIntentionAction();
     return action.getOptions().isEmpty() ? null : action;
   }
-  
+
+  @Override
+  public double getWeight() {
+    return 0;
+  }
+
   private class MyIntentionAction extends AbstractEmptyIntentionAction implements IntentionActionWithOptions, Iconable {
     private final List<IntentionAction> myOptions = new ArrayList<IntentionAction>();
 

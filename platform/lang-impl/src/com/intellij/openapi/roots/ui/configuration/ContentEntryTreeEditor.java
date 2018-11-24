@@ -21,10 +21,7 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -183,6 +180,11 @@ public class ContentEntryTreeEditor {
     return myContentEntryEditor;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   public JComponent createComponent() {
     createEditingActions();
     return myTreePanel;
@@ -279,6 +281,10 @@ public class ContentEntryTreeEditor {
     @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        return myFileSystemTree.getSelectedFiles();
+      }
+
       if (FileSystemTree.DATA_KEY.is(dataId)) {
         return myFileSystemTree;
       }

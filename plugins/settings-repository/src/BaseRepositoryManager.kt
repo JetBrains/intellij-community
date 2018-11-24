@@ -26,8 +26,10 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.*
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -130,7 +132,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
    */
   protected abstract fun addToIndex(file: Path, path: String, content: ByteArray, size: Int)
 
-  override fun delete(path: String) {
+  override fun delete(path: String): Boolean {
     LOG.debug { "Remove $path"}
 
     lock.write {
@@ -138,8 +140,11 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
       // delete could be called for non-existent file
       if (file.exists()) {
         delete(file, path)
+        return true
       }
     }
+
+    return false
   }
 
   private fun delete(file: Path, path: String) {
@@ -160,7 +165,12 @@ fun Path.removeWithParentsIfEmpty(root: Path, isFile: Boolean = true) {
     // remove empty directories
     var parent = this.parent
     while (parent != null && parent != root) {
-      parent.delete()
+      try {
+        Files.delete(parent)
+      }
+      catch (e: IOException) {
+        break
+      }
       parent = parent.parent
     }
   }

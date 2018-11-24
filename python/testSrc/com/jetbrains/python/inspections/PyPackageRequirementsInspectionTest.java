@@ -15,14 +15,25 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
 public class PyPackageRequirementsInspectionTest extends PyTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
+  }
+
   public void testPartiallySatisfiedRequirementsTxt() {
     doTest("test1.py");
   }

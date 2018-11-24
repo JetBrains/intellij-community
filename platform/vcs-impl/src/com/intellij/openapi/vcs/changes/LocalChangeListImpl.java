@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -136,14 +135,12 @@ public class LocalChangeListImpl extends LocalChangeList {
     LOG.debug("List: " + myName + ". addChange: " + change);
   }
 
-  Change removeChange(Change change) {
-    for (Change localChange : myChanges) {
-      if (localChange.equals(change)) {
-        myChanges.remove(localChange);
-        LOG.debug("List: " + myName + ". removeChange: " + change);
-        myReadChangesCache = null;
-        return localChange;
-      }
+  @Nullable
+  Change removeChange(@Nullable Change change) {
+    if (myChanges.remove(change)) {
+      LOG.debug("List: " + myName + ". removeChange: " + change);
+      myReadChangesCache = null;
+      return change;
     }
     return null;
   }
@@ -185,7 +182,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     });
   }
 
-  boolean processChange(@NotNull final Change change) {
+  boolean processChange(@NotNull Change change) {
     LOG.debug("[process change] for '" + myName + "' isDefault: " + myIsDefault + " change: " +
               ChangesUtil.getFilePath(change).getPath());
     if (myIsDefault) {
@@ -194,13 +191,7 @@ public class LocalChangeListImpl extends LocalChangeList {
       return true;
     }
 
-    boolean foundSameChange = ContainerUtil.exists(myChangesBeforeUpdate, new Condition<Change>() {
-      @Override
-      public boolean value(Change oldChange) {
-        return Comparing.equal(change, oldChange);
-      }
-    });
-    if (foundSameChange) {
+    if (myChangesBeforeUpdate.contains(change)) {
       LOG.debug("[process change] adding because equal to old: " + ChangesUtil.getFilePath(change).getPath());
       addChange(change);
       return true;

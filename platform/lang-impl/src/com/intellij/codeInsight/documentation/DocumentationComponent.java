@@ -24,6 +24,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.Disposable;
@@ -95,6 +96,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private DocumentationManager myManager;
   private SmartPsiElementPointer myElement;
   private long myModificationCount;
+
+  private static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size";
 
   private final Stack<Context> myBackStack = new Stack<Context>();
   private final Stack<Context> myForwardStack = new Stack<Context>();
@@ -267,9 +270,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
         int change = Math.abs(e.getWheelRotation());
         boolean increase = e.getWheelRotation() <= 0;
-        EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-        EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-        FontSize newFontSize = scheme.getQuickDocFontSize();
+        FontSize newFontSize = getQuickDocFontSize();
         for (; change > 0; change--) {
           if (increase) {
             newFontSize = newFontSize.larger();
@@ -279,11 +280,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           }
         }
 
-        if (newFontSize == scheme.getQuickDocFontSize()) {
+        if (newFontSize == getQuickDocFontSize()) {
           return;
         }
 
-        scheme.setQuickDocFontSize(newFontSize);
+        setQuickDocFontSize(newFontSize);
         applyFontSize();
         setFontSizeSliderSize(newFontSize);
       }
@@ -483,9 +484,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         if (myIgnoreFontSizeSliderChange) {
           return;
         }
-        EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-        EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-        scheme.setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
+        setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
         applyFontSize();
       }
     });
@@ -497,6 +496,24 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     result.setOpaque(true);
     myFontSizeSlider.setOpaque(true);
     return result;
+  }
+
+  @NotNull
+  public static FontSize getQuickDocFontSize() {
+    String strValue = PropertiesComponent.getInstance().getValue(QUICK_DOC_FONT_SIZE_PROPERTY);
+    if (strValue != null) {
+      try {
+        return FontSize.valueOf(strValue);
+      }
+      catch (IllegalArgumentException iae) {
+        // ignore, fall back to default font.
+      }
+    }
+    return FontSize.SMALL;
+  }
+
+  public void setQuickDocFontSize(@NotNull FontSize fontSize) {
+    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_PROPERTY, fontSize.toString());
   }
 
   private void setFontSizeSliderSize(FontSize fontSize) {
@@ -659,7 +676,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-    StyleConstants.setFontSize(myFontSizeStyle, JBUI.scale(scheme.getQuickDocFontSize().getSize()));
+    StyleConstants.setFontSize(myFontSizeStyle, JBUI.scale(getQuickDocFontSize().getSize()));
     if (Registry.is("documentation.component.editor.font")) {
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }
@@ -1013,9 +1030,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         return;
       }
 
-      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-      EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-      setFontSizeSliderSize(scheme.getQuickDocFontSize());
+      setFontSizeSliderSize(getQuickDocFontSize());
       mySettingsPanel.setVisible(true);
     }
   }

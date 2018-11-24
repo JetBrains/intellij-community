@@ -29,7 +29,6 @@ import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -184,45 +183,13 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   @Override
   public PsiElement findElementAt(int offset) {
     PsiElement mirror = getMirror();
-    if (mirror == null) return null;
-    PsiElement mirrorAt = mirror.findElementAt(offset);
-    while (true) {
-      if (mirrorAt == null || mirrorAt instanceof PsiFile) return null;
-      PsiElement elementAt = mirrorToElement(mirrorAt);
-      if (elementAt != null) return elementAt;
-      mirrorAt = mirrorAt.getParent();
-    }
+    return mirror != null ? mirror.findElementAt(offset) : null;
   }
 
   @Override
   public PsiReference findReferenceAt(int offset) {
     PsiElement mirror = getMirror();
-    if (mirror == null) return null;
-    PsiReference mirrorRef = mirror.findReferenceAt(offset);
-    if (mirrorRef == null) return null;
-    PsiElement mirrorElement = mirrorRef.getElement();
-    PsiElement element = mirrorToElement(mirrorElement);
-    if (element == null) return null;
-    return element.getReference();
-  }
-
-  @Nullable
-  private PsiElement mirrorToElement(PsiElement mirror) {
-    final PsiElement m = getMirror();
-    if (m == mirror) return this;
-
-    PsiElement[] children = getChildren();
-    if (children.length == 0) return null;
-
-    for (PsiElement child : children) {
-      ClsElementImpl clsChild = (ClsElementImpl)child;
-      if (PsiTreeUtil.isAncestor(clsChild.getMirror(), mirror, false)) {
-        PsiElement element = clsChild.mirrorToElement(mirror);
-        if (element != null) return element;
-      }
-    }
-
-    return null;
+    return mirror != null ? mirror.findReferenceAt(offset) : null;
   }
 
   @Override

@@ -564,14 +564,6 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  public PsiQualifiedNamedElement getContainer() {
-    final PsiFile file = getContainingFile();
-    final PsiDirectory dir;
-    return file == null ? null : (dir = file.getContainingDirectory()) == null
-                                 ? null : JavaDirectoryService.getInstance().getPackage(dir);
-  }
-
-  @Override
   public void putInfo(@NotNull Map<String, String> info) {
     PsiClassImpl.putInfo(this, info);
   }

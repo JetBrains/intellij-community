@@ -6,7 +6,6 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -20,10 +19,11 @@ import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
-import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.CourseCreatorPythonIcons;
@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+
+import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
 
 
 public class PyCCProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
@@ -55,14 +57,12 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
-    generateProject(project, baseDir, mySettingsPanel.getName(),
-                    mySettingsPanel.getAuthors(), mySettingsPanel.getDescription());
+    generateProject(project, baseDir, mySettingsPanel);
   }
 
-  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                                     @NotNull final String name, @NotNull final String[] authors,
-                                     @NotNull final String description) {
-    final Course course = getCourse(project, name, authors, description);
+  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir, CCNewProjectPanel settingsPanel) {
+    final Course course = getCourse(project, settingsPanel);
+    EduUsagesCollector.projectTypeCreated(CCUtils.COURSE_MODE);
 
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
     if (projectDir == null) return;
@@ -92,20 +92,22 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   }
 
   @NotNull
-  private static Course getCourse(@NotNull Project project, @NotNull String name, @NotNull String[] authors, @NotNull String description) {
+  private static Course getCourse(@NotNull Project project, @NotNull CCNewProjectPanel settingsPanel) {
     final Course course = new Course();
+    String name = settingsPanel.getName();
     course.setName(name);
-    course.setAuthors(authors);
-    course.setDescription(description);
-    course.setLanguage(PythonLanguage.getInstance().getID());
+    course.setAuthorsAsString(settingsPanel.getAuthors());
+    course.setDescription(settingsPanel.getDescription());
+
+    String language = PythonLanguage.getInstance().getID();
+    course.setLanguage(language);
     course.setCourseMode(CCUtils.COURSE_MODE);
 
-    File coursesDir = new File(PathManager.getConfigPath(), "courses");
-    File courseDir = new File(coursesDir, name + "-" + project.getName());
+    File courseDir = new File(OUR_COURSES_DIR, name + "-" + project.getName());
     course.setCourseDirectory(courseDir.getPath());
 
     StudyTaskManager.getInstance(project).setCourse(course);
-    StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
+    StudyUtils.registerStudyToolWindow(course, project);
     return course;
   }
 
@@ -133,5 +135,10 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
       }
     });
     return mySettingsPanel.getMainPanel();
+  }
+
+  @Override
+  public void locationChanged(@NotNull String newLocation) {
+    mySettingsPanel.getNameField().setText(newLocation);
   }
 }

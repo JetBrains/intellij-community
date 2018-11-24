@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A superclass for all element types for root AST nodes in a {@link com.intellij.psi.PsiFile}.
+ */
 public class IFileElementType extends ILazyParseableElementType {
   public IFileElementType(@Nullable final Language language) {
     super("FILE", language);
@@ -31,6 +34,9 @@ public class IFileElementType extends ILazyParseableElementType {
     super(debugName, language);
   }
 
+  /**
+   * Allows to construct file element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
+   */
   public IFileElementType(@NonNls @NotNull final String debugName, @Nullable final Language language, boolean register) {
     super(debugName, language, register);
   }

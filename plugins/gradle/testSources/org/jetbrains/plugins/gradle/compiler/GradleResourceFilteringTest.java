@@ -216,6 +216,24 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
   }
 
   @Test
+  public void testEscapeUnicodeFilter() throws Exception {
+    createProjectSubFile(
+      "src/main/resources/dir/file.txt", "some text テキスト");
+    importProject(
+      "apply plugin: 'java'\n" +
+      "\n" +
+      "import org.apache.tools.ant.filters.*\n" +
+      "processResources {\n" +
+      "  filter (EscapeUnicode)\n" +
+      "}"
+    );
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main");
+
+    assertCopied("build/resources/main/dir/file.txt", "some text \\u30c6\\u30ad\\u30b9\\u30c8");
+  }
+
+  @Test
   public void testFiltersChain() throws Exception {
     createProjectSubFile(
       "src/main/resources/dir/file.txt", "1 Header\n" +

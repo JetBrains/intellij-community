@@ -68,11 +68,20 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     RecentProjectsManagerBase.getInstanceEx().doOpenProject(myProjectPath, project, forceOpenInNewFrame);
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setText(getProjectName());
+  }
+
   public String getProjectPath() {
     return myProjectPath;
   }
   
   public String getProjectName() {
+    final RecentProjectsManager mgr = RecentProjectsManager.getInstance();
+    if (mgr instanceof RecentProjectsManagerBase) {
+      return ((RecentProjectsManagerBase)mgr).getProjectName(myProjectPath);
+    }
     return myProjectName;
   }
 }

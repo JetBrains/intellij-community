@@ -51,7 +51,8 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   @Nullable
-  private NamedScope getContainingScope(PsiFile file) {
+  private NamedScope getContainingScope(@Nullable PsiFile file) {
+    if (file == null) return null;
     NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
     for (NamedScope scope : ScopeViewPane.getShownScopes(myProject)) {
       PackageSet packageSet = scope.getValue();

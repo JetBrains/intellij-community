@@ -17,6 +17,7 @@ package com.jetbrains.python.newProject;
 
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,11 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.List;
 
 public abstract class PythonProjectGenerator {
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
+  @Nullable private MouseListener myErrorLabelMouseListener;
 
   @Nullable
   public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
@@ -65,7 +68,22 @@ public abstract class PythonProjectGenerator {
   }
 
   @Nullable
-  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@NotNull final Sdk sdk) {
+  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable final Sdk sdk) {
     return null;
   }
+
+  public boolean hideInterpreter() {
+    return false;
+  }
+
+  public void addErrorLabelMouseListener(@NotNull final MouseListener mouseListener) {
+    myErrorLabelMouseListener = mouseListener;
+  }
+
+  @Nullable
+  public MouseListener getErrorLabelMouseListener() {
+    return myErrorLabelMouseListener;
+  }
+
+  public void createAndAddVirtualEnv(Project project, PyNewProjectSettings settings) {}
 }

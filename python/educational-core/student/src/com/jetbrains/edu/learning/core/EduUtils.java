@@ -4,33 +4,32 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.util.Function;
-import com.intellij.util.containers.HashMap;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
-import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
-import com.jetbrains.edu.learning.oldCourseFormat.TaskWindow;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
@@ -38,9 +37,10 @@ import java.util.Map;
 public class EduUtils {
   private EduUtils() {
   }
+
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
-  public static Comparator<StudyItem> INDEX_COMPARATOR = (o1, o2) -> o1.getIndex() - o2.getIndex();
+  public static final Comparator<StudyItem> INDEX_COMPARATOR = (o1, o2) -> o1.getIndex() - o2.getIndex();
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
     final Presentation presentation = event.getPresentation();
@@ -61,7 +61,8 @@ public class EduUtils {
     }
     try {
       return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
-    } catch(NumberFormatException e) {
+    }
+    catch (NumberFormatException e) {
       return -1;
     }
   }
@@ -73,8 +74,7 @@ public class EduUtils {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
-  public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file,
-                                         boolean useLength) {
+  public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file) {
     final VirtualFile taskDir = file.getParent();
     VirtualFile fileWindows = null;
     final Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -91,11 +91,7 @@ public class EduUtils {
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
           int length = answerPlaceholder.getRealLength();
-          if (!answerPlaceholder.isValid(document, length)) {
-            printWriter.println("#educational_plugin_window = ");
-            continue;
-          }
-          int start = answerPlaceholder.getRealStartOffset(document);
+          int start = answerPlaceholder.getOffset();
           final String windowDescription = document.getText(new TextRange(start, start + length));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }
@@ -120,89 +116,69 @@ public class EduUtils {
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
 
-  public static void createStudentFileFromAnswer(@NotNull final Project project,
-                                                 @NotNull final VirtualFile userFileDir,
-                                                 @NotNull final VirtualFile answerFileDir,
-                                                 @NotNull final String taskFileName, @NotNull final TaskFile taskFile) {
-    VirtualFile file = userFileDir.findChild(taskFileName);
-    if (file != null) {
-      try {
-        file.delete(project);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
 
-    if (taskFile.getAnswerPlaceholders().isEmpty()) {
-      //do not need to replace anything, just copy
-      VirtualFile answerFile = answerFileDir.findChild(taskFileName);
-      if (answerFile != null) {
-        try {
-          answerFile.copy(answerFileDir, userFileDir, taskFileName);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-      return;
+  public static VirtualFile copyFile(Object requestor, VirtualFile toDir, VirtualFile file) {
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document != null) {
+      FileDocumentManager.getInstance().saveDocument(document);
     }
+    String name = file.getName();
     try {
-      userFileDir.createChildData(project, taskFileName);
+      VirtualFile userFile = toDir.findChild(name);
+      if (userFile != null) {
+        userFile.delete(requestor);
+      }
+      return VfsUtilCore.copyFile(requestor, file, toDir);
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info("Failed to create file " + name + "  in folder " + toDir.getPath(), e);
     }
-
-    file = userFileDir.findChild(taskFileName);
-    if (file == null) {
-      LOG.info("Failed to find task file " + taskFileName);
-      return;
-    }
-    VirtualFile answerFile = answerFileDir.findChild(taskFileName);
-    if (answerFile == null) {
-      return;
-    }
-    final Document answerDocument = FileDocumentManager.getInstance().getDocument(answerFile);
-    if (answerDocument == null) {
-      return;
-    }
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return;
-
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
-      FileDocumentManager.getInstance().saveDocument(document);
-    }), "Create Student File", "Create Student File");
-    createStudentDocument(project, taskFile, file, document);
+    return null;
   }
 
-  public static void createStudentDocument(@NotNull Project project,
-                                           @NotNull TaskFile taskFile,
-                                           VirtualFile file,
-                                           final Document document) {
-    EduDocumentListener listener = new EduDocumentListener(taskFile, false);
-    document.addDocumentListener(listener);
-    taskFile.sortAnswerPlaceholders();
-    for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
-      final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
-      if (answerPlaceholder.getRealStartOffset(document) > document.getTextLength() || answerPlaceholder.getRealStartOffset(document) + answerPlaceholder.getPossibleAnswerLength() > document.getTextLength()) {
-        LOG.error("Wrong startOffset: " + answerPlaceholder.getRealStartOffset(document) + "; document: " + file.getPath());
-        return;
-      }
-      replaceAnswerPlaceholder(project, document, answerPlaceholder);
+  @Nullable
+  public static Pair<VirtualFile, TaskFile> createStudentFile(Object requestor,
+                                                              Project project,
+                                                              VirtualFile answerFile,
+                                                              VirtualFile parentDir,
+                                                              @Nullable Task task) {
+
+    VirtualFile studentFile = copyFile(requestor, parentDir, answerFile);
+    if (studentFile == null) {
+      return null;
     }
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(document)), "Create Student File", "Create Student File");
-    document.removeDocumentListener(listener);
+    Document studentDocument = FileDocumentManager.getInstance().getDocument(studentFile);
+    if (studentDocument == null) {
+      return null;
+    }
+    if (task == null) {
+      task = StudyUtils.getTaskForFile(project, answerFile);
+      if (task == null) {
+        return null;
+      }
+      task = task.copy();
+    }
+    TaskFile taskFile = task.getTaskFile(answerFile.getName());
+    if (taskFile == null) {
+      return null;
+    }
+    EduDocumentListener listener = new EduDocumentListener(taskFile, false);
+    studentDocument.addDocumentListener(listener);
+
+    for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+      replaceAnswerPlaceholder(project, studentDocument, placeholder);
+    }
+    studentDocument.removeDocumentListener(listener);
+    return Pair.create(studentFile, taskFile);
   }
 
   private static void replaceAnswerPlaceholder(@NotNull final Project project,
                                                @NotNull final Document document,
                                                @NotNull final AnswerPlaceholder answerPlaceholder) {
     final String taskText = answerPlaceholder.getTaskText();
-    final int offset = answerPlaceholder.getRealStartOffset(document);
+    final int offset = answerPlaceholder.getOffset();
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      document.replaceString(offset, offset + answerPlaceholder.getPossibleAnswerLength(), taskText);
+      document.replaceString(offset, offset + answerPlaceholder.getRealLength(), taskText);
       FileDocumentManager.getInstance().saveDocument(document);
     }), "Replace Answer Placeholders", "Replace Answer Placeholders");
   }
@@ -246,76 +222,6 @@ public class EduUtils {
     return lesson.getTask(directory.getName());
   }
 
-  @NotNull
-  public static Course transformOldCourse(@NotNull final OldCourse oldCourse) {
-    return transformOldCourse(oldCourse, null);
-  }
-
-  @NotNull
-  public static Course transformOldCourse(@NotNull final OldCourse oldCourse,
-                                          @Nullable Function<Pair<AnswerPlaceholder, StudyStatus>, Void> setStatus) {
-    Course course = new Course();
-    course.setDescription(oldCourse.description);
-    course.setName(oldCourse.name);
-    course.setAuthors(new String[]{oldCourse.author});
-
-    String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", oldCourse.name);
-    if (new File(updatedCoursePath).exists()) {
-      course.setCourseDirectory(FileUtil.toSystemIndependentName(updatedCoursePath));
-    }
-    final ArrayList<Lesson> lessons = new ArrayList<Lesson>();
-    for (com.jetbrains.edu.learning.oldCourseFormat.Lesson oldLesson : oldCourse.lessons) {
-      final Lesson lesson = new Lesson();
-      lesson.setName(oldLesson.name);
-      lesson.setIndex(oldLesson.myIndex + 1);
-
-      final ArrayList<Task> tasks = new ArrayList<Task>();
-      for (com.jetbrains.edu.learning.oldCourseFormat.Task oldTask : oldLesson.taskList) {
-        final Task task = new Task();
-        task.setIndex(oldTask.myIndex + 1);
-        task.setName(oldTask.name);
-        task.setLesson(lesson);
-        final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
-        for (Map.Entry<String, com.jetbrains.edu.learning.oldCourseFormat.TaskFile> entry : oldTask.taskFiles.entrySet()) {
-          final TaskFile taskFile = new TaskFile();
-          final com.jetbrains.edu.learning.oldCourseFormat.TaskFile oldTaskFile = entry.getValue();
-          taskFile.setIndex(oldTaskFile.myIndex);
-          taskFile.name = entry.getKey();
-
-          final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
-          for (TaskWindow window : oldTaskFile.taskWindows) {
-            final AnswerPlaceholder placeholder = new AnswerPlaceholder();
-            placeholder.setIndex(window.myIndex);
-            placeholder.setHint(window.hint);
-            placeholder.setLength(window.length);
-            placeholder.setLine(window.line);
-            placeholder.setPossibleAnswer(window.possibleAnswer);
-            placeholder.setStart(window.start);
-            placeholders.add(placeholder);
-            placeholder.setInitialState(new AnswerPlaceholder.MyInitialState(window.myInitialLine,
-                                                                             window.myInitialLength,
-                                                                             window.myInitialStart));
-            if (setStatus != null) {
-              setStatus.fun(Pair.create(placeholder, window.myStatus));
-            }
-          }
-
-          taskFile.setAnswerPlaceholders(placeholders);
-          taskFiles.put(entry.getKey(), taskFile);
-        }
-        task.taskFiles = taskFiles;
-        tasks.add(task);
-      }
-
-      lesson.taskList = tasks;
-
-      lessons.add(lesson);
-    }
-    course.setLessons(lessons);
-    course.initCourse(true);
-    return course;
-  }
-
   public static boolean isImage(String fileName) {
     final String[] readerFormatNames = ImageIO.getReaderFormatNames();
     for (@NonNls String format : readerFormatNames) {
@@ -325,5 +231,23 @@ public class EduUtils {
       }
     }
     return false;
+  }
+
+  public static void runUndoableAction(Project project, String name, UndoableAction action) {
+    runUndoableAction(project, name, action, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
+  }
+
+  public static void runUndoableAction(Project project, String name, UndoableAction action, UndoConfirmationPolicy confirmationPolicy) {
+    new WriteCommandAction(project, name) {
+      protected void run(@NotNull final Result result) throws Throwable {
+        action.redo();
+        UndoManager.getInstance(project).undoableActionPerformed(action);
+      }
+
+      @Override
+      protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+        return confirmationPolicy;
+      }
+    }.execute();
   }
 }

@@ -2,36 +2,52 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Implementation of windows which user should type in
  */
 
 public class AnswerPlaceholder {
+  private static final Logger LOG = Logger.getInstance(AnswerPlaceholder.class);
+  
+  @SerializedName("hint")
+  @Expose private String myHint = "";
 
-  @Expose private int line = 0;
-  @Expose private int start = 0;
-  @Expose private String hint = "";
+  @SerializedName("additional_hints")
+  @Expose private List<String> myAdditionalHints = new ArrayList<String>();
 
   @SerializedName("possible_answer")
   @Expose private String possibleAnswer = "";
-  @Expose private int length = 0;
+
+  @SerializedName("offset")
+  @Expose private int myOffset = -1;
+
+  @Expose private int length = -1;
+
   private int myIndex = -1;
   private String myTaskText;
   private MyInitialState myInitialState;
-  private StudyStatus myStatus = StudyStatus.Uninitialized;
+  private StudyStatus myStatus = StudyStatus.Unchecked;
   private boolean mySelected = false;
   private boolean myUseLength = true;
 
+
   @Transient private TaskFile myTaskFile;
+
+  public AnswerPlaceholder() {
+  }
 
   public void initAnswerPlaceholder(final TaskFile file, boolean isRestarted) {
     if (!isRestarted) {
-      setInitialState(new MyInitialState(getLine(), getLength(), getStart()));
+      setInitialState(new MyInitialState(myOffset, length));
       myStatus = file.getTask().getStatus();
     }
 
@@ -57,28 +73,13 @@ public class AnswerPlaceholder {
     this.length = length;
   }
 
-  public int getStart() {
-    return start;
+  @NotNull
+  public List<String> getAdditionalHints() {
+    return myAdditionalHints;
   }
 
-  public void setStart(int start) {
-    this.start = start;
-  }
-
-  public int getLine() {
-    return line;
-  }
-
-  public void setLine(int line) {
-    this.line = line;
-  }
-
-  public String getHint() {
-    return hint;
-  }
-
-  public void setHint(@Nullable final String hint) {
-    this.hint = hint;
+  public void setAdditionalHints(@Nullable final List<String> additionalHints) {
+    myAdditionalHints = additionalHints;
   }
 
   public String getPossibleAnswer() {
@@ -93,7 +94,7 @@ public class AnswerPlaceholder {
     return myInitialState;
   }
 
-  public void setInitialState(@NotNull final MyInitialState initialState) {
+  public void setInitialState(MyInitialState initialState) {
     myInitialState = initialState;
   }
 
@@ -115,34 +116,17 @@ public class AnswerPlaceholder {
     myTaskFile = taskFile;
   }
 
-  public int getRealStartOffset(@NotNull final Document document) {
-    return document.getLineStartOffset(line) + start;
-  }
-
   public int getPossibleAnswerLength() {
     return possibleAnswer.length();
-  }
-
-  public boolean isValid(@NotNull final Document document) {
-    return isValid(document, length);
-  }
-
-  public boolean isValid(@NotNull final Document document, int length) {
-    boolean isLineValid = line < document.getLineCount() && line >= 0;
-    if (!isLineValid) return false;
-    boolean isStartValid = start >= 0 && start < document.getLineEndOffset(line);
-    boolean isLengthValid = (getRealStartOffset(document) + length) <= document.getTextLength();
-    return isLengthValid && isStartValid;
   }
 
   /**
    * Returns window to its initial state
    */
   public void reset() {
-    line = myInitialState.myLine;
-    start = myInitialState.myStart;
-    length = myInitialState.myLength;
-    if (!getUseLength()) {
+    myOffset = myInitialState.getOffset();
+    length = myInitialState.getLength();
+    if (!myUseLength) {
       possibleAnswer = myTaskText;
     }
   }
@@ -164,7 +148,7 @@ public class AnswerPlaceholder {
   }
 
   public void init() {
-    setInitialState(new MyInitialState(line, myTaskText.length(), start));
+    setInitialState(new MyInitialState(myOffset, myTaskText.length()));
   }
 
   public boolean getUseLength() {
@@ -182,53 +166,101 @@ public class AnswerPlaceholder {
     myUseLength = useLength;
   }
 
-  public void setInitialState(AnswerPlaceholder placeholder) {
-    setInitialState(new MyInitialState(placeholder.line, placeholder.length, placeholder.start));
+  public int getOffset() {
+    return myOffset;
+  }
+
+  public void setOffset(int offset) {
+    myOffset = offset;
+  }
+
+  public String getHint() {
+    return myHint;
+  }
+
+  public void setHint(String hint) {
+    myHint = hint;
+  }
+
+  @Transient
+  public List<String> getHints() {
+    if (myHint.isEmpty() && myAdditionalHints.isEmpty()) return Collections.emptyList();
+    final ArrayList<String> result = new ArrayList<>();
+    result.add(myHint);
+    result.addAll(myAdditionalHints);
+    return result;
+  }
+
+  @Transient
+  public void setHints(@NotNull final List<String> hints) {
+    if (hints.isEmpty()) {
+      myHint = "";
+      myAdditionalHints.clear();
+    }
+    else {
+      myHint = hints.get(0);
+      myAdditionalHints = hints.subList(1, hints.size());
+    }
+  }
+
+  public void setHintByIndex(int i, @NotNull final String text) {
+    if (i == 0) {
+      myHint = text;
+    }
+    else {
+      myAdditionalHints.set(i - 1, text);
+    }
+  }
+
+  public void addHint(@NotNull final String text) {
+    if (myHint.isEmpty() && myAdditionalHints.isEmpty()) {
+      myHint = text;
+    }
+    else {
+      myAdditionalHints.add(text);
+    }
+  }
+
+  public void removeHint(int i) {
+    if (i == 0) {
+      myHint = "";
+    }
+    else {
+      if (i - 1 <myAdditionalHints.size()) {
+        myAdditionalHints.remove(i - 1);
+      }
+      else {
+        LOG.warn("Trying to remove nonexistent hint. Hint to remove number: " + (i - 1) + "number of hints: " + getHints().size());
+      }
+    }
   }
 
   public static class MyInitialState {
-    public int myLine = -1;
-    public int myLength = -1;
-    public int myStart = -1;
+    private int length = -1;
+    private int offset = -1;
 
     public MyInitialState() {
     }
 
-    public MyInitialState(int line, int length, int start) {
-      myLine = line;
-      myLength = length;
-      myStart = start;
+    public MyInitialState(int initialOffset, int length) {
+      this.offset = initialOffset;
+      this.length = length;
     }
-  }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    public int getLength() {
+      return length;
+    }
 
-    AnswerPlaceholder that = (AnswerPlaceholder)o;
+    public void setLength(int length) {
+      this.length = length;
+    }
 
-    if (getLine() != that.getLine()) return false;
-    if (getStart() != that.getStart()) return false;
-    if (getLength() != that.getLength()) return false;
-    if (getIndex() != that.getIndex()) return false;
-    if (getHint() != null ? !getHint().equals(that.getHint()) : that.getHint() != null) return false;
-    if (getPossibleAnswer() != null ? !getPossibleAnswer().equals(that.getPossibleAnswer()) : that.getPossibleAnswer() != null)
-      return false;
-    if (myTaskText != null ? !myTaskText.equals(that.myTaskText) : that.myTaskText != null) return false;
+    public int getOffset() {
+      return offset;
+    }
 
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = getLine();
-    result = 31 * result + getStart();
-    result = 31 * result + (getHint() != null ? getHint().hashCode() : 0);
-    result = 31 * result + (getPossibleAnswer() != null ? getPossibleAnswer().hashCode() : 0);
-    result = 31 * result + getLength();
-    result = 31 * result + getIndex();
-    result = 31 * result + (myTaskText != null ? myTaskText.hashCode() : 0);
-    return result;
+    public void setOffset(int offset) {
+      this.offset = offset;
+    }
   }
 }

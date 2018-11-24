@@ -79,5 +79,8 @@ public class PyChangeSignatureQuickFix implements LocalQuickFix {
     dialog.show();
   }
 
-
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }

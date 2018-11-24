@@ -19,6 +19,7 @@ package com.intellij.ide.bookmarks;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,10 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -63,6 +61,7 @@ import java.util.List;
 )
 public class BookmarkManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
+  private static final Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
   private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks =
@@ -104,6 +103,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
             UIUtil.invokeLaterIfNeeded(() -> {
               if (myProject.isDisposed()) return;
               bookmark.createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
+              map(document, bookmark);
             });
           }
         }
@@ -123,6 +123,25 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         }
       }
     }, project);
+  }
+
+  private static void map(Document document, Bookmark bookmark) {
+    if (document == null || bookmark == null) return;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
+    if (list == null) {
+      document.putUserData(BOOKMARKS_KEY, list = new ArrayList<Bookmark>());
+    }
+    list.add(bookmark);
+  }
+
+  private static void unmap(Document document, Bookmark bookmark) {
+    if (document == null || bookmark == null) return;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
+    if (list != null && list.remove(bookmark) && list.isEmpty()) {
+      document.putUserData(BOOKMARKS_KEY, null);
+    }
   }
 
   public void editDescription(@NotNull Bookmark bookmark) {
@@ -166,6 +185,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull String description) {
     Bookmark b = new Bookmark(myProject, file, lineIndex, description);
     myBookmarks.add(0, b);
+    map(b.getDocument(), b);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
     return b;
   }
@@ -211,9 +231,12 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   @Nullable
   public Bookmark findEditorBookmark(@NotNull Document document, int line) {
-    for (Bookmark bookmark : myBookmarks) {
-      if (bookmark.getDocument() == document && bookmark.getLine() == line) {
-        return bookmark;
+    List<Bookmark> bookmarks = document.getUserData(BOOKMARKS_KEY);
+    if (bookmarks != null) {
+      for (Bookmark bookmark : bookmarks) {
+        if (bookmark.getLine() == line) {
+          return bookmark;
+        }
       }
     }
 
@@ -248,6 +271,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   public void removeBookmark(@NotNull Bookmark bookmark) {
     if (myBookmarks.remove(bookmark)) {
+      unmap(bookmark.getDocument(), bookmark);
       bookmark.release();
       myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkRemoved(bookmark);
     }
@@ -269,6 +293,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         for (Bookmark bookmark : myBookmarks) {
           bookmark.release();
           publisher.bookmarkRemoved(bookmark);
+          unmap(bookmark.getDocument(), bookmark);
         }
         myBookmarks.clear();
 
@@ -379,44 +404,17 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   @Nullable
-  public Bookmark getNextBookmark(@NotNull Editor editor, boolean isWrapped) {
-    Bookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
-    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+  public Bookmark findLineBookmark(@NotNull Editor editor, boolean isWrapped, boolean next) {
+    List<Bookmark> bookmarksForDocument = editor.getDocument().getUserData(BOOKMARKS_KEY);
+    if (bookmarksForDocument == null) return null;
+    int sign = next ? 1 : -1;
+    Collections.sort(bookmarksForDocument, (o1, o2) -> sign * (o1.getLine() - o2.getLine()));
+    int caretLine = editor.getCaretModel().getLogicalPosition().line;
     for (Bookmark bookmark : bookmarksForDocument) {
-      if (bookmark.getLine() > lineNumber) return bookmark;
+      if (next && bookmark.getLine() > caretLine) return bookmark;
+      if (!next && bookmark.getLine() < caretLine) return bookmark;
     }
-    if (isWrapped && bookmarksForDocument.length > 0) {
-      return bookmarksForDocument[0];
-    }
-    return null;
-  }
-
-  @Nullable
-  public Bookmark getPreviousBookmark(@NotNull Editor editor, boolean isWrapped) {
-    Bookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
-    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-    for (int i = bookmarksForDocument.length - 1; i >= 0; i--) {
-      Bookmark bookmark = bookmarksForDocument[i];
-      if (bookmark.getLine() < lineNumber) return bookmark;
-    }
-    if (isWrapped && bookmarksForDocument.length > 0) {
-      return bookmarksForDocument[bookmarksForDocument.length - 1];
-    }
-    return null;
-  }
-
-  @NotNull
-  private Bookmark[] getBookmarksForDocument(@NotNull Document document) {
-    ArrayList<Bookmark> answer = new ArrayList<Bookmark>();
-    for (Bookmark bookmark : getValidBookmarks()) {
-      if (document.equals(bookmark.getDocument())) {
-        answer.add(bookmark);
-      }
-    }
-
-    Bookmark[] bookmarks = answer.toArray(new Bookmark[answer.size()]);
-    Arrays.sort(bookmarks, (o1, o2) -> o1.getLine() - o2.getLine());
-    return bookmarks;
+    return isWrapped && !bookmarksForDocument.isEmpty() ? bookmarksForDocument.get(0) : null;
   }
 
   public void setMnemonic(@NotNull Bookmark bookmark, char c) {

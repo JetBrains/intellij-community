@@ -27,7 +27,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.python.PythonDebuggerTest;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -36,6 +35,7 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -50,19 +50,16 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
   private boolean myMultiprocessDebug = false;
   private PythonRunConfiguration myRunConfiguration;
 
-  public PyDebuggerTask() {
-    init();
-  }
 
-  public PyDebuggerTask(String workingFolder, String scriptName, String scriptParameters) {
-    setWorkingFolder(getTestDataPath() + workingFolder);
+  public PyDebuggerTask(@Nullable final String relativeTestDataPath, String scriptName, String scriptParameters) {
+    super(relativeTestDataPath);
     setScriptName(scriptName);
     setScriptParameters(scriptParameters);
     init();
   }
 
-  public PyDebuggerTask(String workingFolder, String scriptName) {
-    this(workingFolder, scriptName, null);
+  public PyDebuggerTask(@Nullable final String relativeTestDataPath, String scriptName) {
+    this(relativeTestDataPath, scriptName, null);
   }
 
   protected void init() {
@@ -81,8 +78,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myRunConfiguration = (PythonRunConfiguration)settings.getConfiguration();
 
     myRunConfiguration.setSdkHome(sdkHome);
-    myRunConfiguration.setScriptName(getScriptPath());
-    myRunConfiguration.setWorkingDirectory(getWorkingFolder());
+    myRunConfiguration.setScriptName(getScriptName());
+    myRunConfiguration.setWorkingDirectory(myFixture.getTempDirPath());
     myRunConfiguration.setScriptParameters(getScriptParameters());
 
     new WriteAction() {

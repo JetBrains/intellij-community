@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.XmlAttributeInsertHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
@@ -34,7 +35,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {
     if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
       if (XmlGtTypedHandler.fileContainsXmlLanguage(file)) {
-        TypedHandler.commitDocumentIfCurrentCaretIsNotTheFirstOne(editor, project);
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         
         PsiElement at = file.findElementAt(editor.getCaretModel().getOffset() - 1);
         PsiElement atParent = at != null ? at.getParent() : null;

@@ -133,7 +133,7 @@ public abstract class AstPath extends SubstrateRef {
       CompositeElement parentNode = myParent.getNode();
       parentNode.getFirstChildNode(); // expand chameleons, populate PATH_CHILDREN array
       CompositeElement[] children = parentNode.getUserData(PATH_CHILDREN);
-      assert children != null;
+      assert children != null : parentNode + " of " + parentNode.getClass();
       return children[myIndex];
     }
 
@@ -173,7 +173,10 @@ public abstract class AstPath extends SubstrateRef {
     public CompositeElement getNode() {
       CompositeElement node = SoftReference.dereference(myNode);
       if (node == null) {
-        myNode = new WeakReference<CompositeElement>(node = super.getNode());
+        node = super.getNode();
+        if (myFile.mayCacheAst()) {
+          myNode = new WeakReference<CompositeElement>(node);
+        }
       }
       return node;
     }

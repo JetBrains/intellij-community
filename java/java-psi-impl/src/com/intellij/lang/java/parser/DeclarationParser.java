@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.WhitespacesBinders;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -25,6 +24,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.Function;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -897,7 +897,19 @@ public class DeclarationParser {
   }
 
   @NotNull
-  public PsiBuilder.Marker parseAnnotationValue(final PsiBuilder builder) {
+  public PsiBuilder.Marker parseAnnotationValue(PsiBuilder builder) {
+    PsiBuilder.Marker result = doParseAnnotationValue(builder);
+
+    if (result == null) {
+      result = builder.mark();
+      result.error(JavaErrorMessages.message("expected.value"));
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private PsiBuilder.Marker doParseAnnotationValue(PsiBuilder builder) {
     PsiBuilder.Marker result;
 
     final IElementType tokenType = builder.getTokenType();
@@ -911,48 +923,16 @@ public class DeclarationParser {
       result = myParser.getExpressionParser().parseConditional(builder);
     }
 
-    if (result == null) {
-      result = builder.mark();
-      result.error(JavaErrorMessages.message("expected.value"));
-    }
-
     return result;
   }
 
   @NotNull
-  private PsiBuilder.Marker parseAnnotationArrayInitializer(final PsiBuilder builder) {
-    assert builder.getTokenType() == JavaTokenType.LBRACE : builder.getTokenType();
-    final PsiBuilder.Marker annoArray = builder.mark();
-    builder.advanceLexer();
-
-    if (expect(builder, JavaTokenType.RBRACE)) {
-      done(annoArray, JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
-      return annoArray;
-    }
-
-    parseAnnotationValue(builder);
-
-    boolean unclosed = false;
-    while (true) {
-      if (expect(builder, JavaTokenType.RBRACE)) {
-        break;
+  private PsiBuilder.Marker parseAnnotationArrayInitializer(PsiBuilder builder) {
+    return myParser.getExpressionParser().parseArrayInitializer(builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, new Function<PsiBuilder, Boolean>() {
+      @Override
+      public Boolean fun(PsiBuilder builder) {
+        return doParseAnnotationValue(builder) != null;
       }
-      else if (expect(builder, JavaTokenType.COMMA)) {
-        if (builder.getTokenType() != JavaTokenType.RBRACE) {
-          parseAnnotationValue(builder);
-        }
-      }
-      else {
-        error(builder, JavaErrorMessages.message("expected.rbrace"));
-        unclosed = true;
-        break;
-      }
-    }
-
-    done(annoArray, JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
-    if (unclosed) {
-      annoArray.setCustomEdgeTokenBinders(null, WhitespacesBinders.GREEDY_RIGHT_BINDER);
-    }
-    return annoArray;
+    }, "expected.value");
   }
 }

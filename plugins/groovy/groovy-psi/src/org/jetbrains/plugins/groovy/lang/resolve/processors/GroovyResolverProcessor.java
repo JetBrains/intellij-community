@@ -171,7 +171,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       if (kind == GroovyResolveKind.METHOD || kind == GroovyResolveKind.PROPERTY) {
         final PsiMethod method = (PsiMethod)namedElement;
         final boolean isApplicable = kind == GroovyResolveKind.PROPERTY && !myIsLValue
-                                     || isApplicable(myArgumentTypes, method, null, myRef, true);
+                                     || isApplicable(myArgumentTypes, method, substitutor, myRef, true);
 
         final NotNullComputable<PsiSubstitutor> substitutorComputer;
         if (kind == GroovyResolveKind.METHOD) {
@@ -300,6 +300,9 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       if (element instanceof PsiMethod) {
         return GroovyResolveKind.METHOD;
       }
+      else if (element instanceof PsiEnumConstant) {
+        return GroovyResolveKind.ENUM_CONST;
+      }
       else if (element instanceof PsiField) {
         return GroovyResolveKind.FIELD;
       }
@@ -317,6 +320,9 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
         }
         if (element instanceof PsiMethod) {
           return GroovyResolveKind.METHOD;
+        }
+        else if (element instanceof PsiEnumConstant) {
+          return GroovyResolveKind.ENUM_CONST;
         }
         else if (element instanceof PsiField) {
           return GroovyResolveKind.FIELD;

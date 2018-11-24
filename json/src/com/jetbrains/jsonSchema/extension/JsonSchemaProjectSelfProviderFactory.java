@@ -44,6 +44,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
   private static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
     public static final Pair<SchemaType, Object> KEY = Pair.create(SchemaType.schema, SchemaType.schema);
+    private final VirtualFile mySchemaFile = JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/schema.json");
 
     @Override
     public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
@@ -59,7 +60,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
     @Override
     public VirtualFile getSchemaFile() {
-      return JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/schema.json");
+      return mySchemaFile;
     }
 
     @Override

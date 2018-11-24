@@ -74,7 +74,9 @@ public class ChangesUtil {
 
   @Nullable
   public static AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
-    return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
+    AbstractVcs result = ChangeListManager.getInstance(project).getVcsFor(change);
+
+    return result != null ? result : ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
   }
 
   @NotNull
@@ -293,20 +295,21 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static VirtualFile findValidParentAccurately(final FilePath filePath) {
-    if (filePath.getVirtualFile() != null) return filePath.getVirtualFile();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile result = lfs.findFileByIoFile(filePath.getIOFile());
-    if (result != null) return result;
-    if (! ApplicationManager.getApplication().isReadAccessAllowed()) {
-      result = lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
-      if (result != null) return result;
+  public static VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
+    VirtualFile result = filePath.getVirtualFile();
+
+    if (result == null && !ApplicationManager.getApplication().isReadAccessAllowed()) {
+      result = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
     }
-    return getValidParentUnderReadAction(filePath);
+    if (result == null) {
+      result = getValidParentUnderReadAction(filePath);
+    }
+
+    return result;
   }
 
   @Nullable
-  private static VirtualFile getValidParentUnderReadAction(final FilePath filePath) {
+  private static VirtualFile getValidParentUnderReadAction(@NotNull final FilePath filePath) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
@@ -320,24 +323,19 @@ public class ChangesUtil {
    */
   @Nullable
   @Deprecated
-  public static VirtualFile findValidParent(FilePath file) {
+  public static VirtualFile findValidParent(@NotNull FilePath file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    VirtualFile parent = file.getVirtualFile();
-    if (parent == null) {
-      parent = file.getVirtualFileParent();
+
+    VirtualFile result = null;
+    FilePath parent = file;
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+
+    while (result == null && parent != null) {
+      result = lfs.findFileByPath(parent.getPath());
+      parent = parent.getParentPath();
     }
-    if (parent == null) {
-      File ioFile = file.getIOFile();
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      do {
-        parent = lfs.findFileByIoFile(ioFile);
-        if (parent != null) break;
-        ioFile = ioFile.getParentFile();
-        if (ioFile == null) return null;
-      }
-      while (true);
-    }
-    return parent;
+
+    return result;
   }
 
   @Nullable

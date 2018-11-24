@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -834,6 +834,30 @@ public class PyTypeTest extends PyTestCase {
            "expr = (1, False) * 2");
   }
 
+
+  public void testTupleDestructuring() {
+    doTest("str",
+           "_, expr = (1, 'val') ");
+  }
+
+  public void testParensTupleDestructuring() {
+    doTest("str",
+           "(_, expr) = (1, 'val') ");
+  }
+
+  // PY-19825
+  public void testSubTupleDestructuring() {
+    doTest("str",
+           "(a, (_, expr)) = (1, (2,'val')) ");
+  }
+
+  // PY-19825
+  public void testSubTupleIndirectDestructuring() {
+    doTest("str",
+           "xs = (2,'val')\n" +
+           "(a, (_, expr)) = (1, xs) ");
+  }
+
   public void testConstructorUnification() {
     doTest("C[int]",
            "class C(object):\n" +
@@ -1063,6 +1087,20 @@ public class PyTypeTest extends PyTestCase {
                     "from module import func\n" +
                     "\n" +
                     "expr = func()");
+  }
+
+  // PY-19967
+  public void testInheritedNamedTupleReplace() {
+    PyExpression expr = parseExpr("from collections import namedtuple\n" +
+                                  "class MyClass(namedtuple('T', 'a b c')):\n" +
+                                  "    def get_foo(self):\n" +
+                                  "        return self.a\n" +
+                                  "\n" +
+                                  "inst = MyClass(1,2,3)\n" +
+                                  "expr = inst._replace(a=2)\n");
+    doTest("MyClass",
+           expr,
+           TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

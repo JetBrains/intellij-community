@@ -57,7 +57,7 @@ public class IDE {
 
   private static void print(Writer writer, Object o) {
     try {
-      writer.append(String.valueOf(o));
+      writer.append(String.valueOf(o)).append("\n");
     }
     catch (IOException e) {
       throw new RuntimeException(e);

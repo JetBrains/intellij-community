@@ -26,8 +26,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationCo
 @CompileStatic
 class MiscBuilderTransformationTest extends LightGroovyTestCase {
 
-  final String basePath = null
-
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   void 'test resolve inner class from java'() {

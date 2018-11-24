@@ -126,7 +126,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       setJMenuBar(new IdeMenuBar(actionManager, dataManager));
     }
 
-    myGlassPane = new IdeGlassPaneImpl(this);
+    myGlassPane = new IdeGlassPaneImpl(this, true);
     setGlassPane(myGlassPane);
     myGlassPaneInitialized = true;
 
@@ -162,6 +162,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         Disposer.dispose(myStatusBar);
       }
       removeToolbar();
+      setJMenuBar(null);
     }
     super.removeNotify();
   }

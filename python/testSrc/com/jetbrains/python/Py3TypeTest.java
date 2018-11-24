@@ -52,6 +52,38 @@ public class Py3TypeTest extends PyTestCase {
            "    pass\n"));
   }
 
+  // PY-12944
+  public void testYieldFromReturnType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest("None",
+           "def a():\n" +
+           "    yield 1\n" +
+           "    return 'a'\n" +
+           "\n" +
+           "y = [1, 2, 3]\n" +
+           "\n" +
+           "def b():\n" +
+           "    expr = yield from y\n" +
+           "    return expr\n"));
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest("str",
+           "def a():\n" +
+           "    yield 1\n" +
+           "    return 'a'\n" +
+           "\n" +
+           "def b():\n" +
+           "    expr = yield from a()\n" +
+           "    return expr\n"));
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest("int",
+           "def g():\n" +
+           "    yield 1\n" +
+           "    return 'abc'\n" +
+           "\n" +
+           "def f()\n" +
+           "    x = yield from g()\n" +
+           "\n" +
+           "for expr in f():\n" +
+           "    pass"));
+  }
+
   public void testAwaitAwaitable() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
            "class C:\n" +

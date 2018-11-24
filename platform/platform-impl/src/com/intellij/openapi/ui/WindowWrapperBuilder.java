@@ -331,8 +331,8 @@ public class WindowWrapperBuilder {
 
       @Override
       public void dispose() {
-        super.dispose();
         myPreferredFocusedComponent = null;
+        super.dispose();
       }
 
       @Override

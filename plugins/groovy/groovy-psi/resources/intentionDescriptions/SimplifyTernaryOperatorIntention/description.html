@@ -15,11 +15,10 @@
   -->
 <html>
 <body>
-<span style="font-family: verdana,serif; font-size: smaller;">
-This intention simplifies a conditional operator <b><font color="#000080">?:</font></b> when one of the branches is a constant true or false.
+This intention simplifies a conditional operator <b><font color="#000080">?:</font></b> when one of the branches is a constant true or
+false.
 <br>
-  So <code>a ? b : false</code> gets turned into <code>a && b</code> and <code>a ? true : b</code> gets turned into <code>a || b</code>.<br>
-  While you would normally not write such code, you may end up with it as a result of other refactorings.
-</span>
+So <code>a ? b : false</code> gets turned into <code>a && b</code> and <code>a ? true : b</code> gets turned into <code>a || b</code> . <br>
+While you would normally not write such code, you may end up with it as a result of other refactorings.
 </body>
 </html>

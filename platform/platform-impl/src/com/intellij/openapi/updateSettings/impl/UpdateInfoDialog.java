@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -32,16 +33,20 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author pti
@@ -53,6 +58,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final BuildInfo myNewBuild;
   private final PatchInfo myPatch;
   private final boolean myWriteProtected;
+  private final Pair<String, Color> myLicenseInfo;
 
   UpdateInfoDialog(@NotNull UpdateChannel channel,
                    @NotNull BuildInfo newBuild,
@@ -69,7 +75,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myPatch = patch;
     myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
-    initLicensingInfo(myUpdatedChannel, myNewBuild);
+    myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
@@ -78,22 +84,32 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
   }
 
-  private void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
+  private static Pair<String, Color> initLicensingInfo(UpdateChannel channel, BuildInfo build) {
     LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade != null) {
-      if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
-      }
-      else {
-        Date buildDate = build.getReleaseDate();
-        Date expiration = facade.getLicenseExpirationDate();
-        if (buildDate != null && facade.isPerpetualForProduct(buildDate)) {
-          myLicenseInfo = IdeBundle.message("updates.fallback.build");
-        }
-        else if (expiration != null && expiration.after(new Date())) {
-          myLicenseInfo = IdeBundle.message("updates.subscription.active.till", DateFormatUtil.formatAboutDialogDate(expiration));
-        }
-      }
+    if (facade == null) return null;
+
+    if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
+      return pair(IdeBundle.message("updates.channel.bundled.key"), null);
+    }
+
+    Date releaseDate = build.getReleaseDate();
+    Boolean applicable = releaseDate == null ? null : facade.isApplicableForProduct(releaseDate);
+    if (applicable == null) {
+      return null;
+    }
+    if (applicable == Boolean.FALSE) {
+      return pair(IdeBundle.message("updates.paid.upgrade", channel.getEvalDays()), JBColor.RED);
+    }
+    if (facade.isPerpetualForProduct(releaseDate) == Boolean.TRUE) {
+      return pair(IdeBundle.message("updates.fallback.build"), null);
+    }
+
+    Date expiration = facade.getLicenseExpirationDate();
+    if (expiration != null) {
+      return pair(IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration)), null);
+    }
+    else {
+      return null;
     }
   }
 
@@ -168,7 +184,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       restart();
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(UpdateChecker.class).warn(e);
       if (Messages.showOkCancelDialog(IdeBundle.message("update.downloading.patch.error", e.getMessage()),
                                       IdeBundle.message("updates.error.connection.title"),
@@ -182,7 +198,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private void openDownloadPage() {
     String url = myUpdatedChannel.getHomePageUrl();
     assert url != null : "channel: " + myUpdatedChannel.getId();
-    BrowserUtil.browse(url);
+    BrowserUtil.browse(augmentUrl(url));
   }
 
   private static class ButtonAction extends AbstractAction {
@@ -195,7 +211,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      BrowserUtil.browse(myUrl);
+      BrowserUtil.browse(augmentUrl(myUrl));
     }
   }
 
@@ -223,7 +239,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         final int idx = message.indexOf(fullProductName);
         if (idx >= 0) {
           message = message.substring(0, idx) +
-                    "<a href=\'" + homePageUrl + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
+                    "<a href=\'" + augmentUrl(homePageUrl) + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
         }
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
@@ -253,12 +269,22 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
 
       if (myLicenseInfo != null) {
-        configureMessageArea(myLicenseArea, myLicenseInfo, null, null);
+        configureMessageArea(myLicenseArea, myLicenseInfo.first, myLicenseInfo.second, null);
       }
     }
   }
 
   protected static String formatVersion(String versionString, String build) {
     return IdeBundle.message("updates.version.info", versionString, build);
+  }
+
+  private static String augmentUrl(String url) {
+    try {
+      return new URIBuilder(url).addParameter("fromIDE", "").build().toString();
+    }
+    catch (URISyntaxException e) {
+      Logger.getInstance(UpdateInfoDialog.class).warn(url, e);
+      return url;
+    }
   }
 }

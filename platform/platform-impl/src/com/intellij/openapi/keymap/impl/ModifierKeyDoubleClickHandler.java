@@ -248,6 +248,7 @@ public class ModifierKeyDoubleClickHandler extends ApplicationComponent.Adapter 
       myIsRunningAction = true;
       try {
         AnAction action = myActionManagerEx.getAction(myActionId);
+        if (action == null) return false;
         DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
         AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.MAIN_MENU, context);
         action.update(anActionEvent);

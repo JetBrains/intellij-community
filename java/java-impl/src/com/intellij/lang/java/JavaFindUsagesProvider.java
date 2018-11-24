@@ -22,6 +22,7 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
@@ -151,7 +152,8 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {
-        return LangBundle.message("java.terms.anonymous.class");
+        String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
+        return "anonymous " + StringUtil.notNullize(name, "class");
       }
       else {
         final PsiClass aClass = (PsiClass)element;

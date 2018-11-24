@@ -92,7 +92,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
     return false;
   }
 
-  private static void applyFix(@NotNull final Project project, final PsiElement tag) {
+  private static void applyFix(@NotNull final Project project, final @NotNull PsiElement tag) {
     if (!FileModificationService.getInstance().prepareFileForWrite(tag.getContainingFile())) {
       return;
     }

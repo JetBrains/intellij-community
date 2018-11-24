@@ -27,7 +27,7 @@ import java.util.List;
 
 public class StudyConfigurable extends CompositeConfigurable<StudyOptionsProvider> {
   public static final String ID = "com.jetbrains.edu.learning.stepic.EduConfigurable";
-  private JPanel myMainPanel;
+  private final JPanel myMainPanel;
 
   public StudyConfigurable() {
     myMainPanel = new JPanel(new VerticalFlowLayout());
@@ -57,11 +57,6 @@ public class StudyConfigurable extends CompositeConfigurable<StudyOptionsProvide
       }
     }
     return myMainPanel;
-  }
-
-  @Override
-  public void disposeUIResources() {
-    super.disposeUIResources();
   }
 
   @Override

@@ -26,9 +26,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 public class PyDocTestProcessRunner extends PyScriptTestProcessRunner<PythonDocTestRunConfiguration> {
-  public PyDocTestProcessRunner(@NotNull final String workingFolder,
-                                @NotNull final String scriptName, final int timesToRerunFailedTests) {
+  public PyDocTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY,
-          PythonDocTestRunConfiguration.class, workingFolder, scriptName, timesToRerunFailedTests);
+          PythonDocTestRunConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 }

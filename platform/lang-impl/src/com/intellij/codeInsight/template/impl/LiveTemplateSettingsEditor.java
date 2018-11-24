@@ -41,7 +41,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.GridBag;
@@ -150,7 +149,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
-    
+
     JPanel editorPanel = new JPanel(new BorderLayout(4, 4));
     editorPanel.setPreferredSize(JBUI.size(250, 100));
     editorPanel.setMinimumSize(editorPanel.getPreferredSize());
@@ -260,11 +259,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
         else {
           myTemplate.setShortcutChar(TemplateSettings.SPACE_CHAR);
         }
-        
       }
     });
     expandWithLabel.setLabelFor(myExpandByCombo);
-    
+
     panel.add(myExpandByCombo, gbConstraints);
     gbConstraints.weightx = 1;
     gbConstraints.gridx = 2;
@@ -287,7 +285,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.weighty = 1;
     gbConstraints.gridy++;
-    panel.add(new JPanel(), gbConstraints);          
+    panel.add(new JPanel(), gbConstraints);
 
     return panel;
   }
@@ -295,7 +293,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private List<TemplateContextType> getApplicableContexts() {
     ArrayList<TemplateContextType> result = new ArrayList<TemplateContextType>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-      if (myContext.isExplicitlyEnabled(type)) {
+      if (myContext.isEnabled(type)) {
         result.add(type);
       }
     }
@@ -449,14 +447,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
     parent.add(node);
 
     if (children.isEmpty()) {
-      node.setChecked(context.isExplicitlyEnabled(type));
+      node.setChecked(context.isEnabled(type));
     }
     else {
       for (TemplateContextType child : children) {
         addContextNode(hierarchy, node, child, context);
       }
       final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
-      other.setChecked(context.isExplicitlyEnabled(type));
+      other.setChecked(context.isEnabled(type));
       node.add(other);
     }
   }

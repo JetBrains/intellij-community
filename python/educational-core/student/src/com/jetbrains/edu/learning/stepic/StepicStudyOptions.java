@@ -15,13 +15,20 @@
  */
 package com.jetbrains.edu.learning.stepic;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBCheckBox;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -31,9 +38,11 @@ import java.awt.event.FocusListener;
 
 public class StepicStudyOptions implements StudyOptionsProvider {
   private static final String DEFAULT_PASSWORD_TEXT = "************";
+  private static final Logger LOG = Logger.getInstance(StepicStudyOptions.class);
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JPanel myPane;
+  private JBCheckBox myEnableTestingFromSamples;
 
   private boolean myCredentialsModified;
 
@@ -67,6 +76,13 @@ public class StepicStudyOptions implements StudyOptionsProvider {
       public void focusLost(FocusEvent e) {
       }
     });
+
+    myEnableTestingFromSamples.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        myCredentialsModified = true;
+      }
+    });
     reset();
   }
 
@@ -91,20 +107,28 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @NotNull
   private String getPassword() {
-    return String.valueOf(myPasswordField.getPassword());
+    final String passwordText = String.valueOf(myPasswordField.getPassword());
+    return passwordText.equals(DEFAULT_PASSWORD_TEXT) ? "" : passwordText;
   }
 
   private void setPassword(@NotNull final String password) {
     myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
   }
 
-  
+  @Override
   public void reset() {
-    final StudySettings studySettings = StudySettings.getInstance();
-    setLogin(studySettings.getLogin());
-    setPassword(DEFAULT_PASSWORD_TEXT);
-
-    resetCredentialsModification();
+    Project project = StudyUtils.getStudyProject();
+    if (project != null) {
+      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+      final StepicUser user = taskManager.getUser();
+      setLogin(user.getEmail());
+      setPassword(DEFAULT_PASSWORD_TEXT);
+      myEnableTestingFromSamples.setSelected(taskManager.isEnableTestingFromSamples());
+      resetCredentialsModification();
+    }
+    else {
+      LOG.warn("No study object is opened");
+    }
   }
 
   @Override
@@ -112,13 +136,26 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   }
 
+  @Override
   public void apply() {
     if (myCredentialsModified) {
-      final StudySettings studySettings = StudySettings.getInstance();
-      studySettings.setLogin(getLogin());
-      studySettings.setPassword(getPassword());
-      if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
-        EduStepicConnector.login(getLogin(), getPassword());
+      final Project project = StudyUtils.getStudyProject();
+      if (project != null) {
+        StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+        taskManager.setEnableTestingFromSamples(myEnableTestingFromSamples.isSelected());
+        final String login = getLogin();
+        final String password = getPassword();
+        if (!StringUtil.isEmptyOrSpaces(login) && !StringUtil.isEmptyOrSpaces(password)) {
+          final StepicUser user = taskManager.getUser();
+          user.setEmail(login);
+          user.setPassword(password);
+          
+          // login to post credentials
+          EduStepicConnector.login(login, password);
+        }
+      }
+      else {
+        LOG.warn("No study object is opened");
       }
     }
     resetCredentialsModification();

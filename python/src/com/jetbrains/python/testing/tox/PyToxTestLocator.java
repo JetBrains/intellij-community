@@ -39,11 +39,12 @@ public final class PyToxTestLocator implements PythonTestLocator {
 
   private static final String DUMMY_FILE_PADDING = "#env";
   private static final Key<String> ENV_NAME_KEY = Key.create("ENV_NAME");
+  static final String PROTOCOL_ID = "tox_env";
 
   @NotNull
   @Override
   public String getProtocolId() {
-    return "tox_env";
+    return PROTOCOL_ID;
   }
 
   @NotNull

@@ -16,7 +16,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -367,7 +366,7 @@ public class PyCallExpressionHelper {
         PyClass resolvedParent = PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyClass.class);
         if (resolvedParent != null) {
           final PyClass qualifierClass = ((PyClassType)qualifierType).getPyClass();
-          if ((qualifierClass.isSubclass(resolvedParent, null) || resolvedParent.isSubclass(qualifierClass, null))) {
+          if ((qualifierClass.isSubclass(resolvedParent, context) || resolvedParent.isSubclass(qualifierClass, context))) {
             return true;
           }
         }

@@ -155,7 +155,7 @@ public class LocalVariablesUtil {
     MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot);
 
     // first add arguments
-    int slot = 0;
+    int slot = getFirstArgsSlot(method);
     List<String> typeNames = method.argumentTypeNames();
     List<Value> argValues = frameProxy.getArgumentValues();
     for (int i = 0; i < argValues.size(); i++) {
@@ -326,7 +326,7 @@ public class LocalVariablesUtil {
           PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
             MultiMap<Integer, String> res = new MultiMap<>();
-            int slot = Math.max(0, firstLocalsSlot - getFirstLocalsSlot(method));
+            int slot = Math.max(0, firstLocalsSlot - getParametersStackSize(method));
             for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
               res.putValue(slot, parameter.getName());
               slot += getTypeSlotSize(parameter.getType());
@@ -478,11 +478,8 @@ public class LocalVariablesUtil {
     }
   }
 
-  private static int getFirstLocalsSlot(PsiElement method) {
+  private static int getParametersStackSize(PsiElement method) {
     int startSlot = 0;
-    if (method instanceof PsiModifierListOwner) {
-      startSlot = ((PsiModifierListOwner)method).hasModifierProperty(PsiModifier.STATIC) ? 0 : 1;
-    }
     for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
       startSlot += getTypeSlotSize(parameter.getType());
     }
@@ -496,8 +493,12 @@ public class LocalVariablesUtil {
     return 1;
   }
 
+  private static int getFirstArgsSlot(com.sun.jdi.Method method) {
+    return method.isStatic() ? 0 : 1;
+  }
+
   private static int getFirstLocalsSlot(com.sun.jdi.Method method) {
-    int firstLocalVariableSlot = method.isStatic() ? 0 : 1;
+    int firstLocalVariableSlot = getFirstArgsSlot(method);
     for (String type : method.argumentTypeNames()) {
       firstLocalVariableSlot += getTypeSlotSize(type);
     }

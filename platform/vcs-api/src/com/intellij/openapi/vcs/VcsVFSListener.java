@@ -266,6 +266,10 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
+  protected boolean filterOutUnknownFiles() {
+    return true;
+  }
+
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
     final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
     LOG.debug("Checking moved file " + file + "; status=" + status);
@@ -292,7 +296,10 @@ public abstract class VcsVFSListener implements Disposable {
     final List<MovedFileInfo> movedFiles = new ArrayList<MovedFileInfo>(myMovedFiles);
     LOG.debug("executeMoveRename " + movedFiles);
     myMovedFiles.clear();
-    performMoveRename(movedFiles);
+    performMoveRename(ContainerUtil.filter(movedFiles, info -> {
+      FileStatus status = FileStatusManager.getInstance(myProject).getStatus(info.myFile);
+      return !(status == FileStatus.UNKNOWN && filterOutUnknownFiles()) && status != FileStatus.IGNORED;
+    }));
   }
 
   protected VcsDeleteType needConfirmDeletion(final VirtualFile file) {

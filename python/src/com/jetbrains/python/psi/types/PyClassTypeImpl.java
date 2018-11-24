@@ -195,8 +195,20 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     classMember = resolveClassMember(myClass, myIsDefinition, name, location);
+
+    if (PyNames.__CLASS__.equals(name)) {
+      return resolveDunderClass(context, classMember);
+    }
+
     if (classMember != null) {
       return ResolveResultList.to(classMember);
+    }
+
+    if (PyNames.DOC.equals(name)) {
+      return Optional
+        .ofNullable(PyBuiltinCache.getInstance(myClass).getObjectType())
+        .map(type -> type.resolveMember(name, location, direction, resolveContext))
+        .orElse(Collections.emptyList());
     }
 
     classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
@@ -291,6 +303,36 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
     return resultRef;
+  }
+
+  @Nullable
+  private List<? extends RatedResolveResult> resolveDunderClass(@NotNull TypeEvalContext context, @Nullable PsiElement classMember) {
+    final boolean newStyleClass = myClass.isNewStyleClass(context);
+
+    if (!myIsDefinition) {
+      if (newStyleClass && classMember != null) {
+        return ResolveResultList.to(classMember);
+      }
+
+      return ResolveResultList.to(
+        myClass.getAncestorClasses(context)
+        .stream()
+        .filter(cls -> !PyUtil.isObjectClass(cls))
+        .<PsiElement>map(cls -> cls.findClassAttribute(PyNames.__CLASS__, true, context))
+        .filter(target -> target != null)
+        .findFirst()
+        .orElse(myClass)
+      );
+    }
+
+    if (LanguageLevel.forElement(myClass).isOlderThan(LanguageLevel.PYTHON30) && !newStyleClass) {
+      return ResolveResultList.to(classMember);
+    }
+
+    return Optional
+      .ofNullable(PyBuiltinCache.getInstance(myClass).getTypeType())
+      .map(typeType -> ResolveResultList.to(typeType.getPyClass()))
+      .orElse(null);
   }
 
   @Nullable

@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -22,9 +23,13 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.Map;
 
 public class PyCCCommandLineState extends PythonCommandLineState {
   private final PyCCRunTestConfiguration myRunConfiguration;
@@ -46,6 +51,7 @@ public class PyCCCommandLineState extends PythonCommandLineState {
 
   @Override
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
+    commandLine.setWorkDirectory(myTaskDir.getPath());
     ParamsGroup group = commandLine.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert group != null;
 
@@ -54,22 +60,43 @@ public class PyCCCommandLineState extends PythonCommandLineState {
     assert course != null;
 
     group.addParameter(myRunConfiguration.getPathToTest());
-    group.addParameter(course.getCourseDirectory());
+    group.addParameter(new File(course.getCourseDirectory()).getPath());
 
-    group.addParameter(getFirstTaskFilePath());
+    String path = getFirstTaskFilePath();
+    if (path != null) {
+      group.addParameter(path);
+    }
   }
 
-  @NotNull
+  @Nullable
   private String getFirstTaskFilePath() {
-    String firstTaskFileName = StudyUtils.getFirst(myTask.getTaskFiles().keySet());
+    for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
+      String path = getTaskFilePath(entry.getKey());
+      if (!entry.getValue().getAnswerPlaceholders().isEmpty()) {
+        return path;
+      }
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+      if (virtualFile == null) {
+        continue;
+      }
+      if (TextEditorProvider.isTextFile(virtualFile)) {
+        return path;
+      }
+    }
+    return null;
+  }
+
+
+  private String getTaskFilePath(String name) {
+    String taskDirPath = FileUtil.toSystemDependentName(myTaskDir.getPath());
     return myTaskDir.findChild(EduNames.SRC) != null ?
-           FileUtil.join(myTaskDir.getPath(), EduNames.SRC, firstTaskFileName) :
-           FileUtil.join(myTaskDir.getPath(), firstTaskFileName);
+           FileUtil.join(taskDirPath, EduNames.SRC, name) :
+           FileUtil.join(taskDirPath, name);
   }
 
   @Override
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    CCUtils.createResources(myRunConfiguration.getProject(), myTask, myTaskDir);
+    CCUtils.updateResources(myRunConfiguration.getProject(), myTask, myTaskDir);
     ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.flushWindows(myTask, myTaskDir));
 
     return super.execute(executor, patchers);

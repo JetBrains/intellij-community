@@ -319,7 +319,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);
     if (builder != null) {
       final FormattingModel model = CoreFormatterUtil.buildModel(builder, containingFile, getSettings(), FormattingMode.REFORMAT);
-      FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), textRange, containingFile.getFileType());
+      FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), containingFile, textRange);
     }
 
     adjustLineIndent(containingFile, textRange);

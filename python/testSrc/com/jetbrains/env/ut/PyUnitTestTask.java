@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -88,14 +87,11 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   private StringBuilder myOutput;
   private boolean mySetUp = false;
 
-  public PyUnitTestTask() {
-  }
 
-  public PyUnitTestTask(String workingFolder, String scriptName, String scriptParameters) {
-    setWorkingFolder(getTestDataPath() + workingFolder);
+  protected PyUnitTestTask(@Nullable final String relativeTestDataPath, String scriptName, String scriptParameters) {
+    super(relativeTestDataPath);
     setScriptName(scriptName);
     setScriptParameters(scriptParameters);
-    deletePycFiles(new File(getTestDataPath() + workingFolder));
   }
 
   private static void deletePycFiles(@NotNull final File directory) {
@@ -116,6 +112,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
       PyUnitTestTask.super.setUp(testName);
       mySetUp = true;
     }
+    deletePycFiles(new File(myFixture.getTempDirPath()));
   }
 
   @NotNull
@@ -169,17 +166,17 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
 
     config.setSdkHome(sdkHome);
-    config.setScriptName(getScriptPath());
-    config.setWorkingDirectory(getWorkingFolder());
+    config.setScriptName(getScriptName());
+    config.setWorkingDirectory(myFixture.getTempDirPath());
 
     PythonSdkFlavor sdk = PythonSdkFlavor.getFlavor(sdkHome);
 
 
     if (sdk instanceof JythonSdkFlavor) {
-      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.<String>newArrayList(getWorkingFolder())));
+      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.<String>newArrayList(myFixture.getTempDirPath())));
     }
     else {
-      PythonEnvUtil.addToPythonPath(config.getEnvs(), getWorkingFolder());
+      PythonEnvUtil.addToPythonPath(config.getEnvs(), myFixture.getTempDirPath());
     }
 
 

@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.io.BaseOutputReader;
@@ -46,16 +45,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     this(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
     myHasErrorStream = !commandLine.isRedirectErrorStream();
-    setHasPty(commandLine instanceof PtyCommandLine);
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
-    if (myHasPty && SystemInfo.isWindows) { // explicitly destroy pty on process termination, see IDEA-156065
-      addProcessListener(new ProcessAdapter() {
-        @Override
-        public void processTerminated(ProcessEvent event) {
-          getProcess().destroy();
-        }
-      });
-    }
   }
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other ctor (to be removed in IDEA 17) */
@@ -76,6 +66,20 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
+    setHasPty(isPtyProcess(process));
+  }
+
+  private static boolean isPtyProcess(Process process) {
+    Class c = process.getClass();
+    
+    while (c != null) {
+      if ("com.pty4j.unix.UnixPtyProcess".equals(c.getName()) || "com.pty4j.windows.WinPtyProcess".equals(c.getName())) {
+        return true;
+      }
+      c = c.getSuperclass();
+    }
+    
+    return false;
   }
 
   @NotNull

@@ -113,7 +113,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @NotNull
   private String getRequirementsPath() {
     final String path = PyPackageRequirementsSettings.getInstance(myModule).getRequirementsPath();
-    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && PyPackageUtil.findRequirementsTxt(myModule) == null) {
+    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && !PyPackageUtil.hasRequirementsTxt(myModule)) {
       return "";
     }
     else {
@@ -169,7 +169,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           @Override
           public void finished(List<ExecutionException> exceptions) {
             if (exceptions.isEmpty()) {
-              VFSTestFrameworkListener.getInstance().testInstalled(true, sdk.getHomePath(), name);
+              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(), name);
               facetErrorPanel.getValidatorsManager().validate();
             }
           }

@@ -810,6 +810,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
          if (myTextLabel != null) {
            myTextLabel.setText(getActionText(((AnAction)value)));
            myTextLabel.setIcon(((AnAction)value).getTemplatePresentation().getIcon());
+           myTextLabel.setBackground(isSelected ? UIUtil.getListBackground(true) : getProjectsBackground());
          }
        }
      }

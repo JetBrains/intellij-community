@@ -236,13 +236,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-      resourcesDirectorySet.outputDir = chooseNotNull(sourceSet.output.resourcesDir, sourceSet.output.classesDir, project.buildDir)
+      resourcesDirectorySet.gradleOutputDir = chooseNotNull(sourceSet.output.resourcesDir, sourceSet.output.classesDir, project.buildDir)
       resourcesDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      javaDirectorySet.outputDir = chooseNotNull(sourceSet.output.classesDir, project.buildDir);
+      javaDirectorySet.gradleOutputDir = chooseNotNull(sourceSet.output.classesDir, project.buildDir);
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
@@ -260,7 +260,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           generatedDirectorySet = new DefaultExternalSourceDirectorySet()
           generatedDirectorySet.name = "generated " + javaDirectorySet.name
           generatedDirectorySet.srcDirs = files
-          generatedDirectorySet.outputDir = javaDirectorySet.outputDir
+          generatedDirectorySet.gradleOutputDir = javaDirectorySet.outputDir
           generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
         }
         additionalIdeaGenDirs.removeAll(files)
@@ -299,7 +299,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             def testDirectorySet = new DefaultExternalSourceDirectorySet()
             testDirectorySet.name = javaDirectorySet.name
             testDirectorySet.srcDirs = testDirs
-            testDirectorySet.outputDir = javaDirectorySet.outputDir
+            testDirectorySet.gradleOutputDir = javaDirectorySet.outputDir
             testDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
             sources.put(ExternalSystemSourceType.TEST, testDirectorySet)
           }
@@ -311,7 +311,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             def testResourcesDirectorySet = new DefaultExternalSourceDirectorySet()
             testResourcesDirectorySet.name = resourcesDirectorySet.name
             testResourcesDirectorySet.srcDirs = testResourcesDirs
-            testResourcesDirectorySet.outputDir = resourcesDirectorySet.outputDir
+            testResourcesDirectorySet.gradleOutputDir = resourcesDirectorySet.outputDir
             testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
             sources.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet)
           }
@@ -327,7 +327,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
               def testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet()
               testGeneratedDirectorySet.name = generatedDirectorySet.name
               testGeneratedDirectorySet.srcDirs = testGeneratedDirs
-              testGeneratedDirectorySet.outputDir = generatedDirectorySet.outputDir
+              testGeneratedDirectorySet.gradleOutputDir = generatedDirectorySet.outputDir
               testGeneratedDirectorySet.inheritedCompilerOutput = generatedDirectorySet.isCompilerOutputPathInherited()
 
               sources.put(ExternalSystemSourceType.TEST_GENERATED, testGeneratedDirectorySet)
@@ -371,7 +371,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
             generatedDirectorySet.name = "generated " + mainSourceSet.name
             generatedDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
-            generatedDirectorySet.outputDir = mainSourceDirectorySet.outputDir
+            generatedDirectorySet.gradleOutputDir = mainSourceDirectorySet.outputDir
             generatedDirectorySet.inheritedCompilerOutput = mainSourceDirectorySet.isCompilerOutputPathInherited()
             mainSourceSet.sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
           }
@@ -398,7 +398,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
             generatedDirectorySet.name = "generated " + testSourceSet.name
             generatedDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
-            generatedDirectorySet.outputDir = testSourceDirectorySet.outputDir
+            generatedDirectorySet.gradleOutputDir = testSourceDirectorySet.outputDir
             generatedDirectorySet.inheritedCompilerOutput = testSourceDirectorySet.isCompilerOutputPathInherited()
             testSourceSet.sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)
           }
@@ -463,23 +463,26 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 
         if(copyActions) {
           copyActions.each { Action<? super FileCopyDetails> action ->
-            if (action.hasProperty('val$filterType') && action.hasProperty('val$properties')) {
+            if (action.hasProperty('val$filterType')) {
               //noinspection GrUnresolvedAccess
               def filterType = (action?.val$filterType as Class).name
               def filter = [filterType: filterType] as DefaultExternalFilter
-              //noinspection GrUnresolvedAccess
-              def props = action?.val$properties
-              if (props) {
-                if ('org.apache.tools.ant.filters.ExpandProperties'.equals(filterType) && props['project']) {
-                  if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties);
-                }
-                else {
-                  filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props);
+
+              if(action.hasProperty('val$properties')) {
+                //noinspection GrUnresolvedAccess
+                def props = action?.val$properties
+                if (props) {
+                  if ('org.apache.tools.ant.filters.ExpandProperties' == filterType && props['project']) {
+                    if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties);
+                  }
+                  else {
+                    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props);
+                  }
                 }
               }
               filterReaders << filter
             }
-            else if (action.class.simpleName.equals('RenamingCopyAction') && action.hasProperty('transformer')) {
+            else if (action.class.simpleName == 'RenamingCopyAction' && action.hasProperty('transformer')) {
               //noinspection GrUnresolvedAccess
               if (action.transformer.hasProperty('matcher') && action?.transformer?.hasProperty('replacement')) {
                 //noinspection GrUnresolvedAccess

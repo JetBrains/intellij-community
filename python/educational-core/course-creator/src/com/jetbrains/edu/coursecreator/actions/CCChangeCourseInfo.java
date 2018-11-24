@@ -1,5 +1,6 @@
 package com.jetbrains.edu.coursecreator.actions;
 
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,8 +9,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -17,9 +19,9 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class CCChangeCourseInfo extends DumbAwareAction {
-
   private static final String ACTION_TEXT = "Change Course Information";
 
   public CCChangeCourseInfo() {
@@ -61,21 +63,30 @@ public class CCChangeCourseInfo extends DumbAwareAction {
 
     CCNewProjectPanel panel =
       new CCNewProjectPanel(course.getName(), Course.getAuthorsString(course.getAuthors()), course.getDescription());
+    setupLanguageLevels(course, panel);
     DialogBuilder builder = createChangeInfoDialog(project, panel);
     if (builder.showAndGet()) {
-      course.setAuthors(panel.getAuthors());
+      course.setAuthorsAsString(panel.getAuthors());
       course.setName(panel.getName());
       course.setDescription(panel.getDescription());
+      setVersion(course, panel);
       ProjectView.getInstance(project).refresh();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      InspectionProfileManager.getInstance().fireProfileChanged(profile);
     }
   }
+
+  protected void setVersion(Course course, CCNewProjectPanel panel) {}
+
+  protected void setupLanguageLevels(Course course, CCNewProjectPanel panel) {}
 
   private static DialogBuilder createChangeInfoDialog(Project project, @NotNull CCNewProjectPanel panel) {
     DialogBuilder builder = new DialogBuilder(project);
 
     builder.setTitle(ACTION_TEXT);
     JPanel changeInfoPanel = panel.getMainPanel();
-    changeInfoPanel.setMinimumSize(JBUI.size(400, 300));
+    changeInfoPanel.setPreferredSize(new Dimension(450, 300));
+    changeInfoPanel.setMinimumSize(new Dimension(450, 300));
     builder.setCenterPanel(changeInfoPanel);
 
     return builder;

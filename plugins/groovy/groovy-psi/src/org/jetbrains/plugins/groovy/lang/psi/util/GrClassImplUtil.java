@@ -17,10 +17,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -418,9 +418,11 @@ public class GrClassImplUtil {
       return Arrays.asList(grType.getCodeInnerClasses());
     }
 
-    List<PsiClass> classes = RecursionManager.doPreventingRecursion(grType, false, () -> {
+    boolean includeSynthetic = !PsiTreeUtil.isContextAncestor(grType, place, true);
+    Object key = Trinity.create(grType, lastParent, place);
+    List<PsiClass> classes = RecursionManager.doPreventingRecursion(key, false, () -> {
       List<PsiClass> result = new ArrayList<PsiClass>();
-      for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, true).values()) {
+      for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, includeSynthetic).values()) {
         final PsiClass inner = (PsiClass)info.getElement();
         final PsiClass containingClass = inner.getContainingClass();
         assert containingClass != null;

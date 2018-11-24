@@ -16,11 +16,11 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.TabbedContent;
@@ -32,12 +32,14 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class TabbedContentTabLabel extends ContentTabLabel implements Disposable {
+public class TabbedContentTabLabel extends ContentTabLabel {
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
@@ -50,7 +52,7 @@ public class TabbedContentTabLabel extends ContentTabLabel implements Disposable
     }
   };
   private final TabbedContent myContent;
-  private boolean myDisposed;
+  private Reference<JBPopup> myPopupReference = null;
 
   public TabbedContentTabLabel(TabbedContent content, TabContentLayout layout) {
     super(content, layout);
@@ -58,9 +60,7 @@ public class TabbedContentTabLabel extends ContentTabLabel implements Disposable
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        if (!myDisposed) {
-          showPopup();
-        }
+        showPopup();
         return true;
       }
     }.installOn(this);
@@ -92,7 +92,7 @@ public class TabbedContentTabLabel extends ContentTabLabel implements Disposable
           myContent.selectContent(index);
         }
       }).createPopup();
-    Disposer.register(this, popup);
+    myPopupReference = new WeakReference<JBPopup>(popup);
     popup.showUnderneathOf(this);
   }
 
@@ -118,13 +118,12 @@ public class TabbedContentTabLabel extends ContentTabLabel implements Disposable
   }
 
   @Override
-  public void dispose() {
-    myDisposed = true;
-  }
-
-  @Override
   public void removeNotify() {
     super.removeNotify();
-    Disposer.dispose(this);
+    JBPopup popup = SoftReference.dereference(myPopupReference);
+    if (popup != null) {
+      Disposer.dispose(popup);
+      myPopupReference = null;
+    }
   }
 }

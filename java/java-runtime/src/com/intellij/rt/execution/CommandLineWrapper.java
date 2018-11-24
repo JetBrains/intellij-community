@@ -41,7 +41,6 @@ public class CommandLineWrapper {
                                                        : loadMainClassWithOldCustomLoader(jarFile, args);
     String[] mainArgs = mainPair.getArgs();
     Class mainClass = mainPair.getMainClass();
-    System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
     //noinspection SSBasedInspection
     Class mainArgType = (new String[0]).getClass();
     Method main = mainClass.getMethod("main", new Class[]{mainArgType});
@@ -50,6 +49,7 @@ public class CommandLineWrapper {
   }
 
   private static MainPair loadMainClassFromClasspathJar(File jarFile, String[] args) throws Exception {
+    String[] mainArgs;
     final JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
     try {
       final Manifest manifest = inputStream.getManifest();
@@ -62,6 +62,14 @@ public class CommandLineWrapper {
           System.setProperty(optionName, (String)vmOptions.get(optionName));
         }
       }
+      String programParameters = manifest.getMainAttributes().getValue("Program-Parameters");
+      if (programParameters == null) {
+        mainArgs = new String[args.length - 2];
+        System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
+      }
+      else {
+        mainArgs = splitBySpaces(programParameters);
+      }
     }
     finally {
       if (inputStream != null) {
@@ -70,7 +78,58 @@ public class CommandLineWrapper {
       jarFile.deleteOnExit();
     }
 
-    return new MainPair(Class.forName(args[1]), new String[args.length - 2]);
+    return new MainPair(Class.forName(args[1]), mainArgs);
+  }
+
+  /**
+   * The implementation is copied from copied from com.intellij.util.execution.ParametersListUtil.parse and adapted to old Java versions
+   */
+  private static String[] splitBySpaces(String parameterString) {
+    parameterString = parameterString.trim();
+
+    final ArrayList params = new ArrayList();
+    final StringBuffer token = new StringBuffer(128);
+    boolean inQuotes = false;
+    boolean escapedQuote = false;
+    boolean nonEmpty = false;
+
+    for (int i = 0; i < parameterString.length(); i++) {
+      final char ch = parameterString.charAt(i);
+
+      if (ch == '\"') {
+        if (!escapedQuote) {
+          inQuotes = !inQuotes;
+          nonEmpty = true;
+          continue;
+        }
+        escapedQuote = false;
+      }
+      else if (Character.isWhitespace(ch)) {
+        if (!inQuotes) {
+          if (token.length() > 0 || nonEmpty) {
+            params.add(token.toString());
+            token.setLength(0);
+            nonEmpty = false;
+          }
+          continue;
+        }
+      }
+      else if (ch == '\\') {
+        if (i < parameterString.length() - 1 && parameterString.charAt(i + 1) == '"') {
+          escapedQuote = true;
+          continue;
+        }
+      }
+
+      token.append(ch);
+    }
+
+    if (token.length() > 0 || nonEmpty) {
+      params.add(token.toString());
+    }
+
+    //noinspection SSBasedInspection
+    return (String[])params.toArray(new String[params.size()]);
   }
 
   private static class MainPair {

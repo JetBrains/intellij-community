@@ -100,7 +100,11 @@ public interface TransformationContext {
 
   void addInnerClass(@NotNull PsiClass innerClass);
 
+  void setSuperType(@NotNull String fqn);
+
   void setSuperType(@NotNull PsiClassType type);
+
+  void addInterface(@NotNull String fqn);
 
   void addInterface(@NotNull PsiClassType type);
 

@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.fileTypes.FileType;
@@ -33,8 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
@@ -624,19 +623,21 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public List<PyImportStatementBase> getImportBlock() {
-    List<PyImportStatementBase> result = new ArrayList<PyImportStatementBase>();
-    ASTNode firstImport = getNode().getFirstChildNode();
-    while (firstImport != null && !isImport(firstImport, false)) {
-      firstImport = firstImport.getTreeNext();
+    final List<PyImportStatementBase> result = new ArrayList<>();
+    final PsiElement firstChild = getFirstChild();
+    final PyImportStatementBase firstImport;
+    if (firstChild instanceof PyImportStatementBase) {
+      firstImport = (PyImportStatementBase)firstChild;
+    }
+    else {
+      firstImport = PsiTreeUtil.getNextSiblingOfType(firstChild, PyImportStatementBase.class);
     }
     if (firstImport != null) {
-      result.add(firstImport.getPsi(PyImportStatementBase.class));
-      ASTNode lastImport = firstImport.getTreeNext();
-      while (lastImport != null && isImport(lastImport.getTreeNext(), true)) {
-        if (isImport(lastImport, false)) {
-          result.add(lastImport.getPsi(PyImportStatementBase.class));
-        }
-        lastImport = lastImport.getTreeNext();
+      result.add(firstImport);
+      PsiElement nextImport = PyPsiUtils.getNextNonCommentSibling(firstImport, true);
+      while (nextImport instanceof PyImportStatementBase) {
+        result.add((PyImportStatementBase)nextImport);
+        nextImport = PyPsiUtils.getNextNonCommentSibling(nextImport, true);
       }
     }
     return result;
@@ -727,15 +728,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     protected List<String> initialValue() {
       return new ArrayList<String>();
     }
-  }
-
-  public static boolean isImport(ASTNode node, boolean orWhitespace) {
-    if (node == null) return false;
-    IElementType elementType = node.getElementType();
-    if (orWhitespace && elementType == TokenType.WHITE_SPACE) {
-      return true;
-    }
-    return elementType == PyElementTypes.IMPORT_STATEMENT || elementType == PyElementTypes.FROM_IMPORT_STATEMENT;
   }
 
   @Override

@@ -38,11 +38,13 @@ import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +87,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
       //try to find test_runner import
       final String extension = PythonFileType.INSTANCE.getDefaultExtension();
       // Module#getModuleScope() and GlobalSearchScope#getModuleScope() search only in source roots
-      final GlobalSearchScope searchScope = module.getModuleContentScope();
+      final GlobalSearchScope searchScope = module.getModuleScope();
       final Collection<VirtualFile> pyFiles = FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope);
       for (VirtualFile file : pyFiles) {
         if (file.getName().startsWith("test")) {
@@ -113,17 +115,20 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
         //check if installed in sdk
         final Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-          final Boolean nose = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST);
-          final Boolean pytest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST);
-          final Boolean attest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST);
-          if (nose != null && nose)
-            testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-          else if (pytest != null && pytest)
-            testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-          else if (attest != null && attest)
-            testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
-          if (!testRunner.isEmpty()) {
-            LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
+          final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+          if (packages != null) {
+            final boolean nose = PyPackageUtil.findPackage(packages, PyNames.NOSE_TEST) != null;
+            final boolean pytest = PyPackageUtil.findPackage(packages, PyNames.PY_TEST) != null;
+            final boolean attest = PyPackageUtil.findPackage(packages, PyNames.AT_TEST) != null;
+            if (nose)
+              testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+            else if (pytest)
+              testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
+            else if (attest)
+              testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
+            if (!testRunner.isEmpty()) {
+              LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
+            }
           }
         }
       }
@@ -149,27 +154,20 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
 
   @NotNull
   private static String detectTestRunnerFromSetupPy(@NotNull Module module) {
-    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
-    if (setupPy == null) return "";
-    final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
+    final PyCallExpression setupCall = PyPackageUtil.findSetupCall(module);
     if (setupCall == null) return "";
-    for (PyExpression arg : setupCall.getArguments()) {
-      if (arg instanceof PyKeywordArgument) {
-        final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-        if ("test_loader".equals(kwarg.getKeyword()) || "test_suite".equals(kwarg.getKeyword())) {
-          final PyExpression value = kwarg.getValueExpression();
-          if (value instanceof PyStringLiteralExpression) {
-            final String stringValue = ((PyStringLiteralExpression)value).getStringValue();
-            if (stringValue.contains(PyNames.NOSE_TEST)) {
-              return PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-            }
-            if (stringValue.contains(PyNames.PY_TEST)) {
-              return PythonTestConfigurationsModel.PY_TEST_NAME;
-            }
-            if (stringValue.contains(PyNames.AT_TEST_IMPORT)) {
-              return PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
-            }
-          }
+    for (String argumentName : Arrays.asList("test_loader", "test_suite")) {
+      final PyExpression argumentValue = setupCall.getKeywordArgument(argumentName);
+      if (argumentValue instanceof PyStringLiteralExpression) {
+        final String stringValue = ((PyStringLiteralExpression)argumentValue).getStringValue();
+        if (stringValue.contains(PyNames.NOSE_TEST)) {
+          return PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+        }
+        if (stringValue.contains(PyNames.PY_TEST)) {
+          return PythonTestConfigurationsModel.PY_TEST_NAME;
+        }
+        if (stringValue.contains(PyNames.AT_TEST_IMPORT)) {
+          return PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
         }
       }
     }

@@ -320,3 +320,12 @@ def test_unused_empty_init_parameter():
 # PY-14429
 def test_used_local_augmented_assignment(x, y):
     x += y
+
+
+# PY-19492
+class A:
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print(exc_type)
+
+    def __eq__(self, other):
+        return False

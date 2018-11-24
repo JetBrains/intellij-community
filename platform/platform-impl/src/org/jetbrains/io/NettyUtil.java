@@ -85,7 +85,7 @@ public final class NettyUtil {
                            int maxAttemptCount,
                            @NotNull Condition<Void> stopCondition) throws Throwable {
     int attemptCount = 0;
-    if (bootstrap.group() instanceof NioEventLoopGroup) {
+    if (bootstrap.config().group() instanceof NioEventLoopGroup) {
       return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount);
     }
 

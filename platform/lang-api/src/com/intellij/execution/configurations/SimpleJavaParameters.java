@@ -18,6 +18,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -33,6 +34,7 @@ import java.nio.charset.Charset;
  * @author Gregory.Shrago
  */
 public class SimpleJavaParameters extends SimpleProgramParameters {
+  private static final Logger LOG = Logger.getInstance(SimpleJavaParameters.class);
   private Sdk myJdk;
   private String myMainClass;
   private final PathsList myClassPath = new PathsList();
@@ -41,6 +43,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private boolean myUseDynamicClasspath;
   private boolean myUseClasspathJar = false;
   private boolean myUseDynamicVMOptions;
+  private boolean myPassProgramParametersViaClasspathJar;
   private String myJarPath;
 
   public String getMainClass() {
@@ -105,8 +108,25 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myUseClasspathJar;
   }
 
+  /**
+   * Call this method and pass {@code true} to pass classpath of the application via MANIFEST.MF file in a specially generated classpath.jar
+   * archive instead of passing it via -classpath command line option. This may be needed to avoid problems with too long command line on Windows.
+   */
   public void setUseClasspathJar(boolean useClasspathJar) {
     myUseClasspathJar = useClasspathJar;
+  }
+
+  public boolean isPassProgramParametersViaClasspathJar() {
+    return myPassProgramParametersViaClasspathJar;
+  }
+
+  /**
+   * Call this method and pass {@code true} to pass program parameters via attribute in MANIFEST.MF of the classpath jar instead of passing
+   * them via command line. This may be needed to avoid problems with too long command line on Windows.
+   */
+  public void setPassProgramParametersViaClasspathJar(boolean passProgramParametersViaClasspathJar) {
+    LOG.assertTrue(myUseClasspathJar);
+    myPassProgramParametersViaClasspathJar = passProgramParametersViaClasspathJar;
   }
 
   @NotNull

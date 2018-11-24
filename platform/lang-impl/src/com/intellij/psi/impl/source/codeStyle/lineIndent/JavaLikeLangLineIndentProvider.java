@@ -166,7 +166,13 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     }
     while (!position.isAtEnd()) {
       if (currLanguage == Language.ANY || currLanguage == null) currLanguage = position.getLanguage();
-      if (position.isAtAnyOf(Semicolon, BlockOpeningBrace, BlockClosingBrace, BlockComment, DocBlockEnd, LineComment) ||
+      if (position.isAt(Colon)) {
+        SemanticEditorPosition afterColon = getPosition(position.getEditor(), position.getStartOffset()).after().afterOptional(Whitespace);
+        if (position.isAfterOnSameLine(SwitchCase, SwitchDefault)) {
+          return afterColon.getStartOffset();
+        }
+      }
+      if (position.isAtAnyOf(Semicolon, BlockOpeningBrace, BlockClosingBrace, BlockComment, DocBlockEnd, LineComment, LeftParenthesis) ||
           (position.getLanguage() != Language.ANY) && !position.isAtLanguage(currLanguage)) {
         SemanticEditorPosition statementStart = getPosition(position.getEditor(), position.getStartOffset());
         if (!statementStart.after().afterOptional(Whitespace).isAtEnd()) {

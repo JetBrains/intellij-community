@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -44,6 +45,7 @@ import com.intellij.util.concurrency.BlockingSet;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -131,6 +133,7 @@ public class PythonSdkUpdater implements StartupActivity {
       return true;
     }
 
+    @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable methodCallStacktrace = new Throwable();
     application.invokeLater(() -> {
       synchronized (ourLock) {
         if (!ourScheduledToRefresh.contains(homePath)) {
@@ -138,7 +141,7 @@ public class PythonSdkUpdater implements StartupActivity {
         }
         ourScheduledToRefresh.remove(homePath);
       }
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skeletons"), false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.interpreter"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final Project project1 = getProject();
@@ -152,8 +155,25 @@ public class PythonSdkUpdater implements StartupActivity {
                   LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
                 }
                 LOG.info("Performing background update of skeletons for SDK " + sdk12.getHomePath());
+                indicator.setText("Updating skeletons...");
                 PySkeletonRefresher.refreshSkeletonsOfSdk(project1, ownerComponent, skeletonsPath, sdk12);
                 updateRemoteSdkPaths(sdk12);
+                indicator.setIndeterminate(true);
+                indicator.setText("Scanning installed packages...");
+                indicator.setText2("");
+                LOG.info("Performing background scan of packages for SDK " + sdk12.getHomePath());
+                try {
+                  PyPackageManager.getInstance(sdk12).refreshAndGetPackages(true);
+                }
+                catch (ExecutionException e) {
+                  if (LOG.isDebugEnabled()) {
+                    e.initCause(methodCallStacktrace);
+                    LOG.debug(e);
+                  }
+                  else {
+                    LOG.warn(e.getMessage());
+                  }
+                }
               }
               catch (InvalidSdkException e) {
                 if (PythonSdkType.isVagrant(sdk12)

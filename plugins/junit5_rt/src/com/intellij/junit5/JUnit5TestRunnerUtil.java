@@ -16,10 +16,10 @@
 package com.intellij.junit5;
 
 import com.intellij.rt.execution.junit.JUnitStarter;
-import org.junit.gen5.engine.discovery.NameBasedSelector;
-import org.junit.gen5.engine.discovery.PackageSelector;
-import org.junit.gen5.launcher.TestDiscoveryRequest;
-import org.junit.gen5.launcher.main.TestDiscoveryRequestBuilder;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.engine.discovery.PackageSelector;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -31,12 +31,12 @@ import java.util.stream.Collectors;
 
 public class JUnit5TestRunnerUtil {
 
-  public static TestDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef) {
+  public static LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef) {
     if (suiteClassNames.length == 0) {
       return null;
     }
 
-    final TestDiscoveryRequestBuilder builder = TestDiscoveryRequestBuilder.request();
+    final LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
     final List<String> lines = new ArrayList<>();
 
 
@@ -56,10 +56,7 @@ public class JUnit5TestRunnerUtil {
             lines.add(line);
           }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
-          if (JUnitStarter.isJUnit5Preferred()) {
-            final PackageSelector selector = PackageSelector.forPackageName(packageName);
-            return builder.select(selector).build();
-          }
+          return builder.selectors(DiscoverySelectors.selectPackage(packageName)).build();
         }
         finally {
           reader.close();
@@ -75,7 +72,7 @@ public class JUnit5TestRunnerUtil {
     }
 
     final List<String> mappedLines = lines.stream().map(line -> line.replaceFirst(",", "#")).collect(Collectors.toList());
-    return builder.select(NameBasedSelector.forNames(mappedLines)).build();
+    return builder.selectors(DiscoverySelectors.selectNames(mappedLines)).build();
   }
 
 }

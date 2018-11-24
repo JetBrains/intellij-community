@@ -1947,4 +1947,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public boolean isBlockClicks() {
     return myBlockClicks;
   }
+
+  // Returns true if balloon is 'prepared' to process clicks by itself.
+  // For example balloon would ignore clicks and won't hide explicitly or would trigger some actions/navigation
+  public boolean isClickProcessor() {
+    return myClickHandler != null || !myCloseOnClick || isBlockClicks();
+  }
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
@@ -453,25 +454,22 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                            @Nullable String logExpression) {
-    final SetBreakpointCommand command =
-      new SetBreakpointCommand(this, typeId, file, line,
-                               condition,
-                               logExpression);
-    execute(command);
-  }
-
-  @Override
-  public void setBreakpointWithFuncName(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                                        @Nullable String logExpression, @Nullable String funcName) {
+  public void setBreakpoint(@NotNull String typeId,
+                            @NotNull String file,
+                            int line,
+                            @Nullable String condition,
+                            @Nullable String logExpression,
+                            @Nullable String funcName,
+                            @NotNull SuspendPolicy policy) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, typeId, file, line,
                                condition,
                                logExpression,
-                               funcName);
+                               funcName,
+                               policy);
     execute(command);
   }
+
 
   @Override
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
@@ -547,6 +545,9 @@ public class RemoteDebugger implements ProcessDebugger {
         else if (AbstractCommand.isConcurrencyEvent(frame.getCommand())) {
           recordConcurrencyEvent(ProtocolParser.parseConcurrencyEvent(frame.getPayload(), myDebugProcess.getPositionConverter()));
         }
+        else if (AbstractCommand.isInputRequested(frame.getCommand())) {
+          myDebugProcess.consoleInputRequested();
+        }
         else {
           placeResponse(frame.getSequence(), frame);
         }
@@ -572,6 +573,11 @@ public class RemoteDebugger implements ProcessDebugger {
           final PyThreadInfo thread = parseThreadEvent(frame);
           if (!thread.isPydevThread()) {  // ignore pydevd threads
             myThreads.put(thread.getId(), thread);
+            if (myDebugProcess.getSession().isSuspended() && myDebugProcess.isSuspendedOnAllThreadsPolicy()) {
+              // Sometimes the notification about new threads may come slow from the Python side. We should check if
+              // the current session is suspended in the "Suspend all threads" mode and suspend new thread, which hasn't been suspended
+              suspendThread(thread.getId());
+            }
           }
           break;
         }
@@ -586,7 +592,13 @@ public class RemoteDebugger implements ProcessDebugger {
           thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
           thread.setStopReason(event.getStopReason());
           thread.setMessage(event.getMessage());
-          myDebugProcess.threadSuspended(thread);
+          boolean updateSourcePosition = true;
+          if (event.getStopReason() == AbstractCommand.SUSPEND_THREAD) {
+            // That means that the thread was stopped manually from the Java side either while suspending all threads
+            // or after the "Pause" command. In both cases we shouldn't change debugger focus if session is already suspended.
+            updateSourcePosition = !myDebugProcess.getSession().isSuspended();
+          }
+          myDebugProcess.threadSuspended(thread, updateSourcePosition);
           break;
         }
         case AbstractCommand.RESUME_THREAD: {
@@ -610,7 +622,7 @@ public class RemoteDebugger implements ProcessDebugger {
               // notify UI of suspended threads left in debugger if one thread finished its work
               if ((threadInfo != null) && (threadInfo.getState() == PyThreadInfo.State.SUSPENDED)) {
                 myDebugProcess.threadResumed(threadInfo);
-                myDebugProcess.threadSuspended(threadInfo);
+                myDebugProcess.threadSuspended(threadInfo, true);
               }
             }
           }
@@ -751,6 +763,19 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     execute(factory.createRemoveCommand(this));
+  }
+
+  @Override
+  public void suspendOtherThreads(PyThreadInfo thread) {
+    if (!myThreads.containsKey(thread.getId())) {
+      // It means that breakpoint with "Suspend all" policy was reached in another process
+      // and we should suspend all threads in the current process on Java side
+      for (PyThreadInfo otherThread : getThreads()) {
+        if (!otherThread.getId().equals(thread.getId())) {
+          suspendThread(otherThread.getId());
+        }
+      }
+    }
   }
 
   private void fireCloseEvent() {

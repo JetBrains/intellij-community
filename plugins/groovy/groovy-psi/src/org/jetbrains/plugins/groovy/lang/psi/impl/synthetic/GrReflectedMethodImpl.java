@@ -95,7 +95,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     final GrLightModifierList myModifierList = ((GrLightModifierList)getModifierList());
 
     for (String modifier : GrModifier.GROOVY_MODIFIERS) {
-      if (baseMethod.hasModifierProperty(modifier)) {
+      if (baseMethod.getModifierList().hasExplicitModifier(modifier)) {
         myModifierList.addModifier(modifier);
       }
     }

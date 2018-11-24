@@ -4,22 +4,17 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,11 +30,8 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLineBreakpointType;
-import com.jetbrains.python.debugger.PyRunCythonExtensionsFilter;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
-import com.jetbrains.python.run.PythonTracebackFilter;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,53 +117,26 @@ public class PyEduDebugRunner extends PyDebugRunner {
       }
       content = findContent(contentManager, XDebuggerBundle.message("debugger.session.tab.console.content.name"));
       if (content != null) {
-        contentManager.removeContent(content, true);
+        ExecutionConsole console = session.getDebugProcess().createConsole();
+        PythonDebugLanguageConsoleView view = (PythonDebugLanguageConsoleView)console;
+        Presentation presentation = view.getSwitchConsoleActionPresentation();
+        ToggleAction action = new ToggleAction(presentation.getText(), presentation.getDescription(), presentation.getIcon()) {
+
+          @Override
+          public boolean isSelected(AnActionEvent e) {
+            return !view.isPrimaryConsoleEnabled();
+          }
+
+          @Override
+          public void setSelected(AnActionEvent e, boolean state) {
+            view.enableConsole(!state);
+          }
+        };
+        content.setActions(new DefaultActionGroup(action), ActionPlaces.DEBUGGER_TOOLBAR,
+                              view.getPreferredFocusableComponent());
       }
-      initEduConsole(session, ui);
+      patchLeftToolbar(session, ui);
     }
-  }
-
-  private static void initEduConsole(@NotNull final XDebugSession session,
-                                     @NotNull final RunnerLayoutUi ui) {
-    Project project = session.getProject();
-    final Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
-    final PythonDebugLanguageConsoleView view = new PythonDebugLanguageConsoleView(project, sdk);
-    final ProcessHandler processHandler = session.getDebugProcess().getProcessHandler();
-
-    view.attachToProcess(processHandler);
-    view.addMessageFilter(new PythonTracebackFilter(project));
-    view.addMessageFilter(new UrlFilter());
-    view.addMessageFilter(new PyRunCythonExtensionsFilter(project));
-
-    view.enableConsole(false);
-
-    Content eduConsole =
-      ui.createContent("EduConsole", view.getComponent(),
-                       XDebuggerBundle.message("debugger.session.tab.console.content.name"),
-                       AllIcons.Debugger.ToolConsole, view.getPreferredFocusableComponent());
-    eduConsole.setCloseable(false);
-    ui.addContent(eduConsole, 0, PlaceInGrid.right, false);
-
-    Presentation presentation = view.getSwitchConsoleActionPresentation();
-    ToggleAction action = new ToggleAction(presentation.getText(), presentation.getDescription(), presentation.getIcon()) {
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return !view.isPrimaryConsoleEnabled();
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        view.enableConsole(!state);
-      }
-    };
-
-    eduConsole.setActions(new DefaultActionGroup(action), ActionPlaces.DEBUGGER_TOOLBAR,
-                          view.getPreferredFocusableComponent());
-    PyDebugProcess process = (PyDebugProcess)session.getDebugProcess();
-    PyDebugRunner.initDebugConsoleView(project, process, view, processHandler, session);
-
-    patchLeftToolbar(session, ui);
   }
 
   private static void patchLeftToolbar(@NotNull XDebugSession session, @NotNull RunnerLayoutUi ui) {

@@ -96,15 +96,15 @@ public class ImageLoader implements Serializable {
         if (stream == null) return null;
       }
       if (stream == null) {
+        cacheKey = path;
+        Image image = ourCache.get(cacheKey);
+        if (image != null) return image;
+
         url = new URL(path);
         URLConnection connection = url.openConnection();
         if (connection instanceof HttpURLConnection) {
           if (!original) return null;
           connection.addRequestProperty("User-Agent", "IntelliJ");
-
-          cacheKey = path;
-          Image image = ourCache.get(cacheKey);
-          if (image != null) return image;
         }
         stream = connection.getInputStream();
       }

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
@@ -2280,5 +2281,17 @@ fo<caret>o(new Object[0], {})
 ''', GrMethod)
     assert !method.isVarArgs()
     assert method.parameters.size() == 2
+  }
+
+  void 'test compareTo() with Integer and BigDecimal'() {
+    addBigDecimal()
+    def resolved = resolveByText('''\
+BigDecimal b = 1
+1.comp<caret>areTo(b)
+1 > b
+''')
+    assert resolved instanceof GrGdkMethod
+    fixture.enableInspections GroovyAssignabilityCheckInspection
+    fixture.checkHighlighting()
   }
 }

@@ -14,12 +14,10 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 abstract public class CCAnswerPlaceholderAction extends DumbAwareAction {
 
-  protected CCAnswerPlaceholderAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
-    super(text, description, icon);
+  protected CCAnswerPlaceholderAction(@Nullable String text, @Nullable String description) {
+    super(text, description, null);
   }
 
   @Nullable
@@ -44,9 +42,9 @@ abstract public class CCAnswerPlaceholderAction extends DumbAwareAction {
     if (taskFile == null) {
       return null;
     }
-    AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholder(editor.getDocument(),
-                                                                        editor.getCaretModel().getLogicalPosition(),
-                                                                        true);
+    AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholder(
+      editor.getCaretModel().getOffset()
+    );
     return new CCState(taskFile, answerPlaceholder, psiFile, editor, project);
   }
 

@@ -986,12 +986,6 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> filter(@NotNull Condition<? super T> condition, @NotNull T... collection) {
-    return findAll(collection, condition);
-  }
-
-  @NotNull
-  @Contract(pure=true)
   public static <T> List<T> findAll(@NotNull T[] collection, @NotNull Condition<? super T> condition) {
     final List<T> result = new SmartList<T>();
     for (T t : collection) {
@@ -1536,7 +1530,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+  public static <T> Collection<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
     List<T> result = new ArrayList<T>();
     for (T t : collection1) {
       if (collection2.contains(t)) {
@@ -2617,6 +2611,10 @@ public class ContainerUtil extends ContainerUtilRt {
     return new LockFreeCopyOnWriteArrayList<T>(collection);
   }
 
+  /**
+   * @see #addIfNotNull(Collection, Object)
+   */
+  @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     ContainerUtilRt.addIfNotNull(element, result);
   }

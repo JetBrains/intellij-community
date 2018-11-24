@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.hash.HashMap;
 import com.siyeh.ig.controlflow.DoubleNegationInspection;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,8 +151,10 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
           }
           boolean isCollection =
             InheritanceUtil.isInheritor(PsiTypesUtil.getPsiClass(argument.getType()), CommonClassNames.JAVA_UTIL_COLLECTION);
-          setReplaceByString(isCollection ? "$it$.stream()" : "java.util.stream.StreamSupport.stream($it$.spliterator(), false)");
-          return super.replace(expression, evaluator);
+          setReplaceByString(isCollection ? "($it$).stream()" : "java.util.stream.StreamSupport.stream(($it$).spliterator(), false)");
+          final PsiExpression replaced = super.replace(expression, evaluator);
+          ParenthesesUtils.removeParentheses(replaced, false);
+          return replaced;
         }
       };
     } else if (methodName.equals("filter")) {

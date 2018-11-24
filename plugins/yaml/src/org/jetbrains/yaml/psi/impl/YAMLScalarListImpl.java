@@ -36,7 +36,7 @@ public class YAMLScalarListImpl extends YAMLBlockScalarImpl implements YAMLScala
 
   @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence leftString, @NotNull CharSequence rightString) {
+  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
     return "\n";
   }
 

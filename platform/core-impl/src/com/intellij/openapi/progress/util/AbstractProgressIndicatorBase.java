@@ -17,6 +17,8 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -216,6 +218,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     myModalityProgress = modalityProgress;
     ModalityState currentModality = ApplicationManager.getApplication().getCurrentModalityState();
     myModalityState = myModalityProgress != null ? ((ModalityStateEx)currentModality).appendProgress(myModalityProgress) : currentModality;
+    if (modalityProgress != null) {
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(myModalityState);
+    }
   }
 
   @Override

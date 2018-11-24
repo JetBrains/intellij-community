@@ -30,18 +30,38 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
 
   @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence leftString, @NotNull CharSequence rightString) {
-    if (StringUtil.isEmptyOrSpaces(leftString)) {
+  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+    final TextRange leftRange = contentRanges.get(indexBefore);
+    final TextRange rightRange = contentRanges.get(indexBefore + 1);
+    if (leftRange.isEmpty()) {
       return "\n";
     }
-    if (StringUtil.startsWithChar(leftString, ' ') || StringUtil.startsWithChar(leftString, '\t')
-      || StringUtil.startsWithChar(rightString, ' ') || StringUtil.startsWithChar(rightString, '\t')) {
+    if (startsWithWhitespace(text, leftRange) || startsWithWhitespace(text, rightRange)) {
       return "\n";
     }
-    if (StringUtil.isEmptyOrSpaces(rightString)) {
-      return "";
+    if (rightRange.isEmpty()) {
+      int i = indexBefore + 2;
+      // Unfortunately we need to scan to the nearest non-empty line to understand
+      // whether we should add a line here 
+      while (i < contentRanges.size() && contentRanges.get(i).isEmpty()) {
+        i++;
+      }
+      if (i < contentRanges.size() && startsWithWhitespace(text, contentRanges.get(i))) {
+        return "\n";
+      }
+      else {
+        return "";
+      }
     }
     return " ";
+  }
+  
+  private static boolean startsWithWhitespace(@NotNull CharSequence text, @NotNull TextRange range) {
+    if (range.isEmpty()) {
+      return false;
+    }
+    final char c = text.charAt(range.getStartOffset());
+    return c == ' ' || c == '\t';
   }
 
   @Override
@@ -57,11 +77,16 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
     final String indentString = StringUtil.repeatSymbol(' ', indent);
 
     final List<Pair<TextRange, String>> result = new ArrayList<>();
+    
     int currentLength = 0;
+    boolean currentLineIsIndented = input.length() > 0 && input.charAt(0) == ' ';
     for (int i = 0; i < input.length(); ++i) {
       if (input.charAt(i) == '\n') {
         final String replacement;
-        if (i + 1 >= input.length() || YAMLGrammarCharUtil.isSpaceLike(input.charAt(i + 1))) {
+        if (i + 1 >= input.length() ||
+            YAMLGrammarCharUtil.isSpaceLike(input.charAt(i + 1)) ||
+            input.charAt(i + 1) == '\n' ||
+            currentLineIsIndented) {
           replacement = "\n" + indentString;
         }
         else {
@@ -70,6 +95,7 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
         
         result.add(Pair.create(TextRange.from(i, 1), replacement));
         currentLength = 0;
+        currentLineIsIndented = i + 1 < input.length() && input.charAt(i + 1) == ' ';
         continue;
       }
 

@@ -19,8 +19,6 @@
                     serviceImplementation="com.intellij.vcs.log.data.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsRootsRegistry"
-                    serviceImplementation="com.intellij.vcs.log.impl.VcsRootsRegistryImpl"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>

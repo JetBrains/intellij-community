@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
+import org.jetbrains.plugins.groovy.lang.resolve.ImplicitImportsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
@@ -96,7 +96,7 @@ class FromStringLightElement extends LightElement {
       }
     }
 
-    if (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, myFile)) {
+    if (!ImplicitImportsKt.processImplicitImports(processor, state, lastParent, place, myFile)) {
       return false;
     }
 

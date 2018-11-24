@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -555,7 +556,7 @@ public class FindDialog extends DialogWrapper {
     myModel = model;
     updateReplaceVisibility();
     updateTitle();
-    if (!Comparing.equal(newStringToFind, previousStringToFind)) {
+    if (newStringToFind.length() > 0 && !Comparing.equal(newStringToFind, previousStringToFind)) {
       myInputComboBox.getEditor().setItem(newStringToFind);
     }
   }
@@ -1669,11 +1670,13 @@ public class FindDialog extends DialogWrapper {
           TextChunk[] text = usageAdapter.getPresentation().getText();
           // line number / file info
           VirtualFile file = usageAdapter.getFile();
-          String uniqueVirtualFilePath = myOmitFileExtension ? file.getNameWithoutExtension() : file.getName();
+          String uniqueVirtualFilePath = myOmitFileExtension ?
+                                         file.getNameWithoutExtension() :
+                                         UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(usageAdapter.getUsageInfo().getProject(), file);
           VirtualFile prevFile = findPrevFile(table, row, column);
           SimpleTextAttributes attributes = Comparing.equal(file, prevFile) ? REPEATED_FILE_ATTRIBUTES : ORDINAL_ATTRIBUTES;
           append(uniqueVirtualFilePath, attributes);
-          append(" " + text[0].getText(), ORDINAL_ATTRIBUTES);
+          if (text.length > 0) append(" " + text[0].getText(), ORDINAL_ATTRIBUTES);
         }
         setBorder(null);
       }

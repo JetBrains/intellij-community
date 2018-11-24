@@ -973,7 +973,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitClassInitializer(GrClassInitializer initializer) {
     final PsiClass aClass = initializer.getContainingClass();
-    if (aClass != null && aClass.isInterface()) {
+    if (GrTraitUtil.isInterface(aClass)) {
       final TextRange range = GrHighlightUtil.getInitializerHeaderTextRange(initializer);
       myHolder.createErrorAnnotation(range, GroovyBundle.message("initializers.are.not.allowed.in.interface"));
     }
@@ -1994,7 +1994,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
                                      GroovyBundle.message("anonymous.classes.are.not.supported", configUtils.getSDKVersion(typeDefinition)));
       }
 
-      PsiElement superClass = ((PsiAnonymousClass)typeDefinition).getBaseClassReference().resolve();
+      PsiClass superClass = ((PsiAnonymousClass)typeDefinition).getBaseClassType().resolve();
       if (superClass instanceof GrTypeDefinition && ((GrTypeDefinition)superClass).isTrait()) {
         holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("anonymous.classes.cannot.be.created.from.traits"));
       }

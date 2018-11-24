@@ -104,7 +104,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
   private static String createConfirmationMessage(VirtualFile[] filesToDelete) {
     if (filesToDelete.length == 1) {
       if (filesToDelete[0].isDirectory()) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message", filesToDelete[0].getName());
       }
       else {
         return UIBundle.message("are.you.sure.you.want.to.delete.selected.file.confirmation.message", filesToDelete[0].getName());
@@ -120,13 +120,13 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
       }
       LOG.assertTrue(hasFiles || hasFolders);
       if (hasFiles && hasFolders) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.directories.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.directories.confirmation.message", filesToDelete.length);
       }
       else if (hasFolders) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folders.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folders.confirmation.message", filesToDelete.length);
       }
       else {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.files.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.files.confirmation.message", filesToDelete.length);
       }
     }
   }

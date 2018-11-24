@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributorBase;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GriffonDefaultImportContributor extends DefaultImportContributor {
+public class GriffonDefaultImportContributor extends GrImportContributorBase {
 
   private static Couple<List<String>> getDefaultImports(@NotNull final Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<Couple<List<String>>>() {
@@ -81,6 +81,7 @@ public class GriffonDefaultImportContributor extends DefaultImportContributor {
     });
   }
 
+  @NotNull
   @Override
   public List<String> appendImplicitlyImportedPackages(@NotNull GroovyFile file) {
     Module module = ModuleUtilCore.findModuleForPsiElement(file);

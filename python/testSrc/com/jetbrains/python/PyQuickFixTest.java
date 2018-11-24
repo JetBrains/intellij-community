@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -279,9 +279,19 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
+  // PY-20004
+  public void testChainedComparison7() {
+    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
   // PY-14002
   public void testChainedComparisonWithCommonBinaryExpression() {
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
+  // PY-19583
+  public void testChainedComparison6() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
   }
 
   // PY-1362, PY-2585

@@ -20,20 +20,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Irina.Chernushina on 5/30/2016.
  */
 public class JsonSchemaFileTypeManager implements ProjectManagerListener {
-  private final Map<Project, Collection<VirtualFile>> myFileSets = new ConcurrentHashMap<Project, Collection<VirtualFile>>();
+  private final Collection<VirtualFile> myFileSets = ContainerUtil.createConcurrentList();
   private volatile boolean mySetsInitialized;
   private static final Object LOCK = new Object();
 
@@ -41,46 +38,36 @@ public class JsonSchemaFileTypeManager implements ProjectManagerListener {
     return ServiceManager.getService(JsonSchemaFileTypeManager.class);
   }
 
+  public JsonSchemaFileTypeManager() {
+    ProjectManager.getInstance().addProjectManagerListener(this);
+  }
+
   public boolean isJsonSchemaFile(@NotNull final VirtualFile file) {
     ensureInitialized();
-    for (Collection<VirtualFile> files : myFileSets.values()) {
-      if (files.contains(file)) return true;
-    }
-    return false;
+    return myFileSets.contains(file);
   }
 
   private void ensureInitialized() {
     if (mySetsInitialized) return;
     synchronized (LOCK) {
       if (mySetsInitialized) return;
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      myFileSets.clear();
+      final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       for (Project openProject : openProjects) {
-        addProjectFiles(openProject);
+        myFileSets.addAll(JsonSchemaService.Impl.getEx(openProject).getSchemaFiles());
       }
       mySetsInitialized = true;
     }
   }
 
-  private Set<VirtualFile> addProjectFiles(@NotNull final Project project) {
-    final Set<VirtualFile> files = JsonSchemaService.Impl.getEx(project).getSchemaFiles();
-    myFileSets.put(project, files);
-    return files;
-  }
-
   @Override
   public void projectOpened(Project project) {
-    reparseFiles(addProjectFiles(project));
+    reset();
   }
 
-  public void reset(@NotNull final Project project) {
-    final Collection<VirtualFile> files = myFileSets.remove(project);
-    reparseFiles(files);
-  }
-
-  private static void reparseFiles(Collection<VirtualFile> files) {
-    if (files != null && !files.isEmpty()) {
-      FileContentUtilCore.reparseFiles(files);
-    }
+  public void reset() {
+    mySetsInitialized = false;
+    ensureInitialized();
   }
 
   @Override
@@ -90,7 +77,7 @@ public class JsonSchemaFileTypeManager implements ProjectManagerListener {
 
   @Override
   public void projectClosed(Project project) {
-    myFileSets.remove(project);
+    reset();
   }
 
   @Override

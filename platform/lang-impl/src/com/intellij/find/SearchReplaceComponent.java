@@ -441,7 +441,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       wrapper.setContent(textArea);
     }
     else {
-      SearchTextField searchTextField = new SearchTextField(true);
+      SearchTextField searchTextField = new SearchTextField(true) {
+        @Override
+        protected boolean toClearTextOnEscape() {
+          return false;
+        }
+      };
       searchTextField.setOpaque(false);
       textComponent = searchTextField.getTextEditor();
       searchTextField.getTextEditor().setColumns(25);

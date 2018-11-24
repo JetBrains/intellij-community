@@ -361,6 +361,14 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
+  public void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor) {
+    final CommonProblemDescriptor[] ignoredDescriptors = getIgnoredElements().get(refEntity);
+    if (ignoredDescriptors != null) {
+      getIgnoredElements().put(refEntity, ArrayUtil.remove(ignoredDescriptors, descriptor));
+    }
+  }
+
+  @Override
   public void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx) {
     if (refEntity == null) return;
     final Set<QuickFix> localQuickFixes = getQuickFixActions().get(refEntity);

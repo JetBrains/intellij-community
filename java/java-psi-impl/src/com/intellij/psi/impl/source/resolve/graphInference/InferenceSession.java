@@ -1599,7 +1599,7 @@ public class InferenceSession {
               return receiverSubstitutor;
             }
           }
-          mySiteSubstitutor = receiverSubstitutor;
+          mySiteSubstitutor = mySiteSubstitutor.putAll(receiverSubstitutor);
 
           if (methodContainingClass != null) {
             final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, receiverSubstitutor);

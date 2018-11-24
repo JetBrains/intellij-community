@@ -29,6 +29,12 @@ class C {
   void m4a(C C.this) { }
   void m4b(C <error descr="The receiver name does not match the enclosing class type">C.X.this</error>) { }
 
+  void m5() {
+    class L {
+      L(C C.this) { }
+    }
+  }
+
   static void sm1(@TA Object <error descr="The receiver cannot be used in a static context">this</error>) { }
 
   C(C <error descr="The receiver cannot be used in a static context">this</error>) { }

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class VcsContextWrapper implements VcsContext {
   protected final DataContext myContext;
@@ -97,6 +98,14 @@ public class VcsContextWrapper implements VcsContext {
     }
 
     return VirtualFile.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public Stream<VirtualFile> getSelectedFilesStream() {
+    Stream<VirtualFile> result = VcsDataKeys.VIRTUAL_FILE_STREAM.getData(myContext);
+
+    return result != null ? result.filter(VirtualFile::isInLocalFileSystem) : VcsContext.super.getSelectedFilesStream();
   }
 
   private static boolean isLocal(VirtualFile virtualFile) {

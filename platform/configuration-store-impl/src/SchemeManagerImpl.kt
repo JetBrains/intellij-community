@@ -258,9 +258,13 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
     val newSchemesOffset = schemes.size
     if (provider != null && provider.enabled) {
       provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
-        val scheme = loadScheme(name, input, true)
-        if (readOnly && scheme != null) {
-          readOnlyExternalizableSchemes.put(scheme.name, scheme)
+        catchAndLog(name) {
+          input.use {
+            val scheme = loadScheme(name, it, true)
+            if (readOnly && scheme != null) {
+              readOnlyExternalizableSchemes.put(scheme.name, scheme)
+            }
+          }
         }
         true
       }
@@ -272,11 +276,8 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
             continue
           }
 
-          try {
-            loadScheme(file.fileName.toString(), file.inputStream(), true)
-          }
-          catch (e: Throwable) {
-            LOG.error("Cannot read scheme $file", e)
+          catchAndLog(file.fileName.toString()) { filename ->
+            file.inputStream()?.use { loadScheme(filename, it, true) }
           }
         }
       }
@@ -351,16 +352,6 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
   }
 
   private fun loadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): E? {
-    try {
-      return doLoadScheme(fileName, input, duringLoad)
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot read scheme $fileName", e)
-      return null
-    }
-  }
-
-  private fun doLoadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): E? {
     val extension = getFileExtension(fileName, false)
     if (duringLoad && filesToDelete.isNotEmpty() && filesToDelete.contains(fileName.toString())) {
       LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
@@ -460,20 +451,18 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
       return null
     }
 
-    try {
-      return loadScheme(fileName, file.inputStream, duringLoad)
+    catchAndLog(fileName) {
+      return file.inputStream.use { loadScheme(fileName, it, duringLoad) }
     }
-    catch (e: Throwable) {
-      LOG.error("Cannot read scheme $fileName", e)
-      return null
-    }
+
+    return null
   }
 
   fun save(errors: MutableList<Throwable>) {
     var hasSchemes = false
     val nameGenerator = UniqueNameGenerator()
     val schemesToSave = SmartList<E>()
-    for (scheme in schemes) {
+    for (scheme in schemes.toList()) {
       @Suppress("UNCHECKED_CAST")
       if (scheme is ExternalizableScheme) {
         val state = getState(scheme as E)
@@ -935,4 +924,13 @@ fun createDir(ioDir: Path, requestor: Any): VirtualFile {
 
 fun getFile(fileName: String, parent: VirtualFile, requestor: Any): VirtualFile {
   return parent.findChild(fileName) ?: runWriteAction { parent.createChildData(requestor, fileName) }
+}
+
+private inline fun catchAndLog(fileName: CharSequence, runnable: (fileName: CharSequence) -> Unit) {
+  try {
+    runnable(fileName)
+  }
+  catch (e: Throwable) {
+    LOG.error("Cannot read scheme $fileName", e)
+  }
 }

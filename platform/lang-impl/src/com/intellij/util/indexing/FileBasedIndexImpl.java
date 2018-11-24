@@ -74,6 +74,7 @@ import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -1607,7 +1608,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC)
     throws StorageException {
-    if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD && !myIsUnitTestMode) {
+    AtomicInteger rebuildStatus = ourRebuildStatus.get(indexId);
+    if (rebuildStatus == null) {
+      LOG.error("Problem updating " + indexId + " for " + inputId + "," + file + " with content:" + currentFC + ", initialized:" + myInitialized);
+      return;
+    }
+    if (rebuildStatus.get() == REQUIRES_REBUILD && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
     myLocalModCount++;
@@ -1768,6 +1774,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void scheduleFileForIndexing(final VirtualFile file, boolean contentChange) {
+    waitUntilIndicesAreInitialized();
     // handle 'content-less' indices separately
     boolean fileIsDirectory = file.isDirectory();
     if (!contentChange) {
@@ -1974,6 +1981,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     private UnindexedFilesFinder(@Nullable ProgressIndicator indicator) {
       myProgressIndicator = indicator;
+      if (!myInitialized) waitUntilIndicesAreInitialized();
     }
 
     @NotNull
@@ -2122,8 +2130,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           if (event.isGenericChange() &&
               event.getCode() == PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED) {
             PsiFile file = event.getFile();
+
             if (file != null) {
+              waitUntilIndicesAreInitialized();
               VirtualFile virtualFile = file.getVirtualFile();
+
               if (!clearUpToDateStateForPsiIndicesOfUnsavedDocuments(virtualFile)) {
                 // change in persistent file
                 if (virtualFile instanceof VirtualFileWithId) {
@@ -2236,28 +2247,28 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }*/
 
     final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
+    JBIterable<VirtualFile> contributedRoots = JBIterable.empty();
     for (IndexableSetContributor contributor : Extensions.getExtensions(IndexableSetContributor.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
       if (project.isDisposed()) {
         return tasks;
       }
-      for (final VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
-        if (visitedRoots.add(root)) {
-          //System.out.println(root);
-          tasks.add(() -> {
-            if (project.isDisposed() || !root.isValid()) return;
-            iterateRecursively(root, processor, indicator, visitedRoots, null);
-          });
-        }
+      contributedRoots = contributedRoots.append(IndexableSetContributor.getRootsToIndex(contributor));
+      contributedRoots = contributedRoots.append(IndexableSetContributor.getProjectRootsToIndex(contributor, project));
+    }
+    for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      if (project.isDisposed()) {
+        return tasks;
       }
-      for (final VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(contributor, project)) {
-        if (visitedRoots.add(root)) {
-          tasks.add(() -> {
-            if (project.isDisposed() || !root.isValid()) return;
-            iterateRecursively(root, processor, indicator, visitedRoots, null);
-          });
-        }
+      contributedRoots = contributedRoots.append(provider.getAdditionalProjectLibrarySourceRoots(project));
+    }
+    for (VirtualFile root : contributedRoots) {
+      if (visitedRoots.add(root)) {
+        tasks.add(() -> {
+          if (project.isDisposed() || !root.isValid()) return;
+          iterateRecursively(root, processor, indicator, visitedRoots, null);
+        });
       }
     }
 
@@ -2347,6 +2358,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         indexRoot.mkdirs();
         // serialization manager is initialized before and use removed index root so we need to reinitialize it
         mySerializationManagerEx.reinitializeNameStorage();
+        ID.reinitializeDiskStorage();
       }
       FileUtil.delete(corruptionMarker);
     }

@@ -31,6 +31,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
@@ -186,7 +187,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = getReturnType(context);
-    return isAsync() ? createCoroutineType(type) : type;
+    return isAsync() && isAsyncAllowed() ? createCoroutineType(type) : type;
   }
 
   @Nullable
@@ -318,7 +319,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     statements.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyYieldExpression(PyYieldExpression node) {
-        final PyType type = context.getType(node);
+        final PyExpression expr = node.getExpression();
+        final PyType type = expr != null ? context.getType(expr) : null;
         if (node.isDelegating() && type instanceof PyCollectionType) {
           final PyCollectionType collectionType = (PyCollectionType)type;
           // TODO: Select the parameter types that matches T in Iterable[T]
@@ -579,12 +581,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public PsiComment getTypeComment() {
-    final PyStatementList statements = getStatementList();
-    final PsiComment inlineComment = as(PyPsiUtils.getPrevNonWhitespaceSibling(statements), PsiComment.class);
+    final PsiComment inlineComment = PyUtil.getCommentOnHeaderLine(this);
     if (inlineComment != null && PyTypingTypeProvider.getTypeCommentValue(inlineComment.getText()) != null) {
       return inlineComment;
     }
-
+    
+    final PyStatementList statements = getStatementList();
     if (statements.getStatements().length != 0) {
       final PsiComment comment = as(statements.getFirstChild(), PsiComment.class);
       if (comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null) {
@@ -677,6 +679,18 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return stub.isAsync();
     }
     return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
+  }
+
+  @Override
+  public boolean isAsyncAllowed() {
+    final LanguageLevel languageLevel = LanguageLevel.forElement(this);
+    final String functionName = getName();
+
+    return languageLevel.isAtLeast(LanguageLevel.PYTHON35) && (
+      functionName == null ||
+      ArrayUtil.contains(functionName, PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT) ||
+      !PyNames.getBuiltinMethods(languageLevel).containsKey(functionName)
+    );
   }
 
   @Nullable

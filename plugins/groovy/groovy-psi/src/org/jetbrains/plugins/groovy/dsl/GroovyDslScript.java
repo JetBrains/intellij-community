@@ -62,14 +62,8 @@ public class GroovyDslScript {
                                  final PsiType psiType,
                                  final PsiElement place,
                                  final PsiFile placeFile,
-                                 ResolveState state) {
-    CustomMembersHolder holder = myFactorTree.retrieve(place, placeFile, new NotNullLazyValue<String>() {
-      @NotNull
-      @Override
-      protected String compute() {
-        return psiType.getCanonicalText(false);
-      }
-    });
+                                 ResolveState state, NotNullLazyValue<String> typeText) {
+    CustomMembersHolder holder = myFactorTree.retrieve(place, placeFile, typeText);
     GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
     try {
       if (holder == null) {

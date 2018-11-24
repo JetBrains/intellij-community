@@ -33,8 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   @NonNls protected static final String MARKER = "<ref>";
 
-  protected String getBasePath() { null }
-
   @Override
   void setUp() {
     super.setUp();

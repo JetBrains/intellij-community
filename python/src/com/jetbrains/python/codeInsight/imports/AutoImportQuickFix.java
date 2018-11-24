@@ -27,8 +27,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
@@ -41,6 +43,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * The object contains a list of import candidates and serves only to show the initial hint;
  * the actual work is done in ImportFromExistingAction..
@@ -49,30 +53,36 @@ import java.util.List;
  */
 public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements HighPriorityAction {
 
-  protected final PsiReference myReference;
-  protected final List<ImportCandidateHolder> myImports; // from where and what to import
-  protected final String myInitialName;
-  protected final boolean myUseQualifiedImport;
-  private boolean myExpended;
+  private final List<ImportCandidateHolder> myImports; // from where and what to import
+  private final String myInitialName;
+  private final boolean myUseQualifiedImport;
+  private final Class<? extends PsiReference> myReferenceType;
+  private boolean myExpended = false;
 
   /**
    * Creates a new, empty fix object.
    * @param node to which the fix applies.
+   * @param referenceType
    * @param name name to import
    * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name"
    */
-  public AutoImportQuickFix(@NotNull PsiElement node, @NotNull PsiReference reference, @NotNull String name, boolean qualify) {
-    this(node, reference, name, qualify, Collections.<ImportCandidateHolder>emptyList());
+  public AutoImportQuickFix(@NotNull PsiElement node, 
+                            @NotNull Class<? extends PsiReference> referenceType, 
+                            @NotNull String name, 
+                            boolean qualify) {
+    this(node, referenceType, name, qualify, Collections.emptyList());
   }
 
-  protected AutoImportQuickFix(@NotNull PsiElement node, @NotNull PsiReference reference, @NotNull String name, boolean qualify,
-                               @NotNull Collection<ImportCandidateHolder> candidates) {
+  private AutoImportQuickFix(@NotNull PsiElement node, 
+                             @NotNull Class<? extends PsiReference> referenceType, 
+                             @NotNull String name, 
+                             boolean qualify,
+                             @NotNull Collection<ImportCandidateHolder> candidates) {
     super(node);
-    myReference = reference;
-    myImports = new ArrayList<ImportCandidateHolder>(candidates);
+    myReferenceType = referenceType;
     myInitialName = name;
     myUseQualifiedImport = qualify;
-    myExpended = false;
+    myImports = new ArrayList<>(candidates);
   }
 
   /**
@@ -116,23 +126,27 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   }
 
   public boolean showHint(Editor editor) {
-    if (!PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
+    if (!PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP ||
+        HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true) ||
+        myImports.isEmpty()) {
       return false;
     }
     final PsiElement element = getStartElement();
     PyPsiUtils.assertValid(element);
-    if (element == null || !element.isValid() || (element instanceof PsiNamedElement && ((PsiNamedElement)element).getName() == null)
-        || myImports.size() <= 0) {
-      PyPsiUtils.assertValid(element);
-      return false; // TODO: also return false if an on-the-fly unambiguous fix is possible?
-    }
-    if (ImportFromExistingAction.isResolved(myReference)) {
+    if (element == null || !element.isValid()) {
       return false;
     }
-    if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
+    final PyElement pyElement = as(element, PyElement.class);
+    if (pyElement == null || !myInitialName.equals(pyElement.getName())) {
       return false;
     }
-    if ((element instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)element).isQualified()))) return false; // we cannot be qualified
+    final PsiReference reference = findOriginalReference(element);
+    if (reference == null || isResolved(reference)) {
+      return false;
+    }
+    if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).isQualified()) {
+      return false; // we cannot be qualified
+    }
 
     final String message = ShowAutoImportPass.getMessage(
       myImports.size() > 1,
@@ -163,9 +177,14 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
 
   public void invoke(PsiFile file) throws IncorrectOperationException {
     // make sure file is committed, writable, etc
-    PyPsiUtils.assertValid(myReference.getElement());
+    final PsiElement startElement = getStartElement();
+    if (startElement == null) {
+      return;
+    }
+    PyPsiUtils.assertValid(startElement);
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    if (ImportFromExistingAction.isResolved(myReference)) return;
+    final PsiReference reference = findOriginalReference(startElement);
+    if (reference == null || isResolved(reference)) return;
     // act
     ImportFromExistingAction action = createAction();
     action.execute(); // assume that action runs in WriteAction on its own behalf
@@ -181,8 +200,9 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     Collections.sort(myImports);
   }
 
-  public int getCandidatesCount() {
-    return myImports.size();
+  @NotNull
+  public List<ImportCandidateHolder> getCandidates() {
+    return Collections.unmodifiableList(myImports);
   }
 
   public boolean hasOnlyFunctions() {
@@ -207,7 +227,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
 
   @NotNull
   public AutoImportQuickFix forLocalImport() {
-    return new AutoImportQuickFix(getStartElement(), myReference, myInitialName, myUseQualifiedImport, myImports) {
+    return new AutoImportQuickFix(getStartElement(), myReferenceType, myInitialName, myUseQualifiedImport, myImports) {
       @NotNull
       @Override
       public String getFamilyName() {
@@ -228,7 +248,20 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     };
   }
 
+  @NotNull
   public String getNameToImport() {
     return myInitialName;
+  }
+
+  private static boolean isResolved(@NotNull PsiReference reference) {
+    if (reference instanceof PsiPolyVariantReference) {
+      return ((PsiPolyVariantReference)reference).multiResolve(false).length > 0;
+    }
+    return reference.resolve() != null;
+  }
+
+  @Nullable
+  private PsiReference findOriginalReference(@NotNull PsiElement element) {
+    return ContainerUtil.findInstance(element.getReferences(), myReferenceType);
   }
 }

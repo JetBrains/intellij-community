@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -169,8 +170,7 @@ public class FileReferenceQuickFixProvider {
       if (!isDirectory && myNewFileTemplateName != null) {
         Project project = getStartElement().getProject();
         FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
-        FileTemplate template = fileTemplateManager.getTemplate(myNewFileTemplateName);
-        if (template == null) template = fileTemplateManager.findInternalTemplate(myNewFileTemplateName);
+        FileTemplate template = findTemplate(fileTemplateManager);
 
         if (template != null) {
           try {
@@ -181,6 +181,25 @@ public class FileReferenceQuickFixProvider {
         }
       }
       return super.getFileText();
+    }
+
+    private FileTemplate findTemplate(FileTemplateManager fileTemplateManager) {
+      FileTemplate template = fileTemplateManager.getTemplate(myNewFileTemplateName);
+      if (template == null) template = fileTemplateManager.findInternalTemplate(myNewFileTemplateName);
+      return template;
+    }
+
+    @Override
+    protected void openFile(@NotNull Project project, PsiDirectory directory, PsiFile newFile, String text) {
+      super.openFile(project, directory, newFile, text);
+      if (!isDirectory && myNewFileTemplateName != null) {
+        FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
+        FileTemplate template = findTemplate(fileTemplateManager);
+
+        if (template != null && template.isLiveTemplateEnabled()) {
+          CreateFromTemplateActionBase.startLiveTemplate(newFile);
+        }
+      }
     }
   }
 }

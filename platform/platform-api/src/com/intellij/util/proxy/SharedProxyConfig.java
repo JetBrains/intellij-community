@@ -20,14 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.security.Key;
-import java.security.SecureRandom;
 import java.util.Properties;
 
 public class SharedProxyConfig {
@@ -36,12 +29,7 @@ public class SharedProxyConfig {
   private static final String PORT = "port";
   private static final String LOGIN = "login";
   private static final String PASSWORD = "password";
-  private static final Key ENCRYPTION_KEY;  // the key is valid for the same session only
-  static {
-    final byte[] bytes = new byte[16];
-    new SecureRandom().nextBytes(bytes);
-    ENCRYPTION_KEY = new SecretKeySpec(bytes, "AES");
-  }
+  private static final PropertiesEncryptionSupport ourEncryptionSupport = new PropertiesEncryptionSupport();  // the key is valid for the same session only
 
   public static final class ProxyParameters {
     @Nullable
@@ -71,9 +59,7 @@ public class SharedProxyConfig {
   @Nullable
   public static ProxyParameters load() {
     try {
-      final byte[] bytes = decrypt(FileUtil.loadFileBytes(CONFIG_FILE));
-      final Properties props = new Properties();
-      props.load(new ByteArrayInputStream(bytes));
+      final Properties props = ourEncryptionSupport.load(CONFIG_FILE);
       final String password = props.getProperty(PASSWORD, "");
       return new ProxyParameters(
         props.getProperty(HOST, null),
@@ -97,10 +83,7 @@ public class SharedProxyConfig {
           props.setProperty(LOGIN, params.login);
           props.setProperty(PASSWORD, new String(params.password));
         }
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        props.store(out, "Proxy Configuration");
-        out.close();
-        FileUtil.writeToFile(CONFIG_FILE, encrypt(out.toByteArray()));
+        ourEncryptionSupport.store(props, "Proxy Configuration", CONFIG_FILE);
         return true;
       }
       catch (Exception ignored) {
@@ -110,46 +93,6 @@ public class SharedProxyConfig {
       FileUtil.delete(CONFIG_FILE);
     }
     return false;
-  }
-
-  private static byte[] encrypt(byte[] bytes) throws Exception {
-    return encrypt(bytes, ENCRYPTION_KEY);
-  }
-
-  private static byte[] decrypt(byte[] bytes) throws Exception {
-    return decrypt(bytes, ENCRYPTION_KEY);
-  }
-
-  private static byte[] encrypt(byte[] msgBytes, Key key) throws Exception {
-    final Cipher ciph = Cipher.getInstance("AES/CBC/PKCS5Padding");
-    ciph.init(Cipher.ENCRYPT_MODE, key);
-    final byte[] body = ciph.doFinal(msgBytes);
-    final byte[] iv = ciph.getIV();
-
-    final byte[] data = new byte[4 + iv.length + body.length];
-
-    final int length = body.length;
-    data[0] = (byte)((length >> 24)& 0xFF);
-    data[1] = (byte)((length >> 16)& 0xFF);
-    data[2] = (byte)((length >> 8)& 0xFF);
-    data[3] = (byte)(length & 0xFF);
-
-    System.arraycopy(iv, 0, data, 4, iv.length);
-    System.arraycopy(body, 0, data, 4 + iv.length, body.length);
-    return data;
-  }
-
-  private static byte[] decrypt(byte[] data, Key key) throws Exception {
-    int bodyLength = data[0] & 0xFF;
-    bodyLength = (bodyLength << 8) + data[1] & 0xFF;
-    bodyLength = (bodyLength << 8) + data[2] & 0xFF;
-    bodyLength = (bodyLength << 8) + data[3] & 0xFF;
-
-    final int ivlength = data.length - 4 - bodyLength;
-
-    final Cipher ciph = Cipher.getInstance("AES/CBC/PKCS5Padding");
-    ciph.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(data, 4, ivlength));
-    return ciph.doFinal(data, 4 + ivlength, bodyLength);
   }
 
 }

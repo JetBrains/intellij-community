@@ -28,12 +28,17 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XValue;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyThreadInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -56,6 +61,11 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected boolean shouldPrintOutput = false;
   protected boolean myProcessCanTerminate;
   protected ExecutionResult myExecutionResult;
+  protected SuspendPolicy myDefaultSuspendPolicy = SuspendPolicy.THREAD;
+
+  protected PyBaseDebuggerTask(@Nullable final String relativeTestDataPath) {
+    super(relativeTestDataPath);
+  }
 
   protected void waitForPause() throws InterruptedException, InvocationTargetException {
     Assert.assertTrue("Debugger didn't stopped within timeout\nOutput:" + output(), waitFor(myPausedSemaphore));
@@ -163,7 +173,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   /**
    * Toggles breakpoint
    *
-   * @param file getScriptPath() or path to script
+   * @param file getScriptName() or path to script
    * @param line starting with 0
    */
   protected void toggleBreakpoint(final String file, final int line) {
@@ -173,6 +183,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
         doToggleBreakpoint(file, line);
       }
     });
+    setBreakpointSuspendPolicy(getProject(), line, myDefaultSuspendPolicy);
 
     addOrRemoveBreakpoint(file, line);
   }
@@ -204,14 +215,45 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   public boolean canPutBreakpointAt(Project project, String file, int line) {
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(file);
-    Assert.assertNotNull(vFile);
+
+    // May be relative or not
+    final VirtualFile vFile = getFileByPath(file);
+    Assert.assertNotNull(String.format("There is no %s", file), vFile);
     return XDebuggerUtil.getInstance().canPutBreakpointAt(project, vFile, line);
   }
 
   private void doToggleBreakpoint(String file, int line) {
     Assert.assertTrue(canPutBreakpointAt(getProject(), file, line));
-    XDebuggerTestUtil.toggleBreakpoint(getProject(), LocalFileSystem.getInstance().findFileByPath(file), line);
+    XDebuggerTestUtil.toggleBreakpoint(getProject(),getFileByPath(file), line);
+  }
+
+  public static void setBreakpointSuspendPolicy(Project project, int line, SuspendPolicy policy) {
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    for (XBreakpoint breakpoint : XDebuggerTestUtil.getBreakpoints(breakpointManager)) {
+      if (breakpoint instanceof XLineBreakpoint) {
+        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+
+        if (lineBreakpoint.getLine() == line) {
+          new WriteAction() {
+            @Override
+            protected void run(@NotNull Result result) throws Throwable {
+              lineBreakpoint.setSuspendPolicy(policy);
+            }
+          }.execute();
+        }
+      }
+    }
+  }
+
+  public String getRunningThread() {
+    for (PyThreadInfo thread : myDebugProcess.getThreads()) {
+      if (!thread.isPydevThread()) {
+        if ((thread.getState() == null) || (thread.getState() == PyThreadInfo.State.RUNNING)) {
+          return thread.getName();
+        }
+      }
+    }
+    return null;
   }
 
   protected Variable eval(String name) throws InterruptedException {
@@ -226,7 +268,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     myDebugProcess.changeVariable((PyDebugValue)var, value);
   }
 
-  public void waitForOutput(String ... string) throws InterruptedException {
+  public void waitForOutput(String... string) throws InterruptedException {
     long started = System.currentTimeMillis();
 
     while (!containsOneOf(output(), string)) {
@@ -238,7 +280,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected boolean containsOneOf(String output, String[] strings) {
-    for (String s: strings) {
+    for (String s : strings) {
       if (output.contains(s)) {
         return true;
       }

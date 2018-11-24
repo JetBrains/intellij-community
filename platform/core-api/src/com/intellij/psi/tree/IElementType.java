@@ -99,6 +99,11 @@ public class IElementType {
     }
   };
 
+  /**
+   * Allows to construct element types for some temporary purposes without registering them.
+   * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
+   * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
+   */
   protected IElementType(@NotNull @NonNls String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
@@ -139,7 +144,7 @@ public class IElementType {
 
   @Override
   public int hashCode() {
-    return myIndex;
+    return myIndex >= 0 ? myIndex : super.hashCode();
   }
 
   public String toString() {

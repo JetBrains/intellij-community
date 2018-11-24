@@ -27,7 +27,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
   public abstract List<TextRange> getContentRanges();
 
   @NotNull
-  protected abstract String getRangesJoiner(@NotNull CharSequence leftString, @NotNull CharSequence rightString);
+  protected abstract String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore);
   
   protected List<Pair<TextRange, String>> getDecodeReplacements(@NotNull CharSequence input) {
     return Collections.emptyList();
@@ -44,18 +44,15 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     final List<TextRange> contentRanges = getContentRanges();
 
     final StringBuilder builder = new StringBuilder();
-    CharSequence nextString = null;
 
     for (int i = 0; i < contentRanges.size(); i++) {
       final TextRange range = contentRanges.get(i);
       
-      final CharSequence curString = i == 0 ? range.subSequence(text) : nextString;
-      assert curString != null;
+      final CharSequence curString = range.subSequence(text);
       builder.append(curString);
 
       if (i + 1 != contentRanges.size()) {
-        nextString = contentRanges.get(i + 1).subSequence(text);
-        builder.append(getRangesJoiner(curString, nextString));
+        builder.append(getRangesJoiner(text, contentRanges, i));
       }
     }
     return processReplacements(builder, getDecodeReplacements(builder));
@@ -125,17 +122,14 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
       final List<TextRange> contentRanges = myHost.getContentRanges();
       
       int currentOffsetInDecoded = 0;
-      String nextString = null;
 
       for (int i = 0; i < contentRanges.size(); i++) {
         final TextRange range = contentRanges.get(i);
 
-        String curString = i == 0 ? range.subSequence(text).toString() : nextString;
-        assert curString != null;
+        String curString = range.subSequence(text).toString();
 
         if (i + 1 != contentRanges.size()) {
-          nextString = contentRanges.get(i + 1).subSequence(text).toString();
-          final String joiner = myHost.getRangesJoiner(curString, nextString);
+          final String joiner = myHost.getRangesJoiner(text, contentRanges, i);
           curString += joiner;
         }
 

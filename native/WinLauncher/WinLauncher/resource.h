@@ -19,6 +19,8 @@
 #define IDS_PROPS_ENV_VAR               112
 #define IDS_VM_OPTIONS_ENV_VAR          113
 #define IDS_ERROR_LAUNCHING_APP         114
+#define IDS_VM_OPTION_ERRORFILE         115
+#define IDS_VM_OPTION_HEAPDUMPPATH      116
 #define IDR_MAINFRAME                   128
 #define IDS_VM_OPTIONS                  129
 #define IDB_BITMAP1                     130

@@ -194,7 +194,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       return GroovyResolveResult.EMPTY_ARRAY;
     }
 
-    candidates = ResolveUtil.getMethodCandidates(thisType, name, invoked, true, incompleteCode, false, argTypes);
+    candidates = ResolveUtil.getMethodCandidates(thisType, name, invoked, true, incompleteCode, argTypes);
 
     //hack for remove DefaultGroovyMethods.getAt(Object, ...)
     if (candidates.length == 2) {

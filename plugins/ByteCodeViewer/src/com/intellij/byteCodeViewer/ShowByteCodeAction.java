@@ -83,7 +83,7 @@ public class ShowByteCodeAction extends AnAction {
     final RelativePoint bestPopupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     final SmartPsiElementPointer element = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Looking for bytecode...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Looking for Bytecode...") {
       private String myByteCode;
       private String myErrorMessage;
       private String myErrorTitle;
@@ -179,12 +179,6 @@ public class ShowByteCodeAction extends AnAction {
   }
 
   private static PsiElement findElementInFile(@Nullable PsiFile psiFile, Editor editor) {
-    if (psiFile == null) {
-      return null;
-    }
-    if (psiFile instanceof PsiCompiledFile) {
-      psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
-    }
-    return psiFile.findElementAt(editor.getCaretModel().getOffset());
+    return psiFile != null ? psiFile.findElementAt(editor.getCaretModel().getOffset()) : null;
   }
 }

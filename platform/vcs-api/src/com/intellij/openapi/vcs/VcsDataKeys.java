@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author yole
@@ -74,4 +75,5 @@ public interface VcsDataKeys {
   DataKey<VcsRevisionNumber> VCS_REVISION_NUMBER = DataKey.create("VCS_REVISION_NUMBER");
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
   DataKey<VcsHistoryProvider> HISTORY_PROVIDER = DataKey.create("VCS_HISTORY_PROVIDER");
+  DataKey<Stream<VirtualFile>> VIRTUAL_FILE_STREAM = DataKey.create("virtualFileStream");
 }

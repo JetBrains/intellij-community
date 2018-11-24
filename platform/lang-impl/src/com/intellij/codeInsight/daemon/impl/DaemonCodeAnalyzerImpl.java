@@ -39,6 +39,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -125,6 +126,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private final PassExecutorService myPassExecutorService;
 
   private volatile boolean allowToInterrupt = true;
+  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(5, 1000);
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project,
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
@@ -602,13 +604,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return isRunning() || !myAlarm.isEmpty();
   }
 
-  synchronized void stopProcess(boolean toRestartAlarm, @NonNls String reason) {
+  synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
 
     cancelUpdateProgress(toRestartAlarm, reason);
     myAlarm.cancelAllRequests();
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
     if (restart) {
+      if (LOG.isDebugEnabled()) {
+        myFrequentEventDetector.eventHappened(reason);
+      }
       UIUtil.invokeLaterIfNeeded(() -> {
         if (myAlarm.isEmpty()) {
           myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);

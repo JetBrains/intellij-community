@@ -151,7 +151,7 @@ public class TransactionGuardImpl extends TransactionGuard {
         if (!isWriteSafeModality(ModalityState.current())) {
           message += "\nUnsafe modality: " + ModalityState.current();
         }
-        LOG.error(message);
+        LOG.info(message);
       }
       runSyncTransaction(transaction);
       return;
@@ -235,7 +235,7 @@ public class TransactionGuardImpl extends TransactionGuard {
         message += "; current modality=" + ModalityState.current() + "; known modalities=" + myWriteSafeModalities;
       }
       // please assign exceptions here to Peter
-      LOG.error(message);
+      LOG.info(message);
     }
   }
 

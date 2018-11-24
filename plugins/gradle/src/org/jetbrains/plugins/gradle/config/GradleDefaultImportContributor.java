@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.jetbrains.plugins.gradle.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributorBase;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GradleDefaultImportContributor extends DefaultImportContributor {
+public class GradleDefaultImportContributor extends GrImportContributorBase {
 
   // As listed here - http://www.gradle.org/docs/current/userguide/userguide_single.html#sec:using_gradle_without_ide_support
   public static final String[] IMPLICIT_GRADLE_PACKAGES = {
@@ -206,6 +206,7 @@ public class GradleDefaultImportContributor extends DefaultImportContributor {
   };
 
 
+  @NotNull
   @Override
   public List<String> appendImplicitlyImportedPackages(@NotNull GroovyFile file) {
     if (file.isScript() && GroovyScriptUtil.getScriptType(file) instanceof GradleScriptType) {

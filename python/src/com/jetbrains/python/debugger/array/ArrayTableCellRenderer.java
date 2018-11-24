@@ -17,6 +17,8 @@ package com.jetbrains.python.debugger.array;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
+import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -26,14 +28,14 @@ import java.awt.*;
 /**
  * @author amarch
  */
-class ArrayTableCellRenderer extends DefaultTableCellRenderer {
+class ArrayTableCellRenderer extends DefaultTableCellRenderer implements ColoredCellRenderer {
 
   private double myMin = Double.MIN_VALUE;
   private double myMax = Double.MIN_VALUE;
   private String myComplexMin;
   private String myComplexMax;
   private boolean myColored = true;
-  private String myType;
+  private final String myType;
 
   public ArrayTableCellRenderer(double min, double max, String type) {
     setHorizontalAlignment(CENTER);
@@ -62,9 +64,8 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
     if (myMax != myMin) {
       if (myColored && value != null) {
         try {
-          double rangedValue = NumpyArrayTable.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
-          //noinspection UseJBColor
-          this.setBackground(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130));
+          double rangedValue = PyNumericViewUtil.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
+          this.setBackground(PyNumericViewUtil.rangedValueToColor(rangedValue));
         }
         catch (NumberFormatException ignored) {
         }

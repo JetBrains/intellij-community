@@ -5,12 +5,7 @@ import java.util.Comparator;
 public class AnswerPlaceholderComparator implements Comparator<AnswerPlaceholder> {
   @Override
   public int compare(AnswerPlaceholder o1, AnswerPlaceholder answerPlaceholder) {
-    final int line = o1.getLine();
-    int lineDiff = line - answerPlaceholder.getLine();
-    if (lineDiff == 0) {
-      return o1.getStart() - answerPlaceholder.getStart();
-    }
-    return lineDiff;
+    return o1.getOffset() - answerPlaceholder.getOffset();
   }
 
   @Override

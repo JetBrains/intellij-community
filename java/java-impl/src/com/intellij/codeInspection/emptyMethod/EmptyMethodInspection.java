@@ -21,6 +21,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
@@ -35,7 +36,6 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jdom.Element;
@@ -138,13 +138,15 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (message != null) {
       final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
-      SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), qualifiedName -> {
-        fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
-          QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
-          QuickFixBundle.message("fix.add.special.annotation.family"),
-          EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
-        return true;
-      });
+      if (globalContext instanceof GlobalInspectionContextBase && ((GlobalInspectionContextBase)globalContext).getCurrentProfile().getSingleTool() == null) {
+        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), qualifiedName -> {
+          fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
+            QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
+            QuickFixBundle.message("fix.add.special.annotation.family"),
+            EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
+          return true;
+        });
+      }
 
       final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, false,
                                                                            fixes.toArray(new LocalQuickFix[fixes.size()]),

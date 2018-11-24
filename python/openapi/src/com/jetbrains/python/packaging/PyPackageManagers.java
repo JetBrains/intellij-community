@@ -32,7 +32,7 @@ public abstract class PyPackageManagers {
   }
 
   @NotNull
-  public abstract PyPackageManager forSdk(Sdk sdk);
+  public abstract PyPackageManager forSdk(@NotNull Sdk sdk);
 
   public abstract PackageManagementService getManagementService(Project project, Sdk sdk);
 

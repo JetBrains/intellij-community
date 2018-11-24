@@ -43,6 +43,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -72,6 +73,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.content.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -646,7 +648,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
       }
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(globalTools, this, createContentProvider())).booleanValue()) {
         return;
       }
@@ -934,14 +936,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
 
     if (results.isEmpty()) {
-      UIUtil.invokeLaterIfNeeded(() -> {
+      GuiUtils.invokeLaterIfNeeded(() -> {
         if (commandName != null) {
           NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
         }
         if (postRunnable != null) {
           postRunnable.run();
         }
-      });
+      }, ModalityState.defaultModalityState());
       return;
     }
     Runnable runnable = () -> {

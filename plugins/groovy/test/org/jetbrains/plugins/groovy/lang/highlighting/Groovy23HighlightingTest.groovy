@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
@@ -134,6 +135,39 @@ trait T {
       assert method.hasModifierProperty(GrModifier.ABSTRACT)
       assert !method.hasModifierProperty(GrModifier.FINAL)
     }
+  }
+
+  void 'test trait with method with default parameters'() {
+    testHighlighting '''\
+trait A {
+  def foo(a, b = null, c = null) {}
+}
+class B implements A {}
+'''
+  }
+
+  void 'test trait with abstract method with default parameters'() {
+    testHighlighting '''
+trait A {
+  abstract foo(a, b = null, c = null)
+}
+<error descr="Method 'foo' is not implemented">class B implements A</error> {}
+'''
+    def definition = fixture.findClass('B') as GrTypeDefinition
+    def map = OverrideImplementExploreUtil.getMapToOverrideImplement(definition, true)
+    assert map.size() == 1 // need to implement only foo(a, b, c)
+  }
+
+  void 'test class initializers in traits'() {
+    testHighlighting '''\
+trait T {
+  static {
+  }
+
+  {
+  }
+}
+'''
   }
 
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]

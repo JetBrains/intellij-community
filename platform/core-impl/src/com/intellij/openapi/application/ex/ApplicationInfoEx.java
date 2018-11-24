@@ -114,4 +114,25 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   @Nullable
   public abstract String getCustomizeIDEWizardStepsProvider();
+
+  public abstract String getSubscriptionFormId();
+
+  public abstract String getSubscriptionNewsKey();
+
+  public abstract String getSubscriptionNewsValue();
+
+  public abstract String getSubscriptionTipsKey();
+
+  public abstract boolean areSubscriptionTipsAvailable();
+
+  @Nullable
+  public abstract String getSubscriptionAdditionalFormData();
+
+  /**
+   * @return true if the product's vendor is JetBrains
+   */
+  public final boolean isVendorJetBrains() {
+    String companyName = getCompanyName();
+    return companyName != null && companyName.startsWith("JetBrains");
+  }
 }

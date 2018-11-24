@@ -141,6 +141,13 @@ class CanonicalPathMap {
             continue ext;
           }
         }
+        else {
+          String rootParent = new File(root).getParent();
+          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
+            changedPaths.add(root);
+            continue ext;
+          }
+        }
       }
 
       for (String root : myRecursiveWatchRoots) {
@@ -149,8 +156,8 @@ class CanonicalPathMap {
           continue ext;
         }
         if (!isExact) {
-          String parentPath = new File(root).getParent();
-          if (parentPath != null && FileUtil.namesEqual(path, parentPath)) {
+          String rootParent = new File(root).getParent();
+          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
             changedPaths.add(root);
             continue ext;
           }

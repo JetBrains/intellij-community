@@ -4,6 +4,6 @@ abstract class A<S> {
   {
     A<? extends A<? super A<Object>>> a = null;
     A<? extends A<? super A<String>>> b = null;
-      A<? extends A<?>> m = foo(a, b);
+      A<? extends A<? extends Object>> m = foo(a, b);
   }
 }

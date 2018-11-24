@@ -1000,7 +1000,10 @@ public class JBScrollPane extends JScrollPane {
   public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
     if (event.isConsumed()) return false; // event should not be consumed already
     if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
-    int modifiers = ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & event.getModifiers();
-    return modifiers == 0; // no modifiers expected except SHIFT for horizontal scrolling
+    return 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }
+
+  private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
+    ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
+    ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
 }

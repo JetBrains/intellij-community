@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
@@ -55,7 +56,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     this(element, descriptor, toolWrapper, presentation, true, null);
   }
 
-  protected ProblemDescriptionNode(RefEntity element,
+  protected ProblemDescriptionNode(@Nullable RefEntity element,
                                    CommonProblemDescriptor descriptor,
                                    @NotNull InspectionToolWrapper toolWrapper,
                                    @NotNull InspectionToolPresentation presentation,
@@ -69,7 +70,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile
                 .getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
-              : profile.getTools(toolWrapper.getShortName(), element.getRefManager().getProject()).getLevel();
+              : profile.getTools(toolWrapper.getShortName(), presentation.getContext().getProject()).getLevel();
     if (doInit) {
       init(presentation.getContext().getProject());
     }
@@ -132,9 +133,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void amnestyElement(ExcludedInspectionTreeNodesManager manager) {
-    if (!isAlreadySuppressedFromView() && !isQuickFixAppliedFromView()) {
+    if (!isAlreadySuppressedFromView()) {
       InspectionToolPresentation presentation = getPresentation();
-      presentation.amnesty(getElement());
+      presentation.amnesty(getElement(), getDescriptor());
     }
     super.amnestyElement(manager);
   }

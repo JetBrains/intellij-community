@@ -36,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author nik
@@ -115,13 +113,6 @@ public class CompilerTestUtil {
             ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
           }
           BuildManager.getInstance().clearState(project);
-          Future<?> future = BuildManager.getInstance().stopListening();
-          try {
-            future.get(100, TimeUnit.SECONDS);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
         });
       }
     });

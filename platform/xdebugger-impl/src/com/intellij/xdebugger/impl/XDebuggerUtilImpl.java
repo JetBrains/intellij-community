@@ -473,10 +473,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     PsiElement element;
     int offset = lineStart;
 
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-    }
-
     while (offset < lineEnd) {
       element = file.findElementAt(offset);
       if (element != null) {
@@ -509,10 +505,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     PsiFile file = document == null ? null : PsiManager.getInstance(project).findFile(virtualFile);
     if (file == null) {
       return null;
-    }
-
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
     }
 
     if (offset < 0) {

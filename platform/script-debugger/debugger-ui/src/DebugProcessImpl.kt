@@ -64,7 +64,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   private val _breakpointHandlers: Array<XBreakpointHandler<*>> by lazy(LazyThreadSafetyMode.NONE) { createBreakpointHandlers() }
 
-  protected final val realProcessHandler: ProcessHandler?
+  protected val realProcessHandler: ProcessHandler?
     get() = executionResult?.processHandler
 
   override final fun getSmartStepIntoHandler() = smartStepIntoHandler
@@ -185,7 +185,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     else {
       lastStep = stepAction
     }
-    return suspendContextManager.continueVm(stepAction, 1)
+    return suspendContextManager.continueVm(stepAction)
   }
 
   protected fun setOverlay(context: SuspendContext<*>) {

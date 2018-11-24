@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -154,7 +155,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private static String findEnclosingName(final SourcePosition position) {
+  private static String findEnclosingName(@NotNull final SourcePosition position) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
     try {
@@ -188,7 +189,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private static String getClassNameForJvm(final PsiClass typeDefinition) {
+  private static String getClassNameForJvm(@NotNull final PsiClass typeDefinition) {
     String suffix = typeDefinition instanceof GrTypeDefinition && ((GrTypeDefinition)typeDefinition).isTrait() ? "$Trait$Helper" : "";
     final PsiClass psiClass = typeDefinition.getContainingClass();
     if (psiClass != null) {
@@ -196,10 +197,13 @@ public class GroovyPositionManager implements PositionManager {
       return parent == null ? null : parent + "$" + typeDefinition.getName() + suffix;
     }
 
-    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
-      final String s = helper.customizeClassName(typeDefinition);
-      if (s != null) {
-        return s;
+    PsiFile file = typeDefinition.getContainingFile();
+    if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
+      for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
+        String s = helper.isAppropriateScriptFile((GroovyFile)file) ? helper.customizeClassName(typeDefinition) : null;
+        if (s != null) {
+          return s;
+        }
       }
     }
 
@@ -208,7 +212,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private static String getScriptQualifiedName(SourcePosition position) {
+  private static String getScriptQualifiedName(@NotNull SourcePosition position) {
     PsiFile file = position.getFile();
     if (file instanceof GroovyFile) {
       return getScriptFQName((GroovyFile)file);
@@ -217,7 +221,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Override
-  public SourcePosition getSourcePosition(final Location location) throws NoDataException {
+  public SourcePosition getSourcePosition(@Nullable final Location location) throws NoDataException {
     if (location == null) throw NoDataException.INSTANCE;
 
     if (LOG.isDebugEnabled()) {
@@ -244,7 +248,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private PsiFile getPsiFileByLocation(final Project project, final Location location) {
+  private PsiFile getPsiFileByLocation(@NotNull final Project project, @Nullable final Location location) {
     if (location == null) return null;
 
     final ReferenceType refType = location.declaringType();
@@ -279,10 +283,10 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private static PsiFile getExtraScriptIfNotFound(Project project,
-                                                  ReferenceType refType,
-                                                  String runtimeName,
-                                                  GlobalSearchScope searchScope) {
+  private static PsiFile getExtraScriptIfNotFound(@NotNull Project project,
+                                                  @NotNull ReferenceType refType,
+                                                  @NotNull String runtimeName,
+                                                  @NotNull GlobalSearchScope searchScope) {
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
         PsiFile file = helper.getExtraScriptIfNotFound(refType, runtimeName, project, searchScope);
@@ -302,10 +306,11 @@ public class GroovyPositionManager implements PositionManager {
     return scope;
   }
 
-  private static String getOriginalQualifiedName(ReferenceType refType, String runtimeName) {
+  private static String getOriginalQualifiedName(@NotNull ReferenceType refType, @NotNull String runtimeName) {
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
-        return helper.getOriginalScriptName(refType, runtimeName);
+        String originalScriptName = helper.getOriginalScriptName(refType, runtimeName);
+        if (originalScriptName != null) return originalScriptName;
       }
     }
     return runtimeName;
@@ -357,24 +362,26 @@ public class GroovyPositionManager implements PositionManager {
     return result;
   }
 
-  private static String getScriptFQName(GroovyFile groovyFile) {
+  @Nullable
+  private static String getScriptFQName(@NotNull GroovyFile groovyFile) {
     String packageName = groovyFile.getPackageName();
     String fileName = getRuntimeScriptName(groovyFile);
-    return !packageName.isEmpty() ? packageName + "." + fileName : fileName;
+    return StringUtil.getQualifiedName(packageName, fileName);
   }
 
-  private static String getRuntimeScriptName(GroovyFile groovyFile) {
-    VirtualFile vFile = groovyFile.getVirtualFile();
-    assert vFile != null;
-    String plainName = vFile.getNameWithoutExtension();
+  @Nullable
+  private static String getRuntimeScriptName(@NotNull GroovyFile groovyFile) {
     if (groovyFile.isScript()) {
       for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
         if (helper.isAppropriateScriptFile(groovyFile)) {
-          return helper.getRuntimeScriptName(plainName, groovyFile);
+          String runtimeScriptName = helper.getRuntimeScriptName(groovyFile);
+          if (runtimeScriptName != null) return runtimeScriptName;
         }
       }
     }
-    return plainName;
+    VirtualFile vFile = groovyFile.getVirtualFile();
+    assert vFile != null;
+    return vFile.getNameWithoutExtension();
   }
 
   @Nullable

@@ -17,20 +17,22 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.FontComboBox;
-import com.intellij.ui.FontInfoRenderer;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -95,8 +100,19 @@ public class FontOptions extends JPanel implements OptionsPanel{
                    SwingConstants.LEFT), "newline, sx 5");
     add(myUseSecondaryFontCheckbox, "newline, ax right");
     add(mySecondaryCombo, "sgx b");
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
     myEnableLigaturesCheckbox.setBorder(null);
-    add(myEnableLigaturesCheckbox, "newline, sx 2");
+    panel.add(myEnableLigaturesCheckbox);
+    JLabel warningIcon = new JLabel(AllIcons.General.BalloonWarning);
+    IdeTooltipManager.getInstance().setCustomTooltip(
+      warningIcon,
+      new TooltipWithClickableLinks.ForBrowser(warningIcon,
+                                               ApplicationBundle.message("ligatures.jre.warning",
+                                                                         ApplicationNamesInfo.getInstance().getFullProductName())));
+    warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
+    updateWarningIconVisibility(warningIcon);
+    panel.add(warningIcon);
+    add(panel, "newline, sx 2");
 
     myOnlyMonospacedCheckBox.setBorder(null);
     myUseSecondaryFontCheckbox.setBorder(null);
@@ -180,7 +196,14 @@ public class FontOptions extends JPanel implements OptionsPanel{
         }
       }
     });
-    myEnableLigaturesCheckbox.addActionListener(e -> getFontPreferences().setUseLigatures(myEnableLigaturesCheckbox.isSelected()));
+    myEnableLigaturesCheckbox.addActionListener(e -> {
+      getFontPreferences().setUseLigatures(myEnableLigaturesCheckbox.isSelected());
+      updateWarningIconVisibility(warningIcon);
+    });
+  }
+
+  private void updateWarningIconVisibility(JLabel warningIcon) {
+    warningIcon.setVisible(!SystemInfo.isJetbrainsJvm && getFontPreferences().useLigatures());
   }
 
   private int getFontSizeFromField() {

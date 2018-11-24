@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.LazyUiDisposable;
@@ -68,8 +67,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
     }
-    // don't force FixedSizeButton to occupy the whole height
-    add(wrapWithoutResize(myBrowseButton), BorderLayout.EAST);
+    add(centerComponentVertically(myBrowseButton), BorderLayout.EAST);
 
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
@@ -82,9 +80,10 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
   }
 
-  private static JPanel wrapWithoutResize(JComponent component) {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    panel.add(component);
+  @NotNull
+  private static JPanel centerComponentVertically(@NotNull Component component) {
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(component, new GridBagConstraints());
     return panel;
   }
 

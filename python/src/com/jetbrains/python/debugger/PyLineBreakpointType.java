@@ -23,10 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Processor;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.jetbrains.python.PyTokenTypes;
@@ -65,6 +63,11 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     }
 
     return stoppable.get();
+  }
+
+  @Override
+  public boolean isSuspendThreadSupported() {
+    return true;
   }
 
   private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {

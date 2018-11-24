@@ -78,6 +78,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
 /**
@@ -224,6 +225,21 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         assert sourceSetMap != null;
         sourceSetMap.put(moduleId, Pair.create(sourceSetDataNode, sourceSet));
       }
+    } else {
+      try {
+        IdeaJavaLanguageSettings languageSettings = gradleModule.getJavaLanguageSettings();
+        if(languageSettings != null) {
+          if(languageSettings.getLanguageLevel() != null) {
+            mainModuleData.setSourceCompatibility(languageSettings.getLanguageLevel().toString());
+          }
+          if(languageSettings.getTargetBytecodeVersion() != null) {
+            mainModuleData.setTargetCompatibility(languageSettings.getTargetBytecodeVersion().toString());
+          }
+        }
+      }
+      catch (UnsupportedMethodException ignore) {
+        // org.gradle.tooling.model.idea.IdeaModule.getJavaLanguageSettings method supported since Gradle 2.11
+      }
     }
 
     final ProjectData projectData = projectDataNode.getData();
@@ -257,6 +273,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       classpathEntries = ContainerUtil.emptyList();
     }
     BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
+    buildScriptClasspathData.setGradleHomeDir(buildScriptClasspathModel != null ? buildScriptClasspathModel.getGradleHomeDir() : null);
     ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
   }
 
@@ -339,6 +356,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                                   @NotNull DataNode<ModuleData> ideModule) {
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
+      DataNode<ProjectData> projectDataNode = ideModule.getDataNode(ProjectKeys.PROJECT);
+      assert projectDataNode != null;
+      final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap = projectDataNode.getUserData(MODULES_OUTPUTS);
+      assert moduleOutputsMap != null;
+
       processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
@@ -346,8 +368,23 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
             final ModuleData moduleData = dataNode.getData();
-            moduleData.setCompileOutputPath(sourceType, sourceDirectorySet.getOutputDir().getAbsolutePath());
+            File outputDir = sourceDirectorySet.getOutputDir();
+            moduleData.setCompileOutputPath(sourceType, outputDir.getAbsolutePath());
             moduleData.setInheritProjectCompileOutputPath(sourceDirectorySet.isCompilerOutputPathInherited());
+
+            File gradleOutputDir = sourceDirectorySet.getGradleOutputDir();
+            String gradleOutputPath = moduleData.getCompileOutputPath(sourceType);
+            if(!gradleOutputDir.getPath().equals(outputDir.getPath())) {
+              gradleOutputPath = ExternalSystemApiUtil.toCanonicalPath(gradleOutputDir.getAbsolutePath());
+              moduleOutputsMap.put(gradleOutputPath, Pair.create(moduleData.getId(), sourceType));
+            }
+
+            Map<ExternalSystemSourceType, String> map = dataNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS);
+            if(map == null) {
+              map = ContainerUtil.newHashMap();
+              dataNode.putUserData(GradleProjectResolver.GRADLE_OUTPUTS, map);
+            }
+            map.put(sourceType, gradleOutputPath);
           }
         }
       });
@@ -552,9 +589,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           extraJvmArgs.add(KeyValue.create("https.nonProxyHosts", nonProxyHosts));
         }
       }
-      if (httpConfigurable.USE_HTTP_PROXY && StringUtil.isNotEmpty(httpConfigurable.PROXY_LOGIN)) {
-        extraJvmArgs.add(KeyValue.create("http.proxyUser", httpConfigurable.PROXY_LOGIN));
-        extraJvmArgs.add(KeyValue.create("https.proxyUser", httpConfigurable.PROXY_LOGIN));
+      if (httpConfigurable.USE_HTTP_PROXY && StringUtil.isNotEmpty(httpConfigurable.getProxyLogin())) {
+        extraJvmArgs.add(KeyValue.create("http.proxyUser", httpConfigurable.getProxyLogin()));
+        extraJvmArgs.add(KeyValue.create("https.proxyUser", httpConfigurable.getProxyLogin()));
         final String plainProxyPassword = httpConfigurable.getPlainProxyPassword();
         extraJvmArgs.add(KeyValue.create("http.proxyPassword", plainProxyPassword));
         extraJvmArgs.add(KeyValue.create("https.proxyPassword", plainProxyPassword));

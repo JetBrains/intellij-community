@@ -17,22 +17,24 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
-import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Map;
+
+import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
 
 public class CCFromCourseArchive extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCFromCourseArchive.class.getName());
@@ -62,22 +64,22 @@ public class CCFromCourseArchive extends DumbAwareAction {
     Reader reader = null;
     try {
       ZipUtil.unzip(null, new File(basePath), new File(virtualFile.getPath()), null, null, true);
-      reader = new InputStreamReader(new FileInputStream(new File(basePath, EduNames.COURSE_META_FILE)));
-      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+      File courseMetaFile = new File(basePath, EduNames.COURSE_META_FILE);
+      reader = new InputStreamReader(new FileInputStream(courseMetaFile));
+      Gson gson = new GsonBuilder()
+        .registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseMetaFile))
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .create();
       Course course = gson.fromJson(reader, Course.class);
-      if (course == null || course.getLessons().isEmpty() || StringUtil.isEmptyOrSpaces(course.getLessons().get(0).getName())) {
-        try {
-          reader.close();
-        }
-        catch (IOException e) {
-          LOG.error(e.getMessage());
-        }
-        reader = new InputStreamReader(new FileInputStream(new File(basePath, EduNames.COURSE_META_FILE)));
-        OldCourse oldCourse = gson.fromJson(reader, OldCourse.class);
-        course = EduUtils.transformOldCourse(oldCourse);
+
+      if (course == null) {
+        Messages.showErrorDialog("This course is incompatible with current version", "Failed to Unpack Course");
+        return;
       }
 
       StudyTaskManager.getInstance(project).setCourse(course);
+      File courseDir = new File(OUR_COURSES_DIR, course.getName() + "-" + project.getName());
+      course.setCourseDirectory(courseDir.getPath());
       course.setCourseMode(CCUtils.COURSE_MODE);
       project.getBaseDir().refresh(false, true);
       int index = 1;
@@ -152,27 +154,30 @@ public class CCFromCourseArchive extends DumbAwareAction {
   private static void replaceAnswerPlaceholder(@NotNull final Project project,
                                                @NotNull final Document document,
                                                @NotNull final AnswerPlaceholder answerPlaceholder) {
-    final int offset = answerPlaceholder.getRealStartOffset(document);
+    final int offset = answerPlaceholder.getOffset();
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       final String text = document.getText(TextRange.create(offset, offset + answerPlaceholder.getRealLength()));
       answerPlaceholder.setTaskText(text);
       answerPlaceholder.init();
       final VirtualFile hints = project.getBaseDir().findChild(EduNames.HINTS);
       if (hints != null) {
-        final String hintFile = answerPlaceholder.getHint();
-        final VirtualFile virtualFile = hints.findChild(hintFile);
-        if (virtualFile != null) {
-          final Document hintDocument = FileDocumentManager.getInstance().getDocument(virtualFile);
-          if (hintDocument != null) {
-            final String hintText = hintDocument.getText();
-            answerPlaceholder.setHint(hintText);
-          }
+        final ArrayList<String> result = new ArrayList<>();
+        for (String hint : answerPlaceholder.getHints()) {
+          final VirtualFile virtualFile = hints.findChild(hint);
+          if (virtualFile != null) {
+            final Document hintDocument = FileDocumentManager.getInstance().getDocument(virtualFile);
+            if (hintDocument != null) {
+              final String hintText = hintDocument.getText();
+              result.add(hintText);
+            }
+          }          
         }
+        answerPlaceholder.setHints(result);
       }
-
       document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());
+      answerPlaceholder.setUseLength(false);
       FileDocumentManager.getInstance().saveDocument(document);
-    }), "x", "qwe");
+    }), "Replace answer placeholder", "From Course Archive");
   }
 
   private static void synchronize(@NotNull final Project project) {

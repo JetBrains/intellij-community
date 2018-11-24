@@ -28,6 +28,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -38,6 +39,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -81,15 +85,11 @@ import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.sdk.PythonSdkType;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -858,6 +858,28 @@ public class PyUtil {
     return result;
   }
 
+  public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                                     boolean modal, boolean canBeCancelled, @NotNull final Consumer<ProgressIndicator> function) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (modal) {
+        ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            function.consume(indicator);
+          }
+        });
+      }
+      else {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            function.consume(indicator);
+          }
+        });
+      }
+    }, ModalityState.current());
+  }
+
   /**
    * Executes code only if <pre>_PYCHARM_VERBOSE_MODE</pre> is set in env (which should be done for debug purposes only)
    * @param runnable code to call
@@ -866,6 +888,16 @@ public class PyUtil {
     if (System.getenv().get("_PYCHARM_VERBOSE_MODE") != null) {
       runnable.run();
     }
+  }
+
+  /**
+   * Returns the line comment that immediately precedes statement list of the given compound statement. Python parser ensures
+   * that it follows the statement header, i.e. it's directly after the colon, not on its own line. 
+   */
+  @Nullable
+  public static PsiComment getCommentOnHeaderLine(@NotNull PyStatementListContainer container) {
+    final PyStatementList statementList = container.getStatementList();
+    return as(PyPsiUtils.getPrevNonWhitespaceSibling(statementList), PsiComment.class);
   }
 
   public static class KnownDecoratorProviderHolder {

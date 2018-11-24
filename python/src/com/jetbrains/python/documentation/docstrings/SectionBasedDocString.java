@@ -17,10 +17,8 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyIndentUtil;
@@ -260,7 +258,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   protected boolean isValidName(@NotNull String name) {
-    return PyNames.isIdentifierString(name.toString());
+    return PyNames.isIdentifierString(name);
   }
 
   /**

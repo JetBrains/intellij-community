@@ -539,8 +539,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       myNamesToResolve.add(path);
     }
     myNamesResolver.addRequest(() -> {
-      final Set<String> paths = Collections.synchronizedSet(myNamesToResolve);
-      synchronized (myNamesToResolve) {myNamesToResolve.clear();}
+      final Set<String> paths;
+      synchronized (myNamesToResolve) {
+        paths = new HashSet<String>(myNamesToResolve);
+        myNamesToResolve.clear();
+      }
       for (String p : paths) {
         myNameCache.put(p, readProjectName(p));
       }

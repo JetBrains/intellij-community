@@ -6,17 +6,14 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Processor;
 import com.jetbrains.jsonSchema.extension.SchemaType;
-import com.jetbrains.jsonSchema.extension.schema.JsonSchemaRefReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
 class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
   @NotNull private final String myName;
   @NotNull private final SchemaType mySchemaType;
+  @NotNull private final JsonSchemaObject mySchemaObject;
 
   @NotNull
   private final CompletionContributor myContributor;
@@ -25,7 +22,7 @@ class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
 
   @NotNull
   private final DocumentationProvider myDocumentationProvider;
-  private Convertor<String, PsiElement> my2SchemaResolver;
+
 
   public JsonSchemaObjectCodeInsightWrapper(@NotNull Project project, @NotNull String name,
                                             @NotNull SchemaType type,
@@ -33,17 +30,10 @@ class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
                                             @NotNull JsonSchemaObject schemaObject) {
     myName = name;
     mySchemaType = type;
+    mySchemaObject = schemaObject;
     myContributor = new JsonBySchemaObjectCompletionContributor(type, schemaObject);
     myAnnotator = new JsonBySchemaObjectAnnotator(schemaObject);
     myDocumentationProvider = new JsonBySchemaDocumentationProvider(schemaObject);
-    my2SchemaResolver = new Convertor<String, PsiElement>() {
-      @Override
-      public PsiElement convert(String key) {
-        final PsiFile psiFile = PsiManager.getInstance(project).findFile(schemaFile);
-        if (psiFile == null) return null;
-        return JsonSchemaRefReferenceProvider.resolveSchemaProperty(psiFile, null, key);
-      }
-    };
   }
 
   @Override
@@ -69,10 +59,9 @@ class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
     return myDocumentationProvider;
   }
 
-  @NotNull
   @Override
-  public Convertor<String, PsiElement> getToPropertyResolver() {
-    return my2SchemaResolver;
+  public boolean iterateSchemaObjects(@NotNull final Processor<JsonSchemaObject> consumer) {
+    return consumer.process(mySchemaObject);
   }
 
   public boolean isUserSchema() {

@@ -81,11 +81,12 @@ public class CollectClassMembersUtil {
 
   @NotNull
   private static ClassMembers getCachedMembers(@NotNull PsiClass aClass, boolean includeSynthetic) {
-    PsiUtilCore.ensureValid(aClass);
-    if (includeSynthetic && !checkClass(aClass)) {
-      includeSynthetic = false;
+    CachedValue<ClassMembers> cached = aClass.getUserData(getMemberCacheKey(includeSynthetic));
+    if (cached != null && cached.hasUpToDateValue()) {
+      return cached.getValue();
     }
-    return buildCache(aClass, includeSynthetic);
+
+    return buildCache(aClass, includeSynthetic && checkClass(aClass));
   }
 
   private static boolean checkClass(PsiClass aClass) {
@@ -122,8 +123,7 @@ public class CollectClassMembersUtil {
   }
 
   private static ClassMembers buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
-    Key<CachedValue<ClassMembers>> key = includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
-    return CachedValuesManager.getManager(aClass.getProject()).getCachedValue(aClass, key, () -> {
+    return CachedValuesManager.getManager(aClass.getProject()).getCachedValue(aClass, getMemberCacheKey(includeSynthetic), () -> {
       LinkedHashMap<String, CandidateInfo> allFields = ContainerUtil.newLinkedHashMap();
       LinkedHashMap<String, List<CandidateInfo>> allMethods = ContainerUtil.newLinkedHashMap();
       LinkedHashMap<String, CandidateInfo> allInnerClasses = ContainerUtil.newLinkedHashMap();
@@ -133,6 +133,10 @@ public class CollectClassMembersUtil {
         ClassMembers.create(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
       );
     }, false);
+  }
+
+  private static Key<CachedValue<ClassMembers>> getMemberCacheKey(boolean includeSynthetic) {
+    return includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
   }
 
   private static void processClass(@NotNull PsiClass aClass,

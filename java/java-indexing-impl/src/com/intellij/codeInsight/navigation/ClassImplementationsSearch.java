@@ -19,7 +19,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFunctionalExpression;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -37,20 +36,16 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Def
   }
 
   public static boolean processImplementations(final PsiClass psiClass, final Processor<PsiElement> processor, SearchScope scope) {
-    if (!FunctionalExpressionSearch.search(psiClass, scope).forEach(expression -> {
-      return processor.process(expression);
-    })) {
-      return false;
-    }
-
     final boolean showInterfaces = Registry.is("ide.goto.implementation.show.interfaces");
-    return ClassInheritorsSearch.search(psiClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(@NotNull PsiClass element) {
+    if (!ClassInheritorsSearch.search(psiClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(element -> {
         if (!showInterfaces && element.isInterface()) {
           return true;
         }
         return processor.process(element);
-      }
-    }));
+    }))) {
+      return false;
+    }
+
+    return FunctionalExpressionSearch.search(psiClass, scope).forEach((Processor<PsiFunctionalExpression>)processor::process);
   }
 }

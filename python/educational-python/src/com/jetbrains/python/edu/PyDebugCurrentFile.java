@@ -1,6 +1,5 @@
 package com.jetbrains.python.edu;
 
-import com.intellij.execution.actions.RunContextAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
@@ -15,7 +14,7 @@ public class PyDebugCurrentFile implements PyExecuteFileExtensionPoint {
     if (!PlatformUtils.isPyCharmEducational()) {
       return null;
     }
-    return new RunContextAction(PyEduDebugExecutor.getInstance());
+    return new PyStudyRunContextAction(PyEduDebugExecutor.getInstance());
   }
 
   @Override

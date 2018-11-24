@@ -72,7 +72,6 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     }
 
     return !ContainerUtil.isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY)) ||
-           SelectedFilesHelper.hasChangedOrUnversionedFiles(project, e) ||
            !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)) ||
            !ArrayUtil.isEmpty(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
   }

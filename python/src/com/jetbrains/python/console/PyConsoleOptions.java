@@ -94,6 +94,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myUseModuleSdk;
     public String myModuleName = null;
     public Map<String, String> myEnvs = Maps.newHashMap();
+    public boolean myPassParentEnvs = true;
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
     public boolean myAddSourceRoots;
@@ -111,6 +112,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       mySdkHome = form.getSdkHome();
       myInterpreterOptions = form.getInterpreterOptions();
       myEnvs = form.getEnvs();
+      myPassParentEnvs = form.isPassParentEnvs();
       myUseModuleSdk = form.isUseModuleSdk();
       myModuleName = form.getModule() == null ? null : form.getModule().getName();
       myWorkingDirectory = form.getWorkingDirectory();
@@ -124,6 +126,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return !ComparatorUtil.equalsNullable(mySdkHome, form.getSdkHome()) ||
              !myInterpreterOptions.equals(form.getInterpreterOptions()) ||
              !myEnvs.equals(form.getEnvs()) ||
+             myPassParentEnvs != form.isPassParentEnvs() || 
              myUseModuleSdk != form.isUseModuleSdk() ||
              myAddContentRoots != form.shouldAddContentRoots() ||
              myAddSourceRoots != form.shouldAddSourceRoots()
@@ -134,6 +137,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void reset(Project project, AbstractPythonRunConfigurationParams form) {
       form.setEnvs(myEnvs);
+      form.setPassParentEnvs(myPassParentEnvs);
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
       form.setUseModuleSdk(myUseModuleSdk);
@@ -234,13 +238,14 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     }
 
     @Override
+    @Attribute("is-pass-parent-envs")
     public boolean isPassParentEnvs() {
-      return true; // doesn't make sense for console
+      return myPassParentEnvs;
     }
 
     @Override
     public void setPassParentEnvs(boolean passParentEnvs) {
-      // doesn't make sense for console
+      myPassParentEnvs = passParentEnvs;
     }
 
     public void setModuleName(String moduleName) {

@@ -41,7 +41,7 @@ public class GraphicsUtil {
     setupAntialiasing(g2, true, false);
   }
 
-  public static int stringWidth(String text, Font font) {
+  public static int stringWidth(@NotNull String text, Font font) {
     setupAntialiasing(ourGraphics, true, true);
     return ourGraphics.getFontMetrics(font).stringWidth(text);
   }

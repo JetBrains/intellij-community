@@ -92,6 +92,15 @@ public class TooBroadScope
         runnable.run();
     }
 
+    void doNotNarrowInsideLambda() {
+        final int[] counter = new int[1];
+        Runnable runnable = () -> {
+            counter[0] += 1;
+            System.out.println("counter = " + counter);
+        };
+        runnable.run();
+    }
+
     void switchLabel() {
         final int other = 4;
         switch (2)

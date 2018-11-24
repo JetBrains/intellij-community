@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 /**
  * @author Maxim.Medvedev
@@ -61,9 +62,14 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
     consumer.addMemberHolder(new CustomMembersHolder() {
 
       @Override
-      public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-        if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true;
-        return methodsMap.getValue().processMethods(processor, state, descriptor.getPsiType(), descriptor.getProject());
+      public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor _processor, ResolveState state) {
+        for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(_processor)) {
+          if (ResolveUtil.shouldProcessMethods(each.getHint(ElementClassHint.KEY)) &&
+              !methodsMap.getValue().processMethods(each, state, descriptor.getPsiType(), descriptor.getProject())) {
+            return false;
+          }
+        }
+        return true;
       }
     });
   }

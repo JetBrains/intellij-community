@@ -22,6 +22,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -99,6 +100,7 @@ public class CommandLineProcessor {
       return null;
     }
     else {
+      NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
       Project project = findBestProject(virtualFile, projects);
       if (line == -1) {
         new OpenFileDescriptor(project, virtualFile).navigate(true);

@@ -72,7 +72,7 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
   }
 
   private static boolean canCompare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return file1.isValid() && file2.isValid() && !file1.equals(file2);
+    return !file1.equals(file2) && hasContent(file1) && hasContent(file2);
   }
 
   @Nullable

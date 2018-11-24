@@ -76,9 +76,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
         myRefreshIndicator.stop();
         Application app = ApplicationManager.getApplication();
         // invokeLater might be not necessary once transactions are enforced
-        app.invokeLater(
-          () -> TransactionGuard.getInstance().submitTransaction(app, transaction, session::fireEvents),
-          modality);
+        app.invokeLater(session::fireEvents, modality);
       }
     });
     myEventCounter.eventHappened(session);
