@@ -63,7 +63,6 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.collections.HashSet
 
 /**
  * @author traff
@@ -90,7 +89,7 @@ class CompletionQualityStatsAction : AnAction() {
           (dialog.scope as LocalSearchScope).virtualFiles.asList()
         }
 
-        val wordSet = HashSet<String>() // we don't want to complete the same words more than once
+        val wordSet = HashMap<String, Int>() // we don't want to complete the same words more than twice
 
         for (file in files) {
           if (indicator.isCanceled) {
@@ -164,7 +163,7 @@ class CompletionQualityStatsAction : AnAction() {
     console.print(text, ConsoleViewContentType.NORMAL_OUTPUT)
   }
 
-  private fun getCompletionAttempts(file: PsiFile, wordSet: HashSet<String>): List<Pair<Int, String>> {
+  private fun getCompletionAttempts(file: PsiFile, wordSet: HashMap<String, Int>): List<Pair<Int, String>> {
     val res = Lists.newArrayList<Pair<Int, String>>()
 
     val text = file.text
@@ -176,9 +175,9 @@ class CompletionQualityStatsAction : AnAction() {
 
         if (el != null && el !is PsiComment) {
           val word = range.substring(text)
-          if (!word.isEmpty() && word !in wordSet) {
+          if (!word.isEmpty() && wordSet.getOrDefault(word, 0)<2) {
             res.add(Pair(startIndex - 1, word))
-            wordSet.add(word)
+            wordSet[word] = wordSet.getOrDefault(word, 0) + 1
           }
         }
       }
