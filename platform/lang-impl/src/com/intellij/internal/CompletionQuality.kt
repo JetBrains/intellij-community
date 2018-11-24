@@ -124,8 +124,7 @@ class CompletionQualityStatsAction : AnAction() {
                     if (indicator.isCanceled) {
                       break
                     }
-                    val line = newEditor.document.getLineNumber(pair.first)
-                    evalCompletionAt(project, file.path + ":$line", newEditor, text, pair.first, pair.second, stats, indicator)
+                    evalCompletionAt(project, file.path, newEditor, text, pair.first, pair.second, stats, indicator)
                   }
                 }
                 finally {
@@ -318,8 +317,8 @@ class CompletionQualityStatsAction : AnAction() {
 
     val result = Ref.create(-1)
     val total = Ref.create(0)
-    try {
-      ApplicationManager.getApplication().invokeAndWait(Runnable {
+    ApplicationManager.getApplication().invokeAndWait(Runnable {
+      try {
         WriteAction.run<Exception> {
           editor.document.setText(newText)
           FileDocumentManager.getInstance().saveDocument(editor.document)
@@ -358,18 +357,14 @@ class CompletionQualityStatsAction : AnAction() {
 
         timeStats.cnt += 1
         timeStats.time += System.currentTimeMillis() - start
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
+      finally {
+      }
+    }, ModalityState.NON_MODAL)
 
-      }, ModalityState.NON_MODAL)
-    } catch (e: Exception) {
-      LOG.error(e)
-    }
-    finally {
-      ApplicationManager.getApplication().invokeAndWait(Runnable {
-        WriteAction.run<Exception> {
-          editor.document.setText(newText)
-        }
-      })
-    }
 
     return Pair(result.get(), total.get())
   }
