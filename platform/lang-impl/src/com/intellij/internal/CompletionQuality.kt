@@ -177,7 +177,7 @@ class CompletionQualityStatsAction : AnAction() {
         if (el != null && el !is PsiComment) {
           val word = range.substring(text)
           if (!word.isEmpty() && word !in wordSet) {
-            res.add(Pair(startIndex-1, word))
+            res.add(Pair(startIndex - 1, word))
             wordSet.add(word)
           }
         }
@@ -227,7 +227,8 @@ class CompletionQualityStatsAction : AnAction() {
 
 
     stats.completions.add(
-      Completion(file.path, startIndex, existingCompletion, rank0, total0, rank1, total1, rank3, total3, charsToFirst, charsToFirst3, completionTime.cnt, completionTime.time))
+      Completion(file.path, startIndex, existingCompletion, rank0, total0, rank1, total1, rank3, total3, charsToFirst, charsToFirst3,
+                 completionTime.cnt, completionTime.time))
   }
 
   private fun calcCharsToFirstN(rank0: Int,
@@ -274,31 +275,32 @@ class CompletionQualityStatsAction : AnAction() {
                                      resultInFirstN: Int,
                                      cache: Array<Pair<Int, Int>?>,
                                      timeStats: CompletionTime): Int {
-    if (from < to) {
-      val mid = (from + to) / 2
+
+    for (mid in from until to) {
       if (indicator.isCanceled) {
         return -1
       }
-      val (rank, total) = if (cache[mid] != null) {cache[mid]!!} else {findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)}
+
+      val (rank, total) = if (cache[mid] != null) {
+        cache[mid]!!
+      }
+      else {
+        findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)
+      }
       if (cache[mid] == null) {
         cache[mid] = Pair(rank, total)
       }
 
-      if ((rank in 0..(resultInFirstN - 1)) || rank == -2) {
-        if (from >= mid - 1) {
-          return mid
-        }
-        else {
-          return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, from, mid - 1, resultInFirstN, cache, timeStats)
-        }
+      if (rank == -2) {
+        return -1
       }
-      else {
-        return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, mid + 1, to, resultInFirstN, cache, timeStats)
+
+      if (rank < resultInFirstN) {
+        return mid
       }
     }
-    else {
-      return -1
-    }
+
+    return -1
   }
 
   private data class CompletionTime(var cnt: Int, var time: Long)
@@ -337,6 +339,7 @@ class CompletionQualityStatsAction : AnAction() {
             super.completionFinished(indicator, hasModifiers)
             ref.set(indicator.lookup!!.items)
           }
+
           override fun isExecutedProgrammatically() = true
         }
         handler.invokeCompletion(project, editor, 1)
