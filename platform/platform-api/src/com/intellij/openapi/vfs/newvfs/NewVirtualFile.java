@@ -16,10 +16,10 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,4 +127,10 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @NotNull
   public abstract Iterable<VirtualFile> iterInDbChildren();
 
+  @NotNull
+  @Deprecated
+  @ApiStatus.Experimental
+  public Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
+    return iterInDbChildren();
+  }
 }

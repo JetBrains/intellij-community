@@ -116,9 +116,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    offset = adjustOffset(file, document, offset);
-
-    return file.findReferenceAt(offset);
+    PsiReference ref = file.findReferenceAt(adjustOffset(file, document, offset));
+    if (ref == null) return null;
+    int elementOffset = ref.getElement().getTextRange().getStartOffset();
+    if (ref.getRangeInElement().shiftRight(elementOffset).containsOffset(offset)) {
+      return ref;
+    }
+    return null;
   }
 
   /**
@@ -140,8 +144,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
     if (correctedOffset >= 0) {
       char charAt = text.charAt(correctedOffset);
-      if (isIdentifierPart(file, text, correctedOffset) ||
-          charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']') {
+      if (charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']' ||
+          isIdentifierPart(file, text, correctedOffset)) {
         return correctedOffset;
       }
     }
@@ -220,9 +224,9 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    offset = adjustOffset(file, document, offset);
+    int adjusted = adjustOffset(file, document, offset);
 
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = file.findElementAt(adjusted);
     if (BitUtil.isSet(flags, REFERENCED_ELEMENT_ACCEPTED)) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
       //if (referenceOrReferencedElement == null) {
@@ -237,7 +241,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     if (BitUtil.isSet(flags, ELEMENT_NAME_ACCEPTED)) {
       if (element instanceof PsiNamedElement) return element;
-      return getNamedElement(element, offset - element.getTextRange().getStartOffset());
+      return getNamedElement(element, adjusted - element.getTextRange().getStartOffset());
     }
     return null;
   }

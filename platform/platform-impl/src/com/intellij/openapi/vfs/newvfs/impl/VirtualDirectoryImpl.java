@@ -305,21 +305,38 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     boolean areChildrenLoadedInPersistentFs = ourPersistence.areChildrenLoaded(this);
-    
+
     if (OptionHolder.loadAllChildren) {
       if (areChildrenLoadedInPersistentFs) {
         return Arrays.asList(getChildren());
       }
     }
-    
+
     if (!areChildrenLoadedInPersistentFs) {
-      final String[] names = ourPersistence.listPersisted(this);
-      final NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
-      for (String name : names) {
-        findChild(name, false, false, delegate);
-      }
+      loadPersistedChildren();
     }
     return getCachedChildren();
+  }
+
+  @NotNull
+  @Override
+  public Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
+    if (!ourPersistence.wereChildrenAccessed(this)) {
+      return Collections.emptyList();
+    }
+
+    if (!ourPersistence.areChildrenLoaded(this)) {
+      loadPersistedChildren();
+    }
+    return getCachedChildren();
+  }
+
+  protected void loadPersistedChildren() {
+    final String[] names = ourPersistence.listPersisted(this);
+    final NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
+    for (String name : names) {
+      findChild(name, false, false, delegate);
+    }
   }
 
   @Override
