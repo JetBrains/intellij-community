@@ -53,7 +53,9 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     if (project.isDisposed() || !Utils.isEnabled(settings)) return null;
 
     // Get editorconfig settings
-    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(project, file);
+    final List<EditorConfig.OutPair> outPairs =
+      SettingsProviderComponent.getInstance().getOutPairs(
+        project, file, EditorConfigNavigationActionsFactory.getInstance(psiFile.getVirtualFile()));
     // Apply editorconfig settings for the current editor
     return applyCodeStyleSettings(project, outPairs, file, settings);
   }
@@ -183,7 +185,8 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   public AnAction[] getActions(@NotNull PsiFile file, @NotNull IndentOptions indentOptions) {
     if (isEditorConfigOptions(indentOptions)) {
       List<AnAction> actions = ContainerUtil.newArrayList();
-      actions.addAll(EditorConfigNavigationActionsFactory.getNavigationActions(file));
+      EditorConfigNavigationActionsFactory navigationActionsFactory = EditorConfigNavigationActionsFactory.getInstance(file.getVirtualFile());
+      actions.addAll(navigationActionsFactory.getNavigationActions(file.getProject()));
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
     return null;
