@@ -375,3 +375,36 @@ class CtorTest {
     test = Optional.empty();
   }
 }
+
+class FinallyTest
+{
+  private Optional<String> optionalValue = Optional.of("StringValue");
+
+  // IDEA-195886
+  private void methodA()
+  {
+    if (optionalValue.isPresent()) {
+      System.out.println(optionalValue.get().toLowerCase());
+    }
+    if (optionalValue.isPresent()) {
+      System.out.println(optionalValue.get());
+    }
+  }
+
+  private void methodA1()
+  {
+    if (optionalValue.isPresent()) {
+      System.out.println(optionalValue.get().toLowerCase());
+    }
+    try {
+      methodB();
+    }
+    finally {
+      if (optionalValue.isPresent()) {
+        System.out.println(optionalValue.get());
+      }
+    }
+  }
+
+  private native void methodB();
+}

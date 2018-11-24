@@ -18,7 +18,12 @@ public class YAMLQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
   @Override
   public String getQualifiedName(PsiElement element) {
-    return element instanceof YAMLPsiElement ? YAMLUtil.getConfigFullName((YAMLPsiElement)element) : null;
+    if (element instanceof YAMLPsiElement) {
+      String configFullName = YAMLUtil.getConfigFullName((YAMLPsiElement)element);
+      if (!configFullName.isEmpty())
+        return configFullName;
+    }
+    return null;
   }
 
   @Nullable

@@ -47,7 +47,7 @@ public class TypeInferenceHelper {
 
   private static <T> T doInference(@NotNull Map<String, PsiType> bindings, @NotNull Computable<T> computation) {
     InferenceContext old = ourInferenceContext.get();
-    ourInferenceContext.set(new InferenceContext.PartialContext(bindings));
+    ourInferenceContext.set(new InferenceContext.PartialContext(bindings, getCurrentContext()));
     try {
       return computation.compute();
     } catch(Throwable e) {

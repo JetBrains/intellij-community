@@ -69,15 +69,15 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return ID;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public PsiElement getElementFromNode(@Nullable Object node) {
+  public List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object o = getValueFromNode(node);
     if (o instanceof PackageElement) {
       PsiPackage aPackage = ((PackageElement)o).getPackage();
-      return aPackage.isValid() ? aPackage : null;
+      return ContainerUtil.createMaybeSingletonList(aPackage.isValid() ? aPackage : null);
     }
-    return super.getElementFromNode(node);
+    return super.getElementsFromNode(node);
   }
 
   @Override

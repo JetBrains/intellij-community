@@ -218,7 +218,7 @@ final class FileTrees {
     for (int i = firstNonFilePsiIndex; i < stubList.size(); i++) {
       StubElement<?> stub = stubList.get(i);
       CompositeElement node = nodeList.get(i);
-      assert stub.getStubType() == node.getElementType() : "Stub type mismatch";
+      assert stub.getStubType() == node.getElementType() : "Stub type mismatch: " + stub.getStubType() + "!=" + node.getElementType() + " in #" + node.getElementType().getLanguage();
 
       PsiElement psi = Objects.requireNonNull(srcSpine.get(i));
       if (takePsiFromStubs) {

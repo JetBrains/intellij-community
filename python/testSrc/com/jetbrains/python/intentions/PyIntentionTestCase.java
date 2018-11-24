@@ -2,11 +2,14 @@
 package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.List;
 
 public abstract class PyIntentionTestCase extends PyTestCase {
   @Override
@@ -20,12 +23,15 @@ public abstract class PyIntentionTestCase extends PyTestCase {
   }
 
   protected void doIntentionTest(final String hint, String... files) {
-    final String testFileName = getTestName(true);
+    final String testFileName;
     final PsiFile file;
-    if (files.length>0) {
+    if (files.length > 0) {
       final PsiFile[] allFiles = myFixture.configureByFiles(files);
       file = allFiles[0];
-    } else {
+      testFileName = FileUtil.getNameWithoutExtension(file.getName());
+    }
+    else {
+      testFileName = getTestName(true);
       file = myFixture.configureByFile(testFileName + ".py");
     }
     final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
@@ -38,8 +44,8 @@ public abstract class PyIntentionTestCase extends PyTestCase {
   protected void doNegativeTest(final String hint) {
     final String testFileName = getTestName(true);
     final PsiFile file = myFixture.configureByFile(testFileName + ".py");
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(hint);
-    assertNull(intentionAction);
+    final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(hint);
+    assertEmpty(intentionActions);
     assertSdkRootsNotParsed(file);
   }
 }

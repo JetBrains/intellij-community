@@ -76,7 +76,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       .sortedWith(PreferredSdkComparator())
     val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, module, sdks, newProjectPath),
                                            createAnacondaPanel(project, module),
-                                           PyAddSystemWideInterpreterPanel(existingSdks))
+                                           PyAddSystemWideInterpreterPanel(module, existingSdks))
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
       .mapNotNull {
         it.createView(project = project, module = module, newProjectPath = newProjectPath, existingSdks = existingSdks)

@@ -214,4 +214,19 @@ public class LongRangeBasics {
       }
     }
   }
+
+  void testLoopLong() {
+    // IDEA-196624
+    long maxCount = 3_000_000_000L;
+    for ( long xx = 0; xx < maxCount; xx += 1 ) {
+      System.out.println();
+    }
+  }
+
+  void testLoopInt() {
+    long maxCount = 3_000_000_000L;
+    for ( int xx = 0; <warning descr="Condition 'xx < maxCount' is always 'true'">xx < maxCount</warning>; xx += 1 ) {
+      System.out.println();
+    }
+  }
 }

@@ -5,6 +5,7 @@ import com.intellij.json.psi.*;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -297,6 +298,13 @@ public class JsonSchemaReader {
       return ((JsonBooleanLiteral)value).getValue();
     } else if (value instanceof JsonNullLiteral) {
       return "null";
+    } else if (value instanceof JsonArray) {
+      return new EnumArrayValueWrapper(((JsonArray)value).getValueList().stream().map(v -> readEnumValue(v)).filter(v -> v != null).toArray());
+    } else if (value instanceof JsonObject) {
+      return new EnumObjectValueWrapper(((JsonObject)value).getPropertyList().stream()
+        .map(p -> Pair.create(p.getName(), readEnumValue(p.getValue())))
+        .filter(p -> p.second != null)
+        .collect(Collectors.toMap(p -> p.first, p -> p.second)));
     }
     return null;
   }
@@ -308,7 +316,8 @@ public class JsonSchemaReader {
         final List<JsonValue> list = ((JsonArray)element).getValueList();
         for (JsonValue value : list) {
           Object enumValue = readEnumValue(value);
-          if (enumValue != null) objects.add(enumValue);
+          if (enumValue == null) return; // don't validate if we have unsupported entity kinds
+          objects.add(enumValue);
         }
         object.setEnum(objects);
       }

@@ -17,18 +17,12 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.actions.OptimizeImportsAction;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.sdk.PythonSdkType;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -122,29 +116,6 @@ public class PyOptimizeImportsTest extends PyTestCase {
       OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
       myFixture.checkResultByFile(testName + "/main.after.py");
     });
-  }
-
-  private void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
-    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
-    assertNotNull(sdk);
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      modificator.addRoot(directory, OrderRootType.CLASSES);
-      modificator.commitChanges();
-    });
-    try {
-      runnable.run();
-    }
-    finally {
-      //noinspection ThrowFromFinallyBlock
-      WriteAction.run(() -> {
-        final SdkModificator modificator = sdk.getSdkModificator();
-        assertNotNull(modificator);
-        modificator.removeRoot(directory, OrderRootType.CLASSES);
-        modificator.commitChanges();
-      });
-    }
   }
 
   // PY-18792

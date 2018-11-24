@@ -81,11 +81,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       }
     });
     initFileOpenedListener(application.getMessageBus());
-
-    // make sure languages are initialized to avoid PerFileMappingsBase.handleUnknownMapping()
-    for (StubElementTypeHolderEP holderEP : Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
-      holderEP.initialize();
-    }
   }
 
   @NotNull
@@ -164,9 +159,21 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   public void dispose() {
   }
 
+  private static class LanguageLoader {
+    static {
+      // make sure languages are initialized to avoid PerFileMappingsBase.handleUnknownMapping()
+      for (StubElementTypeHolderEP holderEP : Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
+        holderEP.initialize();
+      }
+    }
+    static void ensureLoaded() {}
+  }
+
   private static class MyLanguages extends PerFileMappingsBase<Language> {
+
     @Override
     public List<Language> getAvailableValues() {
+      LanguageLoader.ensureLoaded();
       return LanguageUtil.getFileLanguages();
     }
 

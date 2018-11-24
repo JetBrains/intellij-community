@@ -73,7 +73,7 @@ public final class PyMagicLiteralRenameHandler implements RenameHandler {
   @Override
   public boolean isRenaming(@NotNull final DataContext dataContext) {
     final PyStringLiteralExpression literal = getStringLiteral(dataContext);
-    return !((literal == null) || !PyMagicLiteralTools.isMagicLiteral(literal));
+    return !((literal == null) || !PyMagicLiteralTools.couldBeMagicLiteral(literal));
   }
 
   @Override

@@ -891,4 +891,34 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                    "  \"name\": <warning>\"aA\"</warning>\n" +
                    "}");
   }
+
+  public void testEnumArrayValue() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"enum\": [ [{\"x\": 5}, [true], \"q\"] ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\"foo\": <warning>5</warning>}");
+    doTest(schema, "{\"foo\": <warning>[ ]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}, true]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}, [true]]</warning>}");
+    doTest(schema, "{\"foo\": [  { \"x\"   :   5 }  ,  [ true ]  , \"q\"  ]}");
+  }
+
+  public void testEnumObjectValue() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"enum\": [ {\"x\": 5} ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\"foo\": <warning>{}</warning>}");
+    doTest(schema, "{\"foo\": <warning>{\"x\": 4}</warning>}");
+    doTest(schema, "{\"foo\": <warning>{\"x\": true}</warning>}");
+    doTest(schema, "{\"foo\": { \r  \"x\"  : \t  5 \n  }}");
+  }
 }

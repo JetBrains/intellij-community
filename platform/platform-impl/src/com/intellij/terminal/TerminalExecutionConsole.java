@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -88,25 +87,11 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
 
     myTerminalWidget = new JBTerminalWidget(project, 200, 24, provider, this) {
-      private final TerminalInputBuffer myInputBuffer = new TerminalInputBuffer(myTerminal);
-
       @Override
       protected JBTerminalPanel createTerminalPanel(@NotNull SettingsProvider settingsProvider,
                                                     @NotNull StyleState styleState,
                                                     @NotNull TerminalTextBuffer textBuffer) {
         JBTerminalPanel panel = new JBTerminalPanel((JBTerminalSystemSettingsProviderBase)settingsProvider, textBuffer, styleState) {
-          @Override
-          public void initKeyHandler() {
-            setKeyListener(new TerminalKeyHandler() {
-              @Override
-              public void keyPressed(KeyEvent e) {
-                if (!myInputBuffer.keyPressed(e)) {
-                  super.keyPressed(e);
-                }
-              }
-            });
-          }
-
           @Override
           public Dimension requestResize(Dimension newSize, RequestOrigin origin, int cursorY, JediTerminal.ResizeHandler resizeHandler) {
             Dimension dimension = super.requestResize(newSize, origin, cursorY, resizeHandler);
@@ -134,12 +119,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
             } else {
               return super.getCode(key, modifiers);
             }
-          }
-
-          @Override
-          public void sendString(String string) {
-            super.sendString(string);
-            myInputBuffer.inputStringSent(string); // supports copy-pasted text as well
           }
         };
       }

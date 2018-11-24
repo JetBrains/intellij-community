@@ -36,6 +36,7 @@ import sys
 
 from _pydev_bundle import pydev_imports
 from pydevd_file_utils import get_fullname, rPath
+from _pydevd_bundle.pydevd_utils import save_main_module
 
 
 # The following classes and functions are mainly intended to be used from
@@ -108,7 +109,7 @@ def _set_globals_function(get_globals):
     _get_globals_callback = get_globals
 
 
-def _get_globals():
+def _get_interpreter_globals():
     """Return current Python interpreter globals namespace"""
     if _get_globals_callback is not None:
         return _get_globals_callback()
@@ -155,11 +156,13 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
             __umd__.run(verbose=verbose)
 
     if global_vars is None:
-        global_vars = _get_globals()
-    if '__file__' in global_vars:
-        old_file = global_vars['__file__']
-    else:
-        old_file = None
+        m = save_main_module(filename, 'pydevconsole')
+        global_vars = m.__dict__
+        try:
+            global_vars['__builtins__'] = __builtins__
+        except NameError:
+            pass  # Not there on Jython...
+
     local_vars = global_vars
 
     module_name = None
@@ -209,7 +212,5 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
                 runpy.run_module(module_name)
 
     sys.argv = ['']
-    if old_file is None:
-        del global_vars['__file__']
-    else:
-        global_vars['__file__'] = old_file
+    interpreter_globals = _get_interpreter_globals()
+    interpreter_globals.update(global_vars)

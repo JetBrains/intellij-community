@@ -2,14 +2,10 @@ package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.json.JsonLanguage;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.json.JsonElementTypes.*;
 
@@ -20,10 +16,13 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
   @NotNull
   @Override
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-    final JsonBlock block = new JsonBlock(null, element.getNode(), settings, null, Indent.getNoneIndent(), null);
+    JsonCodeStyleSettings customSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
+    SpacingBuilder spacingBuilder = createSpacingBuilder(settings);
+    final JsonBlock block = new JsonBlock(null, element.getNode(), customSettings, null, Indent.getNoneIndent(), null, spacingBuilder);
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
   }
 
+  @NotNull
   static SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
     final JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);

@@ -309,6 +309,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testTry_catch$newLineBeforeCatchBlock() throws Throwable { doTest() }
 
+  void testTry_catch$newLineBeforeFinallyBlock() { doTest() }
+
   void testTry_catch$tryResources() { doTest() }
 
   void testTry_catch$tryResourcesEmpty() { doTest() }

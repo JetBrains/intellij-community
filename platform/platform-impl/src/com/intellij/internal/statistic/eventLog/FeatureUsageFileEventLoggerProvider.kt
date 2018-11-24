@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 
 class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
@@ -10,6 +11,8 @@ class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
   }
 
   override fun isEnabled() : Boolean {
-    return StatisticsUploadAssistant.isSendAllowed() && Registry.`is`("feature.usage.event.log.collect.and.upload")
+    return StatisticsUploadAssistant.isSendAllowed() &&
+           Registry.`is`("feature.usage.event.log.collect.and.upload") &&
+           !ApplicationManager.getApplication().isUnitTestMode
   }
 }

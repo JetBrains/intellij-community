@@ -2,10 +2,18 @@
 package org.jetbrains.yaml.navigation;
 
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.psi.YAMLFile;
+
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 
 public class YAMLCopyReferenceTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
@@ -25,11 +33,46 @@ public class YAMLCopyReferenceTest extends LightPlatformCodeInsightFixtureTestCa
     doTest("top.next.several line targetKey");
   }
 
+  public void testPlainTextValue() {
+    checkEmptyReference();
+  }
+
+  public void testComment() {
+    checkEmptyReference();
+  }
+
+  public void testFileNoReference() {
+    myFixture.configureByFile("simpleConfig.yml");
+    PsiElement element = myFixture.getElementAtCaret();
+    PsiFile file = element.getContainingFile();
+    assertInstanceOf(file, YAMLFile.class);
+    String qualifiedName = CopyReferenceAction.elementToFqn(file);
+    assertEquals("simpleConfig.yml", qualifiedName);
+  }
+
+  private void checkEmptyReference() {
+    String reference = configureAndCopyReference();
+    int line = myFixture.getEditor().getDocument().getLineNumber(myFixture.getCaretOffset());
+    String expected = getTestName(true) + ".yml:" + (line + 1);
+    assertEquals(expected, reference);
+  }
+
   private void doTest(String result) {
+    String reference = configureAndCopyReference();
+    assertEquals(result, reference);
+  }
+
+  @NotNull
+  private String configureAndCopyReference() {
     myFixture.configureByFile(getTestName(true) + ".yml");
-    final PsiElement element = myFixture.getElementAtCaret();
-    assertInstanceOf(element, YAMLKeyValue.class);
-    final String qualifiedName = CopyReferenceAction.elementToFqn(element);
-    assertEquals(result, qualifiedName);
+    myFixture.performEditorAction(IdeActions.ACTION_COPY_REFERENCE);
+    String reference;
+    try {
+      reference = (String)CopyPasteManager.getInstance().getContents().getTransferData(DataFlavor.stringFlavor);
+    }
+    catch (UnsupportedFlavorException | IOException e) {
+      throw new RuntimeException(e);
+    }
+    return reference;
   }
 }

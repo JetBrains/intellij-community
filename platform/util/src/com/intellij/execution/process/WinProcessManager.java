@@ -17,7 +17,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  *
  * @author Alexey.Ushakov
  */
-class WinProcessManager {
+public class WinProcessManager {
   private static final Logger LOG = Logger.getInstance(WinProcessManager.class);
 
   private WinProcessManager() { }
@@ -42,6 +42,10 @@ class WinProcessManager {
     throw new IllegalStateException("Unable to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME);
   }
 
+  public static int getCurrentProcessId() {
+    return Kernel32.INSTANCE.GetCurrentProcessId();
+  }
+
   public static boolean kill(Process process, boolean tree) {
     return kill(-1, process, tree);
   }
@@ -64,7 +68,7 @@ class WinProcessManager {
       String output = FileUtil.loadTextAndClose(p.getInputStream());
       int res = p.waitFor();
 
-      if (res != 0 && (process == null || process.isAlive())) {
+      if (res != 0 && (process == null || isAlive(process))) {
         LOG.warn(StringUtil.join(cmdArray, " ") + " failed: " + output);
         return false;
       }
@@ -83,5 +87,14 @@ class WinProcessManager {
   /** @deprecated to be removed in IDEA 2018 */
   public static int getProcessPid(Process process) {
     return getProcessId(process);
+  }
+
+  private static boolean isAlive(Process process) {
+    try {
+      process.exitValue();
+      return false;
+    } catch(IllegalThreadStateException e) {
+      return true;
+    }
   }
 }

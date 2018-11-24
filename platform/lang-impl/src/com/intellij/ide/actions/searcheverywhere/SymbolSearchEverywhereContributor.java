@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
+import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
@@ -55,15 +56,20 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Language> createFilter() {
+    public SearchEverywhereContributorFilter<Language> createFilter(AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      if (project == null) {
+        return null;
+      }
+
       List<Language> items = Language.getRegisteredLanguages()
                                      .stream()
                                      .filter(lang -> lang != Language.ANY && !(lang instanceof DependentLanguage))
                                      .sorted(LanguageUtil.LANGUAGE_COMPARATOR)
                                      .collect(Collectors.toList());
-      return new SearchEverywhereContributorFilterImpl<>(items,
-                                                         ClassSearchEverywhereContributor.Factory.LANGUAGE_NAME_EXTRACTOR,
-                                                         ClassSearchEverywhereContributor.Factory.LANGUAGE_ICON_EXTRACTOR
+      return new PersistentSearchEverywhereContributorFilter<>(items, GotoClassSymbolConfiguration.getInstance(project),
+                                                               ClassSearchEverywhereContributor.Factory.LANGUAGE_NAME_EXTRACTOR,
+                                                               ClassSearchEverywhereContributor.Factory.LANGUAGE_ICON_EXTRACTOR
       );
     }
   }

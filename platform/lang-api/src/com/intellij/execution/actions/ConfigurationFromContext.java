@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
@@ -31,6 +32,12 @@ import java.util.Comparator;
  * @see RunConfigurationProducer
  */
 public abstract class ConfigurationFromContext {
+
+  private boolean myIsFromAlternativeLocation;
+
+  @Nullable
+  private String myAlternativeLocationDisplayName;
+
   /**
    * Returns the created run configuration settings.
    *
@@ -116,6 +123,34 @@ public abstract class ConfigurationFromContext {
   public String toString() {
     return getConfigurationSettings().toString();
   }
+
+  /**
+   * Return if this configuration was created from alternative location provided by {@link MultipleRunLocationsProvider}.
+   *
+   * @return true if the configuration was created from alternative location, false otherwise.
+   */
+  public boolean isFromAlternativeLocation() {
+    return myIsFromAlternativeLocation;
+  }
+
+  public void setFromAlternativeLocation(boolean isFromAlternativeLocation) {
+    this.myIsFromAlternativeLocation = isFromAlternativeLocation;
+  }
+
+  /**
+   * Return alternative location display name provided by {@link MultipleRunLocationsProvider}.
+   *
+   * @return Location display name, null if name was not provided or this configuration is not from alternative location.
+   */
+  @Nullable
+  public String getAlternativeLocationDisplayName() {
+    return myAlternativeLocationDisplayName;
+  }
+
+  public void setAlternativeLocationDisplayName(@Nullable String alternativeLocationDisplayName) {
+    this.myAlternativeLocationDisplayName = alternativeLocationDisplayName;
+  }
+
 
   /**
    * Compares configurations according to precedence.

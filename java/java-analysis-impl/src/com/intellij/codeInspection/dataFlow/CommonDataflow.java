@@ -27,6 +27,7 @@ public class CommonDataflow {
    */
   public static class DataflowResult {
     private final Map<PsiExpression, DfaFactMap> myFacts = new HashMap<>();
+    private final Set<PsiExpression> myUnknowns = new HashSet<>();
 
     DataflowResult copy() {
       DataflowResult copy = new DataflowResult();
@@ -35,6 +36,9 @@ public class CommonDataflow {
     }
 
     void add(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
+      if (memState.isUnknownState(value)) {
+        myUnknowns.add(expression);
+      }
       DfaFactMap existing = myFacts.get(expression);
       if(existing != DfaFactMap.EMPTY) {
         DfaFactMap newMap = memState.getFactMap(value);
@@ -56,7 +60,7 @@ public class CommonDataflow {
      */
     public boolean expressionWasAnalyzed(PsiExpression expression) {
       assert !(expression instanceof PsiParenthesizedExpression);
-      return myFacts.containsKey(expression);
+      return myFacts.containsKey(expression) && !myUnknowns.contains(expression);
     }
 
     /**

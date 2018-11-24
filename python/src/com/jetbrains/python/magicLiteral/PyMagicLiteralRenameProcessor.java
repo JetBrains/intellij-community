@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 class PyMagicLiteralRenameProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
-    return (PyMagicLiteralTools.isMagicLiteral(element));
+    return (PyMagicLiteralTools.couldBeMagicLiteral(element));
   }
 
   @Override

@@ -19,6 +19,9 @@ package com.intellij.execution.actions;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.LocatableConfiguration;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConfigurationFromContextWrapper;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,6 +107,19 @@ class PreferredProducerFind {
       return null;
     }
 
+    MultipleRunLocationsProvider.AlternativeLocationsInfo
+      alternativeLocations = MultipleRunLocationsProvider.findAlternativeLocations(location);
+    if (alternativeLocations == null) {
+      return doGetConfigurationsFromContext(location, context, strict);
+    }
+
+    return getConfigurationsFromAlternativeLocations(alternativeLocations, location, strict);
+  }
+
+  @Nullable
+  private static List<ConfigurationFromContext> doGetConfigurationsFromContext(@NotNull final Location location,
+                                                                               @NotNull final ConfigurationContext context,
+                                                                               final boolean strict) {
     final ArrayList<ConfigurationFromContext> configurationsFromContext = new ArrayList<>();
     for (RuntimeConfigurationProducer producer : findAllProducers(location, context)) {
       configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
@@ -139,5 +156,37 @@ class PreferredProducerFind {
       return producers.get(0);
     }
     return null;
+  }
+
+  @Nullable
+  private static List<ConfigurationFromContext> getConfigurationsFromAlternativeLocations(
+    @NotNull MultipleRunLocationsProvider.AlternativeLocationsInfo alternativeLocationsInfo,
+    @NotNull Location originalLocation,
+    boolean strict
+  ) {
+    SmartList<ConfigurationFromContext> result = new SmartList<>();
+    for (Location alternativeLocation : alternativeLocationsInfo.getAlternativeLocations()) {
+      ConfigurationContext fakeContextForAlternativeLocation = ConfigurationContext.createEmptyContextForLocation(alternativeLocation);
+      List<ConfigurationFromContext> configurationsForLocation =
+        doGetConfigurationsFromContext(alternativeLocation, fakeContextForAlternativeLocation, strict);
+      if (configurationsForLocation != null) {
+        for (ConfigurationFromContext configurationFromContext : configurationsForLocation) {
+          configurationFromContext.setFromAlternativeLocation(true);
+          String locationDisplayName = alternativeLocationsInfo.getProvider().getLocationDisplayName(alternativeLocation, originalLocation);
+          configurationFromContext.setAlternativeLocationDisplayName(locationDisplayName);
+          RunConfiguration configuration = configurationFromContext.getConfiguration();
+          if (configuration instanceof LocatableConfigurationBase && ((LocatableConfiguration)configuration).isGeneratedName()) {
+            configuration.setName(configuration.getName() + " " + locationDisplayName);
+            ((LocatableConfigurationBase)configuration).setNameChangedByUser(true);
+          }
+        }
+
+        result.addAll(configurationsForLocation);
+      }
+    }
+    if (result.isEmpty()) {
+      return null;
+    }
+    return result;
   }
 }

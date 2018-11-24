@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.execution.process.WinProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
@@ -113,7 +114,7 @@ public class Restarter {
     Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
 
-    int pid = kernel32.GetCurrentProcessId();
+    int pid = WinProcessManager.getCurrentProcessId();
     IntByReference argc = new IntByReference();
     Pointer argvPtr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
     String[] argv = getRestartArgv(argvPtr.getWideStringArray(0, argc.getValue()));
@@ -255,7 +256,6 @@ public class Restarter {
 
   @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
   private interface Kernel32 extends StdCallLibrary {
-    int GetCurrentProcessId();
     WString GetCommandLineW();
     Pointer LocalFree(Pointer pointer);
     WinDef.DWORD GetModuleFileNameW(WinDef.HMODULE hModule, char[] lpFilename, WinDef.DWORD nSize);

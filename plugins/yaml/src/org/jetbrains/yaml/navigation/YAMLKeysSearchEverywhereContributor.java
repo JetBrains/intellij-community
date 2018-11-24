@@ -205,7 +205,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Language> createFilter() {
+    public SearchEverywhereContributorFilter<Language> createFilter(AnActionEvent initEvent) {
       return null;
     }
   }

@@ -39,7 +39,7 @@ final class ContractConverter {
       throw new ContractConversionException("automatic update of external annotation is not supported");
     }
     if (annotation.getOwner() != method.getModifierList()) {
-      throw new ContractConversionException("annotation is inherited from base method");
+      throw new ContractInheritedException();
     }
     if (annotation.findDeclaredAttributeValue(MutationSignature.ATTR_MUTATES) != null) {
       throw new ContractConversionException("it contains mutation contract");
@@ -114,9 +114,15 @@ final class ContractConverter {
     return oldToNewIndex;
   }
 
-  static final class ContractConversionException extends Exception {
+  public static class ContractConversionException extends Exception {
     ContractConversionException(String message) {
       super(message);
+    }
+  }
+
+  public static class ContractInheritedException extends ContractConversionException {
+    ContractInheritedException() {
+      super("annotation is inherited from base method");
     }
   }
 }

@@ -1,9 +1,9 @@
 class Test {
   public static void main(String[] args) {
-    String arg = newMethod(args[0]);   //comment
+    String arg = newMethod(args);   //comment
   }
 
-    private static String newMethod(String arg) {
-        return arg;
+    private static String newMethod(String[] args) {
+        return args[0];
     }
 }

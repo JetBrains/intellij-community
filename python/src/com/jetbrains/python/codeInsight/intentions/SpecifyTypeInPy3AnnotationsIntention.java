@@ -16,7 +16,9 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -36,7 +38,6 @@ import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -75,20 +76,35 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     final PyNamedParameter parameter = getParameter(problemElement, resolved);
 
     if (parameter != null) {
-      annotateParameter(project, editor, parameter, true);
+      annotateParameter(project, editor, parameter);
     }
-    else {
-      StreamEx
-        .of(getMultiCallable(elementAt))
-        .select(PyFunction.class)
-        .forEach(function -> annotateReturnType(project, function, true));
+    else if (elementAt != null) {
+      final PyFunction function = findSuitableFunction(elementAt);
+      if (function != null) {
+        annotateReturnType(project, function);
+      }
     }
   }
 
-  static PyNamedParameter annotateParameter(Project project,
-                                            Editor editor,
-                                            @NotNull PyNamedParameter parameter,
-                                            boolean createTemplate) {
+  private static void annotateParameter(Project project, Editor editor, @NotNull PyNamedParameter parameter) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(parameter)) return;
+    WriteAction.run(() -> annotateParameter(project, editor, parameter, true));
+  }
+
+  private static void annotateReturnType(Project project, PyFunction function) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(function)) return;
+    WriteAction.run(() -> annotateReturnType(project, function, true));
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  public static PyNamedParameter annotateParameter(Project project,
+                                                   Editor editor,
+                                                   @NotNull PyNamedParameter parameter,
+                                                   boolean createTemplate) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
     final String paramName = StringUtil.notNullize(parameter.getName());

@@ -24,6 +24,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 public class UndefinedJavaHomeException extends ExternalSystemJdkException {
 
   public UndefinedJavaHomeException() {
-    super(ExternalSystemBundle.message("external.system.java.home.undefined"), null, null);
+    super(ExternalSystemBundle.message("external.system.java.home.undefined"), null);
   }
 }

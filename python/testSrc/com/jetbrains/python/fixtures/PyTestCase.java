@@ -29,6 +29,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +37,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
@@ -163,6 +165,29 @@ public abstract class PyTestCase extends UsefulTestCase {
   @NotNull
   protected TempDirTestFixture createTempDirFixture() {
     return new LightTempDirTestFixtureImpl(true); // "tmp://" dir by default
+  }
+
+  protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
+    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      modificator.addRoot(directory, OrderRootType.CLASSES);
+      modificator.commitChanges();
+    });
+    try {
+      runnable.run();
+    }
+    finally {
+      //noinspection ThrowFromFinallyBlock
+      WriteAction.run(() -> {
+        final SdkModificator modificator = sdk.getSdkModificator();
+        assertNotNull(modificator);
+        modificator.removeRoot(directory, OrderRootType.CLASSES);
+        modificator.commitChanges();
+      });
+    }
   }
 
   protected String getTestDataPath() {

@@ -33,7 +33,7 @@ import java.util.Collections;
 public class PyMagicLiteralFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   @Override
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    return PyMagicLiteralTools.isMagicLiteral(element);
+    return PyMagicLiteralTools.couldBeMagicLiteral(element);
   }
 
   @Nullable

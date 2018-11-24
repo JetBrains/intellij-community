@@ -153,7 +153,8 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     Color color = list.getForeground();
     if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
-    renderer.append(item + " ", nameAttributes);
+    String name = item.getName();
+    renderer.append(name + " ", nameAttributes);
     ItemPresentation itemPresentation = item.getPresentation();
     assert itemPresentation != null;
     renderer.setIcon(itemPresentation.getIcon(true));

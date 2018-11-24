@@ -42,6 +42,8 @@ public final class PrefSizeTest extends TestCase{
     panel.add(field2, new GridConstraints(0,1,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
+    panel.doLayout();
+
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(345, preferredSize.width);
 

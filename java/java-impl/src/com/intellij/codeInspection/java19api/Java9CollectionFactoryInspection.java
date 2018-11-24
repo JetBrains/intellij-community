@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -270,7 +271,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
         PsiExpression[] args = argumentList.getExpressions();
         PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
         if (classReference != null && className.equals(classReference.getQualifiedName())) {
-          return fromCopyConstructor(newExpression, args, type);
+          return fromCopyConstructor(args, type);
         }
         PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
         if (anonymousClass != null && args.length == 0) {
@@ -284,21 +285,15 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     }
 
     @Nullable
-    private static PrepopulatedCollectionModel fromCopyConstructor(PsiNewExpression newExpression,
-                                                                   PsiExpression[] args,
-                                                                   String type) {
+    private static PrepopulatedCollectionModel fromCopyConstructor(PsiExpression[] args, String type) {
       if (args.length == 1) {
         PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[0]);
         PsiMethodCallExpression call = tryCast(arg, PsiMethodCallExpression.class);
         if (ARRAYS_AS_LIST.test(call)) {
           return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), type);
         }
-        if(arg != null && PsiUtil.isLanguageLevel10OrHigher(arg)) {
-          PsiType sourceType = arg.getType();
-          PsiType targetType = newExpression.getType();
-          if (targetType != null && sourceType != null && sourceType.isAssignableFrom(targetType)) {
-            return new PrepopulatedCollectionModel(Collections.singletonList(arg), Collections.emptyList(), type, true);
-          }
+        if(arg != null && PsiUtil.isLanguageLevel10OrHigher(arg) && InheritanceUtil.isInheritor(arg.getType(), JAVA_UTIL_COLLECTION)) {
+          return new PrepopulatedCollectionModel(Collections.singletonList(arg), Collections.emptyList(), type, true);
         }
       }
       return null;

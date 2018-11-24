@@ -433,6 +433,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (object instanceof NamedArgumentDescriptor) {
       return ((NamedArgumentDescriptor)object).getNavigationElement();
     }
+    if (object instanceof GrPropertyForCompletion) {
+      return ((GrPropertyForCompletion)object).getOriginalAccessor();
+    }
     return null;
   }
 
