@@ -29,68 +29,71 @@ import static com.intellij.codeInspection.InspectionsBundle.BUNDLE;
  * @param <T> a type of anchor element which could be associated with given nullability problem kind
  */
 public class NullabilityProblemKind<T extends PsiElement> {
+  private static final String NPE = CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION;
+  private static final String RE = CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
+  
   private final String myName;
   private final String myAlwaysNullMessage;
   private final String myNormalMessage;
-  private final boolean myThrows;
+  private final @Nullable String myException;
 
-  private NullabilityProblemKind(boolean throwsException, @NotNull String name) {
-    myThrows = throwsException;
+  private NullabilityProblemKind(@Nullable String exception, @NotNull String name) {
+    myException = exception;
     myName = name;
     myAlwaysNullMessage = null;
     myNormalMessage = null;
   }
 
-  private NullabilityProblemKind(boolean throwsException, @NotNull String name, 
+  private NullabilityProblemKind(@Nullable String exception, @NotNull String name, 
                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String message) {
-    this(throwsException, name, message, message);
+    this(exception, name, message, message);
   }
 
-  private NullabilityProblemKind(boolean throwsException, @NotNull String name,
+  private NullabilityProblemKind(@Nullable String exception, @NotNull String name,
                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String alwaysNullMessage,
                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String normalMessage) {
-    myThrows = throwsException;
+    myException = exception;
     myName = name;
     myAlwaysNullMessage = InspectionsBundle.message(alwaysNullMessage);
     myNormalMessage = InspectionsBundle.message(normalMessage);
   }
 
   public static final NullabilityProblemKind<PsiMethodCallExpression> callNPE =
-    new NullabilityProblemKind<>(true, "callNPE", "dataflow.message.npe.method.invocation.sure", "dataflow.message.npe.method.invocation");
+    new NullabilityProblemKind<>(NPE, "callNPE", "dataflow.message.npe.method.invocation.sure", "dataflow.message.npe.method.invocation");
   public static final NullabilityProblemKind<PsiMethodReferenceExpression> callMethodRefNPE =
-    new NullabilityProblemKind<>(true, "callMethodRefNPE", "dataflow.message.npe.methodref.invocation");
+    new NullabilityProblemKind<>(NPE, "callMethodRefNPE", "dataflow.message.npe.methodref.invocation");
   public static final NullabilityProblemKind<PsiNewExpression> innerClassNPE =
-    new NullabilityProblemKind<>(true, "innerClassNPE", "dataflow.message.npe.inner.class.construction.sure",
+    new NullabilityProblemKind<>(NPE, "innerClassNPE", "dataflow.message.npe.inner.class.construction.sure",
                                  "dataflow.message.npe.inner.class.construction");
   public static final NullabilityProblemKind<PsiExpression> fieldAccessNPE =
-    new NullabilityProblemKind<>(true, "fieldAccessNPE", "dataflow.message.npe.field.access.sure", "dataflow.message.npe.field.access");
+    new NullabilityProblemKind<>(NPE, "fieldAccessNPE", "dataflow.message.npe.field.access.sure", "dataflow.message.npe.field.access");
   public static final NullabilityProblemKind<PsiArrayAccessExpression> arrayAccessNPE =
-    new NullabilityProblemKind<>(true, "arrayAccessNPE", "dataflow.message.npe.array.access.sure", "dataflow.message.npe.array.access");
+    new NullabilityProblemKind<>(NPE, "arrayAccessNPE", "dataflow.message.npe.array.access.sure", "dataflow.message.npe.array.access");
   public static final NullabilityProblemKind<PsiElement> unboxingNullable =
-    new NullabilityProblemKind<>(true, "unboxingNullable", "dataflow.message.unboxing");
+    new NullabilityProblemKind<>(NPE, "unboxingNullable", "dataflow.message.unboxing");
   public static final NullabilityProblemKind<PsiExpression> assigningToNotNull =
-    new NullabilityProblemKind<>(false, "assigningToNotNull", "dataflow.message.assigning.null", "dataflow.message.assigning.nullable");
+    new NullabilityProblemKind<>(null, "assigningToNotNull", "dataflow.message.assigning.null", "dataflow.message.assigning.nullable");
   public static final NullabilityProblemKind<PsiExpression> storingToNotNullArray =
-    new NullabilityProblemKind<>(false, "storingToNotNullArray", "dataflow.message.storing.array.null", 
+    new NullabilityProblemKind<>(null, "storingToNotNullArray", "dataflow.message.storing.array.null", 
                                  "dataflow.message.storing.array.nullable");
-  public static final NullabilityProblemKind<PsiExpression> nullableReturn = new NullabilityProblemKind<>(false, "nullableReturn");
+  public static final NullabilityProblemKind<PsiExpression> nullableReturn = new NullabilityProblemKind<>(null, "nullableReturn");
   public static final NullabilityProblemKind<PsiExpression> nullableFunctionReturn =
-    new NullabilityProblemKind<>(true, "nullableFunctionReturn", "dataflow.message.return.nullable.from.notnull.function",
+    new NullabilityProblemKind<>(RE, "nullableFunctionReturn", "dataflow.message.return.nullable.from.notnull.function",
                                  "dataflow.message.return.nullable.from.notnull.function");
   public static final NullabilityProblemKind<PsiElement> passingNullableToNotNullParameter =
-    new NullabilityProblemKind<>(true, "passingNullableToNotNullParameter");
+    new NullabilityProblemKind<>(RE, "passingNullableToNotNullParameter");
   public static final NullabilityProblemKind<PsiElement> passingNullableArgumentToNonAnnotatedParameter =
-    new NullabilityProblemKind<>(false, "passingNullableArgumentToNonAnnotatedParameter");
+    new NullabilityProblemKind<>(null, "passingNullableArgumentToNonAnnotatedParameter");
   public static final NullabilityProblemKind<PsiElement> assigningNullableValueToNonAnnotatedField =
-    new NullabilityProblemKind<>(false, "assigningNullableValueToNonAnnotatedField");
+    new NullabilityProblemKind<>(null, "assigningNullableValueToNonAnnotatedField");
   // assumeNotNull problem is not reported, just used to force the argument to be not null
-  public static final NullabilityProblemKind<PsiExpression> assumeNotNull = new NullabilityProblemKind<>(true, "assumeNotNull");
+  public static final NullabilityProblemKind<PsiExpression> assumeNotNull = new NullabilityProblemKind<>(RE, "assumeNotNull");
   /**
    * noProblem is not reported and used to override another problem
    * @see ControlFlowAnalyzer#addCustomNullabilityProblem(PsiExpression, NullabilityProblemKind) 
    * @see CFGBuilder#pushExpression(PsiExpression, NullabilityProblemKind) 
    */
-  public static final NullabilityProblemKind<PsiExpression> noProblem = new NullabilityProblemKind<>(false, "noProblem");
+  public static final NullabilityProblemKind<PsiExpression> noProblem = new NullabilityProblemKind<>(null, "noProblem");
 
   /**
    * Creates a new {@link NullabilityProblem} of this kind using given anchor
@@ -378,11 +381,12 @@ public class NullabilityProblemKind<T extends PsiElement> {
     }
 
     /**
-     * @return true if this nullability violation results in the exception being thrown (e.g. dereference). 
-     * False means that the execution may continue normally (e.g. assigning null to variable annotated as notnull).
+     * @return name of exception (or its superclass) which is thrown if violation occurs,
+     * or null if no exception is thrown (e.g. when assigning null to variable annotated as notnull).
      */
-    public boolean throwsException() {
-      return myKind.myThrows;
+    @Nullable
+    public String thrownException() {
+      return myKind.myException;
     }
 
     /**

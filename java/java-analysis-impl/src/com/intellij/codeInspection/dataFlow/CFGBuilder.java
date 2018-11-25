@@ -655,7 +655,7 @@ public class CFGBuilder {
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
                                                           LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
           if (resultNullability == Nullability.NOT_NULL) {
-            add(new CheckNotNullInstruction(NullabilityProblemKind.nullableFunctionReturn.problem(methodRef, null)));
+            myAnalyzer.addNullCheck(NullabilityProblemKind.nullableFunctionReturn.problem(methodRef, null));
           }
           return this;
         }

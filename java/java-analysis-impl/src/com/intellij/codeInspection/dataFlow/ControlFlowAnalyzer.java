@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.containers.FactoryMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -57,9 +58,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private ControlFlow myCurrentFlow;
   private FList<Trap> myTrapStack = FList.emptyList();
   private final Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> myCustomNullabilityProblems = new HashMap<>();
-  private final ExceptionTransfer myRuntimeException;
-  private final ExceptionTransfer myError;
-  private final PsiType myAssertionError;
+  private final Map<String, ExceptionTransfer> myExceptionCache;
   private InlinedBlockContext myInlinedBlockContext;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions, boolean inlining) {
@@ -69,9 +68,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myProject = codeFragment.getProject();
     myIgnoreAssertions = ignoreAssertions;
     GlobalSearchScope scope = codeFragment.getResolveScope();
-    myRuntimeException = new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION)));
-    myError = new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, JAVA_LANG_ERROR)));
-    myAssertionError = createClassType(scope, JAVA_LANG_ASSERTION_ERROR);
+    myExceptionCache = FactoryMap.create(fqn -> new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, fqn))));
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
@@ -269,7 +266,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         description.accept(this);
       }
 
-      throwException(myAssertionError, statement);
+      throwException(myExceptionCache.get(JAVA_LANG_ASSERTION_ERROR), statement);
     }
     finishElement(statement);
   }
@@ -407,9 +404,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void addNullCheck(PsiExpression expression) {
-    NullabilityProblemKind.NullabilityProblem<?> problem = NullabilityProblemKind.fromContext(expression, myCustomNullabilityProblems);
+    addNullCheck(NullabilityProblemKind.fromContext(expression, myCustomNullabilityProblems));
+  }
+
+  void addNullCheck(NullabilityProblemKind.NullabilityProblem<?> problem) {
     if (problem != null) {
-      addInstruction(new CheckNotNullInstruction(problem));
+      DfaControlTransferValue transfer = shouldHandleException() && problem.thrownException() != null 
+                                         ? myFactory.controlTransfer(myExceptionCache.get(problem.thrownException()), myTrapStack) : null;
+      addInstruction(new CheckNotNullInstruction(problem, transfer));
     }
   }
 
@@ -1037,9 +1039,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     pushUnknown();
     final ConditionalGotoInstruction ifError = addInstruction(new ConditionalGotoInstruction(null, false, null));
-    throwException(myRuntimeException, null);
+    throwException(myExceptionCache.get(JAVA_LANG_RUNTIME_EXCEPTION), null);
     ifError.setOffset(myCurrentFlow.getInstructionCount());
-    throwException(myError, null);
+    throwException(myExceptionCache.get(JAVA_LANG_ERROR), null);
 
     ifNoException.setOffset(myCurrentFlow.getInstructionCount());
   }
@@ -1384,7 +1386,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new BinopInstruction(JavaTokenType.NE, null, PsiType.BOOLEAN));
     ConditionalGotoInstruction ifNonZero = new ConditionalGotoInstruction(null, false, null);
     addInstruction(ifNonZero);
-    throwException(JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(ArithmeticException.class.getName()), null);
+    throwException(myExceptionCache.get(ArithmeticException.class.getName()), null);
     ifNonZero.setOffset(myCurrentFlow.getInstructionCount());
   }
 

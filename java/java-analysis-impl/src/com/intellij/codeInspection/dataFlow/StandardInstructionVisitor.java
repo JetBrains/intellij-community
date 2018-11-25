@@ -588,7 +588,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   protected boolean checkNotNullable(DfaMemoryState state, DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     boolean notNullable = state.checkNotNullable(value);
-    if (notNullable && problem != null && problem.throwsException()) {
+    if (notNullable && problem != null && problem.thrownException() != null) {
       DfaValueFactory factory = ((DfaMemoryStateImpl)state).getFactory();
       state.applyCondition(factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull()));
     }
@@ -598,10 +598,28 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     NullabilityProblemKind.NullabilityProblem<?> problem = instruction.getProblem();
-    if (!problem.throwsException()) {
+    if (problem.thrownException() == null) {
       checkNotNullable(memState, memState.peek(), problem);
     } else {
-      memState.push(dereference(memState, memState.pop(), problem));
+      DfaControlTransferValue transfer = instruction.getOnNullTransfer();
+      if (transfer == null) {
+        memState.push(dereference(memState, memState.pop(), problem));
+      } else {
+        DfaValue value = memState.pop();
+        List<DfaInstructionState> result = new ArrayList<>();
+        DfaMemoryState nullState = memState.createCopy();
+        memState.push(dereference(memState, value, problem));
+        result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
+        DfaValueFactory factory = runner.getFactory();
+        if (nullState.applyCondition(factory.createCondition(value, RelationType.EQ, factory.getConstFactory().getNull()))) {
+          List<DfaInstructionState> dispatched = transfer.dispatch(nullState, runner);
+          for (DfaInstructionState npeState : dispatched) {
+            npeState.getMemoryState().markEphemeral();
+          }
+          result.addAll(dispatched);
+        }
+        return result.toArray(DfaInstructionState.EMPTY_ARRAY);
+      }
     }
     return super.visitCheckNotNull(instruction, runner, memState);
   }
