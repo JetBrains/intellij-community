@@ -19,30 +19,31 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * This instruction pops a top-of-stack value dereferencing it (so nullability warning might be issued if top-of-stack is nullable value).
  */
-public class DereferenceInstruction extends Instruction {
-  private final @NotNull PsiExpression myExpression;
+public class MethodReferenceInstruction extends Instruction implements ExpressionPushingInstruction {
+  private final @NotNull PsiMethodReferenceExpression myExpression;
 
-  public DereferenceInstruction(@NotNull PsiExpression expression) {
+  public MethodReferenceInstruction(@NotNull PsiMethodReferenceExpression expression) {
     myExpression = expression;
   }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitFieldReference(this, runner, stateBefore);
+    return visitor.visitMethodReference(this, runner, stateBefore);
   }
 
   public String toString() {
-    return "DEREFERENCE: " + myExpression.getText();
+    return "METHOD_REF: " + myExpression.getText();
   }
 
+  @Override
   @NotNull
-  public PsiExpression getExpression() {
+  public PsiMethodReferenceExpression getExpression() {
     return myExpression;
   }
 }

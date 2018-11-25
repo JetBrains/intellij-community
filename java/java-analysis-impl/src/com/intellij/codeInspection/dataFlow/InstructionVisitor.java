@@ -87,7 +87,7 @@ public abstract class InstructionVisitor {
                             @NotNull DfaMemoryState state) {
     PsiExpression anchor = instruction.getExpression();
     if (isExpressionPush(instruction, anchor)) {
-      if (anchor instanceof PsiMethodReferenceExpression && !(instruction instanceof PushInstruction)) {
+      if (anchor instanceof PsiMethodReferenceExpression && !(instruction instanceof MethodReferenceInstruction)) {
         beforeMethodReferenceResultPush(value, (PsiMethodReferenceExpression)anchor, state);
       }
       else {
@@ -276,8 +276,9 @@ public abstract class InstructionVisitor {
     }
   }
 
-  public DfaInstructionState[] visitFieldReference(DereferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  public DfaInstructionState[] visitMethodReference(MethodReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
+    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 

@@ -184,14 +184,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Override
-  public DfaInstructionState[] visitFieldReference(DereferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    PsiExpression expression = instruction.getExpression();
+  public DfaInstructionState[] visitMethodReference(MethodReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    PsiMethodReferenceExpression expression = instruction.getExpression();
     final DfaValue qualifier = memState.pop();
-    PsiElement parent = expression.getParent();
-    if (parent instanceof PsiMethodReferenceExpression) {
-      dropLocality(qualifier, memState);
-      handleMethodReference(qualifier, (PsiMethodReferenceExpression)parent, runner, memState);
-    }
+    dropLocality(qualifier, memState);
+    handleMethodReference(qualifier, expression, runner, memState);
+    pushExpressionResult(runner.getFactory().createTypeValue(expression.getFunctionalInterfaceType(), Nullability.NOT_NULL), instruction, memState);
 
     return nextInstruction(instruction, runner, memState);
   }

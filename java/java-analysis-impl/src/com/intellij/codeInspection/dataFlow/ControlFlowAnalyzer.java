@@ -524,7 +524,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (iteratedValue != null) {
       iteratedValue.accept(this);
-      addInstruction(new DereferenceInstruction(iteratedValue));
+      addInstruction(new PopInstruction());
       DfaValue qualifier = myFactory.createValue(iteratedValue);
 
       if (qualifier instanceof DfaVariableValue) {
@@ -987,10 +987,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression qualifier = expression.getQualifierExpression();
     if (qualifier != null) {
       qualifier.accept(this);
-      addInstruction(new DereferenceInstruction(qualifier));
+    } else {
+      pushUnknown();
     }
 
-    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getFunctionalInterfaceType(), Nullability.NOT_NULL), expression));
+    addInstruction(new MethodReferenceInstruction(expression));
 
     finishElement(expression);
   }
@@ -1001,7 +1002,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lock = statement.getLockExpression();
     if (lock != null) {
       lock.accept(this);
-      addInstruction(new DereferenceInstruction(lock));
+      addInstruction(new PopInstruction());
     }
 
     addInstruction(new FlushFieldsInstruction());
@@ -1022,7 +1023,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (exception != null) {
       exception.accept(this);
 
-      addInstruction(new DereferenceInstruction(exception));
+      addInstruction(new PopInstruction());
       throwException(exception.getType(), statement);
     }
 
@@ -1982,7 +1983,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiElement target = expression.resolve();
       if (!(target instanceof PsiMember) || !((PsiMember)target).hasModifierProperty(PsiModifier.STATIC)) {
         qualifierExpression.accept(this);
-        addInstruction(target instanceof PsiField ? new DereferenceInstruction(qualifierExpression) : new PopInstruction());
+        addInstruction(new PopInstruction());
       }
     }
 
