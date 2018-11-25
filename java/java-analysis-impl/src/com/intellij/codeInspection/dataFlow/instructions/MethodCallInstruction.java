@@ -43,7 +43,7 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
   private final Nullability myReturnNullability;
 
   public enum MethodType {
-    BOXING, UNBOXING, REGULAR_METHOD_CALL, METHOD_REFERENCE_CALL, CAST
+    UNBOXING, REGULAR_METHOD_CALL, METHOD_REFERENCE_CALL, CAST
   }
 
   public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType, @Nullable PsiType resultType) {
@@ -275,8 +275,6 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
     switch (myMethodType) {
       case UNBOXING:
         return "UNBOX";
-      case BOXING:
-        return "BOX";
       case CAST:
         return "CAST TO " + myType;
       case METHOD_REFERENCE_CALL:

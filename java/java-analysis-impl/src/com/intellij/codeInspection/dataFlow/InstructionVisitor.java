@@ -109,8 +109,7 @@ public abstract class InstructionVisitor {
     }
     if (instruction instanceof MethodCallInstruction) {
       MethodCallInstruction.MethodType type = ((MethodCallInstruction)instruction).getMethodType();
-      return type != MethodCallInstruction.MethodType.BOXING &&
-             type != MethodCallInstruction.MethodType.UNBOXING;
+      return type != MethodCallInstruction.MethodType.UNBOXING;
     }
     if (instruction instanceof PushInstruction) {
       return !((PushInstruction)instruction).isReferenceWrite();
@@ -154,6 +153,14 @@ public abstract class InstructionVisitor {
     memState.push(dest);
     flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dest, memState);
     return nextInstruction(instruction, runner, memState);
+  }
+
+  public DfaInstructionState[] visitBox(BoxingInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    DfaValue value = state.pop();
+    DfaValueFactory factory = runner.getFactory();
+    DfaValue boxed = factory.getBoxedFactory().createBoxed(value, instruction.getTargetType());
+    state.push(boxed == null ? factory.createTypeValue(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
+    return nextInstruction(instruction, runner, state);
   }
 
   protected void flushArrayOnUnknownAssignment(AssignInstruction instruction,

@@ -522,11 +522,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return factory.getBoxedFactory().createUnboxed(qualifierValue, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
     }
 
-    if (methodType == MethodCallInstruction.MethodType.BOXING) {
-      DfaValue boxed = factory.getBoxedFactory().createBoxed(qualifierValue, type);
-      return boxed == null ? factory.createTypeValue(type, Nullability.NOT_NULL) : boxed;
-    }
-
     if (methodType == MethodCallInstruction.MethodType.CAST) {
       assert qualifierValue != null;
       if (qualifierValue instanceof DfaVariableValue && TypeConversionUtil.isSafeConversion(type, qualifierValue.getType())) {
