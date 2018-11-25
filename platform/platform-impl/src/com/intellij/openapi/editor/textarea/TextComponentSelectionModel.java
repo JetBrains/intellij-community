@@ -136,12 +136,12 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  public void addSelectionListener(final SelectionListener listener) {
+  public void addSelectionListener(@NotNull final SelectionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeSelectionListener(final SelectionListener listener) {
+  public void removeSelectionListener(@NotNull final SelectionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
