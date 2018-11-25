@@ -107,10 +107,6 @@ public abstract class InstructionVisitor {
         return false;
       }
     }
-    if (instruction instanceof MethodCallInstruction) {
-      MethodCallInstruction.MethodType type = ((MethodCallInstruction)instruction).getMethodType();
-      return type != MethodCallInstruction.MethodType.UNBOXING;
-    }
     if (instruction instanceof PushInstruction) {
       return !((PushInstruction)instruction).isReferenceWrite();
     }
@@ -160,6 +156,12 @@ public abstract class InstructionVisitor {
     DfaValueFactory factory = runner.getFactory();
     DfaValue boxed = factory.getBoxedFactory().createBoxed(value, instruction.getTargetType());
     state.push(boxed == null ? factory.createTypeValue(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
+    return nextInstruction(instruction, runner, state);
+  }
+
+  public DfaInstructionState[] visitUnbox(UnboxingInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    DfaValue value = state.pop();
+    state.push(runner.getFactory().getBoxedFactory().createUnboxed(value, instruction.getTargetType()));
     return nextInstruction(instruction, runner, state);
   }
 

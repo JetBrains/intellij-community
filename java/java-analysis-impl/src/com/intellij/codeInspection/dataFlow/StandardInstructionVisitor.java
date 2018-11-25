@@ -518,10 +518,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
 
-    if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
-      return factory.getBoxedFactory().createUnboxed(qualifierValue, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
-    }
-
     if (methodType == MethodCallInstruction.MethodType.CAST) {
       assert qualifierValue != null;
       if (qualifierValue instanceof DfaVariableValue && TypeConversionUtil.isSafeConversion(type, qualifierValue.getType())) {
