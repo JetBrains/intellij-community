@@ -101,15 +101,18 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    if (myCompilerTester != null) {
-      myCompilerTester.tearDown();
-    }
     try {
+      if (myCompilerTester != null) {
+        myCompilerTester.tearDown();
+      }
       PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
       ProjectManager.getInstance().closeProject(myProject);
       WriteAction.run(() -> Disposer.dispose(myProject));
       myProject = null;
       InspectionProfileImpl.INIT_INSPECTIONS = false;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

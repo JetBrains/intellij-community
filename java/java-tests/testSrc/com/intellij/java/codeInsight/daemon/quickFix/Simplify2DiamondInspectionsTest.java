@@ -51,6 +51,9 @@ public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedT
     try {
       getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignment;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

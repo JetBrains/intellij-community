@@ -33,6 +33,9 @@ public abstract class CompilerReferencesTestBase extends AbstractCompilerAwareTe
     try {
       CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

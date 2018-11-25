@@ -2209,6 +2209,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     try {
       XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS = old;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

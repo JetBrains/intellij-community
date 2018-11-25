@@ -62,6 +62,9 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     try {
       ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(myOldDoctype, getProject());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

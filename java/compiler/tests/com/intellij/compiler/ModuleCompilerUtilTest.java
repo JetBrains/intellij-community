@@ -46,6 +46,9 @@ public class ModuleCompilerUtilTest extends ModuleTestCase {
     try {
       myTempDirTestFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

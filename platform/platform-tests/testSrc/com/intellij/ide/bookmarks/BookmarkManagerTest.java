@@ -51,6 +51,9 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       }
       myBookmarks.clear();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

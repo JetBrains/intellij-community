@@ -244,6 +244,9 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
       PropertiesComponent.getInstance().unsetValue("FileTemplates.SelectedTemplate");
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

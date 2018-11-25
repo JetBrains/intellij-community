@@ -62,6 +62,9 @@ public class DirectoryMappingListTest extends PlatformTestCase {
       myMappings.disposeMe();
       ((AllVcses)myVcses).dispose();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

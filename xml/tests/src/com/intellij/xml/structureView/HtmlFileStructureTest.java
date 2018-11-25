@@ -40,6 +40,9 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
     try {
       PropertiesComponent.getInstance().setValue(getHtml5OutlineModePropertyName(), myHtml5OutlineModeDefault);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

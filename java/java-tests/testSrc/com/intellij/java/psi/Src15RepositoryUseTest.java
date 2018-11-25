@@ -44,6 +44,9 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     try {
       LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

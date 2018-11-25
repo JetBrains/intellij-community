@@ -37,6 +37,9 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
       LookupManager.hideActiveLookup(getProject());
       UISettings.getInstance().setSortLookupElementsLexicographically(false);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

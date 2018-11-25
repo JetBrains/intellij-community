@@ -37,6 +37,9 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     try {
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

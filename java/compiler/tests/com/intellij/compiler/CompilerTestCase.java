@@ -435,6 +435,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           myOriginalSourceDir = null;
           CompilerTestUtil.disableExternalCompiler(myProject);
         }
+        catch (Throwable e) {
+          addSuppressedException(e);
+        }
         finally {
           super.tearDown();
         }

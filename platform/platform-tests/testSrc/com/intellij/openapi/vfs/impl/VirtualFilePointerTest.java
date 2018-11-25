@@ -68,6 +68,9 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
       assertEquals(numberOfListenersBefore, nListeners);
       assertEquals(pointersBefore, pointersAfter);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

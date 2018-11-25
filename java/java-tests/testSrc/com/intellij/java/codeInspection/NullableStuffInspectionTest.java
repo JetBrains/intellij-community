@@ -54,6 +54,9 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
       myInspection = null;
       Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -44,6 +44,9 @@ public class FindUIHelperTest extends LightPlatformTestCase {
       assertTrue(Disposer.isDisposed(myUICopy.getDisposable()));
       assertNull(myHelper.myUI);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

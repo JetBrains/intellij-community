@@ -43,6 +43,9 @@ public class XmlHighlighterTest extends LightCodeInsightTestCase {
       EditorFactory.getInstance().releaseEditor(editor);
       editor = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

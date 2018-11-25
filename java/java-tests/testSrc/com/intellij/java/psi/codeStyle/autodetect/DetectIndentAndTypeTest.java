@@ -56,6 +56,9 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
         optionsProvider.setEnabledInTest(false);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

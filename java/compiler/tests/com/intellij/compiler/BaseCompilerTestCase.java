@@ -85,6 +85,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       }
       CompilerTestUtil.disableExternalCompiler(getProject());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

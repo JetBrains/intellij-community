@@ -95,6 +95,9 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       myModule = null;

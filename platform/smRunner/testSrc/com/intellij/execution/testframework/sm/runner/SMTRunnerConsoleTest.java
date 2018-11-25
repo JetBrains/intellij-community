@@ -68,6 +68,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
       Disposer.dispose(myEventsProcessor);
       Disposer.dispose(myConsole);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

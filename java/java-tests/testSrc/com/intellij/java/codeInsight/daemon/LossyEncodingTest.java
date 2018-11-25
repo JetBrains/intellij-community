@@ -51,6 +51,9 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     try {
       UIUtil.dispatchAllInvocationEvents(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

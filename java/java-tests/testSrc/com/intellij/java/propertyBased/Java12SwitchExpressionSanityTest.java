@@ -35,6 +35,9 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
     try {
       JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

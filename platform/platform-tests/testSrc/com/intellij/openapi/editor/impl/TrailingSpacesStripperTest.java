@@ -53,6 +53,9 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     try {
       EditorSettingsExternalizable.getInstance().loadState(oldSettings);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

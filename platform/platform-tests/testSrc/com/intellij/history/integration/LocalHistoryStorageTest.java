@@ -38,6 +38,9 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     try {
       Disposer.dispose(myStorage);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

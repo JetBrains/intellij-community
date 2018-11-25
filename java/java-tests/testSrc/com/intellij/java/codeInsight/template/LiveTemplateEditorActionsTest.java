@@ -35,6 +35,9 @@ public class LiveTemplateEditorActionsTest extends LightCodeInsightFixtureTestCa
         templateState.gotoEnd(false);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

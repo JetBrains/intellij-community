@@ -98,6 +98,9 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     try {
       Messages.setTestDialog(myOldTestDialogValue);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -41,6 +41,9 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
     try {
       getUndoManager().setEditorProvider(mySavedCurrentEditorProvider);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

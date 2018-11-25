@@ -64,6 +64,9 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
     try {
       PropertiesComponent.getInstance().setValue(getAnonymousPropertyName(), myShowAnonymousByDefault);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
