@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -46,7 +47,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
     val focusModeRange = editor.focusModeRange
     val attributes = if (focusModeRange != null && (inlay.offset <= focusModeRange.startOffset || focusModeRange.endOffset <= inlay.offset)) {
-      editor.getUserData(EditorImpl.FOCUS_MODE_ATTRIBUTES) ?: getTextAttributes(editor)
+      editor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES) ?: getTextAttributes(editor)
     }
     else {
       getTextAttributes(editor)
