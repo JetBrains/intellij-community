@@ -60,7 +60,10 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
   protected void tearDown() throws Exception {
     myFindModel = null;
     myOutputStream = null;
-    myLivePreviewController = null;
+    if (myLivePreviewController != null) {
+      myLivePreviewController.dispose();
+      myLivePreviewController = null;
+    }
     super.tearDown();
   }
 
@@ -109,7 +112,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
       myLivePreviewController.performReplace();
       checkResults();
-    } finally {
+    }
+    finally {
       value.resetToDefault();
     }
   }
@@ -128,7 +132,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
       myLivePreviewController.performReplace();
       checkResults();
-    } finally {
+    }
+    finally {
       value.resetToDefault();
     }
   }
@@ -153,7 +158,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myLivePreviewController.performReplace();
       checkResults();
-    } finally {
+    }
+    finally {
       value.resetToDefault();
     }
   }
@@ -170,7 +176,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myLivePreviewController.performReplace();
       checkResults();
-    } finally {
+    }
+    finally {
       value.resetToDefault();
     }
   }
@@ -195,7 +202,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     configureFromText("abc\n\n\n\n\nabc\n");
     EditorTestUtil.setEditorVisibleSize(myEditor, 100, 3);
     executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
-    
+
     EditorTestUtil.testUndoInEditor(myEditor, () -> {
       initFind();
       myFindModel.setReplaceState(true);
