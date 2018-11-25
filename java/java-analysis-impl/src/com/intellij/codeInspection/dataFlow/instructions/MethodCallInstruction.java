@@ -33,36 +33,16 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
   @Nullable private final PsiType myType;
   private final int myArgCount;
   private final boolean myShouldFlushFields;
-  @NotNull private final PsiElement myContext;
+  @NotNull private final PsiElement myContext; // PsiCall or PsiMethodReferenceExpression
   @Nullable private final PsiMethod myTargetMethod;
   private final List<MethodContract> myContracts;
-  private final MethodType myMethodType;
   @Nullable private final DfaValue myPrecalculatedReturnValue;
   private final boolean myVarArgCall;
   private final Nullability[] myArgRequiredNullability;
   private final Nullability myReturnNullability;
 
-  public enum MethodType {
-    REGULAR_METHOD_CALL, METHOD_REFERENCE_CALL, CAST
-  }
-
-  public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType, @Nullable PsiType resultType) {
-    myContext = context;
-    myContracts = Collections.emptyList();
-    myMethodType = methodType;
-    myArgCount = 0;
-    myType = resultType;
-    myShouldFlushFields = false;
-    myPrecalculatedReturnValue = null;
-    myTargetMethod = null;
-    myVarArgCall = false;
-    myArgRequiredNullability = EMPTY_NULLABILITY_ARRAY;
-    myReturnNullability = Nullability.UNKNOWN;
-  }
-
   public MethodCallInstruction(@NotNull PsiMethodReferenceExpression reference, @NotNull List<? extends MethodContract> contracts) {
     myContext = reference;
-    myMethodType = MethodType.METHOD_REFERENCE_CALL;
     JavaResolveResult resolveResult = reference.advancedResolve(false);
     myTargetMethod = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
     myContracts = Collections.unmodifiableList(contracts);
@@ -95,7 +75,6 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
   public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<? extends MethodContract> contracts) {
     myContext = call;
     myContracts = Collections.unmodifiableList(contracts);
-    myMethodType = MethodType.REGULAR_METHOD_CALL;
     final PsiExpressionList argList = call.getArgumentList();
     PsiExpression[] args = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
     myArgCount = args.length;
@@ -132,16 +111,16 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
    * @return a PsiElement. Either argument expression or method reference if call is described by method reference
    */
   public PsiElement getArgumentAnchor(int index) {
-    if (myMethodType == MethodType.REGULAR_METHOD_CALL && myContext instanceof PsiCall) {
+    if (myContext instanceof PsiCall) {
       PsiExpressionList argumentList = ((PsiCall)myContext).getArgumentList();
       if (argumentList != null) {
         return argumentList.getExpressions()[index];
       }
     }
-    if (myMethodType == MethodType.METHOD_REFERENCE_CALL && myContext instanceof PsiMethodReferenceExpression) {
+    if (myContext instanceof PsiMethodReferenceExpression) {
       return ((PsiMethodReferenceExpression)myContext).getReferenceNameElement();
     }
-    return myContext;
+    throw new AssertionError();
   }
 
   private Nullability[] calcArgRequiredNullability(PsiSubstitutor substitutor, PsiParameter[] parameters) {
@@ -220,10 +199,6 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
     return myArgCount;
   }
 
-  public MethodType getMethodType() {
-    return myMethodType;
-  }
-
   public boolean shouldFlushFields() {
     return myShouldFlushFields;
   }
@@ -253,7 +228,7 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
 
   @Nullable
   public PsiCall getCallExpression() {
-    return myMethodType == MethodType.REGULAR_METHOD_CALL && myContext instanceof PsiCall ? (PsiCall)myContext : null;
+    return ObjectUtils.tryCast(myContext, PsiCall.class);
   }
 
   @NotNull
@@ -272,15 +247,10 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
   }
 
   public String toString() {
-    switch (myMethodType) {
-      case CAST:
-        return "CAST TO " + myType;
-      case METHOD_REFERENCE_CALL:
-        return "CALL_METHOD_REFERENCE: " + myContext.getText();
-      case REGULAR_METHOD_CALL:
-        return "CALL_METHOD: " + myContext.getText();
-      default:
-        throw new IllegalStateException("Unexpected method type: " + myMethodType);
+    if (myContext instanceof PsiCall) {
+      return "CALL_METHOD: " + myContext.getText();
+    } else {
+      return "CALL_METHOD_REFERENCE: " + myContext.getText();
     }
   }
 }

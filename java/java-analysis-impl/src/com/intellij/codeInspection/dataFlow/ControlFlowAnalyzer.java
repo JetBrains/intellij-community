@@ -12,7 +12,6 @@ import com.intellij.codeInspection.dataFlow.Trap.TryFinally;
 import com.intellij.codeInspection.dataFlow.Trap.TwrFinally;
 import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction.MethodType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -1488,12 +1487,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
              TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
              TypeConversionUtil.isNumericType(actualType) &&
              TypeConversionUtil.isNumericType(expectedType)) {
-      addInstruction(new MethodCallInstruction(context, MethodType.CAST, expectedType) {
-        @Override
-        public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-          return visitor.visitCast(this, runner, stateBefore);
-        }
-      });
+      addInstruction(new PrimitiveConversionInstruction((PsiPrimitiveType)expectedType, context));
     }
   }
 

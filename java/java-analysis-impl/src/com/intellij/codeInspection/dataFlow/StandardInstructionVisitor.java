@@ -376,7 +376,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       dropLocality(arg, memState);
       PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
-      if (instruction.getMethodType() == MethodCallInstruction.MethodType.METHOD_REFERENCE_CALL &&
+      if (instruction.getContext() instanceof PsiMethodReferenceExpression &&
           instruction.getArgRequiredNullability(paramIndex) == Nullability.NOT_NULL) {
         arg = dereference(memState, arg, NullabilityProblemKind.passingNullableToNotNullParameter.problem(anchor, null));
       }
@@ -400,7 +400,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                 DfaMemoryState memState,
                                 MutationSignature sig) {
     DfaValue value = memState.pop();
-    if (instruction.getMethodType() == MethodCallInstruction.MethodType.METHOD_REFERENCE_CALL) {
+    if (instruction.getContext() instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression context = (PsiMethodReferenceExpression)instruction.getContext();
       value = dereference(memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
     }
@@ -504,9 +504,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     PsiType type = instruction.getResultType();
-    final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
 
-    if (methodType == MethodCallInstruction.MethodType.METHOD_REFERENCE_CALL && qualifierValue instanceof DfaVariableValue) {
+    if (instruction.getContext() instanceof PsiMethodReferenceExpression && qualifierValue instanceof DfaVariableValue) {
       PsiMethod method = instruction.getTargetMethod();
       SpecialField field = SpecialField.findSpecialField(method);
       if (field != null) {
@@ -516,24 +515,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (source != null) {
         return factory.getVarFactory().createVariableValue(source, instruction.getResultType(), (DfaVariableValue)qualifierValue);
       }
-    }
-
-    if (methodType == MethodCallInstruction.MethodType.CAST) {
-      assert qualifierValue != null;
-      if (qualifierValue instanceof DfaVariableValue && TypeConversionUtil.isSafeConversion(type, qualifierValue.getType())) {
-        return qualifierValue;
-      }
-      DfaConstValue constValue = state.getConstantValue(qualifierValue);
-      if (constValue != null && type != null) {
-        Object casted = TypeConversionUtil.computeCastTo(constValue.getValue(), type);
-        return factory.getConstFactory().createFromValue(casted, type);
-      }
-      if (type instanceof PsiPrimitiveType && TypeConversionUtil.isIntegralNumberType(type)) {
-        LongRangeSet range = state.getValueFact(qualifierValue, DfaFactType.RANGE);
-        if (range == null) range = LongRangeSet.all();
-        return factory.getFactValue(DfaFactType.RANGE, range.castTo((PsiPrimitiveType)type));
-      }
-      return DfaUnknownValue.getInstance();
     }
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {
@@ -582,6 +563,33 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       state.applyCondition(factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull()));
     }
     return notNullable;
+  }
+
+  @Override
+  public DfaInstructionState[] visitConvertPrimitive(PrimitiveConversionInstruction instruction,
+                                                     DataFlowRunner runner,
+                                                     DfaMemoryState state) {
+    DfaValue value = state.pop();
+    DfaValue result = getConversionResult(value, instruction.getTargetType(), runner.getFactory(), state);
+    pushExpressionResult(result, instruction, state);
+    return nextInstruction(instruction, runner, state);
+  }
+  
+  private static DfaValue getConversionResult(DfaValue value, PsiPrimitiveType type, DfaValueFactory factory, DfaMemoryState state) {
+    if (value instanceof DfaVariableValue && TypeConversionUtil.isSafeConversion(type, value.getType())) {
+      return value;
+    }
+    DfaConstValue constValue = state.getConstantValue(value);
+    if (constValue != null && type != null) {
+      Object casted = TypeConversionUtil.computeCastTo(constValue.getValue(), type);
+      return factory.getConstFactory().createFromValue(casted, type);
+    }
+    if (TypeConversionUtil.isIntegralNumberType(type)) {
+      LongRangeSet range = state.getValueFact(value, DfaFactType.RANGE);
+      if (range == null) range = LongRangeSet.all();
+      return factory.getFactValue(DfaFactType.RANGE, range.castTo(type));
+    }
+    return DfaUnknownValue.getInstance();
   }
 
   @Override

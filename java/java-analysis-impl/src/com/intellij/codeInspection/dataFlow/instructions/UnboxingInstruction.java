@@ -24,4 +24,9 @@ public class UnboxingInstruction extends Instruction {
   public PsiPrimitiveType getTargetType() {
     return myTargetType;
   }
+
+  @Override
+  public String toString() {
+    return "UNBOX";
+  }
 }

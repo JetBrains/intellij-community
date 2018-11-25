@@ -165,6 +165,14 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, state);
   }
 
+  public DfaInstructionState[] visitConvertPrimitive(PrimitiveConversionInstruction instruction,
+                                                     DataFlowRunner runner,
+                                                     DfaMemoryState state) {
+    state.pop();
+    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, state);
+    return nextInstruction(instruction, runner, state);
+  }
+
   protected void flushArrayOnUnknownAssignment(AssignInstruction instruction,
                                                DfaValueFactory factory,
                                                DfaValue dest,
@@ -309,10 +317,6 @@ public abstract class InstructionVisitor {
     memState.pop(); //qualifier
     pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
-  }
-
-  public DfaInstructionState[] visitCast(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    return visitMethodCall(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitNot(NotInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

@@ -5,28 +5,37 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.Nullable;
 
-public class BoxingInstruction extends Instruction {
-  @Nullable private final PsiType myTargetType;
+public class PrimitiveConversionInstruction extends Instruction implements ExpressionPushingInstruction {
+  @Nullable private final PsiPrimitiveType myTargetType;
+  @Nullable private final PsiExpression myExpression;
 
-  public BoxingInstruction(@Nullable PsiType targetType) {
+  public PrimitiveConversionInstruction(@Nullable PsiPrimitiveType targetType, @Nullable PsiExpression expression) {
     myTargetType = targetType;
+    myExpression = expression;
   }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitBox(this, runner, stateBefore);
+    return visitor.visitConvertPrimitive(this, runner, stateBefore);
   }
 
   @Nullable
-  public PsiType getTargetType() {
+  public PsiPrimitiveType getTargetType() {
     return myTargetType;
   }
 
   @Override
+  @Nullable
+  public PsiExpression getExpression() {
+    return myExpression;
+  }
+
+  @Override
   public String toString() {
-    return "BOX";
+    return "CONVERT_PRIMITIVE";
   }
 }
