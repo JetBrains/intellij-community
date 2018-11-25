@@ -135,8 +135,9 @@ public class FocusModeModel {
     EditorColorsScheme scheme = ObjectUtils.notNull(myEditor.getColorsScheme(), EditorColorsManager.getInstance().getGlobalScheme());
     Color background = scheme.getDefaultBackground();
     //noinspection UseJBColor
-    Color foreground = Registry
-      .getColor(ColorUtil.isDark(background) ? "editor.focus.mode.color.dark" : "editor.focus.mode.color.light", Color.GRAY);
+    Color foreground = Registry.getColor(ColorUtil.isDark(background) ?
+                                         "editor.focus.mode.color.dark" :
+                                         "editor.focus.mode.color.light", Color.GRAY);
     TextAttributes attributes = new TextAttributes(foreground, background, background, null, Font.PLAIN);
     myEditor.putUserData(FOCUS_MODE_ATTRIBUTES, attributes);
 
@@ -144,10 +145,13 @@ public class FocusModeModel {
     DocumentEx document = myEditor.getDocument();
     int textLength = document.getTextLength();
 
-    myFocusModeMarkup.add(markupModel.addRangeHighlighter(0, focusRange.getStartOffset(), LAYER, attributes, EXACT_RANGE));
-    myFocusModeMarkup.add(markupModel.addRangeHighlighter(focusRange.getEndOffset(), textLength, LAYER, attributes, EXACT_RANGE));
+    int start = focusRange.getStartOffset();
+    int end = focusRange.getEndOffset();
 
-    myFocusModeRange = document.createRangeMarker(focusRange.getStartOffset(), focusRange.getEndOffset());
+    if (start <= textLength) myFocusModeMarkup.add(markupModel.addRangeHighlighter(0, start, LAYER, attributes, EXACT_RANGE));
+    if (end >= textLength) myFocusModeMarkup.add(markupModel.addRangeHighlighter(end, textLength, LAYER, attributes, EXACT_RANGE));
+
+    myFocusModeRange = document.createRangeMarker(start, end);
   }
 
   @Nullable
