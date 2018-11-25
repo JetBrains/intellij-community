@@ -149,7 +149,7 @@ public class FocusModeModel {
     int end = focusRange.getEndOffset();
 
     if (start <= textLength) myFocusModeMarkup.add(markupModel.addRangeHighlighter(0, start, LAYER, attributes, EXACT_RANGE));
-    if (end >= textLength) myFocusModeMarkup.add(markupModel.addRangeHighlighter(end, textLength, LAYER, attributes, EXACT_RANGE));
+    if (end <= textLength) myFocusModeMarkup.add(markupModel.addRangeHighlighter(end, textLength, LAYER, attributes, EXACT_RANGE));
 
     myFocusModeRange = document.createRangeMarker(start, end);
   }
