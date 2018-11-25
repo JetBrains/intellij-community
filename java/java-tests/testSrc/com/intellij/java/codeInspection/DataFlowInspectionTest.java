@@ -666,5 +666,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNumericCast() { doTest(); }
   public void testEnumValues() { doTest(); }
   public void testEmptyCollection() { doTest(); }
+  public void testAssertNullEphemeral() { doTest(); }
   public void testNotNullAnonymousConstructor() { doTest(); }
 }

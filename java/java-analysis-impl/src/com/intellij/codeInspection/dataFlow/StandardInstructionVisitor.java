@@ -448,7 +448,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           condition = DfaUnknownValue.getInstance();
         }
         DfaMemoryState falseState = state.createCopy();
-        if (falseState.applyContractCondition(condition.createNegated())) {
+        DfaValue falseCondition = condition.createNegated();
+        if (contract.getReturnValue().isFail() ? 
+            falseState.applyCondition(falseCondition) : 
+            falseState.applyContractCondition(falseCondition)) {
           DfaCallArguments falseArguments = contractValue.updateArguments(arguments, true);
           falseStates.add(new DfaCallState(falseState, falseArguments));
         }
