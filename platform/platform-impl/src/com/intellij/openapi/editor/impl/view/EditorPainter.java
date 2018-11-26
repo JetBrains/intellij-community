@@ -375,7 +375,7 @@ public class EditorPainter implements TextDrawingCallback {
       if (customRenderer != null) {
         int highlighterStart = highlighter.getStartOffset();
         int highlighterEnd = highlighter.getEndOffset();
-        if (highlighterStart < endOffset && highlighterEnd > startOffset &&
+        if (highlighterStart <= endOffset && highlighterEnd >= startOffset &&
             clipDetector.rangeCanBeVisible(highlighterStart, highlighterEnd)) {
           customRenderer.paint(myEditor, highlighter, g);
         }
