@@ -789,6 +789,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     // (and, so, should be called after project initialization)
     if (project instanceof ComponentManagerImpl) {
       for (ProjectComponent component : ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class)) {
+        ProgressManager.checkCanceled();
         try {
           component.projectOpened();
         }
