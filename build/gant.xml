@@ -2,21 +2,31 @@
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="project.home" value="${build.dir}/.."/>
   <property name="idea.lib" value="${project.home}/lib"/>
+  <property environment="env"/>
 
   <condition property="gant.target" value="default">
     <not>
       <isset property="gant.target"/>
     </not>
   </condition>
-
   <target name="init">
     <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
                else="${project.home}/build/dependencies/gradlew">
       <os family="windows"/>
     </condition>
+    <condition property="gradle.daemon" value="--daemon" else="--no-daemon">
+      <and>
+        <isset property="intellij.build.use.gradle.daemon"/>
+        <equals arg1="${intellij.build.use.gradle.daemon}" arg2="true"/>
+      </and>
+    </condition>
+    <condition property="java.path" value="${env.JDK_18_x64}" else="${java.home}">
+      <isset property="env.JDK_18_x64"/>
+    </condition>
     <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
-      <env key="JAVA_HOME" value="${java.home}"/>
-      <arg value="--no-daemon"/>
+      <env key="JAVA_HOME" value="${java.path}"/>
+      <arg value="${gradle.daemon}"/>
+      <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
       <arg value="setupBuildScriptsDeps"/>
     </exec>
   </target>
