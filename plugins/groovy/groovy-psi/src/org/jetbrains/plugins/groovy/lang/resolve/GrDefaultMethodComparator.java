@@ -110,9 +110,6 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
 
   private static boolean typesAgree(@NotNull PsiType type1, @NotNull PsiType type2, @NotNull Context context) {
     final boolean hasArguments = context.getArguments() != null;
-    if (hasArguments && type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
-      type1 = ((PsiArrayType)type1).getComponentType();
-    }
     return hasArguments ? //resolve, otherwise same_name_variants
            TypesUtil.isAssignableWithoutConversions(type1, type2, context.getPlace()) :
            type1.equals(type2);
