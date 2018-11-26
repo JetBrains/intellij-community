@@ -242,17 +242,18 @@ internal fun sendNotification(investigator: Investigator?, context: Context) {
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 
 internal fun Context.report(slack: Boolean = false): String {
-  val iconsSync = when {
-    iconsSyncRequired() && iconsReview() != null -> iconsReview()!!.let {
-      val link = if (slack) slackLink(it.id, it.url) else it.url
-      "To sync $iconsRepoName see $link\n"
-    }
-    else -> ""
+  val iconsSync = if (iconsSyncRequired() && iconsReviews().isNotEmpty()) {
+    "To sync $iconsRepoName see ${iconsReviews().joinToString {
+      if (slack) slackLink(it.id, it.url) else it.url
+    }}" + if (slack) "\n" else ""
   }
-  val devSync = devReview()?.let {
-    val link = if (slack) slackLink(it.id, it.url) else it.url
-    "To sync $devRepoName see $link\n"
-  } ?: ""
+  else ""
+  val devSync = if (devReviews().isNotEmpty()) {
+    "To sync $devRepoName see ${devReviews().joinToString {
+      if (slack) slackLink(it.id, it.url) else it.url
+    }}" + if (slack) "\n" else ""
+  }
+  else ""
   return iconsSync + devSync
 }
 
