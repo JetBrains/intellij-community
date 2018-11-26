@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -122,11 +121,10 @@ public class NewMappings {
       }
     }
 
-    final Ref<Boolean> switched = new Ref<>(Boolean.FALSE);
     keepActiveVcs(() -> {
       // sorted -> map. sorted mappings are NOT changed;
-      switched.set(trySwitchVcs(path, activeVcsName));
-      if (!switched.get().booleanValue()) {
+      boolean switched = trySwitchVcs(path, activeVcsName);
+      if (!switched) {
         myVcsToPaths.putValue(newMapping.getVcs(), newMapping);
         sortedMappingsByMap();
       }
