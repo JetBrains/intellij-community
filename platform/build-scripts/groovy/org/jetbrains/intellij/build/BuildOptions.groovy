@@ -121,4 +121,10 @@ class BuildOptions {
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getProperty("teamcity.buildType.id") == null)
+
+  /**
+   * Directory path to unpack Jetbrains JDK builds into
+   */
+  static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
+  String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 }
