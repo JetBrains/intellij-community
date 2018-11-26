@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,11 +101,16 @@ public class NewMappings {
   }
 
   public void activateActiveVcses() {
+    MyVcsActivator activator;
     synchronized (myLock) {
       if (myActivated) return;
       myActivated = true;
+
+      activator = updateActiveVcses();
     }
-    updateVcsMappings(EmptyRunnable.getInstance());
+    activator.activate();
+
+    mappingsChanged();
   }
 
   public void setMapping(final String path, final String activeVcsName) {
@@ -130,30 +134,28 @@ public class NewMappings {
   }
 
   private void updateVcsMappings(@NotNull Runnable runnable) {
-    final MyVcsActivator activator;
+    MyVcsActivator activator = null;
     synchronized (myLock) {
-      if (!myActivated) {
-        runnable.run();
-        sortedMappingsByMap();
-        mappingsChanged();
-        return;
-      }
-
-      AbstractVcs[] oldVcses = myActiveVcses.clone();
       runnable.run();
       sortedMappingsByMap();
-      restoreActiveVcses();
-      AbstractVcs[] newVcses = myActiveVcses.clone();
 
-      activator = new MyVcsActivator(oldVcses, newVcses);
+      if (myActivated) {
+        activator = updateActiveVcses();
+      }
     }
-    activator.activate();
+
+    if (activator != null) {
+      activator.activate();
+    }
 
     mappingsChanged();
   }
 
-  private void restoreActiveVcses() {
+  @NotNull
+  private MyVcsActivator updateActiveVcses() {
     synchronized (myLock) {
+      AbstractVcs[] oldVcses = myActiveVcses;
+
       final Set<String> set = myVcsToPaths.keySet();
       final List<AbstractVcs> list = new ArrayList<>(set.size());
       for (String s : set) {
@@ -164,6 +166,8 @@ public class NewMappings {
         }
       }
       myActiveVcses = list.toArray(new AbstractVcs[0]);
+
+      return new MyVcsActivator(oldVcses, myActiveVcses);
     }
   }
 
@@ -284,12 +288,13 @@ public class NewMappings {
   public void disposeMe() {
     LOG.debug("dispose me");
 
-    // if vcses were not mapped, there's nothing to clear
-    if ((myActiveVcses == null) || (myActiveVcses.length == 0)) return;
-
-    updateVcsMappings(() -> {
+    MyVcsActivator activator;
+    synchronized (myLock) {
       myVcsToPaths.clear();
-    });
+      sortedMappingsByMap();
+      activator = updateActiveVcses();
+    }
+    activator.activate();
     myFileWatchRequestsManager.ping();
   }
 
