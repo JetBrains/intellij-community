@@ -84,15 +84,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final MappingsToRoots myMappingsToRoots;
 
   private ConsoleView myConsole;
-  private final Disposable myConsoleDisposer = new Disposable() {
-    @Override
-    public void dispose() {
-      if (myConsole != null) {
-        Disposer.dispose(myConsole);
-        myConsole = null;
-      }
-    }
-  };
 
   @Nullable private final VcsInitialization myInitialization;
 
@@ -420,7 +411,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       panel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
-      content.setDisposer(myConsoleDisposer);
+      content.setDisposer(() -> releaseConsole());
       content.setPreferredFocusedComponent(() -> console.getPreferredFocusableComponent());
       contentManager.addContent(content);
 
@@ -436,7 +427,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   private void releaseConsole() {
-    Disposer.dispose(myConsoleDisposer);
+    if (myConsole != null) {
+      Disposer.dispose(myConsole);
+      myConsole = null;
+    }
   }
 
   @Override
