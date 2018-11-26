@@ -12,10 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Phaser;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -77,25 +74,26 @@ class MultithreadSearcher implements SESearcher {
     LOG.debug("Search started for pattern [", pattern, "]");
     Phaser phaser = new Phaser();
     FullSearchResultsAccumulator accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor);
-    ProgressIndicator indicator = new ProgressIndicatorBase() {
-      @Override
-      protected void onRunningChange() {
-        if (isCanceled()) {
-          accumulator.stop();
-          phaser.forceTermination();
-        }
-      }
-    };
+    ProgressIndicatorWithCancelListener indicator = new ProgressIndicatorWithCancelListener();
     indicator.start();
 
+    Collection<Future<?>> futures = new ArrayList<>();
     Runnable finisherTask = createFinisherTask(phaser, accumulator, indicator);
     for (SearchEverywhereContributor<?> contributor : contributorsAndLimits.keySet()) {
       SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributor);
       phaser.register();
       Runnable task = createSearchTask(pattern, useNonProjectItems, accumulator, indicator, contributor, filter, () -> phaser.arrive());
-      ApplicationManager.getApplication().executeOnPooledThread(task);
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(task);
+      futures.add(future);
     }
-    ApplicationManager.getApplication().executeOnPooledThread(finisherTask);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(finisherTask);
+    futures.add(future);
+
+    indicator.setCancelCallback(() -> {
+      accumulator.stop();
+      phaser.forceTermination();
+      futures.forEach(f -> f.cancel(true));
+    });
 
     return indicator;
   }
@@ -116,10 +114,11 @@ class MultithreadSearcher implements SESearcher {
                                          Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
     ResultsAccumulator accumulator = new ShowMoreResultsAccumulator(alreadyFound, myEqualityProvider, contributorToExpand, newLimit, myListener, myNotificationExecutor);
     SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributorToExpand);
-    ProgressIndicator indicator = new ProgressIndicatorBase();
+    ProgressIndicatorWithCancelListener indicator = new ProgressIndicatorWithCancelListener();
     indicator.start();
     Runnable task = createSearchTask(pattern, useNonProjectItems, accumulator, indicator, contributorToExpand, filter, () -> indicator.stop());
-    ApplicationManager.getApplication().executeOnPooledThread(task);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(task);
+    indicator.setCancelCallback(() -> future.cancel(true));
 
     return indicator;
   }
@@ -416,6 +415,22 @@ class MultithreadSearcher implements SESearcher {
       }
 
       return sections.get(contributor).size() >= sectionsLimits.get(contributor);
+    }
+  }
+
+  private static class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
+
+    private Runnable cancelCallback = () -> {};
+
+    private void setCancelCallback(Runnable cancelCallback) {
+      this.cancelCallback = cancelCallback;
+    }
+
+    @Override
+    protected void onRunningChange() {
+      if (isCanceled()) {
+        cancelCallback.run();
+      }
     }
   }
 }
