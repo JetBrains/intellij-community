@@ -11,7 +11,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 class EditorConfigHighlightUsagesTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/highlightUsages/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/highlightUsages/"
 
   fun testParentlessOption() = doTest()
   fun testSubcaseParentOption() = doTest()

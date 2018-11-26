@@ -6,7 +6,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 class EnterInEditorConfigFileHandlerTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/actions/enter/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/actions/enter/"
 
   fun testEnterInsideOfWordInComment() = doTest()
   fun testEnterBeforeSpaceInComment() = doTest()
