@@ -355,9 +355,10 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     if (Boolean.TRUE.equals(startNode.getUserData(DATA_READY))) return;
     final DeduplicateVisitorsSupplier supplier = new DeduplicateVisitorsSupplier();
     ExternalSystemApiUtil.visit(startNode, dataNode -> {
-      prepareDataToUse(dataNode);
-      dataNode.visitData(supplier.getVisitor(dataNode.getKey()));
-      dataNode.putUserData(DATA_READY, Boolean.TRUE);
+      if (prepareDataToUse(dataNode)) {
+        dataNode.visitData(supplier.getVisitor(dataNode.getKey()));
+        dataNode.putUserData(DATA_READY, Boolean.TRUE);
+      }
     });
   }
 
@@ -428,7 +429,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
   }
 
-  private void prepareDataToUse(@NotNull DataNode dataNode) {
+  private boolean prepareDataToUse(@NotNull DataNode dataNode) {
     final Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
     List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
     if (services != null) {
@@ -438,8 +439,10 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       catch (Exception e) {
         LOG.debug(e);
         dataNode.clear(true);
+        return false;
       }
     }
+    return true;
   }
 
   private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,
