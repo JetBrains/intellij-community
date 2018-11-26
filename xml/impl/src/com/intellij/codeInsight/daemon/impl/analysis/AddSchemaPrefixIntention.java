@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,6 +24,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.TypeOrElementOrAttributeReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
@@ -76,7 +76,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
                                  new InputValidator() {
                                    @Override
                                    public boolean checkInput(String inputString) {
-                                     return !ns.contains(inputString);
+                                     return !ns.contains(inputString) && isValidPrefix(inputString, project);
                                    }
 
                                    @Override
@@ -133,6 +133,16 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
         }
         xmlns.setName("xmlns:" + nsPrefix);
       });
+    }
+  }
+
+  private static boolean isValidPrefix(String prefix, Project project) {
+    try {
+      XmlTag tag = XmlElementFactory.getInstance(project).createTagFromText("<" + prefix + ":foo/>");
+      return "foo".equals(tag.getLocalName());
+    }
+    catch (IncorrectOperationException e) {
+      return false;
     }
   }
 
