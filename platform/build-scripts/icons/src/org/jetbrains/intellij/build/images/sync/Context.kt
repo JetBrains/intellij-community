@@ -47,7 +47,11 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   fun devReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_DEV_PROJECT_ID }
   fun iconsReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_ICONS_PROJECT_ID }
   fun verifyDevIcons() = devIconsVerifier?.run()
-  fun doFail(report: String) = errorHandler.accept(report)
+  fun doFail(report: String) {
+    log(report)
+    errorHandler.accept(report)
+  }
+
   fun isFail() = (notifySlack || assignInvestigation) &&
                  (iconsSyncRequired() || failIfSyncDevIconsRequired && devSyncRequired())
 

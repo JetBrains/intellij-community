@@ -125,8 +125,8 @@ private fun postVerificationResultToReview(review: Review) {
               "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
 }
 
-private fun createReviewForIcons(context: Context, user: String, email: String): Stream<Review> {
-  if (!context.doSyncIconsAndCreateReview || context.devCommitsToSync.isEmpty()) return Stream.empty()
+private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
+  if (!context.doSyncIconsAndCreateReview || context.devCommitsToSync.isEmpty()) return emptyList()
   val repos = listOf(context.iconsRepo)
   return context.devCommitsToSync.values.flatten()
     .groupBy(CommitInfo::committerEmail)
@@ -135,25 +135,24 @@ private fun createReviewForIcons(context: Context, user: String, email: String):
       val (committer, commits) = it
       withTmpBranch(repos) { branch ->
         commits.forEach { commit ->
-          val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash}")
-          log("[$branch] syncing ${commit.hash} in ${context.iconsRepoName}")
+          val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
+          log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
           syncIconsRepo(context, change)
         }
         val commitsForReview = commitAndPush(branch, user, email, commits.groupBy(CommitInfo::repo).commitMessage(), repos)
         val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
-        log("[$branch] $committer")
         addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer)
         review
       }
-    }.filter(Objects::nonNull).map { it as Review }
+    }.filter(Objects::nonNull).map { it as Review }.toList()
 }
 
 internal fun createReviews(context: Context) = callSafely {
   val (user, email) = System.getProperty("upsource.user.name") to System.getProperty("upsource.user.email")
   context.createdReviews = Stream.of(
-    { createReviewForDev(context, user, email)?.let { Stream.of(it) } ?: Stream.empty() },
+    { createReviewForDev(context, user, email)?.let { listOf(it) } ?: emptyList() },
     { createReviewForIcons(context, user, email) }
-  ).parallel().flatMap { it() }
+  ).parallel().flatMap { it().stream() }
     .filter(Objects::nonNull)
     .map { it as Review }
     .toList()
