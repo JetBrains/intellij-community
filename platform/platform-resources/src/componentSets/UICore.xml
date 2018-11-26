@@ -44,7 +44,6 @@
 
     <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
-      <headless-implementation-class/>
     </component>
 
     <component>
