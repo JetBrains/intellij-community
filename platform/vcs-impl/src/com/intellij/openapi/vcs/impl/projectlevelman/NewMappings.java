@@ -106,8 +106,7 @@ public class NewMappings {
       if (myActivated) return;
       myActivated = true;
     }
-    keepActiveVcs(EmptyRunnable.getInstance());
-    mappingsChanged();
+    updateVcsMappings(EmptyRunnable.getInstance());
   }
 
   public void setMapping(final String path, final String activeVcsName) {
@@ -121,34 +120,36 @@ public class NewMappings {
       }
     }
 
-    keepActiveVcs(() -> {
+    updateVcsMappings(() -> {
       // sorted -> map. sorted mappings are NOT changed;
       boolean switched = trySwitchVcs(path, activeVcsName);
       if (!switched) {
         myVcsToPaths.putValue(newMapping.getVcs(), newMapping);
-        sortedMappingsByMap();
       }
     });
-
-    mappingsChanged();
   }
 
-  private void keepActiveVcs(@NotNull Runnable runnable) {
+  private void updateVcsMappings(@NotNull Runnable runnable) {
     final MyVcsActivator activator;
     synchronized (myLock) {
       if (!myActivated) {
         runnable.run();
+        sortedMappingsByMap();
+        mappingsChanged();
         return;
       }
 
       AbstractVcs[] oldVcses = myActiveVcses.clone();
       runnable.run();
+      sortedMappingsByMap();
       restoreActiveVcses();
       AbstractVcs[] newVcses = myActiveVcses.clone();
 
       activator = new MyVcsActivator(oldVcses, newVcses);
     }
     activator.activate();
+
+    mappingsChanged();
   }
 
   private void restoreActiveVcses() {
@@ -193,15 +194,12 @@ public class NewMappings {
       itemsCopy = items;
     }
 
-    keepActiveVcs(() -> {
+    updateVcsMappings(() -> {
       myVcsToPaths.clear();
       for (VcsDirectoryMapping mapping : itemsCopy) {
         myVcsToPaths.putValue(mapping.getVcs(), mapping);
       }
-      sortedMappingsByMap();
     });
-
-    mappingsChanged();
   }
 
   @Nullable
@@ -289,10 +287,8 @@ public class NewMappings {
     // if vcses were not mapped, there's nothing to clear
     if ((myActiveVcses == null) || (myActiveVcses.length == 0)) return;
 
-    keepActiveVcs(() -> {
+    updateVcsMappings(() -> {
       myVcsToPaths.clear();
-      myActiveVcses = new AbstractVcs[0];
-      mySortedMappings = VcsDirectoryMapping.EMPTY_ARRAY;
     });
     myFileWatchRequestsManager.ping();
   }
@@ -335,13 +331,9 @@ public class NewMappings {
   public void removeDirectoryMapping(final VcsDirectoryMapping mapping) {
     LOG.debug("remove mapping: " + mapping.getDirectory());
 
-    keepActiveVcs(() -> {
-      if (removeVcsFromMap(mapping, mapping.getVcs())) {
-        sortedMappingsByMap();
-      }
+    updateVcsMappings(() -> {
+      removeVcsFromMap(mapping, mapping.getVcs());
     });
-
-    mappingsChanged();
   }
 
   // todo area for optimization
@@ -465,13 +457,10 @@ public class NewMappings {
 
   public void beingUnregistered(final String name) {
     synchronized (myLock) {
-      keepActiveVcs(() -> {
+      updateVcsMappings(() -> {
         myVcsToPaths.remove(name);
-        sortedMappingsByMap();
       });
     }
-
-    mappingsChanged();
   }
 
   @NotNull
