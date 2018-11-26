@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
@@ -75,7 +73,10 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   fun collect(module: JpsModule, includePhantom: Boolean = false): List<ImagePaths> {
     for (sourceRoot in module.sourceRoots) {
       if (sourceRoot.rootType == JavaResourceRootType.RESOURCE) {
-        processRoot(sourceRoot)
+        val rootDir = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
+        if (rootDir.fileName.toString() != "compatibilityResources") {
+          processRoot(sourceRoot, rootDir)
+        }
       }
     }
 
@@ -92,22 +93,21 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     }
   }
 
-  private fun processRoot(sourceRoot: JpsModuleSourceRoot) {
-    val root = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
+  private fun processRoot(sourceRoot: JpsModuleSourceRoot, rootDir: Path) {
     val attributes = try {
-      Files.readAttributes(root, BasicFileAttributes::class.java)
+      Files.readAttributes(rootDir, BasicFileAttributes::class.java)
     }
     catch (ignored: NoSuchFileException) {
       return
     }
 
-    val answer = downToRoot(root, root, attributes.isDirectory, null, IconRobotsData(), 0)
+    val answer = downToRoot(rootDir, rootDir, attributes.isDirectory, null, IconRobotsData(), 0)
     val iconsRoot = (if (answer == null || Files.isDirectory(answer)) answer else answer.parent) ?: return
 
-    val rootRobotData = upToProjectHome(root)
-    if (rootRobotData.isSkipped(root)) return
+    val rootRobotData = upToProjectHome(rootDir)
+    if (rootRobotData.isSkipped(rootDir)) return
 
-    val robotData = rootRobotData.fork(iconsRoot, root)
+    val robotData = rootRobotData.fork(iconsRoot, rootDir)
 
     processDirectory(iconsRoot, sourceRoot, robotData, emptyList(), 0)
     processPhantomIcons(iconsRoot, sourceRoot, robotData, emptyList())
