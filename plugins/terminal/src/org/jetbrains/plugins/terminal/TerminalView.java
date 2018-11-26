@@ -210,12 +210,16 @@ public class TerminalView {
 
       @Override
       public void onPreviousTabSelected() {
-        toolWindow.getContentManager().selectPreviousContent();
+        if (toolWindow.getContentManager().getContentCount() > 1) {
+          toolWindow.getContentManager().selectPreviousContent();
+        }
       }
 
       @Override
       public void onNextTabSelected() {
-        toolWindow.getContentManager().selectNextContent();
+        if (toolWindow.getContentManager().getContentCount() > 1) {
+          toolWindow.getContentManager().selectNextContent();
+        }
       }
 
       @Override
