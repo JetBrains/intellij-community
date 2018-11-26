@@ -792,6 +792,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         try {
           component.projectOpened();
         }
+        catch (ProcessCanceledException e) {
+          LOG.error(new Exception("Unexpected ProcessCanceledException", e));
+        }
         catch (Throwable e) {
           LOG.error(component.toString(), e);
         }
