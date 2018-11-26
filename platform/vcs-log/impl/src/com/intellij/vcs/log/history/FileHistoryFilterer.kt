@@ -28,6 +28,7 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 
@@ -194,7 +195,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     private fun getHead(pack: DataPack): Hash? {
-      return VcsLogUtil.findBranch(pack.refsModel, root, "HEAD")?.commitHash
+      return pack.refsModel.findBranch("HEAD", root)?.commitHash
     }
   }
 

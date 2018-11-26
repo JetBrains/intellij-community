@@ -1,18 +1,4 @@
-/*
-` * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
@@ -36,18 +22,12 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
-import com.intellij.vcs.log.data.RefsModel
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.index.IndexDataGetter
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.utils.subgraphDifference
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
-import com.intellij.vcs.log.util.StopWatch
-import com.intellij.vcs.log.util.TroveUtil
-import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.visible.VisiblePack
 import git4idea.GitBranch
 import git4idea.GitUtil
@@ -279,59 +259,17 @@ class DeepComparator(private val project: Project,
       val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
       val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return null
 
-      val targetBranchIndex = storage.getCommitIndex(targetBranchRef.commitHash, root)
-      val sourceBranchIndex = storage.getCommitIndex(sourceBranchRef.commitHash, root)
-      if (targetBranchIndex == sourceBranchIndex) return TIntHashSet()
+      val targetBranchCommits = dataPack.subgraphDifference(targetBranchRef, sourceBranchRef, storage) ?: return null
+      if (targetBranchCommits.isEmpty) return sourceBranchCommits
 
-      if (dataPack.permanentGraph !is PermanentGraphInfo<*>) return null
-
-      val permanentGraphInfo = dataPack.permanentGraph as PermanentGraphInfo<Int>
-      val targetBranchNodeIds = permanentGraphInfo.linearGraph.subgraphDifference(
-        permanentGraphInfo.permanentCommitsInfo.getNodeId(targetBranchIndex),
-        permanentGraphInfo.permanentCommitsInfo.getNodeId(sourceBranchIndex))
-      if (targetBranchNodeIds.isEmpty) return sourceBranchCommits
-      val targetBranchCommits = TroveUtil.map2IntSet(targetBranchNodeIds) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
-
-      val timeToSourceCommit = TroveUtil.group(sourceBranchCommits) { dataGetter.getAuthorTime(it) }
-      val authorToSourceCommit = TroveUtil.group(sourceBranchCommits) { dataGetter.getAuthor(it) }
-
-      val commitsToRemove = TIntHashSet()
-      for (targetCommit in targetBranchCommits) {
-        val time = dataGetter.getAuthorTime(targetCommit)
-        val author = dataGetter.getAuthor(targetCommit)
-
-        val sourceCandidates = TroveUtil.intersect(timeToSourceCommit[time] ?: TIntHashSet(),
-                                                   authorToSourceCommit[author] ?: TIntHashSet())
-        if (sourceCandidates.isNotEmpty()) {
-          selectSourceCommit(targetCommit, sourceCandidates, dataGetter)?.let { sourceCommit ->
-            commitsToRemove.add(sourceCommit)
-          }
-        }
-      }
-      TroveUtil.removeAll(sourceBranchCommits, commitsToRemove)
-      if (!commitsToRemove.isEmpty) {
-        LOG.debug("Using index, detected ${commitsToRemove.size()} commits in ${sourceBranch}#${root.name}" +
+      val match = dataGetter.match(sourceBranchCommits, targetBranchCommits)
+      TroveUtil.removeAll(sourceBranchCommits, match)
+      if (!match.isEmpty) {
+        LOG.debug("Using index, detected ${match.size()} commits in ${sourceBranch}#${root.name}" +
                   " that were picked to the current branch")
       }
 
       return sourceBranchCommits
-    }
-
-    private fun selectSourceCommit(targetCommit: Int, sourceCandidates: Set<Int>, dataGetter: IndexDataGetter): Int? {
-      val targetMessage = dataGetter.getFullMessage(targetCommit) ?: return null
-      for (sourceCandidate in sourceCandidates) {
-        val sourceHash = storage.getCommitId(sourceCandidate)?.hash ?: continue
-        if (targetMessage.contains("\n(cherry picked from commit ${sourceHash.asString()})") ||
-            targetMessage.contains("\n(cherry picked from commit ${sourceHash.toShortString()})")) {
-          return sourceCandidate
-        }
-      }
-
-      return null
-    }
-
-    private fun RefsModel.findBranch(name: String, root: VirtualFile): VcsRef? {
-      return VcsLogUtil.findBranch(this, root, name)
     }
 
     override fun toString(): String {

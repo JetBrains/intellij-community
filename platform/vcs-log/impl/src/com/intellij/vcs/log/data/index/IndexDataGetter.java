@@ -328,6 +328,11 @@ public class IndexDataGetter {
   // Util
   //
 
+  @NotNull
+  public VcsLogStorage getLogStorage() {
+    return myLogStorage;
+  }
+
   @Nullable
   private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
     return executeAndCatch(computable, null);
