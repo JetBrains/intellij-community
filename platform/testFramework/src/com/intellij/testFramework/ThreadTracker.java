@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -151,18 +150,18 @@ public class ThreadTracker {
             || thread.getState() == Thread.State.RUNNABLE) {
           thread.interrupt();
           long start = System.currentTimeMillis();
-          if (thread.isAlive()) {
-            System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
-          }
+          //if (thread.isAlive()) {
+          //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
+          //}
           while (System.currentTimeMillis() < start + 5_000) {
             UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
             // afters some time the submitted task can finish and the thread become idle pool
             if (shouldIgnore(thread, thread.getStackTrace())) break;
           }
-          long elapsed = System.currentTimeMillis() - start;
-          if (elapsed > 1_000) {
-            System.err.println("waited for " + thread + " for " + elapsed+"ms");
-          }
+          //long elapsed = System.currentTimeMillis() - start;
+          //if (elapsed > 1_000) {
+          //  System.err.println("waited for " + thread + " for " + elapsed+"ms");
+          //}
         }
 
         // check once more because the thread name may be set via race
