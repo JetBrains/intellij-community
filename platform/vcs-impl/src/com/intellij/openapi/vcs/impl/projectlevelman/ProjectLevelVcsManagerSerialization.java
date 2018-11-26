@@ -20,11 +20,11 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.VcsShowConfirmationOptionImpl;
 import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
-import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ProjectLevelVcsManagerSerialization {
@@ -40,21 +40,13 @@ public class ProjectLevelVcsManagerSerialization {
     myReadValue = new HashMap<>();
   }
 
-  private static VcsShowOptionsSettingImpl getOrCreateOption(Map<String, VcsShowOptionsSettingImpl> options, String actionName) {
-    if (!options.containsKey(actionName)) {
-      options.put(actionName, new VcsShowOptionsSettingImpl(actionName));
-    }
-    return options.get(actionName);
-  }
-
   public void readExternalUtil(final Element element, final OptionsAndConfirmations optionsAndConfirmations) throws InvalidDataException {
-    final Map<String, VcsShowOptionsSettingImpl> options = optionsAndConfirmations.getOptions();
     for (Element subElement : element.getChildren(OPTIONS_SETTING)) {
       final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
       final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
       if (id != null && value != null) {
         try {
-          getOrCreateOption(options, id).setValue(Boolean.parseBoolean(value));
+          optionsAndConfirmations.getOrCreateOption(id).setValue(Boolean.parseBoolean(value));
         }
         catch (Exception ignored) {
         }

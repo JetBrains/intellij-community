@@ -20,10 +20,10 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OptionsAndConfirmations {
   private final Map<String, VcsShowOptionsSettingImpl> myOptions;
@@ -72,9 +72,7 @@ public class OptionsAndConfirmations {
   }
 
   private void createSettingFor(final VcsConfiguration.StandardOption option) {
-    if (!myOptions.containsKey(option.getId())) {
-      myOptions.put(option.getId(), new VcsShowOptionsSettingImpl(option));
-    }
+    getOrCreateOption(option.getId());
   }
 
   @NotNull
@@ -97,7 +95,7 @@ public class OptionsAndConfirmations {
     return option;
   }
 
-  private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
+  VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
     if (!myOptions.containsKey(actionName)) {
       myOptions.put(actionName, new VcsShowOptionsSettingImpl(actionName));
     }
