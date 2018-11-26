@@ -497,7 +497,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
     else if (selectedType == JUnitConfigurationModel.TAGS) {
       myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(false);
+      myScopesPanel.setVisible(true);
       myDir.setVisible(false);
       myPattern.setVisible(false);
       myClass.setVisible(false);
