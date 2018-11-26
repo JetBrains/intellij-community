@@ -180,8 +180,11 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
 
     when {
       isFileDir -> {
-        if (level == 1 && (file.fileName.toString() == "META-INF" || file.fileName.toString() == "intentionDescriptions")) {
-          return common
+        if (level == 1) {
+          val name = file.fileName.toString()
+          if (name == "META-INF" || name == "intentionDescriptions" || name == "fileTemplates") {
+            return common
+          }
         }
 
         val childRobotData = robotData.fork(file, root)
