@@ -7,7 +7,7 @@ class MyTest {
         int g = switch (i) {
             default -> {
                 String temp = "";
-                throw new IOEXception(temp);
+                throw new IOException(temp);
             }
         };
 
