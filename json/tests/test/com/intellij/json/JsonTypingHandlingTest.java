@@ -98,4 +98,8 @@ public class JsonTypingHandlingTest extends JsonTestCase {
                           "  \"a\": <caret>\n" +
                           "}");
   }
+
+  public void testPairedSingleQuote() {
+    doTypingTest('\'', "{<caret>}", "{'<caret>'}", "json");
+  }
 }
