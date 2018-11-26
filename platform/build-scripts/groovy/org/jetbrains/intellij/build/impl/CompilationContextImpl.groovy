@@ -64,7 +64,8 @@ class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
+    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "", "JDK_18_x64", false))
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, gradleJdk)
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle)
     }
@@ -75,7 +76,6 @@ class CompilationContextImpl implements CompilationContext {
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
-    gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
 
     def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
