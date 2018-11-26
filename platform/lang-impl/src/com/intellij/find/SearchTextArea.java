@@ -28,7 +28,10 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -427,7 +430,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     abstract Icon getShowHistoryIcon();
 
-    abstract Icon getClearIcon();
+    Icon getClearIcon() {
+      return AllIcons.Actions.Clear;
+    }
 
     abstract void paint(Graphics2D g);
   }
@@ -470,11 +475,6 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     Icon getShowHistoryIcon() {
       return AllIcons.Actions.SearchWithHistory;
-    }
-
-    @Override
-    Icon getClearIcon() {
-      return AllIcons.Actions.Clear;
     }
 
     @Override
@@ -522,15 +522,6 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     Icon getShowHistoryIcon() {
       return AllIcons.Actions.SearchWithHistory;
-    }
-
-    @Override
-    Icon getClearIcon() {
-      Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
-      if (clearIcon == null) {
-        clearIcon = LafIconLookup.getIcon("clear");
-      }
-      return clearIcon;
     }
 
     @Override
