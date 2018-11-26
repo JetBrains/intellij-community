@@ -46,7 +46,7 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
   @NotNull
   @Override
   public String getTextFor(JsonSchemaInfo value) {
-    return value.getDescription();
+    return value == null ? "" : value.getDescription();
   }
 
   @Override
