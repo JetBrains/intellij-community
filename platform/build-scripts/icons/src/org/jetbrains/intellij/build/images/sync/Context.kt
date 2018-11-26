@@ -108,6 +108,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     iconsCommitHashesToSync = commits(iconsCommitHashesToSyncArg)
     devIconsCommitHashesToSync = commits(devIconsCommitHashesToSyncArg)
       .takeIf { it.isNotEmpty() } ?: System.getProperty("teamcity.build.changedFiles.file")
+      ?.takeIf { System.getProperty(devIconsCommitHashesToSyncArg)?.let(String::trim) != "*" }
       ?.takeIf { !isScheduled() }
       ?.let(::File)
       ?.takeIf(File::exists)
