@@ -5,10 +5,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.UnknownConfigurationType;
-import com.intellij.execution.impl.EditConfigurationsDialog;
-import com.intellij.execution.impl.RunDialog;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.*;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
@@ -29,7 +26,6 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
@@ -1044,7 +1040,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           ConfigurationType currentType = result.get(index).getType();
           int m = currentType == null ?
                   1 :
-                  NaturalComparator.INSTANCE.compare(folderType.getDisplayName(), currentType.getDisplayName());
+                  RunConfigurationListManagerHelperKt.compareTypesForUi(folderType, currentType);
           if (m < 0 || (m == 0 && !(result.get(index) instanceof FolderWrapper))) {
             break;
           }
