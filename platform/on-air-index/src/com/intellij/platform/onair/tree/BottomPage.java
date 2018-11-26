@@ -2,6 +2,7 @@
 package com.intellij.platform.onair.tree;
 
 import com.intellij.platform.onair.storage.api.*;
+import com.intellij.platform.onair.tree.functional.BaseTransientPage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +10,9 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 import static com.intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
+import static com.intellij.platform.onair.tree.StoredBTreeUtil.indent;
+import static com.intellij.platform.onair.tree.StoredBTreeUtil.set;
+import static com.intellij.platform.onair.tree.StoredBTreeUtil.setChild;
 
 public class BottomPage extends BasePage {
   protected int mask;
@@ -20,8 +24,8 @@ public class BottomPage extends BasePage {
 
   @Nullable
   @Override
-  protected byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
-    final int index = binarySearch(key);
+  public byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
+    final int index = BTreeCommon.binarySearch(backingArray, size, tree.getKeySize(), BYTES_PER_ADDRESS, key);
     if (index >= 0) {
       return getValue(novelty, index);
     }
@@ -29,7 +33,7 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  protected boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer) {
+  public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer) {
     for (int i = 0; i < size; i++) {
       byte[] key = getKey(i);
       byte[] value = getValue(novelty, i);
@@ -41,8 +45,8 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  protected boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
-    for (int i = binarySearchRange(fromKey); i < size; i++) {
+  public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
+    for (int i = BTreeCommon.binarySearchRange(backingArray, size, tree.getKeySize(), BYTES_PER_ADDRESS, fromKey); i < size; i++) {
       byte[] key = getKey(i);
       byte[] value = getValue(novelty, i);
       if (!consumer.consume(key, value)) {
@@ -54,8 +58,8 @@ public class BottomPage extends BasePage {
 
   @Nullable
   @Override
-  protected BasePage put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
-    int pos = binarySearch(key);
+  public BasePage put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
+    int pos = BTreeCommon.binarySearch(backingArray, size, tree.getKeySize(), BYTES_PER_ADDRESS, key);
     if (pos >= 0) {
       if (overwrite) {
         final int bytesPerEntry = tree.getKeySize() + BYTES_PER_ADDRESS;
@@ -66,12 +70,12 @@ public class BottomPage extends BasePage {
         }
         else {
           // key found
-          if ((mask & (1L << pos)) == 0) {
+          /*if ((mask & (1L << pos)) == 0) {
             final Address childAddress = getChildAddress(pos);
-            /*if (tree.canMutateInPlace(childAddress)) {
+            if (tree.canMutateInPlace(childAddress)) {
               novelty.free(childAddress.getLowBytes());
-            }*/
-          }
+            }
+          }*/
 
           final long childAddressLowBytes = novelty.alloc(value);
           mask &= ~(1 << pos); // drop mask bit
@@ -94,7 +98,7 @@ public class BottomPage extends BasePage {
       page = insertValueAt(novelty, pos, key, value);
     }
     else {
-      page = insertAt(novelty, pos, key, novelty.alloc(value));
+      page = BTreeCommon.insertAt(this, tree.getBase(), novelty, pos, key, value);
     }
     result[0] = true;
     tree.incrementSize();
@@ -102,11 +106,11 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  protected boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
-    final int pos = binarySearch(key);
+  public boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
+    final int pos = BTreeCommon.binarySearch(backingArray, size, tree.getKeySize(), BYTES_PER_ADDRESS, key);
     if (pos < 0) return false;
 
-    // tree.addExpiredLoggable(keysAddresses[pos]);
+    // novelty.free(getChildAddress(pos));
     copyChildren(pos + 1, pos);
     tree.decrementSize();
     decrementSize(1);
@@ -116,7 +120,7 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  protected BottomPage split(@NotNull Novelty.Accessor novelty, int from, int length) {
+  public BottomPage split(@NotNull Novelty.Accessor novelty, int from, int length) {
     final BottomPage result = copyOf(novelty, this, from, length);
     decrementSize(length);
     flush(novelty);
@@ -124,7 +128,7 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  protected BottomPage getMutableCopy(@NotNull Novelty.Accessor novelty, BTree tree) {
+  protected BottomPage getMutableCopy(@NotNull Novelty.Accessor novelty) {
     if (tree.canMutateInPlace(address)) {
       return this;
     }
@@ -133,6 +137,11 @@ public class BottomPage extends BasePage {
       bytes,
       tree, new Address(novelty.alloc(bytes)), size, mask
     );
+  }
+
+  @Override
+  public BaseTransientPage getTransientCopy(long epoch) {
+    throw new UnsupportedOperationException(); // TODO
   }
 
   @Override
@@ -159,14 +168,7 @@ public class BottomPage extends BasePage {
     ByteUtils.writeUnsignedInt(mask ^ 0x80000000, backingArray, bytesPerEntry * tree.getBase() + 2);
   }
 
-  @Override
-  protected void set(int pos, byte[] key, long lowAddressBytes) {
-    mask &= ~(1 << pos); // drop mask bit
-    updateMask(tree.getKeySize() + BYTES_PER_ADDRESS);
-    super.set(pos, key, lowAddressBytes);
-  }
-
-  private void  setValue(int pos, byte[] key, byte[] value) {
+  private void setValue(int pos, byte[] key, byte[] value) {
     mask |= (1 << pos); // set mask bit
     updateMask(tree.getKeySize() + BYTES_PER_ADDRESS);
     final int bytesPerKey = tree.getKeySize();
@@ -178,13 +180,13 @@ public class BottomPage extends BasePage {
     set(pos, key, bytesPerKey, backingArray, value);
   }
 
-  protected BasePage insertValueAt(@NotNull Novelty.Accessor novelty, int pos, byte[] key, byte[] value) {
-    if (!needSplit(this)) {
+  private BasePage insertValueAt(@NotNull Novelty.Accessor novelty, int pos, byte[] key, byte[] value) {
+    if (!BTreeCommon.needSplit(this, tree.getBase())) {
       insertValueDirectly(novelty, pos, key, value);
       return null;
     }
     else {
-      int splitPos = getSplitPos(this, pos);
+      int splitPos = BTreeCommon.getSplitPos(this, pos);
 
       final BottomPage sibling = split(novelty, splitPos, size - splitPos);
       if (pos >= splitPos) {
@@ -200,17 +202,6 @@ public class BottomPage extends BasePage {
     }
   }
 
-  @Override
-  protected void copyChildren(int from, int to) {
-    int highBits = mask & (0xFFFFFFFF << from);
-    int lowBits = mask & ~(0xFFFFFFFF << Math.min(from, to));
-
-    this.mask = lowBits | highBits << (to - from);
-    updateMask(tree.getKeySize() + BYTES_PER_ADDRESS);
-
-    super.copyChildren(from, to);
-  }
-
   private void insertValueDirectly(@NotNull Novelty.Accessor novelty, final int pos, @NotNull byte[] key, @NotNull byte[] value) {
     if (pos < size) {
       copyChildren(pos, pos + 1);
@@ -220,13 +211,12 @@ public class BottomPage extends BasePage {
     flush(novelty);
   }
 
-  @Override
-  protected byte[] getValue(@NotNull Novelty.Accessor novelty, int index) {
+  private byte[] getValue(@NotNull Novelty.Accessor novelty, int index) {
     if ((mask & (1L << index)) != 0) {
       return getInlineValue(index);
     }
     else {
-      return super.getValue(novelty, index);
+      return tree.loadLeaf(novelty, getChildAddress(index));
     }
   }
 
@@ -243,17 +233,33 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  protected BasePage getChild(@NotNull Novelty.Accessor novelty, int index) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  protected BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty) {
+  public BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty) {
     return this;
   }
 
   @Override
-  protected boolean isBottom() {
+  public void insertDirectly(@NotNull Novelty.Accessor novelty, final int pos, @NotNull byte[] key, Object child) {
+    if (pos < size) {
+      copyChildren(pos, pos + 1);
+    }
+
+    final int bytesPerKey = tree.getKeySize();
+
+    if (key.length != bytesPerKey) {
+      throw new IllegalArgumentException("Invalid key length: need " + bytesPerKey + ", got: " + key.length);
+    }
+
+    mask &= ~(1 << pos); // drop mask bit
+    updateMask(tree.getKeySize() + BYTES_PER_ADDRESS);
+
+    set(pos, key, bytesPerKey, backingArray, novelty.alloc((byte[])child));
+
+    incrementSize();
+    flush(novelty);
+  }
+
+  @Override
+  public boolean isBottom() {
     return true;
   }
 
@@ -277,6 +283,24 @@ public class BottomPage extends BasePage {
         );
       }
     }
+  }
+
+  private void copyChildren(int from, int to) {
+    int highBits = mask & (0xFFFFFFFF << from);
+    int lowBits = mask & ~(0xFFFFFFFF << Math.min(from, to));
+
+    this.mask = lowBits | highBits << (to - from);
+    updateMask(tree.getKeySize() + BYTES_PER_ADDRESS);
+
+    if (from >= size) return;
+
+    final int bytesPerEntry = tree.getKeySize() + BYTES_PER_ADDRESS;
+
+    System.arraycopy(
+      backingArray, from * bytesPerEntry,
+      backingArray, to * bytesPerEntry,
+      (size - from) * bytesPerEntry
+    );
   }
 
   private static BottomPage copyOf(@NotNull Novelty.Accessor novelty, BottomPage page, int from, int length) {
