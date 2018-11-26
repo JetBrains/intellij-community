@@ -21,6 +21,10 @@ class C<T> implements I<T> {
   C(I<? extends T> c) {}
 }
 class PG {}
+
+class IdCallable {
+  def <T> T call(T arg) { arg }
+}
 '''
   }
 
@@ -102,7 +106,7 @@ I<PG> l = first(theMethod<caret>())
   }
 
   @Test
-  void 'type from argument'() {
+  void 'diamond type from argument'() {
     typingTest 'new ArrayList<>(new ArrayList<Integer>())', 'java.util.ArrayList<java.lang.Integer>'
   }
 
@@ -127,5 +131,20 @@ abstract class Wrapper<V, X> implements F<V, X> {
 F<Integer, String> w = new Wrapper<>({} <caret>as F)
 ''', GrSafeCastExpression
     typingTest(expression, 'F<java.lang.Integer,java.lang.String>')
+  }
+
+  @Test
+  void 'implicit call in variable initializer'() {
+    typingTest(elementUnderCaret('String s = <caret>new IdCallable()()', GrMethodCall), 'java.lang.String')
+  }
+
+  @Test
+  void 'implicit call in argument of diamond in variable initializer'() {
+    typingTest(elementUnderCaret('C<Integer> s = new C<>(<caret>new IdCallable()())', GrMethodCall), 'I<? extends java.lang.Integer>')
+  }
+
+  @Test
+  void 'implicit call from argument'() {
+    typingTest('new IdCallable()("hi")', 'java.lang.String')
   }
 }
