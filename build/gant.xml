@@ -2,6 +2,7 @@
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="project.home" value="${build.dir}/.."/>
   <property name="idea.lib" value="${project.home}/lib"/>
+  <property name="gradle.daemon" value="--no-daemon"/>
 
   <condition property="gant.target" value="default">
     <not>
@@ -16,7 +17,7 @@
     </condition>
     <exec executable="${gradle.home}/${gradlew}" dir="${gradle.home}" failonerror="true">
       <env key="JAVA_HOME" value="${java.home}"/>
-      <arg value="--no-daemon"/>
+      <arg value="${gradle.daemon}"/>
       <arg value="setupBuildScriptsDeps"/>
     </exec>
   </target>
