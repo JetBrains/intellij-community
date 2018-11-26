@@ -147,4 +147,15 @@ F<Integer, String> w = new Wrapper<>({} <caret>as F)
   void 'implicit call from argument'() {
     typingTest('new IdCallable()("hi")', 'java.lang.String')
   }
+
+  @Test
+  void 'vararg method call type from argument'() {
+    typingTest 'static <T> List<T> foo(T... t) {}; foo("")', 'java.util.List<java.lang.String>'
+    typingTest 'static <T> List<T> foo(T... t) {}; foo(1d, 2l)', 'java.util.List<java.lang.Number>'
+  }
+
+  @Test
+  void 'vararg method call type from array argument'() {
+    typingTest 'static <T> List<T> foo(T... t) {}; foo("".split(""))', 'java.util.List<java.lang.String>'
+  }
 }
