@@ -45,11 +45,7 @@ public class ProjectLevelVcsManagerSerialization {
       final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
       final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
       if (id != null && value != null) {
-        try {
-          optionsAndConfirmations.getOrCreateOption(id).setValue(Boolean.parseBoolean(value));
-        }
-        catch (Exception ignored) {
-        }
+        optionsAndConfirmations.getOrCreateOption(id).setValue(Boolean.parseBoolean(value));
       }
     }
     myReadValue.clear();
@@ -57,11 +53,7 @@ public class ProjectLevelVcsManagerSerialization {
       final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
       final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
       if (id != null && value != null) {
-        try {
-          myReadValue.put(id, VcsShowConfirmationOption.Value.fromString(value));
-        }
-        catch (Exception ignored) {
-        }
+        myReadValue.put(id, VcsShowConfirmationOption.Value.fromString(value));
       }
     }
   }
