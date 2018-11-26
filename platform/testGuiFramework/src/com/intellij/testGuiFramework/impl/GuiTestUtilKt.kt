@@ -255,6 +255,17 @@ object GuiTestUtilKt {
     }
   }
 
+  fun repeatUntil(condition: () -> Boolean, action: () -> Unit, maxAttempts: Int = 3) {
+    var remainingAttempts = maxAttempts
+    while (!condition() && remainingAttempts-- > 0) {
+      try {
+        action()
+      } catch (e: Exception) {
+        // ignore
+      }
+    }
+  }
+
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
     val result = LinkedList<ComponentType>()
     val queue: Queue<Component> = LinkedList()
