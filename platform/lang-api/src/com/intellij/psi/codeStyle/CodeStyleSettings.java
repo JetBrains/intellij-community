@@ -909,7 +909,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   @Override
-  @Nullable
+  @NotNull
   public IndentOptions getIndentOptions() {
     return OTHER_INDENT_OPTIONS;
   }

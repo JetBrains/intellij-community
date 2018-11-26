@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.lang.annotation.Documented;
 
 /**
  * Utility class for miscellaneous code style settings retrieving methods.
@@ -169,14 +172,21 @@ public class CodeStyle {
     return rootSettings.getIndentOptionsByFile(file);
   }
 
+
   /**
-   * Explicitly retrieves indent options by file type.
-   * @param file The file to get indent options for.
-   * @return The indent options associated with the file type.
+   * Returns indent options by virtual file's type. If {@code null} is given instead of the virtual file or the type of the virtual
+   * file doesn't have it's own configuration, returns other indent options configured via "Other File Types" section in Settings.
+   * <p>
+   * <b>Note:</b> This method is faster then {@link #getIndentOptions(PsiFile)} but it doesn't take into account possible configurations
+   * overwriting the default, for example EditorConfig.
+   *
+   * @param project The current project.
+   * @param file    The virtual file to get indent options for or {@code null} if the file is unknown.
+   * @return The indent options for the given project and file.
    */
   @NotNull
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptionsByFileType(@NotNull PsiFile file) {
-    return getSettings(file).getIndentOptions(file.getFileType());
+  public static CommonCodeStyleSettings.IndentOptions getIndentOptionsByFileType(@NotNull Project project, @Nullable VirtualFile file) {
+    return file != null ? getSettings(project).getIndentOptions(file.getFileType()) : getSettings(project).getIndentOptions();
   }
 
   /**
