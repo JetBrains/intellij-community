@@ -350,30 +350,63 @@ static bool update_roots(set* new_roots) {
 }
 
 
+static bool watched_by_any(const char *path) {
+  char real_path[PATH_MAX];
+  if (realpath(UNFLATTEN(path), real_path) == NULL)
+    return false;
+
+  char real_root_path[PATH_MAX];
+  int roots_count = array_size(roots);
+  for (int i = 0; i < roots_count; i++) {
+    watch_root *root = array_get(roots, i);
+    if (realpath(UNFLATTEN(root->path), real_root_path) == NULL)
+      continue;
+
+    if (root->path[0] == '|') {
+      if (strcmp(real_root_path, real_path) == 0)
+        return true;
+    }
+    else {
+      if (is_parent_path(real_root_path, real_path))
+        return true;
+    }
+  }
+  return false;
+}
+
 static void unregister_roots(set* to_remove) {
   if (set_size(to_remove) == 0) {
     return;
   }
 
+  array* preserved = array_create(array_size(roots));
+  array* removed = array_create(array_size(roots));
+
   watch_root* root;
-  array* temp = array_create(array_size(roots));
   while ((root = array_pop(roots)) != NULL) {
     if (set_contains(to_remove, root->path)) {
-      userlog(LOG_INFO, "unregistering root: %s", root->path);
-      unwatch(root->id);
-      free(root->path);
-      free(root);
+      array_push(removed, root);
     }
     else {
-      array_push(temp,root);
+      array_push(preserved, root);
     }
   }
-  int tmp_array_size = array_size(temp);
-  for (int j = 0; j < tmp_array_size; j++) {
-    array_push(roots, array_pop(temp));
+
+  while ((root = array_pop(preserved)) != NULL) {
+    array_push(roots, root);
   }
 
-  array_delete(temp);
+  while ((root = array_pop(removed)) != NULL) {
+    userlog(LOG_INFO, "unregistering root: %s", root->path);
+    if (!watched_by_any(root->path)) {
+      unwatch(root->id);
+    }
+    free(root->path);
+    free(root);
+  }
+
+  array_delete(preserved);
+  array_delete(removed);
 }
 
 
