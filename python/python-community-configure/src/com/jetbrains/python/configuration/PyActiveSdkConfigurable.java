@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -44,7 +45,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +129,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkCombo.setPreferredSize(preferredSize);
     notificationsArea.hide();
     myDetailsButton = new FixedSizeButton();
-    myDetailsButton.setIcon(PythonIcons.Python.InterpreterGear);
+    myDetailsButton.setIcon(AllIcons.General.GearPlain);
     //noinspection SuspiciousNameCombination
     myDetailsButton.setPreferredSize(new Dimension(preferredSize.height, preferredSize.height));
 
