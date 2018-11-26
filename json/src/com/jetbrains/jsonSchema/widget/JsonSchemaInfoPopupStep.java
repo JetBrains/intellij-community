@@ -172,7 +172,7 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
 
     if (selectedValue == null) return;
 
-    String path = VfsUtilCore.getRelativePath(virtualFile, projectBaseDir);
+    String path = projectBaseDir == null ? null : VfsUtilCore.getRelativePath(virtualFile, projectBaseDir);
     if (path == null) {
       path = virtualFile.getUrl();
     }
