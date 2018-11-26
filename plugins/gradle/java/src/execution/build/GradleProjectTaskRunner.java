@@ -177,9 +177,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
-    if (!GradleSystemRunningSettings.getInstance().isUseGradleAwareMake()) return false;
     if (projectTask instanceof ModuleBuildTask) {
-      return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, ((ModuleBuildTask)projectTask).getModule());
+      Module module = ((ModuleBuildTask)projectTask).getModule();
+      if (!GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabled(module)) return false;
+      return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
     if (projectTask instanceof ProjectModelBuildTask) {
       ProjectModelBuildTask buildTask = (ProjectModelBuildTask)projectTask;

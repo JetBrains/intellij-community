@@ -26,6 +26,9 @@ public class JavaGradleSettingsControlProvider extends GradleSettingsControlProv
   public GradleProjectSettingsControlBuilder getProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     return new JavaGradleProjectSettingsControlBuilder(initialSettings)
       // Hide bundled distribution option for a while
-      .dropUseBundledDistributionButton();
+      .dropUseBundledDistributionButton()
+      // hide delegated build/run/tests settings for 2018.3.x
+      .dropDelegateBuildCombobox()
+      .dropTestRunnerCombobox();
   }
 }

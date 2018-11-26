@@ -4,9 +4,11 @@ package org.jetbrains.plugins.gradle.settings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.*;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +32,11 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private CompositeBuild myCompositeBuild;
 
   private ThreeState storeProjectFilesExternally = ThreeState.NO;
+
+  @NotNull
+  private ThreeState delegatedBuild = ThreeState.UNSURE;
+  @Nullable
+  private GradleSystemRunningSettings.PreferredTestRunner testRunner;
 
   @Nullable
   public String getGradleHome() {
@@ -116,6 +123,55 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     storeProjectFilesExternally = value;
   }
 
+  @Transient
+  @NotNull
+  public ThreeState getEffectiveDelegateBuild() {
+    if (delegatedBuild == ThreeState.UNSURE) {
+      return ThreeState.fromBoolean(GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabledByDefault());
+    }
+    return delegatedBuild;
+  }
+
+  /**
+   * @return {@link ThreeState#UNSURE} means using application level configuration, see {@link GradleSystemRunningSettings#isDelegatedBuildEnabledByDefault()}
+   */
+  @OptionTag(value = "delegatedBuild", converter = ThreeStateConverter.class)
+  @NotNull
+  public ThreeState getDelegatedBuild() {
+    return delegatedBuild;
+  }
+
+  /**
+   * @param state {@link ThreeState#UNSURE} means using application level configuration, see {@link GradleSystemRunningSettings#isDelegatedBuildEnabledByDefault()}
+   */
+  public void setDelegatedBuild(@NotNull ThreeState state) {
+    this.delegatedBuild = state;
+  }
+
+  @Transient
+  @NotNull
+  public GradleSystemRunningSettings.PreferredTestRunner getEffectiveTestRunner() {
+    if (testRunner == null) {
+      return GradleSystemRunningSettings.getInstance().getDefaultTestRunner();
+    }
+    return testRunner;
+  }
+
+  /**
+   * @return test runner option, "null" means using application level configuration, see {@link GradleSystemRunningSettings#getDefaultTestRunner()}
+   */
+  @Nullable
+  public GradleSystemRunningSettings.PreferredTestRunner getTestRunner() {
+    return testRunner;
+  }
+
+  /**
+   * @param testRunner null means using application level configuration, see {@link GradleSystemRunningSettings#getDefaultTestRunner()}
+   */
+  public void setTestRunner(@Nullable GradleSystemRunningSettings.PreferredTestRunner testRunner) {
+    this.testRunner = testRunner;
+  }
+
   @NotNull
   public GradleVersion resolveGradleVersion() {
     GradleVersion version = GradleInstallationManager.getGradleVersion(this);
@@ -161,6 +217,22 @@ public class GradleProjectSettings extends ExternalProjectSettings {
       }
       result.myCompositeDefinitionSource = myCompositeDefinitionSource;
       return result;
+    }
+  }
+
+  private static final class ThreeStateConverter extends Converter<ThreeState> {
+    @Nullable
+    @Override
+    public ThreeState fromString(@NotNull String value) {
+      if (StringUtil.isEmpty(value)) return ThreeState.UNSURE;
+      return ThreeState.fromBoolean(Boolean.getBoolean(value));
+    }
+
+    @Nullable
+    @Override
+    public String toString(@NotNull ThreeState value) {
+      if (value == ThreeState.UNSURE) return null;
+      return String.valueOf(value.toBoolean());
     }
   }
 }

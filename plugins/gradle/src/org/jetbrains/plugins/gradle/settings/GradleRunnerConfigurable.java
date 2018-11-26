@@ -40,16 +40,17 @@ public class GradleRunnerConfigurable implements Configurable {
   public void apply() throws ConfigurationException {
     boolean gradleMakeEnabled = myGradleAwareMakeCheckBox.isSelected();
     GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
-    settings.setUseGradleAwareMake(gradleMakeEnabled);
-    settings.setPreferredTestRunner(((TestRunnerItem)myPreferredTestRunner.getSelectedItem()).value);
+    settings.setDelegatedBuildEnabledByDefault(gradleMakeEnabled);
+    GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner = getSelectedRunner();
+    settings.setDefaultTestRunner(preferredTestRunner);
   }
 
   @Override
   public void reset() {
     GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
-    final TestRunnerItem item = getItem(settings.getLastPreferredTestRunner());
+    final TestRunnerItem item = getItem(settings.getDefaultTestRunner());
     myPreferredTestRunner.setSelectedItem(item);
-    boolean gradleMakeEnabled = settings.isUseGradleAwareMake();
+    boolean gradleMakeEnabled = settings.isDelegatedBuildEnabledByDefault();
     enableGradleMake(gradleMakeEnabled);
   }
 
@@ -62,11 +63,9 @@ public class GradleRunnerConfigurable implements Configurable {
   @Override
   public boolean isModified() {
     GradleSystemRunningSettings uiSettings = new GradleSystemRunningSettings();
-    final TestRunnerItem selectedItem = (TestRunnerItem)myPreferredTestRunner.getSelectedItem();
-    GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner =
-      selectedItem == null ? GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST : selectedItem.value;
-    uiSettings.setPreferredTestRunner(preferredTestRunner);
-    uiSettings.setUseGradleAwareMake(myGradleAwareMakeCheckBox.isSelected());
+    GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner = getSelectedRunner();
+    uiSettings.setDefaultTestRunner(preferredTestRunner);
+    uiSettings.setDelegatedBuildEnabledByDefault(myGradleAwareMakeCheckBox.isSelected());
     GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
     return !settings.equals(uiSettings);
   }
@@ -79,6 +78,11 @@ public class GradleRunnerConfigurable implements Configurable {
 
   private void enableGradleMake(boolean enable) {
     myGradleAwareMakeCheckBox.setSelected(enable);
+  }
+
+  private GradleSystemRunningSettings.PreferredTestRunner getSelectedRunner() {
+    final TestRunnerItem selectedItem = (TestRunnerItem)myPreferredTestRunner.getSelectedItem();
+    return selectedItem == null ? GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST : selectedItem.value;
   }
 
   private static TestRunnerItem getItem(GradleSystemRunningSettings.PreferredTestRunner preferredTestRunner) {

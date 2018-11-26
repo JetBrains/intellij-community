@@ -379,8 +379,9 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
     GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
 
-    assertTrue(settings.isUseGradleAwareMake());
-    assertEquals(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST, settings.getPreferredTestRunner());
+    String projectPath = getCurrentExternalProjectSettings().getExternalProjectPath();
+    assertTrue(settings.isDelegatedBuildEnabled(myProject, projectPath));
+    assertEquals(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST, settings.getTestRunner(myProject, projectPath));
   }
 
   @Test
