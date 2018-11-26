@@ -137,22 +137,24 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   }
 
   private fun processImageFile(file: Path, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
-    val id = ImageType.getBasicName(file, prefix)
-
     val flags = robotData.getImageFlags(file)
-    if (flags.skipped) return
+    if (flags.skipped) {
+      return
+    }
 
+    val id = ImageType.getBasicName(file, prefix)
     val iconPaths = icons.computeIfAbsent(id) { ImagePaths(id, sourceRoot, false) }
     iconPaths.addImage(file, flags)
   }
 
   private fun processPhantomIcons(root: Path, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
     for (icon in robotData.getOwnDeprecatedIcons()) {
-      val iconFile = root.resolve(icon.first.removePrefix("/").removePrefix(File.separator))
       val id = ImageType.getBasicName(icon.first, prefix)
+      if (icons.containsKey(id)) {
+        continue
+      }
 
-      if (icons.containsKey(id)) continue
-
+      val iconFile = root.resolve(icon.first.removePrefix("/").removePrefix(File.separator))
       val paths = ImagePaths(id, sourceRoot, true)
       paths.addImage(iconFile, icon.second)
 
