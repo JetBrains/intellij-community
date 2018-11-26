@@ -1017,6 +1017,11 @@ public abstract class DialogWrapper {
     }
   }
 
+  @SuppressWarnings("unused")
+  public void performOkAction() {
+    doOKAction();
+  }
+
   protected void processDoNotAskOnOk(int exitCode) {
     if (myDoNotAsk != null) {
       if (myDoNotAsk.canBeHidden()) {
