@@ -31,6 +31,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.containers.ContainerUtil.*;
+import static git4idea.commands.GitAuthenticationMode.FULL;
+import static git4idea.commands.GitAuthenticationMode.NONE;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
 import static java.util.Collections.singletonList;
@@ -152,7 +154,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
       lsRemote(repository, gitRemote, map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()),
-               useForceAuthentication);
+               useForceAuthentication ? FULL : NONE);
 
     for (Map.Entry<String, Hash> hashEntry : remoteNameWithHash.entrySet()) {
       String remoteBranchName = hashEntry.getKey();
@@ -174,13 +176,13 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   private Map<String, Hash> lsRemote(@NotNull GitRepository repository,
                                      @NotNull GitRemote remote,
                                      @NotNull List<String> branchRefNames,
-                                     boolean useForceAuthentication) {
+                                     @NotNull GitAuthenticationMode authenticationMode) {
     Map<String, Hash> result = newHashMap();
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
       List<String> params = newArrayList("--heads", remote.getName());
       params.addAll(refs);
       GitCommandResult lsRemoteResult = Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params,
-                                                                                                 useForceAuthentication));
+                                                                                                 authenticationMode));
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
@@ -196,10 +198,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull
   private GitLineHandler createLsRemoteHandler(@NotNull GitRepository repository,
                                                @NotNull GitRemote remote,
-                                               @NotNull List<String> params, boolean useForceAuthentication) {
+                                               @NotNull List<String> params, @NotNull GitAuthenticationMode authenticationMode) {
     GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE,
-                                          !useForceAuthentication ? singletonList("credential.helper=") : emptyList());
-    h.setIgnoreAuthenticationRequest(!useForceAuthentication);
+                                          authenticationMode == NONE ? singletonList("credential.helper=") : emptyList());
+    h.setIgnoreAuthenticationMode(authenticationMode);
     h.addParameters(params);
     h.setUrls(remote.getUrls());
     return h;
