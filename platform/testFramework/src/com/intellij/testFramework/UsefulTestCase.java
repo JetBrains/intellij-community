@@ -178,7 +178,6 @@ public abstract class UsefulTestCase extends TestCase {
       // don't use method references here to make stack trace reading easier
       //noinspection Convert2MethodRef
       new RunAll(
-        () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
         () -> disposeRootDisposable(),
         () -> cleanupSwingDataStructures(),
         () -> cleanupDeleteOnExitHookList(),
@@ -201,7 +200,8 @@ public abstract class UsefulTestCase extends TestCase {
             }
           }
         },
-        () -> UIUtil.removeLeakingAppleListeners()
+        () -> UIUtil.removeLeakingAppleListeners(),
+        () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
       ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
     }
     finally {
