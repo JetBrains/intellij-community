@@ -53,7 +53,11 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
       myItems = null;
       CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
+
       super.tearDown();
     }
   }

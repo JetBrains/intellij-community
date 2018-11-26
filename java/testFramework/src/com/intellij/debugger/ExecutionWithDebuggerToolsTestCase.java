@@ -136,6 +136,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myRatherLaterRequests.clear();
       myScriptRunnables.clear();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
       throwExceptionsIfAny();

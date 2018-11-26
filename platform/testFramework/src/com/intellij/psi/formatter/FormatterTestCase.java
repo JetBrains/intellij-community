@@ -91,6 +91,9 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
         FileEditorManager.getInstance(getProject()).closeFile(myFile.getVirtualFile());
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myEditor = null;
       myFile = null;

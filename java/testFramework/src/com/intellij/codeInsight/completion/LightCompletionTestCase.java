@@ -39,7 +39,11 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
     try {
       myItems = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
+
       super.tearDown();
     }
   }
