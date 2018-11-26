@@ -62,6 +62,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
@@ -1455,6 +1456,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myIgnoredIdeaLevel.removeImplicitlyIgnoredDirectory(path, myProject);
   }
 
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
   public IgnoredFilesComponent getIgnoredFilesComponent() {
     return myIgnoredIdeaLevel;
   }
@@ -1523,6 +1528,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public IgnoredFileBean[] getFilesToIgnore() {
     return myIgnoredIdeaLevel.getFilesToIgnore();
+  }
+
+  @NotNull
+  @Override
+  public Set<IgnoredFileDescriptor> getPotentiallyIgnoredFiles() {
+    return ContainerUtil.unmodifiableOrEmptySet(
+      IgnoredFileProvider.IGNORE_FILE.extensions()
+        .flatMap(provider -> provider.getIgnoredFiles(myProject).stream())
+        .collect(Collectors.toSet())
+    );
   }
 
   @Override

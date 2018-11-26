@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,15 @@ public class IgnoredBeanFactory {
   @NotNull
   public static IgnoredFileBean ignoreFile(@NotNull @NonNls String path, @Nullable Project p) {
     return new IgnoredFileBean(path, IgnoreSettingsType.FILE, p);
+  }
+
+  @NotNull
+  public static IgnoredFileBean ignoreFile(@NotNull VirtualFile file, @Nullable Project p) {
+    if (file.isDirectory()) {
+      return ignoreUnderDirectory(file.getPath(), p);
+    }
+
+    return ignoreFile(file.getPath(), p);
   }
 
   @NotNull
