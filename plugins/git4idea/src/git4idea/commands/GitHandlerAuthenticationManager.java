@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static git4idea.commands.GitAuthenticationMode.FULL;
 
 /**
  * Manager for Git remotes authentication.
@@ -77,7 +78,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
                                                                          myHandler.getUrls(),
                                                                          authenticationGate,
-                                                                         myHandler.isIgnoreAuthenticationRequest());
+                                                                         myHandler.getIgnoreAuthenticationMode());
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
@@ -133,7 +134,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_VAR, "ssh");
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
-    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.isIgnoreAuthenticationRequest());
+    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode() != FULL);
     mySshHandler = ssh.registerHandler(guiHandler, myProject);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
@@ -173,7 +174,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
     GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject,
                                                                                   authenticationGate,
-                                                                                  myHandler.isIgnoreAuthenticationRequest(),
+                                                                                  myHandler.getIgnoreAuthenticationMode() != FULL,
                                                                                   doNotRememberPasswords);
 
     myNativeSshHandler = service.registerHandler(authenticator, myProject);
