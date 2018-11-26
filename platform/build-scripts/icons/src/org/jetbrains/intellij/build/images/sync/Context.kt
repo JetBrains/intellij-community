@@ -26,12 +26,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val notifySlack: Boolean
   lateinit var iconsRepo: File
   lateinit var devRepoRoot: File
-  var addedByDev: MutableCollection<String> = mutableListOf()
-  var removedByDev: MutableCollection<String> = mutableListOf()
-  var modifiedByDev: MutableCollection<String> = mutableListOf()
-  val addedByDesigners: MutableCollection<String> = mutableListOf()
-  val removedByDesigners: MutableCollection<String> = mutableListOf()
-  val modifiedByDesigners: MutableCollection<String> = mutableListOf()
+  val byDev = Changes()
+  val byCommit = mutableMapOf<String, Changes>()
   val consistent: MutableCollection<String> = mutableListOf()
   var createdReviews: Collection<Review> = emptyList()
   lateinit var icons: Map<String, GitObject>
@@ -42,9 +38,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val devIconsCommitHashesToSync: MutableSet<String>
   lateinit var devIconsFilter: (File) -> Boolean
 
-  fun devChanges() = addedByDev + removedByDev + modifiedByDev
-  fun iconsChanges() = addedByDesigners + modifiedByDesigners +
-                       (if (doSyncRemovedIconsInDev) removedByDesigners else emptyList())
+  fun devChanges() = byDev.all()
+  fun iconsChanges() = byDesigners.all()
 
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
@@ -120,7 +115,12 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.takeIf { !it.contains("<personal>") }
       ?.let(StringUtil::splitByLines)
       ?.mapNotNull {
-        val (file, _, commit) = it.split(':')
+        val split = it.split(':')
+        if (split.size != 3) {
+          log("WARNING: malformed line in 'teamcity.build.changedFiles.file' : $it")
+          return@mapNotNull null
+        }
+        val (file, _, commit) = split
         if (ImageExtension.fromName(file) != null) commit else null
       }?.toMutableSet() ?: mutableSetOf()
     doSyncIconsRepo = bool(syncIconsArg)
@@ -132,4 +132,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     assignInvestigation = bool(assignInvestigationArg)
     notifySlack = bool(notifySlackArg)
   }
+
+  val byDesigners = Changes(includeRemoved = doSyncRemovedIconsInDev)
 }
