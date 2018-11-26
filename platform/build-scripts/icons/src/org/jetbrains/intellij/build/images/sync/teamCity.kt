@@ -46,7 +46,9 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
   val report = context.report().let { if (it.isNotEmpty()) "$it, " else it }
   assignInvestigation(investigator, report)
   if (!investigator.isAssigned) {
-    listOf(teamCityEmail(investigator.email), investigator.email.toLowerCase(), DEFAULT_INVESTIGATOR).forEach {
+    var nextAttempts = listOf(teamCityEmail(investigator.email), investigator.email.toLowerCase())
+    if (!isInvestigationAssigned()) nextAttempts += DEFAULT_INVESTIGATOR
+    nextAttempts.forEach {
       if (it != investigator.email) {
         val next = Investigator(it, investigator.commits)
         assignInvestigation(next, report)
@@ -57,11 +59,18 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
   return investigator
 }
 
+private val investigation by lazy {
+  teamCityGet("investigations?locator=buildType:$BUILD_CONF")
+}
+
+private fun isInvestigationAssigned() = with(investigation) {
+  contains("assignee") && !contains("GIVEN_UP")
+}
+
 private fun assignInvestigation(investigator: Investigator, report: String) {
   try {
-    val assignee = teamCityGet("investigations?locator=buildType:$BUILD_CONF")
     val id = teamCityGet("users/email:${investigator.email}/id")
-    if (assignee.contains(id)) {
+    if (investigation.contains(id)) {
       log("Investigation is already assigned to ${investigator.email}")
       investigator.isAssigned = true
       return
