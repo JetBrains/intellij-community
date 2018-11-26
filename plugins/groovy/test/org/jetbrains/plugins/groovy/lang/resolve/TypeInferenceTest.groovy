@@ -933,4 +933,8 @@ class W {
     doExprTest 'def a = ""; a ?= null', 'java.lang.String'
     doExprTest 'def a = "s"; a ?= 1', '[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]'
   }
+
+  void 'test spread asImmutable()'() {
+    doExprTest('List<List<String>> a; a*.asImmutable()', 'java.util.ArrayList<java.util.List<java.lang.String>>')
+  }
 }
