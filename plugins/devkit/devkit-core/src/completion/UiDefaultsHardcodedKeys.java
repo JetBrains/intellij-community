@@ -1024,6 +1024,9 @@ public final class UiDefaultsHardcodedKeys {
     "activeCaptionBorder",
     "activeCaptionText",
     "com.apple.laf.AquaButtonUI",
+    "com.apple.laf.AquaButtonCheckBoxUI",
+    "com.apple.laf.AquaButtonRadioUI",
+    "com.apple.laf.AquaComboBoxUI",
     "com.apple.laf.AquaLabelUI",
     "com.apple.laf.AquaListUI",
     "com.apple.laf.AquaMenuBarUI",
@@ -1033,9 +1036,11 @@ public final class UiDefaultsHardcodedKeys {
     "com.apple.laf.AquaPopupMenuUI",
     "com.apple.laf.AquaProgressBarUI",
     "com.apple.laf.AquaRootPaneUI",
+    "com.apple.laf.AquaScrollBarUI",
     "com.apple.laf.AquaScrollPaneUI",
     "com.apple.laf.AquaSplitPaneUI",
     "com.apple.laf.AquaTableUI",
+    "com.apple.laf.AquaTableHeaderUI",
     "com.apple.laf.AquaTextFieldUI",
     "com.apple.laf.AquaTextPaneUI",
     "com.apple.laf.AquaToolTipUI",
@@ -1179,7 +1184,7 @@ public final class UiDefaultsHardcodedKeys {
     "window",
     "windowBorder",
     "windowText"
-    );
+  );
 
 
   public static final Set<String> NAMED_COLORS = Sets.newHashSet(
