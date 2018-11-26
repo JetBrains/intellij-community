@@ -27,7 +27,7 @@ public class IdeUICustomization {
    * Returns the name to be displayed in the UI for the "Project" concept (Rider changes this to "Solution").
    */
   public String getProjectDisplayName() {
-    return IdeBundle.message("title.project");
+    return StringUtil.capitalize(getProjectConceptName());
   }
 
   /**
