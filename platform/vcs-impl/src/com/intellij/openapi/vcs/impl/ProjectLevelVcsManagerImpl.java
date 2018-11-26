@@ -84,7 +84,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final Project myProject;
   private final MappingsToRoots myMappingsToRoots;
 
-  private ContentManager myContentManager;
   private ConsoleView myConsole;
   private final Disposable myConsoleDisposer = new Disposable() {
     @Override
@@ -211,7 +210,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     releaseConsole();
     myMappings.disposeMe();
     Disposer.dispose(myAnnotationLocalChangesListener);
-    myContentManager = null;
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager != null && toolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
@@ -355,11 +353,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Nullable
   @Override
   public ContentManager getContentManager() {
-    if (myContentManager == null) {
-      ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
-      myContentManager = changes == null ? null : changes.getContentManager();
-    }
-    return myContentManager;
+    ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    return changes == null ? null : changes.getContentManager();
   }
 
   @Override
