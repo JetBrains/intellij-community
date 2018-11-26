@@ -10,7 +10,7 @@ import com.intellij.util.PathUtil
 import java.util.*
 
 class TerminalUsageTriggerCollector : ProjectUsageTriggerCollector() {
-  override fun getGroupId(): String = "statistics.terminal"
+  override fun getGroupId(): String = "statistics.terminal.v2"
 
   companion object {
     fun trigger(project: Project, featureId: String, context: FUSUsageContext) {
@@ -58,7 +58,6 @@ private val KNOWN_SHELLS = setOf("activate",
                                  "tcsh",
                                  "ubuntu",
                                  "ubuntu1804",
-                                 "vscode",
                                  "wsl",
                                  "zsh")
 private val KNOWN_EXTENSIONS = setOf(".exe", ".bat", ".cmd")
