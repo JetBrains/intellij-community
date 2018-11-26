@@ -10,7 +10,7 @@ import com.intellij.util.PathUtil
 import java.util.*
 
 class TerminalUsageTriggerCollector : ProjectUsageTriggerCollector() {
-  override fun getGroupId(): String = "statistics.terminal.v2"
+  override fun getGroupId(): String = "statistics.terminalShell"
 
   companion object {
     fun trigger(project: Project, featureId: String, context: FUSUsageContext) {
@@ -32,7 +32,7 @@ class TerminalUsageTriggerCollector : ProjectUsageTriggerCollector() {
 
     private fun trimKnownExt(name: String): String {
       val ext = PathUtil.getFileExtension(name)
-      return if (ext != null && KNOWN_EXTENSIONS.contains(ext)) name.substring(0, name.length - ext.length) else name
+      return if (ext != null && KNOWN_EXTENSIONS.contains(ext)) name.substring(0, name.length - ext.length - 1) else name
     }
   }
 }
@@ -60,4 +60,4 @@ private val KNOWN_SHELLS = setOf("activate",
                                  "ubuntu1804",
                                  "wsl",
                                  "zsh")
-private val KNOWN_EXTENSIONS = setOf(".exe", ".bat", ".cmd")
+private val KNOWN_EXTENSIONS = setOf("exe", "bat", "cmd")
