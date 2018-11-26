@@ -1073,7 +1073,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   /**
    * {@link ProblemsHolder} wrapper to avoid reporting two problems on the same anchor
    */
-  static class ProblemReporter {
+  private static class ProblemReporter {
     private final Set<PsiElement> myReportedAnchors = new HashSet<>();
     private final ProblemsHolder myHolder;
 
