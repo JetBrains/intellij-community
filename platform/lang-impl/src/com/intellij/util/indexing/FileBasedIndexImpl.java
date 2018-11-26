@@ -1492,9 +1492,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   @NotNull
   private Predicate<VirtualFile> filesToBeIndexedForProjectCondition(Project project) {
     return virtualFile -> {
-        if (virtualFile instanceof DeletedVirtualFileStub) {
+        if (virtualFile instanceof DeletedVirtualFileStub ||
+            !virtualFile.isValid()
+           ) {
           return true;
         }
+
         for (IndexableFileSet set : myIndexableSets) {
           final Project proj = myIndexableSetToProjectMap.get(set);
           if (proj != null && !proj.equals(project)) {
