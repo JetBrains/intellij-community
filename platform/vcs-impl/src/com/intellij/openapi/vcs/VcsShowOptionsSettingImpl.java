@@ -22,10 +22,6 @@ public class VcsShowOptionsSettingImpl extends VcsAbstractSetting implements Vcs
     super(displayName);
   }
 
-  public VcsShowOptionsSettingImpl(VcsConfiguration.StandardOption option) {
-    this(option.getId());
-  }
-
   @Override
   public boolean getValue(){
     return myValue;
