@@ -38,6 +38,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -647,11 +648,13 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
 
-    Document document = mySearchCriteriaEdit.getDocument();
-    PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-    assert psiFile != null;
-    TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
+    if (Registry.is("ssr.template.from.selection.builder")) {
+      Document document = mySearchCriteriaEdit.getDocument();
+      PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      assert psiFile != null;
+      TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
+    }
   }
 
   @Override
