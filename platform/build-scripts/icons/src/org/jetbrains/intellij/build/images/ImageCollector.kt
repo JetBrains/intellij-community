@@ -165,7 +165,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   }
 
   private fun upToProjectHome(dir: Path): IconRobotsData {
-    if (FileUtil.pathsEqual(dir.toString(), projectHome.toString())) {
+    if (dir == projectHome) {
       return IconRobotsData()
     }
 
@@ -246,7 +246,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
 
     fun fork(dir: Path, root: Path): IconRobotsData {
       val robots = dir.resolve(ROBOTS_FILE_NAME)
-      if (!robots.toFile().exists()) {
+      if (!Files.exists(robots)) {
         return this
       }
 
@@ -271,8 +271,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
                 answer.ownDeprecatedIcons.add(OwnDeprecatedIcon(pattern, deprecatedData))
               }
             },
-            RobotFileHandler("name:") { _ -> }, // ignore directive for IconsClassGenerator
-            RobotFileHandler("#") { _ -> }, // comment
+            RobotFileHandler("name:") { }, // ignore directive for IconsClassGenerator
+            RobotFileHandler("#") { }, // comment
             RobotFileHandler("forceSync:") { value -> answer.forceSync.add(compilePattern(dir, root, value)) },
             RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) }
       )
