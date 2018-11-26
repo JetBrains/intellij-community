@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -17,6 +18,12 @@ public class KeymapUsageCollector extends ApplicationUsagesCollector {
   @Override
   public String getGroupId() {
     return "statistics.keymaps.name";
+  }
+
+  @Nullable
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
   }
 
   @NotNull
