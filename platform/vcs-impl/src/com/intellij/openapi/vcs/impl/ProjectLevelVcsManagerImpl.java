@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -95,7 +94,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
   };
 
-  private final VcsInitialization myInitialization;
+  @Nullable private final VcsInitialization myInitialization;
 
   @NonNls private static final String ELEMENT_MAPPING = "mapping";
   @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
@@ -131,24 +130,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myDefaultVcsRootPolicy = defaultVcsRootPolicy;
 
-    myInitialization = new VcsInitialization(myProject);
-    Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
-    projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        Disposer.dispose(myInitialization);
-      }
-    });
-    if (project.isDefault()) {
-      // default project is disposed in write action, so treat it differently
-      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+    if (!project.isDefault()) {
+      myInitialization = new VcsInitialization(myProject);
+      Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
+      projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
         @Override
-        public void appClosing() {
+        public void projectClosing(@NotNull Project project) {
           Disposer.dispose(myInitialization);
         }
       });
     }
+    else {
+      myInitialization = null;
+    }
+
     myMappings = new NewMappings(myProject, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
@@ -822,7 +817,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void addInitializationRequest(final VcsInitObject vcsInitObject, final Runnable runnable) {
-    ApplicationManager.getApplication().runReadAction(() -> myInitialization.add(vcsInitObject, runnable));
+    if (myInitialization != null) {
+      ApplicationManager.getApplication().runReadAction(() -> myInitialization.add(vcsInitObject, runnable));
+    }
   }
 
   @Override
@@ -872,7 +869,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @TestOnly
   public void waitForInitialized() {
-    myInitialization.waitFinished();
+    if (myInitialization != null) {
+      myInitialization.waitFinished();
+    }
   }
 
   private static class ActionKey {

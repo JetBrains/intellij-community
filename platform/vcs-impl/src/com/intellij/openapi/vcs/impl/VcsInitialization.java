@@ -56,7 +56,7 @@ public class VcsInitialization implements Disposable {
 
   VcsInitialization(@NotNull final Project project) {
     myProject = project;
-    if (project.isDefault()) return;
+    LOG.assertTrue(!project.isDefault());
 
     StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
       if (project.isDisposed()) return;
