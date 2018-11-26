@@ -140,15 +140,15 @@ public class NewMappings {
         runnable.run();
         return;
       }
-      final HashSet<String> old = new HashSet<>();
-      for (AbstractVcs activeVcs : myActiveVcses) {
-        old.add(activeVcs.getName());
-      }
-      activator = new MyVcsActivator(old);
+
+      AbstractVcs[] oldVcses = myActiveVcses.clone();
       runnable.run();
       restoreActiveVcses();
+      AbstractVcs[] newVcses = myActiveVcses.clone();
+
+      activator = new MyVcsActivator(oldVcses, newVcses);
     }
-    activator.activate(myVcsToPaths.keySet(), AllVcses.getInstance(myProject));
+    activator.activate();
   }
 
   private void restoreActiveVcses() {
@@ -431,64 +431,39 @@ public class NewMappings {
   }
 
   private static class MyVcsActivator {
-    private final Set<String> myOld;
+    @NotNull private final AbstractVcs[] myOldVcses;
+    @NotNull private final AbstractVcs[] myNewVcses;
 
-    MyVcsActivator(final Set<String> old) {
-      myOld = old;
+    MyVcsActivator(@NotNull AbstractVcs[] oldVcses, @NotNull AbstractVcs[] newVcses) {
+      myOldVcses = oldVcses;
+      myNewVcses = newVcses;
     }
 
-    public void activate(final Set<String> newOne, final AllVcsesI vcsesI) {
-      final Set<String> toAdd = notInBottom(newOne, myOld);
-      final Set<String> toRemove = notInBottom(myOld, newOne);
-      if (toAdd != null) {
-        for (String s : toAdd) {
-          final AbstractVcs vcs = vcsesI.getByName(s);
-          if (vcs != null) {
-            try {
-              vcs.doActivate();
-            }
-            catch (VcsException e) {
-              // actually is not thrown (AbstractVcs#actualActivate())
-            }
-          }
-          else {
-            LOG.info("Error: activating non existing vcs: " + s);
-          }
+    public void activate() {
+      final Collection<AbstractVcs> toAdd = subtract(myNewVcses, myOldVcses);
+      final Collection<AbstractVcs> toRemove = subtract(myOldVcses, myNewVcses);
+
+      for (AbstractVcs vcs : toAdd) {
+        try {
+          vcs.doActivate();
+        }
+        catch (VcsException e) {
+          LOG.error(e);
         }
       }
-      if (toRemove != null) {
-        for (String s : toRemove) {
-          final AbstractVcs vcs = vcsesI.getByName(s);
-          if (vcs != null) {
-            try {
-              vcs.doDeactivate();
-            }
-            catch (VcsException e) {
-              // actually is not thrown (AbstractVcs#actualDeactivate())
-            }
-          }
-          else {
-            LOG.info("Error: removing non existing vcs: " + s);
-          }
+      for (AbstractVcs vcs : toRemove) {
+        try {
+          vcs.doDeactivate();
+        }
+        catch (VcsException e) {
+          LOG.error(e);
         }
       }
     }
 
-    @Nullable
-    private static Set<String> notInBottom(final Set<String> top, final Set<String> bottom) {
-      Set<String> notInBottom = null;
-      for (String topItem : top) {
-        // omit empty vcs: not a vcs
-        if (topItem.trim().length() == 0) continue;
-
-        if (!bottom.contains(topItem)) {
-          if (notInBottom == null) {
-            notInBottom = new HashSet<>();
-          }
-          notInBottom.add(topItem);
-        }
-      }
-      return notInBottom;
+    @NotNull
+    private static Collection<AbstractVcs> subtract(@NotNull AbstractVcs[] from, @NotNull AbstractVcs[] what) {
+      return ContainerUtil.subtract(Arrays.asList(from), Arrays.asList(what));
     }
   }
 
