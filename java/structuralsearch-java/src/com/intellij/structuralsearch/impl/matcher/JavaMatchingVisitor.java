@@ -1373,7 +1373,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       ContainerUtil.addAll(unmatchedElements, catches2);
       context.pushMatchedElementsListener(elements -> unmatchedElements.removeAll(elements));
       try {
-        myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(catches1, catches2));
+        if (!myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(catches1, catches2))) {
+          return;
+        }
       } finally {
         context.popMatchedElementsListener();
       }
