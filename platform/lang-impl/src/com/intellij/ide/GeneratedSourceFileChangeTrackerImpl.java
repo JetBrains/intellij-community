@@ -63,6 +63,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
 
   @TestOnly
   public void cancelAllAndWait(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    myFilesToCheck.clear();
     myCheckingQueue.cancelAllRequests();
     waitForAlarm(timeout, timeUnit);
   }
@@ -118,6 +119,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
       files = myFilesToCheck.toArray(VirtualFile.EMPTY_ARRAY);
       myFilesToCheck.clear();
     }
+    if (files.length == 0) return;
     final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
     ReadAction.run(() -> {
       if (myProject.isDisposed()) return;
