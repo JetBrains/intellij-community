@@ -73,6 +73,9 @@ public class NullabilityProblemKind<T extends PsiElement> {
     new NullabilityProblemKind<>(NPE, "unboxingNullable", "dataflow.message.unboxing");
   public static final NullabilityProblemKind<PsiExpression> assigningToNotNull =
     new NullabilityProblemKind<>(null, "assigningToNotNull", "dataflow.message.assigning.null", "dataflow.message.assigning.nullable");
+  public static final NullabilityProblemKind<PsiExpression> assigningToNonAnnotatedField =
+    new NullabilityProblemKind<>(null, "assigningToNonAnnotatedField", "dataflow.message.assigning.null.notannotated",
+                                 "dataflow.message.assigning.nullable.notannotated");
   public static final NullabilityProblemKind<PsiExpression> storingToNotNullArray =
     new NullabilityProblemKind<>(null, "storingToNotNullArray", "dataflow.message.storing.array.null", 
                                  "dataflow.message.storing.array.nullable");
@@ -80,12 +83,17 @@ public class NullabilityProblemKind<T extends PsiElement> {
   public static final NullabilityProblemKind<PsiExpression> nullableFunctionReturn =
     new NullabilityProblemKind<>(RE, "nullableFunctionReturn", "dataflow.message.return.nullable.from.notnull.function",
                                  "dataflow.message.return.nullable.from.notnull.function");
-  public static final NullabilityProblemKind<PsiElement> passingNullableToNotNullParameter =
-    new NullabilityProblemKind<>(RE, "passingNullableToNotNullParameter");
-  public static final NullabilityProblemKind<PsiElement> passingNullableArgumentToNonAnnotatedParameter =
-    new NullabilityProblemKind<>(null, "passingNullableArgumentToNonAnnotatedParameter");
-  public static final NullabilityProblemKind<PsiElement> assigningNullableValueToNonAnnotatedField =
-    new NullabilityProblemKind<>(null, "assigningNullableValueToNonAnnotatedField");
+  public static final NullabilityProblemKind<PsiExpression> passingToNotNullParameter =
+    new NullabilityProblemKind<>(RE, "passingToNotNullParameter", "dataflow.message.passing.null.argument",
+                                 "dataflow.message.passing.nullable.argument");
+  public static final NullabilityProblemKind<PsiMethodReferenceExpression> passingToNotNullMethodRefParameter =
+    new NullabilityProblemKind<>(RE, "passingToNotNullMethodRefParameter", "dataflow.message.passing.nullable.argument.methodref");
+  public static final NullabilityProblemKind<PsiExpression> passingToNonAnnotatedParameter =
+    new NullabilityProblemKind<>(null, "passingToNonAnnotatedParameter", "dataflow.message.passing.null.argument.nonannotated", 
+                                 "dataflow.message.passing.nullable.argument.nonannotated");
+  public static final NullabilityProblemKind<PsiMethodReferenceExpression> passingToNonAnnotatedMethodRefParameter =
+    new NullabilityProblemKind<>(null, "passingToNonAnnotatedMethodRefParameter", 
+                                 "dataflow.message.passing.nullable.argument.methodref.nonannotated");
   // assumeNotNull problem is not reported, just used to force the argument to be not null
   public static final NullabilityProblemKind<PsiExpression> assumeNotNull = new NullabilityProblemKind<>(RE, "assumeNotNull");
   /**
@@ -220,7 +228,7 @@ public class NullabilityProblemKind<T extends PsiElement> {
           if (nullability == Nullability.UNKNOWN && lho instanceof PsiReferenceExpression) {
             PsiField field = ObjectUtils.tryCast(((PsiReferenceExpression)lho).resolve(), PsiField.class);
             if (field != null && !field.hasModifierProperty(PsiModifier.FINAL)) {
-              return assigningNullableValueToNonAnnotatedField.problem(context, expression);
+              return assigningToNonAnnotatedField.problem(context, expression);
             }
           }
         }
@@ -243,10 +251,10 @@ public class NullabilityProblemKind<T extends PsiElement> {
           PsiSubstitutor substitutor = ((PsiCall)grandParent).resolveMethodGenerics().getSubstitutor();
           Nullability nullability = DfaPsiUtil.getElementNullability(substitutor.substitute(parameter.getType()), parameter);
           if (nullability == Nullability.NOT_NULL) {
-            return passingNullableToNotNullParameter.problem(context, expression);
+            return passingToNotNullParameter.problem(context, expression);
           }
           if (nullability == Nullability.UNKNOWN) {
-            return passingNullableArgumentToNonAnnotatedParameter.problem(context, expression);
+            return passingToNonAnnotatedParameter.problem(context, expression);
           }
         }
       }

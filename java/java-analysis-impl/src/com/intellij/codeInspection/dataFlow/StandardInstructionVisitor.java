@@ -376,9 +376,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       dropLocality(arg, memState);
       PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
-      if (instruction.getContext() instanceof PsiMethodReferenceExpression &&
-          instruction.getArgRequiredNullability(paramIndex) == Nullability.NOT_NULL) {
-        arg = dereference(memState, arg, NullabilityProblemKind.passingNullableToNotNullParameter.problem(anchor, null));
+      if (instruction.getContext() instanceof PsiMethodReferenceExpression) {
+        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)instruction.getContext();
+        Nullability nullability = instruction.getArgRequiredNullability(paramIndex);
+        if (nullability == Nullability.NOT_NULL) {
+          arg = dereference(memState, arg, NullabilityProblemKind.passingToNotNullMethodRefParameter.problem(methodRef, null));
+        } else if (nullability == Nullability.UNKNOWN) {
+          checkNotNullable(memState, arg, NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.problem(methodRef, null));
+        }
       }
       if (sig.mutatesArg(paramIndex) && !memState.applyFact(arg, DfaFactType.MUTABILITY, Mutability.MUTABLE)) {
         reportMutabilityViolation(false, anchor);

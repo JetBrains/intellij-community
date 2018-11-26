@@ -277,10 +277,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
     reportNullabilityProblems(reporter, visitor);
     reportNullableReturns(visitor, reporter, scope);
-    if (SUGGEST_NULLABLE_ANNOTATIONS) {
-      reportNullableArgumentsPassedToNonAnnotated(visitor, reporter);
-      reportNullableAssignedToNonAnnotatedFields(visitor, reporter);
-    }
 
     reportOptionalOfNullableImprovements(reporter, visitor.getOfNullableCalls());
 
@@ -453,12 +449,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   private void reportNullabilityProblems(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     Map<PsiExpression, ConstantResult> expressions = visitor.getConstantExpressions();
     visitor.problems().forEach(problem -> {
-      if (NullabilityProblemKind.passingNullableArgumentToNonAnnotatedParameter.isMyProblem(problem) ||
-          NullabilityProblemKind.assigningNullableValueToNonAnnotatedField.isMyProblem(problem) ||
-          NullabilityProblemKind.nullableReturn.isMyProblem(problem)) {
-        // these kinds are still reported separately
-        return;
-      }
       NullabilityProblemKind.innerClassNPE.ifMyProblem(problem, newExpression -> {
         List<LocalQuickFix> fixes = createNPEFixes(newExpression.getQualifier(), newExpression, reporter.isOnTheFly());
         reporter.registerProblem(getElementToHighlight(newExpression), problem.getMessage(expressions), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -467,11 +457,19 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         reporter.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.npe.methodref.invocation"),
                                createMethodReferenceNPEFixes(methodRef, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY)));
       NullabilityProblemKind.callNPE.ifMyProblem(problem, call -> reportCallMayProduceNpe(reporter, problem.getMessage(expressions), call));
-      NullabilityProblemKind.passingNullableToNotNullParameter.ifMyProblem(problem, expr -> reportNullableArgument(reporter, expr, expressions));
+      NullabilityProblemKind.passingToNotNullParameter.ifMyProblem(problem, expr -> {
+        PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expr);
+        List<LocalQuickFix> fixes = createNPEFixes(expression, expression, reporter.isOnTheFly());
+        reporter.registerProblem(expr, problem.getMessage(expressions), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      });
+      NullabilityProblemKind.passingToNotNullMethodRefParameter.ifMyProblem(problem, methodRef -> {
+        LocalQuickFix[] fixes = createMethodReferenceNPEFixes(methodRef, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY);
+        reporter.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.passing.nullable.argument.methodref"), fixes);
+      });
       NullabilityProblemKind.arrayAccessNPE.ifMyProblem(problem, expression -> {
-        LocalQuickFix[] fix =
+        LocalQuickFix[] fixes =
           createNPEFixes(expression.getArrayExpression(), expression, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY);
-        reporter.registerProblem(expression, problem.getMessage(expressions), fix);
+        reporter.registerProblem(expression, problem.getMessage(expressions), fixes);
       });
       NullabilityProblemKind.fieldAccessNPE.ifMyProblem(problem, element -> {
         PsiElement parent = element.getParent();
@@ -485,9 +483,18 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         }
         reporter.registerProblem(element, problem.getMessage(expressions));
       });
-      NullabilityProblemKind.nullableFunctionReturn.ifMyProblem(problem, expr -> reporter.registerProblem(expr, problem.getMessage(expressions)));
+      NullabilityProblemKind.nullableFunctionReturn.ifMyProblem(
+        problem, expr -> reporter.registerProblem(expr, problem.getMessage(expressions)));
       NullabilityProblemKind.assigningToNotNull.ifMyProblem(problem, expr -> reportNullabilityProblem(reporter, problem, expr, expressions));
       NullabilityProblemKind.storingToNotNullArray.ifMyProblem(problem, expr -> reportNullabilityProblem(reporter, problem, expr, expressions));
+      if (SUGGEST_NULLABLE_ANNOTATIONS) {
+        NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.ifMyProblem(
+          problem, methodRef -> reporter.registerProblem(methodRef, problem.getMessage(expressions)));
+        NullabilityProblemKind.passingToNonAnnotatedParameter.ifMyProblem(
+          problem, expression -> reportNullableArgumentsPassedToNonAnnotated(reporter, problem.getMessage(expressions), expression));
+        NullabilityProblemKind.assigningToNonAnnotatedField.ifMyProblem(
+          problem, expression -> reportNullableAssignedToNonAnnotatedField(reporter, expression, problem.getMessage(expressions)));
+      }
     });
   }
 
@@ -597,57 +604,22 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     });
   }
 
-  private void reportNullableArgumentsPassedToNonAnnotated(DataFlowInstructionVisitor visitor, ProblemReporter reporter) {
-    for (PsiElement anchor : visitor.problems()
-      .map(NullabilityProblemKind.passingNullableArgumentToNonAnnotatedParameter::asMyProblem).nonNull()
-      .map(NullabilityProblem::getAnchor)) {
-
-      if (anchor.getParent() instanceof PsiMethodReferenceExpression) {
-        reporter.registerProblem(anchor.getParent(), "Method reference argument might be null but passed to non-annotated parameter");
-        continue;
-      }
-
-      PsiExpression expression = PsiUtil.skipParenthesizedExprDown((PsiExpression)anchor);
-      final String text = isNullLiteralExpression(expression) || visitor.getConstantExpressions().get(expression) == ConstantResult.NULL
-                          ? "Passing <code>null</code> argument to non-annotated parameter"
-                          : "Argument <code>#ref</code> #loc might be null but passed to non-annotated parameter";
+  private void reportNullableArgumentsPassedToNonAnnotated(ProblemReporter reporter, String message, PsiExpression anchor) {
+    PsiExpression expression = PsiUtil.skipParenthesizedExprDown(anchor);
+    PsiParameter parameter = MethodCallUtils.getParameterForArgument(anchor);
+    if (parameter != null && BaseIntentionAction.canModify(parameter) && AnnotationUtil.isAnnotatingApplicable(parameter)) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, expression, reporter.isOnTheFly());
-      final PsiElement parent = anchor.getParent();
-      if (parent instanceof PsiExpressionList) {
-        final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), anchor);
-        if (idx > -1) {
-          final PsiElement gParent = parent.getParent();
-          if (gParent instanceof PsiCallExpression) {
-            final PsiMethod psiMethod = ((PsiCallExpression)gParent).resolveMethod();
-            if (psiMethod != null && BaseIntentionAction.canModify(psiMethod) && AnnotationUtil.isAnnotatingApplicable(psiMethod)) {
-              final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-              if (idx < parameters.length) {
-                fixes.add(AddAnnotationPsiFix.createAddNullableFix(parameters[idx]));
-                reporter.registerProblem(anchor, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-              }
-            }
-          }
-        }
-      }
+      fixes.add(AddAnnotationPsiFix.createAddNullableFix(parameter));
+      reporter.registerProblem(anchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
-  private void reportNullableAssignedToNonAnnotatedFields(DataFlowInstructionVisitor visitor, ProblemReporter reporter) {
-    for (PsiElement anchor : visitor.problems()
-      .map(NullabilityProblemKind.assigningNullableValueToNonAnnotatedField::asMyProblem).nonNull()
-      .map(NullabilityProblem::getAnchor)) {
-
-      PsiExpression expression = (PsiExpression)anchor;
-      String text = isNullLiteralExpression(expression) ||
-                    visitor.getConstantExpressions().get(expression) == ConstantResult.NULL
-                    ? "Assigning <code>null</code> value to non-annotated field"
-                    : "Expression <code>#ref</code> #loc might be null but is assigned to non-annotated field";
+  private void reportNullableAssignedToNonAnnotatedField(ProblemReporter reporter, PsiExpression expression, String message) {
+    PsiField field = getAssignedField(expression);
+    if (field != null) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, expression, reporter.isOnTheFly());
-      PsiField field = getAssignedField(anchor);
-      if (field != null) {
-        fixes.add(AddAnnotationPsiFix.createAddNullableFix(field));
-        reporter.registerProblem(anchor, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-      }
+      fixes.add(AddAnnotationPsiFix.createAddNullableFix(field));
+      reporter.registerProblem(expression, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
@@ -834,24 +806,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
   protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression parent, final boolean onTheFly) {
     return LocalQuickFix.EMPTY_ARRAY;
-  }
-
-  private void reportNullableArgument(ProblemReporter reporter,
-                                      PsiElement anchor,
-                                      Map<PsiExpression, ConstantResult> expressions) {
-    if (anchor.getParent() instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)anchor.getParent();
-      reporter.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.passing.nullable.argument.methodref"),
-                             createMethodReferenceNPEFixes(methodRef, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY));
-    }
-    else {
-      PsiExpression expression = PsiUtil.skipParenthesizedExprDown((PsiExpression)anchor);
-      final String text = isNullLiteralExpression(expression) || expressions.get(expression) == ConstantResult.NULL
-               ? InspectionsBundle.message("dataflow.message.passing.null.argument")
-               : InspectionsBundle.message("dataflow.message.passing.nullable.argument");
-      List<LocalQuickFix> fixes = createNPEFixes(expression, expression, reporter.isOnTheFly());
-      reporter.registerProblem(anchor, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-    }
   }
 
   @Nullable
