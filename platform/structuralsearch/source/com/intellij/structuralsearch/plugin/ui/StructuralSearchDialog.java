@@ -192,6 +192,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         TextCompletionUtil.installCompletionHint(editor);
         editor.putUserData(STRUCTURAL_SEARCH, StructuralSearchDialog.this);
         editor.setEmbeddedIntoDialogWrapper(true);
+        ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return editor;
       }
 
@@ -648,13 +649,19 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
 
-    if (Registry.is("ssr.template.from.selection.builder")) {
-      Document document = mySearchCriteriaEdit.getDocument();
-      PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-      assert psiFile != null;
-      TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
+    startTemplate();
+  }
+
+  private void startTemplate() {
+    if (!Registry.is("ssr.template.from.selection.builder")) {
+      return;
     }
+    Document document = mySearchCriteriaEdit.getDocument();
+    PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+    assert psiFile != null;
+    TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
+    WriteCommandAction
+      .runWriteCommandAction(getProject(), () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
 
   @Override
