@@ -17,6 +17,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -32,6 +34,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -393,8 +396,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           //myCalcThread = null;
         }
         myAlarm.cancelAllRequests();
-        if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
+        if (myBalloon != null && !myBalloon.isDisposed()) {
           myBalloon.cancel();
+        }
+
+        if (myPopup != null && !myPopup.isDisposed()) {
           myPopup.cancel();
         }
 
@@ -564,10 +570,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere") && e.getProject() != null) {
-      //todo[mikhail.sokolov] show new UI
       String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
-
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
 
       SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(e.getProject());
@@ -577,10 +580,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         else {
           seManager.setShownContributor(searchProviderID);
+          FUSUsageContext context = Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(e))
+            .map(shortcut -> FUSUsageContext.create(searchProviderID, shortcut))
+            .orElseGet(() -> FUSUsageContext.create(searchProviderID));
+          SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
         }
         return;
       }
 
+      SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, FUSUsageContext.create(searchProviderID));
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
       seManager.show(searchProviderID, text, e);
@@ -969,6 +977,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       super(false, "SearchEveryWhereHistory");
       JTextField editor = getTextEditor();
       editor.setOpaque(false);
+      editor.putClientProperty(SearchEverywhereUI.SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
       if (UIUtil.isUnderDefaultMacTheme()) {
         editor.setUI((MacIntelliJTextFieldUI)MacIntelliJTextFieldUI.createUI(editor));
         editor.setBorder(new MacIntelliJTextBorder());
@@ -1287,7 +1296,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (hit == null) {
       hit = value.getOption();
     }
-    hit = StringUtil.unescapeXml(hit);
+    hit = StringUtil.unescapeXmlEntities(hit);
     if (hit.length() > 60) {
       hit = hit.substring(0, 60) + "...";
     }

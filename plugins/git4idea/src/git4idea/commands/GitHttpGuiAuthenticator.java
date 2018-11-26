@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
@@ -359,7 +360,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private static class PasswordSafeProvider implements AuthDataProvider {
+  @VisibleForTesting
+  static class PasswordSafeProvider implements AuthDataProvider {
     @NotNull private final DvcsRememberedInputs myRememberedInputs;
     @NotNull private final PasswordSafe myPasswordSafe;
 
@@ -435,8 +437,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myPasswordSafe.set(credentialAttributes(key), credentials);
     }
 
+    @VisibleForTesting
     @NotNull
-    private static CredentialAttributes credentialAttributes(@NotNull String key) {
+    static CredentialAttributes credentialAttributes(@NotNull String key) {
       return new CredentialAttributes(CredentialAttributesKt.generateServiceName("Git HTTP", key), key, PASS_REQUESTER);
     }
 
@@ -448,8 +451,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     /**
      * Makes the password database key for the URL: inserts the login after the scheme: http://login@url.
      */
+    @VisibleForTesting
     @NotNull
-    private static String makeKey(@NotNull String url, @Nullable String login) {
+    static String makeKey(@NotNull String url, @Nullable String login) {
       if (login == null) {
         return url;
       }

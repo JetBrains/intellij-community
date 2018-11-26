@@ -23,6 +23,21 @@ import com.intellij.psi.stubs.NamedStub;
  * @author peter
  */
 public interface PsiMemberStub<T extends PsiMember & PsiNamedElement> extends NamedStub<T> {
+  /**
+   * @return whether the stubbed element is deprecated by javadoc tag
+   */
   boolean isDeprecated();
+
+  /**
+   * @return whether the stubbed element might have an annotation resolving to {@link Deprecated}
+   */
+  default boolean hasDeprecatedAnnotation() { return true; }
+
+  /**
+   * @return whether the stubbed element might have javadoc
+   */
+  default boolean hasDocComment() {
+    return true;
+  }
 
 }

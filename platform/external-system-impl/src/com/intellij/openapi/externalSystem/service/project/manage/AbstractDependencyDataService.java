@@ -43,7 +43,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 4/14/13 11:21 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public abstract class AbstractDependencyDataService<E extends AbstractDependencyData<?>, I extends ExportableOrderEntry>

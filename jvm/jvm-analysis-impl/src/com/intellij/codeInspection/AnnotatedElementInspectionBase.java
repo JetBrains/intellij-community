@@ -3,11 +3,16 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UImportStatement;
@@ -16,6 +21,11 @@ import org.jetbrains.uast.UastContextKt;
 import javax.swing.*;
 import java.util.List;
 
+/**
+ * This class can be extended by inspections that should report usage of elements annotated with some particular annotation(s).
+ *
+ * @since 2018.3
+ */
 public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool {
   public boolean myIgnoreInsideImports = true;
 
@@ -25,7 +35,9 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
 
   protected abstract void createProblem(@NotNull PsiReference reference, @NotNull ProblemsHolder holder);
 
-  protected abstract boolean shouldProcessElement(@NotNull PsiModifierListOwner element);
+  protected boolean shouldProcessElement(@NotNull PsiModifierListOwner element) {
+    return isLibraryElement(element);
+  }
 
 
   @NotNull
@@ -46,7 +58,7 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
-        if (element instanceof PsiLanguageInjectionHost) {
+        if (element instanceof PsiLanguageInjectionHost || element instanceof LeafPsiElement) {
           return; // better performance
         }
 
@@ -125,5 +137,13 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
     }
     // references are not PsiQualifiedReference for annotation attributes
     return StringUtil.getShortName(reference.getCanonicalText());
+  }
+
+  private static boolean isLibraryElement(@NotNull PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return true;
+    }
+    VirtualFile containingVirtualFile = PsiUtilCore.getVirtualFile(element);
+    return containingVirtualFile != null && ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
   }
 }

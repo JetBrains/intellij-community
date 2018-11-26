@@ -428,11 +428,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
         button.setText(treeNode.getText());
         button.setSelected(treeNode.isSelected);
         if (isSelected) {
-          button.setForeground(UIUtil.getTreeSelectionForeground());
-          button.setBackground(UIUtil.getTreeSelectionBackground());
+          button.setForeground(UIUtil.getTreeSelectionForeground(hasFocus));
+          button.setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
         }
         else {
-          button.setForeground(UIUtil.getTreeTextForeground());
+          button.setForeground(UIUtil.getTreeForeground());
           button.setBackground(tree.getBackground());
         }
 
@@ -446,11 +446,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
         myLabel.setOpaque(true);
 
         if (isSelected) {
-          myLabel.setForeground(UIUtil.getTreeSelectionForeground());
-          myLabel.setBackground(UIUtil.getTreeSelectionBackground());
+          myLabel.setForeground(UIUtil.getTreeSelectionForeground(hasFocus));
+          myLabel.setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
         }
         else {
-          myLabel.setForeground(UIUtil.getTreeTextForeground());
+          myLabel.setForeground(UIUtil.getTreeForeground());
           myLabel.setBackground(tree.getBackground());
         }
 

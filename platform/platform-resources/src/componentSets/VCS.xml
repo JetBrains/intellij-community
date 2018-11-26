@@ -85,8 +85,8 @@
     <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
+    </component>
   </project-components>
-  <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"/>
-  </extensions>
 </idea-plugin>

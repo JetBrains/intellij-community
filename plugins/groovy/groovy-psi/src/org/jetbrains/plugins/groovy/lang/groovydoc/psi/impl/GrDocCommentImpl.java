@@ -31,6 +31,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
     super(GroovyDocElementTypes.GROOVY_DOC_COMMENT, text);
   }
 
+  @Override
   public String toString() {
     return "GrDocComment";
   }

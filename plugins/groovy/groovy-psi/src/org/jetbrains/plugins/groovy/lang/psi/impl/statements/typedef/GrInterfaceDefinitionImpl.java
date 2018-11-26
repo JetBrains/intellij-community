@@ -23,6 +23,7 @@ public class GrInterfaceDefinitionImpl extends GrTypeDefinitionImpl implements G
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Interface definition";
   }

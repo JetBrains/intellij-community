@@ -408,10 +408,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private String getNewQName(PsiElement element) {
     final String qualifiedName = myTargetPackage.getQualifiedName();
     if (element instanceof PsiClass) {
-      return StringUtil.getQualifiedName(qualifiedName, ((PsiClass)element).getName());
+      return StringUtil.getQualifiedName(qualifiedName, StringUtil.notNullize(((PsiClass)element).getName()));
     }
     else if (element instanceof PsiPackage) {
-      return StringUtil.getQualifiedName(qualifiedName, ((PsiPackage)element).getName());
+      return StringUtil.getQualifiedName(qualifiedName, StringUtil.notNullize(((PsiPackage)element).getName()));
     }
     else if (element instanceof PsiClassOwner) {
       return ((PsiClassOwner)element).getName();

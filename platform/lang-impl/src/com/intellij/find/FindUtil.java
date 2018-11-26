@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -80,28 +81,23 @@ public class FindUtil {
     }
   }
 
-  private static boolean isMultilineSelection(Editor editor) {
-    SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
-    if (selectionModel != null) {
-      String selectedText = selectionModel.getSelectedText();
-      if (selectedText != null && selectedText.contains("\n")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
     boolean isGlobal = true;
     String stringToFind = firstSearch ? "" : model.getStringToFind();
     final SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
     String selectedText = selectionModel != null ? selectionModel.getSelectedText() : null;
     if (!StringUtil.isEmpty(selectedText)) {
-      model.setMultiline(isMultilineSelection(editor));
       stringToFind = selectedText;
     }
     model.setReplaceState(replace);
+    boolean multiline = stringToFind.contains("\n");
+    if (replace && multiline) {
+      isGlobal = false;
+      stringToFind = "";
+      multiline = false;
+    }
     model.setStringToFind(stringToFind);
+    model.setMultiline(multiline);
     model.setGlobal(isGlobal);
     model.setPromptOnReplace(false);
   }
@@ -254,9 +250,14 @@ public class FindUtil {
 
   @Nullable
   public static List<Usage> findAll(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
-    final Document document = editor.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile == null) return null;
+    return findAll(project, PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()), findModel);
+  }
+
+  @Nullable
+  private static List<Usage> findAll(@NotNull Project project, @Nullable PsiFile psiFile, @NotNull FindModel findModel) {
+    if (psiFile == null || project.isDisposed()) return null;
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    if (document == null) return null;
 
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
@@ -264,7 +265,7 @@ public class FindUtil {
     findModel.setForward(true); // when find all there is no diff in direction
 
     int offset = 0;
-    VirtualFile virtualFile = getVirtualFile(editor);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
 
     final List<Usage> usages = new ArrayList<>();
     while (offset < textLength) {
@@ -285,11 +286,27 @@ public class FindUtil {
   }
 
   public static void findAllAndShow(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
-    List<Usage> usages = findAll(project, editor, findModel);
+    findAllAndShow(project, PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()), findModel);
+  }
+
+  private static void findAllAndShow(@NotNull Project project, @Nullable PsiFile psiFile, @NotNull FindModel findModel) {
+    List<Usage> usages = findAll(project, psiFile, findModel);
     if (usages == null) return;
     final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel)};
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
-    UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(Usage.EMPTY_ARRAY), usageViewPresentation);
+    UsageView view =
+      UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(Usage.EMPTY_ARRAY), usageViewPresentation);
+    view.setRerunAction(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        findAllAndShow(project, psiFile, findModel);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return !project.isDisposed() && psiFile.isValid();
+      }
+    });
   }
 
   public static void searchBack(Project project, FileEditor fileEditor, @Nullable DataContext dataContext) {
@@ -872,7 +889,7 @@ public class FindUtil {
                                               @NotNull Function<? super T, ? extends Usage> usageConverter,
                                               @NotNull String title,
                                               @Nullable Consumer<? super UsageViewPresentation> presentationSetup,
-                                              @NotNull final Project project) {
+                                              @NotNull Project project) {
     if (targets.length == 0) return null;
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);
@@ -885,11 +902,12 @@ public class FindUtil {
 
     UsageView view = UsageViewManager.getInstance(project).showUsages(usageTargets, Usage.EMPTY_ARRAY, presentation);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View ...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (final T pointer : targets) {
-          if (((UsageViewImpl)view).isDisposed()) break;
+        UsageViewImpl impl = (UsageViewImpl)view;
+        for (T pointer : targets) {
+          if (impl.isDisposed()) break;
           ApplicationManager.getApplication().runReadAction(() -> {
             Usage usage = usageConverter.fun(pointer);
             if (usage != null) {
@@ -897,7 +915,9 @@ public class FindUtil {
             }
           });
         }
-        UIUtil.invokeLaterIfNeeded(((UsageViewImpl)view)::expandAll);
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (!impl.isDisposed()) impl.expandRoot();
+        });
       }
     });
     return view;

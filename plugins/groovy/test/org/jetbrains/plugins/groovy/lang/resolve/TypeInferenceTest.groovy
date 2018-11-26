@@ -8,7 +8,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -261,21 +260,6 @@ map['i'] += 2
 
   void testAllTypeParamsAreSubstituted() {
     assertTypeEquals('java.util.Map<java.lang.Object,java.lang.Object>', 'a.groovy')
-  }
-
-  void testDiamond() {
-    GroovyFile file = myFixture.configureByText('a.groovy', '''
-List<String> list = new ArrayList<>()
-List<Integer> l2
-
-(list, l2) = [new ArrayList<>(), new ArrayList<>()]
-''') as GroovyFile
-
-    def statements = file.topStatements
-
-    assertEquals('java.util.ArrayList<java.lang.String>', (statements[0] as GrVariableDeclaration).variables[0].initializerGroovy.type.canonicalText)
-    assertEquals('java.util.ArrayList<java.lang.String>', ((statements[2] as GrAssignmentExpression).RValue as GrListOrMap).initializers[0].type.canonicalText)
-    assertEquals('java.util.ArrayList<java.lang.Integer>', ((statements[2] as GrAssignmentExpression).RValue as GrListOrMap).initializers[1].type.canonicalText)
   }
 
   void testWildCardsNormalized() {
@@ -838,18 +822,6 @@ class A { Closure foo = { 42 } }
     doCSExprTest '[].class', "java.lang.Class<java.util.List>"
     doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
     doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
-  }
-
-  void testMapClassReference() {
-    doExprTest '[:].class', null
-    doExprTest '[class : 1].class', 'java.lang.Integer'
-    doExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
-    doExprTest 'new HashMap().class', null
-
-    doCSExprTest '[:].class', null
-    doCSExprTest '[class : 1].class', 'java.lang.Integer'
-    doCSExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
-    doCSExprTest 'new HashMap().class', null
   }
 
   void testUnknownClass() {

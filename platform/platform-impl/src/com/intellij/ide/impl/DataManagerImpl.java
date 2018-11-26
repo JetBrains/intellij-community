@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -64,7 +65,8 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Nullable
-  private Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+  public Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+    ProgressManager.checkCanceled();
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
     }
@@ -329,6 +331,7 @@ public class DataManagerImpl extends DataManager {
 
     @Override
     public Object getData(@NotNull String dataId) {
+      ProgressManager.checkCanceled();
       int currentEventCount = IdeEventQueue.getInstance().getEventCount();
       if (myEventCount != -1 && myEventCount != currentEventCount) {
         LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +

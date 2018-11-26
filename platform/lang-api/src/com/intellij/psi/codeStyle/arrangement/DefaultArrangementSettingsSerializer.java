@@ -37,7 +37,6 @@ import java.util.Set;
  * and {@link Mixin can be used as a base for custom serializer implementation}.
  * 
  * @author Denis Zhdanov
- * @since 7/18/12 10:37 AM
  */
 public class DefaultArrangementSettingsSerializer implements ArrangementSettingsSerializer {
   private static final Logger LOG = Logger.getInstance(DefaultArrangementSettingsSerializer.class);

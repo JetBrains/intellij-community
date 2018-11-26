@@ -74,7 +74,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
   @Override
   protected PsiElement getElement() {
-    if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
+    if (!myMethodCall.isValid() || !canModify(myMethodCall)) return null;
     return myMethodCall;
   }
 

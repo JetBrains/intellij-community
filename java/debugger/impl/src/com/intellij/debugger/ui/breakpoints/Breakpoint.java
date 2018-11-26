@@ -136,6 +136,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     renderer.append(getDisplayName());
   }
 
+  @Override
+  public boolean isObsolete() {
+    return myXBreakpoint instanceof XBreakpointBase && ((XBreakpointBase)myXBreakpoint).isDisposed();
+  }
+
   public abstract String getDisplayName ();
 
   public String getShortName() {

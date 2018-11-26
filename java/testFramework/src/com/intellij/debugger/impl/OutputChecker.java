@@ -43,6 +43,8 @@ public class OutputChecker {
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_2 =
     Pattern.compile("JDWP\\s+exit\\s+error\\s+AGENT_ERROR_NO_JNI_ENV.*]\n");
 
+  private static final String[] IGNORED_PATTERNS_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
+
   private final String myAppPath;
   private final String myOutputPath;
   private Map<Key, StringBuffer> myBuffers;
@@ -67,11 +69,10 @@ public class OutputChecker {
   public void print(String s, Key outputType) {
     synchronized (this) {
       if (myBuffers != null) {
-        StringBuffer buffer = myBuffers.get(outputType);
-        if (buffer == null) {
-          myBuffers.put(outputType, buffer = new StringBuffer());
+        if (outputType == ProcessOutputTypes.STDERR && Arrays.stream(IGNORED_PATTERNS_IN_STDERR).anyMatch(s::contains)) {
+          return;
         }
-        buffer.append(s);
+        myBuffers.computeIfAbsent(outputType, k -> new StringBuffer()).append(s);
       }
     }
   }

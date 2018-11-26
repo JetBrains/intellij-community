@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -31,6 +32,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
@@ -74,7 +76,8 @@ public class FindPopupDirectoryChooser extends JPanel {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       descriptor.setForcedToUseIdeaFileChooser(true);
       myFindPopupPanel.getCanClose().set(false);
-      FileChooser.chooseFiles(descriptor, myProject, null, null,
+      FileChooser.chooseFiles(descriptor, myProject, null,
+                              VfsUtil.findFileByIoFile(new File(getDirectory()), true),
                               new FileChooser.FileChooserConsumer() {
         @Override
         public void consume(List<VirtualFile> files) {

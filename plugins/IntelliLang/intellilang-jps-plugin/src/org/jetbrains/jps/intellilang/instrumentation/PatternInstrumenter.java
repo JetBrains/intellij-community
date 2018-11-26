@@ -130,8 +130,8 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     super.visitEnd();
   }
 
-  private void addField(String name, int access, String type) {
-    cv.visitField(access, name, type, null, null).visitEnd();
+  private void addField(String name, int access, String desc) {
+    cv.visitField(access, name, desc, null, null).visitEnd();
   }
 
   private void patchStaticInitializer(MethodVisitor mv) {

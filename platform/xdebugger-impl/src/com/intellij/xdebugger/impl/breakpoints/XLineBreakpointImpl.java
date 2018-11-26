@@ -223,9 +223,8 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
             setFileUrl(file.getUrl());
             setLine(line, true);
             XDebugSessionImpl session = debuggerManager.getCurrentSession();
-            if (session != null) {
-              session.clearActiveNonLineBreakpoint();
-              session.updateExecutionPosition();
+            if (session != null && session.getActiveNonLineBreakpoint() == XLineBreakpointImpl.this) {
+              session.clearActiveNonLineBreakpoint(true);
             }
           }
           return true;

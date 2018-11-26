@@ -17,14 +17,16 @@ import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TwoColorsIcon;
+import com.intellij.util.ui.ColorsIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor {
   public static final ColorLineMarkerProvider INSTANCE = new ColorLineMarkerProvider();
 
@@ -41,10 +43,6 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
       }
     }
     return null;
-  }
-
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
   }
 
   @Override
@@ -89,10 +87,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
     @Override
     public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
-      if (infos.size() == 2 && infos.get(0) instanceof MyInfo && infos.get(1) instanceof MyInfo) {
-        return JBUI.scale(new TwoColorsIcon(12, ((MyInfo)infos.get(0)).myColor, ((MyInfo)infos.get(1)).myColor));
-      }
-      return AllIcons.Gutter.Colors;
+      return JBUI.scale(new ColorsIcon(12, infos.stream().map(_info -> ((MyInfo)_info).myColor).toArray(Color[]::new)));
     }
 
     @NotNull

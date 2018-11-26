@@ -191,7 +191,8 @@ import javax.swing.tree.TreePath
     val indentS = "----"
     for (it in 0 until model.getChildCount(parent)) {
       val node = model.getChild(parent, it)
-      println("${indentS.repeat(indent)}$node")
+      val value = ExtendedJTreeCellReader().valueAt(this, node)?.replace("\u200B", "") ?: ""
+      println("${indentS.repeat(indent)}$value")
       if(model.isLeaf(node).not())
         printModel(node, indent + 1)
     }

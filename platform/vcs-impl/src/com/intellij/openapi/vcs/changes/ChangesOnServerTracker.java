@@ -15,16 +15,21 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vcs.changes.ui.PlusMinus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface ChangesOnServerTracker extends PlusMinus<Pair<String, AbstractVcs>>, VcsListener {
+public interface ChangesOnServerTracker extends VcsListener {
   // todo add vcs parameter???
   void invalidate(final Collection<String> paths);
+
   boolean isUpToDate(final Change change);
+
   boolean updateStep();
+
+  void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs);
+
+  void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs);
 }

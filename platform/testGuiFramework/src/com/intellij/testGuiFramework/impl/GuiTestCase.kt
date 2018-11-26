@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestPaths.testScreenshotDirPath
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.tryWithPause
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
@@ -35,6 +36,7 @@ import java.util.*
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.text.JTextComponent
 
 /**
  * The main base class that should be extended for writing GUI tests.
@@ -62,15 +64,11 @@ import javax.swing.JPanel
 @RunWith(GuiTestLocalRunner::class)
 open class GuiTestCase {
 
-  companion object {
-    @ClassRule
-    @JvmField
-    val projectsFolder: TemporaryFolder = TemporaryFolder()
-  }
-
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule(projectsFolder.apply{ create() }.root.canonicalFile)
+  val guiTestRule = GuiTestRule()
+
+  val projectsFolder: TemporaryFolder = guiTestRule.projectsFolder
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -123,9 +121,18 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
+  fun dialogWithTextComponent(timeout: Timeout, predicate: (JTextComponent) -> Boolean, func: JDialogFixture.() -> Unit) {
+    val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
+      JDialogFixture(robot(), it).containsChildComponent(predicate)
+    }
+    val dialogFixture = JDialogFixture(robot(), dialog)
+    func(dialogFixture)
+    dialogFixture.waitTillGone()
+  }
+
   fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
-                      needToKeepDialog: Boolean = false,
-                      func: JDialogFixture.() -> Unit) {
+                     needToKeepDialog: Boolean = false,
+                     func: JDialogFixture.() -> Unit) {
     if (isMac()) dialog(title = "Preferences", func = func)
     else dialog(title = "Settings", func = func)
   }
@@ -136,7 +143,7 @@ open class GuiTestCase {
     if (!needToKeepDialog) pluginDialog.waitTillGone()
   }
 
-  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout) : PluginDialogFixture{
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout): PluginDialogFixture {
     return PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
   }
 
@@ -144,7 +151,7 @@ open class GuiTestCase {
    * Waits for a native file chooser, types the path in a textfield and closes it by clicking OK button. Or runs AppleScript if the file chooser
    * is a Mac native.
    */
-  fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout) {
+  fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout, needToRefresh: Boolean = false) {
     val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "false")
     if (macNativeFileChooser) {
       MacFileChooserDialogFixture(robot()).selectByPath(path)
@@ -171,6 +178,13 @@ open class GuiTestCase {
         textfield("")
         invokeAction("\$SelectAll")
         typeText(path)
+        if (needToRefresh) {
+          tryWithPause(ComponentLookupException::class.java, "Path is located in the tree", Timeouts.seconds10) {
+            actionButton("Refresh").click()
+            textfield("").deleteText()
+            typeText(path)
+          }
+        }
         button("OK").clickWhenEnabled()
         waitTillGone()
       }
@@ -268,6 +282,10 @@ open class GuiTestCase {
     func(this.editor())
   }
 
+  fun CustomToolWindowFixture.ContentFixture.editorContainingText(text: String, func: EditorFixture.() -> Unit) {
+    func(findEditorContainingText(text))
+  }
+
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
@@ -325,7 +343,10 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
+  fun dialog(title: String? = null,
+             ignoreCaseTitle: Boolean,
+             predicate: FinderPredicate = Predicate.equality,
+             timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
     if (title == null) {
       val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { true }
       return JDialogFixture(robot(), jDialog)

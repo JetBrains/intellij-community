@@ -87,7 +87,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getCon
 
 /**
  * @author Denis Zhdanov
- * @since 23.05.13 18:30
  */
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile,
                                                                                           SMRunnerConsolePropertiesProvider {

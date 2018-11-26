@@ -45,10 +45,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private RefParameter[] myParameters; //guarded by this
   private String myReturnValueTemplate; //guarded by this
 
-  RefMethodImpl(@NotNull RefElement ownerClass, UMethod method, PsiElement psi, RefManager manager) {
+  RefMethodImpl(@NotNull RefElement owner, UMethod method, PsiElement psi, RefManager manager) {
     super(method, psi, manager);
 
-    ((RefEntityImpl)ownerClass).add(this);
+    ((WritableRefEntity)owner).add(this);
   }
 
   // To be used only from RefImplicitConstructor.
@@ -57,7 +57,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     ((RefClassImpl)ownerClass).add(this);
 
     addOutReference(ownerClass);
-    ((RefClassImpl)ownerClass).addInReference(this);
+    ((WritableRefElement)ownerClass).addInReference(this);
 
     setConstructor(true);
   }
@@ -65,7 +65,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public synchronized void add(@NotNull RefEntity child) {
     if (child instanceof RefParameter) {
-      ((RefEntityImpl)child).setOwner(this);
+      ((WritableRefEntity)child).setOwner(this);
       return;
     }
     super.add(child);
@@ -183,7 +183,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         RefClass ownerClass = getOwnerClass();
         if (ownerClass != null) {
           for (RefClass superClass : ownerClass.getBaseClasses()) {
-            RefMethodImpl superDefaultConstructor = (RefMethodImpl)superClass.getDefaultConstructor();
+            WritableRefElement superDefaultConstructor = (WritableRefElement)superClass.getDefaultConstructor();
             if (superDefaultConstructor != null) {
               superDefaultConstructor.addInReference(this);
               addOutReference(superDefaultConstructor);
@@ -222,7 +222,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private void initializeSuperMethods(PsiMethod method) {
-    if (getRefManager().isOfflineView() || !getRefManager().isDeclarationsFound()) return;
+    if (getRefManager().isOfflineView()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
         RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(psiSuperMethod);
@@ -452,8 +452,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     try {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       String methodSignature = externalName.substring(spaceIdx + 1);
-      PsiMethod patternMethod = factory.createMethodFromText(methodSignature, psiClass);
-      return psiClass.findMethodBySignature(patternMethod, false);
+      MethodSignature patternSignature = factory.createMethodFromText(methodSignature, psiClass).getSignature(PsiSubstitutor.EMPTY);
+      return Arrays.stream(psiClass.findMethodsByName(patternSignature.getName(), false)).filter(m -> {
+        MethodSignature s = m.getSignature(PsiSubstitutor.EMPTY);
+        MethodSignature refinedPatternSignature = factory.createMethodFromText(methodSignature, m).getSignature(s.getSubstitutor());
+        return MethodSignatureUtil.areErasedParametersEqual(s, refinedPatternSignature);
+      }).findFirst().orElse(null);
     } catch (IncorrectOperationException e) {
       // Do nothing. Returning null is acceptable in this case.
       return null;

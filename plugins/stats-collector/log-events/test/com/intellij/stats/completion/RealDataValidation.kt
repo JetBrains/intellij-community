@@ -19,6 +19,7 @@ package com.intellij.stats.completion
 import com.intellij.stats.validation.EventLine
 import com.intellij.stats.validation.InputSessionValidator
 import com.intellij.stats.validation.SessionValidationResult
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -58,8 +59,8 @@ class RealDataValidation {
 
         val validSessions = sessionStatuses.count { it.value }
 
-        assert(validSessions == 23)
-        assert(invalidSessions == 4)
+        Assert.assertEquals(7, validSessions)
+        Assert.assertEquals(3, invalidSessions)
     }
 
     private fun file(path: String): File {

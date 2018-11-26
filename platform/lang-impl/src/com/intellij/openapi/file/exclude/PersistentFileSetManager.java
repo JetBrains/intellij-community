@@ -64,6 +64,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(@NotNull Element state) {
+    myFiles.clear();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (Object child : state.getChildren(FILE_ELEMENT)) {
       if (child instanceof Element) {

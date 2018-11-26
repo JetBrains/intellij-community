@@ -112,7 +112,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
         out.append(' ');
       }
       final String s = text.substring(startOffset, endOffset);
-      out.append(StringUtil.unescapeXml(s));
+      out.append(StringUtil.unescapeXmlEntities(s));
     }
   }
 

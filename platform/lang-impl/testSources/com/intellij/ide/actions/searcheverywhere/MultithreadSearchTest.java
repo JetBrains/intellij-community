@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -14,12 +15,15 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /**
  * @author mikhail.sokolov
  */
+@Bombed(month = Calendar.DECEMBER, day = 1, user = "mikhail.sokolov", description = "leaking thread SE-FinisherTask")
 public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private static final String MORE_ITEM = "...MORE";
@@ -32,8 +36,18 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
-      searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
-      collector.awaitFinish();
+      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
+      try {
+        collector.awaitFinish(1000);
+      }
+      catch (TimeoutException e) {
+        Assert.fail("Search timeout exceeded");
+      }
+      catch (InterruptedException ignored) {
+      }
+      finally {
+        indicator.cancel();
+      }
       scenario.results.forEach((contributorId, results) -> {
         List<String> values = collector.getContributorValues(contributorId);
         Assert.assertEquals(String.format("Scenario '%s'. found elements by contributor %s", scenario.description, contributorId), results, values);
@@ -49,8 +63,19 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     SESearcher searcher = new SingleThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
-      searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
-      collector.awaitFinish();
+      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
+      try {
+        collector.awaitFinish(1000);
+      }
+      catch (TimeoutException e) {
+        Assert.fail("Search timeout exceeded");
+      }
+      catch (InterruptedException ignored) {
+      }
+      finally {
+        indicator.cancel();
+      }
+
       scenario.results.forEach((contributorId, results) -> {
         List<String> values = collector.getContributorValues(contributorId);
         Assert.assertEquals(String.format("Scenario '%s'. found elements by contributor %s", scenario.description, contributorId), results, values);
@@ -406,8 +431,9 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       return values != null ? values : Collections.emptyList();
     }
 
-    public void awaitFinish() {
-      myPhaser.arriveAndAwaitAdvance();
+    public void awaitFinish(long timeout) throws TimeoutException, InterruptedException {
+      int phase = myPhaser.arrive();
+      myPhaser.awaitAdvanceInterruptibly(phase, timeout, TimeUnit.MILLISECONDS);
     }
 
     public void clear() {

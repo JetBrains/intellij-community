@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -15,7 +16,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -33,9 +33,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBPoint;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -57,10 +55,9 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
-import static com.intellij.util.ui.UIUtil.addBorder;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
-public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
+class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
   @NotNull private final MergingUpdateQueue myUpdateQueue =
     new MergingUpdateQueue("MultipleLocalChangeListsBrowser", 300, true, ANY_COMPONENT, this);
 
@@ -78,8 +75,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull private LocalChangeList myChangeList;
 
   @Nullable private Runnable mySelectedListChangeListener;
+  private final RollbackDialogAction myRollbackDialogAction;
 
-  public MultipleLocalChangeListsBrowser(@NotNull Project project,
+  MultipleLocalChangeListsBrowser(@NotNull Project project,
                                          boolean showCheckboxes,
                                          boolean highlightProblems,
                                          boolean enableUnversioned,
@@ -90,6 +88,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
+
+    myRollbackDialogAction = new RollbackDialogAction();
+    myRollbackDialogAction.registerCustomShortcutSet(this, null);
 
     if (Registry.is("vcs.skip.single.default.changelist")) {
       List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
@@ -121,35 +122,30 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
   @NotNull
   @Override
-  protected JComponent createCenterPanel() {
-    CurrentBranchComponent branchComponent = new CurrentBranchComponent(myProject, this);
-    JScrollPane viewerScrollPane = getViewerScrollPane();
-
-    if (!SystemInfo.isMac) {
-      addBorder(branchComponent, JBUI.Borders.empty(5, 0, 0, 7));
-      viewerScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-      viewerScrollPane.getVerticalScrollBar().add(JBScrollBar.LEADING, branchComponent);
-
-      return viewerScrollPane;
-    }
-    else {
-      ScrollPaneOverlayPanel overlayPanel = new ScrollPaneOverlayPanel(viewerScrollPane);
-      overlayPanel.setTopRightOffset(new JBPoint(7, 5));
-      overlayPanel.setTopRightComponent(branchComponent);
-
-      return overlayPanel;
-    }
-  }
-
-  @NotNull
-  @Override
   protected List<AnAction> createToolbarActions() {
+    AnAction rollbackGroup = createRollbackGroup(true);
     return ContainerUtil.append(
       super.createToolbarActions(),
-      new RollbackDialogAction(),
+      rollbackGroup,
       ActionManager.getInstance().getAction("ChangesView.Refresh"),
       ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar")
     );
+  }
+
+  private AnAction createRollbackGroup(boolean popup) {
+    List<? extends AnAction> rollbackActions = createAdditionalRollbackActions();
+    if (rollbackActions.isEmpty()) {
+      return myRollbackDialogAction;
+    }
+    DefaultActionGroup group = new DefaultActionGroup(myRollbackDialogAction);
+    group.addAll(rollbackActions);
+    ActionUtil.copyFrom(group, IdeActions.CHANGES_VIEW_ROLLBACK);
+    group.setPopup(popup);
+    return group;
+  }
+
+  protected List<? extends AnAction> createAdditionalRollbackActions() {
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -170,9 +166,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
 
-    RollbackDialogAction rollbackAction = new RollbackDialogAction();
-    rollbackAction.registerCustomShortcutSet(this, null);
-    result.add(rollbackAction);
+    result.add(createRollbackGroup(false));
 
     EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(this);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
@@ -196,6 +190,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     super.updateDiffContext(chain);
     chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent);
     chain.putUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, myEnablePartialCommit);
+    chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
   }
 
 

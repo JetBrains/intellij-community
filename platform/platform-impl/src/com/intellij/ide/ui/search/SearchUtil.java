@@ -45,7 +45,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author anna
- * @since 07.02.2006
  */
 public class SearchUtil {
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");

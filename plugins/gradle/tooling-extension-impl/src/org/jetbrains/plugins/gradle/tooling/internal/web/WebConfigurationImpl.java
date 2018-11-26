@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
  */
 public class WebConfigurationImpl implements WebConfiguration {
 

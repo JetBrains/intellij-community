@@ -52,7 +52,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
   @Override
   protected void initialize() {
-    ((RefModuleImpl)myRefModule).add(this);
+    ((WritableRefEntity)myRefModule).add(this);
   }
 
   @Override
@@ -246,7 +246,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
           RefElement refElement = getRefManager().getReference(element);
           if (refElement != null) {
             addOutReference(refElement);
-            ((RefElementImpl)refElement).addInReference(this);
+            ((WritableRefElement)refElement).addInReference(this);
           }
         }
       }

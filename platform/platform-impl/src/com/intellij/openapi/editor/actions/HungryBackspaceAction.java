@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
  * (white spaces, tabulations, line feeds) are removed then.
  * 
  * @author Denis Zhdanov
- * @since 6/27/12 4:10 PM
  */
 public class HungryBackspaceAction extends TextComponentEditorAction {
 

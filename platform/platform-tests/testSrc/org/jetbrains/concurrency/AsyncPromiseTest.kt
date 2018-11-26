@@ -51,14 +51,14 @@ class AsyncPromiseTest {
       }
     }
 
-    val setResulter: () -> Promise<String> = {
+    val setResultHandler: () -> Promise<String> = {
       promise.setResult("test")
       promise
     }
 
     val numThreads = 30
     val array = Array(numThreads) {
-      if ((it and 1) == 0) Incrementer("handler $it") else setResulter
+      if ((it and 1) == 0) Incrementer("handler $it") else setResultHandler
     }
     assertConcurrentPromises(*array)
 
@@ -104,12 +104,7 @@ class AsyncPromiseTest {
   @Test
   fun blockingGet2() {
     val promise = AsyncPromise<String>()
-    assertConcurrent(
-        { assertThatThrownBy { promise.blockingGet(100) }.isInstanceOf(TimeoutException::class.java) },
-        {
-          Thread.sleep(1000)
-          promise.setResult("test")
-        })
+    assertThatThrownBy { promise.blockingGet(10) }.isInstanceOf(TimeoutException::class.java)
   }
 
   private fun doHandlerTest(reject: Boolean) {
@@ -147,11 +142,11 @@ class AsyncPromiseTest {
   }
 
   @Test
-  fun collectResultsMustReturnArrayWithTheSameOrder() {
+  fun `collectResults must return array with the same order`() {
     val promise0 = AsyncPromise<String>()
     val promise1 = AsyncPromise<String>()
-    val f0 = JobScheduler.getScheduler().schedule({ promise0.setResult("0") }, 10, TimeUnit.SECONDS)
-    val f1 = JobScheduler.getScheduler().schedule({ promise1.setResult("1") }, 1, TimeUnit.SECONDS)
+    val f0 = JobScheduler.getScheduler().schedule({ promise0.setResult("0") }, 1, TimeUnit.SECONDS)
+    val f1 = JobScheduler.getScheduler().schedule({ promise1.setResult("1") }, 1, TimeUnit.MILLISECONDS)
     val list = listOf(promise0, promise1)
     val results = list.collectResults()
     val l = results.blockingGet(1, TimeUnit.MINUTES)
@@ -161,16 +156,51 @@ class AsyncPromiseTest {
   }
 
   @Test
-  fun `collectResultsMustReturnArrayWithTheSameOrder - ignore errors`() {
+  fun `collectResults must return array with the same order - ignore errors`() {
     val promiseList = listOf<AsyncPromise<String>>(AsyncPromise(), AsyncPromise(), AsyncPromise())
     val toExecute = listOf(
-      JobScheduler.getScheduler().schedule({ promiseList[0].setResult("0") }, 5, TimeUnit.SECONDS),
-      JobScheduler.getScheduler().schedule({ promiseList[1].setError("boo") }, 1, TimeUnit.SECONDS),
-      JobScheduler.getScheduler().schedule({ promiseList[2].setResult("1") }, 2, TimeUnit.SECONDS)
+      JobScheduler.getScheduler().schedule({ promiseList[0].setResult("0") }, 5, TimeUnit.MILLISECONDS),
+      JobScheduler.getScheduler().schedule({ promiseList[1].setError("boo") }, 1, TimeUnit.MILLISECONDS),
+      JobScheduler.getScheduler().schedule({ promiseList[2].setResult("1") }, 2, TimeUnit.MILLISECONDS)
     )
     val results = promiseList.collectResults(ignoreErrors = true)
     val l = results.blockingGet(15, TimeUnit.SECONDS)
     assertThat(l).containsExactly("0", "1")
     toExecute.forEach { it.get() }
+  }
+
+  @Test
+  fun `do not swallow exceptions`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    assertThatThrownBy {
+      promise.setError(error)
+    }
+      .isInstanceOf(AssertionError::class.java)
+      .hasCause(error)
+  }
+
+  // this case quite tested by other tests, but better to have special test
+  @Test
+  fun `do not swallow exceptions - error handler added`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    promise.onError {
+      // ignore
+    }
+    promise.setError(error)
+  }
+
+  // this case quite tested by other tests, but better to have special test
+  @Test
+  fun `do not swallow exceptions - error handler added to nested`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    promise
+      .onSuccess { }
+      .onError {
+        // ignore
+      }
+    promise.setError(error)
   }
 }

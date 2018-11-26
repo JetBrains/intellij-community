@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -664,6 +665,11 @@ public class PyUtil {
     return guessLanguageLevelWithCaching(project);
   }
 
+  @NotNull
+  public static LanguageLevel getLanguageLevelForModule(@NotNull Module module) {
+    return FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).getImmediateValue(module);
+  }
+
   public static void invalidateLanguageLevelCache(@NotNull Project project) {
     project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, null);
   }
@@ -814,7 +820,11 @@ public class PyUtil {
     // Don't use ConcurrentHashMap#computeIfAbsent(), it blocks if the function tries to update the cache recursively for the same key
     // during computation. We can accept here that some values will be computed several times due to non-atomic updates.
     final Optional<P> wrappedParam = Optional.ofNullable(param);
-    Optional<T> value = cache.computeIfAbsent(wrappedParam, k -> Optional.ofNullable(f.fun(param)));
+    Optional<T> value = cache.get(wrappedParam);
+    if (value == null) {
+      value = Optional.ofNullable(f.fun(param));
+      cache.put(wrappedParam, value);
+    }
     return value.orElse(null);
   }
 
@@ -1200,15 +1210,6 @@ public class PyUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * @deprecated This method will be removed in 2018.3.
-   */
-  @Nullable
-  @Deprecated
-  public static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
-    return strListValue(attr.findAssignedValue());
   }
 
   @Nullable
@@ -1891,7 +1892,7 @@ public class PyUtil {
     }
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
-    final PyDecoratorList newDecorators = generator.createDecoratorList(decoTexts.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+    final PyDecoratorList newDecorators = generator.createDecoratorList(ArrayUtil.toStringArray(decoTexts));
 
     if (currentDecorators != null) {
       currentDecorators.replace(newDecorators);

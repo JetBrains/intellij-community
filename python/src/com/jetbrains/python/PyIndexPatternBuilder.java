@@ -51,11 +51,21 @@ public class PyIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   public int getCommentStartDelta(IElementType tokenType) {
-    return 0;
+    return tokenType == PyTokenTypes.END_OF_LINE_COMMENT
+           ? 1
+           : tokenType == PyTokenTypes.DOCSTRING
+             ? 3
+             : 0;
   }
 
   @Override
   public int getCommentEndDelta(IElementType tokenType) {
-    return 0;
+    return tokenType == PyTokenTypes.DOCSTRING ? 3 : 0;
+  }
+
+  @NotNull
+  @Override
+  public String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
+    return tokenType == PyTokenTypes.END_OF_LINE_COMMENT ? "#" : "";
   }
 }

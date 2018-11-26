@@ -60,11 +60,16 @@ internal class GithubPullRequestSearchComponent(project: Project,
     }
     addToLeft(icon)
     addToCenter(searchField)
-    UIUtil.setBackgroundRecursively(this, UIUtil.getTextFieldBackground())
+    UIUtil.setNotOpaqueRecursively(searchField)
   }
 
   private fun updateQuery() {
     model.query = GithubPullRequestSearchQuery.parseFromString(searchField.text)
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    background = UIUtil.getListBackground()
   }
 
   private inner class SearchCompletionProvider : TextFieldCompletionProviderDumbAware(true) {
@@ -90,22 +95,26 @@ internal class GithubPullRequestSearchComponent(project: Project,
       val qualifierName = getCurrentQualifierName(text, offset)
       if (qualifierName == null) {
         result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.state)
-                            .withTailText(":" + GithubIssueState.values().joinToString { it.name }, true)
+                            .withTailText(":")
                             .withInsertHandler(addColonInsertHandler))
         result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.author)
-                            .withTailText(":username", true)
+                            .withTailText(":")
+                            .withTypeText("username", true)
                             .withInsertHandler(addColonInsertHandler))
         result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.assignee)
-                            .withTailText(":username", true)
+                            .withTailText(":")
+                            .withTypeText("username", true)
                             .withInsertHandler(addColonInsertHandler))
         result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.after)
-                            .withTailText(":yyyy-MM-dd", true)
+                            .withTailText(":")
+                            .withTypeText("YYYY-MM-DD", true)
                             .withInsertHandler(addColonInsertHandler))
         result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.before)
-                            .withTailText(":yyyy-MM-dd", true)
+                            .withTailText(":")
+                            .withTypeText("YYYY-MM-DD", true)
                             .withInsertHandler(addColonInsertHandler))
         result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.sortBy)
-                            .withTailText(":" + GithubIssueSearchSort.values().joinToString { it.name }, true)
+                            .withTailText(":")
                             .withInsertHandler(addColonInsertHandler))
       }
       else when {

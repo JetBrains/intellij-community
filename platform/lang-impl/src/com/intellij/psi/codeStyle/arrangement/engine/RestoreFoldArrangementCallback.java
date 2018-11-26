@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 11/21/12 12:57 PM
  */
 public class RestoreFoldArrangementCallback implements ArrangementCallback {
 

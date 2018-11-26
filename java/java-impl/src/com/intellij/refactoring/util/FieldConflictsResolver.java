@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +70,8 @@ public class FieldConflictsResolver {
     }
   }
 
-  public PsiExpression fixInitializer(PsiExpression initializer) {
+  @NotNull
+  public PsiExpression fixInitializer(@NotNull PsiExpression initializer) {
     if (myField == null) return initializer;
     final PsiReferenceExpression[] replacedRef = {null};
     initializer.accept(new JavaRecursiveElementVisitor() {

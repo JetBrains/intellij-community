@@ -43,6 +43,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
@@ -1158,7 +1159,7 @@ class Foo {
     myFixture.configureByText 'a.java', 'class Foo <caret>'
     type 'ext'
 
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false)
     edt {
       myFixture.completeBasic()
     }
@@ -1170,7 +1171,7 @@ class Foo {
     myFixture.configureByText 'a.java', 'class Foo {<caret>}'
     type 'pr'
 
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false)
     edt {
       myFixture.completeBasic()
     }

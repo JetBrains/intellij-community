@@ -21,9 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.PlusMinus;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
@@ -31,16 +29,17 @@ import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>>, VcsListener {
+public class RemoteRevisionsCache implements VcsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsCache");
 
-  public static Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
+  public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
   public static final int DEFAULT_REFRESH_INTERVAL = 3 * 60 * 1000;
 
   private final RemoteRevisionsNumbersCache myRemoteRevisionsNumbersCache;
@@ -143,13 +142,12 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
   }
 
-  @Override
-  public void plus(final Pair<String, AbstractVcs> pair) {
-    final AbstractVcs vcs = pair.getSecond();
+  public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
-      myRemoteRevisionsStateCache.plus(pair);
-    } else {
-      myRemoteRevisionsNumbersCache.plus(pair);
+      myRemoteRevisionsStateCache.changeUpdated(path, vcs);
+    }
+    else {
+      myRemoteRevisionsNumbersCache.changeUpdated(path, vcs);
     }
   }
 
@@ -179,13 +177,12 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     myRemoteRevisionsNumbersCache.invalidate(newForUsual);
   }
 
-  @Override
-  public void minus(Pair<String, AbstractVcs> pair) {
-    final AbstractVcs vcs = pair.getSecond();
+  public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
-      myRemoteRevisionsStateCache.minus(pair);
-    } else {
-      myRemoteRevisionsNumbersCache.minus(pair);
+      myRemoteRevisionsStateCache.changeRemoved(path, vcs);
+    }
+    else {
+      myRemoteRevisionsNumbersCache.changeRemoved(path, vcs);
     }
   }
 

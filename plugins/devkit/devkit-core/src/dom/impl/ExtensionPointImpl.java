@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -49,7 +50,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     final IdeaPlugin plugin = getParentOfType(IdeaPlugin.class, false);
     if (plugin == null) return null;
 
-    return StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
+    return StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
   }
 
   @NotNull

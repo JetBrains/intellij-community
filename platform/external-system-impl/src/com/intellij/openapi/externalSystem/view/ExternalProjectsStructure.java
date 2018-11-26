@@ -36,7 +36,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/22/2014
  */
 public class ExternalProjectsStructure extends SimpleTreeStructure implements Disposable  {
   private final Project myProject;
@@ -57,7 +56,9 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     myExternalProjectsView = externalProjectsView;
     myRoot = new RootNode();
 
-    myTreeBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), this, null);
+    myTreeBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), this, null) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(myProject, myTreeBuilder);
     myTreeBuilder.initRoot();
     myTreeBuilder.expand(myRoot, null);

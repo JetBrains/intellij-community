@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -37,6 +38,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.Locale;
 
 /**
  * @author Dmitry Avdeev
@@ -108,7 +110,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
 
           myUseBranchCombo.setModel(new DefaultComboBoxModel<>(tasks));
           for (VcsTaskHandler.TaskInfo info : tasks) {
-            if (branchName.equals(info.getName())) {
+            if (branchName.equals(info.getName()) || task.getSummary().equals(info.getName())) {
               myUseBranchCombo.setSelectedItem(info);
               myUseBranch.setSelected(true);
               break;
@@ -156,9 +158,10 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
 
   @NotNull
   private String getBranchName(Task task) {
-    return myVcsTaskHandler != null
-                         ? myVcsTaskHandler.cleanUpBranchName(myTaskManager.constructDefaultBranchName(task))
-                         : myTaskManager.suggestBranchName(task);
+    String branchName = myVcsTaskHandler != null
+               ? myVcsTaskHandler.cleanUpBranchName(myTaskManager.constructDefaultBranchName(task))
+               : myTaskManager.suggestBranchName(task);
+    return TaskSettings.getInstance().LOWER_CASE_BRANCH ? branchName.toLowerCase(Locale.ENGLISH) : branchName;
   }
 
   private void updateFields(boolean initial) {

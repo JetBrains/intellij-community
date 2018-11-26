@@ -37,6 +37,9 @@ public class PsiAvailabilityServiceTest extends PlatformTestCase {
     try {
       LaterInvocator.leaveAllModals();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

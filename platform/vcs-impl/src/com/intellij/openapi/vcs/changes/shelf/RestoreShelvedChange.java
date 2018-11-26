@@ -3,10 +3,19 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.isEmpty;
+import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class RestoreShelvedChange extends DumbAwareAction {
   public RestoreShelvedChange() {
@@ -16,18 +25,24 @@ public class RestoreShelvedChange extends DumbAwareAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    final ShelvedChangeList[] recycledChanges = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
-    e.getPresentation().setText(VcsBundle.message("vcs.shelf.action.restore.text"));
-    e.getPresentation().setDescription(VcsBundle.message("vcs.shelf.action.restore.description"));
-    e.getPresentation().setEnabled((project != null) && ((recycledChanges != null) && (recycledChanges.length == 1)));
+    Presentation presentation = e.getPresentation();
+    if (project == null || project.isDisposed()) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+    Collection<ShelvedChangeList> deletedLists = notNullize(e.getData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY));
+    presentation.setText(VcsBundle.message("vcs.shelf.action.restore.text"));
+    presentation
+      .setDescription(VcsBundle.message("vcs.shelf.action.restore.description", StringUtil.pluralize("changelist", deletedLists.size())));
+    presentation.setEnabled(!isEmpty(deletedLists));
   }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final ShelvedChangeList[] recycledChanges = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
-    if (recycledChanges != null && recycledChanges.length == 1) {
-      ShelveChangesManager.getInstance(project).restoreList(recycledChanges[0]);
-    }
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
+    List<ShelvedChangeList> lists = e.getRequiredData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY);
+    Date currentDate = new Date(System.currentTimeMillis());
+    lists.forEach(l -> shelveChangesManager.restoreList(l, currentDate));
   }
 }

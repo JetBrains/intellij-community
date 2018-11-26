@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 6, 2004
  */
 public abstract class PathMacroMap {
   private static final Logger LOG = Logger.getInstance(PathMacroMap.class);

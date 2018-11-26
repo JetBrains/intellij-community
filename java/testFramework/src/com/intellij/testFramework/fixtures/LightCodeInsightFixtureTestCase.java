@@ -24,7 +24,7 @@ import java.io.File;
  */
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
-    private final LanguageLevel myLanguageLevel;
+    protected final LanguageLevel myLanguageLevel;
     private final boolean myWithAnnotations;
 
     public ProjectDescriptor(@NotNull LanguageLevel languageLevel) {
@@ -82,8 +82,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
 
-    myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
 
     myModule = myFixture.getModule();
 
@@ -94,6 +94,9 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myFixture = null;

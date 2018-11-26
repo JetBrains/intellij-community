@@ -19,7 +19,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/1/2015
  */
 public interface OperationResult extends Serializable {
   long getStartTime();

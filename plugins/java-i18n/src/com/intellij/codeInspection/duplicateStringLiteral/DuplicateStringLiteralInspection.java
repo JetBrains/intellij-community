@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
@@ -62,18 +61,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         checkStringLiteralExpression(expression, holder, isOnTheFly);
       }
     };
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.duplicates.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
   @Override

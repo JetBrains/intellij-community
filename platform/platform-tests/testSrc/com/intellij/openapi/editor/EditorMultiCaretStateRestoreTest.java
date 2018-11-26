@@ -32,14 +32,20 @@ public class EditorMultiCaretStateRestoreTest extends HeavyFileEditorManagerTest
     PsiFile psiFile = myFixture.configureByText(PlainTextFileType.INSTANCE, text);
     VirtualFile virtualFile = psiFile.getVirtualFile();
     assertNotNull(virtualFile);
-    myManager.openFile(virtualFile, false);
+    openFile(virtualFile);
     myManager.closeAllFiles();
+    Editor editor = openFile(virtualFile);
+
+    verifyEditorState(editor, text);
+  }
+
+  private Editor openFile(VirtualFile virtualFile) {
     FileEditor[] fileEditors = myManager.openFile(virtualFile, false);
     assertNotNull(fileEditors);
     assertEquals(1, fileEditors.length);
     Editor editor = ((TextEditor)fileEditors[0]).getEditor();
-
-    verifyEditorState(editor, text);
+    EditorTestUtil.waitForLoading(editor);
+    return editor;
   }
 
   private static void verifyEditorState(Editor editor, String textWithMarkup) {

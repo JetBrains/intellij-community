@@ -195,7 +195,7 @@ idea.fatal.error.notification=disabled
     def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
     def builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.productProperties.productCode}-plugins/plugins.xml")
+      builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
     }
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
@@ -296,14 +296,14 @@ idea.fatal.error.notification=disabled
     }
 
     if (buildContext.shouldBuildDistributions()) {
-      def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
+      def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.applicationInfo.productCode}-builtinModules.json"
       buildProvidedModulesList(providedModulesFilePath, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
             def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
-            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec())
+            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
           }
         }
         else {
@@ -379,6 +379,33 @@ idea.fatal.error.notification=disabled
       ]
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
+
+      if (buildContext.options.buildToolboxLiteGenLink) {
+        if (buildContext.buildNumber == null) {
+          buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
+        }
+        else {
+          buildContext.executeStep("Building Toolbox Lite-Gen Links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
+            //NOTE[jo]: right now we assume all installer files are created under the same path - distDir
+            String distDir = buildContext.paths.artifacts
+
+            //file paths depend on the fact it was EAP or not. We have to include the parameter
+            boolean isEAP = buildContext.applicationInfo.isEAP
+            String productCode = buildContext.productProperties.productCode
+            String tempDirectory = "${buildContext.paths.buildOutputRoot}/toolbox-lite-gen"
+
+            String[] liteGenArgs = [
+              'runToolboxLiteGen',
+              "-Pintellij.build.artifacts=$distDir",
+              "-Pintellij.build.productCode=$productCode",
+              "-Pintellij.build.isEAP=$isEAP",
+              "-Pintellij.build.output=$tempDirectory",
+            ]
+
+            buildContext.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+          }
+        }
+      }
 
       if (buildContext.productProperties.buildCrossPlatformDistribution) {
         if (paths.size() == 3) {
@@ -475,6 +502,14 @@ idea.fatal.error.notification=disabled
                          "productProperties.productLayout.bundledOsPluginModules[$osFamily]", optionalModules)
     }
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
+
+    if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
+      buildContext.messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
+                                    "layout.compatiblePluginsToIgnore property will be ignored ($layout.compatiblePluginsToIgnore)")
+    }
+    if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
+      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", optionalModules)
+    }
 
     if (!layout.pluginModulesToPublish.isEmpty() && layout.buildAllCompatiblePlugins && buildContext.shouldBuildDistributions()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option is enabled. Value of layout.pluginModulesToPublish property " +

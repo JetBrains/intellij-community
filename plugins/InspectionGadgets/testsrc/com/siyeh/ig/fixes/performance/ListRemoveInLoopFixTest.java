@@ -18,6 +18,7 @@ package com.siyeh.ig.fixes.performance;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.siyeh.ig.LightInspectionTestCase;
 import com.siyeh.ig.performance.ListRemoveInLoopInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,6 @@ public class ListRemoveInLoopFixTest extends LightQuickFixParameterizedTestCase 
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/InspectionGadgets/test";
+    return PathManagerEx.getCommunityHomePath() + LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH;
   }
 }

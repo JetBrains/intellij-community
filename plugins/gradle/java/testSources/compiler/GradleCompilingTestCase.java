@@ -17,7 +17,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/21/2014
  */
 public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
   @Override

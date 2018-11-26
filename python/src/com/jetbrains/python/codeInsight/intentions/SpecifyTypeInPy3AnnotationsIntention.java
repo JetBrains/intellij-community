@@ -121,8 +121,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
       assert annotationValue != null : "Generated parameter must have annotation";
       final int replacementStart = annotation.getStartOffsetInParent() + annotationValue.getStartOffsetInParent();
-      builder.replaceRange(TextRange.create(replacementStart,
-                                            replacementStart + annotationValue.getTextLength()), paramType);
+      builder.replaceRange(TextRange.from(replacementStart, annotationValue.getTextLength()), paramType);
       final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template);
     }

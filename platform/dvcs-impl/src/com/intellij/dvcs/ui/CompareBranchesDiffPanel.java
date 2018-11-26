@@ -72,7 +72,13 @@ class CompareBranchesDiffPanel extends JPanel {
     myBranchName = branchName;
     myVcsSettings = helper.getDvcsCompareSettings();
 
-    myLabel = new JEditorPane();
+    myLabel = new JEditorPane() {
+      @Override
+      public void setText(String t) {
+        super.setText(t);
+        getPreferredSize();
+      }
+    };
     myLabel.setEditorKit(UIUtil.getHTMLEditorKit());
     myLabel.setEditable(false);
     myLabel.setBackground(null);

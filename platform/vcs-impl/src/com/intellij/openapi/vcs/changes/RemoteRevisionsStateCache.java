@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -78,24 +79,24 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public void plus(final Pair<String, AbstractVcs> pair) {
-    final VirtualFile root = getRootForPath(pair.getFirst());
+  public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
     synchronized (myLock) {
-      myQueries.putValue(new VcsRoot(pair.getSecond(), root), pair.getFirst());
+      myQueries.putValue(new VcsRoot(vcs, root), path);
     }
   }
 
   @Override
-  public void minus(Pair<String, AbstractVcs> pair) {
-    final VirtualFile root = getRootForPath(pair.getFirst());
+  public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
     synchronized (myLock) {
-      final VcsRoot key = new VcsRoot(pair.getSecond(), root);
+      final VcsRoot key = new VcsRoot(vcs, root);
       if (myQueries.containsKey(key)) {
-        myQueries.remove(key, pair.getFirst());
+        myQueries.remove(key, path);
       }
-      myChanged.remove(pair.getFirst());
+      myChanged.remove(path);
     }
   }
 

@@ -80,7 +80,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
     languages.removeIf(l -> l.isKindOf("Groovy"));
 
     // TODO enable it in production when will be ready
-    if (Registry.is("batch.jvm.inspections") || !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!Registry.is("batch.jvm.inspections") && !ApplicationManager.getApplication().isUnitTestMode()) {
       languages.removeIf(l -> l.isKindOf("kotlin"));
     }
     return languages;

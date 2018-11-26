@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class and extension point for common code style settings for a specific language.
@@ -199,6 +200,21 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return null;
   }
 
+  /**
+   * Searches a provider for a specific language or its base language.
+   *
+   * @param language The original language.
+   * @return Found provider or {@code null} if it doesn't exist neither for the language itself nor for any of its base languages.
+   */
+  @Nullable
+  public static LanguageCodeStyleSettingsProvider findUsingBaseLanguage(@NotNull final Language language) {
+    for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
+      LanguageCodeStyleSettingsProvider curr = forLanguage(currLang);
+      if (curr != null) return curr;
+    }
+    return null;
+  }
+
   @SuppressWarnings("unused")
   public static DisplayPriority getDisplayPriority(Language language) {
     LanguageCodeStyleSettingsProvider langProvider = forLanguage(language);
@@ -302,12 +318,6 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return DocCommentSettings.DEFAULTS;
   }
 
-  @Nullable
-  @ApiStatus.Experimental
-  public CodeStyleBean createBean() {
-    return null;
-  }
-
   /**
    * Create a code style configurable for the given base settings and model settings.
    *
@@ -324,11 +334,17 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
       this.getClass().getCanonicalName() + " for language #" + getLanguage().getID() + " doesn't implement createConfigurable()");
   }
 
+  private static final AtomicReference<List<LanguageCodeStyleSettingsProvider>> ourSettingsPagesProviders = new AtomicReference<>();
 
   /**
    * @return A list of providers implementing {@link #createConfigurable(CodeStyleSettings, CodeStyleSettings)}
    */
   public static List<LanguageCodeStyleSettingsProvider> getSettingsPagesProviders() {
+    return ourSettingsPagesProviders.updateAndGet(__ -> __ != null ? __ : calcSettingPagesProviders());
+  }
+
+  @NotNull
+  protected static List<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
     List<LanguageCodeStyleSettingsProvider> settingsPagesProviders = ContainerUtil.newArrayList();
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       try {
@@ -340,5 +356,11 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
       }
     }
     return settingsPagesProviders;
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+    return new LanguageCodeStylePropertyMapper(settings, getLanguage());
   }
 }

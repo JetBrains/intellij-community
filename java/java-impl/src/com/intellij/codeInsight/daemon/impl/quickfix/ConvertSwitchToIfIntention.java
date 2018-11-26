@@ -150,9 +150,9 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       }
     }
     boolean unwrapDefault = false;
-    if (defaultBranch != null && defaultBranch.hasStatements()) {
+    if (defaultBranch != null) {
       unwrapDefault = defaultBranch.isAlwaysExecuted() || (switchStatement.getParent() instanceof PsiCodeBlock && !mayCompleteNormally);
-      if (!unwrapDefault) {
+      if (!unwrapDefault && defaultBranch.hasStatements()) {
         ifStatementBuilder.append("else ");
         dumpBody(defaultBranch, ifStatementBuilder, commentTracker);
       }
@@ -182,10 +182,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       dumpBody(defaultBranch, sb, commentTracker);
       PsiBlockStatement defaultBody = (PsiBlockStatement)factory.createStatementFromText(sb.toString(), switchStatement);
       if (!BlockUtils.containsConflictingDeclarations(Objects.requireNonNull(switchStatement.getBody()), parent)) {
+        commentTracker.grabComments(switchStatement);
         BlockUtils.inlineCodeBlock(switchStatement, defaultBody.getCodeBlock());
       }
       else {
-        switchStatement.replace(defaultBody);
+        commentTracker.replace(switchStatement, defaultBody);
       }
       commentTracker.insertCommentsBefore(addedIf);
       if (ifStatementText.equals(";")) {
@@ -334,6 +335,16 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   private static void dumpBody(SwitchStatementBranch branch, @NonNls StringBuilder out, CommentTracker commentTracker) {
     final List<PsiElement> bodyStatements = branch.getBodyElements();
     out.append('{');
+    if (!bodyStatements.isEmpty()) {
+      PsiElement firstBodyElement = bodyStatements.get(0);
+      PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstBodyElement);
+      if (prev instanceof PsiSwitchLabelStatement) {
+        PsiExpression value = ((PsiSwitchLabelStatement)prev).getCaseValue();
+        if (value != null) {
+          out.append(CommentTracker.commentsBetween(value, firstBodyElement));
+        }
+      }
+    }
     for (PsiElement element : branch.getPendingDeclarations()) {
       if (ReferencesSearch.search(element, new LocalSearchScope(bodyStatements.toArray(PsiElement.EMPTY_ARRAY))).findFirst() != null) {
         if (element instanceof PsiVariable) {

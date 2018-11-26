@@ -682,4 +682,30 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                  "\n" +
                  "f(A)");
   }
+
+  // PY-32313
+  public void testMatchingAgainstMultipleBoundTypeVar() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import Type, TypeVar\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "class B(A):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "class C:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "T = TypeVar('T', A, B)\n" +
+                         "\n" +
+                         "def f(cls: Type[T], arg: int) -> T:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "f(A, 1)\n" +
+                         "f(B, 2)\n" +
+                         "f(<warning descr=\"Expected type 'Type[T]', got 'Type[C]' instead\">C</warning>, 3)")
+    );
+  }
 }

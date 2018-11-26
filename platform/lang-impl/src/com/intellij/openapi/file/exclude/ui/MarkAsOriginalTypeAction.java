@@ -43,7 +43,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
         .filter(file -> isApplicableFor(file) && typeManager.isMarkedAsPlainText(file));
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
-    Set<FileType> fileTypes = selectedFiles.map(file -> fileTypeManager.getFileTypeByFileName(file.getName())).toSet();
+    Set<FileType> fileTypes = selectedFiles.map(file -> fileTypeManager.getFileTypeByFileName(file.getNameSequence())).toSet();
 
     if (fileTypes.size() == 1) {
       FileType original = fileTypes.iterator().next();

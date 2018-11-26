@@ -38,10 +38,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -278,16 +280,9 @@ public class SdkConfigurationUtil {
 
   @NotNull
   public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<? extends Sdk> sdks) {
-    final Set<String> names = new HashSet<>();
-    for (Sdk jdk : sdks) {
-      names.add(jdk.getName());
-    }
-    String newSdkName = suggestedName;
-    int i = 0;
-    while (names.contains(newSdkName)) {
-      newSdkName = suggestedName + " (" + (++i) + ")";
-    }
-    return newSdkName;
+    Set<String> nameList = sdks.stream().map( jdk -> ((Sdk)jdk).getName()).collect(Collectors.toSet());
+
+    return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !nameList.contains(o));
   }
 
   public static void selectSdkHome(@NotNull final SdkType sdkType, @NotNull final Consumer<? super String> consumer) {

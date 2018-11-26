@@ -2,6 +2,7 @@
 package git4idea.ignore
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import git4idea.GitUtil
@@ -19,8 +20,9 @@ class GitIgnoredFileTest : GitPlatformTest() {
 
   override fun setUp() {
     super.setUp()
+    Registry.get("vcs.ignorefile.generation").setValue(true, testRootDisposable)
     createRepository(project, projectPath)
-    GitUtil.generateGitignoreFileIfNeeded(project)
+    GitUtil.generateGitignoreFileIfNeeded(project, projectRoot)
   }
 
   override fun setUpModule() {
@@ -45,17 +47,20 @@ class GitIgnoredFileTest : GitPlatformTest() {
     val projectCharset = EncodingProjectManager.getInstance(project).defaultCharset
     val gitIgnoreExpectedContentList = """
         # Default ignored files
+        /.shelf/
         *.iws
-        .shelf
-        $OUT
-        $EXCLUDED
-        $EXCLUDED_CHILD_DIR
+
+        # Project exclude paths
+        /$EXCLUDED/
+        /$EXCLUDED_CHILD_DIR/
+        /$OUT/
     """.trimIndent().lines()
     val gitIgnoreFile = File("$projectPath/$GITIGNORE")
     assertTrue(gitIgnoreFile.exists())
     val generatedGitIgnoreContent = gitIgnoreFile.readText(projectCharset)
     assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
-    assertContainsElements(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
+    assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
+    assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
   }
 
   private fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)

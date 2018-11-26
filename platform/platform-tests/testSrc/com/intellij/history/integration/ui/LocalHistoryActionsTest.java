@@ -57,6 +57,9 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     try {
       getEditorFactory().releaseEditor(editor);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

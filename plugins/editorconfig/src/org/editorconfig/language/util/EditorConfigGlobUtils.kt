@@ -26,7 +26,7 @@ infix fun EditorConfigHeader.isEquivalentTo(other: EditorConfigHeader): Boolean 
 }
 
 infix fun EditorConfigPattern.isSubcaseOf(general: EditorConfigPattern): Boolean {
-  if (!header.isValidGlob) return false
+  if (!general.header.isValidGlob) return false
   val generalAutomaton = EditorConfigAutomatonBuilder.getCachedPatternAutomaton(general)
   return this isSubcaseOf generalAutomaton
 }

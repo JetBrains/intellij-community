@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl;
 import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl;
+import org.jetbrains.jps.model.serialization.impl.JpsSerializationFormatException;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
@@ -308,7 +309,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
 
     Set<String> unloadedModules = new HashSet<>();
-    if (!myLoadUnloadedModules && Files.exists(workspaceFile)) {
+    if (!myLoadUnloadedModules && workspaceFile.toFile().exists()) {
       Element unloadedModulesList = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "UnloadedModulesList");
       for (Element element : JDOMUtil.getChildren(unloadedModulesList, "module")) {
         unloadedModules.add(element.getAttributeValue("name"));
@@ -422,8 +423,13 @@ public class JpsProjectLoader extends JpsLoaderBase {
     String baseModulePath = FileUtil.toSystemIndependentName(file.getParent().toString());
     String classpath = moduleRoot.getAttributeValue(CLASSPATH_ATTRIBUTE);
     if (classpath == null) {
-      JpsModuleRootModelSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"),
-                                                 projectSdkType);
+      try {
+        JpsModuleRootModelSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"),
+                                                   projectSdkType);
+      }
+      catch (JpsSerializationFormatException e) {
+        LOG.warn("Failed to load module configuration from " + file.toString() + ": " + e.getMessage(), e);
+      }
     }
     else {
       for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {

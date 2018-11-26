@@ -435,10 +435,10 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         final boolean assertTrue = isAssertTrue(assertTrueFalseHint);
         final PsiExpression position = assertTrueFalseHint.getPosition(expression.getArgumentList().getExpressions());
         if (ComparisonUtils.isNullComparison(position)) {
-          registerMethodCallError(expression, hasEqEqExpressionArgument(position) ? "assertNull()" : "assertNotNull()");
+          registerMethodCallError(expression, assertTrue == hasEqEqExpressionArgument(position) ? "assertNull()" : "assertNotNull()");
         }
         else if (isIdentityComparison(position)) {
-          registerMethodCallError(expression, hasEqEqExpressionArgument(position) ? "assertSame()" : "assertNotSame()");
+          registerMethodCallError(expression, assertTrue == hasEqEqExpressionArgument(position) ? "assertSame()" : "assertNotSame()");
         }
         else {
           if (isEqualityComparison(position)) {

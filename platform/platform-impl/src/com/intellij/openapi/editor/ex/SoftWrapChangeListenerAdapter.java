@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.ex;
 
 /**
  * @author Denis Zhdanov
- * @since 11/23/11 7:03 PM
  */
 public class SoftWrapChangeListenerAdapter implements SoftWrapChangeListener {
   @Override

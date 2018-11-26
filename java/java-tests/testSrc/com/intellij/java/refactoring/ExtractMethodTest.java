@@ -810,6 +810,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureSameSubexpressionWholeLine() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignatureTrivialMethod() throws Exception {
     doDuplicatesTest();
   }
@@ -929,6 +933,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   public void testRejectParametrizedDuplicate() throws Exception {
     doExactDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateRepeatedArguments() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateTripleRepeatedArguments() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateExactlyRepeatedArguments() throws Exception {
+    doDuplicatesTest();
   }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {

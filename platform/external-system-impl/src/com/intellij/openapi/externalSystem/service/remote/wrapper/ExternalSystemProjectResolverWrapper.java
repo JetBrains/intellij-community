@@ -20,7 +20,6 @@ import java.rmi.RemoteException;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since 2/8/12 7:21 PM
  */
 public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemServiceWrapper<S, RemoteExternalSystemProjectResolver<S>>

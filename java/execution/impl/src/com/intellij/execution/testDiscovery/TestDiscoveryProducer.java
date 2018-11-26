@@ -86,6 +86,9 @@ public interface TestDiscoveryProducer {
            Couple.of(rawName.substring(0, idx), rawName.substring(idx));
   }
 
+  @NotNull
+  List<String> getFilesWithoutTests(@NotNull Project project, @NotNull Collection<String> paths) throws IOException;
+
   @FunctionalInterface
   interface TestProcessor {
     boolean process(@NotNull String className, @NotNull String methodName, @Nullable String parameter);
@@ -93,6 +96,6 @@ public interface TestDiscoveryProducer {
 
   @FunctionalInterface
   interface PsiTestProcessor {
-    boolean process(@NotNull PsiClass clazz, @NotNull PsiMethod method, @Nullable String parameter);
+    boolean process(@NotNull PsiClass clazz, @Nullable PsiMethod method, @Nullable String parameter);
   }
 }

@@ -175,6 +175,8 @@ public class UITheme {
     colorPalette.put("Actions.Blue.Dark", "#3592C4");
     colorPalette.put("Actions.Grey", "#6E6E6E");
     colorPalette.put("Actions.Grey.Dark", "#AFB1B3");
+    colorPalette.put("Actions.GreyInline", "#7F8B91");
+    colorPalette.put("Actions.GreyInline.Dark", "#7F8B91");
     colorPalette.put("Objects.Grey", "#9AA7B0");
     colorPalette.put("Objects.Blue", "#40B6E0");
     colorPalette.put("Objects.Green", "#62B543");
@@ -186,6 +188,31 @@ public class UITheme {
     colorPalette.put("Objects.RedStatus", "#E05555");
     colorPalette.put("Objects.GreenAndroid", "#A4C639");
     colorPalette.put("Objects.BlackText", "#231F20");
+    colorPalette.put("Checkbox.Background.Default", "#FFFFFF");
+    colorPalette.put("Checkbox.Background.Default.Dark", "#43494A");
+    colorPalette.put("Checkbox.Background.Disabled", "#F2F2F2");
+    colorPalette.put("Checkbox.Background.Disabled.Dark", "#3C3F41");
+    colorPalette.put("Checkbox.Border.Default", "#878787");
+    colorPalette.put("Checkbox.Border.Default.Dark", "#6B6B6B");
+    colorPalette.put("Checkbox.Border.Disabled", "#BDBDBD");
+    colorPalette.put("Checkbox.Border.Disabled.Dark", "#545556");
+    colorPalette.put("Checkbox.Focus.Thin.Default", "#7B9FC7");
+    colorPalette.put("Checkbox.Focus.Thin.Default.Dark", "#466D94");
+    colorPalette.put("Checkbox.Focus.Wide", "#97C3F3");
+    colorPalette.put("Checkbox.Focus.Wide.Dark", "#3D6185");
+    colorPalette.put("Checkbox.Foreground.Disabled", "#ABABAB");
+    colorPalette.put("Checkbox.Foreground.Disabled.Dark", "#606060");
+
+    colorPalette.put("Checkbox.Background.Selected", "#4D89C9");
+    colorPalette.put("Checkbox.Background.Selected.Dark", "#43494A");
+
+    colorPalette.put("Checkbox.Border.Selected", "#4982CC");
+    colorPalette.put("Checkbox.Border.Selected.Dark", "#6B6B6B");
+    colorPalette.put("Checkbox.Foreground.Selected", "#FFFFFF");
+    colorPalette.put("Checkbox.Foreground.Selected.Dark", "#A7A7A7");
+
+    colorPalette.put("Checkbox.Focus.Thin.Selected", "#ACCFF7");
+    colorPalette.put("Checkbox.Focus.Thin.Selected.Dark", "#466D94");
   }
 
   public String getId() {
@@ -232,6 +259,7 @@ public class UITheme {
       if (key.startsWith("*.")) {
         String tail = key.substring(1);
         Object finalValue = value;
+        addPattern(key, value, defaults);
 
         //please DO NOT stream on UIDefaults directly
         ((UIDefaults)defaults.clone()).keySet().stream()
@@ -240,6 +268,18 @@ public class UITheme {
       } else {
         defaults.put(key, value);
       }
+    }
+  }
+
+  private static void addPattern(String key, Object value, UIDefaults defaults) {
+    Object o = defaults.get("*");
+    if (! (o instanceof Map)) {
+      o = new HashMap<String, Object>();
+      defaults.put("*", o);
+    }
+    Map map = (Map)o;
+    if (key != null && key.startsWith("*.")) {
+      map.put(key.substring(2), value);
     }
   }
 

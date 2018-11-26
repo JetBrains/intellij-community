@@ -77,7 +77,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 2/16/2015
  */
 public class ConfigureTasksActivationDialog extends DialogWrapper {
 
@@ -142,7 +141,9 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     tree.setModel(treeModel);
     tree.setRootVisible(false);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    final AbstractTreeBuilder treeBuilder = new AbstractTreeBuilder(tree, treeModel, new SimpleTreeStructure.Impl(root), null);
+    final AbstractTreeBuilder treeBuilder = new AbstractTreeBuilder(tree, treeModel, new SimpleTreeStructure.Impl(root), null) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(project, treeBuilder);
     return treeBuilder;
   }

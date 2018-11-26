@@ -8,11 +8,13 @@ import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 
+import java.util.Objects;
+
 //example/GithubRepoBasic.json
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubRepoBasic {
-  private Long id;
+  @Mandatory private Long id;
   //private String nodeId;
   @Mandatory private String name;
   private String fullName;
@@ -24,7 +26,7 @@ public class GithubRepoBasic {
   @SerializedName("fork")
   @Mandatory private Boolean isFork;
 
-  private String url;
+  @Mandatory private String url;
   //urls
 
   @NotNull
@@ -43,6 +45,11 @@ public class GithubRepoBasic {
 
   public boolean isFork() {
     return isFork;
+  }
+
+  @NotNull
+  public String getUrl() {
+    return url;
   }
 
   @NotNull
@@ -69,5 +76,26 @@ public class GithubRepoBasic {
   @NotNull
   public GithubFullPath getFullPath() {
     return new GithubFullPath(getUserName(), getName());
+  }
+
+  @Override
+  public String toString() {
+    return "GithubRepo{" +
+           "id=" + id +
+           ", name='" + name + '\'' +
+           '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof GithubRepoBasic)) return false;
+    GithubRepoBasic basic = (GithubRepoBasic)o;
+    return id.equals(basic.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
   }
 }

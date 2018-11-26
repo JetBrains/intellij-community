@@ -23,6 +23,7 @@ public class GrThrowStatementImpl extends GroovyPsiElementImpl implements GrThro
     visitor.visitThrowStatement(this);
   }
 
+  @Override
   public String toString() {
     return "THROW statement";
   }

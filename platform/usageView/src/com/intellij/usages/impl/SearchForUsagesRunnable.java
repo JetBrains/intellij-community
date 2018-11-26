@@ -35,6 +35,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
@@ -113,7 +114,7 @@ class SearchForUsagesRunnable implements Runnable {
   private void notifyByFindBalloon(@Nullable final HyperlinkListener listener,
                                    @NotNull final MessageType messageType,
                                    @NotNull final List<String> lines) {
-    com.intellij.usageView.UsageViewManager.getInstance(myProject); // in case tool window not registered
+    UsageViewContentManager.getInstance(myProject); // in case tool window not registered
 
     final Collection<VirtualFile> largeFiles = myProcessPresentation.getLargeFiles();
     List<String> resultLines = new ArrayList<>(lines);
@@ -363,7 +364,7 @@ class SearchForUsagesRunnable implements Runnable {
     Alarm findUsagesStartedBalloon = new Alarm();
     findUsagesStartedBalloon.addRequest(() -> {
       notifyByFindBalloon(null, MessageType.WARNING,
-                          Collections.singletonList(StringUtil.escapeXml(UsageViewManagerImpl.getProgressTitle(myPresentation))));
+                          Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
       findStartedBalloonShown.set(true);
     }, 300, ModalityState.NON_MODAL);
     UsageSearcher usageSearcher = mySearcherFactory.create();
@@ -426,13 +427,12 @@ class SearchForUsagesRunnable implements Runnable {
           }
 
           final String message = UsageViewBundle.message("dialog.no.usages.found.in",
-                                                         StringUtil.decapitalize(myPresentation.getUsagesString()),
+                                                         StringUtil.decapitalize(StringUtil.notNullize(myPresentation.getUsagesString())),
                                                          myPresentation.getScopeText(),
-                                                         myPresentation.getContextText()
-          );
+                                                         myPresentation.getContextText());
 
           List<String> lines = new ArrayList<>();
-          lines.add(StringUtil.escapeXml(message));
+          lines.add(StringUtil.escapeXmlEntities(message));
           if (myOutOfScopeUsages.get() != 0) {
             lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
           }

@@ -67,10 +67,15 @@ public class FileTypesTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    FileTypeManagerImpl.reDetectAsync(false);
-    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
-    myFileTypeManager = null;
-    super.tearDown();
+    try {
+      FileTypeManagerImpl.reDetectAsync(false);
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
+    }
+    finally {
+      myFileTypeManager = null;
+
+      super.tearDown();
+    }
   }
 
   public void testMaskExclude() {
@@ -120,7 +125,7 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testAddNewExtension() {
     FileTypeAssocTable<FileType> associations = new FileTypeAssocTable<>();
-    associations.addAssociation(FileTypeManager.parseFromString("*.java"), FileTypes.ARCHIVE);
+    associations.addAssociation(FileTypeManager.parseFromString("*.java"), ArchiveFileType.INSTANCE);
     associations.addAssociation(FileTypeManager.parseFromString("*.xyz"), StdFileTypes.XML);
     associations.addAssociation(FileTypeManager.parseFromString("SomeSpecial*.java"), StdFileTypes.XML); // patterns should have precedence over extensions
     assertEquals(StdFileTypes.XML, associations.findAssociatedFileType("sample.xyz"));
@@ -317,7 +322,8 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   private static void log(String message) {
-    System.out.println(message);
+    LOG.debug(message);
+    //System.out.println(message);
   }
 
   private void ensureRedetected(VirtualFile vFile, Set<VirtualFile> detectorCalled) {
@@ -702,8 +708,7 @@ public class FileTypesTest extends PlatformTestCase {
             //ra.setLength(ra.length()+(isText ? 1 : -1));
             //ra.close();
             //LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
-            System.out
-              .println(i + "; f = " + f.length() + "; virtualFile=" + virtualFile.getLength() + "; type=" + virtualFile.getFileType());
+            LOG.debug(i + "; f = " + f.length() + "; virtualFile=" + virtualFile.getLength() + "; type=" + virtualFile.getFileType());
             //Thread.sleep(random.nextInt(100));
           }
         }
@@ -739,7 +744,7 @@ public class FileTypesTest extends PlatformTestCase {
       for (int i = 0; i < N; i++) {
         ApplicationManager.getApplication().runReadAction(() -> {
           String text = psiFile.getText();
-          System.out.println("text = " + text.length());
+          LOG.debug("text = " + text.length());
           //if (!virtualFile.getFileType().isBinary()) {
           //  LoadTextUtil.loadText(virtualFile);
           //}
@@ -748,7 +753,7 @@ public class FileTypesTest extends PlatformTestCase {
           try {
             FileUtil.appendToFile(f, StringUtil.repeatSymbol(' ', 50));
             LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
-            System.out.println("f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; psiFile="+psiFile.isValid()+"; type="+virtualFile.getFileType());
+            LOG.debug("f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; psiFile="+psiFile.isValid()+"; type="+virtualFile.getFileType());
           }
           catch (IOException e) {
             throw new RuntimeException(e);

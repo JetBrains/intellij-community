@@ -182,6 +182,11 @@ class MultithreadSearcher implements SESearcher {
             myContributor.fetchElements(myPattern, myUseNonProjectItems, filter, wrapperIndicator,
                                         element -> {
                                           try {
+                                            if (element == null) {
+                                              LOG.debug("Skip null element");
+                                              return true;
+                                            }
+
                                             int priority = myContributor.getElementPriority(element, myPattern);
                                             boolean added = myAccumulator.addElement(element, myContributor, priority, wrapperIndicator);
                                             if (!added) {

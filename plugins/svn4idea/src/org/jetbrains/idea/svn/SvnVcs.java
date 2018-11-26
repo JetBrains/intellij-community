@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -551,25 +550,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public void collectInfo(@NotNull Collection<File> files, @Nullable InfoConsumer handler) {
-    File first = ContainerUtil.getFirstItem(files);
+    File first = getFirstItem(files);
 
     if (first != null) {
-      ClientFactory factory = getFactory(first);
-
       try {
-        if (factory instanceof CmdClientFactory) {
-          factory.createInfoClient().doInfo(files, handler);
-        }
-        else {
-          // TODO: Generally this should be moved in SvnKit info client implementation.
-          // TODO: Currently left here to have exception logic as in handleInfoException to be applied for each file separately.
-          for (File file : files) {
-            Info info = getInfo(file);
-            if (handler != null) {
-              handler.consume(info);
-            }
-          }
-        }
+        getFactory(first).createInfoClient().doInfo(files, handler);
       }
       catch (SvnBindException e) {
         handleInfoException(e);

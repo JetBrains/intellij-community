@@ -236,7 +236,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             return false
           }
           GitInit.refreshAndConfigureVcsMappings(project, root, root.path)
-          GitUtil.generateGitignoreFileIfNeeded(project)
+          //even if gitignore file can be created after VCS configuration changed, we call this explicitly just to be sure that gitignore file will be added to initial commit
+          GitUtil.generateGitignoreFileIfNeeded(project, root)
           return true
         }
 

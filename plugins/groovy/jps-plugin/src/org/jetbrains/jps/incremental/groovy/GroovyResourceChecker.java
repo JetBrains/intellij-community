@@ -50,6 +50,11 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
   }
 
   @Override
+  public long getExpectedBuildTime() {
+    return 50;
+  }
+
+  @Override
   public void build(@NotNull final CheckResourcesTarget target,
                     @NotNull DirtyFilesHolder<GroovyResourceRootDescriptor, CheckResourcesTarget> holder,
                     @NotNull final BuildOutputConsumer outputConsumer,

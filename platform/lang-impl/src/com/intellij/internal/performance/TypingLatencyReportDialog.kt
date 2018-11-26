@@ -94,7 +94,7 @@ class TypingLatencyReportDialog(
   }
 
   private fun formatLatency(action: String, latencyRecord: LatencyRecord, details: String? = null): String {
-    val result = "$action - avg ${latencyRecord.averageLatency} ms, max ${latencyRecord.maxLatency} ms"
+    val result = "$action - avg ${latencyRecord.averageLatency} ms, max ${latencyRecord.maxLatency} ms, 90% percentile ${latencyRecord.percentile(90)} ms"
     if (details != null) {
       return "$result, $details"
     }

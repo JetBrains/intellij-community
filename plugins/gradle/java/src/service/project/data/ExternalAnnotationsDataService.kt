@@ -29,21 +29,25 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
     if (!Registry.`is`("external.system.import.resolve.annotations")) {
       return
     }
+    if (imported.isEmpty()) {
+      return
+    }
 
     projectData?.apply {
-      GradleSettings
-        .getInstance(project)
-        .linkedProjectsSettings
-        .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
-        ?.let {
-          if (!it.isResolveExternalAnnotations) {
-            return@onSuccessImport
-          }
-        }
+      val importRepositories =
+        GradleSettings
+          .getInstance(project)
+          .linkedProjectsSettings
+          .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
+          ?.isResolveExternalAnnotations ?: false
+
+      if (!importRepositories) {
+        return
+      }
     }
 
     val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
-    val totalSize = imported.size.toDouble()
+    val totalSize = imported.size
 
     runBackgroundableTask("Resolving external annotations", project) { indicator ->
       indicator.isIndeterminate = false
@@ -51,7 +55,6 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
         if (indicator.isCanceled) {
           return@runBackgroundableTask
         }
-        indicator.fraction = (index.toDouble() + 1) / totalSize
         val libraryData = dataNode.data
         val libraryName = libraryData.internalName
         val library = modelsProvider.getLibraryByName(libraryName)
@@ -60,6 +63,7 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
           val mavenId = "${libraryData.groupId}:${libraryData.artifactId}:${libraryData.version}"
           resolver.resolve(project, library, mavenId)
         }
+        indicator.fraction = (index + 1) / totalSize.toDouble()
       }
     }
   }

@@ -21,6 +21,14 @@ public class IndexId<K, V> {
     return myName;
   }
 
+  /**
+   * Consider to use {@link ID#getName()} instead of this method
+   */
+  @Override
+  public String toString() {
+    return getName();
+  }
+
   public static <K, V> IndexId<K, V> create(String name) {
     synchronized (ourInstances) {
       @SuppressWarnings("unchecked")

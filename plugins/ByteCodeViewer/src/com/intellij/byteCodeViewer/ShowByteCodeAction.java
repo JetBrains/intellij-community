@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * @since 5/4/12
  */
 public class ShowByteCodeAction extends AnAction {
   @Override

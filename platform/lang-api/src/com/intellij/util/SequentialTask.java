@@ -16,13 +16,13 @@
 package com.intellij.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines general contract for processing that may be executed by parts, i.e. it remembers the state after every iteration
  * and allows to resume the processing any time.
  * 
  * @author Denis Zhdanov
- * @since 2/14/11 9:15 AM
  */
 public interface SequentialTask {
 
@@ -43,7 +43,7 @@ public interface SequentialTask {
    */
   boolean iteration();
 
-  default boolean iteration(ProgressIndicator indicator) {
+  default boolean iteration(@NotNull ProgressIndicator indicator) {
     return iteration();
   }
 

@@ -26,7 +26,6 @@ import java.util.Set;
  * Enumerates formatting processing states.
  * 
  * @author Denis Zhdanov
- * @since 2/10/11 2:50 PM
  */
 public enum FormattingStateId {
 

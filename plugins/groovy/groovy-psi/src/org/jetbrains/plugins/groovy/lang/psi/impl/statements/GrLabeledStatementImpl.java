@@ -32,6 +32,7 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     visitor.visitLabeledStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Labeled statement";
   }

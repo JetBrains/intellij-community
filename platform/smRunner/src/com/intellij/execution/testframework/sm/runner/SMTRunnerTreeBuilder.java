@@ -10,11 +10,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.util.Alarm;
 
-import javax.swing.JTree;
+import javax.swing.*;
 
 public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase<SMTestProxy> {
   private final JTree myTree;
-  private final AbstractTreeStructure myTreeStructure;
+  private final SMTRunnerTreeStructure myTreeStructure;
   private boolean myDisposed;
   private StructureTreeModel myTreeModel;
   private final Alarm mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
@@ -25,8 +25,12 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   }
 
   @Override
-  public void repaintWithParents(final SMTestProxy testProxy) {
-    updateTestsSubtree(testProxy);
+  public void repaintWithParents(SMTestProxy testProxy) {
+    do {
+      getTreeModel().invalidate(testProxy, false);
+      testProxy = testProxy.getParent();
+    }
+    while (testProxy != null);
   }
 
   @Override
@@ -38,10 +42,6 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
     return myDisposed;
   }
 
-  
-  public SMTRunnerTreeStructure getSMRunnerTreeStructure() {
-    return ((SMTRunnerTreeStructure)getTreeStructure());
-  }
 
   public void updateTestsSubtree(final SMTestProxy parentTestProxy) {
     getTreeModel().invalidate(parentTestProxy, true);
@@ -51,7 +51,7 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
     return myTree;
   }
 
-  public AbstractTreeStructure getTreeStructure() {
+  public SMTRunnerTreeStructure getTreeStructure() {
     return myTreeStructure;
   }
 

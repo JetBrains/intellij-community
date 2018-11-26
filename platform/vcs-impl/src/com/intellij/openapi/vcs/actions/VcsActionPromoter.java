@@ -36,7 +36,6 @@ public class VcsActionPromoter implements ActionPromoter {
 
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
-    reorderActionPair(reorderedActions, reorderedIds, "Vcs.Log.Refresh", "Refresh");
 
     Set<AnAction> promoted = new HashSet<>(ContainerUtil.filter(actions, action -> {
       return action instanceof ShowMessageHistoryAction ||
@@ -54,7 +53,7 @@ public class VcsActionPromoter implements ActionPromoter {
    * But is not pushing it ahead of other actions (ex: of some local action with same shortcut).
    */
   private static void reorderActionPair(List<AnAction> reorderedActions, List<String> reorderedIds,
-                                       String highPriority, String lowPriority) {
+                                        String highPriority, String lowPriority) {
     int highPriorityIndex = reorderedIds.indexOf(highPriority);
     int lowPriorityIndex = reorderedIds.indexOf(lowPriority);
     if (highPriorityIndex == -1 || lowPriorityIndex == -1) return;

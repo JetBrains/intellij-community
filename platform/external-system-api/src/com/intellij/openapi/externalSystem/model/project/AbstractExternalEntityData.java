@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/25/11 3:44 PM
  */
 public abstract class AbstractExternalEntityData implements ExternalEntityData {
 

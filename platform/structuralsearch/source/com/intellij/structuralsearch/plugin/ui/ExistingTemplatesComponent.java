@@ -22,13 +22,16 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -214,7 +217,26 @@ public class ExistingTemplatesComponent {
     tree.setDragEnabled(false);
     tree.setEditable(false);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    tree.setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final Object selection = tree.getLastSelectedPathComponent();
+        if (!(selection instanceof DefaultMutableTreeNode)) {
+          return null;
+        }
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+        if (!(node.getUserObject() instanceof Configuration)) {
+          return null;
+        }
+        return new TextTransferable(ConfigurationUtil.toXml((Configuration)node.getUserObject()));
+      }
 
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
@@ -287,8 +309,8 @@ public class ExistingTemplatesComponent {
       final Object userObject = treeNode.getUserObject();
       if (userObject == null) return;
 
-      final Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
-      final Color foreground = selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
+      Color background = UIUtil.getTreeBackground(selected, hasFocus);
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;

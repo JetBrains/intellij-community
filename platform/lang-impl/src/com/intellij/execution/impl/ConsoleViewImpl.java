@@ -93,6 +93,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
   private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
   private static final Key<Boolean> MANUAL_HYPERLINK = Key.create("MANUAL_HYPERLINK");
+  private static final char BACKSPACE = '\b';
 
   private static boolean ourTypedHandlerInitialized;
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
@@ -687,7 +688,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             document.deleteString(lineStartOffset, document.getTextLength());
           }
         }
-        document.insertString(document.getTextLength(), addedText);
+        normalizeBackspaceCharacters(addedText);
+        int backspacePrefixLength = getBackspacePrefixLength(addedText);
+        if (backspacePrefixLength > 0) {
+          int lineCount = document.getLineCount();
+          if (lineCount != 0) {
+            int lineStartOffset = document.getLineStartOffset(lineCount - 1);
+            document.deleteString(Math.max(lineStartOffset, document.getTextLength() - backspacePrefixLength), document.getTextLength());
+          }
+        }
+        document.insertString(document.getTextLength(), addedText.substring(backspacePrefixLength));
         // add token information as range markers
         // start from the end because portion of the text can be stripped from the document beginning because of a cycle buffer
         int offset = document.getTextLength();
@@ -733,6 +743,64 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       scrollToEnd();
     }
     sendUserInput(addedText);
+  }
+
+  private static int getBackspacePrefixLength(@NotNull CharSequence text) {
+    int prefix = 0;
+    while (prefix < text.length() && text.charAt(prefix) == BACKSPACE) {
+      prefix++;
+    }
+    return prefix;
+  }
+
+  private static void normalizeBackspaceCharacters(@NotNull StringBuilder text) {
+    int ind = StringUtil.indexOf(text, BACKSPACE);
+    if (ind < 0) {
+      return;
+    }
+    int i = 0;
+    int guardLength = 0;
+    int oldLength = text.length();
+    int newLength = 0;
+    while (i < oldLength) {
+      LineSeparator lineSeparator = StringUtil.getLineSeparatorAt(text, i);
+      if (lineSeparator != null) {
+        int sepLength = lineSeparator.getSeparatorString().length();
+        text.replace(newLength, newLength + sepLength, lineSeparator.getSeparatorString());
+        newLength += sepLength;
+        guardLength = newLength;
+        i += sepLength;
+      }
+      else {
+        char ch = text.charAt(i);
+        final boolean append;
+        if (ch == BACKSPACE) {
+          assert guardLength <= newLength;
+          if (guardLength == newLength) {
+            // Backspace is the first char in a new line:
+            // Keep backspace at the first line (guardLength == 0) as it might be in the middle of the actual line,
+            // handle it later (see getBackspacePrefixLength).
+            // Otherwise (for non-first lines), skip backspace as it can't be interpreted if located right after line ending.
+            append = guardLength == 0;
+          }
+          else {
+            append = text.charAt(newLength - 1) == BACKSPACE;
+            if (!append) {
+              newLength--; // interpret \b: delete prev char
+            }
+          }
+        }
+        else {
+          append = true;
+        }
+        if (append) {
+          text.setCharAt(newLength, ch);
+          newLength++;
+        }
+        i++;
+      }
+    }
+    text.setLength(newLength);
   }
 
   private void createTokenRangeHighlighter(@NotNull ConsoleViewContentType contentType,
@@ -1079,35 +1147,43 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return null;
   }
 
-  public static class ClearAllAction extends DumbAwareAction {
+  private static class ClearThisConsoleAction extends ClearAllAction {
     private final ConsoleView myConsoleView;
 
-    @SuppressWarnings("unused") // in LangActions.xml
-    public ClearAllAction() {
-      this(null);
-    }
-
-    ClearAllAction(ConsoleView consoleView) {
-      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+    ClearThisConsoleAction(@NotNull ConsoleView consoleView) {
       myConsoleView = consoleView;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = myConsoleView != null && myConsoleView.getContentSize() > 0;
-      if (!enabled) {
-        enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
-        Editor editor = e.getData(CommonDataKeys.EDITOR);
-        if (editor != null && editor.getDocument().getTextLength() == 0) {
-          enabled = false;
-        }
+      boolean enabled = myConsoleView.getContentSize() > 0;
+      e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      myConsoleView.clear();
+    }
+  }
+
+  public static class ClearAllAction extends DumbAwareAction {
+    public ClearAllAction() {
+      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      if (editor != null && editor.getDocument().getTextLength() == 0) {
+        enabled = false;
       }
       e.getPresentation().setEnabled(enabled);
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      final ConsoleView consoleView = myConsoleView != null ? myConsoleView : e.getData(LangDataKeys.CONSOLE_VIEW);
+      final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
       if (consoleView != null) {
         consoleView.clear();
       }
@@ -1387,19 +1463,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     };
     final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(myEditor);
 
-    //Initializing custom actions
-    final AnAction[] consoleActions = new AnAction[6 + customActions.size()];
-    consoleActions[0] = prevAction;
-    consoleActions[1] = nextAction;
-    consoleActions[2] = switchSoftWrapsAction;
-    consoleActions[3] = autoScrollToTheEndAction;
-    consoleActions[4] = ActionManager.getInstance().getAction("Print");
-    consoleActions[5] = new ClearAllAction(this);
-    for (int i = 0; i < customActions.size(); ++i) {
-      consoleActions[i + 6] = customActions.get(i);
-    }
+    List<AnAction> consoleActions = new ArrayList<>();
+    consoleActions.add(prevAction);
+    consoleActions.add(nextAction);
+    consoleActions.add(switchSoftWrapsAction);
+    consoleActions.add(autoScrollToTheEndAction);
+    consoleActions.add(ActionManager.getInstance().getAction("Print"));
+    consoleActions.add(new ClearThisConsoleAction(this));
+    consoleActions.addAll(customActions);
     List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
-    AnAction[] result = consoleActions;
+    AnAction[] result = consoleActions.toArray(AnAction.EMPTY_ARRAY);
     for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
       result = postProcessor.postProcess(this, result);
     }

@@ -132,7 +132,7 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    if (!fetchAndNotify(trackedBranches.keySet())) {
+    if (!fetchAndNotify(myRepositories)) {
       return GitUpdateResult.NOT_READY;
     }
 

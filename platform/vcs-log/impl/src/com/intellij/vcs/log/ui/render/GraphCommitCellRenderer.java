@@ -130,6 +130,10 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myTemplateComponent.getReferencePainter().setShowTagNames(showTagNames);
   }
 
+  public static Font getLabelFont() {
+    return UIUtil.getLabelFont();
+  }
+
   private static class MyComponent extends SimpleColoredRenderer {
     private static final int DISPLAYED_MESSAGE_PART = 80;
     @NotNull private final VcsLogData myLogData;
@@ -144,11 +148,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     private AffineTransform myAffineTransform;
 
     MyComponent(@NotNull VcsLogData data,
-                       @NotNull GraphCellPainter painter,
-                       @NotNull VcsLogGraphTable table,
-                       @NotNull LabelIconCache iconCache,
-                       boolean compact,
-                       boolean showTags) {
+                @NotNull GraphCellPainter painter,
+                @NotNull VcsLogGraphTable table,
+                @NotNull LabelIconCache iconCache,
+                boolean compact,
+                boolean showTags) {
       myLogData = data;
       myPainter = painter;
       myGraphTable = table;
@@ -156,7 +160,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myReferencePainter = new LabelPainter(myLogData, table, iconCache, compact, showTags);
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
 
-      myFont = RectanglePainter.getFont();
+      myFont = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
       myAffineTransform = configuration != null ? configuration.getDefaultTransform() : null;
       myHeight = calculateHeight();
@@ -191,7 +195,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       AffineTransform origTx = PaintUtil.alignTxToInt(g2d, null, false, true, RoundingMode.ROUND_FLOOR_BIAS);
       try {
         UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
-      } finally {
+      }
+      finally {
         if (origTx != null) g2d.setTransform(origTx);
       }
     }
@@ -249,7 +254,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     public int getPreferredHeight() {
-      Font font = RectanglePainter.getFont();
+      Font font = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
       if (myFont != font || (configuration != null && !Objects.equals(myAffineTransform, configuration.getDefaultTransform()))) {
         myFont = font;

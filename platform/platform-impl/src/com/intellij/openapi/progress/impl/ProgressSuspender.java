@@ -17,6 +17,7 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class ProgressSuspender {
+public class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
   public static final Topic<SuspenderListener> TOPIC = Topic.create("ProgressSuspender", SuspenderListener.class);
 
@@ -43,11 +44,14 @@ public class ProgressSuspender {
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
+  @NotNull private final ProgressIndicatorEx myAttachedToProgress;
+  private boolean myClosed;
 
   private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
     mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;
+    myAttachedToProgress = progress;
     myThread = Thread.currentThread();
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
 
@@ -61,6 +65,16 @@ public class ProgressSuspender {
     }.installToProgress(progress);
 
     myPublisher.suspendableProgressAppeared(this);
+  }
+
+  @Override
+  public void close() {
+    synchronized (myLock) {
+      myClosed = true;
+      mySuspended = false;
+      ((ProgressManagerImpl)ProgressManager.getInstance()).removeCheckCanceledHook(myHook);
+    }
+    ((UserDataHolder) myAttachedToProgress).putUserData(PROGRESS_SUSPENDER, null);
   }
 
   public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull String suspendedText) {
@@ -88,7 +102,7 @@ public class ProgressSuspender {
    */
   public void suspendProcess(@Nullable String reason) {
     synchronized (myLock) {
-      if (mySuspended) return;
+      if (mySuspended || myClosed) return;
 
       mySuspended = true;
       myTempReason = reason;
@@ -114,8 +128,17 @@ public class ProgressSuspender {
     myPublisher.suspendedStatusChanged(this);
   }
 
+  private boolean safeIsReadAccessAllowed() {
+    // isReadAccessAllowed throws if running as isInImpatientReader.
+    return ((ApplicationEx)ourApp).isInImpatientReader() || ourApp.isReadAccessAllowed();
+  }
+
   private boolean freezeIfNeeded(@Nullable ProgressIndicator current) {
-    if (current == null || ourApp.isReadAccessAllowed() || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
+    // Note: instead of safeIsReadAccessAllowed it is enough to make isThreadUnderIndicator check first, but it is expected to be slower
+    //       than an additional call to ourApp.isInImpatientReader()
+    if (current == null
+        || safeIsReadAccessAllowed()
+        || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
       return false;
     }
 

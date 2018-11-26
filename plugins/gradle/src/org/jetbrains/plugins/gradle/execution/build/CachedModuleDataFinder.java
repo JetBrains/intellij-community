@@ -34,7 +34,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/14/2016
  */
 public class CachedModuleDataFinder {
   private final Map<String, DataNode<? extends ModuleData>> cache = ContainerUtil.newHashMap();

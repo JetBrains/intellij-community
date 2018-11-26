@@ -1,4 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -24,6 +26,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   private val processedIcons = AtomicInteger()
   private val processedPhantom = AtomicInteger()
   private val modifiedClasses = ContainerUtil.createConcurrentList<ModifiedClass>()
+  private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
 
   fun processModule(module: JpsModule) {
     val customLoad: Boolean
@@ -37,6 +40,15 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
 
       val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
       outFile = Paths.get(dir, "AllIcons.java")
+    }
+    else if ("intellij.android.artwork" == module.name) {
+      // backward compatibility - AndroidIcons class should be not modified
+      packageName = "icons"
+      customLoad = true
+      className = "AndroidArtworkIcons"
+
+      val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath
+      outFile = Paths.get(dir, "icons", "AndroidArtworkIcons.java")
     }
     else {
       customLoad = true
@@ -81,7 +93,12 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       outFile = targetRoot.resolve("$className.java")
     }
 
-    val oldText = if (Files.exists(outFile)) Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8) else null
+    val oldText = try {
+      Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8)
+    }
+    catch (ignored: NoSuchFileException) {
+      null
+    }
     val newText = generate(module, className, packageName, customLoad, getCopyrightComment(oldText))
 
     val oldLines = oldText?.lines() ?: emptyList()
@@ -115,11 +132,18 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
         }
       }
     }
+    else {
+      if (Files.exists(outFile)) {
+        obsoleteClasses.add(outFile)
+        //Files.delete(outFile)
+      }
+    }
   }
 
   fun printStats() {
     println()
     println("Generated classes: ${processedClasses.get()}. Processed icons: ${processedIcons.get()}. Phantom icons: ${processedPhantom.get()}")
+    println("\nObsolete classes:\n${obsoleteClasses.joinToString("\n") }}")
   }
 
   fun getModifiedClasses(): List<ModifiedClass> = modifiedClasses
@@ -309,7 +333,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       assert(isIcon(imageFile)) { "Overriding icon should be valid: $iconName - $imageFile" }
     }
 
-    val size = if (Files.exists(imageFile)) imageSize(imageFile) else null
+    val size = if (imageFile.toFile().exists()) imageSize(imageFile) else null
     val comment: String
     when {
       size != null -> comment = " // ${size.width}x${size.height}"

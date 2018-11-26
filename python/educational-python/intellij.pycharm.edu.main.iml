@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="intellij.python.helpers" />
     <orderEntry type="module" module-name="intellij.pycharm.community" />
     <orderEntry type="module" module-name="intellij.platform.main" />
-    <orderEntry type="module" module-name="intellij.shortcutPromoter" />
     <orderEntry type="module" module-name="intellij.pycharm.edu" />
     <orderEntry type="module" module-name="intellij.vcs.hg" />
     <orderEntry type="module" module-name="intellij.python.ipnb" />

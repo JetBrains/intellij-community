@@ -27,24 +27,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 
 /**
  * Basic abstract action handler for all Git actions to extend.
  */
 public abstract class BasicAction extends DumbAwareAction {
-  /**
-   * {@inheritDoc}
-   */
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
     ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveAllDocuments());
     final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null : "The action is only available when files are selected";
 
-    assert project != null;
     final GitVcs vcs = GitVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, vFiles)) {
       return;
@@ -65,7 +61,6 @@ public abstract class BasicAction extends DumbAwareAction {
       });
     }
   }
-
 
   /**
    * Perform the action over set of files
@@ -98,7 +93,7 @@ public abstract class BasicAction extends DumbAwareAction {
       if (!file.isDirectory() && projectLevelVcsManager.getVcsFor(file) instanceof GitVcs) {
         affectedFiles.add(file);
       }
-      else if (file.isDirectory() && isRecursive()) {
+      else if (file.isDirectory()) {
         addChildren(project, affectedFiles, file);
       }
 
@@ -117,7 +112,7 @@ public abstract class BasicAction extends DumbAwareAction {
    *                (recursively)
    */
   private void addChildren(@NotNull final Project project, @NotNull final List<VirtualFile> files, @NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, (isRecursive() ? null : ONE_LEVEL_DEEP)) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, null) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && appliesTo(project, file)) {
@@ -133,14 +128,6 @@ public abstract class BasicAction extends DumbAwareAction {
    */
   @NotNull
   protected abstract String getActionName();
-
-
-  /**
-   * @return true if the action could be applied recursively
-   */
-  protected boolean isRecursive() {
-    return true;
-  }
 
   /**
    * Check if the action is applicable to the file. The default checks if the file is a directory

@@ -34,7 +34,6 @@ import java.util.List;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 3/2/11 11:55 AM
  */
 public class TextChangesStorage {
   private final List<ChangeEntry> myChanges = new ArrayList<>();

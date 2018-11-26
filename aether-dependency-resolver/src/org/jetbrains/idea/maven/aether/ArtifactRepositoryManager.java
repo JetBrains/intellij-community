@@ -16,6 +16,7 @@ import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.*;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
@@ -220,7 +221,9 @@ public class ArtifactRepositoryManager {
                 requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
               }
             }
-            requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+            else {
+              requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+            }
           }
         }
 
@@ -338,7 +341,12 @@ public class ArtifactRepositoryManager {
     for (Artifact artifact : toArtifacts(groupId, artifactId, Collections.singleton(versioning), EnumSet.of(artifactKind))) {
       request.setArtifact(artifact); // will be at most 1 artifact
     }
-    return request.setRepositories(Collections.unmodifiableList(myRemoteRepositories));
+    List<RemoteRepository> repositories = new ArrayList<>(myRemoteRepositories.size());
+    for (RemoteRepository repository : myRemoteRepositories) {
+      RepositoryPolicy policy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+      repositories.add(new RemoteRepository.Builder(repository).setPolicy(policy).build());
+    }
+    return request.setRepositories(repositories);
   }
 
   public static Version asVersion(@Nullable String str) throws InvalidVersionSpecificationException {

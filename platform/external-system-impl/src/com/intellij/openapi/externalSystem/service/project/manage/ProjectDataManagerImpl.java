@@ -51,7 +51,6 @@ import static com.intellij.util.containers.ContainerUtil.map2Array;
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
  *
  * @author Denis Zhdanov
- * @since 4/16/13 11:38 AM
  */
 public class ProjectDataManagerImpl implements ProjectDataManager {
 

@@ -15,17 +15,13 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLoopStatement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +64,7 @@ class MigrateToStreamFix implements LocalQuickFix {
   static void simplify(@NotNull Project project, PsiElement result) {
     if (result == null) return;
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
-    PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+    RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, true);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
   }

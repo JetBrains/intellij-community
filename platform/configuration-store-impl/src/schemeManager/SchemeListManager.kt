@@ -1,7 +1,7 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.configurationStore.SchemeManagerImpl
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.util.Condition
 import com.intellij.util.containers.ConcurrentList
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManagerImpl<T, *>) {
   private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
 
-  val readOnlyExternalizableSchemes = ContainerUtil.newConcurrentMap<String, T>()
+  internal val readOnlyExternalizableSchemes = ContainerUtil.newConcurrentMap<String, T>()
 
   val schemes: ConcurrentList<T>
     get() = schemesRef.get()
@@ -117,27 +117,5 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
     val result = THashSet<String>(schemes.size)
     schemes.mapTo(result) { schemeManager.processor.getSchemeKey(it) }
     return result
-  }
-
-  fun removeFirstScheme(schemes: MutableList<T>, scheduleDelete: Boolean = true, condition: (T) -> Boolean): T? {
-    val iterator = schemes.iterator()
-    for (scheme in iterator) {
-      if (!condition(scheme)) {
-        continue
-      }
-
-      if (schemeManager.activeScheme === scheme) {
-        schemeManager.activeScheme = null
-      }
-
-      iterator.remove()
-
-      if (scheduleDelete && schemeManager.processor.isExternalizable(scheme)) {
-        schemeManager.schemeToInfo.remove(scheme)?.let(schemeManager::scheduleDelete)
-      }
-      return scheme
-    }
-
-    return null
   }
 }

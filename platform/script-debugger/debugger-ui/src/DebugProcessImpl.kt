@@ -54,6 +54,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   @Volatile protected var isForceStep: Boolean = false
   @Volatile protected var disableDoNotStepIntoLibraries: Boolean = false
 
+  // todo: file resolving: check that urlToFileCache still needed
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
   var processBreakpointConditionsAtIdeSide: Boolean = false

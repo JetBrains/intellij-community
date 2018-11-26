@@ -432,10 +432,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           return
         }
 
-        selectedConfigurationId = value?.uniqueID
+        val id = value?.uniqueID
+        if (id != null && !idToSettings.containsKey(id)) {
+          LOG.error("$id must be added before selecting")
+        }
+        selectedConfigurationId = id
       }
 
-      eventPublisher.runConfigurationSelected()
+      eventPublisher.runConfigurationSelected(value)
     }
 
   fun requestSort() {
@@ -488,7 +492,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         val recent = Element(RECENT)
         element.addContent(recent)
 
-        val listElement = recent.element("list")
+        val listElement = Element("list")
+        recent.addContent(listElement)
         for (id in recentList) {
           listElement.addContent(Element("item").setAttribute("itemvalue", id))
         }
@@ -631,7 +636,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     fireBeforeRunTasksUpdated()
 
     if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
-      eventPublisher.runConfigurationSelected()
+      eventPublisher.runConfigurationSelected(selectedConfiguration)
     }
 
     eventPublisher.stateLoaded(this, isFirstLoadState)
@@ -667,7 +672,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
     this.selectedConfigurationId = selectedConfigurationId
 
-    eventPublisher.runConfigurationSelected()
+    eventPublisher.runConfigurationSelected(selectedConfiguration)
   }
 
   override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
@@ -893,8 +898,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return icon
   }
 
-  fun isInvalidInCache(settings: RunnerAndConfigurationSettings): Boolean {
-    return iconCache.isInvalid(settings.uniqueID)
+  fun isInvalidInCache(configuration: RunConfiguration): Boolean {
+    findSettings(configuration)?.let {
+      return iconCache.isInvalid(it.uniqueID)
+    }
+    return false
   }
 
   fun getConfigurationById(id: String): RunnerAndConfigurationSettings? = lock.read { idToSettings.get(id) }

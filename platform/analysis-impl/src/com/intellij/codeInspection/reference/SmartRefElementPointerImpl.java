@@ -16,14 +16,19 @@
 
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   @NonNls public static final String FQNAME_ATTR = "FQNAME";
   @NonNls public static final String TYPE_ATTR = "TYPE";
   @NonNls public static final String ENTRY_POINT = "entry_point";
+  private static final Logger LOG = Logger.getInstance(SmartRefElementPointerImpl.class);
 
   private final boolean myIsPersistent;
   private RefEntity myRefElement;
@@ -31,11 +36,20 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   private final String myType;
 
   public SmartRefElementPointerImpl(RefEntity ref, boolean isPersistent) {
-      myIsPersistent = isPersistent;
-      myRefElement = ref;
-      myFQName = ref.getExternalName();
-      myType = ref.getRefManager().getType(ref);
+    myIsPersistent = isPersistent;
+    myRefElement = ref;
+    myFQName = ref.getExternalName();
+    myType = ref.getRefManager().getType(ref);
+    if (myFQName == null) {
+      boolean psiExists = ref instanceof RefElement && ((RefElement)ref).getPsiElement() != null;
+      LOG.error("Name: " + ref.getName() +
+                ", qName: " + ref.getQualifiedName() +
+                "; type: " + myType +
+                "; psi exists: " + psiExists +
+                (ref instanceof RefElement ? ("; containing file: " + getContainingFileName((RefElement)ref)) : ""));
     }
+  }
+
 
   public SmartRefElementPointerImpl(Element jDomElement) {
     myIsPersistent = true;
@@ -85,5 +99,14 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   @Override
   public void freeReference() {
     myRefElement = null;
+  }
+
+  @Nullable
+  private String getContainingFileName(RefElement ref) {
+    SmartPsiElementPointer pointer = ref.getPointer();
+    if (pointer == null) return null;
+    PsiFile file = pointer.getContainingFile();
+    if (file == null) return null;
+    return file.getName();
   }
 }

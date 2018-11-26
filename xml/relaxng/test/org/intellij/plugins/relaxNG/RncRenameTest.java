@@ -31,7 +31,6 @@ import java.io.File;
 
 /**
  * @author sweinreuter
- * @since 25.07.2007
  */
 public class RncRenameTest extends HighlightingTestBase {
 

@@ -26,7 +26,6 @@ public class DebugAttachDetector {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (!app.isInternal()
         || app.isUnitTestMode()
-        || app.isHeadlessEnvironment()
         || Boolean.getBoolean("disable.attach.detector")
         || PluginManagerCore.isRunningFromSources()) return;
 

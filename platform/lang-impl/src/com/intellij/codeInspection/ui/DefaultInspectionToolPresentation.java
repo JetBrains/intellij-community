@@ -38,6 +38,7 @@ import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public boolean isProblemResolved(@Nullable RefEntity entity) {
-    return myResolvedElements.containsKey(entity);
+    return myResolvedElements.containsKey(entity) && !myProblemElements.containsKey(entity);
   }
 
   @NotNull
@@ -211,14 +212,14 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Consumer<Element> problemSink,
+  public void exportResults(@NotNull final Consumer<Element> resultConsumer,
                             @NotNull final Predicate<? super RefEntity> excludedEntities,
                             @NotNull final Predicate<? super CommonProblemDescriptor> excludedDescriptors) {
     getRefManager().iterate(new RefVisitor(){
       @Override
       public void visitElement(@NotNull RefEntity elem) {
         if (!excludedEntities.test(elem)) {
-          exportResults(problemSink, elem, excludedDescriptors);
+          exportResults(resultConsumer, elem, excludedDescriptors);
         }
       }
     });
@@ -264,8 +265,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
-    @NonNls final String ext = ".xml";
-    final File file = new File(myContext.getOutputPath(), myToolWrapper.getShortName() + ext);
+    final File file = ExportHTMLAction.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
     boolean exists = file.exists();
     FileUtil.createParentDirs(file);
     try (PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), CharsetToolkit.UTF8_CHARSET)))) {
@@ -275,7 +275,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
         xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
         xmlWriter.writeAttribute(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE, Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
         xmlWriter.writeCharacters("\n");
-        xmlWriter.close();
+        xmlWriter.flush();
       }
 
       exportResults(descriptions, refElement, p -> {
@@ -334,12 +334,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull Consumer<Element> problemSink,
+  public void exportResults(@NotNull Consumer<Element> resultConsumer,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     CommonProblemDescriptor[] descriptions = getProblemElements().get(refEntity);
     if (descriptions != null) {
-      exportResults(descriptions, refEntity, problemSink, isDescriptorExcluded);
+      exportResults(descriptions, refEntity, resultConsumer, isDescriptorExcluded);
     }
   }
 
@@ -535,14 +535,19 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     if (!(element instanceof RefElement)) return;
     SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
     if (pointer == null) return;
-    VirtualFile entityFile = pointer.getVirtualFile();
+    VirtualFile entityFile = ensureNotInjectedFile(pointer.getVirtualFile());
     if (entityFile == null) return;
     StreamEx.of(descriptors).select(ProblemDescriptorBase.class).forEach(d -> {
       VirtualFile file = d.getContainingFile();
       if (file != null) {
-        if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-        LOG.assertTrue(file.equals(entityFile), "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
+        LOG.assertTrue(ensureNotInjectedFile(file).equals(entityFile),
+                       "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
       }
     });
+  }
+
+  @Contract("null -> null")
+  private static VirtualFile ensureNotInjectedFile(VirtualFile file) {
+    return file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
   }
 }

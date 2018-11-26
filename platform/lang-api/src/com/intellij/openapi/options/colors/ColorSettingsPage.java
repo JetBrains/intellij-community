@@ -54,6 +54,8 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
    */
   @Nullable Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap();
 
+  @Nullable default Map<String,TextAttributesKey> getAdditionalInlineElementToDescriptorMap() { return null; }
+
   /**
    * Specifies tag-to-'color key' mapping for regions with presentation containing additional colors from color map. 
    * It's used to implement navigation between the list of keys and regions in sample editor.

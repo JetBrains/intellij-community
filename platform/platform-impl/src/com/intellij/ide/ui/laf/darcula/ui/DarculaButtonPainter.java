@@ -92,17 +92,17 @@ public class DarculaButtonPainter implements Border, UIResource {
                                 button.hasFocus()
                                 ?
                                 JBColor.namedColor(
-                                  defButton ? "Button.darcula.defaultFocusedOutlineColor" : "Button.darcula.focusedOutlineColor", 0x87afda)
+                                  defButton ? "Button.default.focusedBorderColor" : "Button.focusedBorderColor", 0x87afda)
                                 :
                                 new GradientPaint(0, 0,
                                                   JBColor.namedColor(defButton
-                                                                     ? "Button.darcula.outlineDefaultStartColor"
-                                                                     : "Button.darcula.outlineStartColor", 0xbfbfbf),
+                                                                     ? "Button.default.startBorderColor"
+                                                                     : "Button.startBorderColor", 0xbfbfbf),
                                                   0, r.height,
                                                   JBColor.namedColor(
-                                                    defButton ? "Button.darcula.outlineDefaultEndColor" : "Button.darcula.outlineEndColor",
+                                                    defButton ? "Button.default.endBorderColor" : "Button.endBorderColor",
                                                     0xb8b8b8))
-                              : JBColor.namedColor("Button.darcula.disabledOutlineColor", 0xcfcfcf);
+                              : JBColor.namedColor("Button.disabledBorderColor", 0xcfcfcf);
   }
 
   @Override

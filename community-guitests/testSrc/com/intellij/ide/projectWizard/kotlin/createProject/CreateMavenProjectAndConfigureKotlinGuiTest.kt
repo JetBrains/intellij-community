@@ -2,78 +2,47 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
-import com.intellij.testGuiFramework.impl.mavenReimport
-import com.intellij.testGuiFramework.impl.waitAMoment
-import com.intellij.testGuiFramework.util.*
-import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
-import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
-import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
+import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
+import com.intellij.testGuiFramework.util.logInfo
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.io.Serializable
 
-class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
+@RunWith(GuiTestSuiteParam::class)
+class CreateMavenProjectAndConfigureKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
 
-  @Test
-  @JvmName("maven_cfg_jvm")
-  fun createMavenAndConfigureKotlinJvm() {
-    val projectName = testMethod.methodName
-    val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    if (!isIdeFrameRun()) return
-    createMavenProject(
-      projectPath = projectFolder,
-      artifact = projectName)
-    waitAMoment()
-    configureKotlinJvmFromMaven(kotlinVersion)
-    waitAMoment()
-    saveAndCloseCurrentEditor()
-    editPomXml(
-      kotlinVersion = kotlinVersion
-    )
-    waitAMoment()
-    mavenReimport()
-    waitAMoment()
-
-    projectStructureDialogScenarios.openProjectStructureAndCheck {
-      projectStructureDialogModel.checkLibrariesFromMavenGradle(
-        buildSystem = BuildSystem.Maven,
-        kotlinVersion = kotlinVersion,
-        expectedJars = kotlinProjects.getValue(Projects.MavenProjectJvm).jars.getJars(kotlinVersion)
-      )
-      projectStructureDialogModel.checkFacetInOneModule(
-        defaultFacetSettings[TargetPlatform.JVM18]!!,
-        projectName, "Kotlin"
-      )
-    }
+  data class TestParameters(
+    val projectName: String,
+    val project: ProjectProperties,
+    val expectedFacet: FacetStructure) : Serializable {
+    override fun toString() = projectName
   }
 
   @Test
-  @JvmName("maven_cfg_js")
-  fun createMavenAndConfigureKotlinJs() {
-    val projectName = testMethod.methodName
-    val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    if (!isIdeFrameRun()) return
-    createMavenProject(
-      projectPath = projectFolder,
-      artifact = projectName)
-    waitAMoment()
-    configureKotlinJsFromMaven(kotlinVersion)
-    waitAMoment()
-    saveAndCloseCurrentEditor()
-    editPomXml(
-      kotlinVersion = kotlinVersion
+  fun createMavenAndConfigureKotlin() {
+    createMavenAndConfigureKotlin(
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
+      project = testParameters.project,
+      expectedFacet = testParameters.expectedFacet
     )
-    waitAMoment()
-    mavenReimport()
-    waitAMoment()
+  }
 
-    projectStructureDialogScenarios.openProjectStructureAndCheck {
-      projectStructureDialogModel.checkLibrariesFromMavenGradle(
-        buildSystem = BuildSystem.Maven,
-        kotlinVersion = kotlinVersion,
-        expectedJars = kotlinProjects.getValue(Projects.MavenProjectJs).jars.getJars(kotlinVersion)
-      )
-      projectStructureDialogModel.checkFacetInOneModule(
-        defaultFacetSettings[TargetPlatform.JavaScript]!!,
-        projectName, "Kotlin"
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun data(): Collection<TestParameters> {
+      return listOf(
+        TestParameters(
+          projectName = "maven_cfg_jvm",
+          project = kotlinProjects.getValue(Projects.MavenProjectJvm),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
+        ),
+        TestParameters(
+          projectName = "maven_cfg_js",
+          project = kotlinProjects.getValue(Projects.MavenProjectJs),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
+        )
       )
     }
   }

@@ -118,7 +118,9 @@
     <xs:attribute type="xs:string" name="number" use="required">
       <xs:annotation>
         <xs:documentation>
-          In sources this attribute should be set to __BUILD_NUMBER__ placeholder which is replaced by real build number (two or more numbers separated by dots) by the build scripts.
+          Specifies the full build number in format '&lt;product code&gt;-__BUILD__'. &lt;product code&gt; is a unique product code (e.g. IU
+          for IntelliJ IDEA Ultimate Edition, IC for IntelliJ IDEA Community Edition), and __BUILD__ is a placeholder which will be replaced
+          by the real build number (two or more numbers separated by dots) by the build scripts.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

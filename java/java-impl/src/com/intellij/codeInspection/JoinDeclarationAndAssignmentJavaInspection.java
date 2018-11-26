@@ -7,7 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -20,15 +20,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
-import static com.intellij.psi.util.PsiTreeUtil.*;
+import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
+import static com.intellij.psi.util.PsiTreeUtil.skipWhitespacesAndCommentsForward;
 import static com.siyeh.ig.psiutils.VariableAccessUtils.variableIsUsed;
 
 /**
@@ -223,7 +221,9 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         PsiAssignmentExpression assignmentExpression = context.myAssignment;
         PsiExpression initializer = variable.getInitializer();
         if (initializer != null && assignmentExpression.getOperationTokenType() == JavaTokenType.EQ) {
-          RemoveInitializerFix.sideEffectAwareRemove(project, initializer, initializer, variable);
+          String textAfter = PsiExpressionTrimRenderer.render(initializer) + ";<br>" +
+                             variable.getTypeElement().getText() + ' ' + variable.getName();
+          if (!RemoveInitializerFix.sideEffectAwareRemove(project, initializer, initializer, variable, textAfter)) return;
         }
 
         if (!FileModificationService.getInstance().prepareFileForWrite(assignmentExpression.getContainingFile())) return;
@@ -232,84 +232,26 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     }
 
     public void applyFixImpl(@NotNull Context context) {
-      PsiExpression initializerExpression = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
+      PsiExpression initializer = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
       PsiElement elementToReplace = context.myAssignment.getParent();
-      if (initializerExpression != null && elementToReplace != null) {
-        List<String> commentTexts = collectCommentTexts(elementToReplace);
-        List<String> reverseTrailingCommentTexts = collectReverseTrailingCommentTexts(elementToReplace);
+      if (initializer != null && elementToReplace != null) {
+        // Don't normalize the original declaration: it may declare many variables
+        PsiElement declCopy = context.myVariable.getParent().copy();
+        PsiLocalVariable varCopy = (PsiLocalVariable)ContainerUtil.find(
+          declCopy.getChildren(), e -> e instanceof PsiLocalVariable && context.myName.equals(((PsiLocalVariable)e).getName()));
 
-        PsiElement declaration = replaceWithDeclaration(context, elementToReplace, initializerExpression);
-        restoreComments(commentTexts, reverseTrailingCommentTexts, declaration);
+        if (varCopy != null) {
+          varCopy.setInitializer(initializer);
+          varCopy.normalizeDeclaration();
+          String text = varCopy.getText();
 
-        deleteAndRestoreComments(context.myVariable, declaration);
-      }
-    }
-
-    @NotNull
-    private static PsiElement replaceWithDeclaration(@NotNull Context context,
-                                                     @NotNull PsiElement elementToReplace,
-                                                     @NotNull PsiExpression initializerExpression) {
-      Project project = elementToReplace.getProject();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      String text = context.getDeclarationText(initializerExpression);
-      PsiStatement statement = factory.createStatementFromText(text, context.myAssignment);
-      PsiElement replaced = elementToReplace.replace(statement);
-      return CodeStyleManager.getInstance(project).reformat(replaced);
-    }
-
-    @NotNull
-    public List<String> collectCommentTexts(@NotNull PsiElement element) {
-      return ContainerUtil.map(collectElementsOfType(element, PsiComment.class), PsiElement::getText);
-    }
-
-    @NotNull
-    private static List<String> collectReverseTrailingCommentTexts(@NotNull PsiElement element) {
-      List<String> result = new ArrayList<>();
-      for (PsiElement child = element.getLastChild();
-           child instanceof PsiComment || child instanceof PsiWhiteSpace;
-           child = child.getPrevSibling()) {
-        if (child instanceof PsiComment) {
-          result.add(child.getText());
+          CommentTracker tracker = new CommentTracker();
+          tracker.markUnchanged(initializer);
+          tracker.markUnchanged(context.myVariable);
+          tracker.delete(context.myVariable);
+          tracker.replaceAndRestoreComments(elementToReplace, text);
         }
       }
-      return result;
-    }
-
-    private void restoreComments(@NotNull List<String> commentTexts,
-                                 @NotNull List<String> reverseTrailingCommentTexts,
-                                 @NotNull PsiElement target) {
-      if (commentTexts.isEmpty()) return;
-
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(target.getProject());
-      List<String> newCommentTexts = collectCommentTexts(target);
-      PsiElement parent = target.getParent();
-
-      for (String commentText : commentTexts) {
-        if (!newCommentTexts.contains(commentText) && !reverseTrailingCommentTexts.contains(commentText)) {
-          PsiComment comment = factory.createCommentFromText(commentText, target);
-          parent.addBefore(comment, target);
-        }
-      }
-
-      if (reverseTrailingCommentTexts.isEmpty()) return;
-      for (String commentText : reverseTrailingCommentTexts) {
-        if (!newCommentTexts.contains(commentText)) {
-          PsiComment comment = factory.createCommentFromText(commentText, target);
-          parent.addAfter(comment, target); // adding immediately after the target restores the original order
-        }
-      }
-    }
-
-    public static void deleteAndRestoreComments(@NotNull PsiElement elementToDelete, @NotNull PsiElement anchor) {
-      assert elementToDelete != anchor : "can't delete anchor";
-      CommentTracker tracker = new CommentTracker();
-      tracker.delete(elementToDelete);
-      for (PsiElement element = skipWhitespacesBackward(anchor);
-           element instanceof PsiComment;
-           element = skipWhitespacesBackward(element)) {
-        anchor = element;
-      }
-      tracker.insertCommentsBefore(anchor);
     }
   }
 
@@ -325,19 +267,6 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       myName = name;
       myIsUpdate = !JavaTokenType.EQ.equals(myAssignment.getOperationTokenType()) ||
                    findNextAssignment(myAssignment.getParent(), myVariable) != null;
-    }
-
-    @NotNull
-    private String getDeclarationText(@NotNull PsiExpression initializer) {
-      StringJoiner joiner = new StringJoiner(" ");
-      if (myVariable.hasModifierProperty(PsiModifier.FINAL)) {
-        joiner.add(PsiKeyword.FINAL + ' ');
-      }
-      for (PsiAnnotation annotation : myVariable.getAnnotations()) {
-        joiner.add(annotation.getText() + ' ');
-      }
-      joiner.add(myVariable.getTypeElement().getText() + ' ' + myName + '=' + initializer.getText() + ';');
-      return joiner.toString();
     }
   }
 }

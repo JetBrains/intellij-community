@@ -11,9 +11,6 @@
   </xi:include>
 
   <application-components>
-    <!--<component>-->
-      <!--<implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>-->
-    <!--</component>-->
     <component>
       <implementation-class>com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer</implementation-class>
     </component>

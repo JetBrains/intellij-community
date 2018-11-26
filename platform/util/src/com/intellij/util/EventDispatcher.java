@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.StaticGetter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +26,11 @@ import java.util.Map;
 public class EventDispatcher<T extends EventListener> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.EventDispatcher");
 
-  private final T myMulticaster;
+  private T myMulticaster;
 
   private final List<T> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  @NotNull private final Class<T> myListenerClass;
+  @Nullable private final Map<String, Object> myMethodReturnValues;
 
   @NotNull
   public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
@@ -68,12 +71,8 @@ public class EventDispatcher<T extends EventListener> {
   }
 
   private EventDispatcher(@NotNull Class<T> listenerClass, @Nullable Map<String, Object> methodReturnValues) {
-    myMulticaster = createMulticaster(listenerClass, methodReturnValues, new Getter<Iterable<T>>() {
-      @Override
-      public Iterable<T> get() {
-        return myListeners;
-      }
-    });
+    myListenerClass = listenerClass;
+    myMethodReturnValues = methodReturnValues;
   }
 
   @NotNull
@@ -122,7 +121,12 @@ public class EventDispatcher<T extends EventListener> {
 
   @NotNull
   public T getMulticaster() {
-    return myMulticaster;
+    T multicaster = myMulticaster;
+    if (multicaster == null) {
+      // benign race
+      myMulticaster = multicaster = createMulticaster(myListenerClass, myMethodReturnValues, new StaticGetter<Iterable<T>>(myListeners));
+    }
+    return multicaster;
   }
 
   private static <T> void dispatchVoidMethod(@NotNull Iterable<T> listeners, @NotNull Method method, Object[] args) {

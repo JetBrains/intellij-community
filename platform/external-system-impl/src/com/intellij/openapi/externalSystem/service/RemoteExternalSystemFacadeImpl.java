@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Denis Zhdanov
- * @since 8/9/13 4:28 PM
  */
 public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
 

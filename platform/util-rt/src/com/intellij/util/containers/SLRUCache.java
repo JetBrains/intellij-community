@@ -28,7 +28,7 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K,V> {
     super(protectedQueueSize, probationalQueueSize);
   }
 
-  protected SLRUCache(final int protectedQueueSize, final int probationalQueueSize, EqualityPolicy<K> hashingStrategy) {
+  protected SLRUCache(final int protectedQueueSize, final int probationalQueueSize, @NotNull EqualityPolicy<? super K> hashingStrategy) {
     super(protectedQueueSize, probationalQueueSize, hashingStrategy);
   }
 

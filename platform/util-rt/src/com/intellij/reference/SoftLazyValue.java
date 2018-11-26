@@ -21,7 +21,6 @@ import java.lang.ref.SoftReference;
 
 /**
  * @author Dmitry Avdeev
- * @since 25.05.2012
  */
 public abstract class SoftLazyValue<T> {
   private SoftReference<T> myReference;

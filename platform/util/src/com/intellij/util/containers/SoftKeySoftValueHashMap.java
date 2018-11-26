@@ -86,7 +86,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> t) {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -138,6 +138,6 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 }

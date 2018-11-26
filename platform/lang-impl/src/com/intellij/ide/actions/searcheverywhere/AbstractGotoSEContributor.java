@@ -2,12 +2,14 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -86,7 +88,8 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, psiContext);
+      PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
+      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
       try {
         popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
           if (progressIndicator.isCanceled()) return false;
@@ -155,8 +158,17 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   @Override
   public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId) && element instanceof PsiElement) {
-      return element;
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (element instanceof PsiElement) {
+        return element;
+      }
+      if (element instanceof DataProvider) {
+        return ((DataProvider)element).getData(dataId);
+      }
+    }
+
+    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiElement) {
+      return QualifiedNameProviderUtil.getQualifiedName((PsiElement) element);
     }
 
     return null;

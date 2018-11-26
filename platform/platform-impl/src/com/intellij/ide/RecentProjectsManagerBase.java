@@ -487,9 +487,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         }
         actions.add(new ProjectGroupActionGroup(group, children));
         if (group.isExpanded()) {
-          for (AnAction child : children) {
-            actions.add(child);
-          }
+          actions.addAll(children);
         }
       }
     }

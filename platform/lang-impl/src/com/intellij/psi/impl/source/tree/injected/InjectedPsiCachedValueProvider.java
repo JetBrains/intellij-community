@@ -19,10 +19,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -53,26 +50,28 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
                                    @NotNull InjectedLanguageManagerImpl injectedManager,
                                    @NotNull Project project,
                                    @NotNull PsiFile hostPsiFile) {
-    MyInjProcessor processor = new MyInjProcessor(project, hostPsiFile);
+    MyInjProcessor processor = new MyInjProcessor(project, hostPsiFile, injectedManager.getDocManager());
     injectedManager.processInPlaceInjectorsFor(element, processor);
     InjectionRegistrarImpl registrar = processor.hostRegistrar;
     return registrar == null ? null : registrar.getInjectedResult();
   }
 
   private static class MyInjProcessor implements InjectedLanguageManagerImpl.InjProcessor {
+    private final PsiDocumentManager myDocManager;
     private InjectionRegistrarImpl hostRegistrar;
     private final Project myProject;
     private final PsiFile myHostPsiFile;
 
-    private MyInjProcessor(@NotNull Project project, @NotNull PsiFile hostPsiFile) {
+    private MyInjProcessor(@NotNull Project project, @NotNull PsiFile hostPsiFile, @NotNull PsiDocumentManager docManager) {
       myProject = project;
       myHostPsiFile = hostPsiFile;
+      myDocManager = docManager;
     }
 
     @Override
     public boolean process(@NotNull PsiElement element, @NotNull MultiHostInjector injector) {
       if (hostRegistrar == null) {
-        hostRegistrar = new InjectionRegistrarImpl(myProject, myHostPsiFile, element);
+        hostRegistrar = new InjectionRegistrarImpl(myProject, myHostPsiFile, element, myDocManager);
       }
       injector.getLanguagesToInject(hostRegistrar, element);
       return hostRegistrar.getInjectedResult() == null;

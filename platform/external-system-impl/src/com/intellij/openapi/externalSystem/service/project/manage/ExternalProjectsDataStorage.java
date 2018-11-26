@@ -48,7 +48,6 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/18/2014
  */
 @State(name = "ExternalProjectsData", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class ExternalProjectsDataStorage implements SettingsSavingComponent, PersistentStateComponent<ExternalProjectsDataStorage.State> {
@@ -377,7 +376,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   private static Collection<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     SmartList<InternalExternalProjectInfo> projects = new SmartList<>();
     final Path configurationFile = getProjectConfigurationFile(project);
-    if (!Files.isRegularFile(configurationFile)) return projects;
+    if (!configurationFile.toFile().isFile()) return projects;
 
     DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
 

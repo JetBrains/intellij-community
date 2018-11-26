@@ -81,6 +81,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         if (selectedFlags.isRearrangeCode()) {
           processor = new RearrangeCodeProcessor(processor);
         }
+        if (selectedFlags.isCodeCleanup()) {
+          processor = new CodeCleanupCodeProcessor(processor);
+        }
 
         processor.run();
       }
@@ -176,6 +179,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
     if (options.isRearrangeCode()) {
       processor = new RearrangeCodeProcessor(processor);
+    }
+    if (options.isCodeCleanup()) {
+      processor = new CodeCleanupCodeProcessor(processor);
     }
 
     processor.run();

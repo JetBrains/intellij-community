@@ -24,10 +24,12 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -59,6 +61,7 @@ public class VcsGeneralConfigurationPanel {
   private JComboBox myOnPatchCreation;
   private JCheckBox myReloadContext;
   private JLabel myOnPatchCreationLabel;
+  private JPanel myEmptyChangeListPanel;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -138,6 +141,25 @@ public class VcsGeneralConfigurationPanel {
   private VcsShowConfirmationOption getRemoveConfirmation() {
     return ProjectLevelVcsManagerEx.getInstanceEx(myProject)
       .getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
+  }
+
+  private void createUIComponents() {
+    myPanel = new JPanel() {
+      @Override
+      public void doLayout() {
+        updateMinSize(myAddConfirmationPanel, myRemoveConfirmationPanel, myEmptyChangeListPanel, myPromptsPanel);
+        super.doLayout();
+      }
+
+      private void updateMinSize(JPanel... panels) {
+        for (JPanel panel : panels) {
+          Border border = panel.getBorder();
+          if (border instanceof IdeaTitledBorder) {
+            ((IdeaTitledBorder)border).acceptMinimumSize(panel);
+          }
+        }
+      }
+    };
   }
 
 

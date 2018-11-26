@@ -20,10 +20,10 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> implements TreeLinkMouseListener.HaveTooltip {
 
-  @NotNull private final Project myProject;
+  @Nullable private final Project myProject;
   @Nullable private final ChangeNodeDecorator myDecorator;
 
-  protected ChangesBrowserChangeNode(@NotNull Project project, @NotNull Change userObject, @Nullable ChangeNodeDecorator decorator) {
+  protected ChangesBrowserChangeNode(@Nullable Project project, @NotNull Change userObject, @Nullable ChangeNodeDecorator decorator) {
     super(userObject);
     myProject = project;
     myDecorator = decorator;
@@ -80,7 +80,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   }
 
   private void appendSwitched(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile file) {
-    if (file != null && !myProject.isDefault()) {
+    if (file != null && myProject != null && !myProject.isDefault()) {
       String branch = ChangeListManager.getInstance(myProject).getSwitchedBranch(file);
       if (branch != null) {
         renderer.append(spaceAndThinSpace() + "[switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);

@@ -126,6 +126,7 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
     }
   }
 
+  @Override
   public String toString() {
     return "PsiForeachStatement";
   }

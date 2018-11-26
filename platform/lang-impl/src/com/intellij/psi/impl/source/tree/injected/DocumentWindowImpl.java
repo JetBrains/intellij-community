@@ -873,7 +873,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     PsiLanguageInjectionHost host = firstShred.getHost();
     if (host == null || firstShred.getHostRangeMarker() == null) return false;
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(this);
-    return virtualFile != null && PsiManagerEx.getInstanceEx(host.getProject()).getFileManager().findCachedViewProvider(virtualFile) != null;
+    return virtualFile != null && ((PsiManagerEx)host.getManager()).getFileManager().findCachedViewProvider(virtualFile) != null;
   }
 
   @Override

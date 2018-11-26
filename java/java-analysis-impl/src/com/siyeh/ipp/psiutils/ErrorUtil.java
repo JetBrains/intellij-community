@@ -15,9 +15,11 @@
  */
 package com.siyeh.ipp.psiutils;
 
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtilCore;
 
 public class ErrorUtil {
@@ -46,12 +48,21 @@ public class ErrorUtil {
     return visitor.containsErrorElement();
   }
 
-  private static class ErrorElementVisitor extends PsiRecursiveElementWalkingVisitor {
+  private static class ErrorElementVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean containsErrorElement = false;
 
     @Override
     public void visitErrorElement(PsiErrorElement element) {
       containsErrorElement = true;
+      stopWalking();
+    }
+
+    @Override
+    public void visitLiteralExpression(PsiLiteralExpression literal) {
+      if (PsiLiteralUtil.isUnsafeLiteral(literal)) {
+        containsErrorElement = true;
+        stopWalking();
+      }
     }
 
     public boolean containsErrorElement() {

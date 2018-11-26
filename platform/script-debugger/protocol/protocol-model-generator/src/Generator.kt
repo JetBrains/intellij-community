@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolModelGenerator
 
 import com.intellij.openapi.util.text.StringUtil
@@ -228,7 +229,7 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
   }
 }
 
-val READER_INTERFACE_NAME: String = "ProtocolResponseReader"
+const val READER_INTERFACE_NAME: String = "ProtocolResponseReader"
 
 private val INCLUDED_DOMAINS = arrayOf("CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
                                        "Tracing", "Target", "Overlay", "Console", "DOMDebugger", "Profiler", "HeapProfiler", "NodeWorker")

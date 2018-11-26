@@ -682,17 +682,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static int indexOf(@NotNull Object[] objects, Object object, int start, int end) {
-    if (object == null) {
-      for (int i = start; i < end; i++) {
-        if (objects[i] == null) return i;
-      }
-    }
-    else {
-      for (int i = start; i < end; i++) {
-        if (object.equals(objects[i])) return i;
-      }
-    }
-    return -1;
+    return ArrayUtilRt.indexOf(objects, object, start, end);
   }
 
   @Contract(pure=true)
@@ -940,6 +930,15 @@ public class ArrayUtil extends ArrayUtilRt {
       if (value < min) min = value;
     }
     return min;
+  }
+
+  @Contract(pure = true)
+  public static int max(int[] values) {
+    int max = Integer.MIN_VALUE;
+    for (int value : values) {
+      if (value > max) max = value;
+    }
+    return max;
   }
 
   @Contract(pure = true)

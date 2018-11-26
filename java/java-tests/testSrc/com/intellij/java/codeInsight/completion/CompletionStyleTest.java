@@ -329,6 +329,9 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     try {
       LookupManager.hideActiveLookup(getProject());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

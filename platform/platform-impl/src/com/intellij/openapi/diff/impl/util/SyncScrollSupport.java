@@ -12,16 +12,17 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SyncScrollSupport implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.SyncScrollSupport");
   private boolean myDuringVerticalScroll = false;
-  @NotNull private final ArrayList<ScrollListener> myScrollers = new ArrayList<>();
+  @NotNull private final List<ScrollListener> myScrollers = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myEnabled = true;
 
   public void install(EditingSides[] sideContainers) {

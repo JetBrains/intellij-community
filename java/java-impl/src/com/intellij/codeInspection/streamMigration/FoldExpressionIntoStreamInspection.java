@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -235,7 +234,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, false);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       result = codeStyleManager.shortenClassReferences(result);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     }
   }
 

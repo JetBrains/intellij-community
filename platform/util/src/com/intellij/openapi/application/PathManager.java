@@ -127,7 +127,9 @@ public class PathManager {
    * Check whether IDE is installed via snap packages (https://snapcraft.io/) or not
    */
   public static boolean isSnap() {
-    return SystemInfo.isLinux && getHomePath().startsWith("/snap/");
+    // On Ubuntu snaps are located in /snap/ directory, but for other distros path is /var/lib/snapd/snap/
+    return SystemInfo.isLinux &&
+           (getHomePath().startsWith("/snap/") || getHomePath().startsWith("/var/lib/snapd/snap/"));
   }
 
   private static String[] getBinDirectories(File root) {
@@ -499,6 +501,21 @@ public class PathManager {
   public static File findFileInLibDirectory(@NotNull String relativePath) {
     File file = new File(getLibPath() + File.separator + relativePath);
     return file.exists() ? file : new File(getHomePath(), "community" + File.separator + "lib" + File.separator + relativePath);
+  }
+
+  /**
+   * @return path to 'community' project home irrespective of current project
+   */
+  @NotNull
+  public static String getCommunityHomePath() {
+    String path = getHomePath();
+    if (new File(path, "community/.idea").isDirectory()) {
+      return path + File.separator + "community";
+    }
+    if (new File(path, "ultimate/community/.idea").isDirectory()) {
+      return path + File.separator + "ultimate" + File.separator + "community";
+    }
+    return path;
   }
 
   @Nullable

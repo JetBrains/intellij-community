@@ -205,7 +205,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddExceptionToCatchFix() {
-    return new AddExceptionToCatchFix();
+    return new AddExceptionToCatchFix(true);
   }
 
   @NotNull

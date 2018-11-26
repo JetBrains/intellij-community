@@ -71,7 +71,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/12/2015
  */
 public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
@@ -312,6 +311,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private Couple<CheckedTreeNode> createRoot() {
     final Map<DataNode, DataNodeCheckedTreeNode> treeNodeMap = ContainerUtil.newIdentityTroveMap();
+    final Map<String, DataNode> ideGroupingMap = ContainerUtil.newTreeMap(); // need order for assigning parents
 
     final DataNodeCheckedTreeNode[] preselectedNode = {null};
     final DataNodeCheckedTreeNode[] rootModuleNode = {null};
@@ -355,21 +355,49 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
           preselectedNode[0] = treeNode;
         }
         if (node.getData() instanceof ModuleData) {
-          if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(((ModuleData)node.getData()).getLinkedExternalProjectPath())) {
+          ModuleData moduleData = (ModuleData)node.getData();
+          if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(moduleData.getLinkedExternalProjectPath())) {
             rootModuleNode[0] = treeNode;
+          }
+          String ideGrouping = moduleData.getIdeGrouping();
+          if (ideGrouping != null) {
+            ideGroupingMap.put(ideGrouping, node);
+          }
+        } else {
+          // add elements under module node like web/enterprise artifacts
+          DataNode<ModuleData> parentModule = node.getParent(ModuleData.class);
+          if(parentModule != null) {
+            DataNodeCheckedTreeNode moduleTreeNode = treeNodeMap.get(parentModule);
+            if(moduleTreeNode != null) {
+              moduleTreeNode.add(treeNode);
+              treeNode.setParent(moduleTreeNode);
+            }
           }
         }
         treeNode.setEnabled(myIgnorableKeys.contains(key));
         treeNodeMap.put(node, treeNode);
-        final DataNode parent = node.getParent();
-        if (parent != null) {
-          final CheckedTreeNode parentTreeNode = treeNodeMap.get(parent);
-          if (parentTreeNode != null) {
-            parentTreeNode.add(treeNode);
-          }
-        }
       }
     });
+
+    for (Map.Entry<String, DataNode> groupingEntry : ideGroupingMap.entrySet()) {
+      DataNode node = groupingEntry.getValue();
+      if (!(node.getData() instanceof ModuleData)) continue;
+      ModuleData moduleData = (ModuleData)node.getData();
+      String ideParentGrouping = moduleData.getIdeParentGrouping();
+      DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
+      DataNodeCheckedTreeNode treeParentNode = structuralParent != null ? treeNodeMap.get(structuralParent) : null;
+
+      DataNodeCheckedTreeNode treeNode = treeNodeMap.get(node);
+
+      if (treeParentNode == null) {
+        treeParentNode = treeNodeMap.get(node.getParent());
+      }
+
+      if (treeNode == null || treeParentNode == null) continue;
+
+      treeParentNode.add(treeNode);
+      treeNode.setParent(treeParentNode);
+    }
 
     myModulesCount = modulesCount[0];
 
@@ -435,6 +463,8 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private class DataNodeCheckedTreeNode extends CheckedTreeNode {
+    private static final int MAX_DEPENDENCIES_TO_DESCRIBE = 5;
+
     private final DataNode myDataNode;
     @Nullable
     private final Icon icon;
@@ -580,23 +610,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
 
       if (!deps.isEmpty() && !selectedModules.isEmpty()) {
-        final String listOfSelectedModules = StringUtil.join(selectedModules, node -> node.getData().getId(), ", ");
-
-        final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
-
-        final String message;
-        if (!checked) {
-          message = String.format(
-            "<html>The following module%s <br><b>%s</b><br>%s enabled and depend%s on selected modules. <br>Would you like to disable %s too?</html>",
-            deps.size() == 1 ? "" : "s", listOfDependencies, deps.size() == 1 ? "is" : "are", deps.size() == 1 ? "s" : "",
-            deps.size() == 1 ? "it" : "them");
-        }
-        else {
-          message = String.format(
-            "<html>The following module%s on which <b>%s</b> depend%s %s disabled:<br><b>%s</b><br>Would you like to enable %s?</html>",
-            deps.size() == 1 ? "" : "s", listOfSelectedModules, selectedModules.size() == 1 ? "s" : "", deps.size() == 1 ? "is" : "are",
-            listOfDependencies, deps.size() == 1 ? "it" : "them");
-        }
+        final String message = checked ? getEnableMessage(selectedModules, deps) : getDisableMessage(deps);
         if (Messages.showOkCancelDialog(message, checked ? "Enable Dependant Modules" : "Disable Modules with Dependency on this",
                                         Messages.getQuestionIcon()) == Messages.OK) {
           List<DataNodeCheckedTreeNode> nodes =
@@ -611,6 +625,32 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
           }
         }
       }
+    }
+
+    private String getEnableMessage(List<DataNode<Identifiable>> selectedModules, Set<DataNode<Identifiable>> deps) {
+      if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
+        return String.format("%d disabled modules depend on selected modules. Would you like to enable them too?", deps.size());
+      }
+
+      final String listOfSelectedModules = StringUtil.join(selectedModules, node -> node.getData().getId(), ", ");
+
+      final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
+      return String.format(
+        "<html>The following module%s on which <b>%s</b> depend%s %s disabled:<br><b>%s</b><br>Would you like to enable %s?</html>",
+        deps.size() == 1 ? "" : "s", listOfSelectedModules, selectedModules.size() == 1 ? "s" : "", deps.size() == 1 ? "is" : "are",
+        listOfDependencies, deps.size() == 1 ? "it" : "them");
+    }
+
+    private String getDisableMessage(Set<DataNode<Identifiable>> deps) {
+      if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
+        return String.format("%d enabled modules depend on selected modules. Would you like to disable them too?", deps.size());
+      }
+
+      final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
+      return String.format(
+        "<html>The following module%s <br><b>%s</b><br>%s enabled and depend%s on selected modules. <br>Would you like to disable %s too?</html>",
+        deps.size() == 1 ? "" : "s", listOfDependencies, deps.size() == 1 ? "is" : "are", deps.size() == 1 ? "s" : "",
+        deps.size() == 1 ? "it" : "them");
     }
   }
 

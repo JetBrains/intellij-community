@@ -47,7 +47,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/4/2016
  */
 public class GradleTreeStructureProvider implements TreeStructureProvider, DumbAware {
   @NotNull

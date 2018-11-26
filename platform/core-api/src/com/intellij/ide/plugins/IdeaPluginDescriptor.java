@@ -51,13 +51,13 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   List<Element> getActionsDescriptionElements();
 
   @NotNull
-  ComponentConfig[] getAppComponents();
+  List<ComponentConfig> getAppComponents();
 
   @NotNull
-  ComponentConfig[] getProjectComponents();
+  List<ComponentConfig> getProjectComponents();
 
   @NotNull
-  ComponentConfig[] getModuleComponents();
+  List<ComponentConfig> getModuleComponents();
 
   String getVendorEmail();
 

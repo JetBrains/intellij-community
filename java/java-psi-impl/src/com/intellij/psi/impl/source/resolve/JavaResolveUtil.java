@@ -119,19 +119,8 @@ public class JavaResolveUtil {
         contextClass = PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
         if (isInClassAnnotationParameterList(place, contextClass)) return false;
       }
-      while (contextClass != null) {
-        if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
-          if (member instanceof PsiClass ||
-              modifierList.hasModifierProperty(PsiModifier.STATIC) ||
-              accessObjectClass == null ||
-              InheritanceUtil.isInheritorOrSelf(accessObjectClass, contextClass, true)) {
-            return true;
-          }
-        }
-
-        contextClass = getContextClass(contextClass);
-      }
-      return false;
+      return canAccessProtectedMember(member, memberClass, accessObjectClass, contextClass,
+                                      modifierList.hasModifierProperty(PsiModifier.STATIC));
     }
 
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
@@ -181,6 +170,22 @@ public class JavaResolveUtil {
     }
 
     return true;
+  }
+
+  public static boolean canAccessProtectedMember(@NotNull PsiMember member,
+                                                  @NotNull PsiClass memberClass,
+                                                  @Nullable PsiClass accessObjectClass, @Nullable PsiClass contextClass, boolean isStatic) {
+    while (contextClass != null) {
+      if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
+        if (member instanceof PsiClass || isStatic || accessObjectClass == null
+            || InheritanceUtil.isInheritorOrSelf(accessObjectClass, contextClass, true)) {
+          return true;
+        }
+      }
+
+      contextClass = getContextClass(contextClass);
+    }
+    return false;
   }
 
   private static boolean isInClassAnnotationParameterList(@NotNull PsiElement place, @Nullable PsiClass contextClass) {

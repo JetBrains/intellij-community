@@ -15,11 +15,17 @@
  */
 package com.intellij.psi.stub;
 
+import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.PsiMemberStub;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaStubImplUtil {
   public static int getMethodStubIndex(PsiMethod method) {
@@ -37,5 +43,14 @@ public class JavaStubImplUtil {
       }
     }
     return -1;
+  }
+
+  public static <T extends PsiMember & PsiJavaDocumentedElement> boolean isMemberDeprecated(@NotNull T member,
+                                                                                            @Nullable PsiMemberStub<?> stub) {
+    if (stub != null) {
+      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(member);
+    }
+
+    return PsiImplUtil.isDeprecatedByDocTag(member) || PsiImplUtil.isDeprecatedByAnnotation(member);
   }
 }

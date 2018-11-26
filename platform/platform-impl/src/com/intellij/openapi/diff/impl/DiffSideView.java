@@ -181,9 +181,9 @@ public class DiffSideView {
         Editor editor = e.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject && myProject != null/*???*/) return;
         if (!isInMyArea(e)) return;
-        Cursor cursor = getOpenFileDescriptor(e) != null ? HAND__CURSOR : Cursor.getDefaultCursor();
-        e.getMouseEvent().getComponent().setCursor(cursor);
-        myEditor.getContentComponent().setCursor(cursor);
+        boolean hand = getOpenFileDescriptor(e) != null;
+        e.getMouseEvent().getComponent().setCursor(hand ? HAND__CURSOR : Cursor.getDefaultCursor());
+        ((EditorEx)myEditor).setCustomCursor(DiffSideView.class, hand ? HAND__CURSOR : null);
       }
     };
 

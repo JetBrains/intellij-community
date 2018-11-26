@@ -91,7 +91,7 @@ public class ArrayRenderer extends NodeRendererImpl{
 
   @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-    return ClassRenderer.calcLabel(descriptor);
+    return ClassRenderer.calcLabel(descriptor, evaluationContext);
   }
 
   public void setForced(boolean forced) {

@@ -40,12 +40,11 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
   @NotNull
   @Override
   public List<TextRange> getLiteralPartRanges() {
-    final int nodeStart = getTextRange().getStartOffset();
     final TextRange contentRange = getContentRange();
     return SyntaxTraverser.psiApi()
       .children(this)
       .filter(child -> child.getNode().getElementType() == PyTokenTypes.FSTRING_TEXT)
-      .map(part -> part.getTextRange().shiftLeft(nodeStart))
+      .map(PsiElement::getTextRangeInParent)
       .map(range -> range.intersection(contentRange))
       .toList();
   }
@@ -84,7 +83,6 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
   @NotNull
   @Override
   public List<Pair<TextRange, String>> getDecodedFragments() {
-    final int nodeOffset = getTextRange().getStartOffset();
     final ArrayList<Pair<TextRange, String>> result = new ArrayList<>();
     final PyStringLiteralDecoder decoder = new PyStringLiteralDecoder(this);
     int continuousTextStart = -1;
@@ -93,7 +91,7 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
       if (childType == PyTokenTypes.FSTRING_START) {
         continue;
       }
-      final TextRange relChildRange = child.getTextRange().shiftLeft(nodeOffset);
+      final TextRange relChildRange = child.getTextRangeInParent();
       if (childType == PyElementTypes.FSTRING_FRAGMENT || childType == PyTokenTypes.FSTRING_END) {
         if (continuousTextStart != -1) {
           result.addAll(decoder.decodeRange(TextRange.create(continuousTextStart, relChildRange.getStartOffset())));

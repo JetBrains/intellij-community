@@ -99,7 +99,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private Editor myEditor;
   @Nullable
   private VirtualFile myVirtualFile;
-  private DataContext myDataContext;
+  @NotNull private final DataContext myDataContext;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
@@ -291,12 +291,18 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private VirtualFile getWorkDirectory(@Nullable Module module, boolean isAltPressed) {
     if (isAltPressed) {
       if (myVirtualFile != null) {
-        return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+        VirtualFile file = myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+        if (file != null) {
+          return file;
+        }
       }
 
       VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
       if (selectedFiles.length > 0) {
-        return selectedFiles[0].getParent();
+        VirtualFile file = selectedFiles[0].getParent();
+        if (file != null) {
+          return file;
+        }
       }
     }
 
@@ -406,16 +412,15 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return topPanel;
   }
 
-  public void createDataContext(AnActionEvent e) {
+  @NotNull
+  public DataContext createDataContext(@NotNull AnActionEvent e) {
     HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
-    //todo
     dataMap.put(CommonDataKeys.PROJECT.getName(), e.getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
-    myDataContext = createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
+    return createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
   }
 
   public void initMySearchField() {
-    mySearchField.setFont(UIUtil.getLabelFont().deriveFont(18f));
     mySearchField.putClientProperty(MATCHED_PROVIDER_PROPERTY, UNKNOWN_CONFIGURATION_ICON);
 
     setHandleMatchedConfiguration();
@@ -838,6 +843,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myEditor = actionEvent.getData(CommonDataKeys.EDITOR);
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
+    myDataContext = createDataContext(actionEvent);
+
     init();
 
     initSearchActions();
@@ -847,10 +854,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     initSearchField();
 
     initMySearchField();
-
-    createDataContext(actionEvent);
-
-    //installActions();
   }
 
   @NotNull

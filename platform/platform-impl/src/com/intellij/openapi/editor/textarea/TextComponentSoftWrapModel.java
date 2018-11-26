@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since Jun 22, 2010 5:56:23 PM
  */
 public class TextComponentSoftWrapModel implements SoftWrapModel {
 

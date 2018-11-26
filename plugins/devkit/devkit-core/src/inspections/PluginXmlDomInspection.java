@@ -23,8 +23,11 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,21 +51,22 @@ import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
+
+  @NonNls
+  private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";
 
   public List<String> myRegistrationCheckIgnoreClassList = new ExternalizableStringSet();
 
@@ -95,6 +99,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       if (module != null) {
         annotateIdeaPlugin((IdeaPlugin)element, holder, module);
         checkJetBrainsPlugin((IdeaPlugin)element, holder, module);
+        checkPluginIcon((IdeaPlugin)element, holder, module);
       }
     }
     else if (element instanceof Extension) {
@@ -181,17 +186,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     if (!hasRealPluginId(ideaPlugin)) return;
 
-    if (!DomUtil.hasXml(ideaPlugin.getVersion())) {
+    boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
+
+    if (isNotIdeaProject &&
+        !DomUtil.hasXml(ideaPlugin.getVersion()) &&
+        PluginModuleType.isOfType(module)) {
       holder.createProblem(ideaPlugin, DevKitBundle.message("inspections.plugin.xml.version.must.be.specified"),
-                           new AddDomElementQuickFix<>(ideaPlugin.getVersion()));
+                           new AddMissingMainTag("Add <version>", ideaPlugin.getVersion(), ""));
     }
     checkMaxLength(ideaPlugin.getVersion(), 64, holder);
 
 
-    if (PsiUtil.isIdeaProject(module.getProject())) return;
-    if (!DomUtil.hasXml(ideaPlugin.getVendor())) {
+    if (isNotIdeaProject && !DomUtil.hasXml(ideaPlugin.getVendor())) {
       holder.createProblem(ideaPlugin, DevKitBundle.message("inspections.plugin.xml.vendor.must.be.specified"),
-                           new AddDomElementQuickFix<>(ideaPlugin.getVendor()));
+                           new AddMissingMainTag("Add <vendor>", ideaPlugin.getVendor(), ""));
     }
   }
 
@@ -213,10 +221,22 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (!DomUtil.hasXml(vendor)) {
       holder.createProblem(DomUtil.getFileElement(ideaPlugin),
                            DevKitBundle.message("inspections.plugin.xml.plugin.should.have.jetbrains.vendor"),
-                           new SpecifyJetBrainsAsVendorQuickFix());
+                           new AddMissingMainTag("Specify JetBrains as vendor", vendor, PluginManagerMain.JETBRAINS_VENDOR));
     }
     else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
       holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.include.jetbrains.vendor"));
+    }
+  }
+
+  private static void checkPluginIcon(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, Module module) {
+    if (!hasRealPluginId(ideaPlugin)) return;
+
+    Collection<VirtualFile> pluginIconFiles =
+      FilenameIndex.getVirtualFilesByName(module.getProject(), PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
+    if (pluginIconFiles.isEmpty()) {
+      holder.createProblem(ideaPlugin, ProblemHighlightType.WEAK_WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.no.plugin.icon.svg.file", PLUGIN_ICON_SVG_FILENAME),
+                           null);
     }
   }
 
@@ -349,11 +369,25 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return;
     }
 
-    BuildNumber sinceBuildNumber = BuildNumber.fromString(sinceBuild.getStringValue());
-    BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild.getStringValue());
+    BuildNumber sinceBuildNumber = parseBuildNumber(sinceBuild, holder);
+    BuildNumber untilBuildNumber = parseBuildNumber(untilBuild, holder);
+    if (sinceBuildNumber == null || untilBuildNumber == null) return;
+
     int compare = Comparing.compare(sinceBuildNumber, untilBuildNumber);
     if (compare > 0) {
       holder.createProblem(untilBuild, DevKitBundle.message("inspections.plugin.xml.until.build.must.be.greater.than.since.build"));
+    }
+  }
+
+  @Nullable
+  private static BuildNumber parseBuildNumber(GenericAttributeValue<String> build,
+                                              DomElementAnnotationHolder holder) {
+    try {
+      return BuildNumber.fromString(build.getStringValue());
+    }
+    catch (RuntimeException e) {
+      holder.createProblem(build, DevKitBundle.message("inspections.plugin.xml.until.since.build.invalid"));
+      return null;
     }
   }
 
@@ -465,6 +499,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       ComponentModuleRegistrationChecker.checkProperXmlFileForClass(
         component, holder, component.getImplementationClass().getValue(), myRegistrationCheckIgnoreClassList);
+    }
+
+    GenericDomValue<PsiClass> interfaceClassElement = component.getInterfaceClass();
+    PsiClass interfaceClass = interfaceClassElement.getValue();
+    if (interfaceClass != null && interfaceClass.equals(component.getImplementationClass().getValue())) {
+      DomElementProblemDescriptor problem = holder.createProblem(
+        interfaceClassElement,
+        ProblemHighlightType.WARNING,
+        DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),
+        null,
+        new RemoveDomElementQuickFix(interfaceClassElement));
+      problem.highlightWholeElement();
     }
   }
 
@@ -651,7 +697,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
                                        DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(domValue)) return;
 
-    String value = StringUtil.notNullize(StringUtil.removeHtmlTags(domValue.getStringValue()));
+    String value = StringUtil.removeHtmlTags(StringUtil.notNullize(domValue.getStringValue()));
     value = StringUtil.replace(value, CommonXmlStrings.CDATA_START, "");
     value = StringUtil.replace(value, CommonXmlStrings.CDATA_END, "");
 
@@ -691,12 +737,28 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
-  private static class SpecifyJetBrainsAsVendorQuickFix implements LocalQuickFix {
+  private static class AddMissingMainTag implements LocalQuickFix {
+
+    @NotNull
+    private final String myFamilyName;
+
+    @NotNull
+    private final String myTagName;
+
+    @Nullable
+    private final String myTagValue;
+
+    private AddMissingMainTag(@NotNull String familyName, @NotNull GenericDomValue domValue, @Nullable String tagValue) {
+      myFamilyName = familyName;
+      myTagName = domValue.getXmlElementName();
+      myTagValue = tagValue;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Specify JetBrains as vendor";
+      return myFamilyName;
     }
 
     @Override
@@ -707,12 +769,19 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         IdeaPlugin root = fileElement.getRootElement();
         XmlTag after = getLastSubTag(root, root.getId(), root.getDescription(), root.getVersion(), root.getName());
         XmlTag rootTag = root.getXmlTag();
-        XmlTag vendorTag = rootTag.createChildTag("vendor", rootTag.getNamespace(), PluginManagerMain.JETBRAINS_VENDOR, false);
+        XmlTag missingTag = rootTag.createChildTag(myTagName, rootTag.getNamespace(), myTagValue, false);
+
+        XmlTag addedTag;
         if (after == null) {
-          rootTag.addSubTag(vendorTag, true);
+          addedTag = rootTag.addSubTag(missingTag, true);
         }
         else {
-          rootTag.addAfter(vendorTag, after);
+          addedTag = (XmlTag)rootTag.addAfter(missingTag, after);
+        }
+
+        if (StringUtil.isEmpty(myTagValue)) {
+          int valueStartOffset = addedTag.getValue().getTextRange().getStartOffset();
+          NavigatableAdapter.navigate(project, file.getVirtualFile(), valueStartOffset, true);
         }
       }
     }

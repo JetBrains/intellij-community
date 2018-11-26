@@ -22,6 +22,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -90,8 +91,8 @@ public class EditorPainter implements TextDrawingCallback {
     g.translate(0, -yShift);
 
     MarginPositions marginWidths = paintBackground(g, clip, yShift, startLine, endLine, caretData, extensionData);
-    paintRightMargin(g, clip, startLine, endLine, marginWidths);
-    paintCustomRenderers(g, yShift, startOffset, endOffset);
+    paintRightMargin(g, clip, marginWidths);
+    paintCustomRenderers(g, yShift, startOffset, endOffset, clipDetector);
     MarkupModelEx docMarkup = myEditor.getFilteredDocumentMarkupModel();
     paintLineMarkersSeparators(g, clip, yShift, docMarkup, startOffset, endOffset);
     paintLineMarkersSeparators(g, clip, yShift, myEditor.getMarkupModel(), startOffset, endOffset);
@@ -143,8 +144,6 @@ public class EditorPainter implements TextDrawingCallback {
 
   private void paintRightMargin(Graphics g,
                                 Rectangle clip,
-                                int startVisualLine,
-                                int endVisualLine,
                                 MarginPositions marginWidths) {
     if (!isMarginShown()) return;
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
@@ -269,7 +268,7 @@ public class EditorPainter implements TextDrawingCallback {
     return marginWidths;
   }
 
-  private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, FoldRegion foldRegion) {
+  private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, @NotNull FoldRegion foldRegion) {
     TextAttributes innerAttributes = getInnerHighlighterAttributes(foldRegion);
     if (innerAttributes != null) {
       foldRegion.putUserData(INNER_HIGHLIGHTING, innerAttributes);
@@ -369,12 +368,17 @@ public class EditorPainter implements TextDrawingCallback {
     g.fill(new Rectangle2D.Float(x, y, width, myView.getLineHeight()));
   }
 
-  private void paintCustomRenderers(final Graphics2D g, int yShift, final int startOffset, final int endOffset) {
+  private void paintCustomRenderers(final Graphics2D g, int yShift, final int startOffset, final int endOffset, ClipDetector clipDetector) {
     g.translate(0, yShift);
     myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
       CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
-      if (customRenderer != null && startOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < endOffset) {
-        customRenderer.paint(myEditor, highlighter, g);
+      if (customRenderer != null) {
+        int highlighterStart = highlighter.getStartOffset();
+        int highlighterEnd = highlighter.getEndOffset();
+        if (highlighterStart < endOffset && highlighterEnd > startOffset &&
+            clipDetector.rangeCanBeVisible(highlighterStart, highlighterEnd)) {
+          customRenderer.paint(myEditor, highlighter, g);
+        }
       }
       return true;
     });
@@ -1208,8 +1212,11 @@ public class EditorPainter implements TextDrawingCallback {
 
   private TextAttributes getFoldRegionAttributes(FoldRegion foldRegion) {
     TextAttributes selectionAttributes = isSelected(foldRegion) ? myEditor.getSelectionModel().getTextAttributes() : null;
-    TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
     TextAttributes defaultAttributes = getDefaultAttributes();
+    if (myEditor.isInFocusMode(foldRegion)) {
+      return ObjectUtils.notNull(myEditor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES), getDefaultAttributes());
+    }
+    TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
     return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
   }
 

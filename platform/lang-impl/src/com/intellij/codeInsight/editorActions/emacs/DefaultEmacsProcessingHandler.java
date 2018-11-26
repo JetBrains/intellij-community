@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 4/11/11 2:36 PM
  */
 public class DefaultEmacsProcessingHandler implements EmacsProcessingHandler {
 

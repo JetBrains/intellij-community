@@ -45,4 +45,75 @@ public class JsonCopyPasteTest extends CodeInsightFixtureTestCase {
   public void testEscapeInPropNames() {
     doTestFromTextToJson("<selection>lorem ipsum\tdolor sit amet</selection>", "{\"<caret>\": \"foo\"}", "{\"lorem ipsum\\tdolor sit amet\": \"foo\"}");
   }
+
+  public void testAddTrailingComma() {
+    doTestFromTextToJson("<selection>\"x\": 5</selection>", "{\"q\": \"foo\"<caret>}", "{\"q\": \"foo\",\"x\": 5}");
+  }
+
+  public void testAddRemoveTrailingComma() {
+    doTestFromTextToJson("<selection>\"x\": 5,</selection>", "{\"q\": \"foo\"<caret>}", "{\"q\": \"foo\",\"x\": 5}");
+  }
+
+  public void testAddLeadingComma() {
+    doTestFromTextToJson("<selection>\"x\": 5</selection>", "{<caret>\"q\": \"foo\"}", "{\"x\": 5,\"q\": \"foo\"}");
+  }
+
+  public void testDoNothingLeadingComma() {
+    doTestFromTextToJson("<selection>\"x\": 5,</selection>", "{<caret>\"q\": \"foo\"}", "{\"x\": 5,\"q\": \"foo\"}");
+  }
+
+  public void testCommasMidPropList() {
+    doTestFromTextToJson("<selection>\"x\": 5</selection>", "{\"s\": \"foo\",<caret>\"q\": \"foo\"}", "{\"s\": \"foo\",\"x\": 5,\"q\": \"foo\"}");
+  }
+
+  public void testAddTrailingCommaArray() {
+    doTestFromTextToJson("<selection>\"a\"</selection>", "[4<caret>]", "[4,\"a\"]");
+  }
+
+  public void testAddRemoveTrailingCommaArray() {
+    doTestFromTextToJson("<selection>\"a\",</selection>", "[4<caret>]", "[4,\"a\"]");
+  }
+
+  public void testAddLeadingCommaArray() {
+    doTestFromTextToJson("<selection>\"a\"</selection>", "[<caret>4]", "[\"a\",4]");
+  }
+
+  public void testCommasMidPropListArray() {
+    doTestFromTextToJson("<selection>\"a\"</selection>", "[3,<caret>4]", "[3,\"a\",4]");
+  }
+
+  public void testWithLeadingAndTrailingWhitespaces() {
+    doTestFromTextToJson("<selection>  \t     \"a\": true   \t     </selection>", "{\"q\": 5<caret>}", "{\"q\": 5,  \t     \"a\": true   \t     }");
+  }
+
+  public void testWithLeadingAndTrailingWhitespacesArray() {
+    doTestFromTextToJson("<selection>  \t     \"a\"   \t     </selection>", "[\"q\"<caret>]", "[\"q\",  \t     \"a\"   \t     ]");
+  }
+
+  public void testWithLeadingAndTrailingWhitespacesBefore() {
+    doTestFromTextToJson("<selection>  \t     \"a\": true   \t     </selection>", "{<caret>\"q\": 5}", "{  \t     \"a\": true,   \t     \"q\": 5}");
+  }
+
+  public void testWithLeadingAndTrailingWhitespacesArrayBefore() {
+    doTestFromTextToJson("<selection>  \t     \"a\"   \t     </selection>", "[<caret>\"q\"]", "[  \t     \"a\",   \t     \"q\"]");
+  }
+
+  public void testTrailingNewline() {
+    doTestFromTextToJson("    \"react-dom\": \"^16.5.2\"\n", "{\n" +
+                             "  \"name\": \"untitled\",\n" +
+                             "  \"version\": \"1.0.0\",\n" +
+                             "  \"dependencies\": {<caret>\n" +
+                             "    \"react\": \"^16.5.2\",\n" +
+                             "    \"react-dom\": \"^16.5.2\"\n" +
+                             "  }\n" +
+                             "}", "{\n" +
+                                  "  \"name\": \"untitled\",\n" +
+                                  "  \"version\": \"1.0.0\",\n" +
+                                  "  \"dependencies\": {    \"react-dom\": \"^16.5.2\",\n" +
+                                  "\n" +
+                                  "    \"react\": \"^16.5.2\",\n" +
+                                  "    \"react-dom\": \"^16.5.2\"\n" +
+                                  "  }\n" +
+                                  "}");
+  }
 }

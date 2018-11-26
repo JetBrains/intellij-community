@@ -25,7 +25,6 @@ import java.util.function.Function;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 4/12/13 11:53 AM
  */
 public class DataNode<T> implements Serializable, UserDataHolderEx {
 

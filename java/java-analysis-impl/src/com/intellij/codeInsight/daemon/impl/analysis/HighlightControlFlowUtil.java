@@ -32,7 +32,6 @@ import java.util.Map;
 
 /**
  * @author cdr
- * @since Aug 8, 2002
  */
 public class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -92,7 +91,7 @@ public class HighlightControlFlowUtil {
         String description = JavaErrorMessages.message("unreachable.statement");
         PsiElement keyword = null;
         if (unreachableStatement instanceof PsiIfStatement ||
-            unreachableStatement instanceof PsiSwitchStatement ||
+            unreachableStatement instanceof PsiSwitchBlock ||
             unreachableStatement instanceof PsiLoopStatement) {
           keyword = unreachableStatement.getFirstChild();
         }

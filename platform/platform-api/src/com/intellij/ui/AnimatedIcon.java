@@ -2,9 +2,12 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.CellRendererPane;
 import javax.swing.Icon;
 import javax.swing.Timer;
 import java.awt.Component;
@@ -19,6 +22,17 @@ import static java.util.Arrays.asList;
  * @author Sergey.Malenkov
  */
 public class AnimatedIcon implements Icon {
+  /**
+   * This key is used to allow animated icons in lists, tables and trees.
+   * If the corresponding client property is set to {@code true} the corresponding component
+   * will be automatically repainted to update an animated icon painted by the renderer of the component.
+   * Note, that animation may cause a performance problems and should not be used everywhere.
+   *
+   * @see UIUtil#putClientProperty
+   */
+  @ApiStatus.Experimental
+  public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
+
   public interface Frame {
     @NotNull
     Icon getIcon();
@@ -238,7 +252,8 @@ public class AnimatedIcon implements Icon {
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Icon icon = getUpdatedIcon();
-    requestRefresh(c);
+    CellRendererPane pane = UIUtil.getParentOfType(CellRendererPane.class, c);
+    requestRefresh(pane == null ? c : getRendererOwner(pane.getParent()));
     icon.paintIcon(c, g, x, y);
   }
 
@@ -258,5 +273,9 @@ public class AnimatedIcon implements Icon {
 
   protected void doRefresh(Component component) {
     if (component != null) component.repaint();
+  }
+
+  protected Component getRendererOwner(Component component) {
+    return UIUtil.isClientPropertyTrue(component, ANIMATION_IN_RENDERER_ALLOWED) ? component : null;
   }
 }

@@ -39,7 +39,7 @@ public class ErrorStripeUpdateManager {
     final EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
     markup.setErrorPanelPopupHandler(createPopup(file));
     markup.setErrorStripTooltipRendererProvider(createTooltipRenderer());
-    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
     setOrRefreshErrorStripeRenderer(markup, file);
   }
 

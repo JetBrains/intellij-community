@@ -57,6 +57,7 @@ public interface FoundationLibrary extends Library {
   ID objc_getMetaClass(String name);
 
   ID objc_msgSend(ID receiver, Pointer selector, Object... args);
+  double objc_msgSend_fpret(ID receiver, Pointer selector, Object... args); // the same as objc_msgSend but returns double
 
   boolean class_respondsToSelector(ID cls, Pointer selName);
   boolean class_addMethod(ID cls, Pointer selName, Callback imp, String types);

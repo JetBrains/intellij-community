@@ -84,4 +84,12 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
   public void testWhitespaceAfterColon() throws Exception {
     // do nothing
   }
+
+  public void testInsertArrayItemNested() throws Exception {
+    baseInsertTest("insertArrayItemNested", "test");
+  }
+
+  public void testInsertColonAfterPropName() throws Exception {
+    baseInsertTest("insertColonAfterPropName", "test");
+  }
 }

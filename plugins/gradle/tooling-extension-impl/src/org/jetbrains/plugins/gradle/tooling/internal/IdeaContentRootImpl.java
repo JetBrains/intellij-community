@@ -25,7 +25,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/13/13
  */
 public class IdeaContentRootImpl implements ExtIdeaContentRoot {
 

@@ -10,11 +10,11 @@ import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.extensions.ExtensionException
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
@@ -183,16 +183,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
     }
 
-    wasSingletonSpecifiedExplicitly = false
-    val singletonStr = element.getAttributeValue(SINGLETON)
-    if (singletonStr.isNullOrEmpty()) {
-      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
-    }
-    else {
-      wasSingletonSpecifiedExplicitly = true
-      configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
-    }
-
     _configuration = configuration
     uniqueId = null
 
@@ -207,6 +197,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
 
     deserializeConfigurationFrom(configuration, element)
+
+    // must be after deserializeConfigurationFrom
+    wasSingletonSpecifiedExplicitly = false
+    val singletonStr = element.getAttributeValue(SINGLETON)
+    if (singletonStr.isNullOrEmpty()) {
+      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
+    }
+    else {
+      wasSingletonSpecifiedExplicitly = true
+      configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
+    }
 
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
@@ -482,8 +483,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       try {
         return settings.getOrPut(runner) { createSettings(runner) }
       }
-      catch (ignored: AbstractMethodError) {
-        RunManagerImpl.LOG.error("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
+      catch (e: AbstractMethodError) {
+        RunManagerImpl.LOG.error(PluginManagerCore.createPluginException("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", e, runner.javaClass))
         return null
       }
     }

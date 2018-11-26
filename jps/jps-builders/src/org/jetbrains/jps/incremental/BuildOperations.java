@@ -45,7 +45,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since 30.10.2012
  */
 public class BuildOperations {
   private BuildOperations() { }

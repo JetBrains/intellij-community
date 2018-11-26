@@ -39,10 +39,11 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.beans.PropertyChangeListener;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Standard implementation of help context tooltip.
@@ -110,15 +111,6 @@ public class HelpTooltip {
 
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
 
-  private static final Set<String> REINIT_PROP_NAMES = new HashSet<>(Arrays.asList(
-    "HelpTooltip.fontSizeDelta",
-    "HelpTooltip.defaultTextBorderInsets",
-    "HelpTooltip.smallTextBorderInsets",
-    "HelpTooltip.verticalGap",
-    "HelpTooltip.horizontalGap",
-    "HelpTooltip.maxWidth"
-  ));
-
   private String title;
   private String shortcut;
   private String description;
@@ -135,8 +127,6 @@ public class HelpTooltip {
   private int myDismissDelay;
 
   private MouseAdapter myMouseListener;
-  private PropertyChangeListener myFontChangeListener;
-  private PropertyChangeListener myAncestorChangeListener;
 
   /**
    * Location of the HelpTooltip relatively to the owner component.
@@ -145,21 +135,21 @@ public class HelpTooltip {
     RIGHT {
       @Override public Point getPointFor(JComponent owner) {
         Dimension size = owner.getSize();
-        return new Point(size.width + JBUI.scale(5) - xOffset(), JBUI.scale(1) + yOffset());
+        return new Point(size.width + JBUI.scale(5) - X_OFFSET.get(), JBUI.scale(1) + Y_OFFSET.get());
       }
     },
 
     BOTTOM {
       @Override public Point getPointFor(JComponent owner) {
         Dimension size = owner.getSize();
-        return new Point(JBUI.scale(1) + xOffset(), JBUI.scale(5) + size.height - yOffset());
+        return new Point(JBUI.scale(1) + X_OFFSET.get(), JBUI.scale(5) + size.height - Y_OFFSET.get());
       }
     },
 
     HELP_BUTTON {
       @Override public Point getPointFor(JComponent owner) {
         Dimension size = owner.getSize();
-        return new Point(xOffset() - JBUI.scale(5), JBUI.scale(5) + size.height - yOffset());
+        return new Point(X_OFFSET.get() - JBUI.scale(5), JBUI.scale(5) + size.height - Y_OFFSET.get());
       }
     };
 
@@ -267,32 +257,13 @@ public class HelpTooltip {
 
     initPopupBuilder();
 
-    myFontChangeListener = evt -> {
-      if (REINIT_PROP_NAMES.contains(evt.getPropertyName())) {
-        initPopupBuilder();
-      }
-    };
-
-    myAncestorChangeListener = evt -> {
-      hidePopup(true);
-      JComponent source = (JComponent)evt.getSource();
-      uninstallMouseListeners(source);
-      if (evt.getNewValue() != null) {
-        installMouseListeners(source);
-      }
-    };
-
     component.putClientProperty(TOOLTIP_PROPERTY, this);
-    component.addPropertyChangeListener("ancestor", myAncestorChangeListener);
-    UIManager.getDefaults().addPropertyChangeListener(myFontChangeListener);
-
     installMouseListeners(component);
   }
 
   private void initPopupBuilder() {
     myPopupBuilder = JBPopupFactory.getInstance().
-      createComponentPopupBuilder(createTipPanel(), null).
-        setBorderColor(BORDER_COLOR).setShowShadow(false);
+        createComponentPopupBuilder(createTipPanel(), null).setBorderColor(BORDER_COLOR).setShowShadow(false);
   }
 
   private JPanel createTipPanel() {
@@ -310,7 +281,7 @@ public class HelpTooltip {
       }
     });
 
-    tipPanel.setLayout(new VerticalLayout(vgap()));
+    tipPanel.setLayout(new VerticalLayout(VGAP.get()));
     tipPanel.setBackground(BACKGROUND_COLOR);
 
     if (StringUtil.isNotEmpty(title)) {
@@ -364,12 +335,7 @@ public class HelpTooltip {
         instance.uninstallMouseListeners(component);
 
         component.putClientProperty(TOOLTIP_PROPERTY, null);
-        component.removePropertyChangeListener("ancestor", instance.myAncestorChangeListener);
         instance.masterPopup = null;
-
-        if (instance.myFontChangeListener != null) {
-          UIManager.getDefaults().removePropertyChangeListener(instance.myFontChangeListener);
-        }
       }
     }
   }
@@ -436,25 +402,12 @@ public class HelpTooltip {
     }
   }
 
-  private static int vgap() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.verticalGap"));
-  }
-
-  private static int hgap() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.horizontalGap"));
-  }
-
-  private static int maxWidth() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.maxWidth"));
-  }
-
-  private static int xOffset() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.xOffset"));
-  }
-
-  private static int yOffset() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.yOffset"));
-  }
+  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
+  private static final JBValue HGAP = new JBValue.UIInteger("HelpTooltip.horizontalGap", 10);
+  private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
+  private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
+  private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
+  private static final JBValue FONT_DELTA_SIZE = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
 
   private static Border textBorder(boolean isDefault) {
     Insets i = UIManager.getInsets(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
@@ -462,8 +415,7 @@ public class HelpTooltip {
   }
 
   private static Font modifyFont(Font font) {
-    int deltaSize = JBUI.scale(UIManager.getInt("HelpTooltip.fontSizeDelta"));
-    return font.deriveFont((float)font.getSize() + deltaSize);
+    return font.deriveFont((float)font.getSize() + FONT_DELTA_SIZE.get());
   }
 
   private class Header extends JPanel {
@@ -499,11 +451,11 @@ public class HelpTooltip {
       int titleWidth = UIUtilities.stringWidth(this, tfm, title);
 
       FontMetrics fm = getFontMetrics(font);
-      titleWidth += StringUtil.isNotEmpty(shortcut) ? hgap() + UIUtilities.stringWidth(this, fm, shortcut) : 0;
+      titleWidth += StringUtil.isNotEmpty(shortcut) ? HGAP.get() + UIUtilities.stringWidth(this, fm, shortcut) : 0;
 
       boolean limitWidth = StringUtil.isNotEmpty(description) || link != null;
-      isMultiline = limitWidth && (titleWidth > maxWidth());
-      setPreferredSize(isMultiline ? new Dimension(maxWidth(), tfm.getHeight() * 2) : new Dimension(titleWidth, fm.getHeight()));
+      isMultiline = limitWidth && (titleWidth > MAX_WIDTH.get());
+      setPreferredSize(isMultiline ? new Dimension(MAX_WIDTH.get(), tfm.getHeight() * 2) : new Dimension(titleWidth, fm.getHeight()));
     }
 
     @Override public void paintComponent(Graphics g) {
@@ -543,7 +495,7 @@ public class HelpTooltip {
 
         if (lineMeasurer.getPosition() < paragraphEnd) {
           if (shortcutString != null) {
-            breakWidth -= dotLayout.getAdvance() + hgap() + shortcutLayout.getAdvance();
+            breakWidth -= dotLayout.getAdvance() + HGAP.get() + shortcutLayout.getAdvance();
           }
 
           layout = lineMeasurer.nextLayout(breakWidth);
@@ -555,13 +507,13 @@ public class HelpTooltip {
             dotLayout.draw(g2, layout.getAdvance(), drawPosY);
 
             g2.setColor(SHORTCUT_COLOR);
-            shortcutLayout.draw(g2, layout.getAdvance() + dotLayout.getAdvance() + hgap(), drawPosY);
+            shortcutLayout.draw(g2, layout.getAdvance() + dotLayout.getAdvance() + HGAP.get(), drawPosY);
           }
         } else if (layout != null && shortcutString != null) {
           g2.setColor(SHORTCUT_COLOR);
-          if (Float.compare(getWidth() - layout.getAdvance(), shortcutLayout.getAdvance() + hgap()) >= 0) {
+          if (Float.compare(getWidth() - layout.getAdvance(), shortcutLayout.getAdvance() + HGAP.get()) >= 0) {
             drawPosY = shortcutLayout.getAscent();
-            shortcutLayout.draw(g2, layout.getAdvance() + hgap(), drawPosY);
+            shortcutLayout.draw(g2, layout.getAdvance() + HGAP.get(), drawPosY);
           } else {
             drawPosY += shortcutLayout.getAscent();
             shortcutLayout.draw(g2, 0, drawPosY);
@@ -584,12 +536,12 @@ public class HelpTooltip {
 
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
       float width = v.getPreferredSpan(View.X_AXIS);
-      isMultiline = isMultiline || width > maxWidth();
-      setText(width > maxWidth() ?
-              String.format("<html><div width=%d>%s</div></html>", maxWidth(), text) :
+      isMultiline = isMultiline || width > MAX_WIDTH.get();
+      setText(width > MAX_WIDTH.get() ?
+              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), text) :
               String.format("<html>%s</html>", text));
 
-      if (width > maxWidth()) {
+      if (width > MAX_WIDTH.get()) {
         v = (View)getClientProperty(BasicHTML.propertyKey);
         if (v != null) {
           width = 0.0f;

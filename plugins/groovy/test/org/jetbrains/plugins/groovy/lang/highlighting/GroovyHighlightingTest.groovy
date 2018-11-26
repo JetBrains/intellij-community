@@ -1387,7 +1387,6 @@ assert book.toString() == 'Other Title by Other Name'
   }
 
   void testArrayAccessForMapProperty() {
-
     testHighlighting('''\
 def bar() {
     return [list:[1, 2, 3]]
@@ -1395,8 +1394,8 @@ def bar() {
 
 def testConfig = bar()
 print testConfig.list[0]
-print testConfig.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
-''', true, false, false, GrUnresolvedAccessInspection)
+print <warning descr="Method call is ambiguous">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></warning>
+''', true, false, false, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
   void testGStringInjectionLFs() {

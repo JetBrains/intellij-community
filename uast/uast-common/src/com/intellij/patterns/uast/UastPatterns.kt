@@ -70,23 +70,31 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     receiverClassPattern.accepts(receiverClass)
   }
 
+  fun withUastParent(parentPattern: ElementPattern<out UElement>): Self = filter { it.uastParent?.let { parentPattern.accepts(it) } ?: false }
+
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
+
+private val constructorOrMethodCall = setOf(UastCallKind.CONSTRUCTOR_CALL, UastCallKind.METHOD_CALL)
 
 private fun isCallExpressionParameter(argumentExpression: UElement,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>): Boolean {
-  val call = argumentExpression.uastParent.getUCallExpression() as? UCallExpressionEx ?: return false
+  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) as? UCallExpressionEx ?: return false
+  if (call.kind !in constructorOrMethodCall) return false
   return call.getArgumentForParameter(parameterIndex) == argumentExpression && callPattern.accepts(call)
 }
 
 private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>): Boolean {
   val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
+  if (uBinaryExpression.operator != UastBinaryOperator.ASSIGN) return false
+
   val leftOperand = uBinaryExpression.leftOperand
 
   val uastReference = when (leftOperand) {
     is UQualifiedReferenceExpression -> leftOperand.selector
-    else -> leftOperand
+    is UReferenceExpression -> leftOperand
+    else -> return false
   }
   val references = uastReference.sourcePsi?.references ?: return false // via `sourcePsi` because of KT-27385
   return references.any { methodPattern.accepts(it.resolve()) }

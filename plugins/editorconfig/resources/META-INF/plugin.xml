@@ -33,23 +33,22 @@
     <fileTypeFactory implementation="org.editorconfig.language.filetype.EditorConfigFileTypeFactory"/>
     <colorSettingsPage implementation="org.editorconfig.language.highlighting.EditorConfigColorSettingsPage"/>
     <annotator
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.annotators.EditorConfigAnnotator"/>
     <enterHandlerDelegate implementation="org.editorconfig.language.codeinsight.actions.EnterInEditorConfigFileHandler"/>
     <vetoRenameCondition implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigVetoRenameCondition"/>
     <completion.contributor
-        language="editorconfig"
+        language="EditorConfig"
         id="EditorConfigCompletionContributor"
         order="last"
         implementationClass="org.editorconfig.language.codeinsight.completion.EditorConfigCompletionContributor"/>
-    <codeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigLanguageCodeStyleSettingsProvider"/>
     <statementUpDownMover implementation="org.editorconfig.language.codeinsight.actions.EditorConfigStatementUpDownMover"/>
     <moveLeftRightHandler
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.actions.EditorConfigMoveElementLeftRightHandler"/>
     <spellchecker.support
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.spellchecker.EditorConfigSpellcheckerStrategy"/>
     <typedHandler implementation="org.editorconfig.language.codeinsight.actions.EditorConfigTypedHandlerDelegate"/>
     <findUsagesHandlerFactory implementation="org.editorconfig.language.codeinsight.findusages.EditorConfigFindUsagesHandlerFactory"/>
@@ -61,7 +60,6 @@
     <editorNotificationProvider implementation="org.editorconfig.language.messages.EditorConfigWrongFileEncodingNotificationProvider"/>
     <fileBasedIndex implementation="org.editorconfig.language.index.EditorConfigIdentifierIndex"/>
     <gotoSymbolContributor implementation="org.editorconfig.language.codeinsight.findusages.EditorConfigGoToSymbolContributor"/>
-    <statusBarWidgetProvider implementation="org.editorconfig.language.widget.EditorConfigStatusBarWidgetProvider"/>
     <gotoTargetRendererProvider
         implementation="org.editorconfig.language.codeinsight.actions.navigation.EditorConfigGotoTargetRendererProvider"/>
     <definitionsScopedSearch
@@ -69,17 +67,17 @@
     <definitionsScopedSearch
         implementation="org.editorconfig.language.codeinsight.actions.navigation.EditorConfigFlatOptionKeyImplementationSearch"/>
     <targetElementEvaluator
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
 
     <!-- Inspections -->
     <lang.inspectionSuppressor
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.suppression.EditorConfigInspectionSuppressor"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigDeprecatedDescriptor"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.element.deprecated.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -88,18 +86,18 @@
 
     <!-- Root declaration inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigRootDeclarationUniqueness"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.root-declaration.uniqueness.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="ERROR"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigRootDeclarationUniquenessInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigRootDeclarationCorrectness"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.root-declaration.correctness.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -108,9 +106,9 @@
 
     <!-- Section inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigEmptySection"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.section.emptiness.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -119,74 +117,82 @@
 
     <!-- Header inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigHeaderUniqueness"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.section.uniqueness.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigHeaderUniquenessInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigPatternEnumerationRedundancy"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.pattern-enumeration.redundant.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="ERROR"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPatternEnumerationRedundancyInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigSpaceInHeader"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.space.in.header.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigSpaceInHeaderInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigNoMatchingFiles"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.no-matching-files.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigNoMatchingFilesInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigNumerousWildcards"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.header.many.wildcards.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigNumerousWildcardsInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigEmptyHeader"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.header.empty.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="ERROR"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigEmptyHeaderInspection"/>
+    <localInspection
+        language="EditorConfig"
+        shortName="EditorConfigPartialOverride"
+        bundle="messages.EditorConfigBundle"
+        key="inspection.header.partially.overridden.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPartialOverrideInspection"/>
 
     <!-- Pattern inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigPatternRedundancy"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.pattern.redundant.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPatternRedundancyInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigWildcardRedundancy"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.pattern.double-asterisk-sibling.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -195,18 +201,18 @@
 
     <!-- Charclass inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigCharClassLetterRedundancy"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.charclass.duplicate.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigCharClassLetterRedundancyInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigCharClassRedundancy"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.charclass.redundant.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -215,94 +221,58 @@
 
     <!-- Option inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigShadowedOption"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.option.shadowed.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigShadowedOptionInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigShadowingOption"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.option.shadowing.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigShadowingOptionInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigOptionRedundancy"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.option.redundant.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigOptionRedundancyInspection"/>
-    <localInspection
-        language="editorconfig"
-        shortName="EditorConfigSuspiciousLineBreak"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
-        key="inspection.option.suspicious.line.break.name"
-        groupKey="editorconfig.inspection.group"
-        enabledByDefault="true"
-        level="ERROR"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigSuspiciousLineBreakInspection"/>
 
     <!-- Key inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigKeyCorrectness"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.key.correctness.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigKeyCorrectnessInspection"/>
-    <localInspection
-        language="editorconfig"
-        shortName="EditorConfigDanglingKey"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
-        key="inspection.key.dangling.name"
-        groupKey="editorconfig.inspection.group"
-        enabledByDefault="true"
-        level="ERROR"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDanglingKeyInspection"/>
-    <localInspection
-        language="editorconfig"
-        shortName="EditorConfigDanglingDot"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
-        key="inspection.key.dangling-dot.name"
-        groupKey="editorconfig.inspection.group"
-        enabledByDefault="true"
-        level="ERROR"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDanglingDotInspection"/>
-    <localInspection
-        language="editorconfig"
-        shortName="EditorConfigMultipleDots"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
-        key="inspection.key.multiple-dots.name"
-        groupKey="editorconfig.inspection.group"
-        enabledByDefault="true"
-        level="ERROR"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigMultipleDotsInspection"/>
 
     <!-- Value inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigValueCorrectness"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.value.correctness.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="ERROR"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigValueCorrectnessInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigValueUniqueness"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.value.uniqueness.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -311,9 +281,9 @@
 
     <!-- Reference inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigReferenceCorrectness"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.reference.correctness.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -322,18 +292,18 @@
 
     <!-- Declaration inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigUnusedDeclaration"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.declaration.unused.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigUnusedDeclarationInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigMissingRequiredDeclaration"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.declaration.missing.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -342,18 +312,18 @@
 
     <!-- Values list inspections -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigListAcceptability"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.value.list.acceptability.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
         level="ERROR"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigListAcceptabilityInspection"/>
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigUnexpectedComma"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.value.list.comma.unexpected.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -362,9 +332,9 @@
 
     <!-- Values pair inspection -->
     <localInspection
-        language="editorconfig"
+        language="EditorConfig"
         shortName="EditorConfigPairAcceptability"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        bundle="messages.EditorConfigBundle"
         key="inspection.value.pair.acceptability.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
@@ -396,25 +366,25 @@
 
   <extensions defaultExtensionNs="com.intellij.lang">
     <syntaxHighlighterFactory
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighterFactory"/>
     <parserDefinition
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.parser.EditorConfigParserDefinition"/>
     <braceMatcher
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.EditorConfigBraceMatcher"/>
     <commenter
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.EditorConfigCommenter"/>
     <foldingBuilder
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.EditorConfigFoldingBuilder"/>
     <formatter
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.formatting.EditorConfigFormattingModelBuilder"/>
     <psiStructureViewFactory
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.structureview.EditorConfigStructureViewFactory"/>
     <elementManipulator
         forClass="org.editorconfig.language.psi.EditorConfigHeader"
@@ -423,38 +393,32 @@
         forClass="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
         implementationClass="org.editorconfig.language.psi.EditorConfigSilentElementManipulator"/>
     <findUsagesProvider
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.findusages.EditorConfigFindUsagesProvider"/>
     <documentationProvider
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.documentation.EditorConfigDocumentationProvider"/>
     <tokenSeparatorGenerator
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.psi.EditorConfigTokenSeparatorGenerator"/>
   </extensions>
 
 
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <lineMarkerProvider
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverridingKeyLineMarkerProvider"/>
     <lineMarkerProvider
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverriddenKeyLineMarkerProvider"/>
     <lineMarkerProvider
-        language="editorconfig"
-        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigPartiallyOverridingHeaderFinder"/>
+        language="EditorConfig"
+        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverridingHeaderLineMarkerProvider"/>
     <lineMarkerProvider
-        language="editorconfig"
-        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigPartiallyOverriddenHeaderFinder"/>
-    <lineMarkerProvider
-        language="editorconfig"
-        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverridingHeaderFinder"/>
-    <lineMarkerProvider
-        language="editorconfig"
-        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverriddenHeaderFinder"/>
+        language="EditorConfig"
+        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverriddenHeaderLineMarkerProvider"/>
     <gotoSuper
-        language="editorconfig"
+        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.actions.navigation.EditorConfigGotoSuperHandler"/>
   </extensions>
 

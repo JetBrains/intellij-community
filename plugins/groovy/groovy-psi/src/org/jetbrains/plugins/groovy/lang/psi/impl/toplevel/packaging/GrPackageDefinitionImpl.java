@@ -33,6 +33,7 @@ public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefiniti
     visitor.visitPackageDefinition(this);
   }
 
+  @Override
   public String toString() {
     return "Package definition";
   }

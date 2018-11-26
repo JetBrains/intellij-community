@@ -21,27 +21,27 @@ class MavenRepositoriesDataService: AbstractProjectDataService<MavenRepositoryDa
                                modelsProvider: IdeModelsProvider) {
 
     projectData?.apply {
-      GradleSettings
-        .getInstance(project)
-        .linkedProjectsSettings
-        .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
-        ?.let {
-          if (!it.isResolveExternalAnnotations) {
-            return@onSuccessImport
-          }
-        }
-    }
+      val importRepositories =
+        GradleSettings
+          .getInstance(project)
+          .linkedProjectsSettings
+          .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
+          ?.isResolveExternalAnnotations ?: false
 
+      if (!importRepositories) {
+        return
+      }
+    }
 
     val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
 
-    val repositories = linkedSetOf<RemoteRepositoryDescription>().apply {
-      addAll(repositoriesConfiguration.repositories)
+    val urlToConfig = repositoriesConfiguration.repositories.groupBy { it.url }.toMutableMap()
+
+    imported.forEach {
+      urlToConfig.putIfAbsent(it.data.url, listOf(RemoteRepositoryDescription(it.data.name, it.data.name, it.data.url)))
     }
 
-    imported.mapTo(repositories) { RemoteRepositoryDescription(it.data.name, it.data.name, it.data.url) }
-
-    repositoriesConfiguration.repositories = repositories.toList()
+    repositoriesConfiguration.repositories = urlToConfig.values.flatten()
 
     super.onSuccessImport(imported, projectData, project, modelsProvider)
   }

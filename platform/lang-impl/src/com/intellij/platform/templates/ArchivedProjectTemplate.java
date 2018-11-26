@@ -126,7 +126,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
       });
   }
 
-  static <T> T consumeZipStream(@NotNull StreamProcessor<T> consumer, @NotNull ZipInputStream stream) throws IOException {
+  protected static <T> T consumeZipStream(@NotNull StreamProcessor<T> consumer, @NotNull ZipInputStream stream) throws IOException {
     try {
       return consumer.consume(stream);
     }

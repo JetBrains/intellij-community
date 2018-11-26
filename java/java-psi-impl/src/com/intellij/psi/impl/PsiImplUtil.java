@@ -37,7 +37,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -630,6 +632,68 @@ public class PsiImplUtil {
         }
       }
     }
+  }
+
+  @Contract("null -> false")
+  public static boolean isPlainReference(@Nullable PsiExpression expression) {
+    return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).getQualifierExpression() == null;
+  }
+
+  @Nullable
+  public static PsiLoopStatement findEnclosingLoop(@NotNull PsiElement start) {
+    for (PsiElement e = start; !isCodeBoundary(e); e = e.getParent()) {
+      if (e instanceof PsiLoopStatement) return (PsiLoopStatement)e;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement findEnclosingSwitchOrLoop(@NotNull PsiElement start) {
+    for (PsiElement e = start; !isCodeBoundary(e); e = e.getParent()) {
+      if (e instanceof PsiSwitchBlock || e instanceof PsiLoopStatement) return e;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiLabeledStatement findEnclosingLabeledStatement(@NotNull PsiElement start, @NotNull String label) {
+    for (PsiElement e = start; !isCodeBoundary(e); e = e.getParent()) {
+      if (e instanceof PsiLabeledStatement && label.equals(((PsiLabeledStatement)e).getName())) return (PsiLabeledStatement)e;
+    }
+    return null;
+  }
+
+  @NotNull
+  public static List<String> findAllEnclosingLabels(@NotNull PsiElement start) {
+    List<String> result = new SmartList<>();
+    for (PsiElement context = start; !isCodeBoundary(context); context = context.getContext()) {
+      if (context instanceof PsiLabeledStatement) {
+        result.add(((PsiLabeledStatement)context).getName());
+      }
+    }
+    return result;
+  }
+
+  private static boolean isCodeBoundary(@Nullable PsiElement e) {
+    return e == null || e instanceof PsiMethod || e instanceof PsiClassInitializer || e instanceof PsiLambdaExpression;
+  }
+
+  /**
+   * Returns enclosing label statement for given label expression
+   *
+   * @param expression switch label expression
+   * @return enclosing label statement or null if given expression is not a label statement expression
+   */
+  @Nullable
+  public static PsiSwitchLabelStatementBase getSwitchLabel(@NotNull PsiExpression expression) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiExpressionList) {
+      PsiElement grand = parent.getParent();
+      if (grand instanceof PsiSwitchLabelStatementBase) {
+        return (PsiSwitchLabelStatementBase)grand;
+      }
+    }
+    return null;
   }
 
   public static boolean isLeafElementOfType(@Nullable PsiElement element, @NotNull IElementType type) {

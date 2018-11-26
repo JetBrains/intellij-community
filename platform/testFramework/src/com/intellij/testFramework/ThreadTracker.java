@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -12,9 +13,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +25,8 @@ import org.junit.Assert;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  */
 public class ThreadTracker {
   private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
-  private final Collection<Thread> before;
+  private final Map<String, Thread> before;
   private final boolean myDefaultProjectInitialized;
 
   @TestOnly
@@ -47,10 +48,10 @@ public class ThreadTracker {
     myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
   }
 
-  private static final Method getThreads = ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads");
+  private static final Method getThreads = ObjectUtils.notNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
 
   @NotNull
-  public static Collection<Thread> getThreads() {
+  public static Map<String, Thread> getThreads() {
     Thread[] threads;
     try {
       // faster than Thread.getAllStackTraces().keySet()
@@ -59,7 +60,7 @@ public class ThreadTracker {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    return ContainerUtilRt.newArrayList(threads);
+    return ContainerUtil.newMapFromValues(ContainerUtil.iterate(threads), Thread::getName);
   }
 
   private static final Set<String> wellKnownOffenders = new THashSet<>();
@@ -133,33 +134,40 @@ public class ThreadTracker {
     try {
       if (myDefaultProjectInitialized != ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) return;
 
-      Collection<Thread> after = new THashSet<>(getThreads());
-      after.removeAll(before);
+      // compare threads by name because BoundedTaskExecutor reuses application thread pool for different bounded pools, leaks of which we want to find
+      Map<String, Thread> after = getThreads();
+      after.keySet().removeAll(before.keySet());
 
-      for (final Thread thread : after) {
+      for (final Thread thread : after.values()) {
         if (thread == Thread.currentThread()) continue;
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
-        if (isWellKnownOffender(thread)) continue;
-
         if (!thread.isAlive()) continue;
-        if (thread.getStackTrace().length == 0
+        StackTraceElement[] stackTrace = thread.getStackTrace();
+        if (shouldIgnore(thread, stackTrace)) continue;
+
+        if (stackTrace.length == 0
             // give thread a chance to run up to the completion
             || thread.getState() == Thread.State.RUNNABLE) {
           thread.interrupt();
           long start = System.currentTimeMillis();
-          while (thread.isAlive() && System.currentTimeMillis() < start + 10000) {
+          if (thread.isAlive()) {
+            System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
+          }
+          while (System.currentTimeMillis() < start + 5_000) {
             UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
+            // afters some time the submitted task can finish and the thread become idle pool
+            if (shouldIgnore(thread, thread.getStackTrace())) break;
+          }
+          long elapsed = System.currentTimeMillis() - start;
+          if (elapsed > 1_000) {
+            System.err.println("waited for " + thread + " for " + elapsed+"ms");
           }
         }
-        StackTraceElement[] stackTrace = thread.getStackTrace();
-        if (stackTrace.length == 0) {
-          continue; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
-        }
 
-        if (isWellKnownOffender(thread)) continue; // check once more because the thread name may be set via race
-        if (isIdleApplicationPoolThread(thread, stackTrace)) continue;
-        if (isIdleCommonPoolThread(thread, stackTrace)) continue;
+        // check once more because the thread name may be set via race
+        stackTrace = thread.getStackTrace();
+        if (shouldIgnore(thread, stackTrace)) continue;
 
         String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
         Assert.fail(trace);
@@ -168,6 +176,17 @@ public class ThreadTracker {
     finally {
       before.clear();
     }
+  }
+
+  private static boolean shouldIgnore(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+    if (!thread.isAlive()) return true;
+    if (isWellKnownOffender(thread)) return true;
+
+    if (stackTrace.length == 0) {
+      return true; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
+    }
+    if (isIdleApplicationPoolThread(thread, stackTrace)) return true;
+    return isIdleCommonPoolThread(thread, stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull Thread thread) {
@@ -203,7 +222,7 @@ public class ThreadTracker {
                                                                   @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
-      Thread jdiThread = ContainerUtil.find(getThreads(), thread -> {
+      Thread jdiThread = ContainerUtil.find(getThreads().values(), thread -> {
         ThreadGroup group = thread.getThreadGroup();
         return group != null && group.getParent() != null && grandThreadGroup.equals(group.getParent().getName());
       });

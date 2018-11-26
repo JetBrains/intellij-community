@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.service.fus;
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,8 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
     if (approvedGroupsServiceUrl == null) {
       return Collections.emptySet();
     }
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl));
+    final BuildNumber build = ApplicationInfo.getInstance().getBuild();
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl), toReportedBuild(build));
   }
 
   @Nullable
@@ -51,5 +53,14 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
   @NotNull
   public String getProductRelatedUrl(@NotNull  String approvedGroupsServiceUrl) {
     return approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+  }
+
+  @NotNull
+  private static BuildNumber toReportedBuild(@NotNull BuildNumber build) {
+    if (build.isSnapshot()) {
+      final String buildString = build.asStringWithoutProductCodeAndSnapshot();
+      return BuildNumber.fromString(buildString.endsWith(".") ? buildString + "0" : buildString);
+    }
+    return build;
   }
 }

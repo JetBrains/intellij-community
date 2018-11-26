@@ -21,7 +21,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 19.12.2012
  */
 public interface RichTextHandler {
   String getMarker();

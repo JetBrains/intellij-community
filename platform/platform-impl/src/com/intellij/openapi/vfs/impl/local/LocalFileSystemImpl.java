@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -364,6 +363,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
         (request.isToWatchRecursively() ? recursiveRoots : flatRoots).add(request.myFSRootPath);
       }
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Setting up file watcher. Recursive roots: " + recursiveRoots.size() + ", flat roots: " + flatRoots.size());
+      }
+      
       myWatcher.setWatchRoots(recursiveRoots, flatRoots);
     }
   }

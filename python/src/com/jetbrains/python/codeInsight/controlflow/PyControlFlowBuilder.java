@@ -474,7 +474,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     boolean isStaticallyTrue = false;
     if (condition != null) {
       condition.accept(this);
-      isStaticallyTrue = PyEvaluator.evaluateAsBooleanNoResolve(condition, false);
+      isStaticallyTrue = loopHasAtLeastOneIteration(node);
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
@@ -509,7 +509,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
-    if (elsePart == null && !PyEvaluator.evaluateAsBooleanNoResolve(source, false)) {
+    if (elsePart == null && !loopHasAtLeastOneIteration(node)) {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     final PyStatementList list = forPart.getStatementList();
@@ -544,6 +544,16 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.flowAbrupted();
   }
 
+  private static boolean loopHasAtLeastOneIteration(@NotNull PyLoopStatement loopStatement) {
+    final PyExpression expression = loopStatement instanceof PyForStatement
+                                    ? ((PyForStatement)loopStatement).getForPart().getSource()
+                                    : loopStatement instanceof PyWhileStatement
+                                      ? ((PyWhileStatement)loopStatement).getWhilePart().getCondition()
+                                      : null;
+
+    return PyEvaluator.evaluateAsBooleanNoResolve(expression, false);
+  }
+
   @Override
   public void visitPyBreakStatement(final PyBreakStatement node) {
     myBuilder.startNode(node);
@@ -568,6 +578,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
       else {
         myBuilder.addPendingEdge(null, null);
+      }
+
+      // There is no edge between loop statement and next after loop instruction
+      // when loop has at least one iteration
+      // so `continue` is marked as one more last instruction in the loop
+      // see visitPyWhileStatement
+      // see visitPyForStatement
+      if (loopHasAtLeastOneIteration(loop)) {
+        myBuilder.addPendingEdge(loop, myBuilder.prevInstruction);
       }
     }
     myBuilder.flowAbrupted();

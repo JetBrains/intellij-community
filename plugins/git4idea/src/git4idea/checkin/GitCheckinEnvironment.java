@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -80,14 +81,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.util.text.StringUtil.escapeXml;
+import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -409,10 +409,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitIndexUtil.StagedFile stagedFile = getStagedFile(repository, change);
       boolean isExecutable = stagedFile != null && stagedFile.isExecutable();
 
-      Pair.NonNull<Charset, byte[]> fileContent =
-        LoadTextUtil.charsetForWriting(repository.getProject(), file, helper.getContent(), file.getCharset());
+      byte[] fileContent = convertDocumentContentToBytes(repository, helper.getContent(), file);
 
-      GitIndexUtil.write(repository, path, fileContent.second, isExecutable);
+      GitIndexUtil.write(repository, path, fileContent, isExecutable);
     }
 
 
@@ -428,6 +427,23 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     });
 
     return Pair.create(callback, partialChanges);
+  }
+
+  @NotNull
+  private static byte[] convertDocumentContentToBytes(@NotNull GitRepository repository,
+                                                      @NotNull String documentContent,
+                                                      @NotNull VirtualFile file) {
+    String text;
+
+    String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, repository.getProject());
+    if (lineSeparator.equals("\n")) {
+      text = documentContent;
+    }
+    else {
+      text = StringUtil.convertLineSeparators(documentContent, lineSeparator);
+    }
+
+    return LoadTextUtil.charsetForWriting(repository.getProject(), file, text, file.getCharset()).second;
   }
 
   @Nullable
@@ -1186,7 +1202,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @NotNull
     private String getToolTip(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       VcsUser user = getFirstItem(mapNotNull(panel.getRoots(), it -> GitUserRegistry.getInstance(project).getUser(it)));
-      String signature = user != null ? escapeXml(VcsUserUtil.toExactString(user)) : "";
+      String signature = user != null ? escapeXmlEntities(VcsUserUtil.toExactString(user)) : "";
       return "<html>Adds the following line at the end of the commit message:<br/>" +
              "Signed-off by: " + signature + "</html>";
     }

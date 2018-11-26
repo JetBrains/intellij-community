@@ -28,7 +28,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Denis Zhdanov
- * @since 4/30/13 11:42 PM
  */
 public class GradleConfigurable extends AbstractExternalSystemConfigurable<GradleProjectSettings, GradleSettingsListener, GradleSettings> {
 

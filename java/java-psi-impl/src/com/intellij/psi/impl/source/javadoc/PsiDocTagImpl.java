@@ -113,6 +113,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     }
   }
 
+  @Override
   public String toString() {
     return "PsiDocTag:" + getNameElement().getText();
   }

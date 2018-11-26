@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Pavel.Dolgov
  */
 class NoSideEffectExpressionEquivalenceChecker extends EquivalenceChecker {
+
   @Override
   protected Match assignmentExpressionsMatch(@NotNull PsiAssignmentExpression assignmentExpression1,
                                              @NotNull PsiAssignmentExpression assignmentExpression2) {

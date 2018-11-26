@@ -239,8 +239,6 @@ public class AnnotationUtil {
   }
 
   private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, @Flags int flags, @Nullable Set<? super PsiMember> processed) {
-    if (!listOwner.isValid()) return false;
-
     PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) return false;
 

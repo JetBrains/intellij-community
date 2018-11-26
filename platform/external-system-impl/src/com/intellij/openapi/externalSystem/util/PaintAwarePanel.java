@@ -23,7 +23,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 4/30/13 10:17 PM
  */
 public class PaintAwarePanel extends JPanel {
 

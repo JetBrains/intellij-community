@@ -345,7 +345,7 @@ abstract class FunctionHelper {
 
     @Override
     void registerReusedElements(Consumer<? super PsiElement> consumer) {
-      consumer.accept(myMethodRef);
+      consumer.accept(myMethodRef.getQualifier());
     }
 
     @Override

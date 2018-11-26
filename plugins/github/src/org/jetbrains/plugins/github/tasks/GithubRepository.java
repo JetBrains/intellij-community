@@ -23,7 +23,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubIssue;
 import org.jetbrains.plugins.github.api.data.GithubIssueBase;
-import org.jetbrains.plugins.github.api.data.GithubIssueComment;
+import org.jetbrains.plugins.github.api.data.GithubIssueCommentWithHtml;
 import org.jetbrains.plugins.github.api.data.GithubIssueState;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
@@ -156,7 +156,7 @@ public class GithubRepository extends BaseRepositoryImpl {
     List<Task> tasks = new ArrayList<>();
 
     for (GithubIssueBase issue : issues) {
-      List<GithubIssueComment> comments = GithubApiPagesLoader
+      List<GithubIssueCommentWithHtml> comments = GithubApiPagesLoader
         .loadAll(executor, indicator, GithubApiRequests.Repos.Issues.Comments.pages(issue.getCommentsUrl()));
       tasks.add(createTask(issue, comments));
     }
@@ -165,7 +165,7 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private Task createTask(@NotNull GithubIssueBase issue, @NotNull List<GithubIssueComment> comments) {
+  private Task createTask(@NotNull GithubIssueBase issue, @NotNull List<GithubIssueCommentWithHtml> comments) {
     return new Task() {
       @NotNull private final String myRepoName = getRepoName();
       @NotNull private final Comment[] myComments =
@@ -267,7 +267,7 @@ public class GithubRepository extends BaseRepositoryImpl {
     GithubIssue issue = executor.execute(indicator,
                                          GithubApiRequests.Repos.Issues.get(getServer(), getRepoAuthor(), getRepoName(), numericId));
     if (issue == null) return null;
-    List<GithubIssueComment> comments = GithubApiPagesLoader
+    List<GithubIssueCommentWithHtml> comments = GithubApiPagesLoader
       .loadAll(executor, indicator, GithubApiRequests.Repos.Issues.Comments.pages(issue.getCommentsUrl()));
     return createTask(issue, comments);
   }

@@ -56,7 +56,7 @@ public class JavaMembersGetter extends MembersGetter {
       addConstantsFromReferencedClassesInSwitch(results);
     }
 
-    if (myPlace.getParent().getParent() instanceof PsiSwitchLabelStatement) {
+    if (JavaCompletionContributor.IN_SWITCH_LABEL.accepts(myPlace)) {
       return; //non-enum values are processed above, enum values will be suggested by reference completion
     }
 

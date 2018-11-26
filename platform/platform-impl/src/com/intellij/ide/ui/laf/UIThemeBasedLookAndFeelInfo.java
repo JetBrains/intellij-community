@@ -4,15 +4,21 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.util.SVGLoader;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
 
@@ -65,28 +71,40 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   }
 
   private void installBackgroundImage() {
-    Map<String, Object> background = myTheme.getBackground();
-    if (background != null) {
-      Object path = background.get("image");
-      if (path instanceof String) {
-        URL resource = myTheme.getProviderClassLoader().getResource((String)path);
-        if (resource != null) {
-          String image = resource.getPath();
-          Object transparency = background.get("transparency");
-          String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
-          String fill = parseEnumValue(background.get("fill"), IdeBackgroundUtil.Fill.SCALE);
-          String anchor = parseEnumValue(background.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
+    try {
+      Map<String, Object> background = myTheme.getBackground();
+      if (background != null) {
+        Object path = background.get("image");
+        if (path instanceof String) {
+          File tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.toString().substring(((String)path).lastIndexOf(".")), true);
+          URL resource = myTheme.getProviderClassLoader().getResource((String)path);
+          if (resource != null) {
+            try (InputStream input = myTheme.getProviderClassLoader().getResourceAsStream((String)path)) {
+              try (FileOutputStream output = new FileOutputStream(tmpImage)) {
+                FileUtil.copy(input, output);
+              }
+            }
 
-          String spec = StringUtil.join(new String[]{image, alpha, fill, anchor}, ",");
-          String currentSpec = PropertiesComponent.getInstance().getValue(IdeBackgroundUtil.EDITOR_PROP);
-          PropertiesComponent.getInstance().setValue("old." + IdeBackgroundUtil.EDITOR_PROP, currentSpec);
+            String image = tmpImage.getPath();
+            Object transparency = background.get("transparency");
+            String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
+            String fill = parseEnumValue(background.get("fill"), IdeBackgroundUtil.Fill.SCALE);
+            String anchor = parseEnumValue(background.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
 
-          PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, spec);
-          IdeBackgroundUtil.repaintAllWindows();
-        } else {
-          throw new IllegalArgumentException("Can't load background: " + path);
+            String spec = StringUtil.join(new String[]{image, alpha, fill, anchor}, ",");
+            String currentSpec = PropertiesComponent.getInstance().getValue(IdeBackgroundUtil.EDITOR_PROP);
+            PropertiesComponent.getInstance().setValue("old." + IdeBackgroundUtil.EDITOR_PROP, currentSpec);
+
+            PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, spec);
+            IdeBackgroundUtil.repaintAllWindows();
+          } else {
+            throw new IllegalArgumentException("Can't load background: " + path);
+          }
         }
       }
+    }
+    catch (IOException boom) {
+      Logger.getInstance(getClass()).error(boom);
     }
   }
 

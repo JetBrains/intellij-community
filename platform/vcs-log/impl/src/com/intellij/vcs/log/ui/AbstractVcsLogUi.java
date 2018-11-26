@@ -49,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 
 public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
@@ -64,7 +63,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull protected final VcsLog myLog;
   @NotNull protected final VisiblePackRefresher myRefresher;
 
-  @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
+  @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
 
   @NotNull protected VisiblePack myVisiblePack;
@@ -262,9 +261,8 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   protected void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Collection<VcsLogListener> logListeners = new ArrayList<>(myLogListeners);
 
-    for (VcsLogListener listener : logListeners) {
+    for (VcsLogListener listener : myLogListeners) {
       listener.onChange(visiblePack, refresh);
     }
   }

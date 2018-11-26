@@ -38,6 +38,10 @@
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
                     serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"
+                        serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.ProjectConfigurationFilesProcessor"
+                    serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesProcessorImpl"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 
@@ -131,7 +135,9 @@
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectImporterCheckoutListener"/>
 
-    <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="last"/>
+    <ignoredFileProvider id="VCS.DefaultIgnoredFileProvider" implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="first"/>
+    <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ProjectExcludesIgnoredFileProvider" order="after VCS.DefaultIgnoredFileProvider"/>
+    <nonProjectFileWritingAccessExtension implementation="com.intellij.openapi.vcs.changes.IgnoredFileWritingAccessExtension"/>
   </extensions>
 </idea-plugin>
 

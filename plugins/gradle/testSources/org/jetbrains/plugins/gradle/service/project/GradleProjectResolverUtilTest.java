@@ -33,7 +33,6 @@ import static org.mockito.Mockito.when;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/2017
  */
 public class GradleProjectResolverUtilTest {
 

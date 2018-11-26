@@ -17,12 +17,9 @@
 package com.jetbrains.completion.feature.impl
 
 
-class CompletionFactors(proximity: Set<String>, relevance: Set<String>) {
+class CompletionFactors(allFactors: Set<String>) {
 
-    private val knownFactors: Set<String> = HashSet<String>().apply {
-        addAll(proximity.map { "prox_$it" })
-        addAll(relevance)
-    }
+    private val knownFactors: Set<String> = HashSet(allFactors)
 
     fun unknownFactors(factors: Set<String>): List<String> {
         var result: MutableList<String>? = null

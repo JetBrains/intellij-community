@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 11/13/12 7:25 PM
  */
 public class ArrangementGroupingRulesPanel extends JPanel implements DataProvider {
 

@@ -166,7 +166,7 @@ public abstract class RunAnythingGroup {
    * @param pattern             input search string
    * @param cancellationChecker runnable that should throw a {@code ProcessCancelledException} if 'load more' process was cancelled
    */
-  public final synchronized void collectItems(DataContext dataContext,
+  public final synchronized void collectItems(@NotNull DataContext dataContext,
                                               @NotNull DefaultListModel model,
                                               @NotNull String pattern,
                                               @NotNull Runnable cancellationChecker) {

@@ -199,10 +199,10 @@ class CustomMethodHandlers {
 
   private static DfaValue ofNullable(DfaValue argument, DfaMemoryState state, DfaValueFactory factory) {
     if (state.isNull(argument)) {
-      return factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false);
+      return DfaOptionalSupport.getOptionalValue(factory, false);
     }
     if (state.isNotNull(argument)) {
-      return factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
+      return DfaOptionalSupport.getOptionalValue(factory, true);
     }
     return null;
   }

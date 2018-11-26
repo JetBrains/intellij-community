@@ -40,7 +40,7 @@ open class ChangesModuleGroupingPolicy(val myProject: Project, val myModel: Defa
     val parent = GRAND_PARENT_CANDIDATE.get(subtreeRoot) ?: if (policy != null && !isTopLevel(nodePath)) policy.getParentNodeInternal(
       nodePath, subtreeRoot)
     else HIERARCHY_UPPER_BOUND.getRequired(subtreeRoot)
-    val node = if (module == null) ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG) else ChangesBrowserModuleNode(module)
+    val node = if (module == null) ChangesBrowserNode.createObject(PROJECT_ROOT_TAG) else ChangesBrowserModuleNode(module)
 
     myModel.insertNodeInto(node, parent, parent.childCount)
     MODULE_CACHE.getValue(cachingRoot)[module] = node

@@ -496,7 +496,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Returns the element which should be used as the parent of this element in a tree up
    * walk during a resolve operation. For most elements, this returns {@code getParent()},
    * but the context can be overridden for some elements like code fragments (see
-   * {@link PsiElementFactory#createCodeBlockCodeFragment(String, PsiElement, boolean)}).
+   * {@link JavaCodeFragmentFactory#createCodeBlockCodeFragment(String, PsiElement, boolean)}).
    *
    * @return the resolve context element.
    */
@@ -546,6 +546,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * toString() should never be presented to the user.
    */
+  @Override
   @NonNls
   @Contract(pure=true)
   String toString();

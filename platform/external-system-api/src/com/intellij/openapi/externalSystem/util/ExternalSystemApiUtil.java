@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -54,7 +54,6 @@ import static com.intellij.util.PlatformUtils.*;
 
 /**
  * @author Denis Zhdanov
- * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemApiUtil {
 
@@ -163,7 +162,7 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
-    if (file.getFileType() == FileTypes.ARCHIVE) {
+    if (file.getFileType() == ArchiveFileType.INSTANCE) {
       final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
       if (jar != null) {
         return jar.getPath();

@@ -14,10 +14,10 @@ import java.nio.charset.StandardCharsets
 
 // this test requires YamlJsonSchemaCompletionContributor, that's why intellij.yaml is added as test dependency
 internal class ConfigurationSchemaTest : CompletionTestCase() {
-  companion object {
-    private val schemaFile by lazy {
-      LightVirtualFile("scheme.json", JsonFileType.INSTANCE, generateConfigurationSchema(), StandardCharsets.UTF_8, 0)
-    }
+  private var schemaFile: LightVirtualFile? = null
+  override fun setUp() {
+    super.setUp()
+    schemaFile = LightVirtualFile("scheme.json", JsonFileType.INSTANCE, generateConfigurationSchema(), StandardCharsets.UTF_8, 0)
   }
 
   fun `test map and description`() {
@@ -28,7 +28,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     """.trimIndent())
 
     checkDescription(variants, "env", "Environment variables")
-    checkDescription(variants, "isAllowRunningInParallel", "Allow running in parallel")
+    checkDescription(variants, "isAllowRunningInParallel", "Allow parallel run")
     checkDescription(variants, "isShowConsoleOnStdErr", "Show console when a message is printed to standard error stream")
     checkDescription(variants, "isShowConsoleOnStdOut", "Show console when a message is printed to standard output stream")
   }
@@ -44,7 +44,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     configurations (array)
     """.trimIndent())
   }
-  
+
   private fun checkDescription(variants: List<LookupElement>, name: String, expectedDescription: String) {
     val variant = variants.first { it.lookupString == name }
     val presentation = LookupElementPresentation()
@@ -60,7 +60,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     val element = file.findElementAt(position)
     assertThat(element).isNotNull
 
-    val schemaObject = JsonSchemaReader.readFromFile(myProject, schemaFile)
+    val schemaObject = JsonSchemaReader.readFromFile(myProject, schemaFile!!)
     assertThat(schemaObject).isNotNull
 
     return JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element!!, element)

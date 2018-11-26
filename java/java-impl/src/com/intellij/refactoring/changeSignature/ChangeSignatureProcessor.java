@@ -42,7 +42,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author Jeka
- * @since Sep 17, 2001
  */
 public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");

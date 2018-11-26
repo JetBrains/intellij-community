@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -62,7 +64,12 @@ public class LineMarkerInfo<T extends PsiElement> {
     myIcon = icon;
     myTooltipProvider = tooltipProvider;
     myIconAlignment = alignment;
-    elementRef = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    PsiFile containingFile = element.getContainingFile();
+    Project project = containingFile.getProject();
+    if (!InjectedLanguageManager.getInstance(project).getTopLevelFile(containingFile).getTextRange().contains(range)) {
+      throw new IllegalArgumentException("Range must be inside file offsets ("+containingFile.getTextRange()+") but got: "+range);
+    }
+    elementRef = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element, containingFile);
     myNavigationHandler = navHandler;
     startOffset = range.getStartOffset();
     endOffset = range.getEndOffset();

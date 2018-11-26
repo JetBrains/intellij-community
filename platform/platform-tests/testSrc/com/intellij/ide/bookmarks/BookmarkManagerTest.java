@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,18 +39,24 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 12/27/10 1:43 PM
  */
 public class BookmarkManagerTest extends AbstractEditorTest {
   private final List<Bookmark> myBookmarks = new ArrayList<>();
   
   @Override
   protected void tearDown() throws Exception {
-    for (Bookmark bookmark : myBookmarks) {
-      getManager().removeBookmark(bookmark);
+    try {
+      for (Bookmark bookmark : myBookmarks) {
+        getManager().removeBookmark(bookmark);
+      }
+      myBookmarks.clear();
     }
-    myBookmarks.clear();
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testWholeTextReplace() {

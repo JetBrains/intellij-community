@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -23,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -159,7 +159,7 @@ public class VfsTestUtil {
 
   @NotNull
   public static List<String> print(@NotNull List<? extends VFileEvent> events) {
-    return events.stream().map(VfsTestUtil::print).collect(Collectors.toList());
+    return ContainerUtil.map(events, VfsTestUtil::print);
   }
 
   private static String print(VFileEvent e) {

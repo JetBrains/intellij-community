@@ -41,7 +41,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
   private static final Logger LOG = Logger.getInstance(JpsGradleExtensionServiceImpl.class);

@@ -191,6 +191,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return false;
   }
 
+  @Override
   public String toString() {
     return "Closable block";
   }

@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.status;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -738,7 +739,7 @@ and no "mod4" under
 
   private static class Against extends ElementHandlerBase {
     private Against() {
-      super(new String[0], new String[0]);
+      super(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY);
     }
 
     @Override

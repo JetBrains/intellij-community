@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -111,7 +112,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                              @NotNull PsiElement endElement) {
     final PsiModifierList myModifierList = (PsiModifierList)startElement;
     PsiVariable variable = myVariable == null ? null : myVariable.getElement();
-    return myModifierList.getManager().isInProject(myModifierList) &&
+    return BaseIntentionAction.canModify(myModifierList) &&
            myModifierList.hasExplicitModifier(myModifier) != myShouldHave &&
            (variable == null || variable.isValid());
   }
@@ -164,7 +165,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
           @Override
           public boolean execute(@NotNull PsiMethod inheritor) {
             PsiModifierList list = inheritor.getModifierList();
-            if (inheritor.getManager().isInProject(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
+            if (BaseIntentionAction.canModify(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
               modifierLists.add(list);
             }
             return true;

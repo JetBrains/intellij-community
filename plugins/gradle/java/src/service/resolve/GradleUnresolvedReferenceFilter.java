@@ -36,7 +36,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 
 /**
  * @author Vladislav.Soroka
- * @since 9/25/13
  */
 public class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFilter {
 

@@ -50,7 +50,6 @@ import java.util.function.IntConsumer;
 
 /**
  * @author stathik
- * @since Aug 4, 2003
  */
 class ITNProxy {
   private static final String DEFAULT_USER = "idea_anonymous";
@@ -118,14 +117,16 @@ class ITNProxy {
   static class ErrorBean {
     final IdeaLoggingEvent event;
     final String comment;
+    final String pluginId;
     final String pluginName;
     final String pluginVersion;
     final String lastActionId;
     final int previousException;
 
-    ErrorBean(IdeaLoggingEvent event, String comment, String pluginName, String pluginVersion, String lastActionId, int previousException) {
+    ErrorBean(IdeaLoggingEvent event, String comment, String pluginId, String pluginName, String pluginVersion, String lastActionId, int previousException) {
       this.event = event;
       this.comment = comment;
+      this.pluginId = pluginId;
       this.pluginName = pluginName;
       this.pluginVersion = pluginVersion;
       this.lastActionId = lastActionId;
@@ -212,6 +213,7 @@ class ITNProxy {
     append(builder, "update.channel.status", updateSettings.getSelectedChannelStatus().getCode());
     append(builder, "update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ","));
 
+    append(builder, "plugin.id", error.pluginId);
     append(builder, "plugin.name", error.pluginName);
     append(builder, "plugin.version", error.pluginVersion);
     append(builder, "last.action", error.lastActionId);

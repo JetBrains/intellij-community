@@ -1,27 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.EncryptionSupport
-import com.intellij.util.generateAesKey
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 import java.util.*
-import javax.crypto.spec.SecretKeySpec
 
-internal val LOG = Logger.getInstance(CredentialStore::class.java)
-
-private fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
-
-internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(hash))
-
-fun toOldKey(requestor: Class<*>, userName: String): CredentialAttributes {
-  return CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$userName".toByteArray())))
-}
+internal val LOG = logger<CredentialStore>()
 
 fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {
@@ -53,7 +40,7 @@ fun splitData(data: String?): Credentials? {
 
 private const val ESCAPING_CHAR = '\\'
 
-private fun parseString(data: String, delimiter: Char): List<String> {
+private fun parseString(data: String, @Suppress("SameParameterValue") delimiter: Char): List<String> {
   val part = StringBuilder()
   val result = ArrayList<String>(2)
   var i = 0
@@ -88,26 +75,18 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 @JvmOverloads
 fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
 
-@Suppress("FunctionName")
-internal fun SecureString(value: CharSequence) = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
-
-internal class SecureString(value: ByteArray) {
-  companion object {
-    private val encryptionSupport = EncryptionSupport(SecretKeySpec(generateAesKey(), "AES"))
-  }
-
-  private val data = encryptionSupport.encrypt(value)
-
-  fun get(clearable: Boolean = true) = OneTimeString(encryptionSupport.decrypt(data), clearable = clearable)
-}
-
 internal val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
 
-internal fun createSecureRandom(): SecureRandom {
-  try {
-    return SecureRandom.getInstanceStrong()
-  }
-  catch (e: NoSuchAlgorithmException) {
-    return SecureRandom()
-  }
+fun createSecureRandom(): SecureRandom {
+  // do not use SecureRandom.getInstanceStrong()
+  // https://tersesystems.com/blog/2015/12/17/the-right-way-to-use-securerandom/
+  // it leads to blocking without any advantages
+  return SecureRandom()
+}
+
+@Synchronized
+internal fun SecureRandom.generateBytes(size: Int): ByteArray {
+  val result = ByteArray(size)
+  nextBytes(result)
+  return result
 }

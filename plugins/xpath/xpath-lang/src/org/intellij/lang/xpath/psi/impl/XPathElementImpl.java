@@ -38,6 +38,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     super(node);
   }
 
+  @Override
   public String toString() {
     final String name = getClass().getName();
     return name.substring(name.lastIndexOf('.') + 1) + ": " + getText();

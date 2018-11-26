@@ -93,18 +93,13 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   GlobalInspectionContextImpl getContext();
 
-  void exportResults(@NotNull Consumer<Element> problemSink,
+  void exportResults(@NotNull Consumer<Element> resultConsumer,
                      @NotNull RefEntity refEntity,
                      @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded);
 
-  void exportResults(@NotNull Consumer<Element> problemSink,
+  void exportResults(@NotNull Consumer<Element> resultConsumer,
                      @NotNull Predicate<? super RefEntity> isEntityExcluded,
                      @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded);
-
-  /** Export aggregate results that can't be attached to any specific problem descriptor. */
-  default void exportAggregateResults(@NotNull Element bulkRoot,
-                                      @NotNull Predicate<? super RefEntity> isEntityExcluded,
-                                      @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded) {}
 
   /** Override the preview panel for the entity. */
   @Nullable

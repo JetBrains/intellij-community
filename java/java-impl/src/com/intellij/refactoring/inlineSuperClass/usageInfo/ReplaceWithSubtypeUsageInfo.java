@@ -26,7 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author anna
- * @since 27-Aug-2008
  */
 public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   public static final Logger LOG = Logger.getInstance(ReplaceWithSubtypeUsageInfo.class);

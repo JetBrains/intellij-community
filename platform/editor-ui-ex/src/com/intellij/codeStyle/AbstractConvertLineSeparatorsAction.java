@@ -15,6 +15,7 @@
  */
 package com.intellij.codeStyle;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -105,6 +106,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
     return !(file.isDirectory()
              || !file.isWritable()
+             || file instanceof VirtualFileWindow
              || FileTypeRegistry.getInstance().isFileIgnored(file)
              || file.getFileType().isBinary()
              || file.equals(project.getProjectFile())

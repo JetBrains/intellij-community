@@ -117,7 +117,7 @@ public class CompileScopeTestBuilder {
     return this;
   }
 
-  public CompileScopeTestBuilder artifacts(JpsArtifact[] artifacts) {
+  public CompileScopeTestBuilder artifacts(JpsArtifact... artifacts) {
     for (JpsArtifact artifact : artifacts) {
       myTargets.add(new ArtifactBuildTarget(artifact));
     }

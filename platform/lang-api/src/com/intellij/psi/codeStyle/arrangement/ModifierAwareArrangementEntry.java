@@ -22,7 +22,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 7/17/12 8:57 PM
  */
 public interface ModifierAwareArrangementEntry extends ArrangementEntry {
   

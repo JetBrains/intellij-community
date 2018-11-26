@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,7 +82,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
   }
 
   @Override
-  public boolean shouldProcess(DeclarationKind kind) {
+  public boolean shouldProcess(@NotNull DeclarationKind kind) {
     return kind == DeclarationKind.CLASS;
   }
 

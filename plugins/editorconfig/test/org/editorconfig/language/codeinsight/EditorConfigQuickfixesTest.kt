@@ -14,10 +14,6 @@ class EditorConfigQuickfixesTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/quickfixes/"
 
-  fun testCleanupDots() =
-    doTest(EditorConfigMultipleDotsInspection::class,
-           "quickfix.dots.cleanup.description")
-
   fun testCleanupValueList() =
     doTest(EditorConfigUnexpectedCommaInspection::class,
            "quickfix.values.list.cleanup.description")
@@ -38,14 +34,6 @@ class EditorConfigQuickfixesTest : LightPlatformCodeInsightFixtureTestCase() {
     doTest(EditorConfigPatternEnumerationRedundancyInspection::class,
            "quickfix.pattern-enumeration.redundant.remove-braces.description")
 
-  fun testRemoveDanglingDot_complex() =
-    doTest(EditorConfigDanglingDotInspection::class,
-           "quickfix.dangling-dot.remove.description")
-
-  fun testRemoveDanglingDot_simple() =
-    doTest(EditorConfigDanglingDotInspection::class,
-           "quickfix.dangling-dot.remove.description")
-
   fun testRemoveDeprecatedDescriptor() =
     doTest(EditorConfigDeprecatedDescriptorInspection::class,
            "quickfix.deprecated.element.remove")
@@ -53,10 +41,6 @@ class EditorConfigQuickfixesTest : LightPlatformCodeInsightFixtureTestCase() {
   fun testRemoveHeaderElement() =
     doTest(EditorConfigPatternRedundancyInspection::class,
            "quickfix.header-element.remove.description")
-
-  fun testRemoveLineBreaksInOption() =
-    doTest(EditorConfigSuspiciousLineBreakInspection::class,
-           "quickfix.option.remove-line-breaks.description")
 
   fun testRemoveListValue() =
     doTest(EditorConfigValueUniquenessInspection::class,

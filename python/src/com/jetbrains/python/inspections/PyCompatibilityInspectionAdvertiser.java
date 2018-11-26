@@ -38,12 +38,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +102,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
         else if (containsFutureImports(pyFile)) {
           showInspectionAdvertisement(project, USING_FUTURE_IMPORTS);
         }
-        else if (containsSixImport(pyFile)) {
+        else if (PyPsiUtils.containsImport(pyFile, "six")) {
           showInspectionAdvertisement(project, USING_SIX);
         }
       }
@@ -195,22 +194,6 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
         notification.expire();
       }
     }).notify(project);
-  }
-
-  private static boolean containsSixImport(@NotNull PyFile file) {
-    for (PyFromImportStatement importStatement : file.getFromImports()) {
-      final QualifiedName name = importStatement.getImportSourceQName();
-      if (name != null && "six".equals(name.toString())) {
-        return true;
-      }
-    }
-    for (PyImportElement importElement : file.getImportTargets()) {
-      final QualifiedName name = importElement.getImportedQName();
-      if (name != null && "six".equals(name.getFirstComponent())) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static boolean containsFutureImports(@NotNull PyFile file) {

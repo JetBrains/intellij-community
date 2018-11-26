@@ -14,7 +14,6 @@ import java.util.List;
 
 /**
  * @author stathik
- * @since Mar 27, 2003
  */
 public class PluginNode implements IdeaPluginDescriptor {
   public static final int STATUS_UNKNOWN = 0;
@@ -331,19 +330,19 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   @NotNull
-  public ComponentConfig[] getAppComponents() {
+  public List<ComponentConfig> getAppComponents() {
     throw new IllegalStateException();
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getProjectComponents() {
+  public List<ComponentConfig> getProjectComponents() {
     throw new IllegalStateException();
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getModuleComponents() {
+  public List<ComponentConfig> getModuleComponents() {
     throw new IllegalStateException();
   }
 

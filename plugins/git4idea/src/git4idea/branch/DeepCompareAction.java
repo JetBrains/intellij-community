@@ -28,11 +28,11 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +69,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       String singleBranchName = VcsLogUtil.getSingleFilteredBranch(ui.getFilterUi().getFilters(), ui.getDataPack().getRefs());
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui, e, selectedBranch -> {
-          ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
+          ui.getFilterUi().setFilter(VcsLogFilterObject.fromBranch(selectedBranch));
           dc.startTask(selectedBranch);
         }, getGitRoots(project, ui));
         return;

@@ -15,8 +15,7 @@ import java.util.function.Supplier
 
 class GithubImageResizer(private val progressManager: ProgressManager) : Disposable {
 
-  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub Image Resizer",
-                                                                              Runtime.getRuntime().availableProcessors() / 2)
+  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub Image Resizer", getThreadPoolSize())
   private val progressIndicator: EmptyProgressIndicator = NonReusableEmptyProgressIndicator()
 
   fun requestImageResize(image: Image, size: Int, scaleContext: JBUI.ScaleContext): CompletableFuture<Image> {
@@ -35,5 +34,9 @@ class GithubImageResizer(private val progressManager: ProgressManager) : Disposa
   override fun dispose() {
     progressIndicator.cancel()
     executor.shutdownNow()
+  }
+
+  companion object {
+    private fun getThreadPoolSize() = Math.max(Runtime.getRuntime().availableProcessors() / 2, 1)
   }
 }

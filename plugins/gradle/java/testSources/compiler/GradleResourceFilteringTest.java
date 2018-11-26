@@ -5,7 +5,6 @@ import org.junit.Test;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/21/2014
  */
 public class GradleResourceFilteringTest extends GradleCompilingTestCase {
 
@@ -28,8 +27,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  filter(HeadFilter, lines:3, skip:2)\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main");
 
     assertCopied("out/production/resources/dir/file.txt", "3 another text\n" +
                                                       "4\n" +
@@ -83,8 +82,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  filter(ReplaceTokens, tokens:[token1:'<11111>', token2:'<2222>'], beginToken: '#', endToken: '#')\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main");
 
     assertCopied("out/production/resources/dir/file.txt", "1 Header\n" +
                                                       "2\n" +
@@ -139,8 +138,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  rename 'file.txt', 'file001.txt'\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main");
 
     assertCopied("out/production/resources/dir/file001.txt");
   }
@@ -175,8 +174,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  filter (ExpandProperties, project: ant.project)\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main");
 
     assertCopied("out/production/resources/dir/file.txt", "some text myPropValue another text");
   }
@@ -212,8 +211,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  filter (EscapeUnicode)\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main");
 
     assertCopied("out/production/resources/dir/file.txt", "some text \\u30c6\\u30ad\\u30b9\\u30c8");
   }
@@ -239,8 +238,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  rename 'file.txt', 'file001.txt'\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main");
 
     assertCopied("out/production/resources/dir/file001.txt", "3 another text<11111>\n" +
                                                          "4\n" +

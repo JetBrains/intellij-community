@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * Provides 'import from external model' functionality.
  *
  * @author Denis Zhdanov
- * @since 7/29/11 3:45 PM
  */
 public abstract class AbstractExternalProjectImportProvider extends ProjectImportProvider {
   

@@ -39,7 +39,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/29/13
  */
 public class GradleDocumentationProvider implements DocumentationProvider {
 

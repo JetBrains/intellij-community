@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -196,6 +195,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     public Map<Integer, List<ChangeKind>> map(@NotNull VcsIndexableDetails inputData) {
       Map<Integer, List<ChangeKind>> result = new THashMap<>();
 
+      String rootPath = inputData.getRoot().getPath();
       // its not exactly parents count since it is very convenient to assume that initial commit has one parent
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
       for (int parentIndex = 0; parentIndex < parentsCount; parentIndex++) {
@@ -208,8 +208,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
             renames.add(Couple.of(beforeId, afterId));
             getOrCreateChangeKindList(result, beforeId, parentsCount).set(parentIndex, ChangeKind.REMOVED);
             getOrCreateChangeKindList(result, afterId, parentsCount).set(parentIndex, ChangeKind.ADDED);
-            addParentsToResult(result, parentIndex, parentsCount, renamedPath.second, inputData.getRoot(), processedParents);
-            addParentsToResult(result, parentIndex, parentsCount, renamedPath.first, inputData.getRoot(), processedParents);
+            addParentsToResult(result, parentIndex, parentsCount, renamedPath.second, rootPath, processedParents);
+            addParentsToResult(result, parentIndex, parentsCount, renamedPath.first, rootPath, processedParents);
           }
 
           if (renames.size() > 0) {
@@ -221,7 +221,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
           for (Map.Entry<String, Change.Type> modifiedPath : inputData.getModifiedPaths(parentIndex).entrySet()) {
             getOrCreateChangeKindList(result, new LightFilePath(modifiedPath.getKey(), false), parentsCount)
               .set(parentIndex, createChangeData(modifiedPath.getValue()));
-            addParentsToResult(result, parentIndex, parentsCount, modifiedPath.getKey(), inputData.getRoot(), processedParents);
+            addParentsToResult(result, parentIndex, parentsCount, modifiedPath.getKey(), rootPath, processedParents);
           }
         }
         catch (IOException e) {
@@ -233,14 +233,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
 
     private void addParentsToResult(@NotNull Map<Integer, List<ChangeKind>> result,
-                                    int parent,
-                                    int parentsCount,
-                                    @NotNull String path,
-                                    @NotNull VirtualFile root,
+                                    int parent, int parentsCount,
+                                    @NotNull String path, @NotNull String rootPath,
                                     @NotNull Set<String> processedParents) throws IOException {
       String parentPath = PathUtil.getParentPath(path);
       while (!processedParents.contains(parentPath)) {
-        if (FileUtil.PATH_HASHING_STRATEGY.equals(root.getPath(), parentPath)) break;
+        if (FileUtil.PATH_HASHING_STRATEGY.equals(rootPath, parentPath)) break;
 
         processedParents.add(parentPath);
         getOrCreateChangeKindList(result, new LightFilePath(parentPath, true), parentsCount).set(parent, ChangeKind.MODIFIED);

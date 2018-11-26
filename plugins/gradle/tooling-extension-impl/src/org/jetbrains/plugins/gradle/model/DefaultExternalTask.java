@@ -23,7 +23,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public class DefaultExternalTask implements ExternalTask {
   private static final long serialVersionUID = 1L;

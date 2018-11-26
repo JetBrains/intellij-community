@@ -1,5 +1,6 @@
 package com.intellij.tasks.integration;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManagerTestCase;
@@ -9,6 +10,8 @@ import com.intellij.tasks.redmine.RedmineRepository;
 import com.intellij.tasks.redmine.RedmineRepositoryType;
 import com.intellij.tasks.redmine.model.RedmineProject;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
+import org.jdom.Element;
 
 import java.util.List;
 
@@ -131,6 +134,18 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
       myRepository.setAPIKey("");
       myRepository.setUseHttpAuthentication(true);
     }
+  }
+
+  // IDEA-200933
+  public void testUnspecifiedProjectIdSerialized() {
+    myRepository.setCurrentProject(RedmineRepository.UNSPECIFIED_PROJECT);
+    final List<Element> options = XmlSerializer.serialize(myRepository).getChildren("option");
+    final String serializedId = StreamEx.of(options)
+      .findFirst(elem -> "currentProject".equals(elem.getAttributeValue("name")))
+      .map(elem -> elem.getChild("RedmineProject"))
+      .map(elem -> elem.getAttributeValue("id"))
+      .orElse(null);
+    assertEquals("-1", serializedId);
   }
 
   @Override

@@ -97,6 +97,9 @@ fun <C : Container> ContainerFixture<C>.componentWithBrowseButton(boundedLabelTe
   else throw unableToFindComponent("ComponentWithBrowseButton", timeout)
 }
 
+inline fun <reified V: JComponent> ContainerFixture<*>.containsChildComponent(noinline predicate: (V) -> Boolean) =
+  robot().finder().findAll(target(), GuiTestUtilKt.typeMatcher(V::class.java, predicate)).size == 1
+
 fun <C : Container> ContainerFixture<C>.treeTable(timeout: Timeout = defaultTimeout): TreeTableFixture {
   val table: TreeTable = findComponentWithTimeout(timeout)
   return TreeTableFixture(robot(), table)
@@ -137,6 +140,13 @@ fun <C : Container> ContainerFixture<C>.combobox(labelText: String, timeout: Tim
  */
 fun <C : Container> ContainerFixture<C>.checkbox(labelText: String, timeout: Timeout = defaultTimeout): CheckBoxFixture {
   val jCheckBox: JCheckBox = findComponentWithTimeout(timeout) { it.isShowing && it.isVisible && it.text == labelText }
+  return CheckBoxFixture(robot(), jCheckBox)
+}
+
+fun <C : Container> ContainerFixture<C>.checkboxContainingText(labelText: String,
+                                                               ignoreCase: Boolean = false,
+                                                               timeout: Timeout = defaultTimeout): CheckBoxFixture {
+  val jCheckBox: JCheckBox = findComponentWithTimeout(timeout) { it.isShowing && it.isVisible && it.text.contains(labelText, ignoreCase) }
   return CheckBoxFixture(robot(), jCheckBox)
 }
 

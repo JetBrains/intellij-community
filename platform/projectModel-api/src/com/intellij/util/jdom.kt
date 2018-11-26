@@ -12,7 +12,6 @@ import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent
-import org.jdom.filter.ElementFilter
 import org.jdom.input.SAXBuilder
 import org.jdom.input.sax.SAXHandler
 import org.xml.sax.EntityResolver
@@ -63,26 +62,7 @@ fun Element.getOrCreate(name: String): Element {
   return element
 }
 
-fun Element.get(name: String): Element? = getChild(name)
-
-fun Element.element(name: String): Element {
-  val element = Element(name)
-  addContent(element)
-  return element
-}
-
 fun Element.attribute(name: String, value: String?): Element = setAttribute(name, value)
-
-fun <T> Element.remove(name: String, transform: (child: Element) -> T): List<T> {
-  val result = SmartList<T>()
-  val groupIterator = getContent(ElementFilter(name)).iterator()
-  while (groupIterator.hasNext()) {
-    val child = groupIterator.next()
-    result.add(transform(child))
-    groupIterator.remove()
-  }
-  return result
-}
 
 fun Element.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(1024)

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -32,7 +33,7 @@ public interface IgnoredFileProvider {
   boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath);
 
   @NotNull
-  Set<String> getIgnoredFilesMasks(@NotNull Project project);
+  Set<String> getIgnoredFilesMasks(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot);
 
   @NotNull
   String getMasksGroupDescription();

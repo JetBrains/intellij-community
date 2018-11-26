@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,15 +86,6 @@ public abstract class AbstractMvcPsiNodeDescriptor extends BasePsiNode<PsiElemen
   @NotNull
   public Module getModule() {
     return myModule;
-  }
-
-  @Nullable
-  @Override
-  public VirtualFile getVirtualFile() {
-    if (!isValid()) {
-      return null;
-    }
-    return PsiUtilCore.getVirtualFile(extractPsiFromValue());
   }
 
   @Override

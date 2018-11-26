@@ -275,6 +275,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return this;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "PsiBinaryFile:" + getName();

@@ -6,6 +6,16 @@ import java.util.ArrayList;
 public class UnnecessaryParenthesesInspection
 {
 
+    void switchExpressions() {
+      String s = (switch(1) {
+        case 1 -> "one";
+        default -> "other";
+      }).substring(1);
+      int z = -<warning descr="Parentheses around '(switch(1) { default -> 10; })' are unnecessary">(switch(1) {
+        default -> 10;
+      })</warning> + 10;
+    }
+
     public int foo()
     {
         final String s = "foo" + (3 + 4); // do not warn here
@@ -127,5 +137,11 @@ public class UnnecessaryParenthesesInspection
 
   public java.util.function.IntFunction context() {
     return <error descr="Incompatible types. Found: 'int', required: '<lambda expression>'">(a -> a)=1</error>;
+  }
+}
+class A{
+
+  A() {
+    ((<error descr="Expression expected"><</error><error descr="Cannot resolve symbol 'x'">x</error>><error descr="Expression expected">)</error><EOLError descr="';' expected"></EOLError>
   }
 }

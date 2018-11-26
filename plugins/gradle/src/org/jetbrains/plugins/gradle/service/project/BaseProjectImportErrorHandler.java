@@ -36,7 +36,6 @@ import java.net.UnknownHostException;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/16/13
  */
 public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHandler {
 

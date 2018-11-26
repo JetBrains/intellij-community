@@ -3,6 +3,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.util.DiffPlaces;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -509,6 +510,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.CHANGES_VIEW);
       Disposer.register(project, this);
+
+      putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
     }
 
     @NotNull

@@ -34,7 +34,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
 
     if (element instanceof PsiCompiledElement) return false;
-    if (!element.getManager().isInProject(element)) return false;
+    if (!canModify(element)) return false;
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
 
     final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, PsiClass.class);

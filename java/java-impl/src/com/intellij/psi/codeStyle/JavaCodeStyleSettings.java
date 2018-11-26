@@ -96,7 +96,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   }
 
   public boolean REPLACE_INSTANCEOF = false;
-  public boolean REPLACE_CAST = false;
   public boolean REPLACE_NULL_CHECK = true;
 
   public boolean SPACES_WITHIN_ANGLE_BRACKETS;
@@ -297,7 +296,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(rootSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     IMPORT_LAYOUT_TABLE.copyFrom(rootSettings.IMPORT_LAYOUT_TABLE);
     REPLACE_INSTANCEOF = rootSettings.REPLACE_INSTANCEOF;
-    REPLACE_CAST = rootSettings.REPLACE_CAST;
     REPLACE_NULL_CHECK = rootSettings.REPLACE_NULL_CHECK;
     FIELD_NAME_PREFIX = rootSettings.FIELD_NAME_PREFIX;
     STATIC_FIELD_NAME_PREFIX = rootSettings.STATIC_FIELD_NAME_PREFIX;

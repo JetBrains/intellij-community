@@ -60,7 +60,6 @@ import java.util.Set;
 
 /**
  * @author dsl
- * @since 07.05.2002
  */
 public class IntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor");

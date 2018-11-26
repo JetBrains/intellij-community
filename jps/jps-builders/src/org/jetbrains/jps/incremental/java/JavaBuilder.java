@@ -55,7 +55,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -72,7 +73,6 @@ import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Eugene Zhuravlev
- * @since 21.09.2011
  */
 public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
@@ -453,12 +453,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       else {
         updateCompilerUsageStatistics(context, "javac " + forkSdk.getSecond(), chunk);
         final ExternalJavacManager server = ensureJavacServerStarted(context);
+        final CompilationPaths paths = CompilationPaths.create(platformCp, classPath, upgradeModulePath, modulePath, sourcePath);
         rc = server.forkJavac(
-          forkSdk.getFirst(),
-          Utils.suggestForkedCompilerHeapSize(),
-          vmOptions, options, platformCp, classPath, upgradeModulePath, modulePath, sourcePath,
-          files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
-        );
+          forkSdk.getFirst(), Utils.suggestForkedCompilerHeapSize(),
+          vmOptions, options, paths, files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus(), false
+        ).get();
       }
       return rc;
     }
@@ -672,13 +671,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return server;
     }
     final int listenPort = findFreePort();
-    server = new ExternalJavacManager(Utils.getSystemRoot()) {
+    server = new ExternalJavacManager(Utils.getSystemRoot(), SharedThreadPool.getInstance()) {
       @Override
-      protected ExternalJavacProcessHandler createProcessHandler(@NotNull Process process, @NotNull String commandLine) {
-        return new ExternalJavacProcessHandler(process, commandLine) {
-          @Override
+      protected ExternalJavacProcessHandler createProcessHandler(UUID processId, @NotNull Process process, @NotNull String commandLine, boolean keepProcessAlive) {
+        return new ExternalJavacProcessHandler(processId, process, commandLine, keepProcessAlive) {
           @NotNull
-          protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
+          @Override
+          public Future<?> executeTask(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().executeOnPooledThread(task);
           }
         };
@@ -1251,6 +1250,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  @Override
+  public long getExpectedBuildTime() {
+    return 100;
+  }
 
   private static final Key<Semaphore> COUNTER_KEY = Key.create("_async_task_counter_");
 }

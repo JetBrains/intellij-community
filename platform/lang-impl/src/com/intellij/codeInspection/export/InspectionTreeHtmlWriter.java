@@ -175,6 +175,6 @@ public class InspectionTreeHtmlWriter {
   }
 
   private static String escapeNonBreakingSymbols(@NotNull Object source) {
-    return StringUtil.replace(StringUtil.escapeXml(source.toString()), Arrays.asList(" ", "-"), Arrays.asList("&nbsp;", "&#8209;"));
+    return StringUtil.replace(StringUtil.escapeXmlEntities(source.toString()), Arrays.asList(" ", "-"), Arrays.asList("&nbsp;", "&#8209;"));
   }
 }

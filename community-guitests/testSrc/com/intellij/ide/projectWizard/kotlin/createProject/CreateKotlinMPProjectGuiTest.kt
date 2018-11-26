@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
@@ -21,6 +22,7 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
   data class TestParameters(
     val projectName: String,
     val project: ProjectProperties,
+    val gradleGroup: String,
     val suffixes: Map<TargetPlatform, String>) : Serializable {
     override fun toString() = projectName
   }
@@ -47,7 +49,7 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
     )
 
     waitAMoment()
-    waitForGradleReimport(projectName, waitForProject = false)
+    waitForGradleReimport(projectName)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
@@ -55,7 +57,7 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
     )
 
     gradleReimport()
-    waitForGradleReimport(projectName, waitForProject = true)
+    assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
     waitAMoment()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {
@@ -66,8 +68,9 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
       )
 
       testParameters.project.modules.forEach { platform: TargetPlatform ->
+        val shownProjectName = if(testParameters.gradleGroup.isEmpty()) projectName else "${testParameters.gradleGroup}.$projectName"
         listOf("Main", "Test").forEach { moduleKind: String ->
-          val path = arrayOf(projectName, "${projectName}_${testParameters.suffixes[platform]!!}$moduleKind", "Kotlin")
+          val path = arrayOf(shownProjectName, "${testParameters.suffixes[platform]!!}$moduleKind", "Kotlin")
           projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[platform]!!, path = *path)
         }
       }
@@ -76,12 +79,18 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
   }
 
   companion object {
+    private val nativeSuffix = when(SystemInfo.getSystemType()){
+      SystemInfo.SystemType.WINDOWS -> "mingw"
+      SystemInfo.SystemType.UNIX -> "linux"
+      SystemInfo.SystemType.MAC -> "macos"
+    }
+
     private val suffixes = mapOf(
       TargetPlatform.JVM16 to "jvm",
       TargetPlatform.JVM18 to "jvm",
       TargetPlatform.JavaScript to "js",
       TargetPlatform.Common to "common",
-      TargetPlatform.Native to "mingw"
+      TargetPlatform.Native to nativeSuffix
     )
 
     private val mobileSuffixes = mapOf(
@@ -92,6 +101,8 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
       TargetPlatform.Native to "ios"
     )
 
+    private const val libraryGroup = "com.example"
+
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun data(): Collection<TestParameters> {
@@ -99,22 +110,26 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
         TestParameters(
           projectName = "kotlin_mpp_library",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectLibrary),
-          suffixes = suffixes
+          suffixes = suffixes,
+          gradleGroup = libraryGroup
         ),
         TestParameters(
           projectName = "kotlin_mpp_client_server",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectClientServer),
-          suffixes = suffixes
+          suffixes = suffixes,
+          gradleGroup = ""
         ),
         TestParameters(
           projectName = "kotlin_mpp_native",
           project = kotlinProjects.getValue(Projects.KotlinProjectNative),
-          suffixes = suffixes
+          suffixes = suffixes,
+        gradleGroup = ""
         ),
         TestParameters(
           projectName = "kotlin_mpp_mobile_library",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectMobileLibrary),
-          suffixes = mobileSuffixes
+          suffixes = mobileSuffixes,
+          gradleGroup = libraryGroup
         )
       )
     }

@@ -58,7 +58,6 @@ import java.util.List;
  * </pre>
  * 
  * @author Denis Zhdanov
- * @since 4/30/13 12:50 PM
  */
 public abstract class AbstractExternalSystemConfigurable<
   ProjectSettings extends ExternalProjectSettings,
@@ -267,6 +266,9 @@ public abstract class AbstractExternalSystemConfigurable<
   public void disposeUIResources() {
     for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
       control.disposeUIResources();
+    }
+    if (mySystemSettingsControl != null) {
+      mySystemSettingsControl.disposeUIResources();
     }
     myProjectSettingsControls.clear();
     myComponent = null;

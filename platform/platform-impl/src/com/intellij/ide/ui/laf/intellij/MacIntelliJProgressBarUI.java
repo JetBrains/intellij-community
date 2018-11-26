@@ -27,6 +27,8 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
+  public static final Gray GRAPHITE_START_COLOR = Gray.xD4;
+  @SuppressWarnings("UseJBColor") public static final Color GRAPHITE_END_COLOR = new Color(0x989a9e);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -35,13 +37,12 @@ public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
 
   @Override
   protected Color getFinishedColor() {
-    //noinspection UseJBColor
-    return UIUtil.isGraphite() ? new Color(0x989a9e) : super.getFinishedColor();
+    return UIUtil.isGraphite() ? GRAPHITE_END_COLOR : super.getFinishedColor();
   }
 
   @Override
   protected Color getStartColor() {
-    return UIUtil.isGraphite() ? Gray.xD4 : super.getStartColor();
+    return UIUtil.isGraphite() ? GRAPHITE_START_COLOR : super.getStartColor();
   }
 
   @Override

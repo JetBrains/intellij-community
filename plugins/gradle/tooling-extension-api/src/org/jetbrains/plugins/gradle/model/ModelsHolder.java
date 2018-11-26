@@ -24,7 +24,6 @@ import java.util.*;
 
 /**
 * @author Vladislav.Soroka
-* @since 12/25/2014
 */
 public abstract class ModelsHolder<K extends Model,V>  implements Serializable {
 

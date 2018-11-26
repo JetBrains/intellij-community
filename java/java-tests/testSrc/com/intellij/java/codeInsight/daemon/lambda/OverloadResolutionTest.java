@@ -18,6 +18,12 @@ package com.intellij.java.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -268,6 +274,20 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
 
   public void testStaticMethodInSuperInterfaceConflictWithCurrentStatic() { doTest(false);}
   public void testOverloadsWithOneNonCompatible() { doTest(false);}
+  public void testSecondSearchOverloadsBoxing() {
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
+    String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    PsiReference reference = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
+    assertNotNull(reference);
+    PsiElement resolve = reference.resolve();
+    assertInstanceOf(resolve, PsiMethod.class);
+    assertEquals("java.lang.StringBuilder append(int i)", 
+                 PsiFormatUtil.formatMethod((PsiMethod)resolve, PsiSubstitutor.EMPTY, 
+                                            PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                            PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_NAME));
+    
+  }
 
   private void doTest() {
     doTest(true);

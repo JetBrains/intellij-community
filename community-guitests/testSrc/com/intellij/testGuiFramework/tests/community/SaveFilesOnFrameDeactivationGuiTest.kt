@@ -8,16 +8,17 @@ import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
-import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
+import com.intellij.testGuiFramework.launcher.system.SystemInfo.isUnix
+import com.intellij.testGuiFramework.launcher.system.SystemInfo.isWin
 import com.intellij.testGuiFramework.util.Key.*
-import com.intellij.testGuiFramework.util.Modifier
-import com.intellij.testGuiFramework.util.Modifier.CONTROL
-import com.intellij.testGuiFramework.util.Modifier.META
+import com.intellij.testGuiFramework.util.Modifier.*
 import com.intellij.testGuiFramework.util.plus
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Timeout
 import org.junit.Test
 import java.io.File
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import kotlin.test.assertEquals
@@ -91,14 +92,14 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
 
     val fileSystemText = waitFileToBeSynced(textToWrite, filePath)
     dialog(if (SystemInfo.isMac()) "Preferences" else "Settings") {
-     button("Cancel").click()
+      button("Cancel").click()
     }
     ideFrame.closeProject(false)
     assertEquals(originalTextFromEditor, fileSystemText)
   }
 
   private fun openSettings() {
-    shortcut(CONTROL + Modifier.ALT + Key.S, META + Key.COMMA)
+    shortcut(CONTROL + ALT + S, META + COMMA)
   }
 
   private fun getCurrentEditorFilePath(ideFrame2: IdeFrameFixture) =
@@ -109,17 +110,16 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
       shortcut(CONTROL + A, META + A)
       typeText(text)
     }
+    waitUntil("text in editor will match entered text", Timeouts.seconds05) { editor.getCurrentFileContents(false) == text }
   }
 
   private fun dummyUiApp(): ProcessBuilder {
     val dummyUIAppClassStr: String = DummyUIApp::class.java.name.replace(".", "/") + ".class"
     val cl = this.javaClass.classLoader.getResource(dummyUIAppClassStr)
-    val classpath = File(cl.toURI()).path.substringBefore(dummyUIAppClassStr)
-    return ProcessBuilder("java", "-classpath", classpath, DummyUIApp::class.java.name).apply { inheritIO() }
-  }
-
-  private fun switchApp() {
-    shortcut(CONTROL + TAB, META + TAB)
+    val classpath = File(cl.toURI()).path.dropLast(dummyUIAppClassStr.length)
+    val javaPath = System.getProperty("java.home") ?: throw Exception("Unable to locate java")
+    val javaFilePath = Paths.get(javaPath, "bin", "java").toFile().path
+    return ProcessBuilder(javaFilePath, "-classpath", classpath, DummyUIApp::class.java.name).apply { inheritIO() }
   }
 
   private fun ensureSaveFilesOnFrameDeactivation() {
@@ -145,7 +145,8 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
         textFromFile = File(filePath).readText()
         textInEditor == textFromFile
       }
-    } catch(e: WaitTimedOutError) {
+    }
+    catch (e: WaitTimedOutError) {
       System.err.println(e.message)
     }
     return textFromFile
@@ -153,7 +154,11 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
 
   private fun IdeFrameFixture.switchFrameTo() {
     if (this.target().isActive) return
-    shortcut(CONTROL + BACK_QUOTE, META + BACK_QUOTE)
+    when {
+      isWin() -> shortcut(CONTROL + ALT + OPEN_BRACKET)
+      isMac() -> shortcut(META + BACK_QUOTE)
+      isUnix() -> shortcut(ALT + BACK_QUOTE)
+    }
     GuiTestUtilKt.waitUntil("IdeFrame[${this.projectPath}] will be activated", Timeouts.seconds02) { this.target().isActive }
   }
 

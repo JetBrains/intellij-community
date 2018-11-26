@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
@@ -36,6 +37,7 @@ import com.siyeh.ig.fixes.IntroduceVariableFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -74,6 +76,12 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return WrapWithMutableCollectionFix.createFix(violation, holder.isOnTheFly());
   }
 
+  @Nullable
+  @Override
+  protected LocalQuickFix createUnwrapSwitchLabelFix() {
+    return new UnwrapSwitchLabelFix();
+  }
+
   @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
     return new IntroduceVariableFix(true);
@@ -101,10 +109,12 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @NotNull
   @Override
-  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef) {
+  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
-    fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
+    if (onTheFly) {
+      fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
+    }
     return fixes;
   }
 
@@ -113,7 +123,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
       return null;
     }
-    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression());
+    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression(), true);
   }
 
   @Override
@@ -145,7 +155,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
           fixes.add(new SurroundWithIfFix(qualifier));
         }
 
-        if (ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
+        if (onTheFly && ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
           fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
         }
       }

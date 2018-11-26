@@ -49,7 +49,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     myType = type;
   }
 
-  static PsiFileImpl getCachedFile(TreeElement each) {
+  private static PsiFileImpl getCachedFile(@NotNull TreeElement each) {
     FileElement node = (FileElement)SharedImplUtil.findFileElement(each);
     return node == null ? null : (PsiFileImpl)node.getCachedPsi();
   }
@@ -77,18 +77,17 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       return PsiManagerEx.getInstanceEx(project);
     }
     TreeElement element;
-    for (element = this; element.getTreeParent() != null; element = element.getTreeParent()) {
+    CompositeElement parent;
+    for (element = this; (parent = element.getTreeParent()) != null; element = parent) {
     }
-
     if (element instanceof FileElement) { //TODO!!
       return element.getManager();
     }
-    else {
-      if (getTreeParent() != null) {
-        return getTreeParent().getManager();
-      }
-      return null;
+    parent = getTreeParent();
+    if (parent != null) {
+      return parent.getManager();
     }
+    return null;
   }
 
   @Override
@@ -174,6 +173,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     return getTextLength() == element.getTextLength() && textMatches(element.getText());
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "Element" + "(" + getElementType() + ")";
@@ -229,6 +229,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public void clearCaches() {
   }
 
+  @Override
   public final boolean equals(Object obj) {
     return obj == this;
   }

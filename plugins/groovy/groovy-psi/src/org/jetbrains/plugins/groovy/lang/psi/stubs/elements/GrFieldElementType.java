@@ -46,7 +46,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     }
 
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames,
-                           namedParameters.toArray(ArrayUtil.EMPTY_STRING_ARRAY),
+                           ArrayUtil.toStringArray(namedParameters),
                            GroovyElementTypes.FIELD, GrFieldStub.buildFlags(psi),
                            GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }

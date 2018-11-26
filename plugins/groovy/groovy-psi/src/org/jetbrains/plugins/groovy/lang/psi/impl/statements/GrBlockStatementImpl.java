@@ -22,6 +22,7 @@ public class GrBlockStatementImpl extends GroovyPsiElementImpl implements GrBloc
     visitor.visitBlockStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Block statement";
   }

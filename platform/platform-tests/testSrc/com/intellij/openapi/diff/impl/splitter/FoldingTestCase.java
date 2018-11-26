@@ -52,6 +52,9 @@ public abstract class FoldingTestCase extends PlatformTestCase {
       }
       myEditorsToDispose.clear();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

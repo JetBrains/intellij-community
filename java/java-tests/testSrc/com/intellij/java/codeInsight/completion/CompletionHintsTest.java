@@ -36,6 +36,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     try {
       CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = myStoredSettingValue;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -609,7 +612,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>a default value.  </i></html>");
     showParameterInfo();
     waitForAllAsyncStuff();
-    checkHintContents("<html><font color=gray>@NotNull String key</font color=gray></html>\n" +
+    checkHintContents("<html><font color=a8a8a8>@NotNull String key</font></html>\n" +
                       "-\n" +
                       "[<html>@NotNull String key, <b>String def</b></html>]");
   }
@@ -1657,8 +1660,22 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("toChars(int codePoint, char[] dst, int dstIndex)");
     type("codePoin");
     completeSmart("codePoint");
+    checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<HINT text=\"codePoint:\"/>codePoint, <hint text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<Hint text=\"codePoint:\"/>codePoint, <HINT text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
+  }
+
+  public void testOverloadSwitchingForVarargMethod() {
+    configureJava("class C { void some(int a) {} void some(int a, int... b) {} void m() { s<caret> } }");
+    complete("some(int a, int... b)");
+    type('1');
+    next();
+    type('2');
+    next();
+    type('3');
+    showParameterInfo();
+    methodOverloadUp();
+    checkResultWithInlays("class C { void some(int a) {} void some(int a, int... b) {} void m() { some(<HINT text=\"a:\"/>1<caret>); } }");
   }
 
   private void checkResultWithInlays(String text) {

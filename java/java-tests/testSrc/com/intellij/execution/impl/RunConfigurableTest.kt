@@ -22,6 +22,7 @@ import org.junit.Test
 import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
+import kotlin.test.assertFalse
 
 private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
                             FOLDER, //1
@@ -47,7 +48,7 @@ internal class RunConfigurableTest {
       return runManager
     }
 
-    private class MockRunConfigurable(override val runManager: RunManagerImpl) : RunConfigurable(projectRule.project) {
+    private class MockRunConfigurable(override val runManager: RunManagerImpl) : ProjectRunConfigurationConfigurable(projectRule.project) {
       init {
         createComponent()
       }
@@ -189,8 +190,9 @@ internal class RunConfigurableTest {
   @Test
   fun sort() {
     doExpand()
+    assertFalse(model.canDrop(2, 0, ABOVE))
     assertThat(configurable.isModified).isFalse()
-    model.drop(2, 0, ABOVE)
+    model.drop(2, 14, ABOVE)
     assertThat(configurable.isModified).isTrue()
     configurable.apply()
     assertThat(configurable.runManager.allSettings.map { it.name }).containsExactly("Renamer",
@@ -202,6 +204,7 @@ internal class RunConfigurableTest {
                                                                                     "Periods",
                                                                                     "C148E_Porcelain",
                                                                                     "ErrAndOut",
+                                                                                    "CodeGenerator",
                                                                                     "All in titled",
                                                                                     "All in titled2",
                                                                                     "All in titled3",
@@ -210,19 +213,22 @@ internal class RunConfigurableTest {
     assertThat(configurable.isModified).isFalse()
     model.drop(4, 8, BELOW)
     configurable.apply()
-    assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
-                                                                                     "AuTest",
-                                                                                     "Simples",
-                                                                                     "UI",
-                                                                                     "OutAndErr",
-                                                                                     "C148C_TersePrincess",
-                                                                                     "Periods",
-                                                                                     "C148E_Porcelain",
-                                                                                     "ErrAndOut",
-                                                                                     "All in titled",
-                                                                                     "All in titled2",
-                                                                                     "All in titled3",
-                                                                                     "All in titled4",
-                                                                                     "All in titled5"))
+    assertThat(configurable.runManager.allSettings.joinToString("\n") { "[${it.type.displayName}] [${it.folderName ?: ""}] ${it.name}" }).isEqualTo("""
+      [Application] [1] Renamer
+      [Application] [1] UI
+      [Application] [1] Simples
+      [Application] [1] OutAndErr
+      [Application] [1] C148C_TersePrincess
+      [Application] [2] AuTest
+      [Application] [2] Periods
+      [Application] [3] C148E_Porcelain
+      [Application] [3] ErrAndOut
+      [Application] [] CodeGenerator
+      [JUnit] [4] All in titled
+      [JUnit] [4] All in titled2
+      [JUnit] [5] All in titled3
+      [JUnit] [5] All in titled4
+      [JUnit] [] All in titled5
+    """.trimIndent())
   }
 }

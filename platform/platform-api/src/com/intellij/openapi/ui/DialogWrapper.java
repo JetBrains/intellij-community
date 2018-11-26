@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
@@ -188,7 +189,7 @@ public abstract class DialogWrapper {
     myDoNotAsk = doNotAsk;
   }
 
-  private NotNullLazyValue<ErrorText> myErrorText;
+  private ErrorText myErrorText;
 
   private final Alarm myErrorTextAlarm = new Alarm();
 
@@ -222,8 +223,8 @@ public abstract class DialogWrapper {
         public void componentResized(ComponentEvent e) {
           if (!myResizeInProgress) {
             myActualSize = myPeer.getSize();
-            if (myErrorText != null && myErrorText.isComputed() && myErrorText.getValue().isVisible()) {
-              myActualSize.height -= myErrorText.getValue().getMinimumSize().height;
+            if (myErrorText != null && myErrorText.isVisible()) {
+              myActualSize.height -= myErrorText.getMinimumSize().height;
             }
           }
         }
@@ -356,9 +357,10 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
   }
 
-  private void updateErrorInfo(@NotNull List<ValidationInfo> info) {
+  @SuppressWarnings("WeakerAccess")
+  protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
     boolean updateNeeded = Registry.is("ide.inplace.validation.tooltip") ?
-                           !myInfo.equals(info) : !myErrorText.getValue().isTextSet(info) /* do not check isComputed, inplace validation by default now */;
+                           !myInfo.equals(info) : !myErrorText.isTextSet(info);
 
     if (updateNeeded) {
       SwingUtilities.invokeLater(() -> {
@@ -520,6 +522,11 @@ public abstract class DialogWrapper {
     helpButton.setText("");
     helpButton.setMargin(insets);
     setHelpTooltip(helpButton);
+    helpButton.addPropertyChangeListener("ancestor", evt -> {
+      if (evt.getNewValue() == null) {
+        HelpTooltip.dispose((JComponent)evt.getSource());
+      }
+    });
     return helpButton;
   }
 
@@ -605,7 +612,7 @@ public abstract class DialogWrapper {
       if (rightSideButtons.size() > 0) {
         JPanel buttonsPanel = createButtonsPanel(rightSideButtons);
         if (shouldAddErrorNearButtons()) {
-          lrButtonsPanel.add(myErrorText.getValue(), bag.next());
+          lrButtonsPanel.add(myErrorText, bag.next());
           lrButtonsPanel.add(Box.createHorizontalStrut(10), bag.next());
         }
         lrButtonsPanel.add(buttonsPanel, bag.next());
@@ -1217,20 +1224,20 @@ public abstract class DialogWrapper {
     return myPeer.getTitle();
   }
 
-  @NotNull
-  private ErrorText createErrorText(@NotNull JPanel southSection) {
-    ErrorText errorText = new ErrorText(getErrorTextAlignment());
-    errorText.setVisible(false);
+  protected void init() {
+    ensureEventDispatchThread();
+    myErrorText = new ErrorText(getErrorTextAlignment());
+    myErrorText.setVisible(false);
     final ComponentAdapter resizeListener = new ComponentAdapter() {
       private int myHeight;
 
       @Override
       public void componentResized(ComponentEvent event) {
-        int height = !errorText.isVisible() ? 0 : event.getComponent().getHeight();
+        int height = !myErrorText.isVisible() ? 0 : event.getComponent().getHeight();
         if (height != myHeight) {
           myHeight = height;
           myResizeInProgress = true;
-          errorText.setMinimumSize(new Dimension(0, height));
+          myErrorText.setMinimumSize(new Dimension(0, height));
           JRootPane root = myPeer.getRootPane();
           if (root != null) {
             root.validate();
@@ -1238,25 +1245,18 @@ public abstract class DialogWrapper {
           if (myActualSize != null && !shouldAddErrorNearButtons()) {
             myPeer.setSize(myActualSize.width, myActualSize.height + height);
           }
-          errorText.revalidate();
+          myErrorText.revalidate();
           myResizeInProgress = false;
         }
       }
     };
-    errorText.myLabel.addComponentListener(resizeListener);
+    myErrorText.myLabel.addComponentListener(resizeListener);
     Disposer.register(myDisposable, new Disposable() {
       @Override
       public void dispose() {
-        errorText.myLabel.removeComponentListener(resizeListener);
+        myErrorText.myLabel.removeComponentListener(resizeListener);
       }
     });
-
-    southSection.add(errorText, BorderLayout.CENTER, 0);
-    return errorText;
-  }
-
-  protected void init() {
-    ensureEventDispatchThread();
 
     final JPanel root = new JPanel(createRootLayout());
     //{
@@ -1302,19 +1302,12 @@ public abstract class DialogWrapper {
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
-    myErrorText = new NotNullLazyValue<ErrorText>() {
-      @NotNull
-      @Override
-      protected ErrorText compute() {
-        return createErrorText(southSection);
-      }
-    };
-
     if (!isVisualPaddingCompensatedOnComponentLevel) {
       southSection.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
     }
     root.add(southSection, BorderLayout.SOUTH);
 
+    southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
       southSection.add(south, BorderLayout.SOUTH);
@@ -1951,7 +1944,7 @@ public abstract class DialogWrapper {
                  Collections.singletonList(new ValidationInfo(text, component)));
   }
 
-  protected final void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
+  protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
     if (myInfo.equals(info)) return;
 
     Application application = ApplicationManager.getApplication();
@@ -1959,8 +1952,8 @@ public abstract class DialogWrapper {
 
     myErrorTextAlarm.cancelAllRequests();
     Runnable clearErrorRunnable = () -> {
-      if (myErrorText != null && myErrorText.isComputed()) {
-        myErrorText.getValue().clearError();
+      if (myErrorText != null) {
+        myErrorText.clearError();
       }
     };
     if (headless) {
@@ -1991,13 +1984,13 @@ public abstract class DialogWrapper {
           }
         }
 
-        SwingUtilities.invokeLater(() -> myErrorText.getValue().appendError(vi.message));
+        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
       });
     }
     else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
-          myErrorText.getValue().appendError(vi.message);
+          myErrorText.appendError(vi.message);
         }
       };
       if (headless) {
@@ -2017,7 +2010,7 @@ public abstract class DialogWrapper {
   }
 
   private void updateSize() {
-    if (myActualSize == null && (myErrorText == null || !myErrorText.isComputed() || !myErrorText.getValue().isVisible())) {
+    if (myActualSize == null && !myErrorText.isVisible()) {
       myActualSize = getSize();
     }
   }
@@ -2063,13 +2056,15 @@ public abstract class DialogWrapper {
         }
         setSize(size.width, size.height);
         //repaint();
-        if (myErrorText != null && myErrorText.isComputed() && myErrorText.getValue().shouldBeVisible()) {
-          myErrorText.getValue().setVisible(true);
+        if (myErrorText.shouldBeVisible()) {
+          myErrorText.setVisible(true);
         }
         myResizeInProgress = false;
       }
     }.start();
   }
+
+  public static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
 
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
@@ -2111,7 +2106,7 @@ public abstract class DialogWrapper {
     private void appendError(String text) {
       errors.add(text);
       myLabel.setBounds(0, 0, 0, 0);
-      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(JBColor.RED) + "'>");
+      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(ERROR_FOREGROUND_COLOR) + "'>");
       errors.forEach(error -> sb.append("<left>").append(error).append("</left><br/>"));
       sb.append("</font></html>");
       myLabel.setText(sb.toString());

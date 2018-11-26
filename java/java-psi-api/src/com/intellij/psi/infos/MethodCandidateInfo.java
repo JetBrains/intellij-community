@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author ik, dsl
@@ -256,6 +258,12 @@ public class MethodCandidateInfo extends CandidateInfo{
         return ThreeState.UNSURE;
       }
     }
+    else if (expression instanceof PsiSwitchExpression) {
+      Set<ThreeState> states =
+        PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)expression).stream().map(expr -> isPotentialCompatible(expr, formalType, method)).collect(Collectors.toSet());
+      if (states.contains(ThreeState.NO)) return ThreeState.NO;
+      if (states.contains(ThreeState.UNSURE)) return ThreeState.UNSURE;
+    }
     return ThreeState.YES;
   }
 
@@ -341,6 +349,9 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
       else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();
+        if (isRawSubstitution()) {
+          return JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(mySubstitutor, typeParams);
+        }
         for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
           incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
         }

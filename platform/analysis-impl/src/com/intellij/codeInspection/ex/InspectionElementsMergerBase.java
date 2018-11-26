@@ -105,7 +105,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
         }
       }
     }
-    if (!toolElement.getChildren().isEmpty()) {
+    if (writeMergedContent(toolElement)) {
       toolElement.setAttribute(InspectionProfileImpl.CLASS_TAG, getMergedToolName());
       toolElement.setAttribute(ToolsImpl.ENABLED_ATTRIBUTE, String.valueOf(enabled));
       if (level != null) {
@@ -128,6 +128,10 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       return toolElement;
     }
     return null;
+  }
+
+  protected boolean writeMergedContent(Element toolElement) {
+    return !toolElement.getChildren().isEmpty();
   }
 
   protected Element getSourceElement(Map<String, Element> inspectionElements, String sourceToolName) {

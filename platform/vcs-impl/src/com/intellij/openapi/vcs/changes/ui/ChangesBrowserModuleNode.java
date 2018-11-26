@@ -25,7 +25,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   }
 
   @Override
-  public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final Module module = (Module)userObject;
 
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

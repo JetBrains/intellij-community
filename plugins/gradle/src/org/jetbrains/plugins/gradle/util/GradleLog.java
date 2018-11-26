@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/11 11:44 AM
  */
 public class GradleLog {
 

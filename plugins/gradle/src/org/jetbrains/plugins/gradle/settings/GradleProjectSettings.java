@@ -19,7 +19,6 @@ import java.util.Optional;
 
 /**
  * @author Denis Zhdanov
- * @since 4/24/13 11:57 AM
  */
 public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private String myGradleHome;
@@ -121,6 +120,11 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   public GradleVersion resolveGradleVersion() {
     GradleVersion version = GradleInstallationManager.getGradleVersion(this);
     return Optional.ofNullable(version).orElseGet(GradleVersion::current);
+  }
+
+  public GradleProjectSettings withQualifiedModuleNames() {
+    setUseQualifiedModuleNames(true);
+    return this;
   }
 
   @Tag("compositeBuild")

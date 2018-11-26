@@ -182,7 +182,7 @@ public class BoolUtils {
         final boolean isEven = (operands.length & 1) != 1;
         for (int i = 0, length = operands.length; i < length; i++) {
           final PsiExpression operand = operands[i];
-          if (TypeUtils.hasFloatingPointType(operand)) {
+          if (TypeUtils.hasFloatingPointType(operand) && !ComparisonUtils.isEqualityComparison(polyadicExpression)) {
             // preserve semantics for NaNs
             return "!(" + polyadicExpression.getText() + ')';
           }

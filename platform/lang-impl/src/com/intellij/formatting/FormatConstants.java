@@ -27,7 +27,6 @@ import static com.intellij.psi.util.PsiUtilBase.getLanguageInEditor;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Sep 14, 2010 2:56:04 PM
  */
 public class FormatConstants {
 

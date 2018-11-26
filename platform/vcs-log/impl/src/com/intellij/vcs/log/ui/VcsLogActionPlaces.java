@@ -15,8 +15,6 @@
  */
 package com.intellij.vcs.log.ui;
 
-import com.intellij.openapi.vcs.VcsActions;
-
 public class VcsLogActionPlaces {
   // action groups
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
@@ -25,7 +23,6 @@ public class VcsLogActionPlaces {
   public static final String TEXT_FILTER_SETTINGS_ACTION_GROUP = "Vcs.Log.TextFilterSettings";
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
   public static final String HISTORY_POPUP_ACTION_GROUP = "Vcs.FileHistory.ContextMenu";
-  public static final String CHANGES_BROWSER_TOOLBAR_ACTION_GROUP = VcsActions.VCS_LOG_CHANGES_BROWSER_TOOLBAR;
   public static final String CHANGES_BROWSER_POPUP_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Popup";
 
   // action places
@@ -41,6 +38,4 @@ public class VcsLogActionPlaces {
   public static final String VCS_LOG_SHOW_DIFF_ACTION = "Diff.ShowDiff";
   public static final String CHECKIN_PROJECT_ACTION = "CheckinProject";
   public static final String VCS_LOG_GO_TO_HASH_OR_REF_ACTION = "Vcs.Log.GoToRef";
-  public static final String VCS_LOG_GO_TO_CHILD_ACTION = "Vcs.Log.GoToChild";
-  public static final String VCS_LOG_GO_TO_PARENT_ACTION = "Vcs.Log.GoToParent";
 }

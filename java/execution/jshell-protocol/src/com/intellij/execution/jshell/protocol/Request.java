@@ -1,27 +1,23 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.protocol;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  */
-@XmlRootElement
-public class Request extends Message{
+public class Request extends Message {
   private Command myCommand;
   private String myCodeText;
   private List<String> myClassPath;
 
-  @XmlEnum
-  public enum Command{
+  public enum Command {
     EVAL, DROP_STATE, EXIT
   }
 
-  public Request() {
-  }
+  @SuppressWarnings("unused")
+  public Request() { }
 
   public Request(String uid, Command cmd, String codeText) {
     super(uid);
@@ -33,27 +29,12 @@ public class Request extends Message{
     return myCommand;
   }
 
-  @XmlElement
-  public void setCommand(Command command) {
-    myCommand = command;
-  }
-
   public String getCodeText() {
     return myCodeText;
   }
 
-  @XmlElement
-  public void setCodeText(String codeText) {
-    myCodeText = codeText;
-  }
-
   public List<String> getClassPath() {
     return myClassPath;
-  }
-
-  @XmlElement(name = "cp")
-  public void setClassPath(List<String> classPath) {
-    myClassPath = classPath;
   }
 
   public void addClasspathItem(String path) {

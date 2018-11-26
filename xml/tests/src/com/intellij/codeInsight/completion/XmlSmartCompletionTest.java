@@ -80,6 +80,18 @@ public class XmlSmartCompletionTest extends LightPlatformCodeInsightFixtureTestC
               "</xs:schema>");
   }
 
+  public void testInvalidXmlException() {
+    doForText("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
+              "  <element name=\"foo\"><<caret></element>>\n" +
+              "  </element>\n" +
+              "</schema>",
+
+              "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
+              "  <element name=\"foo\"><</element>>\n" +
+              "  </element>\n" +
+              "</schema>");
+  }
+
   private void doForText(String before, String after) {
     myFixture.configureByText("a.xml", before);
     myFixture.complete(CompletionType.SMART);

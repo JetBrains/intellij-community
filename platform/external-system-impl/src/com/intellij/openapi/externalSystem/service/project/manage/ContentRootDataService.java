@@ -68,7 +68,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
 /**
  * @author Denis Zhdanov
- * @since 2/7/12 3:20 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {

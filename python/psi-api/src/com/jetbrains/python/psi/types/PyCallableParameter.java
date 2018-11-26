@@ -74,12 +74,9 @@ public interface PyCallableParameter {
    * @return canonical representation of parameter.
    * Includes asterisks for *param and **param.
    * Also includes argument type if {@code context} is not null and filter returns `false` for it.
-   * @apiNote This method will be marked as abstract in 2018.3.
    */
   @NotNull
-  default String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
-    return getPresentableText(includeDefaultValue, context);
-  }
+  String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter);
 
   /**
    * @param context context to be used to resolve argument type

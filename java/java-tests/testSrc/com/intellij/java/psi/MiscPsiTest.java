@@ -81,9 +81,9 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     fileCopy = (PsiFile) fileCopy.setName("NewTest.xxx");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
     if (!(newFile instanceof PsiBinaryFile)) {
-      System.out.println(newFile.getVirtualFile().getFileType());
-      System.out.println(newFile.getFileType());
-      System.out.println(newFile.getText());
+      System.err.println(newFile.getVirtualFile().getFileType());
+      System.err.println(newFile.getFileType());
+      System.err.println(newFile.getText());
     }
     assertInstanceOf(newFile, PsiBinaryFile.class);
 

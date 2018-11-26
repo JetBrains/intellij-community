@@ -85,7 +85,7 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
 
       @Override
       public Icon getIcon(boolean open) {
-        return AllIcons.Nodes.Advice;
+        return AllIcons.Nodes.Tag;
       }
     };
   }

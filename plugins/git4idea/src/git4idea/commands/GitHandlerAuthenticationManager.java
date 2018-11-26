@@ -5,12 +5,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import git4idea.config.GitVcsApplicationSettings;
+import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +179,12 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myNativeSshHandler = service.registerHandler(authenticator, myProject);
     int port = service.getXmlRcpPort();
 
-    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV, service.getScriptPath().getPath());
+    boolean useBatchFile = SystemInfo.isWindows &&
+                           (!Registry.is("git.use.shell.script.on.windows") ||
+                            !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myProject));
+
+    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV,
+                                           service.getScriptPath(useBatchFile).getPath());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV, myNativeSshHandler.toString());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("myHandler=%s, port=%s", myNativeSshHandler, port));

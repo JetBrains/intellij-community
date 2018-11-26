@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,14 @@ public class InconsistentResourceBundleInspectionTest extends JavaCodeInsightFix
 
   @Override
   protected void tearDown() throws Exception {
-    myInspection.clearSettings();
-    myInspection = null;
-    super.tearDown();
+    try {
+      myInspection.clearSettings();
+    }
+    finally {
+      myInspection = null;
+
+      super.tearDown();
+    }
   }
 
   public void testInconsistentPlaceholders() {

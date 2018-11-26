@@ -34,7 +34,6 @@ import java.util.*;
 
 /**
  * @author stathik
- * @since Mar 28, 2003
  */
 public class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);

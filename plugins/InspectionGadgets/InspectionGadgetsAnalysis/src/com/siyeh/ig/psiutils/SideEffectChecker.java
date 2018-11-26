@@ -260,6 +260,13 @@ public class SideEffectChecker {
   }
 
   private static boolean isSideEffectFreeConstructor(@NotNull PsiNewExpression newExpression) {
+    PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+    if (anonymousClass != null && anonymousClass.getInitializers().length == 0) {
+      PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
+      if (baseClass != null && baseClass.isInterface()) {
+        return true;
+      }
+    }
     PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     PsiClass aClass = classReference == null ? null : (PsiClass)classReference.resolve();
     String qualifiedName = aClass == null ? null : aClass.getQualifiedName();

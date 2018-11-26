@@ -2,10 +2,11 @@
 class C {
     void foo() {
         /*comment 1*/
-        bar();/*comment 2*//*comment 3*///comment 4
+        bar();
         // comment A
         /*comment B*/
-        int n = 1;// comment C
+        //comment 4
+        int /*comment 2*/ n /*comment 3*/ = 1; // comment C
     }
     void bar(){}
 }

@@ -8,7 +8,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public class OnOutputEvent extends AbstractTestEvent {
 

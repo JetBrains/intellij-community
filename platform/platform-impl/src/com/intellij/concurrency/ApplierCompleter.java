@@ -135,14 +135,22 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
         }
         long finish = System.currentTimeMillis();
         long elapsed = finish - start;
-        if (elapsed > 5 && hi - i >= 2 && getSurplusQueuedTaskCount() <= JobSchedulerImpl.getJobPoolParallelism()) {
-          int mid = i + hi >>> 1;
-          right = new ApplierCompleter<>(this, runInReadAction, failFastOnAcquireReadAction, progressIndicator, array, processor, mid, hi, failedSubTasks, right);
-          //children.add(right);
-          addToPendingCount(1);
-          right.fork();
-          hi = mid;
-          start = finish;
+        if (elapsed > 1 && hi - i >= 2) {
+          int availableParallelism = JobSchedulerImpl.getJobPoolParallelism() - getSurplusQueuedTaskCount();
+          if (availableParallelism > 1) {
+            // fork off several sub-tasks at once to reduce rampup
+            for (int n=0; n<availableParallelism; n++) {
+              int mid = i + hi >>> 1;
+              if (mid == i || mid == hi) break;
+              right = new ApplierCompleter<>(this, runInReadAction, failFastOnAcquireReadAction, progressIndicator, array, processor,
+                                             mid, hi, failedSubTasks, right);
+              //children.add(right);
+              addToPendingCount(1);
+              right.fork();
+              hi = mid;
+            }
+            start = finish;
+          }
         }
       }
 

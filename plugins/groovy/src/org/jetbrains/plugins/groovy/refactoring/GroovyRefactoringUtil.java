@@ -54,6 +54,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isPlusPlusOrMinusMinus;
+
 /**
  * @author ilyas
  */
@@ -424,14 +426,6 @@ public abstract class GroovyRefactoringUtil {
       result = Math.max(result, childResult);
     }
     return result;
-  }
-
-  public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
-    if (element instanceof GrUnaryExpression) {
-      IElementType operandSign = ((GrUnaryExpression)element).getOperationTokenType();
-      return operandSign == GroovyTokenTypes.mDEC || operandSign == GroovyTokenTypes.mINC;
-    }
-    return false;
   }
 
   public static boolean isCorrectReferenceName(String newName, Project project) {

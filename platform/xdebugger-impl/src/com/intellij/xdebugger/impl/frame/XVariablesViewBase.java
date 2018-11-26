@@ -103,7 +103,8 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
     XValueContainerNode root;
     if (stackFrame == null) {
-      root = new XValueContainerNode<XValueContainer>(getTree(), null, true, new XValueContainer() {}) {};
+      // do not set leaf=false here, otherwise info messages do not appear, see IDEA-200865
+      root = new XValueContainerNode<XValueContainer>(getTree(), null, false, new XValueContainer() {}) {};
     }
     else {
       root = new XStackFrameNode(getTree(), stackFrame);

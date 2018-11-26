@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.List;
 
@@ -73,6 +73,9 @@ public class Foundation {
   public static ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
   }
+
+  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args); }
+  public static double invoke_fpret(ID receiver, String selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, createSelector(selector), args); }
 
   public static boolean isNil(ID id) {
     return id == null || ID.NIL.equals(id);
@@ -161,24 +164,32 @@ public class Foundation {
     return isPackageAtPath(file.getPath());
   }
 
-  @NotNull
-  public static ID nsString(@Nullable String s) {
-    if (s == null) return ID.NIL;
+  private static class NSString {
+    private static final ID nsStringCls = getObjcClass("NSString");
+    private static final Pointer stringSel = createSelector("string");
+    private static final Pointer allocSel = createSelector("alloc");
+    private static final Pointer autoreleaseSel = createSelector("autorelease");
+    private static final Pointer initWithBytesLengthEncodingSel = createSelector("initWithBytes:length:encoding:");
+    private static final long nsEncodingUTF16LE = convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE);
 
-    // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
-    // Turns out about 10% quicker for long strings.
-    try {
+    @NotNull
+    public static ID create(@NotNull String s) {
+      // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
+      // Turns out about 10% quicker for long strings.
       if (s.isEmpty()) {
-        return invoke("NSString", "string");
+        return invoke(nsStringCls, stringSel);
       }
 
-      byte[] utf16Bytes = s.getBytes("UTF-16LE");
-      return invoke(invoke(invoke("NSString", "alloc"), "initWithBytes:length:encoding:", utf16Bytes, utf16Bytes.length,
-                    convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE)), "autorelease");
+      byte[] utf16Bytes = s.getBytes(CharsetToolkit.UTF_16LE_CHARSET);
+      return invoke(invoke(invoke(nsStringCls, allocSel),
+                           initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
+                    autoreleaseSel);
     }
-    catch (UnsupportedEncodingException x) {
-      throw new RuntimeException(x);
-    }
+  }
+
+  @NotNull
+  public static ID nsString(@Nullable String s) {
+    return s == null ? ID.NIL : NSString.create(s);
   }
 
   public static ID nsUUID(@NotNull UUID uuid) {
@@ -253,6 +264,10 @@ public class Foundation {
     }
   }
 
+  public static ID autorelease(ID id){
+    return Foundation.invoke(id, "autorelease");
+  }
+
   public static boolean isMainThread() {
     return invoke("NSThread", "isMainThread").intValue() > 0;
   }
@@ -277,8 +292,7 @@ public class Foundation {
     synchronized (RUNNABLE_LOCK) {
       initRunnableSupport();
 
-      ourCurrentRunnableCount++;
-      runnableCountString = String.valueOf(ourCurrentRunnableCount);
+      runnableCountString = String.valueOf(++ourCurrentRunnableCount);
       ourMainThreadRunnables.put(runnableCountString, new RunnableInfo(runnable, withAutoreleasePool));
     }
 
@@ -360,11 +374,14 @@ public class Foundation {
     public NSArray keys() { return new NSArray(invoke(myDelegate, "allKeys")); }
 
     @NotNull
-    public static Map<String, String> toStringMap(ID delegate) {
-      NSDictionary dict = new NSDictionary(delegate);
-
-      NSArray keys = dict.keys();
+    public static Map<String, String> toStringMap(@Nullable ID delegate) {
       Map<String, String> result = new HashMap<String, String>();
+      if (isNil(delegate)) {
+        return result;
+      }
+
+      NSDictionary dict = new NSDictionary(delegate);
+      NSArray keys = dict.keys();
 
       for (int i = 0; i < keys.count(); i++) {
         String key = toStringViaUTF8(keys.at(i));

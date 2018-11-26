@@ -61,7 +61,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/18/14
  */
 public class GradleTestsExecutionConsoleManager
   implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, GradleTestsExecutionConsole, ProcessHandler> {

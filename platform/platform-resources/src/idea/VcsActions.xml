@@ -171,6 +171,8 @@
       <separator/>
       <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"
               description="Show/Hide Already Unshelved"/>
+      <action id="ShelvedChanges.ShowRecentlyDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowRecentlyDeletedShelvesAction"
+              description="Show recently deleted shelves" text="Show Recently Deleted"/>
       <action id="ShelvedChanges.CleanMarkedToDelete" class="com.intellij.openapi.vcs.changes.shelf.CleanUnshelvedAction"
               description="Delete unshelved changelists" text="Clean Already Unshelved..." icon="AllIcons.Actions.GC"/>
     </group>
@@ -227,8 +229,10 @@
     <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
             text="Edit Source" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"/>
     <action id="Vcs.OpenRepositoryVersion" class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction"/>
-    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction"
+    <action id="Vcs.RevertSelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Revert"
             text="Revert Selected Changes" icon="AllIcons.Actions.Rollback"/>
+    <action id="Vcs.ApplySelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Apply"
+            text="Apply Selected Changes"/>
 
     <group id="Vcs.RepositoryChangesBrowserToolbar">
       <reference ref="Vcs.RevertSelectedChanges"/>
@@ -241,6 +245,7 @@
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.RevertSelectedChanges"/>
+      <reference ref="Vcs.ApplySelectedChanges"/>
       <reference ref="Vcs.ShowHistoryForRevision"/>
     </group>
 
@@ -427,6 +432,7 @@
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.RevertSelectedChanges"/>
+      <reference ref="Vcs.ApplySelectedChanges"/>
       <separator/>
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>

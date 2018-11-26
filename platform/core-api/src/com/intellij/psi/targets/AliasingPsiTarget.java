@@ -40,7 +40,7 @@ public class AliasingPsiTarget extends DelegatePsiTarget implements PomRenameabl
    @Override
    @NotNull
   public String getName() {
-    return StringUtil.notNullize(getNameAlias(((PsiNamedElement)getNavigationElement()).getName()));
+    return StringUtil.notNullize(getNameAlias(StringUtil.notNullize(((PsiNamedElement)getNavigationElement()).getName())));
   }
 
   @NotNull
@@ -49,7 +49,7 @@ public class AliasingPsiTarget extends DelegatePsiTarget implements PomRenameabl
   }
 
   @Nullable
-  public String getNameAlias(@Nullable String delegatePsiTargetName) {
+  public String getNameAlias(@NotNull String delegatePsiTargetName) {
     return delegatePsiTargetName;
   }
 }

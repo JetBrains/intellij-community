@@ -6,9 +6,11 @@ import java.util.Objects;
 
 public class Main {
   private static void test(List<String> names) {
+      /*3*/
+      /*4*/
       for (String name : names) {
           if (name != null) {
-              System.out.println(name);
+              System/*1*/./*2*/out.println(name);
           }
       }
   }

@@ -18,7 +18,6 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,18 +45,17 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   }
 
   private static boolean hasOnlyPhysicalPsiDependencies(@Nullable Object[] dependencies) {
-    return dependencies != null && dependencies.length > 0 && ContainerUtil.and(dependencies, o -> o instanceof PsiElement && ((PsiElement)o).isValid() && ((PsiElement)o).isPhysical() ||
-                                                                                               o instanceof ProjectRootModificationTracker ||
-                                                                                               o instanceof PsiModificationTracker ||
-           o == PsiModificationTracker.MODIFICATION_COUNT ||
-           o == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
-           o == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    return dependencies != null && dependencies.length > 0 &&
+           ContainerUtil.and(dependencies, PsiCachedValue::anyChangeImpliesPsiCounterChange);
   }
 
-  @Nullable
-  @Override
-  protected <P> T getValueWithLock(P param) {
-    return super.getValueWithLock(param);
+  private static boolean anyChangeImpliesPsiCounterChange(Object o) {
+    return o instanceof PsiElement && ((PsiElement)o).isValid() && ((PsiElement)o).isPhysical() ||
+           o instanceof ProjectRootModificationTracker ||
+           o instanceof PsiModificationTracker ||
+           o == PsiModificationTracker.MODIFICATION_COUNT ||
+           o == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
+           o == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
   }
 
   @Override

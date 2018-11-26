@@ -73,6 +73,7 @@ public class VcsLogContentUtil {
                                                              @NotNull Class<U> clazz,
                                                              @NotNull Condition<? super U> condition) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    if (toolWindow == null) return null;
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> {

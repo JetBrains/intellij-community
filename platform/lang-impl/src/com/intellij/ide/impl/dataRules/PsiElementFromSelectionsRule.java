@@ -16,26 +16,37 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiElementFromSelectionsRule implements GetDataRule {
+  private static final Logger LOG = Logger.getInstance(PsiElementFromSelectionsRule.class);
+
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
-    final Object[] objects = (Object[])dataProvider.getData(PlatformDataKeys.SELECTED_ITEMS.getName());
-    if (objects != null) {
-      final PsiElement[] elements = new PsiElement[objects.length];
-      for (int i = 0, objectsLength = objects.length; i < objectsLength; i++) {
-        Object object = objects[i];
-        if (!(object instanceof PsiElement)) return null;
-        if (!((PsiElement)object).isValid()) return null;
-        elements[i] = (PsiElement)object;
-      }
+    Object data = dataProvider.getData(PlatformDataKeys.SELECTED_ITEMS.getName());
+    if (data == null) return null;
 
-      return elements;
+    if (!(data instanceof Object[])) {
+      String errorMessage = "Value for data key 'PlatformDataKeys.SELECTED_ITEMS' must be of type Object[], but " + data.getClass() +
+                            " is returned by " + dataProvider.getClass();
+      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, dataProvider.getClass()));
+      return null;
     }
-    return null;
+
+    final Object[] objects = (Object[])data;
+    final PsiElement[] elements = new PsiElement[objects.length];
+    for (int i = 0, objectsLength = objects.length; i < objectsLength; i++) {
+      Object object = objects[i];
+      if (!(object instanceof PsiElement)) return null;
+      if (!((PsiElement)object).isValid()) return null;
+      elements[i] = (PsiElement)object;
+    }
+
+    return elements;
   }
 }

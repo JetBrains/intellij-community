@@ -185,7 +185,7 @@ public class PluginHeaderPanel {
           case RESTART:
           case UNINSTALL:
             return UIUtil.isUnderDarcula()
-                   ? ColorUtil.mix(UIManager.getColor("Button.darcula.startColor"), UIManager.getColor("Button.darcula.endColor"), 0.5)
+                   ? ColorUtil.mix(UIManager.getColor("Button.startBackground"), UIManager.getColor("Button.endBackground"), 0.5)
                    : Gray._240;
         }
         return Gray._238;

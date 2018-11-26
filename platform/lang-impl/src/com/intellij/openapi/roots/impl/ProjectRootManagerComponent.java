@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -184,26 +186,32 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDefault()) return null;
 
-    final Set<String> recursive = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    final Set<String> flat = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> dirUrls = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> recursiveDirs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> recursiveDirUrls = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> files = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
     final String projectFilePath = myProject.getProjectFilePath();
     final File projectDirFile = projectFilePath == null ? null : new File(projectFilePath).getParentFile();
     if (projectDirFile != null && projectDirFile.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      recursive.add(projectDirFile.getAbsolutePath());
+      dirUrls.add(VfsUtilCore.pathToUrl(projectDirFile.getAbsolutePath()));
     }
     else {
-      flat.add(projectFilePath);
+      files.add(projectFilePath);
       // may be not existing yet
-      ContainerUtil.addIfNotNull(flat, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());
+      ContainerUtil.addIfNotNull(files, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());
     }
 
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
-      recursive.addAll(ContainerUtil.map(extension.getRootsToWatch(myProject), VirtualFile::getPath));
+      Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
+      recursiveDirs.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
+      recursiveDirUrls.addAll(ContainerUtil.map(toWatch, VirtualFile::getUrl));
     }
 
     for (WatchedRootsProvider extension : WatchedRootsProvider.EP_NAME.getExtensions(myProject)) {
-      recursive.addAll(extension.getRootsToWatch());
+      Set<String> toWatch = extension.getRootsToWatch();
+      recursiveDirs.addAll(toWatch);
+      recursiveDirUrls.addAll(ContainerUtil.map(toWatch, p->VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(p))));
     }
 
     Disposable oldDisposable = myRootPointersDisposable;
@@ -211,14 +219,16 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     Disposer.register(this, myRootPointersDisposable);
     // create container with these urls with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
     VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myRootPointersDisposable, getRootsValidityChangedListener());
-    recursive.forEach(path -> container.addJarDirectory(VfsUtilCore.pathToUrl(path), true));
-    flat.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
+
+    ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveDirUrls, true);
+    ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(dirUrls, false);
+    files.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
 
     Disposer.dispose(oldDisposable); // dispose after the re-creating container to keep virtual file pointers from disposing and re-creating back
 
     // module roots already fire validity change events
-    addRootsFromModulesTo(recursive, flat);
-    return Pair.create(recursive, flat);
+    addRootsFromModulesTo(recursiveDirs, files);
+    return Pair.create(recursiveDirs, files);
   }
 
   private void addRootsFromModulesTo(@NotNull Set<? super String> recursive, @NotNull Set<? super String> flat) {
@@ -309,6 +319,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       if (--myInsideRefresh == 0) {
         if (myPointerChangesDetected) {
           myPointerChangesDetected = false;
+          incModificationCount();
           myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, false));
 
           doSynchronizeRoots();

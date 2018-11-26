@@ -227,6 +227,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   private void onSelectionChanged(@NotNull FileEditorManagerEvent event) {
+    if (!myResourceBundle.isValid()) return;
     // Ignore events which don't target current editor.
     FileEditor oldEditor = event.getOldEditor();
     FileEditor newEditor = event.getNewEditor();

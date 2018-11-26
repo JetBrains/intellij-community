@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
+import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
@@ -490,20 +480,6 @@ public class ExpectedTypesProvider {
     }
 
     @Override
-    public void visitSwitchLabelStatement(@NotNull final PsiSwitchLabelStatement statement) {
-      final PsiSwitchStatement switchStatement = statement.getEnclosingSwitchStatement();
-      if (switchStatement != null) {
-        final PsiExpression expression = switchStatement.getExpression();
-        if (expression != null) {
-          final PsiType type = expression.getType();
-          if (type != null) {
-            myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.CASE_COLON));
-          }
-        }
-      }
-    }
-
-    @Override
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
       PsiType objectType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, myExpr.getResolveScope());
@@ -593,6 +569,18 @@ public class ExpectedTypesProvider {
       else if (parent instanceof PsiAnonymousClass) {
         getExpectedArgumentsTypesForNewExpression((PsiNewExpression)parent.getParent(), list);
       }
+      else if (parent instanceof PsiSwitchLabelStatementBase) {
+        PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchStatement();
+        if (switchStatement != null) {
+          PsiExpression expression = switchStatement.getExpression();
+          if (expression != null) {
+            PsiType type = expression.getType();
+            if (type != null) {
+              myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.CASE_COLON));
+            }
+          }
+        }
+      }
     }
 
     private void getExpectedArgumentsTypesForEnumConstant(@NotNull final PsiEnumConstant enumConstant,
@@ -674,9 +662,9 @@ public class ExpectedTypesProvider {
         }
         return;
       }
-     
+
       PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
-      
+
       if (op == JavaTokenType.MINUS ||
           op == JavaTokenType.ASTERISK ||
           op == JavaTokenType.DIV ||
@@ -1002,8 +990,8 @@ public class ExpectedTypesProvider {
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
           Computable<PsiSubstitutor> computable = () -> info.inferSubstitutorFromArgs(policy, args);
-          substitutor = info.isInferencePossible() && targetMethod == method 
-                        ? computable.compute() 
+          substitutor = info.isInferencePossible() && targetMethod == method
+                        ? computable.compute()
                         : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, computable);
           if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC) || info.getInferenceErrorMessage() != null) continue;
         }
@@ -1017,8 +1005,8 @@ public class ExpectedTypesProvider {
 
         if (leftArgs != null && candidateInfo instanceof MethodCandidateInfo) {
           Computable<PsiSubstitutor> computable = () -> ((MethodCandidateInfo)candidateInfo).inferSubstitutorFromArgs(policy, leftArgs);
-          substitutor = ((MethodCandidateInfo)candidateInfo).isInferencePossible() && targetMethod == method 
-                        ? computable.compute() 
+          substitutor = ((MethodCandidateInfo)candidateInfo).isInferencePossible() && targetMethod == method
+                        ? computable.compute()
                         : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, computable);
           if (substitutor != null) {
             inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
@@ -1079,7 +1067,26 @@ public class ExpectedTypesProvider {
         if (returnType != null) returnType = substitutor.substitute(returnType);
         return getFinalCallParameterTailType(call, returnType, method);
       }
+      if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+        PsiCall completedOuterCall = getCompletedOuterCall(argument);
+        if (completedOuterCall != null) return new CommaTailTypeWithSyncHintUpdate(completedOuterCall);
+      }
       return TailType.COMMA;
+    }
+
+    @Nullable
+    private static PsiCall getCompletedOuterCall(@NotNull PsiExpression argument) {
+      PsiElement expressionList = argument.getParent();
+      if (expressionList instanceof PsiExpressionList) {
+        PsiElement call = expressionList.getParent();
+        if (call instanceof PsiCall) {
+          PsiCall originalCall = CompletionUtil.getOriginalElement((PsiCall)call);
+          if (originalCall != null && JavaMethodCallElement.isCompletionMode(originalCall)) {
+            return originalCall;
+          }
+        }
+      }
+      return null;
     }
 
     private static void inferMethodCallArgumentTypes(@NotNull final PsiExpression argument,
@@ -1308,4 +1315,37 @@ public class ExpectedTypesProvider {
     return TailTypes.CALL_RPARENTH;
   }
 
+  private static class CommaTailTypeWithSyncHintUpdate extends TailType {
+    private final PsiCall myOriginalCall;
+
+    private CommaTailTypeWithSyncHintUpdate(@NotNull PsiCall originalCall) {myOriginalCall = originalCall;}
+
+    @Override
+    public boolean isApplicable(@NotNull InsertionContext context) {
+      return TailType.COMMA.isApplicable(context);
+    }
+
+    @Override
+    public int processTail(Editor editor, int tailOffset) {
+      int result = TailType.COMMA.processTail(editor, tailOffset);
+      if (myOriginalCall.isValid()) {
+        PsiDocumentManager.getInstance(myOriginalCall.getProject()).commitDocument(editor.getDocument());
+        if (myOriginalCall.isValid()) ParameterHintsPass.syncUpdate(myOriginalCall, editor);
+      }
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      CommaTailTypeWithSyncHintUpdate update = (CommaTailTypeWithSyncHintUpdate)o;
+      return myOriginalCall.equals(update.myOriginalCall);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myOriginalCall);
+    }
+  }
 }

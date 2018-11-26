@@ -18,12 +18,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -36,7 +34,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -540,12 +537,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static boolean containsBeanInfoText(@NotNull PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, () -> {
-      Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME,
-                                                                                      new IdIndexEntry("beaninfo", true),
-                                                                                      GlobalSearchScope.fileScope(file));
-      return CachedValueProvider.Result.create(!files.isEmpty(), file);
-    });
+    return CachedValuesManager.getCachedValue(file, () ->
+      CachedValueProvider.Result.create(IdIndex.hasIdentifierInFile(file, "beaninfo"), file));
   }
 
   private static PsiType getType(@NotNull PsiModifierListOwner element) {
@@ -804,7 +797,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      List<PsiAnnotationMemberValue> values = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).collect(Collectors.toList());
+      List<PsiAnnotationMemberValue> values = ContainerUtil.map(myMemberValuePointers, SmartPsiElementPointer::getElement);
       String text = StringUtil.join(Collections.nCopies(values.size(), "0"), " | ");
       PsiExpression concatExp = PsiElementFactory.SERVICE.getInstance(project).createExpressionFromText(text, startElement);
 

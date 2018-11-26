@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.GeneralSettings;
@@ -118,7 +104,7 @@ final class BrowserSettingsPanel {
         item.setSpecificSettings(value.createBrowserSpecificSettings());
       }
 
-      @Nullable
+      @NotNull
       @Override
       public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
         return IconTableCellRenderer.ICONABLE;
@@ -149,7 +135,7 @@ final class BrowserSettingsPanel {
 
   BrowserSettingsPanel() {
     alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
-    defaultBrowserPanel.setBorder(TitledSeparator.EMPTY_BORDER);
+    defaultBrowserPanel.setBorder(TitledSeparator.createEmptyBorder());
 
     ArrayList<DefaultBrowserPolicy> defaultBrowserPolicies = new ArrayList<>();
     if (BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
@@ -363,7 +349,7 @@ final class BrowserSettingsPanel {
     if (policy != DefaultBrowserPolicy.SYSTEM || BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
       return policy;
     }
-    // if system default browser policy cannot be used 
+    // if system default browser policy cannot be used
     return DefaultBrowserPolicy.ALTERNATIVE;
   }
 

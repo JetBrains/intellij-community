@@ -6,6 +6,8 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.text.StringUtil
+import java.util.*
+import java.util.stream.Collectors
 
 
 fun getHintProviders(): List<Pair<Language, InlayParameterHintsProvider>> {
@@ -25,4 +27,22 @@ fun getBlackListInvalidLineNumbers(text: String): List<Int> {
     .map { it.first to MatcherConstructor.createMatcher(it.second) }
     .filter { it.second == null }
     .map { it.first }
+}
+
+fun getLanguageForSettingKey(language: Language): Language {
+  val supportedLanguages = getBaseLanguagesWithProviders()
+  var languageForSettings: Language? = language
+  while (languageForSettings != null && !supportedLanguages.contains(languageForSettings)) {
+    languageForSettings = languageForSettings.baseLanguage
+  }
+  if (languageForSettings == null) languageForSettings = language
+  return languageForSettings
+}
+
+fun getBaseLanguagesWithProviders(): List<Language> {
+  return getHintProviders()
+    .stream()
+    .map { (first) -> first }
+    .sorted(Comparator.comparing<Language, String> { l -> l.displayName })
+    .collect(Collectors.toList())
 }

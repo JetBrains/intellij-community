@@ -46,6 +46,7 @@ public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver {
     super(provider, type);
   }
 
+  @Override
   public String toString() {
 
     return "HtmlFile:" + getName();

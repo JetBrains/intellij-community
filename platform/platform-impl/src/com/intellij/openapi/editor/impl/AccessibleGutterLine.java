@@ -2,19 +2,20 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
@@ -35,13 +36,23 @@ import java.util.List;
  * @author tav
  */
 class AccessibleGutterLine extends JPanel {
-  private static boolean actionHandlersInstalled;
-
   private final EditorGutterComponentImpl myGutter;
   private AccessibleGutterElement mySelectedElement;
   // [tav] todo: soft-wrap doesn't work correctly
   private final int myLogicalLineNum;
   private final int myVisualLineNum;
+
+  private static boolean actionHandlerInstalled;
+
+  private static class MyShortcuts {
+    static final CustomShortcutSet MOVE_RIGHT = new CustomShortcutSet(
+      new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), null),
+      new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), null));
+
+    static final CustomShortcutSet MOVE_LEFT = new CustomShortcutSet(
+      new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), null),
+      new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), null));
+  }
 
   public static AccessibleGutterLine createAndActivate(@NotNull EditorGutterComponentImpl gutter) {
     return new AccessibleGutterLine(gutter);
@@ -61,22 +72,18 @@ class AccessibleGutterLine extends JPanel {
     mySelectedElement.paint(g);
   }
 
-  private static void checkInstallActionHandlers() {
-    if (actionHandlersInstalled) return;
-    actionHandlersInstalled = true;
-
-    installActionHandler(IdeActions.ACTION_EDITOR_ESCAPE, true, (line) -> line.escape(true));
-    installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, false, (line) -> line.moveRight());
-    installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, false, (line) -> line.moveLeft());
-    installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, true, (line) -> line.maybeLineChanged());
-    installActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, true, (line) -> line.maybeLineChanged());
-    installActionHandler(IdeActions.ACTION_EDITOR_ENTER, false, (line) -> {});
-    installActionHandler("EditorShowGutterIconTooltip", false, (line) -> line.showTooltipIfPresent());
-  }
-
   public static void installListeners(@NotNull EditorGutterComponentImpl gutter) {
-    checkInstallActionHandlers();
-
+    if (!actionHandlerInstalled) {
+      // [tav] todo: when the API is stable and open move it to ShowGutterIconTooltipAction
+      actionHandlerInstalled = true;
+      EditorActionManager.getInstance().setActionHandler("EditorShowGutterIconTooltip", new EditorActionHandler() {
+        @Override
+        protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+          AccessibleGutterLine line = ((EditorGutterComponentImpl)editor.getGutter()).getCurrentAccessibleLine();
+          if (line != null) line.showTooltipIfPresent();
+        }
+      });
+    }
     gutter.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -89,20 +96,11 @@ class AccessibleGutterLine extends JPanel {
         gutter.escapeCurrentAccessibleLine();
       }
     });
-  }
-
-  private static void installActionHandler(String actionId, boolean propagate, Consumer<AccessibleGutterLine> action) {
-    EditorActionManager.getInstance().setActionHandler(actionId, new EditorActionHandler() {
-      private final EditorActionHandler origHandler = EditorActionManager.getInstance().getActionHandler(actionId);
+    gutter.getEditor().getCaretModel().addCaretListener(new CaretListener() {
       @Override
-      protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-        AccessibleGutterLine line = ((EditorGutterComponentImpl)editor.getGutter()).getCurrentAccessibleLine();
-        if (propagate || line == null) {
-          origHandler.execute(editor, caret, dataContext);
-        }
-        if (line != null) {
-          action.consume(line);
-        }
+      public void caretPositionChanged(@NotNull CaretEvent event) {
+        AccessibleGutterLine line = gutter.getCurrentAccessibleLine();
+        if (line != null) line.maybeLineChanged();
       }
     });
   }
@@ -135,7 +133,7 @@ class AccessibleGutterLine extends JPanel {
         @NotNull
         @Override
         public String getAccessibleName() {
-          return "line " + String.valueOf(myLogicalLineNum + 1);
+          return "line " + (myLogicalLineNum + 1);
         }
         @Override
         public String getAccessibleTooltipText() {
@@ -239,7 +237,16 @@ class AccessibleGutterLine extends JPanel {
       }, 0, 0, b.width, b.height);
     }
 
+    installActionHandler(CommonShortcuts.ESCAPE, () -> escape(true));
+    installActionHandler(CommonShortcuts.ENTER, () -> {}); // [tav] todo: it can do something useful, e.g. forcing Screen Reader to voice
+    installActionHandler(MyShortcuts.MOVE_RIGHT, this::moveRight);
+    installActionHandler(MyShortcuts.MOVE_LEFT, this::moveLeft);
+
     IdeFocusManager.getGlobalInstance().requestFocus(mySelectedElement, true);
+  }
+
+  private void installActionHandler(ShortcutSet shortcut, Runnable action) {
+    DumbAwareAction.create(e -> action.run()).registerCustomShortcutSet(shortcut, this);
   }
 
   @SuppressWarnings("SameParameterValue")

@@ -23,6 +23,8 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
@@ -685,6 +687,7 @@ public static void test(Object obj, int i) {
     return assertOneElement(inferContracts(method))
   }
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8_ANNOTATED

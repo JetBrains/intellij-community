@@ -118,7 +118,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                      int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         setHorizontalAlignment(SwingConstants.RIGHT);
-        final Color fg = isSelected ? UIUtil.getTreeSelectionForeground() : SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor();
+        Color fg = isSelected ? UIUtil.getTreeSelectionForeground(hasFocus) : SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor();
         setForeground(fg);
         return this;
       }
@@ -161,8 +161,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         final Component rendererComponent =
           treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         if (rendererComponent instanceof SimpleColoredComponent) {
-          final Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          final Color fg = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
+          Color bg = UIUtil.getTreeBackground(selected, true);
+          Color fg = UIUtil.getTreeForeground(selected, true);
           if (selected) {
             for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
               it.next();
@@ -190,7 +190,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     TreeUtil.installActions(tree);
     myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
 
-    myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null);
+    myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(this, myBuilder);
     myBuilder.initRootNode();
     myBuilder.updateFromRoot();

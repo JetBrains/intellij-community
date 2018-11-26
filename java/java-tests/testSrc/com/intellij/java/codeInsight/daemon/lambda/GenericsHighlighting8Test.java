@@ -1041,5 +1041,6 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   public void testBridgeMethodOverriding() { doTest(); }
   public void testNestedWildcardsWithImplicitBounds() { doTest(); }
+  public void testCallOnRawWithExplicitTypeArguments() { doTest(); }
   public void testNoCaptureConversionDuringDetectingSupertypesDeepInHierarchy() { doTest(); }
 }

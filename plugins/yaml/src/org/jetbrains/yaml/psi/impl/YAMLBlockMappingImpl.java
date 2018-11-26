@@ -5,10 +5,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
+import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
@@ -18,6 +20,13 @@ import java.util.List;
 public class YAMLBlockMappingImpl extends YAMLMappingImpl {
   public YAMLBlockMappingImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @NotNull
+  public YAMLKeyValue getFirstKeyValue() {
+    YAMLKeyValue firstKeyValue = findChildByType(YAMLElementTypes.KEY_VALUE_PAIR);
+    assert firstKeyValue != null : "magic YAML map without any key-value";
+    return firstKeyValue;
   }
 
   @Override
@@ -61,7 +70,27 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
       return;
     }
 
-    if (offset >= getTextRange().getEndOffset()) {
+    if (offset == getTextRange().getEndOffset()) {
+      addNewKey(keyValue);
+      return;
+    }
+
+    if (offset > getTextRange().getEndOffset()) {
+      PsiElement nextLeaf = PsiTreeUtil.nextLeaf(this);
+      List<PsiElement> toBeRemoved = new SmartList<>();
+      while (YAMLElementTypes.SPACE_ELEMENTS.contains(PsiUtilCore.getElementType(nextLeaf))) {
+        if (offset >= nextLeaf.getTextRange().getStartOffset()) {
+          toBeRemoved.add(nextLeaf);
+        }
+        nextLeaf = PsiTreeUtil.nextLeaf(nextLeaf);
+      }
+      for (PsiElement leaf : toBeRemoved) {
+        add(leaf);
+      }
+      for (PsiElement leaf : toBeRemoved) {
+        leaf.delete();
+      }
+
       addNewKey(keyValue);
       return;
     }
@@ -84,9 +113,14 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
     }
     for (; child != null; child = child.getNextSibling()) {
       if (PsiUtilCore.getElementType(child) == YAMLTokenTypes.EOL) {
-        PsiElement newElement = addAfter(generator.createIndent(indent), child);
-        newElement = addAfter(keyValue, newElement);
-        addAfter(generator.createEol(), newElement);
+        PsiElement element = child;
+        if (indent != 0) {
+          element = addAfter(generator.createIndent(indent), element);
+        }
+        element = addAfter(keyValue, element);
+        if (PsiUtilCore.getElementType(child) != YAMLTokenTypes.EOL) {
+          addAfter(generator.createEol(), element);
+        }
         return;
       }
     }

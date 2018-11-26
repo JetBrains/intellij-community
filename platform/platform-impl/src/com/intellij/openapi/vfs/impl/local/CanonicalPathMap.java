@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -136,17 +122,13 @@ class CanonicalPathMap {
           continue ext;
         }
         if (isExact) {
-          String parentPath = getApproxParent(path);
-          if (parentPath != null && FileUtil.namesEqual(parentPath, root)) {
+          if (isApproxParent(path, root)) {
             changedPaths.add(path);
             continue ext;
           }
         }
-        else {
-          String rootParent = getApproxParent(root);
-          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
-            changedPaths.add(root);
-          }
+        else if (isApproxParent(root, path)) {
+          changedPaths.add(root);
         }
       }
 
@@ -155,11 +137,8 @@ class CanonicalPathMap {
           changedPaths.add(path);
           continue ext;
         }
-        if (!isExact) {
-          String rootParent = getApproxParent(root);
-          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
-            changedPaths.add(root);
-          }
+        if (!isExact && isApproxParent(root, path)) {
+          changedPaths.add(root);
         }
       }
     }
@@ -172,13 +151,16 @@ class CanonicalPathMap {
   }
 
   // doesn't care about drive or UNC
-  private static String getApproxParent(@NotNull String path) {
-    int index = path.lastIndexOf(File.separatorChar);
-    return index == -1 ? null : path.substring(0, index);
+  private static boolean isApproxParent(@NotNull String path, @NotNull String parent) {
+    return path.lastIndexOf(File.separatorChar) == parent.length() && FileUtil.startsWith(path, parent);
   }
 
   @NotNull
   private Collection<String> applyMapping(@NotNull String reportedPath) {
+    if (myPathMapping.isEmpty()) {
+      return Collections.singletonList(reportedPath);
+    }
+
     List<String> results = ContainerUtil.newSmartList(reportedPath);
     List<String> pathComponents = FileUtil.splitPath(reportedPath);
 

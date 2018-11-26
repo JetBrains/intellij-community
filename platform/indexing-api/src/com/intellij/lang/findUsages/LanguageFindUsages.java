@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author yole
@@ -48,12 +49,17 @@ public class LanguageFindUsages extends LanguageExtension<FindUsagesProvider> {
 
 
   /**
+   * {@link FindUsagesProvider#canFindUsagesFor(PsiElement)}
    * @return true iff could be found usages by some provider for this element
    */
   public static boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-    return forPsiElement(psiElement) != null;
+    return getFromProviders(psiElement, Boolean.FALSE, p -> p.canFindUsagesFor(psiElement));
   }
 
+  /**
+   * {@link FindUsagesProvider#getWordsScanner()}
+   * @return a word-scanner specified by some provider or null
+   */
   @Nullable
   public static WordsScanner getWordsScanner(@NotNull Language language) {
     for (FindUsagesProvider provider : INSTANCE.allForLanguage(language)) {
@@ -65,44 +71,55 @@ public class LanguageFindUsages extends LanguageExtension<FindUsagesProvider> {
     return null;
   }
 
+  /**
+   * {@link FindUsagesProvider#getDescriptiveName(PsiElement)}
+   * @return specified by some provider non-empty user-visible descriptive name or empty string
+   */
   @NotNull
   public static String getDescriptiveName(@NotNull PsiElement psiElement) {
-    FindUsagesProvider provider = forPsiElement(psiElement);
-    return provider == null ? "" : provider.getDescriptiveName(psiElement);
+    return getFromProviders(psiElement, "", p -> p.getDescriptiveName(psiElement));
   }
 
   /**
+   * {@link FindUsagesProvider#getType(PsiElement)}
    * @return specified by some provider non-empty user-visible type name or empty string
    */
   @NotNull
   public static String getType(@NotNull PsiElement psiElement) {
-    FindUsagesProvider provider = forPsiElement(psiElement);
-    return provider == null ? "" : provider.getType(psiElement);
+    return getFromProviders(psiElement, "", p -> p.getType(psiElement));
   }
 
+  /**
+   * {@link FindUsagesProvider#getNodeText(PsiElement, boolean)}
+   * @return specified by some provider the text representing the specified PSI element in the Find Usages tree or empty string
+   */
   @NotNull
   public static String getNodeText(@NotNull PsiElement psiElement, boolean useFullName) {
-    FindUsagesProvider provider = forPsiElement(psiElement);
-    return provider == null ? "" : provider.getNodeText(psiElement, useFullName);
+    return getFromProviders(psiElement, "", p -> p.getNodeText(psiElement, useFullName));
   }
 
+  /**
+   * {@link FindUsagesProvider#getHelpId(PsiElement)}
+   * @return specified by some provider ID of the help topic
+   */
   @Nullable
   public static String getHelpId(@NotNull PsiElement psiElement) {
-    FindUsagesProvider provider = forPsiElement(psiElement);
-    return provider == null ? null : provider.getHelpId(psiElement);
+    return getFromProviders(psiElement, null, p -> p.getHelpId(psiElement));
   }
 
-  private static FindUsagesProvider forPsiElement(@NotNull PsiElement psiElement) {
+  private static <T> T getFromProviders(@NotNull PsiElement psiElement,
+                                        T defaultValue, @NotNull Function<FindUsagesProvider, T> getter) {
     Language language = psiElement.getLanguage();
     List<FindUsagesProvider> providers = INSTANCE.allForLanguage(language);
     assert !providers.isEmpty() : "Element: " + psiElement + ", language: " + language;
 
     for (FindUsagesProvider provider : providers) {
-      if (provider.canFindUsagesFor(psiElement)) {
-        return provider;
+      T res = getter.apply(provider);
+      if (res != null && !res.equals(defaultValue)) {
+        return res;
       }
     }
-    return null;
+    return defaultValue;
   }
 
 }

@@ -170,6 +170,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     return myEditor.getPreferredSize();
   }
 
+  @Override
+  public void setCursor(Cursor cursor) {
+    super.setCursor(cursor);
+    myEditor.myCursorSetExternally = true;
+  }
+
   protected void fireResized() {
     processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
   }

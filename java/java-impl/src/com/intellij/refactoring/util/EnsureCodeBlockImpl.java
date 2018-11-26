@@ -3,6 +3,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
+import com.intellij.codeInsight.intention.impl.SplitDeclarationAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -54,26 +55,49 @@ class EnsureCodeBlockImpl {
       if (parent == null) return null;
       return replace(expression, parent, (oldParent, copy) -> extractFieldInitializer((PsiField)oldParent, (PsiField)copy));
     }
+    
+    PsiConditionalExpression ternary = findSurroundingTernary(expression);
+    if (ternary != null && parent instanceof PsiStatement) {
+      return replace(expression, parent, (oldParent, copy) -> replaceTernaryWithIf((PsiStatement)oldParent, ternary));
+    }
 
-    PsiPolyadicExpression andChain = findSurroundingConjunction(expression);
+    PsiPolyadicExpression condition = findSurroundingConditionChain(expression);
     PsiExpression operand;
-    if (andChain != null) {
+    if (condition != null) {
       T finalExpression = expression;
-      operand = StreamEx.of(andChain.getOperands()).findFirst(op -> PsiTreeUtil.isAncestor(op, finalExpression, false))
+      operand = StreamEx.of(condition.getOperands()).findFirst(op -> PsiTreeUtil.isAncestor(op, finalExpression, false))
         .orElseThrow(AssertionError::new);
     }
     else {
       operand = null;
     }
 
-    if (parent instanceof PsiIfStatement && andChain != null) {
-      return replace(expression, parent, (oldParent, copy) -> splitIf((PsiIfStatement)oldParent, andChain, operand));
+    if (parent instanceof PsiIfStatement && condition != null && condition.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
+      return replace(expression, parent, (oldParent, copy) -> splitIf((PsiIfStatement)oldParent, condition, operand));
     }
     if (parent instanceof PsiWhileStatement) {
-      return replace(expression, parent, (oldParent, copy) -> extractWhileCondition((PsiWhileStatement)oldParent, andChain, operand));
+      return replace(expression, parent, (oldParent, copy) -> extractWhileCondition((PsiWhileStatement)oldParent, condition, operand));
     }
-    if (parent instanceof PsiReturnStatement && andChain != null) {
-      return replace(expression, parent, (oldParent, copy) -> splitReturn((PsiReturnStatement)oldParent, andChain, operand));
+    if (parent instanceof PsiReturnStatement && condition != null) {
+      return replace(expression, parent, (oldParent, copy) -> splitReturn((PsiReturnStatement)oldParent, condition, operand));
+    }
+    if (parent instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)parent).getBody();
+      boolean addBreak = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock() instanceof PsiSwitchExpression;
+      if (body instanceof PsiExpressionStatement && addBreak) {
+        PsiExpression resultExpression = ((PsiExpressionStatement)body).getExpression();
+        return replace(expression, body, (old, copy) -> {
+          PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{break a;}", resultExpression));
+          PsiExpression copyExpression = ((PsiBreakStatement)block.getCodeBlock().getStatements()[0]).getExpression();
+          return Objects.requireNonNull(copyExpression).replace(((PsiExpressionStatement)copy).getExpression());
+        });
+      }
+      else if (body instanceof PsiThrowStatement || body != null & !addBreak) {
+        return replace(expression, body, (old, copy) -> {
+          PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{}", body));
+          return block.getCodeBlock().add(copy);
+        });
+      }
     }
     return expression;
   }
@@ -88,14 +112,16 @@ class EnsureCodeBlockImpl {
   }
 
   private static PsiElement splitReturn(@NotNull PsiReturnStatement returnStatement,
-                                        @NotNull PsiPolyadicExpression andChain,
+                                        @NotNull PsiPolyadicExpression condition,
                                         @NotNull PsiExpression operand) {
-    PsiExpression lOperands = SplitConditionUtil.getLOperands(andChain, andChain.getTokenBeforeOperand(operand));
-    PsiExpression rOperands = getRightOperands(andChain, operand);
+    PsiExpression lOperands = SplitConditionUtil.getLOperands(condition, condition.getTokenBeforeOperand(operand));
+    PsiExpression rOperands = getRightOperands(condition, operand);
     Project project = returnStatement.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CommentTracker ct = new CommentTracker();
-    String ifText = "if(" + BoolUtils.getNegatedExpressionText(lOperands, ct) + ") return false;";
+    boolean orChain = condition.getOperationTokenType().equals(JavaTokenType.OROR);
+    String ifText =
+      "if(" + (orChain ? ct.text(lOperands) : BoolUtils.getNegatedExpressionText(lOperands, ct)) + ") return " + orChain + ";";
     PsiStatement ifStatement = factory.createStatementFromText(ifText, returnStatement);
     CodeStyleManager.getInstance(project).reformat(returnStatement.getParent().addBefore(ifStatement, returnStatement));
     return ct.replaceAndRestoreComments(Objects.requireNonNull(returnStatement.getReturnValue()), rOperands);
@@ -141,7 +167,9 @@ class EnsureCodeBlockImpl {
     return assignment;
   }
 
-  private static PsiElement extractWhileCondition(PsiWhileStatement whileStatement, PsiPolyadicExpression andChain, PsiExpression operand) {
+  private static PsiElement extractWhileCondition(PsiWhileStatement whileStatement,
+                                                  PsiPolyadicExpression condition,
+                                                  PsiExpression operand) {
     PsiExpression oldCondition = Objects.requireNonNull(whileStatement.getCondition());
     PsiStatement body = whileStatement.getBody();
     PsiBlockStatement blockBody;
@@ -149,8 +177,9 @@ class EnsureCodeBlockImpl {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     if (body == null) {
       PsiWhileStatement newWhileStatement = (PsiWhileStatement)factory.createStatementFromText("while(true) {}", whileStatement);
-      blockBody = (PsiBlockStatement)Objects.requireNonNull(newWhileStatement.getBody());
       whileStatement = (PsiWhileStatement)whileStatement.replace(newWhileStatement);
+      blockBody = (PsiBlockStatement)Objects.requireNonNull(whileStatement.getBody());
+      oldCondition = Objects.requireNonNull(whileStatement.getCondition());
     }
     else if (body instanceof PsiBlockStatement) {
       blockBody = (PsiBlockStatement)body;
@@ -162,9 +191,9 @@ class EnsureCodeBlockImpl {
     }
     PsiExpression lOperands;
     PsiExpression rOperands;
-    if (andChain != null) {
-      lOperands = SplitConditionUtil.getLOperands(andChain, andChain.getTokenBeforeOperand(operand));
-      rOperands = getRightOperands(andChain, operand);
+    if (condition != null && condition.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
+      lOperands = SplitConditionUtil.getLOperands(condition, condition.getTokenBeforeOperand(operand));
+      rOperands = getRightOperands(condition, operand);
     }
     else {
       lOperands = factory.createExpressionFromText("true", whileStatement);
@@ -177,6 +206,41 @@ class EnsureCodeBlockImpl {
     PsiElement newParent = Objects.requireNonNull(negation.getOperand()).replace(rOperands);
     Objects.requireNonNull(whileStatement.getCondition()).replace(lOperands);
     return newParent;
+  }
+  private static PsiElement replaceTernaryWithIf(PsiStatement statement, PsiConditionalExpression ternary) {
+    Project project = statement.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(ternary.getParent());
+    if (parent instanceof PsiLocalVariable) {
+      PsiLocalVariable variable = (PsiLocalVariable)parent;
+      variable.normalizeDeclaration();
+      PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
+      PsiAssignmentExpression assignment =
+        SplitDeclarationAction.invokeOnDeclarationStatement(declaration, PsiManager.getInstance(project), project);
+      if (assignment != null) {
+        ternary = (PsiConditionalExpression)Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()));
+        statement = (PsiStatement)assignment.getParent();
+      }
+    }
+    PsiIfStatement ifStatement =
+      (PsiIfStatement)factory.createStatementFromText("if(" + ternary.getCondition().getText() + ") {} else {}", statement);
+    Object mark = new Object();
+    PsiTreeUtil.mark(ternary, mark);
+    PsiStatement thenStatement = (PsiStatement)statement.copy();
+    PsiConditionalExpression thenTernary = Objects.requireNonNull((PsiConditionalExpression)PsiTreeUtil.releaseMark(thenStatement, mark));
+    PsiExpression branch1 = ternary.getThenExpression();
+    if (branch1 != null) {
+      thenTernary.replace(branch1);
+    }
+    PsiStatement elseStatement = (PsiStatement)statement.copy();
+    PsiConditionalExpression elseTernary = Objects.requireNonNull((PsiConditionalExpression)PsiTreeUtil.releaseMark(elseStatement, mark));
+    PsiExpression branch = ternary.getElseExpression();
+    if (branch != null) {
+      elseTernary.replace(branch);
+    }
+    ((PsiBlockStatement)Objects.requireNonNull(ifStatement.getThenBranch())).getCodeBlock().add(thenStatement);
+    ((PsiBlockStatement)Objects.requireNonNull(ifStatement.getElseBranch())).getCodeBlock().add(elseStatement);
+    return statement.replace(ifStatement);
   }
 
   private static PsiElement splitIf(PsiIfStatement outerIf, PsiPolyadicExpression andChain, PsiExpression operand) {
@@ -209,16 +273,29 @@ class EnsureCodeBlockImpl {
   }
 
   @Nullable
-  private static PsiPolyadicExpression findSurroundingConjunction(@NotNull PsiExpression expression) {
+  private static PsiPolyadicExpression findSurroundingConditionChain(@NotNull PsiExpression expression) {
     PsiExpression current = expression;
-    PsiPolyadicExpression andChain;
+    PsiPolyadicExpression polyadicExpression;
     do {
-      current = andChain = PsiTreeUtil.getParentOfType(current, PsiPolyadicExpression.class, true,
-                                                       PsiStatement.class, PsiLambdaExpression.class);
+      current = polyadicExpression = PsiTreeUtil.getParentOfType(current, PsiPolyadicExpression.class, true,
+                                                                 PsiStatement.class, PsiLambdaExpression.class);
     }
-    while (andChain != null && (andChain.getOperationTokenType() != JavaTokenType.ANDAND ||
-                                PsiTreeUtil.isAncestor(andChain.getOperands()[0], expression, false)));
-    return andChain;
+    while (polyadicExpression != null && ((polyadicExpression.getOperationTokenType() != JavaTokenType.ANDAND &&
+                                           polyadicExpression.getOperationTokenType() != JavaTokenType.OROR) ||
+                                          PsiTreeUtil.isAncestor(polyadicExpression.getOperands()[0], expression, false)));
+    return polyadicExpression;
+  }
+
+  @Nullable
+  private static PsiConditionalExpression findSurroundingTernary(@NotNull PsiExpression expression) {
+    PsiExpression current = expression;
+    PsiConditionalExpression ternary;
+    do {
+      current = ternary = PsiTreeUtil.getParentOfType(current, PsiConditionalExpression.class, true,
+                                                      PsiStatement.class, PsiLambdaExpression.class);
+    }
+    while (ternary != null && PsiTreeUtil.isAncestor(ternary.getCondition(), expression, false));
+    return ternary;
   }
 
   private static boolean hasNameCollision(PsiElement declaration, PsiElement context) {

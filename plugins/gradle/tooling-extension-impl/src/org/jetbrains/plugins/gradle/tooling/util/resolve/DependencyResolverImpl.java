@@ -23,9 +23,9 @@ import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
+import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
 import org.jetbrains.plugins.gradle.tooling.util.ModuleComponentIdentifierImpl;
@@ -45,7 +45,6 @@ import static org.gradle.internal.impldep.com.google.common.collect.Iterables.fi
 
 /**
  * @author Vladislav.Soroka
- * @since 8/19/2015
  */
 public class DependencyResolverImpl implements DependencyResolver {
 
@@ -137,8 +136,12 @@ public class DependencyResolverImpl implements DependencyResolver {
 
     for (Dependency dep : conf.getIncoming().getDependencies()) {
       if (dep instanceof ProjectDependency) {
+        Configuration targetConfiguration = getTargetConfiguration((ProjectDependency)dep);
+        // TODO handle broken dependencies
+        if(targetConfiguration == null) continue;
+
         map.put(toComponentIdentifier(dep.getGroup(), dep.getName(), dep.getVersion()), (ProjectDependency)dep);
-        projectDeps(getTargetConfiguration((ProjectDependency)dep), map, processedConfigurations);
+        projectDeps(targetConfiguration, map, processedConfigurations);
       }
     }
     return map;
@@ -519,15 +522,15 @@ public class DependencyResolverImpl implements DependencyResolver {
       }
 
       if (toRemove.size() != val.size()) {
-        result.removeAll(toRemove);
+        removeOneByOne(result, toRemove);
       } else if (toRemove.size() > 1) {
         toRemove = toRemove.subList(1, toRemove.size());
-        result.removeAll(toRemove);
+        removeOneByOne(result, toRemove);
       }
 
       if (!toRemove.isEmpty()) {
         List<ExternalDependency> retained = new ArrayList<ExternalDependency>(val);
-        retained.removeAll(toRemove);
+        removeOneByOne(retained, toRemove);
         if(!retained.isEmpty()) {
           ExternalDependency retainedDependency = retained.iterator().next();
           if(retainedDependency instanceof AbstractExternalDependency && !retainedDependency.getScope().equals("COMPILE")) {
@@ -543,6 +546,12 @@ public class DependencyResolverImpl implements DependencyResolver {
 
 
     return Lists.newArrayList(filter(result, not(isNull())));
+  }
+
+  private static void removeOneByOne(Collection<ExternalDependency> collection, List<ExternalDependency> toRemove) {
+    for (ExternalDependency remove : toRemove) {
+      collection.remove(remove);
+    }
   }
 
   @NotNull
@@ -763,8 +772,9 @@ public class DependencyResolverImpl implements DependencyResolver {
           projectDependency.setVersion(project.getVersion().toString());
           projectDependency.setScope(scope);
           projectDependency.setProjectPath(project.getPath());
-          projectDependency.setConfigurationName(targetConfiguration.getName());
-          Set<File> artifacts = new LinkedHashSet<File>(targetConfiguration.getAllArtifacts().getFiles().getFiles());
+          projectDependency.setConfigurationName(targetConfiguration == null ? "default" : targetConfiguration.getName());
+          Set<File> artifacts = new LinkedHashSet<File>(targetConfiguration == null ? Collections.<File>emptySet() :
+                                                        targetConfiguration.getAllArtifacts().getFiles().getFiles());
           projectDependency.setProjectDependencyArtifacts(artifacts);
           projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(artifacts, mySourceSetFinder));
 
@@ -810,11 +820,12 @@ public class DependencyResolverImpl implements DependencyResolver {
     return result;
   }
 
+  @Nullable
   public static Configuration getTargetConfiguration(ProjectDependency projectDependency) {
 
     try {
       return !is4OrBetter ?  (Configuration)projectDependency.getClass().getMethod("getProjectConfiguration").invoke(projectDependency) :
-             projectDependency.getDependencyProject().getConfigurations().getByName(projectDependency.getTargetConfiguration() != null
+             projectDependency.getDependencyProject().getConfigurations().findByName(projectDependency.getTargetConfiguration() != null
                                                                                     ? projectDependency.getTargetConfiguration()
                                                                                     : "default");
     }

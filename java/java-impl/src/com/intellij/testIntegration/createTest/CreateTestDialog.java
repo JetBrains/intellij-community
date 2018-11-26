@@ -408,12 +408,13 @@ public class CreateTestDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (mySelectedFramework instanceof JavaTestFramework) {
-          ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
+          ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule)
+            .onSuccess(__ -> myFixLibraryPanel.setVisible(false));
         }
         else {
           OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
+          myFixLibraryPanel.setVisible(false);
         }
-        myFixLibraryPanel.setVisible(false);
       }
     });
 

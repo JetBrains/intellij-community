@@ -10,6 +10,12 @@ import java.util.EventListener;
 public interface RunManagerListener extends EventListener {
   Topic<RunManagerListener> TOPIC = new Topic<>("RunManager", RunManagerListener.class);
 
+  default void runConfigurationSelected(@Nullable RunnerAndConfigurationSettings settings) {
+    //noinspection deprecation
+    runConfigurationSelected();
+  }
+
+  @Deprecated
   default void runConfigurationSelected() {
   }
 

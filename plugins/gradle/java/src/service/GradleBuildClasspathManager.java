@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/27/13
  */
 public class GradleBuildClasspathManager {
   @NotNull

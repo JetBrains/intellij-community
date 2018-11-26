@@ -25,7 +25,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 21, 2008
 */
 public class AntResourcesClassLoader extends UrlClassLoader {
   static { if (registerAsParallelCapable()) markParallelCapable(AntResourcesClassLoader.class); }

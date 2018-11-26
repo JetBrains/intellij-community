@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/4/2015
  */
 public class ModuleComponentIdentifierImpl implements ModuleComponentIdentifier {
   @NotNull

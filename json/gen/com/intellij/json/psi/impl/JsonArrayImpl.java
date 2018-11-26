@@ -21,6 +21,7 @@ public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
     visitor.visitArray(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);

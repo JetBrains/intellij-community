@@ -110,6 +110,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public String toString() {
     return "PsiAssignmentExpression:" + getText();
   }

@@ -138,7 +138,10 @@ public class DependencyResultsTransformer {
       else {
         dependencyConfigurations = new ArrayList<Configuration>();
         for (ProjectDependency dependency : projectDependencies) {
-          dependencyConfigurations.add(getTargetConfiguration(dependency));
+          Configuration targetConfiguration = getTargetConfiguration(dependency);
+          if(targetConfiguration != null) {
+            dependencyConfigurations.add(targetConfiguration);
+          }
         }
       }
 

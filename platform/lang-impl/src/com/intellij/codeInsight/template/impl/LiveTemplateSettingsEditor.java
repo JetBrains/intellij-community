@@ -502,7 +502,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       myExpandByCombo.setSelectedItem(SPACE);
     }
     else {
-      myExpandByCombo.setSelectedItem(TemplateSettings.NONE_CHAR);
+      myExpandByCombo.setSelectedItem(NONE);
     }
 
     CommandProcessor.getInstance().executeCommand(

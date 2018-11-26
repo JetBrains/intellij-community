@@ -22,7 +22,6 @@ interface WebServiceStatus {
     fun isServerOk(): Boolean
     fun dataServerUrl(): String
 
-    fun isExperimentGoingOnNow(): Boolean
     fun isExperimentOnCurrentIDE(): Boolean
     fun experimentVersion(): Int
 

@@ -16,10 +16,6 @@ import java.awt.*;
 public class ColorButton extends JButton {
   @SuppressWarnings("UseJBColor")
   protected static final Color WhiteForeground = new JBColor(Color.white, new Color(0xBBBBBB));
-  protected static final Color BlueColor = new JBColor(0x1D73BF, 0x134D80);
-  protected static final Color GreenColor = new JBColor(0x5D9B47, 0x2B7B50);
-  @SuppressWarnings("UseJBColor")
-  protected static final Color GreenFocusedBackground = new Color(0xE1F6DA);
 
   public ColorButton() {
     setOpaque(false);

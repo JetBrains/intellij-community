@@ -3,4 +3,4 @@ package org.editorconfig.language
 
 import com.intellij.lang.Language
 
-object EditorConfigLanguage : Language("editorconfig")
+object EditorConfigLanguage : Language("EditorConfig")

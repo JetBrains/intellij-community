@@ -82,15 +82,16 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) throws EvaluateException {
-    return calcLabel(descriptor);
+  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
+    throws EvaluateException {
+    return calcLabel(descriptor, evaluationContext);
   }
 
-  protected static String calcLabel(ValueDescriptor descriptor) {
-    final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-    final Value value = valueDescriptor.getValue();
+  protected static String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext) throws EvaluateException {
+    Value value = descriptor.getValue();
     if (value instanceof ObjectReference) {
       if (value instanceof StringReference) {
+        DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
         return ((StringReference)value).value();
       }
       else if (value instanceof ClassObjectReference) {

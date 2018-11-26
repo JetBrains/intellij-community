@@ -52,7 +52,8 @@ public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
   }
 
   @Override
-  public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
+  public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element,
+                                                   @NotNull OperationMode operationMode) {
     return new JavaFindUsagesHandler(element, this) {
       @NotNull
       @Override

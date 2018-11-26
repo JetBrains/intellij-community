@@ -78,7 +78,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
    * If there is no active task, starts a new one. <br/>
    * Otherwise just remembers requests in the queue. Later they can be retrieved by {@link #popRequests()}.
    */
-  public final void request(@NotNull Request ... requests) {
+  public final void request(@NotNull Request... requests) {
     synchronized (LOCK) {
       if (myIsClosed) return;
       myAwaitingRequests.addAll(Arrays.asList(requests));

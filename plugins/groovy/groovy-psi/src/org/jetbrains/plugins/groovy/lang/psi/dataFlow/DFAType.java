@@ -99,9 +99,7 @@ public class DFAType {
   public DFAType negate(@NotNull Instruction instruction) {
     final DFAType type = new DFAType(primary);
 
-    for (Mixin mixin : mixins) {
-      type.mixins.add(mixin);
-    }
+    type.mixins.addAll(mixins);
 
     for (NegatingGotoInstruction negation: instruction.getNegatingGotoInstruction()) {
       final Set<ConditionInstruction> conditionsToNegate = negation.getCondition().getDependentConditions();
@@ -141,7 +139,7 @@ public class DFAType {
     return t1 == t2 || Comparing.equal(TypeConversionUtil.erasure(t1), TypeConversionUtil.erasure(t2));
   }
 
-  @Nullable
+  @NotNull
   public static DFAType create(DFAType t1, DFAType t2, PsiManager manager) {
     if (t1.equals(t2)) return t1;
 

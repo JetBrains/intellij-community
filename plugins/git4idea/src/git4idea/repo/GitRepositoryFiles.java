@@ -61,6 +61,7 @@ public class GitRepositoryFiles {
   private static final String HOOKS = "hooks";
   private static final String PRE_COMMIT_HOOK = "pre-commit";
   private static final String PRE_PUSH_HOOK = "pre-push";
+  private static final String COMMIT_MSG_HOOK = "commit-msg";
   private static final String SHALLOW = "shallow";
 
   private final VirtualFile myMainDir;
@@ -232,6 +233,11 @@ public class GitRepositoryFiles {
   @NotNull
   public File getPrePushHookFile() {
     return file(myHooksDirPath + slash(PRE_PUSH_HOOK));
+  }
+
+  @NotNull
+  public File getCommitMsgHookFile() {
+    return file(myHooksDirPath + slash(COMMIT_MSG_HOOK));
   }
 
   @NotNull

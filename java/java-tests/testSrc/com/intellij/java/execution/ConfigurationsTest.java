@@ -5,6 +5,7 @@ import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunConfigurationConfigurableAdapter;
+import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.application.ApplicationConfigurable;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.*;
@@ -19,6 +20,8 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
@@ -184,6 +187,18 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       lines);
   }
 
+  public void testConfiguredFromAnotherModuleWhenInitialConfigurationProvidesNoModule() {
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
+    JUnitConfiguration allInProjectConfiguration = createConfiguration(psiPackage, (Module)null);
+    Module module1 = getModule1();
+    MapDataContext context = new MapDataContext();
+    VirtualFile root = ModuleRootManager.getInstance(module1).getContentRoots()[0];
+    PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(root);
+    context.put(LangDataKeys.PSI_ELEMENT_ARRAY, new PsiElement[] {psiDirectory});
+    context.put(CommonDataKeys.PROJECT, myProject);
+    context.put(LangDataKeys.MODULE, module1);
+    assertFalse(new AllInPackageConfigurationProducer().isConfigurationFromContext(allInProjectConfiguration, ConfigurationContext.getFromContext(context)));
+  }
 
   public void testRunningAllInDirectory() throws IOException, ExecutionException {
     Module module1 = getModule1();

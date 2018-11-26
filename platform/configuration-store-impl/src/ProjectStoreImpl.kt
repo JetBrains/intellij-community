@@ -135,7 +135,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
+        isOptimiseTestLoadSpeed = !Paths.get(filePath).toFile().exists()
       }
     }
     else {
@@ -299,10 +299,8 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
       // name equals to base path name - just remove name
       nameFile.delete()
     }
-    else {
-      if (Paths.get(basePath).isDirectory()) {
-        nameFile.write(currentProjectName.toByteArray())
-      }
+    else if (Paths.get(basePath).isDirectory()) {
+      nameFile.write(currentProjectName.toByteArray())
     }
   }
 

@@ -72,5 +72,8 @@
   <item name='org.jdom.Element org.jdom.Element setAttribute(org.jdom.Attribute) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.jdom.Element org.jdom.Element setText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
 </root>
 

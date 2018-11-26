@@ -94,12 +94,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 20, 2007
  */
 public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent, Disposable {
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
@@ -1488,7 +1486,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @NotNull
   Collection<VirtualFile> getFilesToUpdate(final Project project) {
-    return myChangedFilesCollector.getAllFilesToUpdate().stream().filter(filesToBeIndexedForProjectCondition(project)).collect(Collectors.toList());
+    return ContainerUtil.filter(myChangedFilesCollector.getAllFilesToUpdate(), filesToBeIndexedForProjectCondition(project)::test);
   }
 
   @NotNull
@@ -1548,6 +1546,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     myChangedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
+    if (file instanceof VirtualFileSystemEntry) ((VirtualFileSystemEntry)file).setFileIndexed(true);
   }
 
   private void doIndexFileContent(@Nullable Project project, @NotNull final com.intellij.ide.caches.FileContent content) {
@@ -2140,7 +2139,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           return true;
         }
         myFileTypeManager.freezeFileTypeTemporarilyIn(file, () -> {
-          boolean oldStuff = true;
+          boolean isUptoDate = true;
           if (file.isDirectory() || !isTooLarge(file)) {
             final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
             //noinspection ForLoopReplaceableByForEach
@@ -2154,7 +2153,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
                   synchronized (myFiles) {
                     myFiles.add(file);
                   }
-                  oldStuff = false;
+                  isUptoDate = false;
                   break;
                 }
               }
@@ -2174,7 +2173,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           int inputId = Math.abs(getIdMaskingNonIdBasedFile(file));
           for (ID<?, ?> indexId : myNotRequiringContentIndices) {
             if (shouldIndexFile(file, indexId)) {
-              oldStuff = false;
+              isUptoDate = false;
               if (fileContent == null) {
                 fileContent = new FileContentImpl(file);
               }
@@ -2183,7 +2182,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
           IndexingStamp.flushCache(inputId);
 
-          if (oldStuff && file instanceof VirtualFileSystemEntry) {
+          if (isUptoDate && file instanceof VirtualFileSystemEntry) {
             ((VirtualFileSystemEntry)file).setFileIndexed(true);
           }
         });

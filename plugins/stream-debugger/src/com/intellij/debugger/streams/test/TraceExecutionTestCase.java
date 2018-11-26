@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.Value;
@@ -36,6 +37,7 @@ import java.util.function.Function;
 /**
  * @author Vitaliy.Bibaev
  */
+@SkipSlowTestLocally
 public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private static final ChainSelector DEFAULT_CHAIN_SELECTOR = ChainSelector.byIndex(0);
   private static final LibrarySupportProvider DEFAULT_LIBRARY_SUPPORT_PROVIDER = new StandardLibrarySupportProvider();

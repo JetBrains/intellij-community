@@ -5,16 +5,18 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UIThemeProvider;
+import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -23,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.BasicOptionButtonUI;
@@ -68,6 +71,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
   @NonNls private static final String GNOME_THEME_PROPERTY_NAME = "gnome.Net/ThemeName";
 
+  private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme";
+  private static final String DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme";
+
   @NonNls private static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
     "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
     "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font",
@@ -95,6 +101,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
   }
+
+  private boolean myFirstSetup = true;
 
   /**
    * Invoked via reflection.
@@ -400,7 +408,47 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).dispose();
     }
 
+
+    final UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
+
+    if (!myFirstSetup) {
+      ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf));
+    }
+    myFirstSetup = false;
+  }
+
+  private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf) {
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+      if (((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getEditorSchemeName() != null) {
+        return;
+      }
+    }
+
+    boolean dark = UIUtil.isUnderDarcula();
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    EditorColorsScheme current = colorsManager.getGlobalScheme();
+    boolean wasUITheme = oldLaf instanceof UIThemeBasedLookAndFeelInfo;
+    if (dark != ColorUtil.isDark(current.getDefaultBackground()) || wasUITheme) {
+      String targetScheme = dark ? DarculaLaf.NAME : EditorColorsScheme.DEFAULT_SCHEME_NAME;
+      PropertiesComponent properties = PropertiesComponent.getInstance();
+      String savedEditorThemeKey = dark ? DARCULA_EDITOR_THEME_KEY : DEFAULT_EDITOR_THEME_KEY;
+      String toSavedEditorThemeKey = dark ? DEFAULT_EDITOR_THEME_KEY : DARCULA_EDITOR_THEME_KEY;
+      String themeName =  properties.getValue(savedEditorThemeKey);
+      if (themeName != null && colorsManager.getScheme(themeName) != null) {
+        targetScheme = themeName;
+      }
+      if (!wasUITheme) {
+        properties.setValue(toSavedEditorThemeKey, current.getName(), dark ? EditorColorsScheme.DEFAULT_SCHEME_NAME : DarculaLaf.NAME);
+      }
+
+      EditorColorsScheme scheme = colorsManager.getScheme(targetScheme);
+      if (scheme != null) {
+        colorsManager.setGlobalScheme(scheme);
+      }
+    }
+    UISettings.getShadowInstance().fireUISettingsChanged();
+    ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
   public static void updateForDarcula(boolean isDarcula) {
@@ -666,7 +714,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     //    uiDefaults.put(entry.getKey(), entry.getValue());
     //  }
     //} else
-    UISettings uiSettings = UISettings.getInstance();
+    UISettingsState uiSettings = UISettings.getInstance().getState();
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
       initFontDefaults(uiDefaults, UIUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));

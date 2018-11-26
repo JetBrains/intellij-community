@@ -2,6 +2,8 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.HelpTooltip;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -13,6 +15,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
@@ -81,6 +84,16 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     ShortcutSet set = getFindActionShortcutSet();
     if (set != null) new FindAction().registerCustomShortcutSet(set, getRootPane(), myDisposable);
     init();
+  }
+
+  @Override
+  protected void setHelpTooltip(JButton helpButton) {
+    if (Registry.is("ide.helptooltip.enabled")) {
+      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+    }
+    else {
+      super.setHelpTooltip(helpButton);
+    }
   }
 
   @Override

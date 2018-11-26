@@ -17,7 +17,7 @@ package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -166,7 +166,7 @@ public class OptionalChainInliner implements CallInliner {
     BiConsumer<CFGBuilder, PsiMethodCallExpression> terminalInliner = TERMINAL_MAPPER.mapFirst(call);
     if (terminalInliner != null) {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), call, NullabilityProblemKind.callNPE)) {
+      if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), null)) {
         return false;
       }
       terminalInliner.accept(builder, call);
@@ -175,14 +175,14 @@ public class OptionalChainInliner implements CallInliner {
     DfaValueFactory factFactory = builder.getFactory();
     if (pushIntermediateOperationValue(builder, call)) {
       builder.ifNotNull()
-        .push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true))
+        .push(DfaOptionalSupport.getOptionalValue(factFactory, true))
         .elseBranch()
-        .push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false))
+        .push(DfaOptionalSupport.getOptionalValue(factFactory, false))
         .end();
       return true;
     }
     if (OPTIONAL_EMPTY.test(call)) {
-      builder.push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(factFactory, false));
       return true;
     }
     return false;
@@ -209,8 +209,8 @@ public class OptionalChainInliner implements CallInliner {
     return parameters[0];
   }
 
-  private static <T extends PsiElement> boolean pushOptionalValue(CFGBuilder builder, PsiExpression expression,
-                                                                  T dereferenceContext, NullabilityProblemKind<T> problem) {
+  private static boolean pushOptionalValue(CFGBuilder builder, PsiExpression expression,
+                                           NullabilityProblemKind<? super PsiExpression> problem) {
     PsiType optionalElementType = getOptionalElementType(expression, true);
     if (optionalElementType == null) return false;
     if (expression instanceof PsiMethodCallExpression) {
@@ -224,10 +224,9 @@ public class OptionalChainInliner implements CallInliner {
         return true;
       }
     }
-    DfaValue presentOptional = builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
+    DfaValue presentOptional = DfaOptionalSupport.getOptionalValue(builder.getFactory(), true);
     builder
-      .pushExpression(expression)
-      .checkNotNull(dereferenceContext, problem)
+      .pushExpression(expression, problem)
       .push(presentOptional)
       .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
       .push(builder.getFactory().createTypeValue(optionalElementType, Nullability.NOT_NULL))
@@ -248,7 +247,7 @@ public class OptionalChainInliner implements CallInliner {
     if (intermediateInliner == null) return false;
     PsiExpression argument = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-    if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), call, NullabilityProblemKind.callNPE)) {
+    if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), null)) {
       return false;
     }
     intermediateInliner.accept(builder, argument);
@@ -264,7 +263,7 @@ public class OptionalChainInliner implements CallInliner {
       PsiExpression lambdaBody = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       if (parameters.length == argCount && lambdaBody != null) {
         StreamEx.ofReversed(parameters).forEach(p -> builder.assignTo(p).pop());
-        if (pushOptionalValue(builder, lambdaBody, lambdaBody, NullabilityProblemKind.nullableFunctionReturn)) {
+        if (pushOptionalValue(builder, lambdaBody, NullabilityProblemKind.nullableFunctionReturn)) {
           return;
         }
         // Restore stack for common invokeFunction
@@ -289,21 +288,22 @@ public class OptionalChainInliner implements CallInliner {
 
   private static void inlineOf(CFGBuilder builder, PsiType optionalElementType, PsiMethodCallExpression qualifierCall) {
     PsiExpression argument = qualifierCall.getArgumentList().getExpressions()[0];
-    builder
-      .pushExpression(argument)
-      .boxUnbox(argument, optionalElementType);
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
-      builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter)
-        .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), qualifierCall)
+      builder
+        .pushExpression(argument, NullabilityProblemKind.passingNullableToNotNullParameter)
+        .boxUnbox(argument, optionalElementType)
+        .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), true), qualifierCall)
         .pop();
     }
     else {
       builder
+        .pushExpression(argument)
+        .boxUnbox(argument, optionalElementType)
         .dup()
         .ifNull()
-          .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), qualifierCall)
+          .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false), qualifierCall)
           .elseBranch()
-          .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), qualifierCall)
+          .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), true), qualifierCall)
         .end()
         .pop();
     }

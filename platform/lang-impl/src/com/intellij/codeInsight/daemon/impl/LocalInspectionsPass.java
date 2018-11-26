@@ -253,13 +253,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final List<InspectionContext> init = new ArrayList<>();
     List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedLanguageIds.entrySet());
 
+    PsiFile file = session.getFile();
     Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor = pair ->
-      AstLoadingFilter.disallowTreeLoading(() -> {
+      AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
         LocalInspectionToolWrapper toolWrapper = pair.getKey();
         Set<String> dialectIdsSpecifiedForTool = pair.getValue();
         runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
         return true;
-      });
+      }));
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
     if (!result) throw new ProcessCanceledException();
     return init;
@@ -505,7 +506,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!inspectionProfile.isToolEnabled(key, getFile())) return;
 
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
-    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
+    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
     @NonNls String link = "";
     if (showToolDescription(toolWrapper)) {
       link = " <a "
@@ -728,6 +729,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         @Override
         public void registerProblem(@NotNull ProblemDescriptor descriptor) {
           if (host != null && myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(host, tool)) {
+            mySuppressedElements.computeIfAbsent(wrapper.getID(), shortName -> new HashSet<>()).add(host);
             return;
           }
           super.registerProblem(descriptor);

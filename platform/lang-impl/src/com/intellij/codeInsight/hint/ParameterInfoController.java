@@ -233,6 +233,9 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
     hintHint.setShowImmediately(true);
+    hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
+    hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
+    hintHint.setComponentBorder(JBUI.Borders.empty());
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;

@@ -49,6 +49,7 @@ import java.util.*;
 
 /*
  * @author max
+ * Key used by this index is the same as key of SingleEntryFileBasedIndexExtension
  */
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent>
   implements PsiDependentIndex, CustomInputsIndexFileBasedIndexExtension<Integer> {
@@ -265,7 +266,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
               LOG.error("Error indexing:" + file, t);
             }
           }
-          final int key = Math.abs(FileBasedIndex.getFileId(file));
+          final int key = SingleEntryFileBasedIndexExtension.getFileKey(file);
           SerializedStubTree serializedStubTree =
             new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength);
           if (LOG.isDebugEnabled()) {

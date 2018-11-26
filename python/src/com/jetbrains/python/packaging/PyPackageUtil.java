@@ -41,7 +41,6 @@ import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -313,10 +312,14 @@ public class PyPackageUtil {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.equals(root)) {
+          return true;
+        }
         if (!fileIndex.isExcluded(file) && file.isDirectory() && file.findChild(PyNames.INIT_DOT_PY) != null) {
           results.add(VfsUtilCore.getRelativePath(file, root, '.'));
+          return true;
         }
-        return true;
+        return false;
       }
     });
   }
@@ -491,7 +494,7 @@ public class PyPackageUtil {
   private static PyKeywordArgument generateRequiresKwarg(@NotNull PyFile setupPy,
                                                          @NotNull String requirementName,
                                                          @NotNull LanguageLevel languageLevel) {
-    final String keyword = SetupTaskIntrospector.usesSetuptools(setupPy) ? INSTALL_REQUIRES : REQUIRES;
+    final String keyword = PyPsiUtils.containsImport(setupPy, "setuptools") ? INSTALL_REQUIRES : REQUIRES;
     final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
     final PyExpression generated = PyElementGenerator.getInstance(setupPy.getProject()).createExpressionFromText(languageLevel, text);
 

@@ -174,7 +174,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             if (value instanceof Color) {
               final Color c = (Color)value;
               label.setText(String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
-              Color fg = c.getRed()*0.299 + c.getGreen()*0.587 + c.getBlue()*0.114 < 186 ? Gray.xFF : Gray.x00; // M is for Magic
+              Color fg = ColorUtil.isDark(c) ? Gray.xFF : Gray.x00;
               label.setForeground(fg);
               panel.setBackground(c);
               return panel;

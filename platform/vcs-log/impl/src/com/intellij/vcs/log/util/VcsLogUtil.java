@@ -21,7 +21,6 @@ import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.graph.VisibleGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,21 +55,6 @@ public class VcsLogUtil {
       set.add(item);
     }
     return map;
-  }
-
-  @NotNull
-  public static List<Integer> getVisibleCommits(@NotNull final VisibleGraph<Integer> visibleGraph) {
-    return new AbstractList<Integer>() {
-      @Override
-      public Integer get(int index) {
-        return visibleGraph.getRowInfo(index).getCommit();
-      }
-
-      @Override
-      public int size() {
-        return visibleGraph.getVisibleCommitCount();
-      }
-    };
   }
 
   public static int compareRoots(@NotNull VirtualFile root1, @NotNull VirtualFile root2) {

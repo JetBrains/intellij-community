@@ -100,15 +100,15 @@ public abstract class CachedValueBase<T> {
   }
 
   @Nullable
-  private Data<T> getUpToDateOrNull(boolean dispose) {
-    final Data<T> data = getRawData();
+  final Data<T> getUpToDateOrNull(boolean dispose) {
+    Data<T> data = getRawData();
 
     if (data != null) {
       if (isUpToDate(data)) {
         return data;
       }
-      if (dispose && data.myValue instanceof Disposable && compareAndClearData(data)) {
-        Disposer.dispose((Disposable)data.myValue);
+      if (dispose && data.value instanceof Disposable && compareAndClearData(data)) {
+        Disposer.dispose((Disposable)data.value);
       }
     }
     return null;
@@ -183,28 +183,28 @@ public abstract class CachedValueBase<T> {
     Data<T> data = computeData(result);
     setData(data);
     valueUpdated(result.getDependencyItems());
-    return data.myValue;
+    return data.value;
   }
 
   protected void valueUpdated(@Nullable Object[] dependencies) {}
 
   public abstract boolean isFromMyProject(Project project);
 
-  protected static class Data<T> implements Disposable {
-    private final T myValue;
+  protected static final class Data<T> implements Disposable {
+    final T value;
     private final Object[] myDependencies;
     private final long[] myTimeStamps;
 
-    public Data(final T value, final Object[] dependencies, final long[] timeStamps) {
-      myValue = value;
+    Data(final T value, final Object[] dependencies, final long[] timeStamps) {
+      this.value = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
     }
 
     @Override
     public void dispose() {
-      if (myValue instanceof Disposable) {
-        Disposer.dispose((Disposable)myValue);
+      if (value instanceof Disposable) {
+        Disposer.dispose((Disposable)value);
       }
     }
   }
@@ -213,7 +213,7 @@ public abstract class CachedValueBase<T> {
   protected <P> T getValueWithLock(P param) {
     Data<T> data = getUpToDateOrNull(true);
     if (data != null) {
-      return data.myValue;
+      return data.value;
     }
 
     RecursionGuard.StackStamp stamp = RecursionManager.createGuard("cachedValue").markStack();
@@ -228,11 +228,11 @@ public abstract class CachedValueBase<T> {
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
           valueUpdated(toReturn.myDependencies);
-          return toReturn.myValue;
+          return toReturn.value;
         }
       }
     }
-    return data.myValue;
+    return data.value;
   }
 
   protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);

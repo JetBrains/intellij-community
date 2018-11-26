@@ -107,7 +107,7 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
       conditionFilter = key -> key.startsWith(presentNamePart);
       mapFunction = key -> key.substring(presentNamePart.length() + 1); // + 1 for dot
     }
-    return UiDefaultsHardcodedKeys.UI_DEFAULTS_KEYS.stream()
+    return UiDefaultsHardcodedKeys.ALL_KEYS.stream()
       .filter(conditionFilter)
       .map(mapFunction)
       .map(key -> createLookupElement(key, shouldSurroundWithQuotes))

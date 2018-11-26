@@ -46,6 +46,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -541,7 +542,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   boolean blockingWaitForFinish(int timeoutMs) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       if (!myFinishSemaphore.waitFor(100 * 1000)) {
         throw new AssertionError("Too long completion");
       }
@@ -692,7 +693,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       int start = pair.first;
-      if (caretOffset >= start && start >= 0) {
+      if (caretOffset >= start && start >= 0 && caretOffset <= text.length()) {
         final String newPrefix = text.subSequence(start, caretOffset).toString();
         if (pair.second.accepts(newPrefix)) {
           scheduleRestart();
@@ -707,7 +708,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       new CodeCompletionHandlerBase(myCompletionType, false, false, true).invokeCompletion(getProject(), myEditor, myInvocationCount);
@@ -786,7 +787,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, listener);
     assert text != null;
-    HintManager.getInstance().showErrorHint(editor, StringUtil.escapeXml(text), HintManager.UNDER);
+    HintManager.getInstance().showErrorHint(editor, StringUtil.escapeXmlEntities(text), HintManager.UNDER);
     connection.disconnect();
     return result[0];
   }

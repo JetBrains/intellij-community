@@ -202,7 +202,11 @@ class EchoTeamCityMessages(object):
         # test name fetched from location passed as metainfo to PyCharm
         # it will be used to run specific test using "-k"
         # See IDEA-176950
-        self.ensure_test_start_reported(self.format_test_id(nodeid, location), location[2])
+        # We only need method/function name because only it could be used as -k
+        test_name = location[2]
+        if test_name:
+            test_name = str(test_name).split(".")[-1]
+        self.ensure_test_start_reported(self.format_test_id(nodeid, location), test_name)
 
     def ensure_test_start_reported(self, test_id, metainfo=None):
         if test_id not in self.test_start_reported_mark:

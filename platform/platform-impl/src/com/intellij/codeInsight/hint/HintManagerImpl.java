@@ -241,8 +241,10 @@ public class HintManagerImpl extends HintManager {
     location = new Point(newRectangle.x + xOffset, newRectangle.y + yOffset);
 
     Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
+    //in some rare cases lookup can appear just on the edge with the editor, so don't hide it on every typing
+    Rectangle newBoundsForIntersectionCheck = new Rectangle(location.x - 1, location.y - 1, size.width + 2, size.height + 2);
 
-    final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBounds);
+    final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBoundsForIntersectionCheck);
     if (okToUpdateBounds || hint.vetoesHiding()) {
       hint.setLocation(new RelativePoint(editor.getContentComponent(), location));
     }

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -29,6 +30,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ListPluginComponent extends CellPluginComponent {
+  public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
+
   private final MyPluginModel myPluginModel;
   private boolean myUninstalled;
 
@@ -93,12 +96,11 @@ public class ListPluginComponent extends CellPluginComponent {
     myEnableDisableButton.setOpaque(false);
 
     if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
-      myRestartButton = new RestartButton(myPluginModel);
-      myRestartButton.setFocusable(false);
-      myBaselinePanel.addButtonComponent(myRestartButton);
+      myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
       myEnableDisableButton.setSelected(false);
       myEnableDisableButton.setEnabled(false);
+      myEnableDisableButton.setVisible(false);
 
       myUninstalled = true;
     }
@@ -107,13 +109,10 @@ public class ListPluginComponent extends CellPluginComponent {
       PluginId id = myPlugin.getPluginId();
 
       if (pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
-        myRestartButton = new RestartButton(myPluginModel);
-        myRestartButton.setFocusable(false);
-        myBaselinePanel.addButtonComponent(myRestartButton);
+        myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       }
       else if (update) {
         myUpdateButton = new UpdateButton();
-        myUpdateButton.setFocusable(false);
         myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, false));
         myBaselinePanel.addButtonComponent(myUpdateButton);
       }
@@ -132,7 +131,7 @@ public class ListPluginComponent extends CellPluginComponent {
     myEnableDisableButton.setEnabled(false);
 
     OneLineProgressIndicator indicator = new OneLineProgressIndicator();
-    indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false));
+    indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
     myBaselinePanel.setProgressComponent(this, indicator.createBaselineWrapper());
     myPluginModel.addProgress(myPlugin, indicator);
     myIndicator = indicator;
@@ -215,7 +214,7 @@ public class ListPluginComponent extends CellPluginComponent {
 
   public void updateErrors() {
     boolean errors = myPluginModel.hasErrors(myPlugin);
-    updateIcon(errors, !myPluginModel.isEnabled(myPlugin));
+    updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
     if (errors) {
       Ref<Boolean> enableAction = new Ref<>();
@@ -232,13 +231,29 @@ public class ListPluginComponent extends CellPluginComponent {
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
     super.setListeners(listener, searchListener, eventHandler);
-    eventHandler.addAll(this);
     myBaselinePanel.setListeners(eventHandler);
   }
 
   @Override
   protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
-    super.updateColors(grayedFg, background);
+    setBackground(background);
+
+    if (mySelection != EventHandler.SelectionType.NONE) {
+      Color color = UIManager.getColor("Plugins.selectionForeground");
+      if (color != null) {
+        if (myVersion != null) {
+          myVersion.setForeground(color);
+        }
+        if (myLastUpdated != null) {
+          myLastUpdated.setForeground(color);
+        }
+        myName.setForeground(color);
+        if (myDescription != null) {
+          myDescription.setForeground(color);
+        }
+        return;
+      }
+    }
 
     if (myVersion != null) {
       myVersion.setForeground(grayedFg);
@@ -247,11 +262,11 @@ public class ListPluginComponent extends CellPluginComponent {
       myLastUpdated.setForeground(grayedFg);
     }
 
-    boolean enabled = MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin);
-    myName.setForeground(enabled ? null : PluginManagerConfigurableNew.DisabledColor);
+    boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
+    myName.setForeground(enabled ? null : DisabledColor);
 
     if (myDescription != null) {
-      myDescription.setForeground(enabled ? grayedFg : PluginManagerConfigurableNew.DisabledColor);
+      myDescription.setForeground(enabled ? grayedFg : DisabledColor);
     }
   }
 
@@ -261,9 +276,11 @@ public class ListPluginComponent extends CellPluginComponent {
 
   public void updateAfterUninstall() {
     myUninstalled = true;
+    updateColors(mySelection);
 
     myEnableDisableButton.setSelected(false);
     myEnableDisableButton.setEnabled(false);
+    myEnableDisableButton.setVisible(false);
 
     changeUpdateToRestart();
   }
@@ -277,9 +294,7 @@ public class ListPluginComponent extends CellPluginComponent {
       layout = true;
     }
     if (myRestartButton == null) {
-      myRestartButton = new RestartButton(myPluginModel);
-      myRestartButton.setFocusable(false);
-      myBaselinePanel.addButtonComponent(myRestartButton);
+      myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       layout = true;
     }
 
@@ -357,6 +372,9 @@ public class ListPluginComponent extends CellPluginComponent {
     group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        if (!myPluginModel.showUninstallDialog(selection)) {
+          return;
+        }
         for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(component, component.myPlugin, null);
         }
@@ -413,6 +431,9 @@ public class ListPluginComponent extends CellPluginComponent {
           if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
             return;
           }
+        }
+        if (!myPluginModel.showUninstallDialog(selection)) {
+          return;
         }
         for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(this, component.myPlugin, null);

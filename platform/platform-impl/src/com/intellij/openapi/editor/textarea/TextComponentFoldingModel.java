@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 11/2/11 6:13 PM
  */
 public class TextComponentFoldingModel implements FoldingModel {
 

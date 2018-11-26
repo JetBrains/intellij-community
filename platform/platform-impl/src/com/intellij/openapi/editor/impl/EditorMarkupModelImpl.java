@@ -60,7 +60,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
-  public int getMinMarkHeight() {
+  private int getMinMarkHeight() {
     return JBUI.scale(myMinMarkHeight);
   }
 
@@ -111,7 +111,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     super(editor.getDocument());
     myEditor = editor;
     myEditorFragmentRenderer = new EditorFragmentRenderer();
-    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
   }
 
   private int offsetToLine(int offset, @NotNull Document document) {
@@ -227,11 +227,21 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int getVisualLineByEvent(@NotNull MouseEvent e) {
-    return fitLineToEditor(myEditor.offsetToVisualLine(yPositionToOffset(e.getY() + myWheelAccumulator, true)));
+    int y = e.getY();
+    if (e.getSource() == myEditor.getVerticalScrollBar() && y == myEditor.getVerticalScrollBar().getHeight() - 1) {
+      y++;
+    }
+    return fitLineToEditor(myEditor.offsetToVisualLine(yPositionToOffset(y + myWheelAccumulator, true)));
   }
 
   private int fitLineToEditor(int visualLine) {
-    return Math.max(0, Math.min(myEditor.getVisibleLineCount() - 1, visualLine));
+    int lineCount = myEditor.getVisibleLineCount();
+    int shift = 0;
+    if (visualLine >= lineCount - 1) {
+      CharSequence sequence = myEditor.getDocument().getCharsSequence();
+      shift = sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
+    }
+    return Math.max(0, Math.min(lineCount - shift, visualLine));
   }
 
   private int getOffset(int visualLine, boolean startLine) {
@@ -465,7 +475,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
              : super.getPreferredSize();
     }
   }
-  
+
   private boolean transparent() {
     return !myEditor.shouldScrollBarBeOpaque();
   }
@@ -530,7 +540,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (!uiSettings.getShowEditorToolTip()) {
         hideMyEditorPreviewHint();
       }
-      setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+      setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
       repaintTrafficTooltip();
       repaintTrafficLightIcon();
       repaintVerticalScrollBar();
@@ -584,7 +594,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
       int b2 =  bounds.width / 2;
       bounds.x = getThinGap() + getMinMarkHeight() + getErrorIconWidth() / 2 - b2;
-      
+
       return bounds;
     }
 
@@ -592,7 +602,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     protected int getThickness() {
       return getErrorIconWidth() + getThinGap() + getMinMarkHeight();
     }
-    
+
     @Override
     protected void paintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle trackBounds) {
       if (myEditor.isDisposed()) return;
@@ -1168,13 +1178,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
                         - myEditor.getVerticalScrollBar().getWidth();
             width -= JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) * 2 + contentInsets;
-            return new Dimension(width - BalloonImpl.POINTER_LENGTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
+            return new Dimension(width - BalloonImpl.POINTER_LENGTH.get(), myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }
 
           @Override
           protected void paintComponent(@NotNull Graphics g) {
             if (myVisualLine ==-1 || myEditor.isDisposed()) return;
             Dimension size = getPreferredSize();
+            if (size.width <= 0 || size.height <= 0) return;
+
             EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
             EditorComponentImpl content = myEditor.getContentComponent();
 
@@ -1238,7 +1250,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 String s = tooltip instanceof HighlightInfo ? ((HighlightInfo)tooltip).getDescription() : String.valueOf(tooltip);
                 if (StringUtil.isEmpty(s)) continue;
                 s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
-                s = StringUtil.unescapeXml(s);
+                s = StringUtil.unescapeXmlEntities(s);
 
                 LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
                 int endOfLineOffset = myEditor.getDocument().getLineEndOffset(logicalPosition.line);

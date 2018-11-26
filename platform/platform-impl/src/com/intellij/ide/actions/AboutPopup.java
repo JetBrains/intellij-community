@@ -47,8 +47,8 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -143,7 +143,7 @@ public class AboutPopup {
       myImage = image;
       //noinspection UseJBColor
       myColor = Color.white;
-      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBColor.link();
+      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBUI.CurrentTheme.Link.linkColor();
       myShowDebugInfo = showDebugInfo;
 
       setOpaque(false);

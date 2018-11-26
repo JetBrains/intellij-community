@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
@@ -109,7 +96,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     myRoot.add(decorator.createPanel(), BorderLayout.CENTER);
     myCountLabel = new JLabel();
     myCountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-    myCountLabel.setForeground(SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.getFgColor());
+    myCountLabel.setForeground(SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES.getFgColor());
     myRoot.add(myCountLabel, BorderLayout.SOUTH);
     updateCountLabel();
   }
@@ -677,7 +664,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         final InjInfo info = (InjInfo)value;
         // fix for a marvellous Swing peculiarity: AccessibleJTable likes to pass null here
         if (info == null) return myLabel;
-        final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+        final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
         final String supportId = info.injection.getSupportId();
         myText.append(supportId + ": ", grayAttrs);
         mySupports.get(supportId).setupPresentation(info.injection, myText, isSelected);
@@ -700,7 +687,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         myLabel.clear();
         final String info = (String)value;
         if (info == null) return myLabel;
-        final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+        final SimpleTextAttributes grayAttrs = isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
         myLabel.append(info, grayAttrs);
         setLabelColors(myLabel, table, isSelected, row);
         return myLabel;
@@ -722,7 +709,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return super.isFileVisible(file, showHiddenFiles) &&
-               (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == FileTypes.ARCHIVE);
+               (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == ArchiveFileType.INSTANCE);
       }
 
       @Override

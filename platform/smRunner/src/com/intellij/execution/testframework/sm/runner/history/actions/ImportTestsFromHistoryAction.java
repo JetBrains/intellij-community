@@ -45,6 +45,7 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
     return TestHistoryConfiguration.getInstance(project).getIcon(name);
   }
 
+  @NotNull
   private static String getPresentableText(Project project, String name) {
     String nameWithoutExtension = FileUtil.getNameWithoutExtension(name);
     final int lastIndexOf = nameWithoutExtension.lastIndexOf(" - ");

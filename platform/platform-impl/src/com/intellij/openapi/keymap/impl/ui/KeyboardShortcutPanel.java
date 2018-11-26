@@ -29,8 +29,8 @@ import java.beans.PropertyChangeListener;
  * @author Sergey.Malenkov
  */
 final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
-  final ShortcutTextField myFirstStroke = new ShortcutTextField();
-  final ShortcutTextField mySecondStroke = new ShortcutTextField();
+  final ShortcutTextField myFirstStroke;
+  final ShortcutTextField mySecondStroke;
   final JCheckBox mySecondStrokeEnable = new JCheckBox();
 
   private final ItemListener myItemListener = new ItemListener() {
@@ -73,8 +73,10 @@ final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
     }
   };
 
-  KeyboardShortcutPanel(LayoutManager layout) {
+  KeyboardShortcutPanel(boolean isFocusTraversalKeysEnabled, LayoutManager layout) {
     super(layout);
+    myFirstStroke = new ShortcutTextField(isFocusTraversalKeysEnabled);
+    mySecondStroke = new ShortcutTextField(isFocusTraversalKeysEnabled);
     addPropertyChangeListener("shortcut", myPropertyListener);
     myFirstStroke.addPropertyChangeListener("keyStroke", myPropertyListener);
     mySecondStroke.addPropertyChangeListener("keyStroke", myPropertyListener);

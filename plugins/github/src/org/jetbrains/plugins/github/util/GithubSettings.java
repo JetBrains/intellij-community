@@ -12,7 +12,10 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 
 import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
-@State(name = "GithubSettings", storages = @Storage("github_settings.xml"))
+@State(name = "GithubSettings", storages = {
+  @Storage(value = "github.xml"),
+  @Storage(value = "github_settings.xml", deprecated = true)
+})
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
   private State myState = new State();
 

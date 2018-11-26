@@ -34,6 +34,14 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     final LanguageLevel level = project != null && virtualFile != null ?
                                 PyUtil.getLanguageLevelForVirtualFile(project, virtualFile) :
                                 LanguageLevel.getDefault();
-    return myMap.get(level);
+    return getSyntaxHighlighterForLanguageLevel(level);
+  }
+
+  /**
+   * Returns a syntax highlighter targeting the specified version of Python.
+   */
+  @NotNull
+  public SyntaxHighlighter getSyntaxHighlighterForLanguageLevel(@NotNull LanguageLevel version) {
+    return myMap.get(version);
   }
 }

@@ -275,18 +275,26 @@ public abstract class SearchPopupController {
       myPopup.list.dispatchEvent(event);
       return true;
     }
+    handleEnter();
     return false;
+  }
+
+  protected void handleEnter() {
   }
 
   public boolean handleUpDown(@NotNull KeyEvent event) {
     if (myPopup != null && myPopup.list != null) {
       if (event.getKeyCode() == KeyEvent.VK_DOWN && myPopup.list.getSelectedIndex() == -1) {
         myPopup.list.setSelectedIndex(0);
+        handlePopupListFirstSelection();
       }
       else {
         myPopup.list.dispatchEvent(event);
       }
     }
     return false;
+  }
+
+  protected void handlePopupListFirstSelection() {
   }
 }

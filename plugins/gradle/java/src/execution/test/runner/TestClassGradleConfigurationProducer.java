@@ -34,7 +34,6 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodL
 
 /**
  * @author Vladislav.Soroka
- * @since 2/14/14
  */
 public class TestClassGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 

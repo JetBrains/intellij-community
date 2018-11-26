@@ -15,8 +15,6 @@ class EditorConfigInspectionsTest : LightPlatformCodeInsightFixtureTestCase() {
 
   fun testCharClassLetterRedundancy() = doTest(EditorConfigCharClassLetterRedundancyInspection::class)
   fun testCharClassRedundancy() = doTest(EditorConfigCharClassRedundancyInspection::class)
-  fun testDanglingDot() = doTest(EditorConfigDanglingDotInspection::class)
-  fun testDanglingKey() = doTest(EditorConfigDanglingKeyInspection::class)
   fun testDeprecatedDescriptor() = doTest(EditorConfigDeprecatedDescriptorInspection::class)
   fun testEmptyHeader() = doTest(EditorConfigEmptyHeaderInspection::class)
   fun testEmptySection() = doTest(EditorConfigEmptySectionInspection::class)
@@ -25,7 +23,6 @@ class EditorConfigInspectionsTest : LightPlatformCodeInsightFixtureTestCase() {
   fun testKeyCorrectness() = doTest(EditorConfigKeyCorrectnessInspection::class)
   fun testListAcceptability() = doTest(EditorConfigListAcceptabilityInspection::class)
   fun testMissingRequiredDeclaration() = doTest(EditorConfigMissingRequiredDeclarationInspection::class)
-  fun testMultipleDots() = doTest(EditorConfigMultipleDotsInspection::class)
   fun testNoMatchingFiles_negative() {
     myFixture.configureByFiles(
       "${getTestName(true)}/this/subpackage/is/deep/abcd.cs",
@@ -37,6 +34,7 @@ class EditorConfigInspectionsTest : LightPlatformCodeInsightFixtureTestCase() {
   fun testNumerousWildcards() = doTest(EditorConfigNumerousWildcardsInspection::class, checkWeakWarnings = true)
   fun testOptionRedundancy() = doTest(EditorConfigOptionRedundancyInspection::class)
   fun testPairAcceptability() = doTest(EditorConfigPairAcceptabilityInspection::class)
+  fun testPartialOverride() = doTest(EditorConfigPartialOverrideInspection::class, checkWarnings = true)
   fun testPatternRedundancy_complex() = doTest(EditorConfigPatternRedundancyInspection::class)
   fun testPatternRedundancy_simple() = doTest(EditorConfigPatternRedundancyInspection::class)
   fun testReferenceCorrectness_complex() = doTest(EditorConfigReferenceCorrectnessInspection::class)
@@ -46,7 +44,6 @@ class EditorConfigInspectionsTest : LightPlatformCodeInsightFixtureTestCase() {
   fun testShadowedOption() = doTest(EditorConfigShadowedOptionInspection::class)
   fun testShadowingOption() = doTest(EditorConfigShadowingOptionInspection::class)
   fun testSpaceInHeader() = doTest(EditorConfigSpaceInHeaderInspection::class, checkWeakWarnings = true)
-  fun testSuspiciousLineBreak() = doTest(EditorConfigSuspiciousLineBreakInspection::class)
   fun testUnexpectedComma() = doTest(EditorConfigUnexpectedCommaInspection::class)
   fun testUnusedDeclaration() = doTest(EditorConfigUnusedDeclarationInspection::class)
   fun testValueCorrectness() = doTest(EditorConfigValueCorrectnessInspection::class)

@@ -35,7 +35,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/14/13
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
 

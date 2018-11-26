@@ -26,7 +26,6 @@ import static org.junit.Assert.assertArrayEquals;
 
 /**
  * @author Denis Zhdanov
- * @since 09/16/2010
  */
 public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorTest {
 
@@ -51,6 +50,9 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
         settings.setUseSoftWraps(false);
         settings.setSmartHome(mySmartHome);
       }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -807,7 +809,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     VisualPosition caretPositionBefore = getEditor().getCaretModel().getVisualPosition();
 
     // Change tab size.
-    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings(ourProject).getIndentOptions(PlainTextFileType.INSTANCE);
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(PlainTextFileType.INSTANCE);
 
     assertNotNull(indentOptions);
     indentOptions.TAB_SIZE++;

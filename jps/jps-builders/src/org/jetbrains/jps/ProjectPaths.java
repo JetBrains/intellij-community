@@ -36,7 +36,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since 30.09.2011
  */
 public class ProjectPaths {
   private ProjectPaths() { }

@@ -51,7 +51,6 @@ import java.util.Properties;
  * Holds miscellaneous utility methods.
  *
  * @author Denis Zhdanov
- * @since 8/25/11 1:19 PM
  */
 public class GradleUtil {
   private static final String LAST_USED_GRADLE_HOME_KEY = "last.used.gradle.home";

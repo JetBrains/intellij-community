@@ -95,6 +95,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,10 +113,11 @@ import static com.intellij.util.containers.ContainerUtil.list;
 
 /**
  * @author Denis Zhdanov
- * @since 4/22/13 9:36 AM
  */
 public class ExternalSystemUtil {
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @NotNull public static final Key<ExternalSystemTaskId> EXTERNAL_SYSTEM_TASK_ID_KEY =
     Key.create("com.intellij.openapi.externalSystem.util.taskId");
 

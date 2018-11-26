@@ -230,8 +230,8 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     long memoryAfter = currentFreeMemory();
     long timeAfter = System.currentTimeMillis();
 
-    System.out.println("\nMEMORY: " + (memoryAfter - memoryBefore));
-    System.out.println("\nTIME: " + (timeAfter - timeBefore));
+    LOG.debug("\nMEMORY: " + (memoryAfter - memoryBefore));
+    LOG.debug("\nTIME: " + (timeAfter - timeBefore));
   }
 
   private void doWrapAlways(String resultNumber, boolean align, int rightMargin) throws Exception {
@@ -362,5 +362,17 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     htmlSettings.HTML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     xmlSettings.XML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doTextTest("<tag>aaa\nbbb\nccc\nddd\n</tag>", "<tag>aaa bbb ccc ddd\n</tag>");
+  }
+
+  public void testXmlCommentLineBreak() throws Exception {
+    XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
+    boolean oldValue = xmlSettings.XML_KEEP_LINE_BREAKS;
+    xmlSettings.XML_KEEP_LINE_BREAKS = false;
+    try {
+      doTest();
+    }
+    finally {
+      xmlSettings.XML_KEEP_LINE_BREAKS = oldValue;
+    }
   }
 }

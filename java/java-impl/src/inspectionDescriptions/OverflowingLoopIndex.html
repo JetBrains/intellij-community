@@ -1,0 +1,19 @@
+<html>
+<body>
+<p>Reports loops that cannot complete without index overflow or doesn't execute at all
+</p>
+<!-- tooltip end -->
+Usually it happens because of mistake in update operation
+<p>Example:</p>
+<pre>
+<code>
+  void foo(int s) {
+    for (int i = s; i > 12; i++) { // i-- should be here
+      System.out.println(i);
+    }
+  }
+</code>
+</pre>
+<p><small>New in 2019.1</small></p>
+</body>
+</html>

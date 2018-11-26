@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
@@ -222,6 +223,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     private final DefaultListModel<Executor> myListModel = new DefaultListModel<>();
     private final JLabel myNoRunner = new JLabel(ExecutionBundle.message("run.configuration.norunner.selected.label"));
     private JPanel myRunnersPanel;
+    private JBScrollPane myScrollPane;
 
     RunnersEditorComponent() {
       myRunnerPanel.setLayout(myLayout);
@@ -241,6 +243,9 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
           append(value.getId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       });
+
+      myScrollPane.setBorder(JBUI.Borders.empty());
+      myScrollPane.setViewportBorder(JBUI.Borders.empty());
     }
 
     private void updateRunnerComponent() {

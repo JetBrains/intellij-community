@@ -25,7 +25,6 @@ import com.intellij.psi.xml.XmlTokenType;
  * {@link LineWrapPositionStrategy} for markup languages like XML, HTML etc.
  * 
  * @author Denis Zhdanov
- * @since 5/11/11 7:42 PM
  */
 public class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
 

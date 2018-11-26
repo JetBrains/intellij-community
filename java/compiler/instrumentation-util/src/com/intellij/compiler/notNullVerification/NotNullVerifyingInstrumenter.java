@@ -169,6 +169,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     final Map<Integer, String> paramNames = myMethodParamNames.get(myClassName + '.' + name + desc);
     return new FailSafeMethodVisitor(Opcodes.API_VERSION, v) {
       private final Map<Integer, NotNullState> myNotNullParams = new LinkedHashMap<Integer, NotNullState>();
+      private int myParamAnnotationOffset = paramAnnotationOffset;
       private NotNullState myMethodNotNull;
       private Label myStartGeneratedCodeLabel;
 
@@ -203,10 +204,18 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       }
 
       @Override
+      public void visitAnnotableParameterCount(int parameterCount, boolean visible) {
+        if (myParamAnnotationOffset != 0 && parameterCount == args.length) {
+          myParamAnnotationOffset = 0;
+        }
+        super.visitAnnotableParameterCount(parameterCount, visible);
+      }
+
+      @Override
       public AnnotationVisitor visitParameterAnnotation(int parameter, String anno, boolean visible) {
         AnnotationVisitor base = mv.visitParameterAnnotation(parameter, anno, visible);
-        if (!NEW_ASM && parameter < paramAnnotationOffset) return base;
-        return checkNotNullParameter(parameter - paramAnnotationOffset, anno, base);
+        if (!NEW_ASM && parameter < myParamAnnotationOffset) return base;
+        return checkNotNullParameter(parameter - myParamAnnotationOffset, anno, base);
       }
 
       private AnnotationVisitor checkNotNullParameter(int parameter, String anno, AnnotationVisitor av) {

@@ -48,7 +48,7 @@ class ForcePushAction : PushActionBase() {
       commonTarget = silentForcePushIsNotAllowed[aSupport]!!.map { it.pushSpec.target }.distinct().singleOrNull()
     }
 
-    val to = if (commonTarget != null) "to <b>${commonTarget.presentation}</b>" else ""
+    val to = if (commonTarget != null) " to <b>${commonTarget.presentation}</b>" else ""
     val message = "You're going to force push${to}. It may overwrite commits at the remote. Are you sure you want to proceed?"
     val myDoNotAskOption = if (commonTarget != null) MyDoNotAskOptionForPush(aSupport!!, commonTarget) else null
     val decision = Messages.showOkCancelDialog(project, XmlStringUtil.wrapInHtml(message), "Force Push",

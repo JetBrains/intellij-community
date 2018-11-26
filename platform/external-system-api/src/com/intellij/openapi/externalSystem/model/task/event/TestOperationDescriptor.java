@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/16/2015
  */
 public interface TestOperationDescriptor extends OperationDescriptor {
   @Nullable

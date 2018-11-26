@@ -56,8 +56,17 @@ public final class ExecutionEnvironmentBuilder {
 
   @Nullable
   public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
-    ExecutionEnvironmentBuilder builder = createOrNull(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
+    ExecutionEnvironmentBuilder builder = createOrNull(executor, settings.getConfiguration());
     return builder == null ? null : builder.runnerAndSettings(builder.myRunner, settings);
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    ExecutionEnvironmentBuilder builder = createOrNull(configuration.getProject(), executor, configuration);
+    if (builder != null) {
+      builder.runProfile(configuration);
+    }
+    return builder;
   }
 
   @NotNull
@@ -107,6 +116,7 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @NotNull
   public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner runner,
                                                        @NotNull RunnerAndConfigurationSettings settings) {
     myRunnerAndConfigurationSettings = settings;

@@ -38,6 +38,8 @@ public abstract class InspectionElementsMerger {
 
   /**
    * @return the shortNames of the inspections whose settings needs to be merged.
+   * 
+   * when one of toolNames doesn't present in the profile, default settings for that tool are expected, e.g. by default the result would be enabled with min severity WARNING
    */
   @NotNull
   public abstract String[] getSourceToolNames();

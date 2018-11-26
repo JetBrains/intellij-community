@@ -94,7 +94,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   }
 
 
-  void switchToLeafNulls() {
+  public void switchToLeafNulls() {
     SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
     if(provider == null){
       return;

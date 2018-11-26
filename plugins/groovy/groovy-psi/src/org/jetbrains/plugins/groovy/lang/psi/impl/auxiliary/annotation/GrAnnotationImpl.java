@@ -57,6 +57,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     visitor.visitAnnotation(this);
   }
 
+  @Override
   public String toString() {
     return "Annotation";
   }

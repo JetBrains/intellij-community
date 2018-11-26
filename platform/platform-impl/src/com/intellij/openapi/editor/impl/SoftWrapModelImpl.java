@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentPa
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,7 +40,6 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Jun 8, 2010 12:47:32 PM
  */
 public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedInternalDocumentListener, FoldingListener,
@@ -48,7 +48,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   private static final Logger LOG = Logger.getInstance(SoftWrapModelImpl.class);
 
-  private final List<SoftWrapChangeListener>  mySoftWrapListeners = new ArrayList<>();
+  private final List<SoftWrapChangeListener> mySoftWrapListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc).

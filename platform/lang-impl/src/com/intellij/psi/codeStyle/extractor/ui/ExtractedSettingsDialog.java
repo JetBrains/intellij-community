@@ -41,7 +41,6 @@ import java.util.Map;
 
 /**
  * @author Roman.Shein
- * @since 28.09.2015.
  */
 public class ExtractedSettingsDialog extends DialogWrapper {
   protected CodeStyleSettingsNameProvider myNameProvider;

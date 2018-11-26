@@ -109,7 +109,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   public void testExistingImportsAlwaysSuggestedFirstEvenIfNonProject() {
     doMultiFileAutoImportTest("Import", quickfix -> {
       final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText("datetime"));
-      assertOrderedEquals(candidates, "datetime from datetime", "mod.datetime");
+      assertOrderedEquals(candidates, "datetime(date) from datetime", "mod.datetime");
       return false;
     });
   }

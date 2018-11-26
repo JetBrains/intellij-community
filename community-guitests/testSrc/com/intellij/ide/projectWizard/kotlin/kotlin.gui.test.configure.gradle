@@ -36,7 +36,8 @@ task updateXmlParsing(dependsOn: downloadUpdateXml) {
         project.ext.pluginZipName = 'kotlin-plugin-' + plugins.plugin[0].@version + '.zip'
         project.ext.pluginInstallPath = project.ext.downloadPath + File.separator + project.ext.pluginZipName
         project.ext.fullVersion = plugins.plugin[0].@version
-        project.ext.isFinalRelease = ((project.ext.versionKind == "release") && (!project.ext.releaseVersion.contains("M"))).toString()
+        project.ext.isOnlyDevRepository = System.getenv("kotlin.artifact.isOnlyDevRep").toBoolean()
+        project.ext.isFinalRelease = (!project.ext.isOnlyDevRepository && (project.ext.versionKind == "release") && (!project.ext.releaseVersion.contains("M"))).toString()
     }
 }
 
@@ -64,7 +65,7 @@ task createPropertiesFile(dependsOn: getKotlinArtifactVersion) {
         props.setProperty("kotlin.plugin.version.full", project.ext.fullVersion)
         props.setProperty("kotlin.artifact.version", project.ext.kotlin_artifact_version)
         props.setProperty("kotlin.artifact.isFinalRelease", project.ext.isFinalRelease)
-        props.setProperty("kotlin.artifact.isOnlyDevRep", System.getenv("kotlin.artifact.isOnlyDevRep"))
+        props.setProperty("kotlin.artifact.isOnlyDevRep", project.ext.isOnlyDevRepository.toString())
         props.setProperty("kotlin.artifact.isPresentInConfigureDialog", System.getenv("kotlin.artifact.isPresentInConfigureDialog"))
 
         props.store(dstFile.newWriter(), null)

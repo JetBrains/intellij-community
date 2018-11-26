@@ -763,7 +763,7 @@ public class TypeCookTest extends MultiFileTestCase {
         writer.print(itemRepr);
       }
 
-      System.out.println("Pattern not found, file " + patternName + " created.");
+      System.err.println("Pattern not found, file " + patternName + " created.");
 
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(patternFile);
     }

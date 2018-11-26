@@ -106,6 +106,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
     }
   }
 
+  @Override
   public String toString(){
     return "PsiArrayInitializerExpression:" + getText();
   }

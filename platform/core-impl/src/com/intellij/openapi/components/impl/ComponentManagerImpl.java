@@ -293,8 +293,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         continue;
       }
 
-      ComponentConfig[] configs = getMyComponentConfigsFromDescriptor(plugin);
-      componentConfigs.ensureCapacity(componentConfigs.size() + configs.length);
+      List<ComponentConfig> configs = getMyComponentConfigsFromDescriptor(plugin);
+      componentConfigs.ensureCapacity(componentConfigs.size() + configs.size());
       for (ComponentConfig config : configs) {
         if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options) && config.prepareClasses(headless)) {
           config.pluginDescriptor = plugin;
@@ -307,7 +307,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   // used in upsource
   @NotNull
-  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getAppComponents();
   }
 
@@ -408,7 +408,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       BaseComponent loadedComponent = myNameToComponent.get(componentName);
       // component may have been already loaded by PicoContainer, so fire error only if components are really different
       if (!instance.equals(loadedComponent)) {
-        LOG.error("Component name collision: " + componentName + " " + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass());
+        String errorMessage = "Component name collision: " + componentName + " " + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
+        LOG.error(PluginManagerCore.createPluginException(errorMessage, null, instance.getClass()));
       }
     }
     else {

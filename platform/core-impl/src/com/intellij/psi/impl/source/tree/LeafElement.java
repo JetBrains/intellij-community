@@ -255,7 +255,7 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
+  public void addLeaf(@NotNull final IElementType leafType, @NotNull final CharSequence leafText, final ASTNode anchorBefore) {
     throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
@@ -299,7 +299,7 @@ public abstract class LeafElement extends TreeElement {
     return getPsi(clazz, getPsi(), LOG);
   }
 
-  static <T extends PsiElement> T getPsi(@NotNull Class<T> clazz, PsiElement element, Logger log) {
+  static <T extends PsiElement> T getPsi(@NotNull Class<T> clazz, PsiElement element, @NotNull Logger log) {
     log.assertTrue(clazz.isInstance(element), "unexpected psi class. expected: " + clazz
                                              + " got: " + (element == null ? null : element.getClass()));
     //noinspection unchecked

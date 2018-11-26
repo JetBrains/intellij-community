@@ -31,7 +31,6 @@ import static com.intellij.application.options.codeStyle.arrangement.match.Arran
 
 /**
  * @author Denis Zhdanov
- * @since 10/31/12 1:23 PM
  */
 public class ArrangementSectionRulesControl extends ArrangementMatchingRulesControl {
   @NotNull public static final DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");

@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -55,7 +56,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
     List<PsiMember> result = new ArrayList<>();
     for (PsiMethod method : cache.getMethodsByName(name, scope)) {
-      if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method, scope, qualifiedMatcher)) {
+      if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method, scope, qualifiedMatcher, pattern)) {
         result.add(method);
       }
     }
@@ -118,7 +119,12 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     });
 
   }
-  private static boolean hasSuperMethod(final PsiMethod method, final GlobalSearchScope scope, final Condition<? super PsiMember> qualifiedMatcher) {
+
+  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Condition<PsiMember> qualifiedMatcher, String pattern) {
+    if (pattern.contains(".") && Registry.is("ide.goto.symbol.include.overrides.on.qualified.patterns")) {
+      return false;
+    }
+
     if (!hasSuperMethodCandidates(method, scope, qualifiedMatcher)) {
       return false;
     }
@@ -173,7 +179,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       Iterator<PsiMethod> iterator = collectedMethods.iterator();
       while(iterator.hasNext()) {
         PsiMethod method = iterator.next();
-        if (!hasSuperMethod(method, scope, qualifiedMatcher) && !processor.process(method)) return;
+        if (!hasSuperMethod(method, scope, qualifiedMatcher, completePattern) && !processor.process(method)) return;
         ProgressManager.checkCanceled();
         iterator.remove();
       }

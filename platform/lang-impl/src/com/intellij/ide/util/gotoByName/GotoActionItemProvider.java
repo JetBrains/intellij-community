@@ -98,12 +98,13 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private boolean processTopHits(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<>();
+    String commandAccelerator = SearchTopHitProvider.getTopHitAccelerator();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       //noinspection deprecation
       if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) continue;
       if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) continue;
-      if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, "#")) {
-        String prefix = "#" + ((OptionsTopHitProvider)provider).getId() + " ";
+      if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, commandAccelerator)) {
+        String prefix = commandAccelerator + ((OptionsTopHitProvider)provider).getId() + " ";
         provider.consumeTopHits(prefix + pattern, collector, project);
       }
       provider.consumeTopHits(pattern, collector, project);

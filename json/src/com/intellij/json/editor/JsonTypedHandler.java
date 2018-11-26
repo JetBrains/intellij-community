@@ -11,23 +11,40 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JsonTypedHandler extends TypedHandlerDelegate {
+
+  private boolean myWhitespaceAdded;
+
   @NotNull
   @Override
   public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (file instanceof JsonFile) {
       processPairedBracesComma(c, editor, file);
       addWhiteSpaceAfterColonIfNeeded(c, editor, file);
+      removeRedundantWhitespaceIfAfterColon(c, editor, file);
     }
     return Result.CONTINUE;
+  }
+
+  private void removeRedundantWhitespaceIfAfterColon(char c, Editor editor, PsiFile file) {
+    if (!myWhitespaceAdded || c != ' ' || !JsonEditorOptions.getInstance().AUTO_WHITESPACE_AFTER_COLON) {
+      if (c != ':') {
+        myWhitespaceAdded = false;
+      }
+      return;
+    }
+    int offset = editor.getCaretModel().getOffset();
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+    final PsiElement element = file.findElementAt(offset);
+    if (element instanceof PsiWhiteSpace) {
+      editor.getDocument().deleteString(offset - 1, offset);
+    }
+    myWhitespaceAdded = false;
   }
 
   @NotNull
@@ -43,16 +60,27 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  private static void addWhiteSpaceAfterColonIfNeeded(char c,
-                                                      @NotNull Editor editor,
-                                                      @NotNull PsiFile file) {
-    if (c != ':' || !JsonEditorOptions.getInstance().AUTO_WHITESPACE_AFTER_COLON) return;
+  private void addWhiteSpaceAfterColonIfNeeded(char c,
+                                               @NotNull Editor editor,
+                                               @NotNull PsiFile file) {
+    if (c != ':' || !JsonEditorOptions.getInstance().AUTO_WHITESPACE_AFTER_COLON) {
+      if (c != ' ') {
+        myWhitespaceAdded = false;
+      }
+      return;
+    }
     int offset = editor.getCaretModel().getOffset();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     PsiElement element = PsiTreeUtil.getParentOfType(PsiTreeUtil.skipWhitespacesBackward(file.findElementAt(offset)), JsonProperty.class, false);
-    if (element == null) return;
+    if (element == null) {
+      myWhitespaceAdded = false;
+      return;
+    }
     final ASTNode[] children = element.getNode().getChildren(TokenSet.create(JsonElementTypes.COLON));
-    if (children.length == 0) return;
+    if (children.length == 0) {
+      myWhitespaceAdded = false;
+      return;
+    }
     final ASTNode colon = children[0];
     final ASTNode next = colon.getTreeNext();
     final String text = next.getText();
@@ -60,6 +88,10 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
       final int insOffset = colon.getStartOffset() + 1;
       editor.getDocument().insertString(insOffset, " ");
       editor.getCaretModel().moveToOffset(insOffset + 1);
+      myWhitespaceAdded = true;
+    }
+    else {
+      myWhitespaceAdded = false;
     }
   }
 

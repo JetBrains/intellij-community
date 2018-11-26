@@ -125,6 +125,13 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(roots[0])
   }
 
+  fun `test dont scan inside vendor folder`() {
+    projectRoot.initRepository()
+    createVcsRoots("vendor", "vendor/child/child")
+
+    expect(projectRoot)
+  }
+
   private fun createVcsRoots(vararg relativePaths: String) = createVcsRoots(listOf(*relativePaths))
 
   private fun createVcsRoots(relativePaths: Collection<String>): List<VirtualFile> {

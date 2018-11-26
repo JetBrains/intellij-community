@@ -8,6 +8,8 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -1264,12 +1266,36 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-23632
   public void testMockPatchObject1Py2() {
-    doMultiFileTest();
+    final String testName = getTestName(true);
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-23632
   public void testMockPatchObject2Py2() {
-    doMultiFileTest();
+    final String testName = getTestName(true);
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-28577
@@ -1369,6 +1395,17 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> suggested = doTestByText("from __future__ import print_function\npr<caret>");
     assertNotNull(suggested);
     assertSameElements(suggested, "print", "print", "print_function", "property", "repr");
+  }
+
+  // PY-27148
+  public void testNamedTupleSpecial() {
+    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
+                                              "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
+                                              "    pass\n" +
+                                              "c1 = Cat1(\"name\", 5)\n" +
+                                              "c1.<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "_make", "_asdict", "_replace", "_fields");
   }
 
   private void assertNoVariantsInExtendedCompletion() {

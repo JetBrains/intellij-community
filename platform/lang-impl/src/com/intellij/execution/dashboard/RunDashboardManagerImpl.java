@@ -255,12 +255,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private List<RunContentDescriptor> filterByContent(List<RunContentDescriptor> descriptors) {
-    return descriptors.stream()
-      .filter(descriptor -> {
-        Content content = descriptor.getAttachedContent();
-        return content != null && content.getManager() == myContentManager;
-      })
-      .collect(Collectors.toList());
+    return ContainerUtil.filter(descriptors, descriptor -> {
+      Content content = descriptor.getAttachedContent();
+      return content != null && content.getManager() == myContentManager;
+    });
   }
 
   @Override

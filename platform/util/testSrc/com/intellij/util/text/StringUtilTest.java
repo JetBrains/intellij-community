@@ -25,7 +25,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 22, 2006
  */
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class StringUtilTest {

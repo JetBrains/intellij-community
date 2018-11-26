@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
+import com.intellij.application.options.CodeStyleSettingsModifier.DependencyList;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -9,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +68,21 @@ public class CodeStyle {
     if (file.isValid()) {
       Project project = file.getProject();
       //noinspection deprecation
-      return CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+      CodeStyleSettings currSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+      CodeStyleSettings cachedSettings = CachedValuesManager.getCachedValue(
+        file,
+        () -> {
+          CodeStyleSettings modifiedSettings = currSettings.clone();
+          DependencyList dependencies = CodeStyleSettingsModifierEP.modifySettings(modifiedSettings, file);
+          if (!dependencies.isEmpty()) {
+            dependencies.add(currSettings.getModificationTracker());
+            return new CachedValueProvider.Result<>(modifiedSettings, dependencies.getAll());
+          }
+          else {
+            return null;
+          }
+      });
+      return cachedSettings != null ? cachedSettings : currSettings;
     }
     return getDefaultSettings();
   }
@@ -291,27 +308,6 @@ public class CodeStyle {
     CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
     codeStyleSettingsManager.setMainProjectCodeStyle(settings);
     codeStyleSettingsManager.USE_PER_PROJECT_SETTINGS = true;
-  }
-
-  @ApiStatus.Experimental
-  @NotNull
-  public static CodeStyleBean getBean(@NotNull Project project, @NotNull Language language) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
-    CodeStyleBean codeStyleBean = null;
-    if (provider != null) {
-      codeStyleBean = provider.createBean();
-    }
-    if (codeStyleBean == null) {
-      codeStyleBean = new CodeStyleBean() {
-        @NotNull
-        @Override
-        protected Language getLanguage() {
-          return language;
-        }
-      };
-    }
-    codeStyleBean.setRootSettings(getSettings(project));
-    return codeStyleBean;
   }
 
   /**

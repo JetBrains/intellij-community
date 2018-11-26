@@ -44,7 +44,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 5/3/11 2:35 PM
  */
 public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/generation/surroundWith/java/";
@@ -173,7 +172,7 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   public void testSurroundWithTryFinallyUsingIndents() {
-    CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings(ourProject).getIndentOptions(JavaFileType.INSTANCE);
+    CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE);
     boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
     indentOptions.USE_TAB_CHARACTER = true;
     doTest(new JavaWithTryFinallySurrounder());
@@ -188,6 +187,18 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     String old = template.getText();
     template.setText("// ${DS} \n" +
                      "${EXCEPTION}.printStackTrace();");
+    try {
+      doTest(new JavaWithTryCatchSurrounder());
+    }
+    finally {
+      template.setText(old);
+    }
+  }
+
+  public void testSurroundWithTryCatchWithFinalParameter() {
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_DECLARATION);
+    String old = template.getText();
+    template.setText("final ${EXCEPTION_TYPE} ex");
     try {
       doTest(new JavaWithTryCatchSurrounder());
     }

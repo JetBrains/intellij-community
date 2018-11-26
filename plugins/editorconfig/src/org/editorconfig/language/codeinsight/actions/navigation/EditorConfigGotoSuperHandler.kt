@@ -8,9 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.editorconfig.language.codeinsight.linemarker.EditorConfigOverridingHeaderFinder
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.EditorConfigHeader
+import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher
 
 class EditorConfigGotoSuperHandler : GotoTargetHandler() {
   override fun getFeatureUsedKey() = GotoSuperAction.FEATURE_ID
@@ -44,7 +44,8 @@ class EditorConfigGotoSuperHandler : GotoTargetHandler() {
     }
 
     private fun findTargets(element: PsiElement) = when (element) {
-      is EditorConfigHeader -> EditorConfigOverridingHeaderFinder().getMatchingHeaders(element)
+      // todo icons
+      is EditorConfigHeader -> EditorConfigOverridingHeaderSearcher().findMatchingHeaders(element).map { it.header }
       is EditorConfigFlatOptionKey -> element.reference.findParents()
       else -> emptyList()
     }

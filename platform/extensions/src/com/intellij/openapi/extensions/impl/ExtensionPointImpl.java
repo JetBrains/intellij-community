@@ -8,8 +8,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +118,11 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           break;
         }
       }
+      if (getExtensionIndex(extension) != -1) {
+        LOG.error("Extension was already added: " + extension);
+        return;
+      }
+
       registerExtension(extension, adapter, index, true);
     }
     else {
@@ -125,11 +132,6 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void registerExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
-    if (getExtensionIndex(extension) != -1) {
-      LOG.error("Extension was already added: " + extension);
-      return;
-    }
-
     Class<T> extensionClass = getExtensionClass();
     if (!extensionClass.isInstance(extension)) {
       LOG.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
@@ -152,7 +154,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
 
         notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
-        adapter.setNotificationSent(true);
+        adapter.setNotificationSent();
       }
     }
   }
@@ -199,9 +201,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       //noinspection unchecked
       return (T[])Array.newInstance(getExtensionClass(), 0);
     }
-    else {
-      return myExtensionsCacheAsArray.clone();
-    }
+    return myExtensionsCacheAsArray.clone();
   }
 
   @NotNull
@@ -243,10 +243,12 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myExtensionAdapters = new LinkedHashSet<>(adapters);
 
       Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
+      OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.size());
 
       myLoadedAdapters = Collections.emptyList();
       boolean errorHappened = false;
       for (int i = 0; i < adapters.size(); i++) {
+        CHECK_CANCELED.run();
         ExtensionComponentAdapter adapter = adapters.get(i);
         try {
           @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
@@ -254,11 +256,12 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             errorHappened = true;
             LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n" );
           }
-          if (i > 0 && extension == result[i - 1]) {
+          if (!duplicates.add(extension)) {
             errorHappened = true;
+            T duplicate = duplicates.get(extension);
             LOG.error("Duplicate extension found: " + extension + "; " +
-                      " Adapter:      " + adapter + ";\n" +
-                      " Prev adapter: " + adapters.get(i-1) + ";\n" +
+                      " Prev extension: " + duplicate + ";\n" +
+                      " Adapter:        " + adapter + ";\n" +
                       " getExtensionClass(): " + getExtensionClass() + ";\n" +
                       " result:" + Arrays.asList(result));
           }
@@ -268,6 +271,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             continue;
           }
           result[i] = extension;
+
           registerExtension(extension, adapter, myLoadedAdapters.size(), !loaded.contains(adapter));
         }
         catch (ProcessCanceledException e) {
@@ -331,7 +335,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @Override
-  public void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
+  public synchronized void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
     for (ExtensionComponentAdapter adapter : ContainerUtil.concat(myExtensionAdapters, myLoadedAdapters)) {
       if (adapter.getAssignableToClassName().equals(extensionClass.getCanonicalName())) {
         unregisterExtensionAdapter(adapter);
@@ -388,14 +392,16 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   public synchronized void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener,
                                                      final boolean invokeForLoadedExtensions,
-                                                     @NotNull Disposable parentDisposable) {
+                                                     @Nullable Disposable parentDisposable) {
     if (invokeForLoadedExtensions) {
       addExtensionPointListener(listener);
     }
     else {
       addListener(listener);
     }
-    Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener, invokeForLoadedExtensions));
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener, invokeForLoadedExtensions));
+    }
   }
 
   // true if added
@@ -479,6 +485,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return extensionClass;
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -528,7 +535,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     private final LoadingOrder myLoadingOrder;
 
     private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), null, null, null);
+      super(extension.getClass().getName(), null, null, null, LoadingOrder.ANY, null);
       myExtension = extension;
       myLoadingOrder = loadingOrder;
     }
@@ -542,5 +549,25 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     public LoadingOrder getOrder() {
       return myLoadingOrder;
     }
+  }
+
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  static Runnable CHECK_CANCELED = EmptyRunnable.getInstance();
+
+  public static void setCheckCanceledAction(Runnable checkCanceled) {
+    CHECK_CANCELED = () -> {
+      try {
+        checkCanceled.run();
+      }
+      catch (ProcessCanceledException e) {
+        if (!isInsideClassInitializer(e.getStackTrace())) { // otherwise ExceptionInInitializerError happens and the class is screwed forever
+          throw e;
+        }
+      }
+    };
+  }
+
+  private static boolean isInsideClassInitializer(StackTraceElement[] trace) {
+    return Arrays.stream(trace).anyMatch(s -> "<clinit>".equals(s.getMethodName()));
   }
 }

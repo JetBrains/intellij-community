@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.getBranchPresentationBackground;
-import static com.intellij.vcs.log.ui.render.RectanglePainter.LABEL_ARC;
 
 public class LabelPainter {
   private static final JBValueGroup JBVG = new JBValueGroup();
@@ -42,6 +41,7 @@ public class LabelPainter {
   public static final JBValue LEFT_PADDING = JBVG.value(4);
   public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(2);
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
+  public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
   private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
@@ -326,7 +326,8 @@ public class LabelPainter {
         g2.setColor(myGreyBackground);
         g2.fill(new RoundRectangle2D.Double(x - MIDDLE_PADDING.get() / 3, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING.get(),
                                             icon.getIconWidth() + fontMetrics.stringWidth(text) + 2 * MIDDLE_PADDING.get() / 3,
-                                            fontMetrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get(), LABEL_ARC.get(), LABEL_ARC.get()));
+                                            fontMetrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get(), LABEL_ARC.get(),
+                                            LABEL_ARC.get()));
       }
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);
@@ -350,7 +351,7 @@ public class LabelPainter {
   }
 
   public static Font getReferenceFont() {
-    Font font = RectanglePainter.getFont();
+    Font font = GraphCommitCellRenderer.getLabelFont();
     return font.deriveFont(font.getSize() - 1f);
   }
 

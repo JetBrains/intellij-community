@@ -63,4 +63,14 @@ public class ImplicitArrayToString {
     void parentheses(int[] is) {
         System.out.println((<warning descr="Implicit call to 'toString()' on array 'is'">is</warning>));
     }
+
+    void component(int[][] arr) {
+        System.out.println(<warning descr="Implicit call to 'toString()' on array 'arr[0]'">arr[0]</warning>);
+        System.out.println(arr[0][0]);
+    }
+
+    void conditional(boolean b, int[] arr) {
+        System.out.println(b ? "foo" : <warning descr="Implicit call to 'toString()' on array 'arr'">arr</warning>);
+        System.out.println(b ? <warning descr="Implicit call to 'toString()' on array 'arr'">arr</warning> : "foo");
+    }
 }

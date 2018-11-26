@@ -13,8 +13,16 @@ import java.util.List;
  */
 public class BgProgressIndicator extends AbstractProgressIndicatorExBase {
   public BgProgressIndicator() {
-    setText("Downloading...");
+    super.setText("Downloading...");
     setIndeterminate(false);
+  }
+
+  @Override
+  public void setText(String text) {
+  }
+
+  @Override
+  public void setText2(String text) {
   }
 
   public void removeStateDelegate(@Nullable ProgressIndicatorEx delegate) {

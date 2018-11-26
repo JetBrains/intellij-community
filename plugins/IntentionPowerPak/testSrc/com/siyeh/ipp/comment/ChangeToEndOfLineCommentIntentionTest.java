@@ -7,6 +7,7 @@ import com.siyeh.ipp.IPPTestCase;
 public class ChangeToEndOfLineCommentIntentionTest extends IPPTestCase {
 
   public void testTrimLines() { doTest(); }
+  public void testConvertMultiLineTodo() { doTest(); }
 
   @Override
   protected String getIntentionName() {

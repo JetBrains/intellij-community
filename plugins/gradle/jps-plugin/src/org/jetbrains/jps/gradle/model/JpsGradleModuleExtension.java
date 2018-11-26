@@ -20,7 +20,6 @@ import org.jetbrains.jps.model.JpsElement;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public interface JpsGradleModuleExtension extends JpsElement {
   @Nullable

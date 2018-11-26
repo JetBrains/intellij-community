@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.structuralsearch.impl.matcher.strategies.JavaMatchingStrategy;
-import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Eugene.Kudelevsky
@@ -38,31 +40,6 @@ public class JavaCompiledPattern extends CompiledPattern {
   public boolean isToResetHandler(PsiElement element) {
     return !(element instanceof PsiJavaToken) &&
            !(element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnnotation);
-  }
-
-  @Nullable
-  @Override
-  public String getAlternativeTextToMatch(PsiElement node, String previousText) {
-    // Short class name is matched with fully qualified name
-    if(node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
-      PsiElement element = (node instanceof PsiJavaCodeReferenceElement)?
-                           ((PsiJavaCodeReferenceElement)node).resolve():
-                           node;
-
-      if (element instanceof PsiClass) {
-        String text = ((PsiClass)element).getQualifiedName();
-        if (text != null && text.equals(previousText)) {
-          text = ((PsiClass)element).getName();
-        }
-
-        if (text != null) {
-          return text;
-        }
-      }
-    } else if (node instanceof PsiLiteralExpression) {
-      return node.getText();
-    }
-    return null;
   }
 
   public boolean isRequestsSuperFields() {

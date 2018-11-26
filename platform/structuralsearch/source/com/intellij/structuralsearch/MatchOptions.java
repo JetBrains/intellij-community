@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.impl.matcher.compiler.StringToConstraintsTransformer;
 import gnu.trove.THashSet;
@@ -27,6 +28,7 @@ public class MatchOptions implements JDOMExternalizable {
   private SearchScope scope;
   private Scopes.Type scopeType;
   private String scopeDescriptor;
+  @NotNull
   private String pattern;
 
   private String myPatternContext;
@@ -140,6 +142,7 @@ public class MatchOptions implements JDOMExternalizable {
     pattern = text;
   }
 
+  @NotNull
   public String getSearchPattern() {
     return pattern;
   }
@@ -188,7 +191,7 @@ public class MatchOptions implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) {
-    pattern = element.getAttribute(TEXT_ATTRIBUTE_NAME).getValue();
+    pattern = StringUtil.notNullize(element.getAttribute(TEXT_ATTRIBUTE_NAME).getValue());
 
     Attribute attr = element.getAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME);
     if (attr != null) {

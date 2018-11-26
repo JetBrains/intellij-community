@@ -2588,6 +2588,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-32240
+  public void testTypingNTFunctionInheritorField() {
+    doTest("str",
+           "from typing import NamedTuple\n" +
+           "\n" +
+           "class A(NamedTuple(\"NT\", [(\"user\", str)])):\n" +
+           "    pass\n" +
+           "    \n" +
+           "expr = A(undefined).user");
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorField() {
     // Seems that this case won't be supported because
@@ -3070,6 +3081,12 @@ public class PyTypeTest extends PyTestCase {
            "from collections import namedtuple\n" +
            "Cat = namedtuple(\"Cat\", \"name age\")\n" +
            "expr = Cat(\"name\", 5)._replace(age=\"five\").age");
+
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "class Cat(namedtuple(\"Cat\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = Cat._replace(Cat(\"name\", 5), name=\"newname\")");
   }
 
   // PY-27148
@@ -3098,6 +3115,16 @@ public class PyTypeTest extends PyTestCase {
                    "from typing import NamedTuple\n" +
                    "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
                    "expr = Cat(\"name\", 5)._replace(age=\"give\").age")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "class Cat(NamedTuple):\n" +
+                   "    name: str\n" +
+                   "    age: int\n" +
+                   "expr = Cat._replace(Cat(\"name\", 5), name=\"newname\")")
     );
   }
 
@@ -3276,6 +3303,30 @@ public class PyTypeTest extends PyTestCase {
            "a = 1\n" +
            "if a is a:\n" +
            "   expr = a");
+  }
+
+  // PY-32533
+  public void testSuperWithAnotherType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> doTest("A",
+                   "class A:\n" +
+                   "    def f(self):\n" +
+                   "        return 'A'\n" +
+                   "\n" +
+                   "class B:\n" +
+                   "    def f(self):\n" +
+                   "        return 'B'\n" +
+                   "\n" +
+                   "class C(B):\n" +
+                   "    def f(self):\n" +
+                   "        return 'C'\n" +
+                   "\n" +
+                   "class D(C, A):\n" +
+                   "    def f(self):\n" +
+                   "        expr = super(B, self)\n" +
+                   "        return expr.f()")
+    );
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

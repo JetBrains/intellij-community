@@ -30,7 +30,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/22/2014
  */
 @Tag("filter")
 public class ResourceRootFilter {

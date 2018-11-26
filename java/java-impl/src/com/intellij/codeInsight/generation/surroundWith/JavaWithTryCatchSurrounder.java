@@ -85,7 +85,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
       String name = codeStyleManager.suggestUniqueVariableName(nameSuggestions[0], tryBlock, false);
       PsiCatchSection catchSection;
       try {
-        catchSection = factory.createCatchSection(exception, name, null);
+        catchSection = factory.createCatchSection(exception, name, tryBlock);
       }
       catch (IncorrectOperationException e) {
         Messages.showErrorDialog(project, CodeInsightBundle.message("surround.with.try.catch.incorrect.template.message"),

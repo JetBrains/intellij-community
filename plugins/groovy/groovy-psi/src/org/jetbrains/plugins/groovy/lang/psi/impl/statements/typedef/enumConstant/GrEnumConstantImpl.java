@@ -44,6 +44,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     super(stub, GroovyElementTypes.ENUM_CONSTANT);
   }
 
+  @Override
   public String toString() {
     return "Enumeration constant";
   }

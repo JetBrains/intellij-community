@@ -225,7 +225,7 @@ public class BreakpointsDialog extends DialogWrapper {
         myDetailController.updateDetailView();
       }
     };
-    final JTree tree = new BreakpointsCheckboxTree(myProject, myTreeController) {
+    BreakpointsCheckboxTree tree = new BreakpointsCheckboxTree(myProject, myTreeController) {
       @Override
       protected void onDoubleClick(CheckedTreeNode node) {
         if (node instanceof BreakpointsGroupNode) {
@@ -243,6 +243,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     };
 
+    tree.setHorizontalAutoScrollingEnabled(false);
     PopupHandler.installPopupHandler(tree, new ActionGroup() {
       @NotNull
       @Override

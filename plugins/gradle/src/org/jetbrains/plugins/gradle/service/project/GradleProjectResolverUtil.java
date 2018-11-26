@@ -33,6 +33,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
@@ -59,7 +62,6 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
 /**
  * @author Vladislav.Soroka
- * @since 10/6/2015
  */
 public class GradleProjectResolverUtil {
   private static final Logger LOG = Logger.getInstance(GradleProjectResolverUtil.class);
@@ -403,6 +405,7 @@ public class GradleProjectResolverUtil {
     }
   }
 
+  @Deprecated
   @SuppressWarnings("unchecked")
   public static Collection<DependencyData> getIdeDependencies(@NotNull ProjectResolverContext resolverCtx,
                                                               @NotNull DataNode<? extends ModuleData> moduleDataNode,
@@ -552,14 +555,26 @@ public class GradleProjectResolverUtil {
           String moduleId = getModuleId(projectDependency);
           Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
           if (projectPair == null) {
+            MultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File> projectPairs =
+              new LinkedMultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File>() {
+                @Override
+                protected EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> getEqualityPolicy() {
+                  //noinspection unchecked
+                  return (EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>)EqualityPolicy.IDENTITY;
+                }
+              };
+
             for (File file: projectDependency.getProjectDependencyArtifacts()) {
               moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
               if (moduleId == null) continue;
               projectPair = sourceSetMap.get(moduleId);
 
               if (projectPair == null) continue;
+              projectPairs.putValue(projectPair, file);
+            }
+            for (Map.Entry<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, Collection<File>> entry : projectPairs.entrySet()) {
               projectDependencyInfos.add(new ProjectDependencyInfo(
-                projectPair.first.getData(), projectPair.second, Collections.singleton(file)));
+                entry.getKey().first.getData(), entry.getKey().second, entry.getValue()));
             }
           }
           else {

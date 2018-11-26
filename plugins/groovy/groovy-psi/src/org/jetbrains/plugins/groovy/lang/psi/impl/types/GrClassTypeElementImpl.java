@@ -25,6 +25,7 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
     visitor.visitClassTypeElement(this);
   }
 
+  @Override
   public String toString() {
     return "Type element";
   }

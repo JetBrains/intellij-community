@@ -4,7 +4,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
@@ -20,8 +20,26 @@ public class SearchingInXmlTest extends LightIdeaTestCase {
                                                      "<tag1><name>name6</name><value>6</value></tag1>" +
                                                      "<tag1><name>name7</name><value>7</value></tag1>" +
                                                      "</root>");
-    XmlTag found = XmlUtil.find("name", "name4", "tag1", xmlTag);
+    XmlTag found = find("name", "name4", "tag1", xmlTag);
 
     assertEquals("4", found.findFirstSubTag("value").getValue().getText());
+  }
+
+  // Read the function name and parameter names to find out what this function does... :-)
+  @Nullable
+  private static XmlTag find(String subTag, String withValue, String forTag, XmlTag insideRoot) {
+    final XmlTag[] forTags = insideRoot.findSubTags(forTag);
+
+    for (XmlTag tag : forTags) {
+      final XmlTag[] allTags = tag.findSubTags(subTag);
+
+      for (XmlTag curTag : allTags) {
+        if (curTag.getName().equals(subTag) && curTag.getValue().getTrimmedText().equalsIgnoreCase(withValue)) {
+          return tag;
+        }
+      }
+    }
+
+    return null;
   }
 }

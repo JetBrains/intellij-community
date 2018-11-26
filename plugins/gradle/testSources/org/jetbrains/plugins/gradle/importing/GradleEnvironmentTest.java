@@ -24,7 +24,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.get
 
 /**
  * @author Vladislav.Soroka
- * @since 4/2/2017
  */
 public class GradleEnvironmentTest extends GradleImportingTestCase {
   @Test

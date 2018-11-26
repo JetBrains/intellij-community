@@ -45,10 +45,6 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
 
     AtomicLong rebuildStamp = new AtomicLong();
 
-    Generator<MadTestingAction> genIntention = psiJavaFiles().flatMap(
-      file -> Generator.frequency(5, Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())),
-                                  1, Generator.constant(new InvalidateAllPsi(myProject)),
-                                  10, Generator.constant(new FilePropertiesChanged(file))));
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env -> {
       long startModCount = tracker.getModificationCount();
@@ -57,7 +53,14 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
       }
 
       MadTestingUtil.changeAndRevert(myProject, () -> {
-        env.executeCommands(genIntention);
+        env.executeCommands(Generator.constant(env1 -> {
+          PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Working with %s");
+          Generator<MadTestingAction> cmd =
+            Generator.frequency(5, Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())),
+                                1, Generator.constant(new InvalidateAllPsi(myProject)),
+                                10, Generator.constant(new FilePropertiesChanged(file)));
+          env1.executeCommands(IntDistribution.uniform(1, 5), cmd);
+        }));
 
         if (tracker.getModificationCount() != startModCount) {
           checkCompiles(myCompilerTester.make());
@@ -67,11 +70,12 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
   }
 
   public void testRandomActivity() {
+    Generator<PsiJavaFile> javaFiles = psiJavaFiles();
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env ->
       MadTestingUtil.changeAndRevert(myProject, () ->
         env.executeCommands(Generator.constant(env1 -> {
-          PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Working with %s");
+          PsiJavaFile file = env1.generateValue(javaFiles, "Working with %s");
           Generator<MadTestingAction> mutations = Generator.sampledFrom(new DeleteRange(file),
                                                                         new AddNullArgument(file),
                                                                         new DeleteForeachInitializers(file),
@@ -83,7 +87,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
                                                                        1, Generator.constant(new RehighlightAllEditors(myProject)),
                                                                        1, mutations);
 
-          env1.executeCommands(IntDistribution.uniform(1, 5), allActions.noShrink());
+          env1.executeCommands(IntDistribution.uniform(1, 5), allActions);
         }))));
   }
 

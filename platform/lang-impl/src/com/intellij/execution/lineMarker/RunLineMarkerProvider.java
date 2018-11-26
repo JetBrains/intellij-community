@@ -20,7 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -125,10 +128,6 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
         return MarkupEditorFilterFactory.createIsNotDiffFilter();
       }
     };
-  }
-
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
   }
 
   @NotNull

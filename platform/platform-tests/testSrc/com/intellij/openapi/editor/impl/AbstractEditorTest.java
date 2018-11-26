@@ -41,7 +41,6 @@ import static org.junit.Assert.assertArrayEquals;
  * It's main purpose is to provide utility methods like fold regions addition and setup; typing etc. 
  * 
  * @author Denis Zhdanov
- * @since 11/18/10 7:43 PM
  */
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
   public static final int TEST_CHAR_WIDTH = 10; // char width matches the one in EditorTestUtil.configureSoftWraps

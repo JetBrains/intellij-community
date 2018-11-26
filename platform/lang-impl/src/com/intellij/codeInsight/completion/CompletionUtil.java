@@ -141,7 +141,7 @@ public class CompletionUtil {
   }
 
 
-  static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item) {
+  public static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item) {
     final InsertionContext newContext = newContext(oldContext, item);
     emulateInsertion(item, newStart, newContext);
     return newContext;

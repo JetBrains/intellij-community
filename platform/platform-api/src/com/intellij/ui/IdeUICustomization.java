@@ -4,6 +4,9 @@ package com.intellij.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * Allows to apply IDE-specific customizations to the terms used in platform UI features.
@@ -46,4 +49,10 @@ public class IdeUICustomization {
   public String getNonProjectFilesScopeTitle() {
     return "Non-" + StringUtil.capitalize(getProjectConceptName()) + " Files";
   }
+
+  public String getSelectAutopopupByCharsText() {
+    return "Insert selected suggestion by pressing space, dot, or other context-dependent keys";
+  }
+
+  public void customizeSchemePanel(@NotNull JPanel abstractSchemePanel, @NotNull JPanel verticalContainer) {  }
 }

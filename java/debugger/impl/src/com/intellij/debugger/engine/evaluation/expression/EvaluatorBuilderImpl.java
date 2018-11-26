@@ -18,8 +18,12 @@ import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.tree.IElementType;
@@ -29,6 +33,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -223,6 +228,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitStatement(PsiStatement statement) {
+      LOG.error(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
       throwEvaluateException(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
     }
 
@@ -361,6 +367,32 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       condition.accept(this);
 
       myResult = new IfStatementEvaluator(new UnBoxingEvaluator(myResult), thenEvaluator, elseEvaluator);
+    }
+
+    @Override
+    public void visitSwitchStatement(PsiSwitchStatement statement) {
+      PsiCodeBlock body = statement.getBody();
+      if (body != null) {
+        Evaluator expressionEvaluator = accept(statement.getExpression());
+        if (expressionEvaluator != null) {
+          myResult = new SwitchStatementEvaluator(expressionEvaluator, visitStatements(body.getStatements()), getLabel(statement));
+        }
+      }
+    }
+
+    @Override
+    public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+      List<Evaluator> evaluators = ContainerUtil.newSmartList();
+      PsiExpressionList caseValues = statement.getCaseValues();
+      if (caseValues != null) {
+        for (PsiExpression expression : caseValues.getExpressions()) {
+          Evaluator evaluator = accept(expression);
+          if (evaluator != null) {
+            evaluators.add(evaluator);
+          }
+        }
+      }
+      myResult = new SwitchStatementEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
     }
 
     @Override
@@ -1206,7 +1238,88 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-      throw new EvaluateRuntimeException(new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
+      PsiElement qualifier = expression.getQualifier();
+      PsiType interfaceType = expression.getFunctionalInterfaceType();
+      if (!Registry.is("debugger.compiling.evaluator.method.refs") && interfaceType != null && qualifier != null) {
+        String code = null;
+        try {
+          PsiElement resolved = expression.resolve();
+          if (resolved instanceof PsiMethod) {
+            PsiMethod method = (PsiMethod)resolved;
+            PsiClass containingClass = method.getContainingClass();
+            if (containingClass != null) {
+              String find;
+              boolean bind = false;
+              if (method.isConstructor()) {
+                find = "findConstructor(" + containingClass.getQualifiedName() + ".class, mt)";
+              }
+              else if (qualifier instanceof PsiSuperExpression) {
+                find = "in(" + containingClass.getQualifiedName() + ".class).findSpecial(" +
+                       containingClass.getQualifiedName() + ".class, \"" + method.getName() + "\", mt, " +
+                       containingClass.getQualifiedName() + ".class)";
+                bind = true;
+              }
+              else {
+                find = containingClass.getQualifiedName() + ".class, \"" + method.getName() + "\", mt)";
+                if (method.hasModifier(JvmModifier.STATIC)) {
+                  find = "findStatic(" + find;
+                }
+                else {
+                  find = "findVirtual(" + find;
+                  if (qualifier instanceof PsiReference) {
+                    PsiElement resolve = ((PsiReference)qualifier).resolve();
+                    if (!(resolve instanceof PsiClass)) {
+                      bind = true;
+                    }
+                  }
+                  else {
+                    bind = true;
+                  }
+                }
+              }
+              String bidStr = bind ? "mh = mh.bindTo(" + qualifier.getText() + ");\n" : "";
+              code =
+                "MethodType mt = MethodType.fromMethodDescriptorString(\"" + JVMNameUtil.getJVMSignature(method) + "\", null);\n" +
+                "MethodHandle mh = MethodHandles.lookup()." + find + ";\n" +
+                bidStr +
+                "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
+            }
+          } else if (PsiUtil.isArrayClass(resolved)) {
+            code =
+              "MethodType mt = MethodType.methodType(Object.class, Class.class, int.class);\n" +
+              "MethodHandle mh = MethodHandles.publicLookup().findStatic(Array.class, \"newInstance\", mt);\n" +
+              "mh = mh.bindTo(" + StringUtil.substringBeforeLast(qualifier.getText(), "[]") + ".class)\n" +
+              "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
+          }
+          if (code != null) {
+            myResult = buildFromJavaCode(code,
+                                         "java.lang.invoke.MethodHandle," +
+                                         "java.lang.invoke.MethodHandleProxies," +
+                                         "java.lang.invoke.MethodHandles," +
+                                         "java.lang.invoke.MethodType," +
+                                         "java.lang.reflect.Array",
+                                         expression);
+            return;
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+      throw new EvaluateRuntimeException(
+        new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
+    }
+
+    private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) {
+      TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, code, imports, StdFileTypes.JAVA);
+      JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(text, context, context.getProject());
+      try {
+        ExpressionEvaluator evaluator = new Builder(myPosition).buildElement(codeFragment);
+        return evaluationContext -> evaluator.evaluate(evaluationContext);
+      }
+      catch (EvaluateException e) {
+        throw new EvaluateRuntimeException(e);
+      }
     }
 
     @Override
@@ -1359,6 +1472,19 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                                                  null,
                                                  myResult);
       }
+    }
+
+    @Override
+    public void visitAssertStatement(PsiAssertStatement statement) {
+      PsiExpression condition = statement.getAssertCondition();
+      if (condition == null) {
+        throwEvaluateException("Assert condition expected in: " + statement.getText());
+      }
+      PsiExpression description = statement.getAssertDescription();
+      String descriptionText = description != null ? description.getText() : "";
+      myResult = new AssertStatementEvaluator(buildFromJavaCode("if (!(" + condition.getText() + ")) { " +
+                                                                "throw new java.lang.AssertionError(" + descriptionText + ");}",
+                                                                "", statement));
     }
 
     @Nullable

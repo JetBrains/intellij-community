@@ -25,7 +25,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 
 /**
  * @author Denis Zhdanov
- * @since 6/24/13 6:35 PM
  */
 public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalSystemSettingsListener<GradleProjectSettings>
   implements GradleSettingsListener

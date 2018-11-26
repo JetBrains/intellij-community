@@ -59,6 +59,12 @@ public abstract class AbstractCommand<T> {
   public static final int SHOW_CYTHON_WARNING = 150;
   public static final int LOAD_FULL_VALUE = 151;
 
+  /**
+   * The code of the message that means that IDE received
+   * {@link #PROCESS_CREATED} message from the Python debugger script.
+   */
+  public static final int PROCESS_CREATED_MSG_RECEIVED = 159;
+
   public static final int ERROR = 901;
 
   public static final int VERSION = 501;
@@ -132,7 +138,7 @@ public abstract class AbstractCommand<T> {
       throw new PyDebuggerException("Couldn't send frame " + myCommandCode);
     }
 
-    frame = myDebugger.waitForResponse(sequence);
+    frame = myDebugger.waitForResponse(sequence, getResponseTimeout());
     if (frame == null) {
       if (!myDebugger.isConnected()) {
         throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
@@ -173,7 +179,7 @@ public abstract class AbstractCommand<T> {
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        ProtocolFrame frame = myDebugger.waitForResponse(sequence);
+        ProtocolFrame frame = myDebugger.waitForResponse(sequence, getResponseTimeout());
         if (frame == null) {
           if (!myDebugger.isConnected()) {
             throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
@@ -188,6 +194,18 @@ public abstract class AbstractCommand<T> {
     });
   }
 
+  /**
+   * Returns the timeout for waiting for the response after sending the
+   * command.
+   * <p>
+   * Please note that the timeout has no meaning when
+   * {@link #isResponseExpected()} is {@code false}.
+   *
+   * @return the response timeout
+   */
+  protected long getResponseTimeout() {
+    return RemoteDebugger.RESPONSE_TIMEOUT;
+  }
 
   protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     if (response.getCommand() >= 900 && response.getCommand() < 1000) {

@@ -129,7 +129,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
+  /**
+   * @deprecated Use {@link EditorMouseHoverPopupControl} instead. To be removed in 2020.1.
+   */
   @NonNls
+  @Deprecated
   public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
@@ -147,10 +151,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
+  private final FocusModeModel myFocusModeModel;
   private volatile long myLastTypedActionTimestamp = -1;
   private String myLastTypedAction;
 
   private static final Cursor EMPTY_CURSOR;
+  private final Map<Object, Cursor> myCustomCursors = new LinkedHashMap<>();
+  private Cursor myDefaultCursor;
+  boolean myCursorSetExternally;
 
   static {
     Cursor emptyCursor = null;
@@ -355,7 +363,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocumentMarkupModel = new EditorFilteringMarkupModelEx(this, documentMarkup);
     myFoldingModel = new FoldingModelImpl(this);
     myCaretModel = new CaretModelImpl(this);
-    myCaretModel.initCarets();
     myScrollingModel = new ScrollingModelImpl(this);
     myInlayModel = new InlayModelImpl(this);
     Disposer.register(myCaretModel, myInlayModel);
@@ -484,7 +491,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     new FoldingPopupManager(this);
 
     myEditorComponent = new EditorComponentImpl(this);
-    myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     if (shouldScrollBarBeOpaque()) myVerticalScrollBar.setOpaque(true);
     myPanel = new JPanel();
@@ -540,6 +546,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
+
+    myFocusModeModel = new FocusModeModel(this);
+  }
+
+  public void applyFocusMode() {
+    myFocusModeModel.applyFocusMode(myCaretModel.getPrimaryCaret());
+  }
+
+  public boolean isInFocusMode(FoldRegion region) {
+    return myFocusModeModel.isInFocusMode(region);
+  }
+
+  public Segment getFocusModeRange() {
+    return myFocusModeModel.getFocusModeRange();
   }
 
   private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
@@ -766,6 +786,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myContextMenuGroupId;
   }
 
+  @Nullable
+  private Cursor getCustomCursor() {
+    return ContainerUtil.getFirstItem(myCustomCursors.values());
+  }
+
+  @Override
+  public void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor) {
+    if (cursor == null) {
+      myCustomCursors.remove(requestor);
+    }
+    else {
+      myCustomCursors.put(requestor, cursor);
+    }
+    updateEditorCursor();
+  }
+
   @Override
   public void setViewer(boolean isViewer) {
     myIsViewer = isViewer;
@@ -910,9 +946,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCaretModel.updateVisualPosition();
 
     // make sure carets won't appear at invalid positions (e.g. on Tab width change)
-    for (Caret caret : getCaretModel().getAllCarets()) {
-      caret.moveToOffset(caret.getOffset());
-    }
+    getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
 
     if (myVirtualFile != null && myProject != null) {
       final EditorNotifications editorNotifications = EditorNotifications.getInstance(myProject);
@@ -920,6 +954,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         editorNotifications.updateNotifications(myVirtualFile);
       }
     }
+
+    putUserData(FocusModeModel.FOCUS_MODE_RANGES, null);
+    myFocusModeModel.clearFocusMode();
   }
 
   /**
@@ -1557,7 +1594,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void beforeChangedUpdate() {
+  private void beforeChangedUpdate(DocumentEvent e) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myDocumentChangeInProgress = true;
@@ -1569,7 +1606,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    saveCaretRelativePosition();
+    if (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getOldLength())  {
+      saveCaretRelativePosition();
+    }
+    else {
+      myTopLeftCornerMarker = null;
+    }
   }
 
   void invokeDelayedErrorStripeRepaint() {
@@ -1634,9 +1676,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void hideCursor() {
-    if (!myIsViewer && Registry.is("ide.hide.cursor.when.typing") &&
-        EMPTY_CURSOR != null && EMPTY_CURSOR != myEditorComponent.getCursor()) {
-      myEditorComponent.setCursor(EMPTY_CURSOR);
+    if (!myIsViewer && EMPTY_CURSOR != null && Registry.is("ide.hide.cursor.when.typing")) {
+      myDefaultCursor = EMPTY_CURSOR;
+      updateEditorCursor();
     }
   }
 
@@ -1946,6 +1988,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlaceholderAttributes = attributes;
   }
 
+  @Nullable
   public TextAttributes getPlaceholderAttributes() {
     return myPlaceholderAttributes;
   }
@@ -2314,27 +2357,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       myGutterComponent.setActiveFoldRegion(null);
-      if (myEditorComponent.isCursorSet()) {
-        Cursor cursor = myEditorComponent.getCursor();
-        if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) &&
-            cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
-            cursor != EMPTY_CURSOR &&
-            (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
-          // someone else has set cursor, don't touch it
-          return;
-        }
-      }
-      if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
-        int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
-        if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {
-          UIUtil.setCursor(myEditorComponent, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-          return;
-        }
-      }
-      if (!IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) {
-        UIUtil.setCursor(myEditorComponent, UIUtil.getTextCursor(getBackgroundColor()));
+      myDefaultCursor = getDefaultCursor(e);
+      updateEditorCursor();
+    }
+  }
+
+  private void updateEditorCursor() {
+    if (IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) return;
+
+    Cursor customCursor = getCustomCursor();
+    if (customCursor == null && myCursorSetExternally && myEditorComponent.isCursorSet()) {
+      Cursor cursor = myEditorComponent.getCursor();
+      if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) &&
+          cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
+          cursor != EMPTY_CURSOR &&
+          (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
+        // someone else has set cursor, don't touch it
+        return;
       }
     }
+
+    UIUtil.setCursor(myEditorComponent, customCursor == null ? myDefaultCursor : customCursor);
+    myCursorSetExternally = false;
+  }
+
+  private Cursor getDefaultCursor(@NotNull MouseEvent e) {
+    if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
+      int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
+      if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {
+        return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+      }
+    }
+    return UIUtil.getTextCursor(getBackgroundColor());
   }
 
   private void runMouseDraggedCommand(@NotNull final MouseEvent e) {
@@ -2959,6 +3013,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private OpaqueAwareScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
+      UIUtil.putClientProperty(this, ColorKey.FUNCTION_KEY, key -> getColorsScheme().getColor(key));
       addPropertyChangeListener("opaque", event -> {
         revalidate();
         repaint();
@@ -3554,10 +3609,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         () -> CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable), "", getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument()));
     }
 
+    private boolean hasRelevantCommittedText(@NotNull InputMethodEvent e) {
+      if (e.getCommittedCharacterCount() <= 0) return false;
+      AttributedCharacterIterator text = e.getText();
+      return text == null || text.first() != 0xA5 /* Yen character */;
+    }
+
     private void replaceInputMethodText(@NotNull InputMethodEvent e) {
       if (myNeedToSelectPreviousChar && SystemInfo.isMac &&
           (Registry.is("ide.mac.pressAndHold.brute.workaround") || Registry.is("ide.mac.pressAndHold.workaround") &&
-                                                                   (e.getCommittedCharacterCount() > 0 || e.getCaret() == null))) {
+                                                                   (hasRelevantCommittedText(e) || e.getCaret() == null))) {
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
         // JDK currently properly supports this functionality only for TextComponent/JTextComponent descendants.
         // For our editor component we need this workaround.
@@ -4562,7 +4623,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class EditorDocumentAdapter implements PrioritizedDocumentListener {
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent e) {
-      beforeChangedUpdate();
+      beforeChangedUpdate(e);
     }
 
     @Override
@@ -4630,11 +4691,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         MouseEvent e = event.getMouseEvent();
         final Component c = e.getComponent();
         if (c != null && c.isShowing()) {
-          popupMenu.getComponent().show(c, e.getX(), e.getY());
+          JPopupMenu popupComponent = popupMenu.getComponent();
+          disableHoverPopupsWhileShowing(popupComponent);
+          popupComponent.show(c, e.getX(), e.getY());
         }
         e.consume();
       }
     }
+  }
+
+  private void disableHoverPopupsWhileShowing(Component popupComponent) {
+    new UiNotifyConnector.Once(popupComponent, new Activatable.Adapter() {
+      @Override
+      public void showNotify() {
+        EditorMouseHoverPopupControl.disablePopups(EditorImpl.this);
+        new UiNotifyConnector.Once(popupComponent, new Adapter() {
+          @Override
+          public void hideNotify() {
+            EditorMouseHoverPopupControl.enablePopups(EditorImpl.this);
+          }
+        });
+      }
+    });
   }
 
   @Override

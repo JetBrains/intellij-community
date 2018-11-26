@@ -1,10 +1,10 @@
-// "Remove switch label '"two"'" "true"
+// "Unwrap 'switch' statement" "true"
 class Main {
     static void fff() {
         switch ("one") {
-            case "one":
+            case "<caret>one":
                 System.out.println("one");
-            case "<caret>two": // quick-fix removes body as well
+            case "two":
                 System.out.println("two");
         }
     }

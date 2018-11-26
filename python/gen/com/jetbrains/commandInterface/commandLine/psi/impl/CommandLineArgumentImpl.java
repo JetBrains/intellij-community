@@ -24,6 +24,7 @@ public class CommandLineArgumentImpl extends CommandLineElement implements Comma
     visitor.visitArgument(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof CommandLineVisitor) accept((CommandLineVisitor)visitor);
     else super.accept(visitor);

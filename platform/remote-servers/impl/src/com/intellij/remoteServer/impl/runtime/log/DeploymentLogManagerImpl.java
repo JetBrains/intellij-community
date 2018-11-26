@@ -79,6 +79,14 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     return handler;
   }
 
+  @Override
+  public void removeAdditionalLog(@NotNull String presentableName) {
+    synchronized (myAdditionalLoggingHandlers) {
+      myAdditionalLoggingHandlers.removeIf(next -> presentableName.equals(next.getPresentableName()));
+    }
+    myChangeListener.run();
+  }
+
   @NotNull
   public LoggingHandler findOrCreateAdditionalLog(@NotNull String presentableName) {
     synchronized (myAdditionalLoggingHandlers) {

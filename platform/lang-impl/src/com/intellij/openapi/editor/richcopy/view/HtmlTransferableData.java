@@ -15,7 +15,6 @@ import java.awt.datatransfer.DataFlavor;
 
 /**
  * @author Denis Zhdanov
- * @since 3/28/13 1:06 PM
  */
 public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableData implements MarkupHandler {
   public static final int PRIORITY = 200;

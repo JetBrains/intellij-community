@@ -139,7 +139,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       }
     });
 
-    UiNotifyConnector.doWhenFirstShown(myPackages, () -> initModel());
+    UiNotifyConnector.doWhenFirstShown(myPackages, this::initModel);
     myOptionsCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
@@ -395,9 +395,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     public void filter(List<RepoPackage> filtered, @Nullable final RepoPackage toSelect){
       myView.clear();
       myPackages.clearSelection();
-      for (RepoPackage repoPackage : filtered) {
-        myView.add(repoPackage);
-      }
+      myView.addAll(filtered);
       if (toSelect != null)
         myPackages.setSelectedValue(toSelect, true);
       Collections.sort(myView);

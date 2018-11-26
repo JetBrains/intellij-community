@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 7/2/12 9:44 AM
  */
 public class QuickDocOnMouseOverStartupActivity implements StartupActivity {
 

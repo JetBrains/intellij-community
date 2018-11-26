@@ -4,6 +4,7 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -22,14 +23,19 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,7 +196,12 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   private static void deleteConfiguration(final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
-    RunManager.getInstance(project).removeConfiguration(configurationSettings);
+    if (Messages.YES == Messages.showYesNoDialog(project,
+                                                    "Are you sure you want to delete " + configurationSettings.getName() + "?",
+                                                    "Confirmation",
+                                                    Messages.getQuestionIcon())) {
+      RunManager.getInstance(project).removeConfiguration(configurationSettings);
+    }
   }
 
   @Override
@@ -517,7 +528,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       final List<ActionWrapper> result = new ArrayList<>();
 
       final ExecutionTarget active = ExecutionTargetManager.getActiveTarget(project);
-      for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, settings)) {
+      for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, settings.getConfiguration())) {
         result.add(new ActionWrapper(eachTarget.getDisplayName(), eachTarget.getIcon()) {
           {
             setChecked(eachTarget.equals(active));
@@ -836,6 +847,14 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       return getValue();
     }
 
+    @Nullable
+    @Override
+    public ConfigurationType getType() {
+      return Registry.is("run.popup.move.folders.to.top") || myConfigurations.isEmpty()
+             ? null
+             : myConfigurations.get(0).getType();
+    }
+
     @Override
     public boolean hasActions() {
       return true;
@@ -947,7 +966,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     if (selectedConfiguration != null) {
       boolean isFirst = true;
       final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
-      for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration)) {
+      for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration.getConfiguration())) {
         result.add(new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
           {
             setChecked(getValue().equals(activeTarget));
@@ -979,6 +998,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
+    List<FolderWrapper> folderWrappers = new SmartList<>();
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(false).values()) {
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
         final String folderName = entry.getKey();
@@ -993,7 +1013,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           if (isSelected) {
             folderWrapper.setMnemonic(1);
           }
-          result.add(folderWrapper);
+          folderWrappers.add(folderWrapper);
         }
         else {
           for (RunnerAndConfigurationSettings configuration : entry.getValue()) {
@@ -1006,10 +1026,32 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
     }
+    boolean moveFoldersToTop = Registry.is("run.popup.move.folders.to.top");
+    if (moveFoldersToTop) {
+      result.addAll(folderWrappers);
+    }
     if (!DumbService.isDumb(project)) {
       populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration);
     }
+    final int topIndex = result.size() - 1;
     result.addAll(wrappedExisting.values());
+    if (!moveFoldersToTop) {
+      for (FolderWrapper folderWrapper : folderWrappers) {
+        int bestIndex = topIndex;
+        for (int index = topIndex; index < result.size(); index++) {
+          bestIndex = index;
+          ConfigurationType folderType = ObjectUtils.notNull(folderWrapper.getType(), UnknownConfigurationType.getInstance());
+          ConfigurationType currentType = result.get(index).getType();
+          int m = currentType == null ?
+                  1 :
+                  NaturalComparator.INSTANCE.compare(folderType.getDisplayName(), currentType.getDisplayName());
+          if (m < 0 || (m == 0 && !(result.get(index) instanceof FolderWrapper))) {
+            break;
+          }
+        }
+        result.add(bestIndex, folderWrapper);
+      }
+    }
     return result.toArray(new ItemWrapper[0]);
   }
 

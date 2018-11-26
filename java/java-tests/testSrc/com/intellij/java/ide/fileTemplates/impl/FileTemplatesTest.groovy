@@ -21,16 +21,20 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IdeaTestCase
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.io.PathKt
 import com.intellij.util.properties.EncodingAwareProperties
 
+import java.nio.file.Files
+import java.nio.file.Path
+
 class FileTemplatesTest extends IdeaTestCase {
-  private File myTestConfigDir
+  private Path myTestConfigDir
 
   @Override
   protected void tearDown() {
     super.tearDown()
-    if (myTestConfigDir !=null && myTestConfigDir.exists()) {
-      FileUtil.delete(myTestConfigDir)
+    if (myTestConfigDir != null && Files.exists(myTestConfigDir)) {
+      PathKt.delete(myTestConfigDir)
     }
   }
 
@@ -75,8 +79,8 @@ class FileTemplatesTest extends IdeaTestCase {
 
         properties.load(propFile, FileTemplate.ourEncoding)
         properties.put(FileTemplateManager.PROJECT_NAME_VARIABLE, getProject().getName())
-  
-        System.out.println(resultFile.getName())
+
+        LOG.debug(resultFile.getName())
         doTestTemplate(inputText, properties, outputText)
       }
     }
@@ -175,9 +179,9 @@ class FileTemplatesTest extends IdeaTestCase {
     assertTrue(template != loadedTemplate)
   }
 
-  private File getTestConfigRoot() {
+  private Path getTestConfigRoot() {
     if (myTestConfigDir == null) {
-      myTestConfigDir = FileUtil.createTempDirectory(getTestName(true), "config")
+      myTestConfigDir = FileUtil.createTempDirectory(getTestName(true), "config").toPath()
     }
     return myTestConfigDir
   }
@@ -221,5 +225,11 @@ class FileTemplatesTest extends IdeaTestCase {
     catch (IOException ignored) {
       return false
     }
+  }
+
+  void 'test StringUtils special variable works and has removeAndHump method'() {
+    FileTemplate template = addTestTemplate("my_class", 'prefix ${StringUtils.removeAndHump("foo_barBar")} suffix')
+    def evaluated = template.getText([:])
+    assert evaluated == 'prefix FooBarBar suffix'
   }
 }

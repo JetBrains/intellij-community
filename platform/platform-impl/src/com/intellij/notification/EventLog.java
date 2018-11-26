@@ -406,7 +406,7 @@ public class EventLog {
     text = StringUtil.replace(text, "&raquo;", ">>");
     text = StringUtil.replace(text, "&laquo;", "<<");
     text = StringUtil.replace(text, "&hellip;", "...");
-    document.insertString(document.getTextLength(), StringUtil.unescapeXml(text));
+    document.insertString(document.getTextLength(), StringUtil.unescapeXmlEntities(text));
   }
 
   public static class LogEntry {

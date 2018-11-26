@@ -182,9 +182,6 @@
       <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
     </group>
 
-    <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze _Stacktrace"
-            internal="true"/>
-
     <reference ref="Compile">
       <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
     </reference>
@@ -379,16 +376,13 @@
     </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
-      <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
-              icon="AllIcons.General.PluginManager"/>
-
+      <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"/>
       <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
     </group>
 
-    <group id="WelcomeScreen.Configure.IDEA">
-      <action class="com.intellij.ide.actions.TemplateProjectSettingsGroup"/>
-      <add-to-group group-id="WelcomeScreen.Configure" anchor="last"/>
-    </group>
+    <action id="WelcomeScreen.Configure.ProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="RunConfigurationTemplatesForNewProjects"/>
+    </action>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>

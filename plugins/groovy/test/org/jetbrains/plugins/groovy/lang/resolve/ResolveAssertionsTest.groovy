@@ -32,7 +32,7 @@ static void foo(String s, Closure c) {}
 }
 '''
     assert result instanceof MethodResolveResult
-    assert !result.getApplicabilityDelegate().initialized
+//    assert !result.getApplicabilityDelegate().initialized
   }
 
   @Test
@@ -45,7 +45,7 @@ static void foo(Closure c) {}
 }
 '''
     assert result instanceof MethodResolveResult
-    assert result.getApplicabilityDelegate().initialized
+//    assert result.getApplicabilityDelegate().initialized
   }
 
   @Test

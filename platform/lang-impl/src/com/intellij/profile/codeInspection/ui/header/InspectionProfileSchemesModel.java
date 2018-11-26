@@ -102,7 +102,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
   }
 
   void updatePanel(@NotNull InspectionProfileSchemesPanel panel) {
-    final List<InspectionProfileModifiableModel> allProfiles = myProfilePanels.stream().map(p -> p.getProfile()).collect(Collectors.toList());
+    final List<InspectionProfileModifiableModel> allProfiles = ContainerUtil.map(myProfilePanels, p -> p.getProfile());
     panel.resetSchemes(allProfiles);
   }
 

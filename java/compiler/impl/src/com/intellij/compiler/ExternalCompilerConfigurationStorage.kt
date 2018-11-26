@@ -10,7 +10,6 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.util.element
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer
@@ -22,17 +21,19 @@ internal class ExternalCompilerConfigurationStorage(private val project: Project
     private set
 
   override fun getState(): Element {
-    val e = Element("state")
+    val result = Element("state")
     if (!project.isExternalStorageEnabled) {
-      return e
+      return result
     }
 
     val map = (CompilerConfigurationImpl.getInstance(project) as CompilerConfigurationImpl).modulesBytecodeTargetMap
     val moduleNames = getFilteredModuleNameList(project, map, true)
     if (moduleNames.isNotEmpty()) {
-      writeBytecodeTarget(moduleNames, map, e.element(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL))
+      val element = Element(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL)
+      writeBytecodeTarget(moduleNames, map, element)
+      result.addContent(element)
     }
-    return e
+    return result
   }
 
   override fun loadState(state: Element) {
@@ -73,9 +74,11 @@ internal fun getFilteredModuleNameList(project: Project, map: Map<String, String
 internal fun writeBytecodeTarget(moduleNames: List<String>, map: Map<String, String>, element: Element) {
   Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER)
   for (name in moduleNames) {
-    val moduleElement = element.element(JpsJavaCompilerConfigurationSerializer.MODULE)
+    val moduleElement = Element(JpsJavaCompilerConfigurationSerializer.MODULE)
     moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name)
     moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, map.get(name) ?: "")
+
+    element.addContent(moduleElement)
   }
 }
 

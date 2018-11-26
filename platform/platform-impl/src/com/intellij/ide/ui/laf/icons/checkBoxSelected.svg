@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="22" height="22" viewBox="0 0 22 22">
+  <defs>
+    <path id="checkboxselected-b" d="M9.92221445,13.0398406 L13.6901957,7.34704188 C13.9188155,7.00163506 14.384156,6.90696046 14.7295628,7.13558025 C15.0749697,7.36420003 15.1696443,7.82954054 14.9410245,8.17494736 L10.6635128,14.6375625 C10.6088763,14.7201093 10.5407198,14.7883358 10.4639115,14.8412518 C10.1562708,15.0817811 9.71046396,15.0463827 9.44518313,14.7517585 L7.19021298,12.2473604 C6.91305001,11.9395398 6.93790298,11.4653168 7.24572365,11.1881538 C7.55354431,10.9109909 8.02776725,10.9358438 8.30493022,11.2436645 L9.92221445,13.0398406 Z"/>
+    <filter id="checkboxselected-a" width="124.8%" height="125%" x="-12.4%" y="-6.3%" filterUnits="objectBoundingBox">
+      <feOffset dy=".5" in="SourceAlpha" result="shadowOffsetOuter1"/>
+      <feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation=".25"/>
+      <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.29 0"/>
+    </filter>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <rect width="13.5" height="13.5" x="4.25" y="4.25" fill="#3A98FB" stroke="#2C91FC" stroke-width=".5" rx="3"/>
+    <g>
+      <use fill="#000" filter="url(#checkboxselected-a)" xlink:href="#checkboxselected-b"/>
+      <use fill="#FFF" xlink:href="#checkboxselected-b"/>
+    </g>
+  </g>
+</svg>

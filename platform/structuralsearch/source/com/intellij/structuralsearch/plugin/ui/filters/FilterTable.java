@@ -17,6 +17,8 @@ public interface FilterTable {
 
   MatchVariableConstraint getConstraint();
 
+  Runnable getConstraintChangedCallback();
+
   @NotNull
   StructuralSearchProfile getProfile();
 

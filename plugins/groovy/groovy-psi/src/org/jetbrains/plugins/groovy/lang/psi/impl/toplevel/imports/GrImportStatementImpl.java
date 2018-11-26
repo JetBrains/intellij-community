@@ -47,6 +47,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     visitor.visitImportStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Import statement";
   }

@@ -604,7 +604,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableReturn() { doTest(); }
   public void testManyBooleans() { doTest(); }
   public void testPureNoArgMethodAsVariable() { doTest(); }
-  public void testRedundantAssignment() { doTest(); }
+  public void testRedundantAssignment() {
+    doTest();
+    assertTrue(myFixture.getAvailableIntentions().stream().anyMatch(action -> action.getText().equals("Extract side effect")));
+  }
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
   public void testLessThanRelations() { doTest(); }
@@ -659,4 +662,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
   public void testAlwaysTrueSwitchLabel() { doTest(); }
   public void testWideningToDouble() { doTest(); }
+  public void testCompoundAssignment() { doTest(); }
+  public void testNumericCast() { doTest(); }
+  public void testEnumValues() { doTest(); }
+  public void testEmptyCollection() { doTest(); }
+  public void testAssertNullEphemeral() { doTest(); }
+  public void testNotNullAnonymousConstructor() { doTest(); }
+  public void testCaughtNPE() { doTest(); }
 }

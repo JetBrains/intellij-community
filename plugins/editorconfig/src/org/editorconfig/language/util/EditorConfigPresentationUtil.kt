@@ -2,15 +2,23 @@
 package org.editorconfig.language.util
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import org.editorconfig.language.psi.EditorConfigPsiFile
+import com.intellij.psi.PsiFile
 
 object EditorConfigPresentationUtil {
-  fun getFileName(file: EditorConfigPsiFile, withFolder: Boolean): String {
+  @JvmStatic
+  fun getFileName(file: PsiFile, withFolder: Boolean): String {
+    return getFileName(file.virtualFile, withFolder)
+  }
+
+  @JvmStatic
+  fun getFileName(file: VirtualFile, withFolder: Boolean): String {
     val settings = UISettings.instanceOrNull
-    val settingsAwareFlag = settings?.showDirectoryForNonUniqueFilenames?.and(withFolder) ?: withFolder
+    val settingsAwareFlag = settings?.state?.showDirectoryForNonUniqueFilenames?.and(withFolder) ?: withFolder
     return if (settingsAwareFlag) "${file.parent?.name}/${file.name}" else file.name
   }
 
+  @JvmStatic
   fun path(element: PsiElement) = EditorConfigPsiTreeUtil.getOriginalFile(element.containingFile)?.virtualFile?.parent?.path ?: ""
 }

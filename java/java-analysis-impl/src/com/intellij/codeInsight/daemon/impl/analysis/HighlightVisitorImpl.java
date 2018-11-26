@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -218,18 +219,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Nullable
   public static JavaResolveResult resolveJavaReference(@NotNull PsiReference reference) {
-    if (reference instanceof PsiJavaReference) {
-      PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
-      return psiJavaReference.advancedResolve(false);
-    }
-    if (reference instanceof PsiPolyVariantReference &&
-        reference instanceof ResolvingHint && ((ResolvingHint)reference).canResolveTo(PsiClass.class)) {
-      ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false);
-      if (resolve.length == 1 && resolve[0] instanceof JavaResolveResult) {
-        return (JavaResolveResult)resolve[0];
-      }
-    }
-    return null;
+    return reference instanceof PsiJavaReference ? ((PsiJavaReference)reference).advancedResolve(false) : null;
   }
 
   @Override
@@ -409,10 +399,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitBreakStatement(PsiBreakStatement statement) {
     super.visitBreakStatement(statement);
-    if (!myHolder.hasErrorResults()) {
-      myHolder.add(HighlightUtil.checkLabelDefined(statement.getLabelIdentifier(), statement.findExitedStatement()));
+    PsiExpression expression = statement.getExpression();
+    if (!myHolder.hasErrorResults() && expression == null) {
+      myHolder.add(HighlightUtil.checkBreakOutsideSwitchOrLoop(statement));
     }
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkBreakOutsideLoop(statement));
+    if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
+      myHolder.add(HighlightUtil.checkValueBreakExpression(statement, expression));
+    }
   }
 
   @Override
@@ -456,9 +449,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitContinueStatement(PsiContinueStatement statement) {
     super.visitContinueStatement(statement);
     if (!myHolder.hasErrorResults()) {
-      myHolder.add(HighlightUtil.checkLabelDefined(statement.getLabelIdentifier(), statement.findContinuedStatement()));
+      PsiIdentifier label = statement.getLabelIdentifier();
+      myHolder.add(label == null ? HighlightUtil.checkContinueOutsideLoop(statement)
+                                 : HighlightUtil.checkContinueTarget(statement, label, myLanguageLevel));
     }
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkContinueOutsideLoop(statement));
   }
 
   @Override
@@ -532,21 +526,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitExpression(PsiExpression expression) {
     ProgressManager.checkCanceled(); // visitLiteralExpression is invoked very often in array initializers
-
     super.visitExpression(expression);
-    PsiType type = expression.getType();
-    if (myHolder.add(HighlightUtil.checkMustBeBoolean(expression, type))) return;
-
-    if (expression instanceof PsiArrayAccessExpression) {
-      myHolder.add(HighlightUtil.checkValidArrayAccessExpression((PsiArrayAccessExpression)expression));
-    }
 
     PsiElement parent = expression.getParent();
-    if (parent instanceof PsiNewExpression
-        && ((PsiNewExpression)parent).getQualifier() != expression
-        && ((PsiNewExpression)parent).getArrayInitializer() != expression) {
-      // like in 'new String["s"]'
-      myHolder.add(HighlightUtil.checkAssignability(PsiType.INT, expression.getType(), expression, expression));
+    PsiType type = expression.getType();
+
+    if (!myHolder.hasErrorResults() && parent instanceof PsiBreakStatement && !PsiImplUtil.isPlainReference(expression)) {
+      myHolder.add(checkFeature(expression, Feature.SWITCH_EXPRESSION));
+    }
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMustBeBoolean(expression, type));
+    if (!myHolder.hasErrorResults() && expression instanceof PsiArrayAccessExpression) {
+      myHolder.add(HighlightUtil.checkValidArrayAccessExpression((PsiArrayAccessExpression)expression));
+    }
+    if (!myHolder.hasErrorResults() && parent instanceof PsiNewExpression &&
+        ((PsiNewExpression)parent).getQualifier() != expression && ((PsiNewExpression)parent).getArrayInitializer() != expression) {
+      myHolder.add(HighlightUtil.checkAssignability(PsiType.INT, expression.getType(), expression, expression));  // like in 'new String["s"]'
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression,myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableExpected(expression));
@@ -555,15 +549,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssertOperatorTypes(expression, type));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSynchronizedExpressionType(expression, type, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression, type));
-    if (!myHolder.hasErrorResults()
-        && parent instanceof PsiThrowStatement
-        && ((PsiThrowStatement)parent).getException() == expression && type != null) {
+    if (!myHolder.hasErrorResults() && parent instanceof PsiThrowStatement && ((PsiThrowStatement)parent).getException() == expression && type != null) {
       myHolder.add(HighlightUtil.checkMustBeThrowable(type, expression, true));
     }
-
-    if (!myHolder.hasErrorResults()) {
-      myHolder.add(AnnotationsHighlightUtil.checkConstantExpression(expression));
-    }
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkConstantExpression(expression));
     if (!myHolder.hasErrorResults() && parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
       myHolder.add(GenericsHighlightUtil.checkForeachExpressionTypeIsIterable(expression));
     }
@@ -1494,7 +1483,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiLocalVariable) {
       return ((PsiLocalVariable)parent).getTypeElement().isInferredType();
     }
-    return parent instanceof PsiExpressionStatement;
+    return parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement);
   }
 
   // 15.13 | 15.27
@@ -1571,10 +1560,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitReturnStatement(PsiReturnStatement statement) {
-    try {
-      myHolder.add(HighlightUtil.checkReturnStatementType(statement));
+    super.visitStatement(statement);
+    if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_12_PREVIEW)) {
+      myHolder.add(HighlightUtil.checkReturnFromSwitchExpr(statement));
     }
-    catch (IndexNotReadyException ignore) { }
+    if (!myHolder.hasErrorResults()) {
+      try {
+        myHolder.add(HighlightUtil.checkReturnStatementType(statement));
+      }
+      catch (IndexNotReadyException ignore) { }
+    }
   }
 
   @Override
@@ -1596,10 +1591,30 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    super.visitSwitchLabeledRuleStatement(statement);
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkCaseStatement(statement));
+  }
+
+  @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
-    myHolder.add(HighlightUtil.checkStatementPrependedWithCaseInsideSwitch(statement));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchSelectorType(statement, myLanguageLevel));
+    checkSwitchBlock(statement);
+  }
+
+  @Override
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    super.visitSwitchExpression(expression);
+    if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(expression, Feature.SWITCH_EXPRESSION));
+    checkSwitchBlock(expression);
+    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkSwitchExpressionReturnTypeCompatible(expression));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkSwitchExpressionHasResult(expression));
+  }
+
+  private void checkSwitchBlock(PsiSwitchBlock switchBlock) {
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchBlockStatements(switchBlock, myLanguageLevel, myFile));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchSelectorType(switchBlock, myLanguageLevel));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkSwitchLabelValues(switchBlock));
   }
 
   @Override

@@ -25,7 +25,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/24/2015
  */
 public interface GradleProjectSettingsControlBuilder {
 

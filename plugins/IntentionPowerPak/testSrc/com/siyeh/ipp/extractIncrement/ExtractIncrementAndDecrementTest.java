@@ -15,6 +15,8 @@
  */
 package com.siyeh.ipp.extractIncrement;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +36,23 @@ public class ExtractIncrementAndDecrementTest extends IPPTestCase {
 
   public void testSingleDoWhileBody() {doExtractTest("++");}
 
+  public void testDecrementInForUpdate() {doNegativeTest("--");}
+
+  public void testTwoIncrementsInForUpdate() {doNegativeTest("++");}
+
   private void doExtractTest(@NotNull String operator) {
-    super.doTest(IntentionPowerPackBundle.message("extract.increment.intention.name", operator));
+    super.doTest(getMessage(operator));
+  }
+
+  private void doNegativeTest(@NotNull String operator) {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    IntentionAction intentionAction = CodeInsightTestUtil.findIntentionByText(myFixture.getAvailableIntentions(), getMessage(operator));
+    assertNull(intentionAction + " is not expected here", intentionAction);
+  }
+
+  @NotNull
+  private static String getMessage(@NotNull String operator) {
+    return IntentionPowerPackBundle.message("extract.increment.intention.name", operator);
   }
 
   @Override

@@ -11,9 +11,7 @@ public class RedundantStringOperationInspectionTest extends LightQuickFixParamet
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RedundantStringOperationInspection()
-    };
+    return new LocalInspectionTool[]{new RedundantStringOperationInspection()};
   }
 
   @Override

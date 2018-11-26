@@ -341,10 +341,10 @@ public final class JavacRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.UUID prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -421,8 +421,8 @@ public final class JavacRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.UUID)
       }
-      private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked"})
+      private byte memoizedIsInitialized = 2;
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           java.lang.Object arg0, java.lang.Object arg1) {
@@ -437,18 +437,11 @@ public final class JavacRemoteProto {
 
             boolean shouldMemoize = ((Boolean) arg0).booleanValue();
             if (!hasMostSigBits()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
             if (!hasLeastSigBits()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
-            if (shouldMemoize) memoizedIsInitialized = 1;
             return DEFAULT_INSTANCE;
 
           }
@@ -478,6 +471,9 @@ public final class JavacRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -525,7 +521,14 @@ public final class JavacRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return memoizedIsInitialized;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -845,10 +848,10 @@ public final class JavacRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.Failure prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -988,7 +991,7 @@ public final class JavacRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Failure)
       }
-      @java.lang.SuppressWarnings({"unchecked"})
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           java.lang.Object arg0, java.lang.Object arg1) {
@@ -1028,6 +1031,9 @@ public final class JavacRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -1082,7 +1088,13 @@ public final class JavacRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -1653,10 +1665,10 @@ public final class JavacRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -1793,8 +1805,8 @@ public final class JavacRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Request.OutputGroup)
         }
-        private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked"})
+        private byte memoizedIsInitialized = 2;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             java.lang.Object arg0, java.lang.Object arg1) {
@@ -1809,12 +1821,8 @@ public final class JavacRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasOutputRoot()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -1843,6 +1851,9 @@ public final class JavacRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -1895,7 +1906,14 @@ public final class JavacRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -2842,10 +2860,10 @@ public final class JavacRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.Request prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -3494,8 +3512,8 @@ public final class JavacRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Request)
       }
-      private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked"})
+      private byte memoizedIsInitialized = 2;
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           java.lang.Object arg0, java.lang.Object arg1) {
@@ -3510,20 +3528,13 @@ public final class JavacRemoteProto {
 
             boolean shouldMemoize = ((Boolean) arg0).booleanValue();
             if (!hasRequestType()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
             for (int i = 0; i < getOutputCount(); i++) {
               if (!getOutput(i).isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
-            if (shouldMemoize) memoizedIsInitialized = 1;
             return DEFAULT_INSTANCE;
 
           }
@@ -3565,6 +3576,9 @@ public final class JavacRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -3685,7 +3699,14 @@ public final class JavacRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return memoizedIsInitialized;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -4508,10 +4529,10 @@ public final class JavacRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.CompileMessage prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -4796,8 +4817,8 @@ public final class JavacRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.CompileMessage)
         }
-        private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked"})
+        private byte memoizedIsInitialized = 2;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             java.lang.Object arg0, java.lang.Object arg1) {
@@ -4812,12 +4833,8 @@ public final class JavacRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasKind()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -4864,6 +4881,9 @@ public final class JavacRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -4949,7 +4969,14 @@ public final class JavacRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -5626,10 +5653,10 @@ public final class JavacRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -5936,8 +5963,8 @@ public final class JavacRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.OutputObject)
         }
-        private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked"})
+        private byte memoizedIsInitialized = 2;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             java.lang.Object arg0, java.lang.Object arg1) {
@@ -5952,18 +5979,11 @@ public final class JavacRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasKind()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
               if (!hasFilePath()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -6007,6 +6027,9 @@ public final class JavacRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -6090,7 +6113,14 @@ public final class JavacRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -6637,10 +6667,10 @@ public final class JavacRemoteProto {
         }
 
         public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
         public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
@@ -6921,8 +6951,8 @@ public final class JavacRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.ClassData)
         }
-        private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked"})
+        private byte memoizedIsInitialized = 2;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             java.lang.Object arg0, java.lang.Object arg1) {
@@ -6937,12 +6967,8 @@ public final class JavacRemoteProto {
 
               boolean shouldMemoize = ((Boolean) arg0).booleanValue();
               if (!hasClassName()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
-              if (shouldMemoize) memoizedIsInitialized = 1;
               return DEFAULT_INSTANCE;
 
             }
@@ -6975,6 +7001,9 @@ public final class JavacRemoteProto {
                   (com.google.protobuf.CodedInputStream) arg0;
               com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                   (com.google.protobuf.ExtensionRegistryLite) arg1;
+              if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+              }
               try {
                 boolean done = false;
                 while (!done) {
@@ -7045,7 +7074,14 @@ public final class JavacRemoteProto {
                 }
               }
               return PARSER;
-            }
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
           }
           throw new UnsupportedOperationException();
         }
@@ -7413,10 +7449,10 @@ public final class JavacRemoteProto {
       }
 
       public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
       }
       public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message.Response prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
       }
 
       /**
@@ -7628,8 +7664,8 @@ public final class JavacRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response)
       }
-      private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked"})
+      private byte memoizedIsInitialized = 2;
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           java.lang.Object arg0, java.lang.Object arg1) {
@@ -7644,36 +7680,23 @@ public final class JavacRemoteProto {
 
             boolean shouldMemoize = ((Boolean) arg0).booleanValue();
             if (!hasResponseType()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
             if (hasCompileMessage()) {
               if (!getCompileMessage().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
             if (hasOutputObject()) {
               if (!getOutputObject().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
             if (hasClassData()) {
               if (!getClassData().isInitialized()) {
-                if (shouldMemoize) {
-                  memoizedIsInitialized = 0;
-                }
                 return null;
               }
             }
-            if (shouldMemoize) memoizedIsInitialized = 1;
             return DEFAULT_INSTANCE;
 
           }
@@ -7705,6 +7728,9 @@ public final class JavacRemoteProto {
                 (com.google.protobuf.CodedInputStream) arg0;
             com.google.protobuf.ExtensionRegistryLite extensionRegistry =
                 (com.google.protobuf.ExtensionRegistryLite) arg1;
+            if (extensionRegistry == null) {
+              throw new java.lang.NullPointerException();
+            }
             try {
               boolean done = false;
               while (!done) {
@@ -7797,7 +7823,14 @@ public final class JavacRemoteProto {
               }
             }
             return PARSER;
-          }
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return memoizedIsInitialized;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+          return null;
+        }
         }
         throw new UnsupportedOperationException();
       }
@@ -8188,10 +8221,10 @@ public final class JavacRemoteProto {
     }
 
     public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
     public static Builder newBuilder(org.jetbrains.jps.javac.JavacRemoteProto.Message prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
     /**
@@ -8419,8 +8452,8 @@ public final class JavacRemoteProto {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message)
     }
-    private byte memoizedIsInitialized = -1;
-    @java.lang.SuppressWarnings({"unchecked"})
+    private byte memoizedIsInitialized = 2;
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
     protected final java.lang.Object dynamicMethod(
         com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
         java.lang.Object arg0, java.lang.Object arg1) {
@@ -8435,40 +8468,24 @@ public final class JavacRemoteProto {
 
           boolean shouldMemoize = ((Boolean) arg0).booleanValue();
           if (!hasSessionId()) {
-            if (shouldMemoize) {
-              memoizedIsInitialized = 0;
-            }
             return null;
           }
           if (!hasMessageType()) {
-            if (shouldMemoize) {
-              memoizedIsInitialized = 0;
-            }
             return null;
           }
           if (!getSessionId().isInitialized()) {
-            if (shouldMemoize) {
-              memoizedIsInitialized = 0;
-            }
             return null;
           }
           if (hasRequest()) {
             if (!getRequest().isInitialized()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
           }
           if (hasResponse()) {
             if (!getResponse().isInitialized()) {
-              if (shouldMemoize) {
-                memoizedIsInitialized = 0;
-              }
               return null;
             }
           }
-          if (shouldMemoize) memoizedIsInitialized = 1;
           return DEFAULT_INSTANCE;
 
         }
@@ -8498,6 +8515,9 @@ public final class JavacRemoteProto {
               (com.google.protobuf.CodedInputStream) arg0;
           com.google.protobuf.ExtensionRegistryLite extensionRegistry =
               (com.google.protobuf.ExtensionRegistryLite) arg1;
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
           try {
             boolean done = false;
             while (!done) {
@@ -8598,7 +8618,14 @@ public final class JavacRemoteProto {
             }
           }
           return PARSER;
-        }
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return memoizedIsInitialized;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+        return null;
+      }
       }
       throw new UnsupportedOperationException();
     }

@@ -122,7 +122,7 @@ public class XLineBreakpointManager {
     if (file != null) {
       Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(file.getUrl());
       if (breakpoints != null) {
-        return breakpoints;
+        return new ArrayList<>(breakpoints);
       }
     }
     return Collections.emptyList();

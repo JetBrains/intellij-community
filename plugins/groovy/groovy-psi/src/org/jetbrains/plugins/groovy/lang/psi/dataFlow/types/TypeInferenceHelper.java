@@ -163,8 +163,8 @@ public class TypeInferenceHelper {
         if (idx >= 0 && rValue != null) {
           PsiType rType = rValue.getType();
           if (rType instanceof GrTupleType) {
-            PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
-            if (idx < componentTypes.length) return componentTypes[idx];
+            List<PsiType> componentTypes = ((GrTupleType)rType).getComponentTypes();
+            if (idx < componentTypes.size()) return componentTypes.get(idx);
             return null;
           }
           return PsiUtil.extractIterableTypeParameter(rType, false);

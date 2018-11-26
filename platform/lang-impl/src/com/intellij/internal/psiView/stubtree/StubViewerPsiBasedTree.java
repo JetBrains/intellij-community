@@ -3,6 +3,7 @@ package com.intellij.internal.psiView.stubtree;
 
 import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -63,6 +64,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @NotNull
   private volatile Map<ASTNode, StubElement> myNodeToStubs = new BidirectionalMap<>();
+  private Disposable myTreeModelDisposable = Disposer.newDisposable();
 
 
   public StubViewerPsiBasedTree(@NotNull Project project, @NotNull PsiTreeUpdater updater) {
@@ -80,8 +82,9 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   private void resetStubTree() {
     myStubTree.removeAll();
     if (myTreeModel != null) {
-      Disposer.dispose(myTreeModel);
+      Disposer.dispose(myTreeModelDisposable);
       myTreeModel = null;
+      myTreeModelDisposable = Disposer.newDisposable();
     }
 
     myNodeToStubs = new BidirectionalMap<>();
@@ -133,7 +136,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       PsiFileWithStubSupport file = (PsiFileWithStubSupport)rootElement;
       final StubTreeNode rootNode = new StubTreeNode((StubElement)stub, null);
       StructureTreeModel treeModel = new StructureTreeModel(new StubTreeStructure(rootNode));
-      myTreeModel = new AsyncTreeModel(treeModel);
+      myTreeModel = new AsyncTreeModel(treeModel, myTreeModelDisposable);
       myStubTree.setModel(myTreeModel);
       fillPsiToStubCache(file, (PsiFileStub)stub);
       myStubTree.setRootVisible(true);

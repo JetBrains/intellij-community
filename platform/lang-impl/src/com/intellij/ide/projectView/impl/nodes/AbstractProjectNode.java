@@ -40,7 +40,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   }
 
   @NotNull
-  Collection<AbstractTreeNode> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
+  protected Collection<AbstractTreeNode> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
     if (getSettings().isFlattenModules()) {
       return ContainerUtil.mapNotNull(modules, moduleDescription -> {
         try {

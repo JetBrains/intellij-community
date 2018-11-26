@@ -12,7 +12,10 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
+import org.apache.http.HttpStatus
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpHead
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.log4j.AppenderSkeleton
 import org.apache.log4j.Level
@@ -31,7 +34,6 @@ import java.security.MessageDigest
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.zip.ZipOutputStream
 
 @CompileStatic
 class CompilationPartsUtil {
@@ -99,7 +101,7 @@ class CompilationPartsUtil {
   static void packAndUploadToServer(CompilationContextImpl context, String zipsLocation) {
     BuildMessages messages = context.messages
 
-    String serverUrl = System.getProperty("intellij.compile.archive.url")
+    String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
     if (StringUtil.isEmptyOrSpaces(serverUrl)) {
       messages.warning("Compile Parts archive server url is not defined. \n" +
                        "Will not upload to remote server. Please set 'intellij.compile.archive.url' system property.")
@@ -165,6 +167,26 @@ class CompilationPartsUtil {
     // TODO: Remove hardcoded constant
     String uploadPrefix = "intellij-compile/v1/$branch".toString()
 
+    messages.block("Compute archives checksums") {
+      runUnderStatisticsTimer(messages, 'compile-parts:checksum:time') {
+        contexts.each { PackAndUploadContext ctx ->
+          executor.submit {
+            String hash = computeHash(new File(ctx.archive))
+            hashes.put(ctx.name, hash)
+          }
+        }
+        executor.waitForAllComplete(messages)
+      }
+    }
+
+    // Prepare metadata for writing into file
+    CompilationPartsMetadata m = new CompilationPartsMetadata()
+    m.serverUrl = serverUrl
+    m.branch = branch
+    m.prefix = uploadPrefix
+    m.files = new TreeMap<String, String>(hashes)
+    String metadataJson = new Gson().toJson(m)
+
     messages.block("Uploading archives") {
       AtomicInteger uploadedCount = new AtomicInteger()
       AtomicLong uploadedBytes = new AtomicLong()
@@ -174,18 +196,37 @@ class CompilationPartsUtil {
       runUnderStatisticsTimer(messages, 'compile-parts:upload:time') {
         CompilationPartsUploader uploader = new CompilationPartsUploader(serverUrl, messages)
 
+        Set<String> alreadyUploaded = new HashSet<>()
+        boolean fallbackToHeads
+        def files = uploader.getFoundAndMissingFiles(metadataJson)
+        if (files != null) {
+          messages.info("Successfully fetched info about already uploaded files")
+          alreadyUploaded.addAll(files.found)
+          fallbackToHeads = false
+        }
+        else {
+          messages.warning("Failed to fetch info about already uploaded files, will fallback to HEAD requests")
+          fallbackToHeads = true
+        }
+
         // Upload with higher threads count
         executor.setMaximumPoolSize(executorThreadsCount * 2)
         executor.prestartAllCoreThreads()
 
         contexts.each { PackAndUploadContext ctx ->
+          if (alreadyUploaded.contains(ctx.name)) {
+            reusedCount.getAndIncrement()
+            reusedBytes.getAndAdd(new File(ctx.archive).size())
+            return
+          }
+
           executor.submit {
             def archiveFile = new File(ctx.archive)
 
-            String hash = computeHash(archiveFile)
+            String hash = hashes.get(ctx.name)
             def path = "$uploadPrefix/${ctx.name}/${hash}.jar".toString()
 
-            if (uploader.upload(path, archiveFile)) {
+            if (uploader.upload(path, archiveFile, fallbackToHeads)) {
               uploadedCount.getAndIncrement()
               uploadedBytes.getAndAdd(archiveFile.size())
             }
@@ -193,8 +234,6 @@ class CompilationPartsUtil {
               reusedCount.getAndIncrement()
               reusedBytes.getAndAdd(archiveFile.size())
             }
-
-            hashes.put(ctx.name, hash)
           }
         }
 
@@ -217,16 +256,9 @@ class CompilationPartsUtil {
     executor.reportErrors(messages)
 
 
-    // Prepare and publish metadata file
-
+    // Save and publish metadata file
     def metadataFile = new File("$zipsLocation/metadata.json")
-    CompilationPartsMetadata m = new CompilationPartsMetadata()
-    m.serverUrl = serverUrl
-    m.branch = branch
-    m.prefix = uploadPrefix
-    m.files = new TreeMap<String, String>(hashes)
-
-    FileUtil.writeToFile(metadataFile, new Gson().toJson(m))
+    FileUtil.writeToFile(metadataFile, metadataJson)
 
     messages.artifactBuilt(metadataFile.absolutePath)
   }
@@ -339,31 +371,59 @@ class CompilationPartsUtil {
       String prefix = metadata.prefix
       String serverUrl = metadata.serverUrl
 
-      initLog4J(messages)
+      if (!toDownload.isEmpty()) {
+        initLog4J(messages)
 
-      def httpClient = HttpClientBuilder.create()
-        .setUserAgent('Parts Downloader')
-        .setMaxConnTotal(20)
-        .setMaxConnPerRoute(10)
-        .build()
+        def httpClient = HttpClientBuilder.create()
+          .setUserAgent('Parts Downloader')
+          .setMaxConnTotal(20)
+          .setMaxConnPerRoute(10)
+          .build()
 
-      toDownload.each { ctx ->
-        executor.submit {
-          FileUtil.ensureExists(ctx.jar.parentFile)
-          def get = new HttpGet("$serverUrl/$prefix/${ctx.name}/${ctx.jar.name}")
-          def response = httpClient.execute(get)
-          assert response.getStatusLine().getStatusCode() == 200
-          def bis = new BufferedInputStream(response.getEntity().getContent())
-          def bos = new BufferedOutputStream(new FileOutputStream(ctx.jar))
-          FileUtil.copy(bis, bos)
-          StreamUtil.closeStream(bis)
-          StreamUtil.closeStream(bos)
+        String urlWithPrefix = "$serverUrl/$prefix/".toString()
+
+        // First let's check for initial redirect (mirror selection)
+        messages.block("Mirror selection") {
+          def head = new HttpHead(urlWithPrefix)
+          head.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build())
+          def response = httpClient.execute(head)
+          int statusCode = response.getStatusLine().getStatusCode()
+          def locationHeader = response.getFirstHeader("location")
+          if ((statusCode == HttpStatus.SC_MOVED_TEMPORARILY ||
+               statusCode == HttpStatus.SC_MOVED_PERMANENTLY ||
+               statusCode == HttpStatus.SC_TEMPORARY_REDIRECT ||
+               statusCode == HttpStatus.SC_SEE_OTHER)
+            && locationHeader != null) {
+            urlWithPrefix = locationHeader.getValue()
+            messages.info("Redirected to mirror: " + urlWithPrefix)
+          }
+          else {
+            messages.info("Will use origin server: " + urlWithPrefix)
+          }
           StreamUtil.closeStream(response)
         }
-      }
-      executor.waitForAllComplete(messages)
 
-      StreamUtil.closeStream(httpClient)
+        toDownload.each { ctx ->
+          executor.submit {
+            FileUtil.ensureExists(ctx.jar.parentFile)
+            def get = new HttpGet("${urlWithPrefix}${ctx.name}/${ctx.jar.name}")
+            def response = httpClient.execute(get)
+            assert response.getStatusLine().getStatusCode() == 200
+            def bis = new BufferedInputStream(response.getEntity().getContent())
+            def bos = new BufferedOutputStream(new FileOutputStream(ctx.jar))
+            FileUtil.copy(bis, bos)
+            StreamUtil.closeStream(bis)
+            StreamUtil.closeStream(bos)
+            StreamUtil.closeStream(response)
+          }
+        }
+        executor.waitForAllComplete(messages)
+
+        StreamUtil.closeStream(httpClient)
+
+        deinitLog4J()
+      }
+
       messages.reportStatisticValue('compile-parts:download:time',
                                     TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
 
@@ -425,8 +485,6 @@ class CompilationPartsUtil {
     executor.close()
 
     executor.reportErrors(messages)
-
-    deinitLog4J()
   }
 
   private static void unpack(BuildMessages messages, FetchAndUnpackContext ctx) {
@@ -454,10 +512,7 @@ class CompilationPartsUtil {
         task.execute()
       }
       else {
-        def file = new File(ctx.archive)
-        def zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file)))
-        zos.setLevel(1)
-        def zip = new Compressor.Zip(zos)
+        def zip = new Compressor.Zip(new File(ctx.archive)).withLevel(1)
         zip.addDirectory(new File(ctx.output.absolutePath))
         zip.close()
       }
@@ -593,7 +648,7 @@ class CompilationPartsUtil {
           futures.last().get()
         }
         else {
-          Thread.sleep(TimeUnit.SECONDS.toMillis(futures.size() < 500 ? 1 : 3))
+          Thread.sleep(TimeUnit.SECONDS.toMillis(1))
         }
       }
     }

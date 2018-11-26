@@ -29,7 +29,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/27/14
  */
 public class GradleNotificationExtension implements ExternalSystemNotificationExtension {
   @NotNull

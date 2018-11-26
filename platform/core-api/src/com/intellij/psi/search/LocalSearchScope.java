@@ -34,10 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
@@ -134,7 +131,8 @@ public class LocalSearchScope extends SearchScope {
     return true;
   }
 
-  public int hashCode() {
+  @Override
+  public int calcHashCode() {
     int result = 0;
     result += myIgnoreInjectedPsi? 1 : 0;
     for (final PsiElement element : myScope) {

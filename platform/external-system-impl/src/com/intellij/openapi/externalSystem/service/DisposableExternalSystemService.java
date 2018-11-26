@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 4/1/13 3:42 PM
  */
 public interface DisposableExternalSystemService {
 

@@ -13,7 +13,8 @@ abstract class ProductProperties {
   String baseFileName
 
   /**
-   * Two-letter product code (e.g. 'IC' for IntelliJ IDEA Community Edition), will be used to produce the full build number
+   * @deprecated specify product code in 'number' attribute in 'build' tag in *ApplicationInfo.xml file instead (see its schema for details);
+   * if you need to get the product code in the build scripts, use {@link ApplicationInfoProperties#productCode} instead
    */
   String productCode
 
@@ -72,7 +73,7 @@ abstract class ProductProperties {
 
   /**
    * Now file containing information about third-party libraries is bundled and shown inside IDE.
-   * If {@code true} html file of third-party libraries will be placed alongside with build artifacts.
+   * If {@code true} html & json files of third-party libraries will be placed alongside with build artifacts.
    */
   boolean generateLibrariesLicensesTable = true
 

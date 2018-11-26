@@ -88,6 +88,18 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
                    "    super.foo();\n" +
                    "    }", newMethod.getText());
     });
+  }
 
+  public void testSetupGeneratedMethodExcludingRedundantThrown() {
+    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject())
+      .createFileFromText(JavaLanguage.INSTANCE, "class A {void foo() {}}\n class B extends A {void foo() throws Exception {}\n}");
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiMethod newMethod = file.getClasses()[1].getMethods()[0];
+      GenerateMembersUtil.setupGeneratedMethod(newMethod);
+      assertEquals("@Override void foo()  {\n" +
+                   "    super.foo();\n" +
+                   "    }", newMethod.getText());
+    });
   }
 }

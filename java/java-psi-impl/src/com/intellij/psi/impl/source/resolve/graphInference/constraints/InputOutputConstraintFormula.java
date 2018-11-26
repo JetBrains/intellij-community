@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class InputOutputConstraintFormula implements ConstraintFormula {
 
@@ -92,6 +94,15 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
         thenResult.addAll(elseResult);
         return thenResult;
       }
+    }
+
+    if (psiExpression instanceof PsiSwitchExpression) {
+      Set<InferenceVariable> variables =
+        PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)psiExpression).stream().flatMap(expression -> {
+          Set<InferenceVariable> inputVariables = createSelfConstraint(type, expression).getInputVariables(session);
+          return inputVariables != null ? inputVariables.stream() : Stream.empty();
+        }).collect(Collectors.toSet());
+      return variables.isEmpty() ? null : variables;
     }
     return null;
   }

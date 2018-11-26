@@ -45,6 +45,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private static final String POPUP = "JTextField.Search.FindPopup";
   private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   private static final String ON_CLEAR = "JTextField.Search.CancelAction";
+
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
   private boolean monospaced;
@@ -68,7 +69,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a search icon in one of the four states or {@code null} to hide it
    */
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return AllIcons.Actions.Search;
+    return clickable ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
   }
 
   /**
@@ -116,7 +117,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return (component != null) && !isEmpty(component.getText());
   }
 
-  protected void updateIconsLayout(Rectangle bounds) {
+  private void updateIconsLayout(Rectangle bounds) {
     JTextComponent c = getComponent();
     Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null || UIUtil.getParentOfType(JSpinner.class, c) != null ?
                     JBUI.emptyInsets() : getDefaultMargins();
@@ -244,6 +245,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       throw new IllegalArgumentException("The " + extensionName + " extension does not exist in this text field");
     }
     return iconHolder.bounds.getLocation();
+  }
+
+  @NotNull
+  public Rectangle getExtensionIconBounds(@NotNull Extension extension) {
+    for (IconHolder holder : icons.values()) {
+      if (holder.extension == extension) {
+        return new Rectangle(holder.bounds);
+      }
+    }
+    throw new IllegalArgumentException("The " + extension + " extension does not exist in this text field");
   }
 
   /**
@@ -457,19 +468,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private void handleMouse(MouseEvent event, boolean run) {
     JTextComponent component = getComponent();
     if (component != null) {
-      boolean invalid = false;
-      boolean repaint = false;
-      IconHolder result = null;
-      for (IconHolder holder : icons.values()) {
-        holder.hovered = component.isEnabled() && holder.bounds.contains(event.getX(), event.getY());
-        if (holder.hovered) result = holder;
-        Icon icon = holder.extension.getIcon(holder.hovered);
-        if (holder.icon != icon) {
-          if (holder.setIcon(icon)) invalid = true;
-          repaint = true;
-        }
-      }
-      if (repaint) repaint(invalid);
+      IconHolder result = getIconHolder(component, event.getX(), event.getY());
       Runnable action = result == null ? null : result.extension.getActionOnClick();
       if (action == null) {
         setCursor(Cursor.TEXT_CURSOR);
@@ -482,6 +481,24 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         }
       }
     }
+  }
+
+  @Nullable
+  private IconHolder getIconHolder(@NotNull JTextComponent component, int x, int y) {
+    boolean invalid = false;
+    boolean repaint = false;
+    IconHolder result = null;
+    for (IconHolder holder : icons.values()) {
+      holder.hovered = component.isEnabled() && holder.bounds.contains(x, y);
+      if (holder.hovered) result = holder;
+      Icon icon = holder.extension.getIcon(holder.hovered);
+      if (holder.icon != icon) {
+        if (holder.setIcon(icon)) invalid = true;
+        repaint = true;
+      }
+    }
+    if (repaint) repaint(invalid);
+    return result;
   }
 
   private void setCursor(int cursor) {
@@ -586,11 +603,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
-    public int getPreferredSpace() {
-      return getSearchIconPreferredSpace();
-    }
-
-    @Override
     public boolean isIconBeforeText() {
       return true;
     }
@@ -629,11 +641,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public int getIconGap() {
       return getClearIconGap();
-    }
-
-    @Override
-    public int getPreferredSpace() {
-      return getClearIconPreferredSpace();
     }
 
     @Override

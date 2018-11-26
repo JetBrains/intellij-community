@@ -56,6 +56,8 @@
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Clipboard"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
+
+    <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
   </extensions>
 
   <actions>
@@ -100,7 +102,7 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
     <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
             use-shortcut-of="Vcs.OpenRepositoryVersion"
-            text="Open Repository Version" description="Open editor with selected revision of the file"/>
+            text="Show File at Revision" description="Open editor with selected revision of the file"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
             use-shortcut-of="Vcs.GetVersion"
             text="Get" description="Get version from repository" icon="AllIcons.Actions.Download"/>
@@ -140,16 +142,21 @@
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
+      <separator/>
       <reference id="Vcs.Log.CompareRevisions"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
+    </group>
+    <group id="Vcs.Log.LayoutConfiguration" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
+           icon="AllIcons.Debugger.RestoreLayout" text="Configure Layout" description="Configure Layout" popup="true">
+      <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.ShowDiffPreview"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <separator/>
       <reference id="ChangesView.GroupBy"/>
       <separator/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="Vcs.Log.ShowDiffPreview"/>
+      <reference id="Vcs.Log.LayoutConfiguration"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Popup">
       <reference id="Vcs.RepositoryChangesBrowserMenu"/>
@@ -159,12 +166,11 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <separator/>
+      <reference id="Vcs.Log.GetVersion"/>
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
-      <separator/>
-      <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistoryActionsGroup"/>
     </group>
@@ -175,8 +181,7 @@
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <separator/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="Vcs.Log.ShowDiffPreview"/>
+      <reference id="Vcs.Log.LayoutConfiguration"/>
       <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
       <separator/>

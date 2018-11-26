@@ -140,7 +140,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
 
   @Override
   protected PsiElement getElement() {
-    if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
+    if (!myMethodCall.isValid() || !canModify(myMethodCall)) return null;
     return myMethodCall;
   }
 }

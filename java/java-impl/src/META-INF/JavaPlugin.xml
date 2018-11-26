@@ -142,8 +142,8 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.JavaProjectModelModificationServiceImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExpectedTypesProvider"
                     serviceImplementation="com.intellij.codeInsight.ExpectedTypesProvider"/>
-    <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"
-                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager"/>
+    <projectService serviceInterface="com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager"
+                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager"/>
     <projectService serviceInterface="com.intellij.refactoring.listeners.JavaRefactoringListenerManager"
                     serviceImplementation="com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl"/>
     <projectService serviceInterface="com.intellij.refactoring.RefactoringManager"
@@ -508,6 +508,7 @@
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
     <anonymousElementProvider implementation="com.intellij.lang.java.JavaAnonymousClassesProvider" />
     <usageToPsiElementProvider implementation="com.intellij.lang.java.JavaUsageToPsiElementProvider" />
+    <focusModeProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFocusModeProvider" />
     <lang.findUsagesProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFindUsagesProvider"/>
     <lang.unwrapDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.unwrap.JavaUnwrapDescriptor"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.JavaSurroundWithStatementRangeAdjuster"/>
@@ -534,7 +535,7 @@
     <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.JavaCodeBlockModificationListener"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
-    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="first"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationToInjectorAdapter" order="first"/>
     <changeSignatureDetector language="JAVA" implementationClass="com.intellij.refactoring.changeSignature.JavaChangeSignatureDetector"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
     <completion.contributor language="JAVA" id="javaMethodHandle" order="last, before javaLegacy"
@@ -909,6 +910,11 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="DuplicateBranchesInSwitch"
+                     key="inspection.duplicate.branches.in.switch.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.codeInspection.DuplicateBranchesInSwitchInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="SortedCollectionWithNonComparableKeys"
                      key="inspection.sorted.collection.with.non.comparable.keys.display.name" bundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
@@ -919,13 +925,28 @@
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.JoinDeclarationAndAssignmentJavaInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeRemovedNarrowingVariableType"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.cast.can.be.removed.narrowing.variable.type.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.redundantCast.CastCanBeRemovedNarrowingVariableTypeInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OverflowingLoopIndex"
+                     key="inspection.overflowing.loop.index.inspection.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.OverflowingLoopIndexInspection" />
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="EnhancedSwitchMigration"
+                     key="inspection.switch.expression.migration.inspection.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids12" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.EnhancedSwitchMigrationInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.InspectionsBundle" key="inspection.unused.return.value.display.name"
                       groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="SameParameterValue" bundle="messages.InspectionsBundle" key="inspection.same.parameter.display.name"
+    <globalInspection groupPath="Java" language="UAST" shortName="SameParameterValue" bundle="messages.InspectionsBundle" key="inspection.same.parameter.display.name"
                       groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="unused" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
@@ -1183,5 +1204,6 @@
       <category>Serialization</category>
     </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
+    <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
   </extensions>
 </idea-plugin>

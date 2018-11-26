@@ -282,7 +282,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     @NotNull private final KeyDescriptor<CommitId> myCommitIdKeyDescriptor;
 
     VcsRefKeyDescriptor(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                               @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) {
+                        @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) {
       myLogProviders = logProviders;
       myCommitIdKeyDescriptor = commitIdKeyDescriptor;
     }

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -195,6 +196,7 @@ public class DuplicatesFinder {
   private void findPatternOccurrences(List<? super Match> array, PsiElement scope) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
+      ProgressManager.checkCanceled();
       final Match match = isDuplicateFragment(child, false);
       if (match != null && (myTextRanges == null || myTextRanges.contains(match.getTextRange()))) {
         array.add(match);
@@ -249,6 +251,7 @@ public class DuplicatesFinder {
 
   protected boolean isSelf(@NotNull PsiElement candidate) {
     for (PsiElement pattern : myPattern) {
+      ProgressManager.checkCanceled();
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) {
         return true;
       }

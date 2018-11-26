@@ -217,14 +217,14 @@ public class HighlightFixUtil {
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
                                               PsiType itemType,
                                               @Nullable PsiExpression expr,
-                                              @NotNull HighlightInfo highlightInfo) {
+                                              @Nullable HighlightInfo highlightInfo) {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, action);
     }
     registerChangeReturnTypeFix(highlightInfo, expr, parameter.getType());
   }
 
-  static void registerChangeReturnTypeFix(@NotNull HighlightInfo highlightInfo, @Nullable PsiExpression expr, @NotNull PsiType toType) {
+  static void registerChangeReturnTypeFix(@Nullable HighlightInfo highlightInfo, @Nullable PsiExpression expr, @NotNull PsiType toType) {
     if (expr instanceof PsiMethodCallExpression) {
       final PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {

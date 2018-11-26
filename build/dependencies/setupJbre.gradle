@@ -1,3 +1,5 @@
+import java.util.concurrent.TimeUnit
+
 def setupJbre = task setupJbre {}
 
 def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
@@ -34,6 +36,7 @@ jrePlatformsToDownload(targetOs).each { platform ->
           src "$jdkRepo/${jbsdkArtifactName}.tar.gz"
           dest outputFile
           tempAndMove true
+          timeout TimeUnit.MINUTES.toMillis(30).toInteger()
         }
       }
     }

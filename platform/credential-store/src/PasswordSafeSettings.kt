@@ -37,11 +37,11 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
       state.keepassDb = v
     }
 
-  @Suppress("DEPRECATION")
   var providerType: ProviderType
     get() = if (SystemInfo.isWindows && state.provider === ProviderType.KEYCHAIN) ProviderType.KEEPASS else state.provider!!
     set(value) {
       var newValue = value
+      @Suppress("DEPRECATION")
       if (newValue === ProviderType.DO_NOT_STORE) {
         newValue = ProviderType.MEMORY_ONLY
       }
@@ -71,6 +71,9 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
     // do not use it directly
     var keepassDb by string()
     var isRememberPasswordByDefault by property(true)
+
+    // do not use it directly
+    var pgpKeyId by string()
   }
 }
 

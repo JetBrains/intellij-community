@@ -1110,9 +1110,33 @@
   </action>
 
   <action id="EditorFocusGutter">
-    <keyboard-shortcut first-keystroke="alt shift G" second-keystroke="F"/>
+    <keyboard-shortcut first-keystroke="alt shift 6" second-keystroke="F"/>
   </action>
   <action id="EditorShowGutterIconTooltip">
-    <keyboard-shortcut first-keystroke="alt shift G" second-keystroke="T"/>
+    <keyboard-shortcut first-keystroke="alt shift 6" second-keystroke="T"/>
+  </action>
+  <action id="ShowFilterPopup">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+
+  <action id="SearchEverywhere.NextTab">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="SearchEverywhere.PrevTab">
+    <keyboard-shortcut first-keystroke="shift TAB"/>
+  </action>
+  <action id="SearchEverywhere.CompleteCommand">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="SearchEverywhere.SelectItem">
+    <keyboard-shortcut first-keystroke="Enter"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToNextGroup">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="control DOWN"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToPrevGroup">
+    <keyboard-shortcut first-keystroke="PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="control UP"/>
   </action>
 </keymap>

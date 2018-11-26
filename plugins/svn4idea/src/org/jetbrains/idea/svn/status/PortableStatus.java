@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.util.Getter;
@@ -136,7 +136,7 @@ public class PortableStatus extends Status {
     if (myFileExists) return super.getKind();
     final Info info = initInfo();
     if (info != null) {
-      return info.getKind();
+      return info.getNodeKind();
     }
     return super.getKind();
   }
@@ -152,7 +152,7 @@ public class PortableStatus extends Status {
     if (! isCopied()) return null;
     final Info info = initInfo();
     if (info == null) return null;
-    return initInfo().getCopyFromURL();
+    return initInfo().getCopyFromUrl();
   }
 
   @Override
@@ -161,7 +161,7 @@ public class PortableStatus extends Status {
 
     if (url == null) {
       Info info = initInfo();
-      url = info != null ? info.getURL() : url;
+      url = info != null ? info.getUrl() : url;
     }
 
     return url;
@@ -173,7 +173,7 @@ public class PortableStatus extends Status {
 
     if (url == null) {
       Info info = initInfo();
-      url = info != null ? info.getRepositoryRootURL() : url;
+      url = info != null ? info.getRepositoryRootUrl() : url;
     }
 
     return url;

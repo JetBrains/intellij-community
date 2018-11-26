@@ -65,7 +65,6 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   static {
     Map<LanguageLevel, LanguageLevel> compatLevels = Maps.newEnumMap(LanguageLevel.class);
     addCompatiblePair(compatLevels, LanguageLevel.PYTHON26, LanguageLevel.PYTHON27);
-    addCompatiblePair(compatLevels, LanguageLevel.PYTHON31, LanguageLevel.PYTHON32);
     addCompatiblePair(compatLevels, LanguageLevel.PYTHON33, LanguageLevel.PYTHON34);
     COMPATIBLE_LEVELS = Maps.immutableEnumMap(compatLevels);
   }
@@ -157,6 +156,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   @Override
+  @NotNull
   public LanguageLevel getImmediateValue(@NotNull Module module) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
@@ -213,7 +213,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   private static boolean isPythonFile(VirtualFile child) {
-    return PythonFileType.INSTANCE.equals(FileTypeRegistry.getInstance().getFileTypeByFileName(child.getName()));
+    return PythonFileType.INSTANCE.equals(FileTypeRegistry.getInstance().getFileTypeByFileName(child.getNameSequence()));
   }
 
   private static void clearSdkPathCache(@NotNull final VirtualFile child) {

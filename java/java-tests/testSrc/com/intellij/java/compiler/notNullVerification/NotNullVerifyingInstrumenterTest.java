@@ -7,6 +7,8 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.project.IntelliJProjectConfiguration;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
@@ -145,6 +147,12 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   @Test
+  public void testGroovyEnum() throws Exception {
+    Class testClass = prepareTest();
+    assertNotNull(testClass.getField("Value").get(null));
+  }
+
+  @Test
   public void testStaticInnerClass() throws Exception {
     Class aClass = prepareTest();
     assertNotNull(aClass.newInstance());
@@ -152,6 +160,12 @@ public class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testNonStaticInnerClass() throws Exception {
+    Class aClass = prepareTest();
+    assertNotNull(aClass.newInstance());
+  }
+
+  @Test
+  public void testGroovyInnerClass() throws Exception {
     Class aClass = prepareTest();
     assertNotNull(aClass.newInstance());
   }
@@ -271,47 +285,34 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
-    String base = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
-    String baseClassName = PlatformTestUtil.getTestName(testName.getMethodName(), false);
-    String javaPath = (base + baseClassName) + ".java";
+    String testDir = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
+    String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
+    File testFile = IdeaTestUtil.findSourceFile(testDir + testName);
     File classesDir = tempDir.newFolder("output");
+    List<String> libRoots = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations-java5");
+    List<String> args = ContainerUtil.newArrayList("-cp", StringUtil.join(libRoots, File.pathSeparator));
+    if (withDebugInfo) args.add("-g");
+    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
-    try {
-      List<String> cmdLine = ContainerUtil.newArrayList("-classpath", base + "annotations.jar", "-d", classesDir.getAbsolutePath());
-      if (withDebugInfo) {
-        cmdLine.add("-g");
+    File[] files = classesDir.listFiles();
+    assertNotNull(files);
+    Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    boolean modified = false;
+    MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
+    Class mainClass = null;
+    for (File file: files) {
+      FailSafeClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
+      ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
+      modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
+      String className = FileUtil.getNameWithoutExtension(file.getName());
+      Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
+      if (className.equals(testName)) {
+        mainClass = aClass;
       }
-      cmdLine.add(javaPath);
-      com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
-
-      Class mainClass = null;
-      File[] files = classesDir.listFiles();
-      assertNotNull(files);
-      Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-      boolean modified = false;
-      MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
-      for (File file: files) {
-        String fileName = file.getName();
-        byte[] content = FileUtil.loadFileBytes(file);
-
-        FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
-        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-        modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
-
-        byte[] instrumented = writer.toByteArray();
-        String className = FileUtil.getNameWithoutExtension(fileName);
-        Class aClass = classLoader.doDefineClass(className, instrumented);
-        if (className.equals(baseClassName)) {
-          mainClass = aClass;
-        }
-      }
-      assertTrue("Class file not instrumented!", modified);
-      assertNotNull("Class " + baseClassName + " not found!", mainClass);
-      return mainClass;
     }
-    finally {
-      FileUtil.delete(classesDir);
-    }
+    assertTrue("Class file not instrumented!", modified);
+    assertNotNull("Class " + testName + " not found!", mainClass);
+    return mainClass;
   }
 
   private static class MyClassLoader extends ClassLoader {

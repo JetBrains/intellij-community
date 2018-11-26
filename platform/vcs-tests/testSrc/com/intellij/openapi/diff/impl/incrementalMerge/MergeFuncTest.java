@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,17 +314,22 @@ public class MergeFuncTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myUtils.tearDown();
-    myUtils = null;
-    myMergeList = null;
-    myCounters = null;
-    myLeft = null;
-    myBase = null;
-    myRight = null;
-    myELeft = null;
-    myEBase = null;
-    myERight = null;
-    super.tearDown();
+    try {
+      myUtils.tearDown();
+    }
+    finally {
+      myUtils = null;
+      myMergeList = null;
+      myCounters = null;
+      myLeft = null;
+      myBase = null;
+      myRight = null;
+      myELeft = null;
+      myEBase = null;
+      myERight = null;
+
+      super.tearDown();
+    }
   }
 
   private static void pressApplyActionIcon(@NotNull Editor editor, int index) {

@@ -23,6 +23,6 @@ public class NullableAnnotationProvider implements AnnotationProvider {
   @NotNull
   @Override
   public String[] getAnnotationsToRemove(Project project) {
-    return NullableNotNullManager.getInstance(project).getNotNulls().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    return ArrayUtil.toStringArray(NullableNotNullManager.getInstance(project).getNotNulls());
   }
 }

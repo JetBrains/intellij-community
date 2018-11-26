@@ -316,6 +316,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myHeader.setAdditionalTitleActions(actions);
   }
 
+  public void setTabActions(AnAction[] actions) {
+    myHeader.setTabActions(actions);
+  }
+
   private class InnerPanelBorder implements Border {
 
     private final ToolWindow myWindow;

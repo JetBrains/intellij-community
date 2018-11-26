@@ -18,7 +18,6 @@ import java.util.*;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 10/19/11 2:04 PM
  */
 public class GradleLibraryNamesMixer {
 

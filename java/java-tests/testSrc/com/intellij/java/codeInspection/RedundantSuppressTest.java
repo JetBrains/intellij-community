@@ -17,6 +17,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
@@ -25,6 +26,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.InspectionTestCase;
@@ -42,6 +44,8 @@ public class RedundantSuppressTest extends InspectionTestCase {
     super.setUp();
     myInspectionToolWrappers = new InspectionToolWrapper[]{
       new LocalInspectionToolWrapper(new JavaDocReferenceInspection()),
+      new LocalInspectionToolWrapper(new PossibleHeapPollutionVarargsInspection()),
+      new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection()),
       new LocalInspectionToolWrapper(new I18nInspection()),
       new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
       new LocalInspectionToolWrapper(new UnnecessaryLocalVariableInspection()),
@@ -87,6 +91,8 @@ public class RedundantSuppressTest extends InspectionTestCase {
   }
 
   public void testIgnoreWithAnnotation() { doTest(); }
+
+  public void testSameSuppressIds() { doTest(); }
 
   public void testSuppressAll() {
     try {

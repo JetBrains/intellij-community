@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -86,8 +87,8 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
    */
   @NotNull
   public static CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
-    int length = string.length();
-    if (length == 0) return "";
+    if (SystemInfo.IS_AT_LEAST_JAVA9) return string; // see JEP 254: Compact Strings
+    if (string.length() == 0) return "";
     if (string instanceof ByteArrayCharSequence) return string;
     byte[] bytes = toBytesIfPossible(string);
     return bytes == null ? string : new ByteArrayCharSequence(bytes);

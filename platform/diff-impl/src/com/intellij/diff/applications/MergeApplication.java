@@ -31,16 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings({"CallToPrintStackTrace"})
 public class MergeApplication extends DiffApplicationBase {
-  @Override
-  protected boolean checkArguments(@NotNull String[] args) {
-    return (args.length == 4 || args.length == 5) && "merge".equals(args[0]);
-  }
-
-  @Override
-  public String getCommandName() {
-    return "merge";
+  public MergeApplication() {
+    super("merge", 3, 4);
   }
 
   @NotNull

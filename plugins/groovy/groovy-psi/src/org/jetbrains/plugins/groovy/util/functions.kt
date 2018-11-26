@@ -19,3 +19,8 @@ operator fun <T> Consumer<in T>.plusAssign(elements: Array<out T>) {
 operator fun <T> Consumer<in T>.plusAssign(element: T) {
   accept(element)
 }
+
+fun <T> Array<T>.init(): List<T> {
+  require(isNotEmpty())
+  return dropLast(1)
+}

@@ -124,6 +124,19 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     }
   }
 
+  public void testAccessibleFromEntryPoint() {
+    EntryPointsManagerBase.ClassPattern pattern = new EntryPointsManagerBase.ClassPattern();
+    pattern.pattern = "Foo";
+    pattern.method = "entry";
+    EntryPointsManagerBase.getInstance(getProject()).getPatterns().add(pattern);
+    try {
+      doTest();
+    }
+    finally {
+      EntryPointsManagerBase.getInstance(getProject()).getPatterns().clear();
+    }
+  }
+
   public void testAnnotationInterface() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();

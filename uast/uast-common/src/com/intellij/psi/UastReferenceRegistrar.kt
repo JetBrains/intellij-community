@@ -48,6 +48,7 @@ abstract class UastReferenceProvider {
 
   abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>
 
+  open fun acceptsTarget(target: PsiElement): Boolean = true
 }
 
 /**
@@ -113,5 +114,5 @@ private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) 
     return provider.getReferencesByElement(uElement, context)
   }
 
-  override fun acceptsTarget(target: PsiElement): Boolean = true
+  override fun acceptsTarget(target: PsiElement): Boolean = provider.acceptsTarget(target)
 }
