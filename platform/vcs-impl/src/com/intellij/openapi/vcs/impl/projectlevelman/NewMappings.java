@@ -285,17 +285,7 @@ public class NewMappings {
 
   public void disposeMe() {
     LOG.debug("dispose me");
-    clearImpl();
-  }
 
-  public void clear() {
-    LOG.debug("clear");
-    clearImpl();
-
-    mappingsChanged();
-  }
-
-  private void clearImpl() {
     // if vcses were not mapped, there's nothing to clear
     if ((myActiveVcses == null) || (myActiveVcses.length == 0)) return;
 
