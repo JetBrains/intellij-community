@@ -13,12 +13,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-
-import java.lang.annotation.Documented;
 
 /**
  * Utility class for miscellaneous code style settings retrieving methods.
