@@ -16,20 +16,13 @@
     <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>
     </condition>
-    <condition property="java" value="${jdk8Home}" else="${env.JDK_18_x64}">
-      <isset property="jdk8Home" />
-    </condition>
     <condition property="java" value="${env.JDK_18_x64}" else="${java.home}">
-      <and>
-        <not>
-          <isset property="jdk8Home"/>
-        </not>
-        <isset property="env.JDK_18_x64"/>
-      </and>
+      <isset property="env.JDK_18_x64"/>
     </condition>
     <exec executable="${gradle.home}/${gradlew}" dir="${gradle.home}" failonerror="true">
       <env key="JAVA_HOME" value="${java}"/>
       <arg value="${gradle.daemon}"/>
+      <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
       <arg value="setupBuildScriptsDeps"/>
     </exec>
   </target>
