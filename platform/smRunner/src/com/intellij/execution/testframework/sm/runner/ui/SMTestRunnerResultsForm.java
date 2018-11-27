@@ -386,6 +386,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myStartedTestCount++;
       myFinishedTestCount++;
     }
+    else if (test.isSuite()) {
+      myTotalTestCount++;
+    }
     updateIconProgress(false);
 
     //still expand failure when user selected another test
