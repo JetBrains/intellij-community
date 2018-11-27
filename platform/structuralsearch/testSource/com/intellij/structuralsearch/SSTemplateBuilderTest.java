@@ -24,6 +24,16 @@ public class SSTemplateBuilderTest extends LightCodeInsightFixtureTestCase {
     assertEquals(1, template.getSegmentsCount());
   }
 
+  public void testStartingWhitespace() {
+    doTest("    List<Integer> list = null;", "    $Class1$<$Class2$> list = null;");
+  }
+
+  public void testInnerWhiteSpace() {
+    doTest("try {\n" +
+           "    List<Integer> list = null;} finally {}", "try {\n" +
+                                                         "    $Class1$<$Class2$> list = null;} finally {}");
+  }
+
   private Template doTest(String text, String expected) {
     PsiFile psiFile = myFixture.configureByText(JavaFileType.INSTANCE, text);
     TemplateBuilderImpl builder = (TemplateBuilderImpl)new StructuralSearchTemplateBuilder(getFile()).buildTemplate();

@@ -5,9 +5,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.*;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
+import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,16 +61,13 @@ public class StructuralSearchTemplateBuilder {
     MatchOptions matchOptions = new MatchOptions();
     String text = myPsiFile.getText();
     matchOptions.setSearchPattern(text);
-    CompiledPattern pattern = PatternCompiler.compilePattern(myPsiFile.getProject(), matchOptions, false);
-    if (pattern == null)
-      return myBuilder;
-
-    PsiElement current = pattern.getNodes().current();
-    if (current != null) {
-      myShift = current.getTextRange().getStartOffset();
-      current.accept(visitor);
+    PsiElement[] elements =
+      MatcherImplUtil.createTreeFromText(text, PatternTreeContext.Block, myPsiFile.getFileType(), myPsiFile.getProject());
+    PsiElement psiElement = ContainerUtil.find(elements, element -> !(element instanceof PsiWhiteSpace));
+    if (psiElement != null) {
+      myShift = 2;
+      psiElement.accept(visitor);
     }
-
     return myBuilder;
   }
 
