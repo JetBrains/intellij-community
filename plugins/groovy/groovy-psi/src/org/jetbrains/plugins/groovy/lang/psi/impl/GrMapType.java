@@ -16,7 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -137,13 +140,6 @@ public abstract class GrMapType extends GrLiteralClassType {
                                  GlobalSearchScope scope,
                                  @NotNull LinkedHashMap<String, PsiType> stringEntries,
                                  @NotNull List<Couple<PsiType>> otherEntries) {
-    return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
-  }
-
-  public static GrMapType create(GlobalSearchScope scope) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
-    List<Couple<PsiType>> otherEntries = Collections.emptyList();
-    LinkedHashMap<String, PsiType> stringEntries = ContainerUtil.newLinkedHashMap();
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 
