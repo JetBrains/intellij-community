@@ -1927,6 +1927,7 @@ public class AllIcons {
     public static final Icon LogFolder = IconLoader.getIcon("/nodes/logFolder.svg"); // 16x16
     public static final Icon Method = IconLoader.getIcon("/nodes/method.svg"); // 16x16
     public static final Icon MethodReference = IconLoader.getIcon("/nodes/methodReference.svg"); // 16x16
+    public static final Icon ModelClass = IconLoader.getIcon("/nodes/modelClass.svg"); // 16x16
     public static final Icon Module = IconLoader.getIcon("/nodes/Module.svg"); // 16x16
     public static final Icon ModuleGroup = IconLoader.getIcon("/nodes/moduleGroup.svg"); // 16x16
     public static final Icon NativeLibrariesFolder = IconLoader.getIcon("/nodes/nativeLibrariesFolder.svg"); // 16x16
