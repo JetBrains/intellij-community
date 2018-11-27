@@ -108,6 +108,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
