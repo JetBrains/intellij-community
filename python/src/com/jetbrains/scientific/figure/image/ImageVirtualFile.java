@@ -17,12 +17,6 @@ public class ImageVirtualFile extends BinaryLightVirtualFile implements Disposab
     return new ImageVirtualFile(virtualFile.getName(), virtualFile.getImage());
   }
 
-  public ImageVirtualFile(String simpleFilename, int width, byte[] raw) {
-    super(simpleFilename);
-    myImage = FigureUtil.fromRawBytes(width, raw);
-    runSetBinaryContentAction(FigureUtil.toByteArray(myImage));
-  }
-
   public ImageVirtualFile(String simpleFilename, BufferedImage image) {
     super(simpleFilename);
     myImage = image;
