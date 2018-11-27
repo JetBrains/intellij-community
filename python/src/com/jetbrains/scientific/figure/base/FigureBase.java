@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.scientific.figure.base;
+package com.jetbrains.scientific.figure.base;
 
-import com.jetbrains.python.scientific.figure.Figure;
+import com.jetbrains.scientific.figure.Figure;
 
 import static com.google.common.base.Preconditions.checkState;
 

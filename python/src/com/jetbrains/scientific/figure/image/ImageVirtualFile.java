@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.scientific.figure.image;
+package com.jetbrains.scientific.figure.image;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
-import com.jetbrains.python.scientific.figure.base.FigureUtil;
+import com.jetbrains.scientific.figure.base.FigureUtil;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;

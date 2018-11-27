@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.scientific.figure.base;
+package com.jetbrains.scientific.figure.base;
 
 import com.intellij.util.ui.JBUI;
-import com.jetbrains.python.scientific.figure.FigureConstants;
-import com.jetbrains.python.scientific.figure.WithBinaryContent;
+import com.jetbrains.scientific.figure.FigureConstants;
+import com.jetbrains.scientific.figure.WithBinaryContent;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;

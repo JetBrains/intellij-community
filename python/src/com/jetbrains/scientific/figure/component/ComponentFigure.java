@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.scientific.figure.component;
+package com.jetbrains.scientific.figure.component;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.scientific.figure.base.FigureBase;
+import com.jetbrains.scientific.figure.base.FigureBase;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,10 +16,10 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
 
-import static com.jetbrains.python.scientific.figure.FigureConstants.THUMBNAIL_ICON_HEIGHT;
-import static com.jetbrains.python.scientific.figure.FigureConstants.THUMBNAIL_ICON_WIDTH;
-import static com.jetbrains.python.scientific.figure.base.FigureUtil.componentImage;
-import static com.jetbrains.python.scientific.figure.base.FigureUtil.fit;
+import static com.jetbrains.scientific.figure.FigureConstants.THUMBNAIL_ICON_HEIGHT;
+import static com.jetbrains.scientific.figure.FigureConstants.THUMBNAIL_ICON_WIDTH;
+import static com.jetbrains.scientific.figure.base.FigureUtil.componentImage;
+import static com.jetbrains.scientific.figure.base.FigureUtil.fit;
 
 public class ComponentFigure extends FigureBase {
   private final ComponentProvider myComponentProvider;
