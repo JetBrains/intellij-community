@@ -1,6 +1,6 @@
 import pytest
 import sys
-from tests_python.test_debugger import IS_PY26
+from tests_python.test_debugger import IS_PY26, IS_PY34
 from _pydevd_bundle.pydevd_constants import NO_FTRACE
 from tests_python.debugger_unittest import IS_JYTHON
 
@@ -77,7 +77,7 @@ def test_tracing_gotchas():
     for tracer, line_events in (
             (Tracer(), 1 if IS_JYTHON else 4),
             (TracerSettingNone(), 1),
-            (TracerChangeToOtherTracing(), 4 if not IS_PY26 and not IS_JYTHON else 1),
+            (TracerChangeToOtherTracing(), 4 if not IS_PY26 and not IS_PY34 and not IS_JYTHON else 1),
             (TracerDisableOnCall(), 0),
     ):
         curr_trace_func = sys.gettrace()

@@ -48,6 +48,7 @@ if sys.version_info[0] == 2:
     IS_PY2 = True
 
 IS_PY26 = sys.version_info[:2] == (2, 6)
+IS_PY34 = sys.version_info[:2] == (3, 4)
 
 if IS_PY2:
     builtin_qualifier = "__builtin__"
