@@ -38,10 +38,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 /**
  * @author vlan
@@ -227,7 +230,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw new PyExecutionException(e.getMessage(), "pip", simplifiedArgs, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+      throw new PyExecutionException(e.getMessage(), "pip", makeSafeToDisplayCommand(simplifiedArgs), 
+                                     e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
@@ -502,8 +506,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     cmdline.add(homePath);
     cmdline.add(helperPath);
     cmdline.addAll(args);
-    LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
-
+    LOG.info("Running packaging tool: " + StringUtil.join(makeSafeToDisplayCommand(cmdline), " "));
+    
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir);
       final Map<String, String> environment = commandLine.getEnvironment();
@@ -548,6 +552,38 @@ public class PyPackageManagerImpl extends PyPackageManager {
     catch (IOException e) {
       throw new PyExecutionException(e.getMessage(), helperPath, args);
     }
+  }
+
+  @NotNull
+  private static List<String> makeSafeToDisplayCommand(@NotNull List<String> cmdline) {
+    final List<String> safeCommand = new ArrayList<>(cmdline);
+    for (int i = 0; i < safeCommand.size(); i++) {
+      if (cmdline.get(i).equals("--proxy") && i + 1 < cmdline.size()) {
+        safeCommand.set(i + 1, makeSafeProxyArgument(cmdline.get(i + 1)));
+      }
+    }
+    return safeCommand;
+  }
+
+  @NotNull
+  private static String makeSafeProxyArgument(@NotNull String proxyArgument) {
+    try {
+      final URI proxyUri = new URI(proxyArgument);
+      final String credentials = proxyUri.getUserInfo();
+      if (credentials != null) {
+        final int colonIndex = credentials.indexOf(":");
+        if (colonIndex >= 0) {
+          final String login = credentials.substring(0, colonIndex);
+          final String password = credentials.substring(colonIndex + 1);
+          final String maskedPassword = StringUtil.repeatSymbol('*', password.length());
+          final String maskedCredentials = login + ":" + maskedPassword;
+          return proxyArgument.replaceFirst(Pattern.quote(credentials), maskedCredentials);
+        }
+      }
+    }
+    catch (URISyntaxException ignored) {
+    }
+    return proxyArgument;
   }
 
   @NotNull
