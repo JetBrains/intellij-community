@@ -65,6 +65,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
   private final FilesProcessor myProjectConfigurationFilesProcessor;
+  private final FilesProcessor myExternalFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
@@ -82,6 +83,7 @@ public abstract class VcsVFSListener implements Disposable {
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
 
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
+    myExternalFilesProcessor = createExternalFilesProcessor();
   }
 
   @Override
@@ -91,6 +93,10 @@ public abstract class VcsVFSListener implements Disposable {
   protected boolean isEventIgnored(@NotNull VirtualFileEvent event) {
     if (event.isFromRefresh()) return true;
     return !isUnderMyVcs(event.getFile());
+  }
+
+  private static boolean isExternalEvent(@NotNull VirtualFileEvent event) {
+    return event.isFromRefresh();
   }
 
   private boolean isUnderMyVcs(@NotNull VirtualFile file) {
@@ -154,6 +160,17 @@ public abstract class VcsVFSListener implements Disposable {
         performAdding(new ArrayList<>(filesToProcess), copyFromMap);
       }
     }
+  }
+
+  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
+                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
+                                          @NotNull ExecuteAddCallback executeAddCallback) {
+    executeAddCallback.executeAdd(addedFiles, copyFromMap);
+  }
+
+  @FunctionalInterface
+  protected interface ExecuteAddCallback {
+    void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);
   }
 
   protected void saveUnsavedVcsIgnoreFiles() {
@@ -229,10 +246,20 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void fileAdded(@NotNull VirtualFileEvent event, @NotNull VirtualFile file) {
-    if (!isEventIgnored(event) && !myChangeListManager.isIgnoredFile(file) &&
+    if (isExternalEvent(event)
+        && !myChangeListManager.isIgnoredFile(file) && VcsUtil.getVcsRootFor(myProject, file) != null) {
+      LOG.debug("Adding external file [", file, "]");
+      if (file.isDirectory()) {
+        processExternalCreatedFiles(ContainerUtil.newArrayList(file));
+      } else {
+        executeAddWithoutIgnores(ContainerUtil.newArrayList(file), Collections.emptyMap(),
+                                 (notIgnoredFiles, copiedFilesMap) -> processExternalCreatedFiles(notIgnoredFiles));
+      }
+    }
+    else if (!isEventIgnored(event) &&
         (isDirectoryVersioningSupported() || !file.isDirectory())) {
       LOG.debug("Adding [", file, "] to added files");
-      myAddedFiles.add(event.getFile());
+      myAddedFiles.add(file);
     }
   }
 
@@ -317,6 +344,16 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract void performMoveRename(@NotNull List<MovedFileInfo> movedFiles);
 
   protected abstract boolean isDirectoryVersioningSupported();
+
+  @SuppressWarnings("unchecked")
+  private FilesProcessor createExternalFilesProcessor() {
+    return new ExternallyAddedFilesProcessorImpl(myProject,
+                                                 myVcs.getDisplayName(),
+                                                 (files) -> {
+                                                   performAdding((Collection<VirtualFile>)files, emptyMap());
+                                                   return Unit.INSTANCE;
+                                                 });
+  }
 
   @SuppressWarnings("unchecked")
   private FilesProcessor createProjectConfigurationFilesProcessor() {
@@ -422,6 +459,20 @@ public abstract class VcsVFSListener implements Disposable {
       if (isUnderMyVcs(file)) {
         VcsVFSListener.this.beforeContentsChange(event, file);
       }
+    }
+  }
+
+  private void processExternalCreatedFiles(@NotNull List<VirtualFile> files) {
+    if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+
+    files = myProjectConfigurationFilesProcessor.processFiles(files);
+    if (files.isEmpty()) return;
+
+    if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      performAdding(files, Collections.emptyMap());
+    }
+    else {
+      myExternalFilesProcessor.processFiles(files);
     }
   }
 
