@@ -14,9 +14,10 @@ import pytest
 
 from tests_python import debugger_unittest
 from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION,
-                                            REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
-                                            CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
-                                            IS_APPVEYOR, wait_for_condition)
+    REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
+    CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
+    IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
+    CMD_THREAD_SUSPEND)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 try:
     from urllib import unquote
@@ -124,6 +125,89 @@ def test_case_2(case_setup):
         assert 15 == writer._sequence, 'Expected 15. Had: %s' % writer._sequence
 
         writer.log.append('Marking finished ok.')
+        writer.finished_ok = True
+
+
+@pytest.mark.parametrize(
+    'skip_suspend_on_breakpoint_exception, skip_print_breakpoint_exception',
+    (
+        [['NameError'], []],
+        [['NameError'], ['NameError']],
+        [[], []],  # Empty means it'll suspend/print in any exception
+        [[], ['NameError']],
+        [['ValueError'], ['Exception']],
+        [['Exception'], ['ValueError']],  # ValueError will also suspend/print since we're dealing with a NameError
+    )
+ )
+def test_case_breakpoint_condition_exc(case_setup, skip_suspend_on_breakpoint_exception, skip_print_breakpoint_exception):
+
+    msgs_in_stderr = (
+        'Error while evaluating expression: i > 5',
+        "NameError: name 'i' is not defined",
+        'Traceback (most recent call last):',
+        'File "<string>", line 1, in <module>',
+    )
+
+    def _ignore_stderr_line(line):
+        if original_ignore_stderr_line(line):
+            return True
+
+        for msg in msgs_in_stderr:
+            if msg in line:
+                return True
+
+        return False
+
+    def additional_output_checks(stdout, stderr):
+        original_additional_output_checks(stdout, stderr)
+        if skip_print_breakpoint_exception in ([], ['ValueError']):
+            for msg in msgs_in_stderr:
+                assert msg in stderr
+        else:
+            for msg in msgs_in_stderr:
+                assert msg not in stderr
+
+    with case_setup.test_file('_debugger_case_breakpoint_condition_exc.py') as writer:
+
+        original_ignore_stderr_line = writer._ignore_stderr_line
+        writer._ignore_stderr_line = _ignore_stderr_line
+
+        original_additional_output_checks = writer.additional_output_checks
+        writer.additional_output_checks = additional_output_checks
+
+        writer.write_suspend_on_breakpoint_exception(skip_suspend_on_breakpoint_exception, skip_print_breakpoint_exception)
+        breakpoint_id = writer.write_add_breakpoint(
+            writer.get_line_index_with_content('break here'), 'Call', condition='i > 5')
+
+        writer.write_make_initial_run()
+
+        if skip_suspend_on_breakpoint_exception in ([], ['ValueError']):
+            writer.wait_for_message(lambda msg:msg.startswith('%s\t' % (CMD_GET_BREAKPOINT_EXCEPTION,)))
+            hit = writer.wait_for_breakpoint_hit()
+            writer.write_run_thread(hit.thread_id)
+
+        if IS_JYTHON:
+            # Jython will break twice.
+            if skip_suspend_on_breakpoint_exception in ([], ['ValueError']):
+                writer.wait_for_message(lambda msg:msg.startswith('%s\t' % (CMD_GET_BREAKPOINT_EXCEPTION,)))
+                hit = writer.wait_for_breakpoint_hit()
+                writer.write_run_thread(hit.thread_id)
+
+        hit = writer.wait_for_breakpoint_hit()
+        thread_id = hit.thread_id
+        frame_id = hit.frame_id
+
+        writer.write_get_frame(thread_id, frame_id)
+        msg = writer.wait_for_message(lambda msg:msg.startswith('%s\t' % (CMD_GET_FRAME,)))
+        name_to_value = {}
+        for var in msg.var:
+            name_to_value[var['name']] = var['value']
+        assert name_to_value == {'i': 'int: 6', 'last_i': 'int: 6'}
+
+        writer.write_remove_breakpoint(breakpoint_id)
+
+        writer.write_run_thread(thread_id)
+
         writer.finished_ok = True
 
 
@@ -2182,7 +2266,7 @@ def test_top_level_exceptions_on_attach(case_setup_remote, check_scenario):
 
     def check_test_suceeded_msg(writer, stdout, stderr):
         return 'TEST SUCEEDED' in ''.join(stderr)
-    
+
     def additional_output_checks(writer, stdout, stderr):
         # Don't call super as we have an expected exception
         assert 'ValueError: TEST SUCEEDED' in stderr
