@@ -51,7 +51,9 @@ public class DependencyResolverImpl implements DependencyResolver {
   private static final boolean is4OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
   static final boolean isJavaLibraryPluginSupported = is4OrBetter ||
                                                               (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0);
-  private static final boolean isDependencySubstitutionsSupported = isJavaLibraryPluginSupported ||
+  static final boolean is31OrBetter = isJavaLibraryPluginSupported ||
+                                      (GradleVersion.current().compareTo(GradleVersion.version("3.1")) >= 0);
+  private static final boolean isDependencySubstitutionsSupported = is31OrBetter ||
                                                                     (GradleVersion.current().compareTo(GradleVersion.version("2.5")) > 0);
   private static final boolean isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
                                                                     (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
