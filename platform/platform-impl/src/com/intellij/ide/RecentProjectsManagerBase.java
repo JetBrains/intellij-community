@@ -506,7 +506,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private AnAction createOpenAction(@SystemIndependent String path, Set<String> duplicates) {
+  protected /* for Rider */ AnAction createOpenAction(@SystemIndependent String path, Set<String> duplicates) {
     String projectName = getProjectName(path);
     String displayName;
     synchronized (myStateLock) {
