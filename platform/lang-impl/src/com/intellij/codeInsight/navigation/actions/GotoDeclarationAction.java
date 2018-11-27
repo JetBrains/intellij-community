@@ -17,6 +17,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -153,7 +154,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
-    if (!editor.getComponent().isShowing()) return;
+    if (!editor.getComponent().isShowing() && !ApplicationManager.getApplication().isOnAir()) return;
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       gotoTargetElement(element, editor, currentFile);
       return true;
