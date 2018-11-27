@@ -81,6 +81,7 @@ abstract class Cell {
     return component
   }
 
+  @JvmOverloads
   fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags): JCheckBox {
     val component = JCheckBox(text)
     component.isSelected = isSelected
