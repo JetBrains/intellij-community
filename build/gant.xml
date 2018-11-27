@@ -11,7 +11,12 @@
 
   <target name="init">
     <property name="gradle.home" value="${project.home}/build/dependencies"/>
-    <property name="gradle.daemon" value="--no-daemon"/>
+    <condition property="gradle.daemon" value="--daemon" else="--no-daemon">
+      <and>
+        <isset property="intellij.build.use.gradle.daemon"/>
+        <equals arg1="${intellij.build.use.gradle.daemon}" arg2="true"/>
+      </and>
+    </condition>
     <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>
     </condition>
