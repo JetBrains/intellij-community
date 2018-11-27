@@ -251,7 +251,9 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertModuleLibDep(String moduleName, String depName, String classesPath, String sourcePath, String javadocPath) {
     LibraryOrderEntry lib = ContainerUtil.getFirstItem(getModuleLibDeps(moduleName, depName));
-
+    final String errorMessage = "Failed to find dependency with name [" + depName + "] in module [" + moduleName + "]\n" +
+                                "Available dependencies: " + collectModuleDepsNames(moduleName, LibraryOrderEntry.class);
+    assertNotNull(errorMessage, lib);
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, classesPath == null ? null : Collections.singletonList(classesPath));
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePath == null ? null : Collections.singletonList(sourcePath));
     assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPath == null ? null : Collections.singletonList(javadocPath));
