@@ -390,11 +390,6 @@ class DebuggerRunner(object):
 
             if writer is not None:
                 if not writer.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
-                    poll = process.poll()
-                    if poll < 0:
-                        self.fail_with_message(
-                            "The other process exited with error code: " + str(poll), stdout, stderr, writer)
-
                     if stdout is None:
                         self.fail_with_message(
                             "The other process may still be running -- and didn't give any output.", stdout, stderr, writer)
