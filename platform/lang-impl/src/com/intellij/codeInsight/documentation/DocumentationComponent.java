@@ -664,6 +664,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
         applyFontProps();
+        // resize popup according to new font size, if user didn't set popup size manually
+        if (myHint != null && myHint.getDimensionServiceKey() == null) showHint();
       }
     });
 
