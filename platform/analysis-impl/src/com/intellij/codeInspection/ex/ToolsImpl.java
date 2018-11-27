@@ -315,6 +315,7 @@ public class ToolsImpl implements Tools {
     return myDefaultState.getLevel();
   }
 
+  @NotNull
   public HighlightDisplayLevel getLevel() {
     return myDefaultState.getLevel();
   }

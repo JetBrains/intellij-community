@@ -80,6 +80,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   protected CodeStyleSettings importSettings() throws SchemeImportException {
     final CodeStyleScheme targetScheme = new CodeStyleSchemeImpl("Test", false, null);
     SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<CodeStyleScheme>() {
+      @NotNull
       @Override
       public CodeStyleScheme createNewScheme(@Nullable String name) {
         return targetScheme;
