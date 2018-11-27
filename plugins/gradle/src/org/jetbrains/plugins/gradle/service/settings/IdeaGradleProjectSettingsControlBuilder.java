@@ -986,7 +986,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       if (runner == GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST) {
         return GradleBundle.message("gradle.preferred_test_runner.CHOOSE_PER_TEST");
       }
-      return "Use application default";
+      return GradleBundle.message("gradle.settings.text.use.application.default");
     }
   }
 }
