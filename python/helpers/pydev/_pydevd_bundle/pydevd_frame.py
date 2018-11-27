@@ -21,6 +21,7 @@ try:
     from inspect import CO_GENERATOR
 except:
     CO_GENERATOR = 0
+from _pydevd_bundle.pydevd_constants import IS_PY2
 
 try:
     from _pydevd_bundle.pydevd_signature import send_signature_call_trace, send_signature_return_trace
@@ -47,34 +48,37 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
             return False
 
         return eval(condition, new_frame.f_globals, new_frame.f_locals)
-
-    except:
-        if type(condition) != type(''):
-            if hasattr(condition, 'encode'):
+    except Exception as e:
+        if IS_PY2:
+            # Must be bytes on py2.
+            if isinstance(condition, unicode):
                 condition = condition.encode('utf-8')
 
-        msg = 'Error while evaluating expression: %s\n' % (condition,)
-        sys.stderr.write(msg)
-        traceback.print_exc()
-        if not py_db.suspend_on_breakpoint_exception:
-            return False
-        else:
+        if not isinstance(e, py_db.skip_print_breakpoint_exception):
+            sys.stderr.write('Error while evaluating expression: %s\n' % (condition,))
+
+            etype, value, tb = sys.exc_info()
+            traceback.print_exception(etype, value, tb.tb_next)
+
+        if not isinstance(e, py_db.skip_suspend_on_breakpoint_exception):
             try:
                 # add exception_type and stacktrace into thread additional info
                 etype, value, tb = sys.exc_info()
-                try:
-                    error = ''.join(traceback.format_exception_only(etype, value))
-                    stack = traceback.extract_stack(f=tb.tb_frame.f_back)
+                error = ''.join(traceback.format_exception_only(etype, value))
+                stack = traceback.extract_stack(f=tb.tb_frame.f_back)
 
-                    # On self.set_suspend(thread, CMD_SET_BREAK) this info will be
-                    # sent to the client.
-                    info.conditional_breakpoint_exception = \
-                        ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
-                finally:
-                    etype, value, tb = None, None, None
+                # On self.set_suspend(thread, CMD_SET_BREAK) this info will be
+                # sent to the client.
+                info.conditional_breakpoint_exception = \
+                    ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
             except:
                 traceback.print_exc()
             return True
+        
+        return False
+
+    finally:
+        etype, value, tb = None, None, None
 
 
 def handle_breakpoint_expression(breakpoint, info, new_frame):
