@@ -1088,7 +1088,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
     EdtTestUtil.runInEdtAndWait(() -> {
       Application application = ApplicationManager.getApplication();
-      if (application != null) {
+      if (application != null && !application.isDisposed()) {
         FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
         if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
 
