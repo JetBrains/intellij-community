@@ -406,7 +406,6 @@ public class UninitializedReadCollector {
       return switchBlockAssignsVariable(switchExpression, variable, stamp, checkedMethods);
     }
     else {
-      assert false : "unknown expression: " + expression;
       return false;
     }
   }
