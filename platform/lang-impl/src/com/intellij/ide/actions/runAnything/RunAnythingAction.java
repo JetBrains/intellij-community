@@ -373,11 +373,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           //myCalcThread = null;
         }
         myAlarm.cancelAllRequests();
-        if (myBalloon != null && !myBalloon.isDisposed()) {
-          myBalloon.cancel();
-          if (myPopup != null && !myPopup.isDisposed()) {
-            myPopup.cancel();
-          }
+        final JBPopup balloon = myBalloon;
+        final JBPopup popup = myPopup;
+        if (balloon != null && !balloon.isDisposed() && popup != null && !popup.isDisposed()) {
+          balloon.cancel();
+          popup.cancel();
         }
 
         //noinspection SSBasedInspection
