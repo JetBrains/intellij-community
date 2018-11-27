@@ -40,4 +40,5 @@ public class DataFlowInspection12Test extends DataFlowInspectionTestCase {
 
   public void testSwitchStatementsJava12() { doTest(); }
   public void testSwitchExpressionsJava12() { doTest(); }
+  public void testSwitchExpressionsNullabilityJava12() { doTest(); }
 }
