@@ -15,6 +15,7 @@ import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
 
+
 def _normpath(filename):
     return pydevd_file_utils.get_abs_path_real_path_and_base_from_file(filename)[0]
 
@@ -219,7 +220,12 @@ def _get_default_library_roots():
                 roots.append(site_path)
         else:
             roots.append(site_paths)
-    return roots
+
+    for path in sys.path:
+        if os.path.exists(path) and os.path.basename(path) == 'site-packages':
+            roots.append(path)
+
+    return sorted(set(roots))
 
 
 # --- Project roots
