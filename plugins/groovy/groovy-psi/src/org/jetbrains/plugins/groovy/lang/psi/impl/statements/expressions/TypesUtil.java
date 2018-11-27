@@ -557,6 +557,11 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Nullable
+  public static PsiType createJavaLangClassType(@Nullable PsiType type, @NotNull PsiElement context) {
+    return createJavaLangClassType(type, context.getProject(), context.getResolveScope());
+  }
+  
+  @Nullable
   public static PsiType createJavaLangClassType(@Nullable PsiType type,
                                                 Project project,
                                                 GlobalSearchScope resolveScope) {

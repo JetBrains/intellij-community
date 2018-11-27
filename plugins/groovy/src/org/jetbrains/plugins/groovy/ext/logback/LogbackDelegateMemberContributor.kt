@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import groovy.lang.Closure.DELEGATE_FIRST
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createJavaLangClassType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrMethodWrapper
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -22,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
-import org.jetbrains.plugins.groovy.lang.resolve.wrapClassType
 
 class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
 
@@ -87,7 +87,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       if (name != null && name != propertyName) return true
 
       val parameter = method.parameterList.parameters.singleOrNull() ?: return true
-      val classType = wrapClassType(parameter.type, place) ?: return true
+      val classType = createJavaLangClassType(parameter.type, place) ?: return true
       val wrappedBase = GrLightMethodBuilder(place.manager, propertyName).apply {
         returnType = PsiType.VOID
         navigationElement = method

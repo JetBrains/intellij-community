@@ -225,7 +225,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         }
         return factory.createType((PsiClass)resolved);
       }
-      return TypesUtil.createJavaLangClassType(factory.createType((PsiClass)resolved), getProject(), getResolveScope());
+      return TypesUtil.createJavaLangClassType(factory.createType((PsiClass)resolved), this);
     }
 
     if (resolved instanceof GrVariable) {
@@ -284,7 +284,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     PsiType qualifierType = PsiImplUtil.getQualifierType(this);
 
     if (qualifierType == null && !PsiUtil.isCompileStatic(this)) return null;
-    return TypesUtil.createJavaLangClassType(qualifierType, getProject(), getResolveScope());
+    return TypesUtil.createJavaLangClassType(qualifierType, this);
   }
 
   @Nullable
