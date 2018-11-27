@@ -1102,7 +1102,7 @@ def test_unhandled_exceptions_in_top_level(case_setup_unhandled_exceptions):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_JYTHON or IS_PY26, reason='Failing on Jython and py26 -- needs to be investigated).')
+@pytest.mark.skipif(IS_JYTHON, reason='Failing on Jython -- needs to be investigated).')
 def test_unhandled_exceptions_in_top_level2(case_setup_unhandled_exceptions):
     # Note: expecting unhandled exception to be printed to stderr.
 
