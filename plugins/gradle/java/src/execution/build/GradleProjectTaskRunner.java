@@ -195,9 +195,13 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
       if (runProfile instanceof ModuleBasedConfiguration) {
         RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
-        if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule())) {
+        if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule()) ||
+            !GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabled(module.getModule())) {
           return false;
         }
+      }
+      else if (!GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabledByDefault()) {
+        return false;
       }
       for (GradleExecutionEnvironmentProvider environmentProvider : GradleExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
         if (environmentProvider.isApplicable(((ExecuteRunConfigurationTask)projectTask))) {
