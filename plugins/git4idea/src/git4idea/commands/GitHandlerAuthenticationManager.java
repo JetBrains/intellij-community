@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.UUID;
 
 import static com.intellij.util.ObjectUtils.notNull;
-import static git4idea.commands.GitAuthenticationMode.FULL;
 
 /**
  * Manager for Git remotes authentication.
@@ -134,7 +133,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_VAR, "ssh");
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
-    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode() != FULL);
+    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode());
     mySshHandler = ssh.registerHandler(guiHandler, myProject);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
@@ -172,10 +171,8 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
     boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
-    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject,
-                                                                                  authenticationGate,
-                                                                                  myHandler.getIgnoreAuthenticationMode() != FULL,
-                                                                                  doNotRememberPasswords);
+    GitNativeSshGuiAuthenticator authenticator =
+      new GitNativeSshGuiAuthenticator(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode(), doNotRememberPasswords);
 
     myNativeSshHandler = service.registerHandler(authenticator, myProject);
     int port = service.getXmlRcpPort();
