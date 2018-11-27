@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.pycharm.community" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
     <orderEntry type="library" name="KotlinScriptRuntime" level="project" />
+    <orderEntry type="module" module-name="intellij.pycharm.community.build" />
   </component>
 </module>
