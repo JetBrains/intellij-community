@@ -1,19 +1,20 @@
+import base64
 import matplotlib
 import os
-import socket
-import struct
+
+from typing import Dict, Tuple
+
 from matplotlib._pylab_helpers import Gcf
 from matplotlib.backend_bases import FigureManagerBase, ShowBase
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
-HOST = 'localhost'
-PORT = os.getenv("PYCHARM_MATPLOTLIB_PORT")
-PORT = int(PORT) if PORT is not None else None
-PORT = PORT if PORT != -1 else None
+from datalore.display import display
+
 index = int(os.getenv("PYCHARM_MATPLOTLIB_INDEX", 0))
 
 rcParams = matplotlib.rcParams
+
 
 class Show(ShowBase):
     def __call__(self, **kwargs):
@@ -61,8 +62,8 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
     def show(self):
         self.figure.tight_layout()
         FigureCanvasAgg.draw(self)
-        if PORT is None:
-            return
+        # if PORT is None:
+        #     return
 
         if matplotlib.__version__ < '1.2':
             buffer = self.tostring_rgb(0, 0)
@@ -77,16 +78,7 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         width = int(render.width)
 
         plot_index = index if os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False) else -1
-        try:
-            sock = socket.socket()
-            sock.connect((HOST, PORT))
-            sock.send(struct.pack('>i', width))
-            sock.send(struct.pack('>i', plot_index))
-            sock.send(struct.pack('>i', len(buffer)))
-            sock.send(buffer)
-        except OSError as _:
-            # nothing bad. It just means, that our tool window doesn't run yet
-            pass
+        display(DisplayDataObject(plot_index, width, buffer))
 
     def draw(self):
         is_interactive = os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False)
@@ -106,3 +98,19 @@ class FigureManagerInterAgg(FigureManagerBase):
     def show(self, **kwargs):
         self.canvas.show()
         Gcf.destroy(self._num)
+
+
+class DisplayDataObject:
+    def __init__(self, plot_index, width, image_bytes):
+        self.plot_index = plot_index
+        self.image_width = width
+        self.image_bytes = image_bytes
+
+    def _repr_display_(self) -> Tuple[str, Dict]:
+        image_bytes_base64 = base64.b64encode(self.image_bytes)
+        body = {
+            'plot_index': self.plot_index,
+            'image_width': self.image_width,
+            'image_base64': image_bytes_base64.decode()
+        }
+        return ('pycharm-plot-image', body)

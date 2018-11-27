@@ -721,6 +721,9 @@
                     interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider"/>
     <extensionPoint qualifiedName="Pythonid.packageManagerProvider" interface="com.jetbrains.python.packaging.PyPackageManagerProvider"/>
+
+    <extensionPoint qualifiedName="Pythonid.scientific.displayMessageHandler"
+                    interface="com.jetbrains.python.scientific.extension.DisplayMessageHandler"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
