@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface ProjectConfigurationFilesProcessor {
+public interface FilesProcessor {
   @NotNull
-  List<VirtualFile> processFiles(@NotNull List<VirtualFile> files, @NotNull VcsVFSListener listener);
+  List<VirtualFile> processFiles(@NotNull List<VirtualFile> files);
 }

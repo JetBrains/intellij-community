@@ -5,7 +5,6 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -19,11 +18,14 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+
+import static java.util.Collections.emptyMap;
 
 public abstract class VcsVFSListener implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VcsVFSListener.class);
@@ -62,7 +64,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
-  private final ProjectConfigurationFilesProcessor myProjectConfigurationFilesProcessor;
+  private final FilesProcessor myProjectConfigurationFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
@@ -79,7 +81,7 @@ public abstract class VcsVFSListener implements Disposable {
     project.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
 
-    myProjectConfigurationFilesProcessor = ServiceManager.getService(myProject, ProjectConfigurationFilesProcessor.class);
+    myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
   }
 
   @Override
@@ -137,7 +139,7 @@ public abstract class VcsVFSListener implements Disposable {
     LOG.debug("executeAdd. add-option: ", myAddOption.getValue(), ", files to add: ", addedFiles);
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
 
-    addedFiles = myProjectConfigurationFilesProcessor.processFiles(addedFiles, this);
+    addedFiles = myProjectConfigurationFilesProcessor.processFiles(addedFiles);
 
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
@@ -315,6 +317,16 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract void performMoveRename(@NotNull List<MovedFileInfo> movedFiles);
 
   protected abstract boolean isDirectoryVersioningSupported();
+
+  @SuppressWarnings("unchecked")
+  private FilesProcessor createProjectConfigurationFilesProcessor() {
+    return new ProjectConfigurationFilesProcessorImpl(myProject,
+                                                      myVcs.getDisplayName(),
+                                                      (files) -> {
+                                                        performAdding((Collection<VirtualFile>)files, emptyMap());
+                                                        return Unit.INSTANCE;
+                                                      });
+  }
 
   private class MyVirtualFileListener implements VirtualFileListener {
     @Override
