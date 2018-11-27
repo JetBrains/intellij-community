@@ -185,6 +185,8 @@ class RetypeSession(
         }
       }
       IdeEventQueue.getInstance().postEvent(
+        KeyEvent(editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_UNDEFINED, c))
+      IdeEventQueue.getInstance().postEvent(
         KeyEvent(editor.component, KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0, KeyEvent.VK_UNDEFINED, c))
       typedRightBefore = true
     }
