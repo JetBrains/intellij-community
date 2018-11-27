@@ -328,6 +328,11 @@ def is_ignored_by_filter(filename, filename_to_ignored_by_filters_cache={}):
         return filename_to_ignored_by_filters_cache[filename]
 
 
+def get_non_pydevd_threads():
+    threads = threading.enumerate()
+    return [t for t in threads if t and not getattr(t, 'is_pydev_daemon_thread', False)]
+
+
 def dump_threads(stream=None):
     '''
     Helper to dump thread info.

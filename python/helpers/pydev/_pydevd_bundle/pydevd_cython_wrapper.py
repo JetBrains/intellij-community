@@ -6,8 +6,7 @@ try:
         # this version number can be unavailable in old versions of compiled extensions
         version = getattr(_pydevd_bundle_ext.pydevd_cython, 'version', 0)
     except ImportError:
-        from _pydevd_bundle.pydevd_cython import trace_dispatch, PyDBAdditionalThreadInfo, set_additional_thread_info, global_cache_skips, \
-            global_cache_frame_skips
+        from _pydevd_bundle.pydevd_cython import trace_dispatch, PyDBAdditionalThreadInfo, set_additional_thread_info, global_cache_skips, global_cache_frame_skips
         import _pydevd_bundle.pydevd_cython
 
         # this version number can be unavailable in old versions of compiled extensions
@@ -39,8 +38,8 @@ except ImportError:
         check_name = '_pydevd_bundle.%s' % (mod_name,)
         mod = __import__(check_name)
         mod = getattr(mod, mod_name)
-        trace_dispatch, PyDBAdditionalThreadInfo, set_additional_thread_info, global_cache_skips, global_cache_frame_skips = \
-            mod.trace_dispatch, mod.PyDBAdditionalThreadInfo, mod.set_additional_thread_info, mod.global_cache_skips, mod.global_cache_frame_skips
+        trace_dispatch, PyDBAdditionalThreadInfo, set_additional_thread_info, global_cache_skips, global_cache_frame_skips = (
+            mod.trace_dispatch, mod.PyDBAdditionalThreadInfo, mod.set_additional_thread_info, mod.global_cache_skips, mod.global_cache_frame_skips)
         version = getattr(mod, 'version', 0)
     except ImportError:
         raise

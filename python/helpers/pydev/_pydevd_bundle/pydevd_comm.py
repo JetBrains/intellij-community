@@ -74,6 +74,9 @@ from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, S
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, GlobalDebuggerHolder, \
     get_global_debugger, GetGlobalDebugger, set_global_debugger # Keep for backward compatibility @UnusedImport
+from _pydev_bundle.pydev_override import overrides
+import json
+import weakref
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -95,7 +98,8 @@ import pydevd_file_utils
 import os
 import sys
 import traceback
-from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
+from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string, \
+    get_non_pydevd_threads
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
@@ -116,160 +120,26 @@ from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 get_file_type = DONT_TRACE.get
 
 
-CMD_RUN = 101
-CMD_LIST_THREADS = 102
-CMD_THREAD_CREATE = 103
-CMD_THREAD_KILL = 104
-CMD_THREAD_SUSPEND = 105
-CMD_THREAD_RUN = 106
-CMD_STEP_INTO = 107
-CMD_STEP_OVER = 108
-CMD_STEP_RETURN = 109
-CMD_GET_VARIABLE = 110
-CMD_SET_BREAK = 111
-CMD_REMOVE_BREAK = 112
-CMD_EVALUATE_EXPRESSION = 113
-CMD_GET_FRAME = 114
-CMD_EXEC_EXPRESSION = 115
-CMD_WRITE_TO_CONSOLE = 116
-CMD_CHANGE_VARIABLE = 117
-CMD_RUN_TO_LINE = 118
-CMD_RELOAD_CODE = 119
-CMD_GET_COMPLETIONS = 120
-
-# Note: renumbered (conflicted on merge)
-CMD_CONSOLE_EXEC = 121
-CMD_ADD_EXCEPTION_BREAK = 122
-CMD_REMOVE_EXCEPTION_BREAK = 123
-CMD_LOAD_SOURCE = 124
-CMD_ADD_DJANGO_EXCEPTION_BREAK = 125
-CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
-CMD_SET_NEXT_STATEMENT = 127
-CMD_SMART_STEP_INTO = 128
-CMD_EXIT = 129
-CMD_SIGNATURE_CALL_TRACE = 130
-
-CMD_SET_PY_EXCEPTION = 131
-CMD_GET_FILE_CONTENTS = 132
-CMD_SET_PROPERTY_TRACE = 133
-# Pydev debug console commands
-CMD_EVALUATE_CONSOLE_EXPRESSION = 134
-CMD_RUN_CUSTOM_OPERATION = 135
-CMD_GET_BREAKPOINT_EXCEPTION = 136
-CMD_STEP_CAUGHT_EXCEPTION = 137
-CMD_SEND_CURR_EXCEPTION_TRACE = 138
-CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED = 139
-CMD_IGNORE_THROWN_EXCEPTION_AT = 140
-CMD_ENABLE_DONT_TRACE = 141
-CMD_SHOW_CONSOLE = 142
-
-CMD_GET_ARRAY = 143
-CMD_STEP_INTO_MY_CODE = 144
-CMD_GET_CONCURRENCY_EVENT = 145
-CMD_SHOW_RETURN_VALUES = 146
-CMD_INPUT_REQUESTED = 147
-CMD_GET_DESCRIPTION = 148
-
-CMD_PROCESS_CREATED = 149
-CMD_SHOW_CYTHON_WARNING = 150
-CMD_LOAD_FULL_VALUE = 151
-
-CMD_GET_THREAD_STACK = 152
-
-# This is mostly for unit-tests to diagnose errors on ci.
-CMD_THREAD_DUMP_TO_STDERR = 153
-
-# Sent from the client to signal that we should stop when we start executing user code.
-CMD_STOP_ON_START = 154
-
-# When the debugger is stopped in an exception, this command will provide the details of the current exception (in the current thread).
-CMD_GET_EXCEPTION_DETAILS = 155
-
-CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION = 156
-
-CMD_PROCESS_CREATED_MSG_RECEIVED = 159
-
-CMD_REDIRECT_OUTPUT = 200
-CMD_GET_NEXT_STATEMENT_TARGETS = 201
-CMD_SET_PROJECT_ROOTS = 202
-
-CMD_VERSION = 501
-CMD_RETURN = 502
-CMD_SET_PROTOCOL = 503
-CMD_ERROR = 901
-
-ID_TO_MEANING = {
-    '101': 'CMD_RUN',
-    '102': 'CMD_LIST_THREADS',
-    '103': 'CMD_THREAD_CREATE',
-    '104': 'CMD_THREAD_KILL',
-    '105': 'CMD_THREAD_SUSPEND',
-    '106': 'CMD_THREAD_RUN',
-    '107': 'CMD_STEP_INTO',
-    '108': 'CMD_STEP_OVER',
-    '109': 'CMD_STEP_RETURN',
-    '110': 'CMD_GET_VARIABLE',
-    '111': 'CMD_SET_BREAK',
-    '112': 'CMD_REMOVE_BREAK',
-    '113': 'CMD_EVALUATE_EXPRESSION',
-    '114': 'CMD_GET_FRAME',
-    '115': 'CMD_EXEC_EXPRESSION',
-    '116': 'CMD_WRITE_TO_CONSOLE',
-    '117': 'CMD_CHANGE_VARIABLE',
-    '118': 'CMD_RUN_TO_LINE',
-    '119': 'CMD_RELOAD_CODE',
-    '120': 'CMD_GET_COMPLETIONS',
-    '121': 'CMD_CONSOLE_EXEC',
-    '122': 'CMD_ADD_EXCEPTION_BREAK',
-    '123': 'CMD_REMOVE_EXCEPTION_BREAK',
-    '124': 'CMD_LOAD_SOURCE',
-    '125': 'CMD_ADD_DJANGO_EXCEPTION_BREAK',
-    '126': 'CMD_REMOVE_DJANGO_EXCEPTION_BREAK',
-    '127': 'CMD_SET_NEXT_STATEMENT',
-    '128': 'CMD_SMART_STEP_INTO',
-    '129': 'CMD_EXIT',
-    '130': 'CMD_SIGNATURE_CALL_TRACE',
-
-    '131': 'CMD_SET_PY_EXCEPTION',
-    '132': 'CMD_GET_FILE_CONTENTS',
-    '133': 'CMD_SET_PROPERTY_TRACE',
-    '134': 'CMD_EVALUATE_CONSOLE_EXPRESSION',
-    '135': 'CMD_RUN_CUSTOM_OPERATION',
-    '136': 'CMD_GET_BREAKPOINT_EXCEPTION',
-    '137': 'CMD_STEP_CAUGHT_EXCEPTION',
-    '138': 'CMD_SEND_CURR_EXCEPTION_TRACE',
-    '139': 'CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED',
-    '140': 'CMD_IGNORE_THROWN_EXCEPTION_AT',
-    '141': 'CMD_ENABLE_DONT_TRACE',
-    '142': 'CMD_SHOW_CONSOLE',
-    '143': 'CMD_GET_ARRAY',
-    '144': 'CMD_STEP_INTO_MY_CODE',
-    '145': 'CMD_GET_CONCURRENCY_EVENT',
-    '146': 'CMD_SHOW_RETURN_VALUES',
-    '147': 'CMD_INPUT_REQUESTED',
-    '148': 'CMD_GET_DESCRIPTION',
-
-    '149': 'CMD_PROCESS_CREATED',
-    '150': 'CMD_SHOW_CYTHON_WARNING',
-    '151': 'CMD_LOAD_FULL_VALUE',
-    '152': 'CMD_GET_THREAD_STACK',
-    '153': 'CMD_THREAD_DUMP_TO_STDERR',
-    '154': 'CMD_STOP_ON_START',
-    '155': 'CMD_GET_EXCEPTION_DETAILS',
-    '156': 'CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION',
-
-    '159': 'CMD_PROCESS_CREATED_MSG_RECEIVED',
-
-    '200': 'CMD_REDIRECT_OUTPUT',
-    '201': 'CMD_GET_NEXT_STATEMENT_TARGETS',
-    '202': 'CMD_SET_PROJECT_ROOTS',
-
-    '501': 'CMD_VERSION',
-    '502': 'CMD_RETURN',
-    '503': 'CMD_SET_PROTOCOL',
-    '901': 'CMD_ERROR',
-}
-
+# CMD_XXX constants imported for backward compatibility
+from _pydevd_bundle.pydevd_comm_constants import (
+    ID_TO_MEANING, CMD_RUN, CMD_LIST_THREADS, CMD_THREAD_CREATE, CMD_THREAD_KILL,
+    CMD_THREAD_SUSPEND, CMD_THREAD_RUN, CMD_STEP_INTO, CMD_STEP_OVER, CMD_STEP_RETURN, CMD_GET_VARIABLE,
+    CMD_SET_BREAK, CMD_REMOVE_BREAK, CMD_EVALUATE_EXPRESSION, CMD_GET_FRAME,
+    CMD_EXEC_EXPRESSION, CMD_WRITE_TO_CONSOLE, CMD_CHANGE_VARIABLE, CMD_RUN_TO_LINE,
+    CMD_RELOAD_CODE, CMD_GET_COMPLETIONS, CMD_CONSOLE_EXEC, CMD_ADD_EXCEPTION_BREAK,
+    CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK,
+    CMD_REMOVE_DJANGO_EXCEPTION_BREAK, CMD_SET_NEXT_STATEMENT, CMD_SMART_STEP_INTO,
+    CMD_EXIT, CMD_SIGNATURE_CALL_TRACE, CMD_SET_PY_EXCEPTION, CMD_GET_FILE_CONTENTS,
+    CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION,
+    CMD_GET_BREAKPOINT_EXCEPTION, CMD_STEP_CAUGHT_EXCEPTION, CMD_SEND_CURR_EXCEPTION_TRACE,
+    CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,
+    CMD_SHOW_CONSOLE, CMD_GET_ARRAY, CMD_STEP_INTO_MY_CODE, CMD_GET_CONCURRENCY_EVENT,
+    CMD_SHOW_RETURN_VALUES, CMD_INPUT_REQUESTED, CMD_GET_DESCRIPTION, CMD_PROCESS_CREATED,
+    CMD_SHOW_CYTHON_WARNING, CMD_LOAD_FULL_VALUE, CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR,
+    CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_PYDEVD_JSON_CONFIG,
+    CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
+    CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, CMD_SET_PROJECT_ROOTS, CMD_VERSION,
+    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR,)
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
 
@@ -315,12 +185,16 @@ def pydevd_log(level, *args):
 class PyDBDaemonThread(threading.Thread):
     created_pydb_daemon_threads = {}
 
-    def __init__(self):
+    def __init__(self, target_and_args=None):
+        '''
+        :param target_and_args:
+            tuple(func, args, kwargs) if this should be a function and args to run.
+            -- Note: use through run_as_pydevd_daemon_thread().
+        '''
         threading.Thread.__init__(self)
-        self.setDaemon(True)
         self.killReceived = False
-        self.pydev_do_not_trace = True
-        self.is_pydev_daemon_thread = True
+        mark_as_pydevd_daemon_thread(self)
+        self._target_and_args = target_and_args
 
     def run(self):
         created_pydb_daemon = self.created_pydb_daemon_threads
@@ -335,6 +209,7 @@ class PyDBDaemonThread(threading.Thread):
                     # Note: Py.setSystemState() affects only the current thread.
                     PyCore.Py.setSystemState(ss)
 
+                self._stop_trace()
                 self._on_run()
             except:
                 if sys is not None and traceback is not None:
@@ -343,26 +218,34 @@ class PyDBDaemonThread(threading.Thread):
             del created_pydb_daemon[self]
 
     def _on_run(self):
-        raise NotImplementedError('Should be reimplemented by: %s' % self.__class__)
+        if self._target_and_args is not None:
+            target, args, kwargs = self._target_and_args
+            target(*args, **kwargs)
+        else:
+            raise NotImplementedError('Should be reimplemented by: %s' % self.__class__)
 
     def do_kill_pydev_thread(self):
-        #that was not working very well because jython gave some socket errors
         self.killReceived = True
 
     def _stop_trace(self):
         if self.pydev_do_not_trace:
+            pydevd_tracing.SetTrace(None, apply_to_pydevd_thread=True)  # no debugging on this thread
 
-            disable_tracing = True
 
-            if pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
-                # don't run untraced threads if we're in jython 2.2.1 or lower
-                # jython bug: if we start a thread and another thread changes the tracing facility
-                # it affects other threads (it's not set only for the thread but globally)
-                # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
-                disable_tracing = False
+def mark_as_pydevd_daemon_thread(thread):
+    thread.pydev_do_not_trace = True
+    thread.is_pydev_daemon_thread = True
+    thread.daemon = True
 
-            if disable_tracing:
-                pydevd_tracing.SetTrace(None, apply_to_pydevd_thread=True)  # no debugging on this thread
+
+def run_as_pydevd_daemon_thread(func, *args, **kwargs):
+    '''
+    Runs a function as a pydevd daemon thread (without any tracing in place).
+    '''
+    t = PyDBDaemonThread(target_and_args=(func, args, kwargs))
+    t.name = '%s (pydevd daemon thread)' % (func.__name__,)
+    t.start()
+    return t
 
 
 #=======================================================================================================================
@@ -390,8 +273,8 @@ class ReaderThread(PyDBDaemonThread):
             #just ignore that
             pass
 
+    @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
-        self._stop_trace()
         read_buffer = ""
         try:
 
@@ -464,10 +347,10 @@ class WriterThread(PyDBDaemonThread):
         if not self.killReceived: #we don't take new data after everybody die
             self.cmdQueue.put(cmd)
 
+    @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
         """ just loop and write responses """
 
-        self._stop_trace()
         try:
             while True:
                 try:
@@ -714,19 +597,23 @@ class NetCommandFactory:
     def make_list_threads_message(self, seq):
         """ returns thread listing as XML """
         try:
-            threads = threading.enumerate()
+            threads = get_non_pydevd_threads()
             cmd_text = ["<xml>"]
             append = cmd_text.append
             for thread in threads:
-                if is_thread_alive(thread) and not getattr(thread, 'is_pydev_daemon_thread', False):
+                if is_thread_alive(thread):
                     append(self._thread_to_xml(thread))
             append("</xml>")
             return NetCommand(CMD_RETURN, seq, ''.join(cmd_text))
         except:
             return self.make_error_message(seq, get_exception_traceback_str())
 
-    def make_get_thread_stack_message(self, seq, thread_id, topmost_frame):
-        """Returns thread stack as XML """
+    def make_get_thread_stack_message(self, seq, thread_id, topmost_frame, must_be_suspended=False):
+        """
+        Returns thread stack as XML.
+
+        :param be_suspended: If True and the thread is not suspended, returns None.
+        """
         try:
             # If frame is None, the return is an empty frame list.
             cmd_text = ['<xml><thread id="%s">' % (thread_id,)]
@@ -745,6 +632,10 @@ class NetCommandFactory:
                             thread_stack_str = frame.f_locals.get('thread_stack_str')
                             break
                         frame = frame.f_back
+                    else:
+                        # Could not find stack of suspended frame...
+                        if must_be_suspended:
+                            return None
                     cmd_text.append(thread_stack_str or self.make_thread_stack_str(topmost_frame))
                 finally:
                     topmost_frame = None
@@ -893,18 +784,32 @@ class NetCommandFactory:
 
     def make_thread_suspend_message(self, thread_id, frame, stop_reason, message, suspend_type, frame_to_lineno=None):
         try:
-
             thread_suspend_str, thread_stack_str = self.make_thread_suspend_str(
                 thread_id, frame, stop_reason, message, suspend_type, frame_to_lineno=frame_to_lineno)
             cmd = NetCommand(CMD_THREAD_SUSPEND, 0, thread_suspend_str)
             cmd.thread_stack_str = thread_stack_str
+            cmd.thread_suspend_str = thread_suspend_str
             return cmd
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
-    def make_thread_run_message(self, id, reason):
+    def make_thread_suspend_single_notification(self, thread_id, stop_reason):
         try:
-            return NetCommand(CMD_THREAD_RUN, 0, str(id) + "\t" + str(reason))
+            return NetCommand(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, 0, json.dumps(
+                {'thread_id': thread_id, 'stop_reason': stop_reason}))
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
+    def make_thread_resume_single_notification(self, thread_id):
+        try:
+            return NetCommand(CMD_THREAD_RESUME_SINGLE_NOTIFICATION, 0, json.dumps(
+                {'thread_id': thread_id}))
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
+    def make_thread_run_message(self, thread_id, reason):
+        try:
+            return NetCommand(CMD_THREAD_RUN, 0, "%s\t%s" % (thread_id, reason))
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
@@ -1095,6 +1000,9 @@ class InternalThreadCommand:
     get posted to PyDB.cmdQueue.
     """
 
+    def __init__(self, thread_id):
+        self.thread_id = thread_id
+
     def can_be_executed_by(self, thread_id):
         '''By default, it must be in the same thread to be executed
         '''
@@ -1152,24 +1060,54 @@ class ReloadCodeCommand(InternalThreadCommand):
 
 
 #=======================================================================================================================
-# InternalTerminateThread
+# InternalGetThreadStack
 #=======================================================================================================================
-class InternalTerminateThread(InternalThreadCommand):
-    def __init__(self, thread_id):
-        self.thread_id = thread_id
+class InternalGetThreadStack(InternalThreadCommand):
+    '''
+    This command will either wait for a given thread to be paused to get its stack or will provide
+    it anyways after a timeout (in which case the stack will be gotten but local variables won't
+    be available and it'll not be possible to interact with the frame as it's not actually
+    stopped in a breakpoint).
+    '''
 
+    def __init__(self, seq, thread_id, py_db, timeout=.5):
+        InternalThreadCommand.__init__(self, thread_id)
+        self._py_db = weakref.ref(py_db)
+        self._timeout = time.time() + timeout
+        self.seq = seq
+        self._cmd = None
+
+    @overrides(InternalThreadCommand.can_be_executed_by)
+    def can_be_executed_by(self, _thread_id):
+        from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
+        timed_out = time.time() >= self._timeout
+
+        py_db = self._py_db()
+        t = pydevd_find_thread_by_id(self.thread_id)
+        frame = None
+        if t and not getattr(t, 'pydev_do_not_trace', None):
+            additional_info = set_additional_thread_info(t)
+            frame = additional_info.get_topmost_frame(t)
+        try:
+            self._cmd = py_db.cmd_factory.make_get_thread_stack_message(
+                self.seq, self.thread_id, frame, must_be_suspended=not timed_out)
+        finally:
+            frame = None
+            t = None
+
+        return self._cmd is not None or timed_out
+
+    @overrides(InternalThreadCommand.do_it)
     def do_it(self, dbg):
-        pydevd_log(1, "killing ", str(self.thread_id))
-        cmd = dbg.cmd_factory.make_thread_killed_message(self.thread_id)
-        dbg.writer.add_command(cmd)
+        if self._cmd is not None:
+            dbg.writer.add_command(self._cmd)
+            self._cmd = None
 
 
 #=======================================================================================================================
 # InternalRunThread
 #=======================================================================================================================
 class InternalRunThread(InternalThreadCommand):
-    def __init__(self, thread_id):
-        self.thread_id = thread_id
 
     def do_it(self, dbg):
         t = pydevd_find_thread_by_id(self.thread_id)
@@ -1760,6 +1698,7 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
     def send_result(self, xml):
         raise NotImplementedError()
 
+    @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
         start = time.time()
         xml = StringIO.StringIO()
@@ -1807,9 +1746,9 @@ def pydevd_find_thread_by_id(thread_id):
             if thread_id == tid or thread_id.endswith('|' + tid):
                 return i
 
-        sys.stderr.write("Could not find thread %s\n" % thread_id)
-        sys.stderr.write("Available: %s\n" % [get_thread_id(t) for t in threads])
-        sys.stderr.flush()
+        # This can happen when a request comes for a thread which was previously removed.
+        pydevd_log(1, "Could not find thread %s\n" % thread_id)
+        pydevd_log(1, "Available: %s\n" % [get_thread_id(t) for t in threads] % thread_id)
     except:
         traceback.print_exc()
 

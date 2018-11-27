@@ -1,5 +1,6 @@
 from _pydevd_bundle.pydevd_constants import get_frame
 from _pydev_imps._pydev_saved_modules import thread, threading
+from _pydevd_bundle import pydevd_utils
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -112,11 +113,8 @@ def settrace_while_running_if_frame_eval(py_db, trace_func):
     if py_db.frame_eval_func is None:
         return
 
-    threads = threading.enumerate()
     try:
-        for t in threads:
-            if getattr(t, 'is_pydev_daemon_thread', False):
-                continue
+        for t in pydevd_utils.get_non_pydevd_threads():
             additional_info = getattr(t, 'additional_info', None)
             if additional_info is None:
                 # that's ok, no info currently set
