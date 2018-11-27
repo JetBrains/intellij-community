@@ -33,9 +33,6 @@ public class GrBinaryExpressionTypeCalculators {
     MAP.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
 
-    MAP.put(GroovyTokenTypes.mRANGE_EXCLUSIVE, GrRangeExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mRANGE_INCLUSIVE, GrRangeExpressionTypeCalculator.INSTANCE);
-
     MAP.put(GroovyTokenTypes.mBAND, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mBOR, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mBXOR, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
