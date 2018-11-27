@@ -62,8 +62,6 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
     def show(self):
         self.figure.tight_layout()
         FigureCanvasAgg.draw(self)
-        # if PORT is None:
-        #     return
 
         if matplotlib.__version__ < '1.2':
             buffer = self.tostring_rgb(0, 0)
