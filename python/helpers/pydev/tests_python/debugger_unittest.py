@@ -1,5 +1,6 @@
 from collections import namedtuple
 from contextlib import contextmanager
+import json
 try:
     from urllib import quote, quote_plus, unquote_plus
 except ImportError:
@@ -74,6 +75,7 @@ CMD_GET_THREAD_STACK = 152
 CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose errors on ci.
 CMD_STOP_ON_START = 154
 CMD_GET_EXCEPTION_DETAILS = 155
+CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION = 156
 
 CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
@@ -736,28 +738,36 @@ class AbstractWriterThread(threading.Thread):
 
     def write_version(self):
         from _pydevd_bundle.pydevd_constants import IS_WINDOWS
-        self.write("501\t%s\t1.0\t%s\tID" % (self.next_seq(), 'WINDOWS' if IS_WINDOWS else 'UNIX'))
+        self.write("%s\t%s\t1.0\t%s\tID" % (CMD_VERSION, self.next_seq(), 'WINDOWS' if IS_WINDOWS else 'UNIX'))
 
     def get_main_filename(self):
         return self.TEST_FILE
 
-    def write_add_breakpoint(self, line, func, filename=None, hit_condition=None, is_logpoint=False, suspend_policy=None):
+    def write_add_breakpoint(self, line, func, filename=None, hit_condition=None, is_logpoint=False, suspend_policy=None, condition=None):
         '''
             @param line: starts at 1
         '''
         if filename is None:
             filename = self.get_main_filename()
         breakpoint_id = self.next_breakpoint_id()
-        if hit_condition is None and not is_logpoint and suspend_policy is None:
+        if hit_condition is None and not is_logpoint and suspend_policy is None and condition is None:
             # Format kept for backward compatibility tests
             self.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (
                 CMD_SET_BREAK, self.next_seq(), breakpoint_id, 'python-line', filename, line, func))
         else:
             # Format: breakpoint_id, type, file, line, func_name, condition, expression, hit_condition, is_logpoint, suspend_policy
-            self.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone\t%s\t%s\t%s" % (
-                CMD_SET_BREAK, self.next_seq(), breakpoint_id, 'python-line', filename, line, func, hit_condition, is_logpoint, suspend_policy))
+            self.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\tNone\t%s\t%s\t%s" % (
+                CMD_SET_BREAK, self.next_seq(), breakpoint_id, 'python-line', filename, line, func, condition, hit_condition, is_logpoint, suspend_policy))
         self.log.append('write_add_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
+
+    def write_suspend_on_breakpoint_exception(self, skip_suspend_on_breakpoint_exception=('all',), skip_print_breakpoint_exception=('all',)):
+        self.write("%s\t%s\t%s" % (CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION, self.next_seq(), 
+            json.dumps(dict(
+                skip_suspend_on_breakpoint_exception=skip_suspend_on_breakpoint_exception,
+                skip_print_breakpoint_exception=skip_print_breakpoint_exception
+            ))
+        ))
 
     def write_stop_on_start(self, stop=True):
         self.write("%s\t%s\t%s" % (CMD_STOP_ON_START, self.next_seq(), stop))
