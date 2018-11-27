@@ -119,17 +119,28 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.wrapInHtml(decoded);
   }
 
-  private static String encodeTooltip(String toolTip, String description) {
-    if (toolTip == null || description == null) return toolTip;
-    String unescaped = StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(toolTip));
+  /**
+   * Encodes \p tooltip so that substrings equal to a \p description
+   * are replaced with the special placeholder to reduce size of the
+   * tooltip. If encoding takes place, <html></html> tags are
+   * stripped of the tooltip.
+   *
+   * @param tooltip - html text
+   * @param description - plain text (not escaped)
+   *
+   * @return encoded tooltip (stripped html text with one or more placeholder characters)
+   *         or tooltip without changes.
+   */
+  private static String encodeTooltip(String tooltip, String description) {
+    if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
-    String encoded = description.isEmpty() ? unescaped : StringUtil.replace(unescaped, description, DESCRIPTION_PLACEHOLDER);
+    String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
     //noinspection StringEquality
-    if (encoded == unescaped) {
-      return toolTip;
+    if (encoded == tooltip) {
+      return tooltip;
     }
     if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
-    return encoded;
+    return XmlStringUtil.stripHtml(encoded);
   }
 
   public String getDescription() {
