@@ -17,7 +17,6 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -128,17 +127,8 @@ public class ProgressSuspender implements AutoCloseable {
     myPublisher.suspendedStatusChanged(this);
   }
 
-  private boolean safeIsReadAccessAllowed() {
-    // isReadAccessAllowed throws if running as isInImpatientReader.
-    return ((ApplicationEx)ourApp).isInImpatientReader() || ourApp.isReadAccessAllowed();
-  }
-
   private boolean freezeIfNeeded(@Nullable ProgressIndicator current) {
-    // Note: instead of safeIsReadAccessAllowed it is enough to make isThreadUnderIndicator check first, but it is expected to be slower
-    //       than an additional call to ourApp.isInImpatientReader()
-    if (current == null
-        || safeIsReadAccessAllowed()
-        || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
+    if (current == null || ourApp.isReadAccessAllowed() || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
       return false;
     }
 
