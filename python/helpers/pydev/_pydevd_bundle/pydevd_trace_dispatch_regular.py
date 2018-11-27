@@ -347,7 +347,7 @@ class ThreadTracer:
                 if not py_db._termination_event_set:
                     # that was not working very well because jython gave some socket errors
                     try:
-                        if py_db.output_checker is None:
+                        if py_db.output_checker_thread is None:
                             kill_all_pydev_threads()
                     except:
                         traceback.print_exc()
