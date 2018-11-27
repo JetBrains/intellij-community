@@ -12,7 +12,7 @@ def set_trace_in_qt():
 _patched_qt = False
 def patch_qt(qt_support_mode):
     '''
-    This method patches qt (PySide, PyQt4, PyQt5) so that we have hooks to set the tracing for QThread.
+    This method patches qt (PySide, PySide2, PyQt4, PyQt5) so that we have hooks to set the tracing for QThread.
     '''
     if not qt_support_mode:
         return
@@ -35,21 +35,31 @@ def patch_qt(qt_support_mode):
 
         patch_qt_on_import = None
         try:
-            import PySide  # @UnresolvedImport @UnusedImport
-            qt_support_mode = 'pyside'
+            import PySide2  # @UnresolvedImport @UnusedImport
+            qt_support_mode = 'pyside2'
         except:
             try:
-                import PyQt5  # @UnresolvedImport @UnusedImport
-                qt_support_mode = 'pyqt5'
+                import Pyside  # @UnresolvedImport @UnusedImport
+                qt_support_mode = 'pyside'
             except:
                 try:
-                    import PyQt4  # @UnresolvedImport @UnusedImport
-                    qt_support_mode = 'pyqt4'
+                    import PyQt5  # @UnresolvedImport @UnusedImport
+                    qt_support_mode = 'pyqt5'
                 except:
-                    return
-
-
-    if qt_support_mode == 'pyside':
+                    try:
+                        import PyQt4  # @UnresolvedImport @UnusedImport
+                        qt_support_mode = 'pyqt4'
+                    except:
+                        return
+                    
+    if qt_support_mode == 'pyside2':
+        try:
+            import PySide2.QtCore  # @UnresolvedImport
+            _internal_patch_qt(PySide2.QtCore, qt_support_mode)
+        except:
+            return
+        
+    elif qt_support_mode == 'pyside':
         try:
             import PySide.QtCore  # @UnresolvedImport
             _internal_patch_qt(PySide.QtCore, qt_support_mode)
@@ -134,14 +144,14 @@ def _internal_patch_qt(QtCore, qt_support_mode='auto'):
             QtCore.QObject.__init__(self)
             self.thread = thread
             self.original_started = original_started
-            if qt_support_mode == 'pyside':
+            if qt_support_mode in ('pyside', 'pyside2'):
                 self._signal = original_started
             else:
                 self._signal.connect(self._on_call)
                 self.original_started.connect(self._signal)
 
         def connect(self, func, *args, **kwargs):
-            if qt_support_mode == 'pyside':
+            if qt_support_mode in ('pyside', 'pyside2'):
                 return self._signal.connect(FuncWrapper(func), *args, **kwargs)
             else:
                 return self._signal.connect(func, *args, **kwargs)
