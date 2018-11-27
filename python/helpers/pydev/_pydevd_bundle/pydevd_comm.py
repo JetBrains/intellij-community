@@ -185,6 +185,8 @@ CMD_STOP_ON_START = 154
 # When the debugger is stopped in an exception, this command will provide the details of the current exception (in the current thread).
 CMD_GET_EXCEPTION_DETAILS = 155
 
+CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION = 156
+
 CMD_PROCESS_CREATED_MSG_RECEIVED = 159
 
 CMD_REDIRECT_OUTPUT = 200
@@ -254,6 +256,7 @@ ID_TO_MEANING = {
     '153': 'CMD_THREAD_DUMP_TO_STDERR',
     '154': 'CMD_STOP_ON_START',
     '155': 'CMD_GET_EXCEPTION_DETAILS',
+    '156': 'CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION',
 
     '159': 'CMD_PROCESS_CREATED_MSG_RECEIVED',
 

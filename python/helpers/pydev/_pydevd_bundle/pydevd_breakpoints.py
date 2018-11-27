@@ -17,7 +17,7 @@ class ExceptionBreakpoint(object):
             notify_on_first_raise_only,
             ignore_libraries
     ):
-        exctype = _get_class(qname)
+        exctype = get_exception_class(qname)
         self.qname = qname
         if exctype is not None:
             self.name = exctype.__name__
@@ -156,7 +156,7 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
     py_db.stop_on_unhandled_exception(thread, frame, frames_byid, arg)
 
 
-def _get_class(kls):
+def get_exception_class(kls):
     if IS_PY24 and "BaseException" == kls:
         kls = "Exception"
 

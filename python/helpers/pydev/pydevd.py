@@ -259,9 +259,10 @@ class PyDB:
         self.skip_on_exceptions_thrown_in_same_context = False
         self.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
 
-        # Suspend debugger even if breakpoint condition raises an exception
-        SUSPEND_ON_BREAKPOINT_EXCEPTION = True
-        self.suspend_on_breakpoint_exception = SUSPEND_ON_BREAKPOINT_EXCEPTION
+        # Suspend debugger even if breakpoint condition raises an exception.
+        # May be changed with CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION.
+        self.skip_suspend_on_breakpoint_exception = ()  # By default suspend on any Exception.
+        self.skip_print_breakpoint_exception = ()  # By default print on any Exception.
 
         # By default user can step into properties getter/setter/deleter methods
         self.disable_property_trace = False
@@ -722,22 +723,21 @@ class PyDB:
         thread.stop_reason = stop_reason
 
         # If conditional breakpoint raises any exception during evaluation send details to Java
-        if stop_reason == CMD_SET_BREAK and self.suspend_on_breakpoint_exception:
-            self._send_breakpoint_condition_exception(thread)
+        if stop_reason == CMD_SET_BREAK and info.conditional_breakpoint_exception is not None:
+            conditional_breakpoint_exception_tuple = info.conditional_breakpoint_exception
+            info.conditional_breakpoint_exception = None
+            self._send_breakpoint_condition_exception(thread, conditional_breakpoint_exception_tuple)
 
 
-    def _send_breakpoint_condition_exception(self, thread):
+    def _send_breakpoint_condition_exception(self, thread, conditional_breakpoint_exception_tuple):
         """If conditional breakpoint raises an exception during evaluation
         send exception details to java
         """
         thread_id = get_thread_id(thread)
-        conditional_breakpoint_exception_tuple = thread.additional_info.conditional_breakpoint_exception
         # conditional_breakpoint_exception_tuple - should contain 2 values (exception_type, stacktrace)
         if conditional_breakpoint_exception_tuple and len(conditional_breakpoint_exception_tuple) == 2:
             exc_type, stacktrace = conditional_breakpoint_exception_tuple
             int_cmd = InternalGetBreakpointException(thread_id, exc_type, stacktrace)
-            # Reset the conditional_breakpoint_exception details to None
-            thread.additional_info.conditional_breakpoint_exception = None
             self.post_internal_command(int_cmd, thread_id)
 
 
