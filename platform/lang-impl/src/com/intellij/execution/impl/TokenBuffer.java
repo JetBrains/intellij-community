@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * Add token via {@link #print(String, ConsoleViewContentType, HyperlinkInfo)}
  * Get all tokens via {@link #drain()}
  */
-public class TokenBuffer {
+class TokenBuffer {
   // special token which means that the deferred text starts with "\r" so it shouldn't be appended to the document end.
   // Instead, the last line of the document should be removed
   static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null);
@@ -42,11 +42,11 @@ public class TokenBuffer {
   private int size; // total lengths of all tokens
   private int startIndex; // index of text start in the first TokeInfo. This TokenInfo can become sliced after total size overflows maxCapacity
 
-  public TokenBuffer(int maxCapacity) {
+  TokenBuffer(int maxCapacity) {
     this.maxCapacity = maxCapacity;
   }
 
-  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+  void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
     int start = 0;
     while (start < text.length()) {
       if (hasTrailingCR()) {
@@ -134,18 +134,18 @@ public class TokenBuffer {
     //assert tokens.toList().stream().mapToInt(TokenInfo::length).sum() == size;
   }
 
-  public int length() {
+  int length() {
     return size - startIndex;
   }
 
-  public void clear() {
+  void clear() {
     tokens.clear();
     startIndex = 0;
     size = 0;
   }
 
   @NotNull
-  public CharSequence getText() {
+  CharSequence getText() {
     if (hasTrailingCR()) {
       removeLastLine();
     }
@@ -156,7 +156,7 @@ public class TokenBuffer {
   // the first token may be CR_TOKEN meaning that instead of appending it we should delete the last line of the document
   // all the remaining text is guaranteed not to contain CR_TOKEN - they can be appended safely to the document end
   @NotNull
-  public List<TokenInfo> drain() {
+  List<TokenInfo> drain() {
     if (hasTrailingCR()) {
       removeLastLine();
     }
@@ -180,17 +180,17 @@ public class TokenBuffer {
     return list;
   }
 
-  public int getCycleBufferSize() {
+  int getCycleBufferSize() {
     return maxCapacity;
   }
 
-  public static class TokenInfo {
+  static class TokenInfo {
     @NotNull
-    public final ConsoleViewContentType contentType;
+    final ConsoleViewContentType contentType;
     private final String text;
     private final HyperlinkInfo myHyperlinkInfo;
 
-    public TokenInfo(@NotNull ConsoleViewContentType contentType,
+    TokenInfo(@NotNull ConsoleViewContentType contentType,
               @NotNull String text,
               @Nullable HyperlinkInfo hyperlinkInfo) {
       this.contentType = contentType;
@@ -198,7 +198,7 @@ public class TokenBuffer {
       this.text = text;
     }
 
-    public int length() {
+    int length() {
       return text.length();
     }
 
@@ -207,12 +207,12 @@ public class TokenBuffer {
       return contentType + "[" + length() + "]";
     }
 
-    public HyperlinkInfo getHyperlinkInfo() {
+    HyperlinkInfo getHyperlinkInfo() {
       return myHyperlinkInfo;
     }
 
     @NotNull
-    public String getText() {
+    String getText() {
       return text;
     }
   }
