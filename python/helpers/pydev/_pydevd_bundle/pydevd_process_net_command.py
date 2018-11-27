@@ -7,7 +7,7 @@ from _pydevd_bundle import pydevd_traceproperty, pydevd_dont_trace, pydevd_utils
 import pydevd_tracing
 import pydevd_file_utils
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_class
-from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL, InternalTerminateThread, \
+from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL, \
     CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, InternalRunThread, CMD_STEP_INTO, CMD_STEP_OVER, \
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, InternalStepThread, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, \
     CMD_SMART_STEP_INTO, InternalSetNextStatementThread, CMD_RELOAD_CODE, ReloadCodeCommand, CMD_CHANGE_VARIABLE, \
@@ -22,7 +22,7 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, 
     CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS,
     InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, \
     CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand, \
-    CMD_SET_PROTOCOL, CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION)
+    CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack)
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR, IS_WINDOWS)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
@@ -100,28 +100,28 @@ def process_net_command(py_db, cmd_id, seq, text):
                 cmd = py_db.cmd_factory.make_list_threads_message(seq)
 
             elif cmd_id == CMD_GET_THREAD_STACK:
-                thread_id = text
+                # Receives a thread_id and a given timeout, which is the time we should
+                # wait to the provide the stack if a given thread is still not suspended.
+                if '\t' in text:
+                    thread_id, timeout = text.split('\t')
+                    timeout = float(timeout)
+                else:
+                    thread_id = text
+                    timeout = .5  # Default timeout is .5 seconds
 
-                t = pydevd_find_thread_by_id(thread_id)
-                frame = None
-                if t and not getattr(t, 'pydev_do_not_trace', None):
-                    additional_info = set_additional_thread_info(t)
-                    frame = additional_info.get_topmost_frame(t)
-                try:
-                    cmd = py_db.cmd_factory.make_get_thread_stack_message(seq, thread_id, frame)
-                finally:
-                    frame = None
-                    t = None
-
-            elif cmd_id == CMD_THREAD_KILL:
-                int_cmd = InternalTerminateThread(text)
-                py_db.post_internal_command(int_cmd, text)
+                # If it's already suspended, get it right away.
+                internal_get_thread_stack = InternalGetThreadStack(seq, thread_id, py_db, timeout=timeout)
+                if internal_get_thread_stack.can_be_executed_by(get_thread_id(threading.current_thread())):
+                    internal_get_thread_stack.do_it(py_db)
+                else:
+                    py_db.post_internal_command(internal_get_thread_stack, '*')
 
             elif cmd_id == CMD_THREAD_SUSPEND:
                 # Yes, thread suspend is done at this point, not through an internal command.
                 threads = []
-                if text.strip() == '*':
-                    threads = threading.enumerate()
+                suspend_all = text.strip() == '*'
+                if suspend_all:
+                    threads = pydevd_utils.get_non_pydevd_threads()
                 
                 elif text.startswith('__frame__:'):
                     sys.stderr.write("Can't suspend tasklet: %s\n" % (text,))
@@ -130,21 +130,20 @@ def process_net_command(py_db, cmd_id, seq, text):
                     threads = [pydevd_find_thread_by_id(text)]
                     
                 for t in threads:
-                    if t and not getattr(t, 'pydev_do_not_trace', None):
-                        additional_info = set_additional_thread_info(t)
-                        frame = additional_info.get_topmost_frame(t)
-                        if frame is not None:
-                            try:
-                                py_db.set_trace_for_frame_and_parents(frame)
-                            finally:
-                                frame = None
-    
-                        py_db.set_suspend(t, CMD_THREAD_SUSPEND)
+                    py_db.set_suspend(
+                        t,
+                        CMD_THREAD_SUSPEND,
+                        suspend_other_threads=suspend_all,
+                        is_pause=True,
+                    )
+                    # Break here (even if it's suspend all) as py_db.set_suspend will
+                    # take care of suspending other threads.
+                    break
 
             elif cmd_id == CMD_THREAD_RUN:
                 threads = []
                 if text.strip() == '*':
-                    threads = threading.enumerate()
+                    threads = pydevd_utils.get_non_pydevd_threads()
                 
                 elif text.startswith('__frame__:'):
                     sys.stderr.write("Can't make tasklet run: %s\n" % (text,))
@@ -153,11 +152,10 @@ def process_net_command(py_db, cmd_id, seq, text):
                     threads = [pydevd_find_thread_by_id(text)]
 
                 for t in threads:
-                    if t and not getattr(t, 'pydev_do_not_trace', None):
-                        additional_info = set_additional_thread_info(t)
-                        additional_info.pydev_step_cmd = -1
-                        additional_info.pydev_step_stop = None
-                        additional_info.pydev_state = STATE_RUN
+                    additional_info = set_additional_thread_info(t)
+                    additional_info.pydev_step_cmd = -1
+                    additional_info.pydev_step_stop = None
+                    additional_info.pydev_state = STATE_RUN
 
             elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN or \
                     cmd_id == CMD_STEP_INTO_MY_CODE:
@@ -191,17 +189,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 module_name = text.strip()
 
                 thread_id = '*'  # Any thread
-
                 # Note: not going for the main thread because in this case it'd only do the load
                 # when we stopped on a breakpoint.
-                # for tid, t in py_db._running_thread_ids.items(): #Iterate in copy
-                #    thread_name = t.getName()
-                #
-                #    print thread_name, get_thread_id(t)
-                #    #Note: if possible, try to reload on the main thread
-                #    if thread_name == 'MainThread':
-                #        thread_id = tid
-
                 int_cmd = ReloadCodeCommand(module_name, thread_id)
                 py_db.post_internal_command(int_cmd, thread_id)
 
@@ -833,18 +822,24 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_STOP_ON_START:
                 py_db.stop_on_start = text.strip() in ('True', 'true', '1')
 
-            elif cmd_id == CMD_SUSPEND_ON_BREAKPOINT_EXCEPTION:
+            elif cmd_id == CMD_PYDEVD_JSON_CONFIG:
                 # Expected to receive a json string as:
                 # {
-                #     'skip_suspend_on_breakpoint_exception': [<exception names where we should suspend>]
-                #     'skip_print_breakpoint_exception': [<exception names where we should print>]
+                #     'skip_suspend_on_breakpoint_exception': [<exception names where we should suspend>],
+                #     'skip_print_breakpoint_exception': [<exception names where we should print>],
+                #     'multi_threads_single_notification': bool,
                 # }
                 msg = json.loads(text.strip())
-                py_db.skip_suspend_on_breakpoint_exception = tuple(
-                    get_exception_class(x) for x in msg.get('skip_suspend_on_breakpoint_exception', ()))
+                if 'skip_suspend_on_breakpoint_exception' in msg:
+                    py_db.skip_suspend_on_breakpoint_exception = tuple(
+                        get_exception_class(x) for x in msg['skip_suspend_on_breakpoint_exception'])
 
-                py_db.skip_print_breakpoint_exception = tuple(
-                    get_exception_class(x) for x in msg.get('skip_print_breakpoint_exception', ()))
+                if 'skip_print_breakpoint_exception' in msg:
+                    py_db.skip_print_breakpoint_exception = tuple(
+                        get_exception_class(x) for x in msg['skip_print_breakpoint_exception'])
+
+                if 'multi_threads_single_notification' in msg:
+                    py_db.multi_threads_single_notification = msg['multi_threads_single_notification']
 
             elif cmd_id == CMD_GET_EXCEPTION_DETAILS:
                 thread_id = text
