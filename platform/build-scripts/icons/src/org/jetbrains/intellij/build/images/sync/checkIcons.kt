@@ -140,7 +140,7 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
   fun asIcons(files: Collection<String>, repo: File) = files.asSequence()
     .filter { ImageExtension.fromName(it) != null }
     .map { repo.resolve(it) }
-    .filter { context.devIconsFilter(it) }
+    .filter(context.devIconsFilter)
     .map { it.toRelativeString(context.devRepoRoot) }.toList()
 
   val iterator = context.devIconsCommitHashesToSync.iterator()
@@ -164,7 +164,7 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
         val icons = asIcons(files, repo)
         when (type) {
           ChangeType.ADDED -> context.byDev.added += icons
-          ChangeType.MODIFIED ->context.byDev.modified += icons
+          ChangeType.MODIFIED -> context.byDev.modified += icons
           ChangeType.DELETED -> context.byDev.removed += icons
         }
       }
@@ -253,7 +253,7 @@ private fun isValidIcon(file: Path) = protectStdErr {
   try {
     System.setErr(mutedStream)
     // image
-    isImage(file) && imageSize(file)?.let { size ->
+    Files.exists(file) && isImage(file) && imageSize(file)?.let { size ->
       val pixels = if (file.fileName.toString().contains("@2x")) 64 else 32
       // small
       size.height <= pixels && size.width <= pixels
@@ -270,7 +270,7 @@ private var skippedDirs = emptySet<File>()
 private var skippedDirsGuard = Any()
 
 private fun doSkip(file: File, testRoots: Set<File>, skipDirsRegex: Regex?): Boolean {
-  val skipDir = file.isDirectory &&
+  val skipDir = (file.isDirectory || !file.exists()) &&
                 // is test root
                 (testRoots.contains(file) ||
                  // or matches skip dir pattern
