@@ -120,6 +120,10 @@ public class ControlFlowUtils {
     else if (statement instanceof PsiSwitchStatement) {
       return switchStatementMayCompleteNormally((PsiSwitchStatement)statement);
     }
+    else if (statement instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)statement).getBody();
+      return body != null && statementMayCompleteNormally(body);
+    }
     else if (statement instanceof PsiTemplateStatement || statement instanceof PsiClassLevelDeclarationStatement) {
       return true;
     }
