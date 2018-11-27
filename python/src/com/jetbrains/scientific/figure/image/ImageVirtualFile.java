@@ -10,7 +10,6 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 public class ImageVirtualFile extends BinaryLightVirtualFile implements Disposable {
-
   private BufferedImage myImage;
 
   static ImageVirtualFile makeCopy(ImageVirtualFile virtualFile) {

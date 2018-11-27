@@ -26,6 +26,14 @@ import java.awt.image.BufferedImage;
 import static com.jetbrains.scientific.figure.FigureConstants.*;
 
 public class ImageFigure extends FigureBase implements WithDockableContent {
+  private final TabInfo myTabInfo;
+  private final Project myProject;
+
+  public ImageFigure(ImageVirtualFile imageVirtualFile, Project project) {
+    myProject = project;
+    myTabInfo = createTabInfo(imageVirtualFile, project);
+  }
+
   public static ImageFigure createDefault(BufferedImage image, Project project) {
     String simpleName = PLOT_DEFAULT_NAME + "." + DEFAULT_IMAGE_FORMAT;
     ImageVirtualFile virtualFile = new ImageVirtualFile(simpleName, image);
@@ -41,15 +49,6 @@ public class ImageFigure extends FigureBase implements WithDockableContent {
     info.setIcon(new ImageIcon(after));
     info.setText(" ");
     return info;
-  }
-
-
-  private final TabInfo myTabInfo;
-  private final Project myProject;
-
-  public ImageFigure(ImageVirtualFile imageVirtualFile, Project project) {
-    myProject = project;
-    myTabInfo = createTabInfo(imageVirtualFile, project);
   }
 
   @Override
@@ -68,7 +67,6 @@ public class ImageFigure extends FigureBase implements WithDockableContent {
     ImageVirtualFile fileCopy = ImageVirtualFile.makeCopy(file);
     return new EditorTabbedContainer.DockableEditor(myProject, img, fileCopy, presentation, preferredSize, false);
   }
-
 
   private static class MyContentPanel extends JPanel implements WithBinaryContent, Disposable {
     private final ImageVirtualFile myVirtualFile;
