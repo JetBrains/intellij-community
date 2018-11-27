@@ -40,7 +40,8 @@ class RetypeFileAction : AnAction() {
       if (!retypeOptionsDialog.showAndGet()) return
       val scriptBuilder = if (retypeOptionsDialog.recordScript) StringBuilder() else null
       if (retypeOptionsDialog.isRetypeCurrentFile) {
-        val session = RetypeSession(project, editor!!, retypeOptionsDialog.retypeDelay, scriptBuilder, retypeOptionsDialog.threadDumpDelay)
+        val session = RetypeSession(project, editor!!, retypeOptionsDialog.retypeDelay, scriptBuilder, retypeOptionsDialog.threadDumpDelay,
+                                    interfereFilesChangePeriod = -1)
         session.start()
       }
       else {
@@ -119,7 +120,8 @@ private class RetypeQueue(private val project: Project,
 
     val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file, 0), true) as EditorImpl
     selectFragmentToRetype(editor)
-    val retypeSession = RetypeSession(project, editor, retypeDelay, scriptBuilder, threadDumpDelay, threadDumps)
+    val retypeSession = RetypeSession(project, editor, retypeDelay, scriptBuilder, threadDumpDelay, threadDumps,
+                                      interfereFilesChangePeriod = -1)
     if (files.isNotEmpty()) {
       retypeSession.startNextCallback = {
         ApplicationManager.getApplication().invokeLater { processNext() }

@@ -36,24 +36,37 @@ import com.intellij.util.Alarm
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
+import kotlin.concurrent.timer
 
+/**
+ * @property interfereFilesChangePeriod Set period for changes in interfere file.
+ * "Interfere file" - file that will be created near by retyped and it will be periodically changed.
+ * After retype session this file will be deleted.
+ * Pass negative value to disable this functionality.
+ */
 class RetypeSession(
   private val project: Project,
   private val editor: EditorImpl,
   private val delayMillis: Int,
   private val scriptBuilder: StringBuilder?,
   private val threadDumpDelay: Int,
-  private val threadDumps: MutableList<String> = mutableListOf()
+  private val threadDumps: MutableList<String> = mutableListOf(),
+  private val interfereFilesChangePeriod: Long = -1
 ) : Disposable {
   private val document = editor.document
+
+  // -- Alarms
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
   private val threadDumpAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
+
   private val originalText = document.text
   private var pos = 0
   private val endPos: Int
   private val tailLength: Int
+
   private var typedChars = 0
   private var completedChars = 0
+
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
   private val oldAddUnambiguous = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
   private val oldOptimize = CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly
@@ -66,8 +79,10 @@ class RetypeSession(
 
   // This stack will contain autocompletion elements
   // E.g. "}", "]", "*/", "* @return"
-  val completionStack = ArrayDeque<String>()
+  private val completionStack = ArrayDeque<String>()
 
+  private var stopInterfereFileChanger = false
+  val interfereFileName = "IdeaRetypeBackgroundChanges.java"
 
   init {
     if (editor.selectionModel.hasSelection()) {
@@ -101,6 +116,7 @@ class RetypeSession(
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
     }
     CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = false
+    runInterfereFileChanger()
     queueNextOrStop()
   }
 
@@ -125,6 +141,7 @@ class RetypeSession(
     if (startNext) {
       startNextCallback?.invoke()
     }
+    stopInterfereFileChanger = true
   }
 
   override fun dispose() {
@@ -372,6 +389,28 @@ class RetypeSession(
         if (!threadDumpAlarm.isDisposed) {
           threadDumpAlarm.addRequest({ logThreadDump() }, 100)
         }
+      }
+    }
+  }
+
+  private fun runInterfereFileChanger() {
+    if (interfereFilesChangePeriod <= 0) return
+    stopInterfereFileChanger = false
+
+    val file = File(editor.virtualFile.parent.path + "${File.separator}$interfereFileName")
+    file.createNewFile()
+
+    val text = "// Text\n".repeat(500)
+    file.writeText(text)
+
+    // Increment this counter to make vision that something really changes.
+    var counter = 0
+    timer(period = interfereFilesChangePeriod) {
+      counter++
+      file.writeText("$text  Additional ${counter}")
+      if (stopInterfereFileChanger) {
+        file.delete()
+        cancel()
       }
     }
   }
