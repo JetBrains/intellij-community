@@ -31,8 +31,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.containers.ContainerUtil.*;
-import static git4idea.commands.GitAuthenticationMode.FULL;
-import static git4idea.commands.GitAuthenticationMode.NONE;
+import static git4idea.commands.GitAuthenticationMode.*;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
 import static java.util.Collections.singletonList;
@@ -51,6 +50,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @Nullable private MessageBusConnection myConnection;
+  @NotNull private final MultiMap<GitRepository, GitRemote> myAuthSuccessMap = MultiMap.createConcurrentSet();
 
   GitBranchIncomingOutgoingManager(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myProject = project;
@@ -154,7 +154,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
       lsRemote(repository, gitRemote, map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()),
-               useForceAuthentication ? FULL : NONE);
+               getAuthenticationMode(repository, gitRemote, useForceAuthentication));
 
     for (Map.Entry<String, Hash> hashEntry : remoteNameWithHash.entrySet()) {
       String remoteBranchName = hashEntry.getKey();
@@ -170,6 +170,15 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       });
     }
     return result;
+  }
+
+  @NotNull
+  private GitAuthenticationMode getAuthenticationMode(@NotNull GitRepository repository,
+                                                      @NotNull GitRemote remote,
+                                                      boolean useForceAuthentication) {
+    if (useForceAuthentication) return FULL;
+    if (myAuthSuccessMap.get(repository).contains(remote)) return SILENT;
+    return NONE;
   }
 
   @NotNull
@@ -269,6 +278,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @Override
   public void authenticationSucceeded(@NotNull GitRepository repository, @NotNull GitRemote remote) {
     Collection<GitRemote> remotes = myAuthErrorMap.get(repository);
+    myAuthSuccessMap.putValue(repository, remote);
     if (remotes.contains(remote)) {
       MultiMap<GitRemote, GitBranchTrackInfo> trackInfoByRemotes = groupTrackInfoByRemotes(repository);
       if (trackInfoByRemotes.containsKey(remote)) {
