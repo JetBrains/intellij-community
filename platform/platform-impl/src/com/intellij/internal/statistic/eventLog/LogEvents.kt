@@ -180,6 +180,9 @@ open class LogEventBaseAction(val id: String) {
   }
 }
 
+private val nonAscii = Regex("[^\\p{ASCII}]")
+
 private fun escape(str: String): String {
-  return str.replace(" ", "_").replace("\t", "_").replace("\"", "")
+  return str.replace(" ", "_").replace("\t", "_").replace("\"", "").
+    replace(nonAscii, "?")
 }
