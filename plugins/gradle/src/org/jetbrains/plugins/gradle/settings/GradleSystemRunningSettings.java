@@ -74,7 +74,7 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
   public boolean isDelegatedBuildEnabled(@NotNull Project project, @NotNull String gradleProjectPath) {
     GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(gradleProjectPath);
     if (projectSettings == null) return false;
-    return projectSettings.getEffectiveDelegateBuild().toBoolean();
+    return projectSettings.getEffectiveDelegatedBuild().toBoolean();
   }
 
   /**

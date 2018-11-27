@@ -125,7 +125,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   @Transient
   @NotNull
-  public ThreeState getEffectiveDelegateBuild() {
+  public ThreeState getEffectiveDelegatedBuild() {
     if (delegatedBuild == ThreeState.UNSURE) {
       return ThreeState.fromBoolean(GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabledByDefault());
     }

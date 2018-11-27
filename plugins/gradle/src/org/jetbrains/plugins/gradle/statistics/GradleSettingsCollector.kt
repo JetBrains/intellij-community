@@ -33,7 +33,7 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
       usages.add(getBooleanUsage("createModulePerSourceSet", setting.isResolveModulePerSourceSet))
       usages.add(UsageDescriptor("gradleJvm." + ConvertUsagesUtil.escapeDescriptorName(setting.gradleJvm ?: "empty"), 1))
       usages.add(UsageDescriptor("gradleVersion." + setting.resolveGradleVersion().version, 1))
-      usages.add(getBooleanUsage("delegateBuildRun", setting.effectiveDelegateBuild.toBoolean()))
+      usages.add(getBooleanUsage("delegateBuildRun", setting.effectiveDelegatedBuild.toBoolean()))
       usages.add(getEnumUsage("preferredTestRunner", setting.effectiveTestRunner))
     }
     return usages
