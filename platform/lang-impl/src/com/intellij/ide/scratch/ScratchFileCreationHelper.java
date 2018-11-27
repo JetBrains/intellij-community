@@ -27,8 +27,10 @@ public abstract class ScratchFileCreationHelper {
   public static final LanguageExtension<ScratchFileCreationHelper> EXTENSION = new LanguageExtension<>(
     "com.intellij.scratch.creationHelper", new ScratchFileCreationHelper() {
   });
-  
-  
+
+  /**
+   * @return true if no further language validation based on {@link Context#text} is required
+   */
   public boolean prepareText(@NotNull Project project, @NotNull Context context, @NotNull DataContext dataContext) {
     return false;
   }
