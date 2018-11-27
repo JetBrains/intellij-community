@@ -36,7 +36,6 @@ public final class PythonIcons {
     public static final Icon DataView = load("/icons/com/jetbrains/python/DataView.svg"); // 13x13
 
     public final static class Debug {
-      public static final Icon CommandLine = load("/icons/com/jetbrains/python/debug/commandLine.png"); // 16x16
       public static final Icon SpecialVar = load("/icons/com/jetbrains/python/debug/specialVar.svg"); // 16x16
       public static final Icon StepIntoMyCode = load("/icons/com/jetbrains/python/debug/StepIntoMyCode.svg"); // 16x16
 
