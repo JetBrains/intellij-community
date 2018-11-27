@@ -48,7 +48,8 @@ package org.jetbrains.intellij.build.impl
 import groovy.transform.Immutable
 
 /**
- * @author nik
+ * Describes additional resources which should be included into a plugin or the platform distribution. This isn't related to files from
+ * 'resources roots' of a module, such files are automatically included into the plugin JAR files.
  */
 @Immutable
 class ModuleResourceData {
