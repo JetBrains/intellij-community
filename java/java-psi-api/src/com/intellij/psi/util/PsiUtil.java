@@ -1007,7 +1007,6 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
     PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiEnumConstantInitializer.class, PsiMethod.class, PsiField.class);
     if (parent instanceof PsiMethod && !((PsiMethod)parent).isConstructor()) return null;
-    if (parent instanceof PsiField && parent.hasModifierProperty(PsiModifier.STATIC)) return null;
     return parent;
   }
 
