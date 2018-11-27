@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.images
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -76,6 +77,14 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
         val rootDir = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
         if (rootDir.fileName.toString() != "compatibilityResources") {
           processRoot(sourceRoot, rootDir)
+        }
+        else if (SystemProperties.getBooleanProperty("remove.extra.icon.robots.files", false)) {
+          // under flag because not required for regular usage (to avoid FS call)
+          try {
+            Files.delete(rootDir.resolve("icon-robots.txt"))
+          }
+          catch (ignored: NoSuchFileException) {
+          }
         }
       }
     }
