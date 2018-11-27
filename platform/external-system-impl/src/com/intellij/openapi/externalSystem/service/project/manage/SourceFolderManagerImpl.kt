@@ -3,11 +3,14 @@ package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.PathPrefixTreeMapImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
@@ -20,13 +23,12 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private var isDisposed = false
   private val mutex = Any()
   private val postponedSourceFolderCreator = PostponedSourceFolderCreator()
-  private val sourceFolders = THashMap<String, SourceFolderModel>(FileUtil.PATH_HASHING_STRATEGY)
+  private val sourceFolders = PathPrefixTreeMapImpl<SourceFolderModel>()
   private val sourceFoldersByModule = THashMap<String, ModuleModel>()
 
   override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>) {
-    val sourceFolder = SourceFolderModel(module, type, "")
     synchronized(mutex) {
-      sourceFolders[url] = sourceFolder
+      sourceFolders[url] = SourceFolderModel(module, url, type, "")
       val moduleModel = sourceFoldersByModule.getOrPut(module.name) {
         ModuleModel(module).also {
           Disposer.register(module, it)
@@ -34,6 +36,10 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       }
       moduleModel.sourceFolders.add(url)
     }
+    TransactionGuard.getInstance().submitTransactionLater(this, Runnable {
+      val virtualFileManager = VirtualFileManager.getInstance()
+      virtualFileManager.refreshAndFindFileByUrl(url)
+    })
   }
 
   override fun setSourceFolderPackagePrefix(url: String, packagePrefix: String) {
@@ -57,42 +63,60 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     virtualFileManager.removeVirtualFileListener(postponedSourceFolderCreator)
   }
 
-  private fun remove(url: String): SourceFolderModel? {
-    return synchronized(mutex) {
-      sourceFolders.remove(url)
-    }
-  }
-
   fun isDisposed() = isDisposed
 
   fun getSourceFolders(moduleName: String) = synchronized(mutex) {
     sourceFoldersByModule[moduleName]?.sourceFolders
   }
 
+  private fun unsafeRemoveSourceFolder(url: String) {
+    val sourceFolder = sourceFolders.remove(url) ?: return
+    val module = sourceFolder.module
+    val moduleModel = sourceFoldersByModule[module.name] ?: return
+    val sourceFolders = moduleModel.sourceFolders
+    sourceFolders.remove(url)
+    if (sourceFolders.isEmpty()) {
+      sourceFoldersByModule.remove(module.name)
+    }
+  }
+
   private inner class PostponedSourceFolderCreator : VirtualFileListener {
     override fun fileCreated(event: VirtualFileEvent) {
+      val sourceFoldersToChange = ArrayList<SourceFolderModel>()
+      val virtualFileManager = VirtualFileManager.getInstance()
+      synchronized(mutex) {
+        for (sourceFolder in sourceFolders.getAllDescendants(event.file.url)) {
+          val sourceFolderFile = ExternalSystemApiUtil.doWriteAction(Computable<VirtualFile> {
+            virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
+          })
+          if (sourceFolderFile != null && sourceFolderFile.isValid) {
+            sourceFoldersToChange.add(sourceFolder)
+            unsafeRemoveSourceFolder(sourceFolder.url)
+          }
+        }
+      }
       ExternalSystemApiUtil.executeProjectChangeAction(false, object : DisposeAwareProjectChange(project) {
         override fun execute() {
-          val sourceFolderUrl = event.file.url
-          val (module, type, packagePrefix) = remove(sourceFolderUrl) ?: return
-          val moduleManager = ModuleRootManager.getInstance(module)
-          val modifiableModuleModel = moduleManager.modifiableModel
-          try {
-            val contentEntry = MarkRootActionBase.findContentEntry(modifiableModuleModel, event.file)
-            if (contentEntry != null) {
-              val sourceFolder = contentEntry.addSourceFolder(sourceFolderUrl, type)
-              sourceFolder.packagePrefix = packagePrefix
+          for ((module, url, type, packagePrefix) in sourceFoldersToChange) {
+            val moduleManager = ModuleRootManager.getInstance(module)
+            val modifiableModuleModel = moduleManager.modifiableModel
+            try {
+              val contentEntry = MarkRootActionBase.findContentEntry(modifiableModuleModel, event.file)
+              if (contentEntry != null) {
+                val sourceFolder = contentEntry.addSourceFolder(url, type)
+                sourceFolder.packagePrefix = packagePrefix
+              }
             }
-          }
-          finally {
-            modifiableModuleModel.commit()
+            finally {
+              modifiableModuleModel.commit()
+            }
           }
         }
       })
     }
   }
 
-  private data class SourceFolderModel(val module: Module, val type: JpsModuleSourceRootType<*>, var packagePrefix: String)
+  private data class SourceFolderModel(val module: Module, val url: String, val type: JpsModuleSourceRootType<*>, var packagePrefix: String)
 
   private inner class ModuleModel(val module: Module, val sourceFolders: MutableSet<String>) : Disposable {
     constructor(module: Module) : this(module, THashSet(FileUtil.PATH_HASHING_STRATEGY))

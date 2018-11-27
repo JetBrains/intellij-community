@@ -417,7 +417,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testRemovingSourceFolderManagerMemLeaking() throws IOException {
-    refreshRecursively(myProjectRoot);
     SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject);
     String javaSourcePath = FileUtil.toCanonicalPath(myProjectRoot.getPath() + "/java");
     String javaSourceUrl = VfsUtilCore.pathToUrl(javaSourcePath);
@@ -464,9 +463,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testPostponedImportPackagePrefix() throws IOException {
-    refreshRecursively(myProjectRoot);
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-    });
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
       new GradleBuildScriptBuilderEx()
@@ -487,9 +483,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertSourceNotExists("project.main", "src/main/kotlin");
     assertSourceNotExists("project.test", "src/test/java");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
-    refreshRecursively(myProjectRoot);
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-    });
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourcePackagePrefix("project.main", "src/main/kotlin", "prefix.package.other");
     assertSourceNotExists("project.test", "src/test/java");
