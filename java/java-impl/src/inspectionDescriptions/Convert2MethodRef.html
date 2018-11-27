@@ -2,6 +2,12 @@
 <body>
 Reports lambdas which can be replaced with method references. Use <a href="settings://preferences.sourceCode.Java"> File | Settings | Editor | Code Style | Java | Code Generation</a> settings to configure special method references.
 <p>
+  Note that if anonymous class is converted into unbound method reference, the same method reference object
+  could be reused during subsequent invocations while anonymous class creates separate objects every time.
+  Thus applying the quick-fix could cause the semantics change in rare cases, e.g. when anonymous class
+  instances are used as <code>HashMap</code> keys.
+</p>
+<p>
 Lambda/method references syntax is not supported under Java 1.7 or earlier JVMs.
 </body>
 </html>
