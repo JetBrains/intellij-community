@@ -951,7 +951,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       if (state == ThreeState.YES) {
         return "Gradle";
       }
-      return "Use application default";
+      return GradleBundle.message("gradle.settings.text.use.application.default");
     }
   }
 
