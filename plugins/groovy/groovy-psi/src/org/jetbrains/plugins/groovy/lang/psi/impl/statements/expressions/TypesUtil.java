@@ -393,7 +393,8 @@ public class TypesUtil implements TypeConstants {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrImmediateTupleType(Arrays.asList(components3), JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrImmediateTupleType(Arrays.asList(components3), JavaPsiFacade.getInstance(manager.getProject()),
+                                      tuple1.getResolveScope().intersectWith(tuple2.getResolveScope()));
     }
     else if (checkEmptyListAndList(type1, type2)) {
       return genNewListBy(type2, manager);

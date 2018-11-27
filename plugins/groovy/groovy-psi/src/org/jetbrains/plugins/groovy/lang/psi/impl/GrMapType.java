@@ -120,7 +120,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   }
 
   public static GrMapType merge(GrMapType l, GrMapType r) {
-    final GlobalSearchScope scope = l.getScope().intersectWith(r.getResolveScope());
+    final GlobalSearchScope scope = l.getResolveScope().intersectWith(r.getResolveScope());
 
     final LinkedHashMap<String, PsiType> strings = ContainerUtil.newLinkedHashMap();
     strings.putAll(l.getStringEntries());
