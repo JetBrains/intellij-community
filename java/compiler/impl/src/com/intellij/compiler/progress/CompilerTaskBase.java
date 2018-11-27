@@ -123,4 +123,8 @@ public abstract class CompilerTaskBase extends Task.Backgroundable {
       return myDisplayName;
     }
   }
+
+  public Runnable getRestartWork() {
+    return myRestartWork;
+  }
 }
