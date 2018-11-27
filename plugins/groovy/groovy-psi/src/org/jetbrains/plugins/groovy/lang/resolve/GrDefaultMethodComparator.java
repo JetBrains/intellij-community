@@ -63,8 +63,8 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
       if (arguments != null && arguments.size() > i) {
         PsiType argType = arguments.get(i).getType();
         if (argType != null) {
-          final boolean converts1 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type1), argType, myPlace);
-          final boolean converts2 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type2), argType, myPlace);
+          final boolean converts1 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type1), argType);
+          final boolean converts2 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type2), argType);
           if (converts1 != converts2) {
             return converts2;
           }
@@ -93,8 +93,8 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
       final PsiType returnType1 = substitutor1.substitute(method1.getReturnType());
       final PsiType returnType2 = substitutor2.substitute(method2.getReturnType());
 
-      if (!TypesUtil.isAssignableWithoutConversions(returnType1, returnType2, myPlace) &&
-          TypesUtil.isAssignableWithoutConversions(returnType2, returnType1, myPlace)) {
+      if (!TypesUtil.isAssignableWithoutConversions(returnType1, returnType2) &&
+          TypesUtil.isAssignableWithoutConversions(returnType2, returnType1)) {
         return false;
       }
     }
@@ -111,7 +111,7 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
   private static boolean typesAgree(@NotNull PsiType type1, @NotNull PsiType type2, @NotNull Context context) {
     final boolean hasArguments = context.getArguments() != null;
     return hasArguments ? //resolve, otherwise same_name_variants
-           TypesUtil.isAssignableWithoutConversions(type1, type2, context.getPlace()) :
+           TypesUtil.isAssignableWithoutConversions(type1, type2) :
            type1.equals(type2);
   }
 }

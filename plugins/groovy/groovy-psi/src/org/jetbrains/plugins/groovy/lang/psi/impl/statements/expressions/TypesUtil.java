@@ -188,7 +188,7 @@ public class TypesUtil implements TypeConstants {
     final ConversionResult result = areTypesConvertible(targetType, actualType, context, position);
     if (result != null) return result;
 
-    if (isAssignableWithoutConversions(targetType, actualType, context)) {
+    if (isAssignableWithoutConversions(targetType, actualType)) {
       return ConversionResult.OK;
     }
 
@@ -235,9 +235,7 @@ public class TypesUtil implements TypeConstants {
     return null;
   }
 
-  public static boolean isAssignableWithoutConversions(@Nullable PsiType lType,
-                                                       @Nullable PsiType rType,
-                                                       @NotNull PsiElement context) {
+  public static boolean isAssignableWithoutConversions(@Nullable PsiType lType, @Nullable PsiType rType) {
     if (lType == null || rType == null) return false;
 
     if (rType == PsiType.NULL) {
@@ -246,7 +244,7 @@ public class TypesUtil implements TypeConstants {
 
     if (rType instanceof GrTraitType) {
       for (PsiType type : ((GrTraitType)rType).getConjuncts()) {
-        if (isAssignableWithoutConversions(lType, type, context)) return true;
+        if (isAssignableWithoutConversions(lType, type)) return true;
       }
       return false;
     }
@@ -269,10 +267,8 @@ public class TypesUtil implements TypeConstants {
   }
 
   @NotNull
-  public static ConversionResult canAssignWithinMultipleAssignment(@NotNull PsiType targetType,
-                                                                   @NotNull PsiType actualType,
-                                                                   @NotNull PsiElement context) {
-    return isAssignableWithoutConversions(targetType, actualType, context) ? ConversionResult.OK : ConversionResult.ERROR;
+  public static ConversionResult canAssignWithinMultipleAssignment(@NotNull PsiType targetType, @NotNull PsiType actualType) {
+    return isAssignableWithoutConversions(targetType, actualType) ? ConversionResult.OK : ConversionResult.ERROR;
   }
 
   public static boolean isNumericType(@Nullable PsiType type) {
@@ -449,8 +445,7 @@ public class TypesUtil implements TypeConstants {
       int i1 = LUB_NUMERIC_TYPES.indexOf(unboxedType1);
       int i2 = LUB_NUMERIC_TYPES.indexOf(unboxedType2);
       if (i1 >= 0 && i2 >= 0) {
-        if (i1 > i2) return type1;
-        if (i2 >= i1) return type2;
+        return i1 > i2 ? type1 : type2;
       }
     }
     return null;
