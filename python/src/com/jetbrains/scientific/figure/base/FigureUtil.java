@@ -4,6 +4,7 @@ package com.jetbrains.scientific.figure.base;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.scientific.figure.FigureConstants;
 import com.jetbrains.scientific.figure.WithBinaryContent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -13,11 +14,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class FigureUtil {
-  public static BufferedImage componentImage(Component component) {
+  @NotNull
+  public static BufferedImage componentImage(@NotNull Component component) {
     return componentImage(component, component.getWidth(), component.getHeight());
   }
 
-  public static BufferedImage componentImage(Component component, int width, int height) {
+  @NotNull
+  public static BufferedImage componentImage(@NotNull Component component, int width, int height) {
     //BufferedImage img = UIUtil.createImage(component, width, height, BufferedImage.TYPE_INT_ARGB);
     //noinspection UndesirableClassUsage (UIUtil creates broken image in case of retina)
     BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -27,11 +30,12 @@ public class FigureUtil {
     return image;
   }
 
-  public static Image fit(Image image, int width, int height) {
+  @NotNull
+  public static Image fit(@NotNull Image image, int width, int height) {
     return image.getScaledInstance(JBUI.scale(width), JBUI.scale(height), Image.SCALE_SMOOTH);
   }
 
-  public static byte[] componentToByteArray(JComponent component) {
+  public static byte[] componentToByteArray(@NotNull JComponent component) {
     byte[] bytes;
     if (component instanceof WithBinaryContent) {
       bytes = ((WithBinaryContent)component).getBytes();
@@ -42,7 +46,7 @@ public class FigureUtil {
     return bytes;
   }
 
-  public static byte[] toByteArray(RenderedImage image) {
+  public static byte[] toByteArray(@NotNull RenderedImage image) {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     try {
       ImageIO.write(image, FigureConstants.DEFAULT_IMAGE_FORMAT, stream);
@@ -56,6 +60,7 @@ public class FigureUtil {
     }
   }
 
+  @NotNull
   public static BufferedImage fromRawBytes(int width, byte[] raw) {
     int height = raw.length / 3 / width;
     final DataBuffer buffer = new DataBufferByte(raw, raw.length);

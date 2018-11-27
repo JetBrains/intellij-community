@@ -2,8 +2,10 @@
 package com.jetbrains.scientific.figure;
 
 import com.intellij.ui.tabs.TabInfo;
+import org.jetbrains.annotations.NotNull;
 
 public interface Figure {
+  @NotNull
   TabInfo getTabInfo();
 
   boolean hasSearchKey();

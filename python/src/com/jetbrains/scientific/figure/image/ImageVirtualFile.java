@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.jetbrains.scientific.figure.base.FigureUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -12,11 +13,11 @@ import java.io.IOException;
 public class ImageVirtualFile extends BinaryLightVirtualFile implements Disposable {
   private BufferedImage myImage;
 
-  static ImageVirtualFile makeCopy(ImageVirtualFile virtualFile) {
+  static ImageVirtualFile makeCopy(@NotNull ImageVirtualFile virtualFile) {
     return new ImageVirtualFile(virtualFile.getName(), virtualFile.getImage());
   }
 
-  public ImageVirtualFile(String simpleFilename, BufferedImage image) {
+  public ImageVirtualFile(String simpleFilename, @NotNull BufferedImage image) {
     super(simpleFilename);
     myImage = image;
     runSetBinaryContentAction(FigureUtil.toByteArray(myImage));

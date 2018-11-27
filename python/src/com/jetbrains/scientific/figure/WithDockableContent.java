@@ -2,7 +2,9 @@
 package com.jetbrains.scientific.figure;
 
 import com.intellij.ui.docking.DockableContent;
+import org.jetbrains.annotations.NotNull;
 
 public interface WithDockableContent {
+  @NotNull
   DockableContent createDockableContent();
 }

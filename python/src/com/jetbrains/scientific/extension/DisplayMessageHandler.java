@@ -3,9 +3,10 @@ package com.jetbrains.scientific.extension;
 
 import com.intellij.openapi.project.Project;
 import com.jetbrains.scientific.figure.Figure;
+import org.jetbrains.annotations.NotNull;
 
 public interface DisplayMessageHandler {
   String getApplicableMessageType();
 
-  Figure createFigure(Object dataObject, Project project);
+  Figure createFigure(@NotNull Object dataObject, @NotNull Project project);
 }

@@ -18,6 +18,7 @@ import com.jetbrains.scientific.figure.WithBinaryContent;
 import com.jetbrains.scientific.figure.WithDockableContent;
 import com.jetbrains.scientific.figure.base.FigureBase;
 import com.jetbrains.scientific.figure.base.FigureUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,21 +27,22 @@ import java.awt.image.BufferedImage;
 import static com.jetbrains.scientific.figure.FigureConstants.*;
 
 public class ImageFigure extends FigureBase implements WithDockableContent {
-  private final TabInfo myTabInfo;
-  private final Project myProject;
+  @NotNull private final TabInfo myTabInfo;
+  @NotNull private final Project myProject;
 
-  public ImageFigure(ImageVirtualFile imageVirtualFile, Project project) {
+  public ImageFigure(@NotNull ImageVirtualFile imageVirtualFile, @NotNull Project project) {
     myProject = project;
     myTabInfo = createTabInfo(imageVirtualFile, project);
   }
 
-  public static ImageFigure createDefault(BufferedImage image, Project project) {
+  public static ImageFigure createDefault(@NotNull BufferedImage image, @NotNull Project project) {
     String simpleName = PLOT_DEFAULT_NAME + "." + DEFAULT_IMAGE_FORMAT;
     ImageVirtualFile virtualFile = new ImageVirtualFile(simpleName, image);
     return new ImageFigure(virtualFile, project);
   }
 
-  private static TabInfo createTabInfo(ImageVirtualFile imageVirtualFile, Project project) {
+  @NotNull
+  private static TabInfo createTabInfo(@NotNull ImageVirtualFile imageVirtualFile, Project project) {
     final JPanel panel = new MyContentPanel(imageVirtualFile, project);
     final TabInfo info = new TabInfo(panel);
     info.setTabColor(UIUtil.getPanelBackground());
@@ -51,11 +53,13 @@ public class ImageFigure extends FigureBase implements WithDockableContent {
     return info;
   }
 
+  @NotNull
   @Override
   public TabInfo getTabInfo() {
     return myTabInfo;
   }
 
+  @NotNull
   @Override
   public DockableContent createDockableContent() {
     Image img = JBTabsImpl.getComponentImage(myTabInfo);
@@ -69,10 +73,10 @@ public class ImageFigure extends FigureBase implements WithDockableContent {
   }
 
   private static class MyContentPanel extends JPanel implements WithBinaryContent, Disposable {
-    private final ImageVirtualFile myVirtualFile;
+    @NotNull private final ImageVirtualFile myVirtualFile;
     private FileEditor myEditor;
 
-    private MyContentPanel(ImageVirtualFile virtualFile, Project project) {
+    private MyContentPanel(@NotNull ImageVirtualFile virtualFile, Project project) {
       super(new BorderLayout());
       myVirtualFile = virtualFile;
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -87,6 +91,7 @@ public class ImageFigure extends FigureBase implements WithDockableContent {
       setBackground(UIUtil.getEditorPaneBackground());
     }
 
+    @NotNull
     private ImageVirtualFile getVirtualFile() {
       return myVirtualFile;
     }
