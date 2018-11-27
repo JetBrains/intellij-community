@@ -19,12 +19,14 @@ import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.junit.Assume
 
 /**
  * @author peter
  */
+@CompileStatic
 class JavaFolding8Test extends JavaFoldingTestCase {
   @NotNull
   @Override

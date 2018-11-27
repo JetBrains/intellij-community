@@ -18,6 +18,7 @@ package com.intellij.java.psi.codeStyle.arrangement
 import com.intellij.application.options.CodeStyle
 import com.intellij.formatting.fileSet.NamedScopeDescriptor
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import groovy.transform.CompileStatic
 import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
@@ -28,6 +29,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
  * @author Denis Zhdanov
  * @since 11/14/12 1:29 PM
  */
+@CompileStatic
 class JavaRearrangerByNameTest extends AbstractJavaRearrangerTest {
 
   @Before

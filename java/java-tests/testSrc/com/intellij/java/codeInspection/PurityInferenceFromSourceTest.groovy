@@ -19,9 +19,12 @@ import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class PurityInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
   void "test getter"() {

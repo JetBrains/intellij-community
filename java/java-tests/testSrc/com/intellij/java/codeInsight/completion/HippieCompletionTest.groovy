@@ -17,9 +17,12 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class HippieCompletionTest extends LightCodeInsightFixtureTestCase {
 
   void testDollars() {

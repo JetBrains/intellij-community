@@ -16,11 +16,13 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.testFramework.LightProjectDescriptor
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
+@CompileStatic
 class NormalCompletionDfaTest extends NormalCompletionTestCase {
   @NotNull
   @Override

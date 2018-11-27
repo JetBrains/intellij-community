@@ -11,9 +11,12 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author ven
  */
+@CompileStatic
 class CreateMethodFromUsageTemplateTest extends LightCodeInsightFixtureTestCase {
 
   void testTemplateAssertions() throws Exception {

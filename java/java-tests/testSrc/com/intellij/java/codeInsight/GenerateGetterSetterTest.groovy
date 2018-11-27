@@ -25,10 +25,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
+
+@CompileStatic
 class GenerateGetterSetterTest extends LightCodeInsightFixtureTestCase {
 
   void "test don't strip is of non-boolean fields"() {
