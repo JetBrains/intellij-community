@@ -391,11 +391,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitBreakStatement(PsiBreakStatement statement) {
     startElement(statement);
-    PsiExpression expression = statement.getExpression();
     PsiElement exitedElement = statement.findExitedElement();
-    if (expression != null && exitedElement instanceof PsiSwitchExpression &&
+    if (exitedElement instanceof PsiSwitchExpression &&
         myInlinedBlockContext != null && myInlinedBlockContext.myCodeBlock == ((PsiSwitchExpression)exitedElement).getBody()) {
-      myInlinedBlockContext.generateReturn(expression, this);
+      myInlinedBlockContext.generateReturn(statement.getExpression(), this);
     } else {
       jumpOut(exitedElement);
     }
