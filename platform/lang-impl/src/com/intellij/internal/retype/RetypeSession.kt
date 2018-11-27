@@ -64,6 +64,11 @@ class RetypeSession(
   private var skipLookupSuggestion = false
   private var textBeforeLookupSelection: String? = null
 
+  // This stack will contain autocompletion elements
+  // E.g. "}", "]", "*/", "* @return"
+  val completionStack = ArrayDeque<String>()
+
+
   init {
     if (editor.selectionModel.hasSelection()) {
       pos = editor.selectionModel.selectionStart
@@ -190,10 +195,6 @@ class RetypeSession(
    * @return if next queue event should be processed
    */
   private fun handleIdeaIntelligence(): Boolean {
-    // This stack will contain autocompletion elements
-    // E.g. "}", "]", "*/", "* @return"
-    val completionStack = ArrayDeque<String>()
-
     if (document.text.take(pos) != originalText.take(pos)) {
       // Unexpected changes before current cursor position
       // (may be unwanted import)
