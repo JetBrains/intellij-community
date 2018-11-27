@@ -29,7 +29,6 @@
   <actions>
     <action class="org.intellij.images.actions.EditExternallyAction"
             id="Images.EditExternally"
-            icon="ImagesIcons.EditExternally"
             text="Open Image in External Editor">
       <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>

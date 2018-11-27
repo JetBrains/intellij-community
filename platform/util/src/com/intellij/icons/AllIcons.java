@@ -796,6 +796,7 @@ public class AllIcons {
     public static final Icon Jspx = IconLoader.getIcon("/fileTypes/jspx.svg"); // 16x16
     public static final Icon Manifest = IconLoader.getIcon("/fileTypes/manifest.svg"); // 16x16
     public static final Icon Properties = IconLoader.getIcon("/fileTypes/properties.svg"); // 16x16
+    public static final Icon Regexp = IconLoader.getIcon("/fileTypes/regexp.svg"); // 16x16
     public static final Icon Text = IconLoader.getIcon("/fileTypes/text.svg"); // 16x16
     public static final Icon UiForm = IconLoader.getIcon("/fileTypes/uiForm.svg"); // 16x16
     public static final Icon Unknown = IconLoader.getIcon("/fileTypes/unknown.svg"); // 16x16
@@ -1859,6 +1860,7 @@ public class AllIcons {
     public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.svg"); // 16x16
     public static final Icon Deploy = IconLoader.getIcon("/nodes/deploy.svg"); // 16x16
     public static final Icon Desktop = IconLoader.getIcon("/nodes/desktop.svg"); // 16x16
+    public static final Icon Editorconfig = IconLoader.getIcon("/nodes/editorconfig.svg"); // 16x16
     public static final Icon Ejb = IconLoader.getIcon("/nodes/ejb.svg"); // 16x16
     public static final Icon EjbBusinessMethod = IconLoader.getIcon("/nodes/ejbBusinessMethod.svg"); // 16x16
     public static final Icon EjbCmpField = IconLoader.getIcon("/nodes/ejbCmpField.svg"); // 16x16
