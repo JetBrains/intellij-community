@@ -73,17 +73,17 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
       PsiElement element = descriptor.getStartElement();
       if (element instanceof PsiKeyword) {
         element = element.getParent();
-        if (element instanceof PsiSwitchLabeledRuleStatement) {
-          PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)element;
-          PsiSwitchBlock switchBlock = rule.getEnclosingSwitchBlock();
-          PsiStatement body = rule.getBody();
+      }
+      if (element instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)element;
+        PsiSwitchBlock switchBlock = rule.getEnclosingSwitchBlock();
+        PsiStatement body = rule.getBody();
 
-          if (switchBlock instanceof PsiSwitchExpression && body instanceof PsiExpressionStatement) {
-            wrapExpression((PsiExpressionStatement)body);
-          }
-          else if (body != null) {
-            wrapStatement(body);
-          }
+        if (switchBlock instanceof PsiSwitchExpression && body instanceof PsiExpressionStatement) {
+          wrapExpression((PsiExpressionStatement)body);
+        }
+        else if (body != null) {
+          wrapStatement(body);
         }
       }
     }
