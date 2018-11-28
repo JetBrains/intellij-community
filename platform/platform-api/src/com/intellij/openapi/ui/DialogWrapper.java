@@ -686,10 +686,15 @@ public abstract class DialogWrapper {
     return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
-  private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
+  private static final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
 
   @NotNull
   protected JPanel createButtonsPanel(@NotNull List<? extends JButton> buttons) {
+    return layoutButtonsPanel(buttons);
+  }
+
+  @NotNull
+  public static JPanel layoutButtonsPanel(@NotNull List<? extends JButton> buttons) {
     JPanel buttonsPanel = new NonOpaquePanel();
     buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
@@ -737,6 +742,26 @@ public abstract class DialogWrapper {
    * @see DialogWrapper#DEFAULT_ACTION
    */
   protected JButton createJButtonForAction(Action action) {
+    JButton button = createJButtonForAction(action, getRootPane());
+
+    int mnemonic = button.getMnemonic();
+    final Object name = action.getValue(Action.NAME);
+    if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
+      myYesAction = action;
+    }
+    else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
+      myNoAction = action;
+    }
+
+    if (action.getValue(FOCUSED_ACTION) != null) {
+      myPreferredFocusedComponent = button;
+    }
+
+    return button;
+  }
+
+  @NotNull
+  public static JButton createJButtonForAction(@NotNull Action action, @Nullable JRootPane rootPane) {
     JButton button;
     if (action instanceof OptionAction && UISettings.getShadowInstance().getAllowMergeButtons()) {
       button = createJOptionsButton((OptionAction)action);
@@ -759,29 +784,17 @@ public abstract class DialogWrapper {
     }
     button.setMnemonic(mnemonic);
 
-    final Object name = action.getValue(Action.NAME);
-    if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
-      myYesAction = action;
-    }
-    else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
-      myNoAction = action;
-    }
-
     if (action.getValue(DEFAULT_ACTION) != null) {
-      if (!myPeer.isHeadless()) {
-        getRootPane().setDefaultButton(button);
+      if (rootPane != null) {
+        rootPane.setDefaultButton(button);
       }
-    }
-
-    if (action.getValue(FOCUSED_ACTION) != null) {
-      myPreferredFocusedComponent = button;
     }
 
     return button;
   }
 
   @NotNull
-  private JButton createJOptionsButton(@NotNull OptionAction action) {
+  private static JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
     String tooltip = String.format("Show drop-down menu (%s)", KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE));
     optionButton.setOptionTooltipText(tooltip);

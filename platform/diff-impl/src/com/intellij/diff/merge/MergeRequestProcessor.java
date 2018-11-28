@@ -18,12 +18,17 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -53,12 +58,12 @@ public abstract class MergeRequestProcessor implements Disposable {
   @NotNull private final Wrapper myContentPanel;
   @NotNull private final Wrapper myToolbarPanel;
   @NotNull private final Wrapper myToolbarStatusPanel;
+  @NotNull private final Wrapper myButtonsPanel;
 
   @NotNull private final MergeRequest myRequest;
 
   @NotNull private MergeTool.MergeViewer myViewer;
   @Nullable private BooleanGetter myCloseHandler;
-  @Nullable private BottomActions myBottomActions;
   private boolean myConflictResolved = false;
 
   public MergeRequestProcessor(@Nullable Project project, @NotNull MergeRequest request) {
@@ -75,6 +80,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myToolbarPanel = new Wrapper();
     myToolbarPanel.setFocusable(true);
     myToolbarStatusPanel = new Wrapper();
+    myButtonsPanel = new Wrapper();
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
@@ -82,6 +88,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
+    myMainPanel.add(myButtonsPanel, BorderLayout.SOUTH);
 
     myMainPanel.setFocusTraversalPolicyProvider(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
@@ -96,7 +103,6 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     myViewer = viewer;
-    updateBottomActions();
   }
 
   //
@@ -118,6 +124,8 @@ public abstract class MergeRequestProcessor implements Disposable {
     buildToolbar(toolbarComponents.toolbarActions);
     myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
     myCloseHandler = toolbarComponents.closeHandler;
+
+    updateBottomActions();
   }
 
   @CalledInAwt
@@ -129,16 +137,42 @@ public abstract class MergeRequestProcessor implements Disposable {
     myContentPanel.setContent(null);
     myToolbarPanel.setContent(null);
     myToolbarStatusPanel.setContent(null);
+    myButtonsPanel.setContent(null);
     myCloseHandler = null;
-    myBottomActions = null;
   }
 
   private void updateBottomActions() {
-    myBottomActions = new BottomActions();
-    myBottomActions.applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
-    myBottomActions.applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
-    myBottomActions.resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
-    myBottomActions.cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
+    Action applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
+    Action applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
+    Action resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
+    Action cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
+
+    if (resolveAction != null) resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+
+    List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);
+    List<Action> rightActions = SystemInfo.isMac ? ContainerUtil.packNullables(cancelAction, resolveAction)
+                                                 : ContainerUtil.packNullables(resolveAction, cancelAction);
+
+    JRootPane rootPane = getRootPane();
+    JPanel buttonsPanel = new NonOpaquePanel(new GridBagLayout());
+    buttonsPanel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
+
+    GridBag bag = new GridBag();
+    if (leftActions.size() > 0) {
+      buttonsPanel.add(createButtonsPanel(leftActions, rootPane), bag.next());
+    }
+    buttonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());
+    if (leftActions.size() > 0) {
+      buttonsPanel.add(createButtonsPanel(rightActions, rootPane), bag.next());
+    }
+
+    myButtonsPanel.setContent(buttonsPanel);
+  }
+
+  @NotNull
+  private static JPanel createButtonsPanel(@NotNull List<Action> actions, @Nullable JRootPane rootPane) {
+    List<JButton> buttons = ContainerUtil.map(actions, action -> DialogWrapper.createJButtonForAction(action, rootPane));
+    return DialogWrapper.layoutButtonsPanel(buttons);
   }
 
   @NotNull
@@ -156,6 +190,8 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(group, contextActions);
+
+    DiffUtil.addActionBlock(group, ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
     return group;
   }
@@ -242,8 +278,6 @@ public abstract class MergeRequestProcessor implements Disposable {
     DiffUtil.runPreservingFocus(myContext, () -> {
       destroyViewer();
       myViewer = newViewer;
-      updateBottomActions();
-      rebuildSouthPanel();
       initViewer();
     });
   }
@@ -259,9 +293,10 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected void setWindowTitle(@NotNull String title) {
   }
 
-  protected abstract void rebuildSouthPanel();
-
   public abstract void closeDialog();
+
+  @Nullable
+  protected abstract JRootPane getRootPane();
 
   @Nullable
   public <T> T getContextUserData(@NotNull Key<T> key) {
@@ -300,16 +335,6 @@ public abstract class MergeRequestProcessor implements Disposable {
   @CalledInAwt
   public boolean checkCloseAction() {
     return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
-  }
-
-  @NotNull
-  public BottomActions getBottomActions() {
-    return myBottomActions != null ? myBottomActions : new BottomActions();
-  }
-
-  @Nullable
-  public String getHelpId() {
-    return PlatformDataKeys.HELP_ID.getData(myMainPanel);
   }
 
   //
@@ -467,12 +492,5 @@ public abstract class MergeRequestProcessor implements Disposable {
     public void reopenWithTool(@NotNull MergeTool tool) {
       MergeRequestProcessor.this.reopenWithTool(tool);
     }
-  }
-
-  public static class BottomActions {
-    @Nullable public Action applyLeft;
-    @Nullable public Action applyRight;
-    @Nullable public Action resolveAction;
-    @Nullable public Action cancelAction;
   }
 }
