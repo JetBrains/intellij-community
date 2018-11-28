@@ -17,6 +17,7 @@ DONT_TRACE = {
     '_weakrefset.py':LIB_FILE,
     'linecache.py':LIB_FILE,
     'threading.py':LIB_FILE,
+    'dis.py':LIB_FILE,
 
     #things from pydev that we don't want to trace
     '_pydev_execfile.py':PYDEV_FILE,

@@ -1,227 +1,238 @@
 import os
-import platform
-import unittest
 import pytest
-import sys
 
 import time
 
-from tests_python import debugger_unittest
+from contextlib import contextmanager
+from tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON
+from tests_python.debug_constants import TEST_CYTHON
 
-IS_CPYTHON = platform.python_implementation() == 'CPython'
-IS_PY36 = sys.version_info[0] == 3 and sys.version_info[1] == 6
-TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
-IS_APPVEYOR = os.environ.get('APPVEYOR', '') in ('True', 'true', '1')
+pytest_plugins = [
+    str('tests_python.debugger_fixtures'),
+]
 
-SKIP_FRAME_EVAL_TESTS = False
+pytestmark = pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON, reason='Requires CPython >= 3.6')
 
 
-class WriterThreadStepAndResume(debugger_unittest.AbstractWriterThread):
+@pytest.fixture
+def case_setup_force_frame_eval(case_setup):
 
-    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_simple_calls.py')
+    def get_environ(writer):
+        env = os.environ.copy()
+        env['PYDEVD_USE_FRAME_EVAL'] = 'YES'
+        env['PYDEVD_USE_CYTHON'] = 'YES'
+        return env
 
-    def run(self):
-        self.start_socket()
-        self.write_add_breakpoint(10, 'Method2')
-        self.write_add_breakpoint(2, 'Method1')
-        self.write_make_initial_run()
+    original_test_file = case_setup.test_file
 
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('111', True)
+    @contextmanager
+    def test_file(*args, **kwargs):
+        kwargs.setdefault('get_environ', get_environ)
+        with original_test_file(*args, **kwargs) as writer:
+            yield writer
 
-        assert line == 10, 'Expected return to be in line 10, was: %s' % line
-        assert suspend_type == "frame_eval", 'Expected suspend type to be "frame_eval", but was: %s' % suspend_type
+    case_setup.test_file = test_file
+    return case_setup
 
-        self.write_step_over(thread_id)
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('108', True)
 
-        assert line == 11, 'Expected return to be in line 11, was: %s' % line
+def test_step_and_resume(case_setup_force_frame_eval):
+    with case_setup_force_frame_eval.test_file('_debugger_case_simple_calls.py') as writer:
+        writer.write_add_breakpoint(10, 'Method2')
+        writer.write_add_breakpoint(2, 'Method1')
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+        assert hit.suspend_type == 'frame_eval'
+        assert hit.line == 10
+
+        writer.write_step_over(hit.thread_id)
+        hit = writer.wait_for_breakpoint_hit('108')
+
+        assert hit.line == 11
         # we use tracing debugger while stepping
-        assert suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % suspend_type
+        assert hit.suspend_type == "trace"
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('111', True)
+        hit = writer.wait_for_breakpoint_hit()
 
-        assert line == 2, 'Expected return to be in line 2, was: %s' % line
+        assert hit.line == 2
         # we enable frame evaluation debugger after "Resume" command
-        assert suspend_type == "frame_eval", 'Expected suspend type to be "frame_eval", but was: %s' % suspend_type
+        assert hit.suspend_type == "frame_eval"
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        self.finished_ok = True
+        writer.finished_ok = True
 
 
-class WriterThreadStepReturn(debugger_unittest.AbstractWriterThread):
+def test_step_return(case_setup_force_frame_eval):
+    with case_setup_force_frame_eval.test_file('_debugger_case56.py') as writer:
+        writer.write_add_breakpoint(2, 'Call2')
+        writer.write_make_initial_run()
 
-    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case56.py')
+        hit = writer.wait_for_breakpoint_hit()
 
-    def run(self):
-        self.start_socket()
-        self.write_add_breakpoint(2, 'Call2')
-        self.write_make_initial_run()
+        assert hit.suspend_type == "frame_eval"
+        writer.write_get_frame(hit.thread_id, hit.frame_id)
 
-        thread_id, frame_id, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type()
+        writer.write_step_return(hit.thread_id)
 
-        assert suspend_type == "frame_eval", 'Expected suspend type to be "frame_eval", but was: %s' % suspend_type
-        self.write_get_frame(thread_id, frame_id)
+        hit = writer.wait_for_breakpoint_hit('109')
 
-        self.write_step_return(thread_id)
-
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('109', True)
-
-        assert line == 8, 'Expecting it to go to line 8. Went to: %s' % line
+        assert hit.line == 8
         # Step return uses temporary breakpoint, so we use tracing debugger
-        assert suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % suspend_type
+        assert hit.suspend_type == "trace"
 
-        self.write_step_in(thread_id)
+        writer.write_step_in(hit.thread_id)
 
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('107', True)
+        hit = writer.wait_for_breakpoint_hit('107')
 
         # goes to line 4 in jython (function declaration line)
-        assert line in (4, 5), 'Expecting it to go to line 4 or 5. Went to: %s' % line
+        assert hit.line in (4, 5)
         # we use tracing debugger for stepping
-        assert suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % suspend_type
+        assert hit.suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % hit.suspend_type
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        self.finished_ok = True
+        writer.finished_ok = True
 
 
-class WriterThreadAddLineBreakWhileRun(debugger_unittest.AbstractWriterThread):
-
-    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case3.py')
-
-    def run(self):
-        self.start_socket()
-        self.write_make_initial_run()
+def test_add_break_while_running(case_setup_force_frame_eval):
+    with case_setup_force_frame_eval.test_file('_debugger_case3.py') as writer:
+        writer.write_make_initial_run()
         time.sleep(.5)
-        breakpoint_id = self.write_add_breakpoint(4, '')
+        breakpoint_id = writer.write_add_breakpoint(4, '')
 
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('111', True)
+        hit = writer.wait_for_breakpoint_hit()
 
-        assert line == 4, 'Expected return to be in line 4, was: %s' % line
+        assert hit.line == 4
         # we use tracing debugger if breakpoint was added while running
-        assert suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % suspend_type
+        assert hit.suspend_type == "trace"
 
-        self.write_get_frame(thread_id, frame_id)
+        writer.write_get_frame(hit.thread_id, hit.frame_id)
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('111', True)
-        assert line == 4, 'Expected return to be in line 4, was: %s' % line
+        hit = writer.wait_for_breakpoint_hit()
+        assert hit.line == 4
         # we still use tracing debugger
-        assert suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % suspend_type
+        assert hit.suspend_type == "trace"
 
-        self.write_get_frame(thread_id, frame_id)
+        writer.write_get_frame(hit.thread_id, hit.frame_id)
 
-        self.write_remove_breakpoint(breakpoint_id)
+        writer.write_remove_breakpoint(breakpoint_id)
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        self.finished_ok = True
+        writer.finished_ok = True
 
 
-class WriterThreadExceptionBreak(debugger_unittest.AbstractWriterThread):
+def test_exc_break(case_setup_force_frame_eval):
+    with case_setup_force_frame_eval.test_file('_debugger_case_simple_calls.py') as writer:
+        writer.write_add_breakpoint(10, 'Method2')
+        writer.write_add_exception_breakpoint_with_policy('IndexError', "1", "0", "0")
+        writer.write_make_initial_run()
 
-    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_simple_calls.py')
+        hit = writer.wait_for_breakpoint_hit()
 
-    def run(self):
-        self.start_socket()
-        self.write_add_breakpoint(10, 'Method2')
-        self.write_add_exception_breakpoint_with_policy('IndexError', "1", "0", "0")
-        self.write_make_initial_run()
-        time.sleep(.5)
-
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('111', True)
-
-        assert line == 10, 'Expected return to be in line 10, was: %s' % line
+        assert hit.line == 10
         # we use tracing debugger if there are exception breakpoints
-        assert suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % suspend_type
+        assert hit.suspend_type == "trace"
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        self.finished_ok = True
+        writer.finished_ok = True
 
 
-class WriterThreadAddExceptionBreakWhileRunning(debugger_unittest.AbstractWriterThread):
+def test_add_exc_break_while_running(case_setup_force_frame_eval):
+    with case_setup_force_frame_eval.test_file('_debugger_case_simple_calls.py') as writer:
+        writer.write_add_breakpoint(10, 'Method2')
+        writer.write_add_breakpoint(2, 'Method1')
+        writer.write_make_initial_run()
 
-    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_simple_calls.py')
+        hit = writer.wait_for_breakpoint_hit('111')
 
-    def run(self):
-        self.start_socket()
-        self.write_add_breakpoint(10, 'Method2')
-        self.write_add_breakpoint(2, 'Method1')
-        # self.write_add_exception_breakpoint_with_policy('IndexError', "1", "0", "0")
-        self.write_make_initial_run()
-        time.sleep(.5)
-
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('111', True)
-
-        assert line == 10, 'Expected return to be in line 10, was: %s' % line
+        assert hit.line == 10
         # we use tracing debugger if there are exception breakpoints
-        assert suspend_type == "frame_eval", 'Expected suspend type to be "frame_eval", but was: %s' % suspend_type
+        assert hit.suspend_type == "frame_eval"
 
-        self.write_add_exception_breakpoint_with_policy('IndexError', "1", "0", "0")
+        writer.write_add_exception_breakpoint_with_policy('IndexError', "1", "0", "0")
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('111', True)
+        hit = writer.wait_for_breakpoint_hit()
 
-        assert line == 2, 'Expected return to be in line 2, was: %s' % line
+        assert hit.line == 2
         # we use tracing debugger if exception break was added
-        assert suspend_type == "trace", 'Expected suspend type to be "trace", but was: %s' % suspend_type
+        assert hit.suspend_type == "trace"
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        self.finished_ok = True
+        writer.finished_ok = True
 
 
-class WriterThreadAddTerminationExceptionBreak(debugger_unittest.AbstractWriterThread):
+def test_add_termination_exc_break(case_setup_force_frame_eval):
+    with case_setup_force_frame_eval.test_file('_debugger_case_simple_calls.py') as writer:
+        writer.write_add_breakpoint(10, 'Method2')
+        writer.write_add_exception_breakpoint_with_policy('IndexError', "0", "1", "0")
+        writer.write_make_initial_run()
 
-    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_simple_calls.py')
+        hit = writer.wait_for_breakpoint_hit(line=10)
 
-    def run(self):
-        self.start_socket()
-        self.write_add_breakpoint(10, 'Method2')
-        self.write_add_exception_breakpoint_with_policy('IndexError', "0", "1", "0")
-        self.write_make_initial_run()
-        time.sleep(.5)
-
-        thread_id, frame_id, line, suspend_type = self.wait_for_breakpoint_hit_with_suspend_type('111', True)
-
-        assert line == 10, 'Expected return to be in line 10, was: %s' % line
         # we can use frame evaluation with exception breakpoint with "On termination" suspend policy
-        assert suspend_type == "frame_eval", 'Expected suspend type to be "frame_eval", but was: %s' % suspend_type
+        assert hit.suspend_type == "frame_eval"
 
-        self.write_run_thread(thread_id)
+        writer.write_run_thread(hit.thread_id)
 
-        self.finished_ok = True
+        writer.finished_ok = True
 
 
-@pytest.mark.skipif(
-    SKIP_FRAME_EVAL_TESTS, 
-    reason='Frame eval is not currently meant to be used in the debugger and tests are flaky.\n'
-           'Feature must be reviewed to be included again.\n'
-)
-class TestFrameEval(unittest.TestCase, debugger_unittest.DebuggerRunner):
-    
-    def get_command_line(self):
-        return [sys.executable, '-u']
+def test_frame_eval_whitebox_test(case_setup_force_frame_eval):
+    from tests_python.debugger_unittest import CMD_STEP_INTO, CMD_STEP_RETURN, CMD_STEP_OVER
 
-    def test_step_and_resume(self):
-        self.check_case(WriterThreadStepAndResume)
+    with case_setup_force_frame_eval.test_file('_debugger_case_frame_eval.py') as writer:
+        line_on_global = writer.get_line_index_with_content('break on global')
+        writer.write_add_breakpoint(line_on_global, '')
+        writer.write_add_breakpoint(writer.get_line_index_with_content('break on check_with_trace'), 'None')
+        writer.write_make_initial_run()
 
-    def test_step_return(self):
-        self.check_case(WriterThreadStepReturn)
+        hit = writer.wait_for_breakpoint_hit(line=line_on_global)
+        assert hit.suspend_type == "frame_eval"
 
-    def test_add_break_while_running(self):
-        self.check_case(WriterThreadAddLineBreakWhileRun)
+        writer.write_step_over(hit.thread_id)
+        hit = writer.wait_for_breakpoint_hit(reason=CMD_STEP_OVER)
 
-    def test_exc_break(self):
-        self.check_case(WriterThreadExceptionBreak)
+        writer.write_step_in(hit.thread_id)
+        hit = writer.wait_for_breakpoint_hit(
+            line=writer.get_line_index_with_content('check_step_in_then_step_return') + 1, reason=CMD_STEP_INTO)
+        assert hit.name == 'check_step_in_then_step_return'
 
-    def test_add_exc_break_while_running(self):
-        self.check_case(WriterThreadAddExceptionBreakWhileRunning)
+        writer.write_step_return(hit.thread_id)
+        hit = writer.wait_for_breakpoint_hit(reason=CMD_STEP_RETURN)
+        assert hit.name == '<module>'
 
-    def test_add_termination_exc_break(self):
-        self.check_case(WriterThreadAddTerminationExceptionBreak)
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+
+
+def test_frame_eval_change_breakpoints(case_setup_force_frame_eval):
+    with case_setup_force_frame_eval.test_file('_debugger_case_change_breaks.py') as writer:
+        break1_line = writer.get_line_index_with_content('break 1')
+        break2_line = writer.get_line_index_with_content('break 2')
+
+        break2_id = writer.write_add_breakpoint(break2_line, 'None')
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit(line=break2_line)
+        assert hit.suspend_type == "frame_eval"
+
+        writer.write_remove_breakpoint(break2_id)
+        writer.write_add_breakpoint(break1_line, 'None')
+        writer.write_run_thread(hit.thread_id)
+
+        hit = writer.wait_for_breakpoint_hit(line=break1_line)
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+

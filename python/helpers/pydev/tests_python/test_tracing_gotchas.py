@@ -64,7 +64,7 @@ def test_tracing_gotchas():
 
     Note: according to: https://docs.python.org/3/library/sys.html#sys.settrace the behavior
     does not follow the spec (but we have to work with it nonetheless).
-
+    
     Note: Jython seems to do what's written in the docs.
     '''
 
@@ -75,11 +75,11 @@ def test_tracing_gotchas():
         _d = 1
 
     for tracer, line_events in (
-            (Tracer(), 1 if IS_JYTHON else 4),
-            (TracerSettingNone(), 1),
-            (TracerChangeToOtherTracing(), 4 if not IS_PY26 and not IS_PY34 and not IS_JYTHON else 1),
-            (TracerDisableOnCall(), 0),
-    ):
+        (Tracer(), 1 if IS_JYTHON else 4),
+        (TracerSettingNone(), 1),
+        (TracerChangeToOtherTracing(), 4 if not IS_PY26 and not IS_PY34 and not IS_JYTHON else 1),
+        (TracerDisableOnCall(), 0),
+        ):
         curr_trace_func = sys.gettrace()
         try:
             sys.settrace(tracer.trace_func)
