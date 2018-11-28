@@ -4,6 +4,7 @@ package com.intellij.internal.retype
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.ide.IdeEventQueue
+import com.intellij.idea.Bombed
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -11,10 +12,12 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.junit.Assert
 import java.io.File
+import java.util.*
 
 /**
  * @author yole
  */
+@Bombed(user = "yole", day = 3, month = Calendar.DECEMBER)
 class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
 
