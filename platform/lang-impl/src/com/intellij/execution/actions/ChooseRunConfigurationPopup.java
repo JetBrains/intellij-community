@@ -4,7 +4,6 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -33,11 +32,12 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,8 +46,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-
-import static com.intellij.execution.impl.RunConfigurationListManagerHelperKt.compareTypesForUi;
 
 public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
@@ -917,14 +915,26 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   @NotNull
-  public static List<ItemWrapper> createSettingsList(@NotNull Project project, @NotNull ExecutorProvider executorProvider, boolean isCreateEditAction) {
+  public static List<ItemWrapper> createSettingsList(@NotNull Project project,
+                                                     @NotNull ExecutorProvider executorProvider,
+                                                     boolean isCreateEditAction) {
+    //noinspection TestOnlyProblems
+    return createSettingsList(RunManagerImpl.getInstanceImpl(project), executorProvider, isCreateEditAction, Registry.is("run.popup.move.folders.to.top", false));
+  }
+
+  @TestOnly
+  @NotNull
+  public static List<ItemWrapper> createSettingsList(@NotNull RunManagerImpl runManager,
+                                                     @NotNull ExecutorProvider executorProvider,
+                                                     boolean isCreateEditAction,
+                                                     boolean isMoveFoldersToTop) {
     List<ItemWrapper> result = new ArrayList<>();
 
     if (isCreateEditAction) {
       result.add(createEditAction());
     }
 
-    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    Project project = runManager.getProject();
     final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
     if (selectedConfiguration != null) {
       addActionsForSelected(selectedConfiguration, project, result);
@@ -933,65 +943,80 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
     List<FolderWrapper> folderWrappers = new SmartList<>();
     for (Map<String, List<RunnerAndConfigurationSettings>> folderToConfigurations : runManager.getConfigurationsGroupedByTypeAndFolder(false).values()) {
-      for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : folderToConfigurations.entrySet()) {
-        final String folderName = entry.getKey();
-        List<RunnerAndConfigurationSettings> configurations = entry.getValue();
-        if (folderName != null) {
-          boolean isSelected = configurations.contains(selectedConfiguration);
-          if (isSelected) {
-            assert selectedConfiguration != null;
+      if (isMoveFoldersToTop) {
+        for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : folderToConfigurations.entrySet()) {
+          final String folderName = entry.getKey();
+          List<RunnerAndConfigurationSettings> configurations = entry.getValue();
+          if (folderName != null) {
+            folderWrappers.add(createFolderItem(project, executorProvider, selectedConfiguration, folderName, configurations));
           }
-          FolderWrapper folderWrapper = new FolderWrapper(project, executorProvider,
-                                                          folderName + (isSelected ? "  (mnemonic is to \"" + selectedConfiguration.getName() + "\")" : ""),
-                                                          configurations);
-          if (isSelected) {
-            folderWrapper.setMnemonic(1);
-          }
-          folderWrappers.add(folderWrapper);
-        }
-        else {
-          for (RunnerAndConfigurationSettings configuration : configurations) {
-            final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
-            if (configuration == selectedConfiguration) {
-              wrapped.setMnemonic(1);
+          else {
+            for (RunnerAndConfigurationSettings configuration : configurations) {
+              wrapAndAdd(project, configuration, selectedConfiguration, wrappedExisting);
             }
-            wrappedExisting.put(configuration, wrapped);
+          }
+        }
+      }
+      else {
+        // add only folders
+        for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : folderToConfigurations.entrySet()) {
+          final String folderName = entry.getKey();
+          if (folderName != null) {
+            result.add(createFolderItem(project, executorProvider, selectedConfiguration, folderName, entry.getValue()));
+          }
+        }
+
+        // add configurations
+        List<RunnerAndConfigurationSettings> configurations = folderToConfigurations.get(null);
+        if (!ContainerUtil.isEmpty(configurations)) {
+          for (RunnerAndConfigurationSettings configuration : configurations) {
+            result.add(wrapAndAdd(project, configuration, selectedConfiguration, wrappedExisting));
           }
         }
       }
     }
 
-    boolean isMoveFoldersToTop = Registry.is("run.popup.move.folders.to.top", false);
     if (isMoveFoldersToTop) {
       result.addAll(folderWrappers);
     }
     if (!DumbService.isDumb(project)) {
       populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration);
     }
-    result.addAll(wrappedExisting.values());
-    if (!isMoveFoldersToTop) {
-      addFolders(result, folderWrappers);
+    if (isMoveFoldersToTop) {
+      result.addAll(wrappedExisting.values());
     }
     return result;
   }
 
-  private static void addFolders(@NotNull List<ItemWrapper> result, @NotNull List<FolderWrapper> folderWrappers) {
-    final int topIndex = result.size() - 1;
-    for (FolderWrapper folderWrapper : folderWrappers) {
-      int bestIndex = topIndex;
-      for (int index = topIndex; index < result.size(); index++) {
-        bestIndex = index;
-        ItemWrapper item = result.get(index);
-        ConfigurationType currentType = item.getType();
-        int m = currentType == null
-                ? 1
-                : compareTypesForUi(ObjectUtils.notNull(folderWrapper.getType(), UnknownConfigurationType.getInstance()), currentType);
-        if (m < 0 || (m == 0 && !(item instanceof FolderWrapper))) {
-          break;
-        }
-      }
-      result.add(bestIndex, folderWrapper);
+  @NotNull
+  private static ItemWrapper wrapAndAdd(@NotNull Project project,
+                                        @NotNull RunnerAndConfigurationSettings configuration,
+                                        @Nullable RunnerAndConfigurationSettings selectedConfiguration,
+                                        @NotNull Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting) {
+    ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
+    if (configuration == selectedConfiguration) {
+      wrapped.setMnemonic(1);
     }
+    wrappedExisting.put(configuration, wrapped);
+    return wrapped;
+  }
+
+  @NotNull
+  private static FolderWrapper createFolderItem(@NotNull Project project,
+                                                @NotNull ExecutorProvider executorProvider,
+                                                @Nullable RunnerAndConfigurationSettings selectedConfiguration,
+                                                @NotNull String folderName,
+                                                @NotNull List<RunnerAndConfigurationSettings> configurations) {
+    boolean isSelected = selectedConfiguration != null && configurations.contains(selectedConfiguration);
+    String value = folderName;
+    if (isSelected) {
+      value += "  (mnemonic is to \"" + selectedConfiguration.getName() + "\")";
+    }
+    FolderWrapper result = new FolderWrapper(project, executorProvider, value, configurations);
+    if (isSelected) {
+      result.setMnemonic(1);
+    }
+    return result;
   }
 
   private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<ItemWrapper> result) {
