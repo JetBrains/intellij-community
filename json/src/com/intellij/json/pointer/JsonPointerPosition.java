@@ -82,12 +82,12 @@ public class JsonPointerPosition {
 
   @Nullable
   public JsonPointerPosition skip(int count) {
-    return checkPosInRange(count) ? new JsonPointerPosition(steps.subList(count, steps.size())) : null;
+    return checkPosInRangeIncl(count) ? new JsonPointerPosition(steps.subList(count, steps.size())) : null;
   }
 
   @Nullable
   public JsonPointerPosition trimTail(int count) {
-    return checkPosInRange(count) ? new JsonPointerPosition(steps.subList(0, steps.size() - count)) : null;
+    return checkPosInRangeIncl(count) ? new JsonPointerPosition(steps.subList(0, steps.size() - count)) : null;
   }
 
   @Nullable
@@ -127,6 +127,10 @@ public class JsonPointerPosition {
 
   private boolean checkPosInRange(int pos) {
     return steps.size() > pos;
+  }
+
+  private boolean checkPosInRangeIncl(int pos) {
+    return steps.size() >= pos;
   }
 
   static class Step {
