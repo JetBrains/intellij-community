@@ -263,7 +263,7 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridwidth = 1;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.class.name")), constr);
 
-    myTargetClassNameField = new EditorTextField(suggestTestClassName(myTargetClass));
+    myTargetClassNameField = new EditorTextField(suggestTestClassName(myTargetClass), myProject);
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {

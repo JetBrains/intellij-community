@@ -216,7 +216,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
                                                     0, 0);
 
     myNamePanel = new JPanel(new BorderLayout(0, 2));
-    myNameField = new EditorTextField(myMethod.getName());
+    myNameField = new EditorTextField(myMethod.getName(), myProject);
     final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     nameLabel.setLabelFor(myNameField);
     myNameField.setEnabled(myMethod.canChangeName());

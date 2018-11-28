@@ -94,6 +94,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     this(EditorFactory.getInstance().createDocument(text), null, FileTypes.PLAIN_TEXT);
   }
 
+  public EditorTextField(@NotNull String text, Project project) {
+    this(EditorFactory.getInstance().createDocument(text), project, FileTypes.PLAIN_TEXT);
+  }
+
   public EditorTextField(@NotNull String text, Project project, FileType fileType) {
     this(EditorFactory.getInstance().createDocument(text), project, fileType, false, true);
   }

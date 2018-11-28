@@ -87,7 +87,7 @@ class CopyClassDialog extends DialogWrapper{
 
   @Override
   protected JComponent createNorthPanel() {
-    myNameField = new EditorTextField("");
+    myNameField = new EditorTextField("", myProject);
 
     String qualifiedName = getQualifiedName();
     myTfPackage = new PackageNameReferenceEditorCombo(qualifiedName, myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
