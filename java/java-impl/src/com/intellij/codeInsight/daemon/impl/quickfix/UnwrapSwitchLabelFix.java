@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -24,7 +23,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CommonQuickFixBundle.message("fix.unwrap.statement", PsiKeyword.SWITCH);
+    return "Remove unreachable branches";
   }
 
   @Override
@@ -33,21 +32,39 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     if (label == null) return;
     PsiSwitchLabelStatementBase labelStatement = PsiImplUtil.getSwitchLabel(label);
     if (labelStatement == null) return;
-    PsiSwitchStatement statement = labelStatement.getEnclosingSwitchStatement();
-    if (statement == null) return;
-    List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
+    PsiSwitchBlock block = labelStatement.getEnclosingSwitchBlock();
+    if (block == null) return;
+    List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
       if (otherLabel != labelStatement) {
         DeleteSwitchLabelFix.deleteLabel(otherLabel);
       }
     }
-    BreakConverter converter = BreakConverter.from(statement);
-    if (converter == null) return;
-    converter.process();
-    unwrap(labelStatement, statement);
+    for (PsiExpression expression : Objects.requireNonNull(labelStatement.getCaseValues()).getExpressions()) {
+      if (expression != label) {
+        new CommentTracker().deleteAndRestoreComments(expression);
+      }
+    }
+    tryUnwrap(labelStatement, block);
   }
 
-  private static void unwrap(PsiSwitchLabelStatementBase labelStatement, PsiSwitchStatement statement) {
+  public void tryUnwrap(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock block) {
+    if (block instanceof PsiSwitchStatement) {
+      BreakConverter converter = BreakConverter.from(block);
+      if (converter == null) return;
+      converter.process();
+      unwrapStatement(labelStatement, (PsiSwitchStatement)block);
+    } else {
+      if (labelStatement instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchLabeledRuleStatement ruleStatement = (PsiSwitchLabeledRuleStatement)labelStatement;
+        if (ruleStatement.getBody() instanceof PsiExpressionStatement) {
+          new CommentTracker().replaceAndRestoreComments(block, ((PsiExpressionStatement)ruleStatement.getBody()).getExpression());
+        }
+      }
+    }
+  }
+
+  private static void unwrapStatement(PsiSwitchLabelStatementBase labelStatement, PsiSwitchStatement statement) {
     PsiCodeBlock block = statement.getBody();
     PsiStatement body =
       labelStatement instanceof PsiSwitchLabeledRuleStatement ? ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() : null;

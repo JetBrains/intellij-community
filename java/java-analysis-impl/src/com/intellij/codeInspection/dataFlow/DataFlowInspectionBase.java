@@ -316,9 +316,18 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
       if (statement == null) continue;
       if (PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class).size() == 1 &&
-          Objects.requireNonNull(labelStatement.getCaseValues()).getExpressionCount() == 1 &&
-          (!(statement instanceof PsiSwitchStatement) || BreakConverter.from((PsiSwitchStatement)statement) == null)) {
-        continue;
+          Objects.requireNonNull(labelStatement.getCaseValues()).getExpressionCount() == 1) {
+        boolean canUnwrap;
+        if (statement instanceof PsiSwitchStatement) {
+          canUnwrap = BreakConverter.from(statement) != null;
+        }
+        else {
+          canUnwrap = labelStatement instanceof PsiSwitchLabeledRuleStatement &&
+                      ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement;
+        }
+        if (!canUnwrap) {
+          continue;
+        }
       }
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseValues)
