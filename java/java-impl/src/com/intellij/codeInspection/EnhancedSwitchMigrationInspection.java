@@ -471,7 +471,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
     @Override
     public String generate(CommentTracker ct) {
-      return ct.text(myExpression);
+      return ct.text(myExpression) + ";";
     }
   }
 
@@ -509,7 +509,6 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       }
       sb.append("->");
       sb.append(myRuleResult.generate(ct));
-      sb.append(";");
       if (mySourceBranch != null) {
         for (PsiStatement relatedStatement : mySourceBranch.getRelatedStatements()) {
           ct.grabComments(relatedStatement);
