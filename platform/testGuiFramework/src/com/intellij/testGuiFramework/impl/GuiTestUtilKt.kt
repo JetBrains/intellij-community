@@ -25,6 +25,7 @@ import org.fest.swing.timing.Wait
 import java.awt.Component
 import java.awt.Container
 import java.awt.Window
+import java.lang.IllegalStateException
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JCheckBox
@@ -263,6 +264,9 @@ object GuiTestUtilKt {
       } catch (e: Exception) {
         // ignore
       }
+    }
+    if (!condition()) {
+      throw IllegalStateException("the condition is not satisfied")
     }
   }
 
