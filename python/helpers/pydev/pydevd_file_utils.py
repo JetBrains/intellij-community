@@ -575,7 +575,7 @@ def get_fullname(mod_name):
 
 def get_package_dir(mod_name):
     for path in sys.path:
-        mod_path = join(path, mod_name)
+        mod_path = join(path, mod_name.replace('.', '/'))
         if os.path.isdir(mod_path):
             return mod_path
     return None
