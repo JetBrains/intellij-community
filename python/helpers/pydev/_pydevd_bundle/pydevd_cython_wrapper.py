@@ -1,3 +1,4 @@
+import sys
 try:
     try:
         from _pydevd_bundle_ext import pydevd_cython as mod
@@ -6,7 +7,6 @@ try:
         from _pydevd_bundle import pydevd_cython as mod
 
 except ImportError:
-    import sys
     import struct
 
     try:
@@ -29,6 +29,11 @@ except ImportError:
     mod_name = 'pydevd_cython_%s_%s%s_%s' % (sys.platform, sys.version_info[0], sys.version_info[1], plat)
     check_name = '_pydevd_bundle.%s' % (mod_name,)
     mod = getattr(__import__(check_name), mod_name)
+
+# Regardless of how it was found, make sure it's later available as the
+# initial name so that the expected types from cython in frame eval
+# are valid.
+sys.modules['_pydevd_bundle.pydevd_cython'] = mod
 
 trace_dispatch = mod.trace_dispatch
 
