@@ -40,6 +40,66 @@ import java.io.File
 import java.util.*
 import kotlin.concurrent.timer
 
+fun String.toReadable() = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
+
+class RetypeLog {
+  private val log = arrayListOf<String>()
+  private var currentTyping: String? = null
+  private var currentCompletion: String? = null
+  var typedChars = 0
+      private set
+  var completedChars = 0
+      private set
+
+  fun recordTyping(c: Char) {
+    if (currentTyping == null) {
+      flushCompletion()
+      currentTyping = ""
+    }
+    currentTyping += c.toString().toReadable()
+    typedChars++
+  }
+
+  fun recordCompletion(c: Char) {
+    if (currentCompletion == null) {
+      flushTyping()
+      currentCompletion = ""
+    }
+    currentCompletion += c.toString().toReadable()
+    completedChars++
+  }
+
+  fun recordDesync(message: String) {
+    flush()
+    log.add("Desync: $message")
+  }
+
+  fun flush() {
+    flushTyping()
+    flushCompletion()
+  }
+
+  private fun flushTyping() {
+    if (currentTyping != null) {
+      log.add("Type: $currentTyping")
+      currentTyping = null
+    }
+  }
+
+  private fun flushCompletion() {
+    if (currentCompletion != null) {
+      log.add("Complete: $currentCompletion")
+      currentCompletion = null
+    }
+  }
+
+  fun printToStdout() {
+    for (s in log) {
+      println(s)
+    }
+  }
+}
+
 /**
  * @property interfereFilesChangePeriod Set period in milliseconds for changes in interfere file.
  * "Interfere file" - file that will be created near by retyped and it will be periodically changed.
@@ -67,8 +127,7 @@ class RetypeSession(
   private val endPos: Int
   private val tailLength: Int
 
-  private var typedChars = 0
-  private var completedChars = 0
+  private val log = RetypeLog()
 
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
   private val oldAddUnambiguous = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
@@ -145,7 +204,9 @@ class RetypeSession(
     }
     CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = oldOptimize
 
-    currentLatencyRecordKey?.details = "typed $typedChars chars, completed $completedChars chars"
+    currentLatencyRecordKey?.details = "typed ${log.typedChars} chars, completed ${log.completedChars} chars"
+    log.flush()
+    log.printToStdout()
     currentLatencyRecordKey = null
     if (startNext) {
       startNextCallback?.invoke()
@@ -196,7 +257,7 @@ class RetypeSession(
     }
 
     val c = originalText[pos++]
-    typedChars++
+    log.recordTyping(c)
 
     // Reset lookup related variables
     textBeforeLookupSelection = null
@@ -233,10 +294,13 @@ class RetypeSession(
    * @return if next queue event should be processed
    */
   private fun handleIdeaIntelligence(): Boolean {
-    if (document.text.take(pos) != originalText.take(pos)) {
+    val actualBeforeCaret = document.text.take(pos)
+    val expectedBeforeCaret = originalText.take(pos)
+    if (actualBeforeCaret != expectedBeforeCaret) {
       // Unexpected changes before current cursor position
       // (may be unwanted import)
       if (textBeforeLookupSelection != null) {
+        log.recordDesync("Restoring text before lookup (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(5).toReadable()} ")
         // Unexpected changes was made by lookup.
         // Restore previous text state and set flag to skip further suggestions until whitespace will be typed
         WriteCommandAction.runWriteCommandAction(project) {
@@ -245,10 +309,11 @@ class RetypeSession(
         skipLookupSuggestion = true
       }
       else {
+        log.recordDesync("Restoring entire text (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(5).toReadable()} ")
         // There changes wasn't made by lookup, so we don't know how to handle them
         // Restore text as it should be at this point without any intelligence
         WriteCommandAction.runWriteCommandAction(project) {
-          document.replaceText(originalText.take(pos) + originalText.takeLast(endPos), document.modificationStamp + 1)
+          document.replaceText(expectedBeforeCaret + originalText.takeLast(originalText.length - endPos), document.modificationStamp + 1)
         }
       }
     }
@@ -260,10 +325,11 @@ class RetypeSession(
              && originalText[pos] == document.text[pos]
              && document.text[pos] !in listOf('\n') // Don't count line breakers because we want to enter "enter" explicitly
       ) {
+        log.recordCompletion(document.text[pos])
         pos++
-        completedChars++
       }
       if (editor.caretModel.offset > pos) {
+        log.recordDesync("Deleting extra characters: ${document.text.substring(pos, editor.caretModel.offset).toReadable()}")
         WriteCommandAction.runWriteCommandAction(project) {
           // Delete symbols not from original text and move caret
           document.deleteString(pos, editor.caretModel.offset)
@@ -286,7 +352,9 @@ class RetypeSession(
           if (originalText.substring(pos).take(origIndexOfFirstComp) != document.text.substring(pos).take(origIndexOfFirstComp)) {
             // We have some unexpected chars before completion. Remove them
             WriteCommandAction.runWriteCommandAction(project) {
-              document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos, pos + origIndexOfFirstComp))
+              val replacement = originalText.substring(pos, pos + origIndexOfFirstComp)
+              log.recordDesync("Replacing extra characters before completion: ${document.text.substring(pos, pos + docIndexOfFirstComp).toReadable()} -> ${replacement.toReadable()}")
+              document.replaceString(pos, pos + docIndexOfFirstComp, replacement)
             }
           }
           pos += origIndexOfFirstComp + firstCompletion.length
@@ -299,6 +367,7 @@ class RetypeSession(
           // Completion is wrong and original text doesn't contain it
           // Remove this completion
           val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
+          log.recordDesync("Removing wrong completion: ${document.text.substring(pos, pos + docIndexOfFirstComp).toReadable()}")
           WriteCommandAction.runWriteCommandAction(project) {
             document.replaceString(pos, pos + docIndexOfFirstComp + firstCompletion.length, "")
           }
