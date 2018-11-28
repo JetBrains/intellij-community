@@ -32,7 +32,6 @@ private fun syncAdded(added: MutableCollection<String>,
     val source = sourceRepoMap[file]!!.file
     val target = targetDir.resolve(file)
     if (target.exists()) {
-      log("$file already exists in target repo!")
       if (source.readBytes().contentEquals(target.readBytes())) {
         log("Skipping $file")
         skip()
@@ -76,14 +75,22 @@ private fun syncRemoved(removed: MutableCollection<String>,
     else {
       val gitObject = targetRepoMap[file]!!
       val target = gitObject.file
-      if (!target.delete()) {
-        log("Failed to delete ${target.absolutePath}")
+      if (target.exists()) {
+        if (target.delete()) {
+          stage(gitObject.repo, gitObject.path)
+        }
+        else {
+          log("Failed to delete ${target.absolutePath}")
+        }
       }
-      else {
-        stage(gitObject.repo, gitObject.path)
-        if (target.parentFile.list().isEmpty()) target.parentFile.delete()
-      }
+      cleanDir(target.parentFile)
     }
+  }
+}
+
+private fun cleanDir(dir: File?) {
+  if (dir?.list()?.isEmpty() == true && dir.delete()) {
+    cleanDir(dir.parentFile)
   }
 }
 
