@@ -133,7 +133,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "" +
       RainbowHighlighter.generatePaletteExample("\n        ") + "\n" +
       "    \"\"\"</docComment>\n" +
-      "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, f'{<param>x</param>!s:{\"foo\"}}')   # Comment\n" +
+      "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, f'{<param>x</param>!s:{\"^10\"}}')   # Comment\n" +
       "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower()</mcall>)\n" +
       "\n" +
       "class <classDef>Foo</classDef>:\n" +
