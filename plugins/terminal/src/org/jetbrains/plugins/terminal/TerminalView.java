@@ -143,7 +143,13 @@ public class TerminalView {
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState) {
-    createNewTab(null, terminalRunner, myToolWindow, tabState);
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    if (window != null && window.isAvailable()) {
+      // ensure TerminalToolWindowFactory.createToolWindowContent gets called
+      ((ToolWindowImpl)window).ensureContentInitialized();
+      createNewTab(null, terminalRunner, myToolWindow, tabState);
+      window.activate(null);
+    }
   }
 
   private Content newTab(@Nullable JBTerminalWidget terminalWidget) {
