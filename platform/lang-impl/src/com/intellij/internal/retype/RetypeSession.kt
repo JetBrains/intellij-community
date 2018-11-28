@@ -57,7 +57,7 @@ class RetypeSession(
   private val document = editor.document
 
   // -- Alarms
-  private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
+  private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private val threadDumpAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
   private val originalText = document.text
@@ -77,6 +77,7 @@ class RetypeSession(
 
   private var skipLookupSuggestion = false
   private var textBeforeLookupSelection: String? = null
+  @Volatile private var waitingForTimerInvokeLater: Boolean = false
 
   // This stack will contain autocompletion elements
   // E.g. "}", "]", "*/", "* @return"
@@ -157,6 +158,13 @@ class RetypeSession(
   private fun typeNext() {
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
+    val timerTick = System.currentTimeMillis()
+    waitingForTimerInvokeLater = true
+    ApplicationManager.getApplication().invokeLater { typeNextInEDT(timerTick) }
+  }
+
+  private fun typeNextInEDT(timerTick: Long) {
+    waitingForTimerInvokeLater = false
     val processNextEvent = handleIdeaIntelligence()
     if (processNextEvent) return
 
@@ -174,7 +182,7 @@ class RetypeSession(
         scriptBuilder?.append("${ActionCommand.PREFIX} ${IdeActions.ACTION_CHOOSE_LOOKUP_ITEM}\n")
         typedRightBefore = false
         textBeforeLookupSelection = document.text
-        executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)
+        executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM, timerTick)
         queueNextOrStop()
         return
       }
@@ -189,7 +197,7 @@ class RetypeSession(
 
     if (c == '\n') {
       scriptBuilder?.append("${ActionCommand.PREFIX} ${IdeActions.ACTION_EDITOR_ENTER}\n")
-      executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+      executeEditorAction(IdeActions.ACTION_EDITOR_ENTER, timerTick)
       typedRightBefore = false
     }
     else {
@@ -203,12 +211,11 @@ class RetypeSession(
         }
       }
 
-      val eventTimestamp = System.currentTimeMillis()
       IdeFocusManager.findInstance().requestFocus(editor.component, true).doWhenDone {
         IdeEventQueue.getInstance().postEvent(
-          KeyEvent(editor.component, KeyEvent.KEY_PRESSED, eventTimestamp, 0, KeyEvent.VK_UNDEFINED, c))
+          KeyEvent(editor.component, KeyEvent.KEY_PRESSED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
         IdeEventQueue.getInstance().postEvent(
-          KeyEvent(editor.component, KeyEvent.KEY_TYPED, eventTimestamp, 0, KeyEvent.VK_UNDEFINED, c))
+          KeyEvent(editor.component, KeyEvent.KEY_TYPED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
       }
       typedRightBefore = true
     }
@@ -371,7 +378,7 @@ class RetypeSession(
            !Character.isJavaIdentifierPart(textAtLookup[lookupString.length] + 1)
   }
 
-  private fun executeEditorAction(actionId: String) {
+  private fun executeEditorAction(actionId: String, timerTick: Long) {
     val actionManager = ActionManagerEx.getInstanceEx()
     val action = actionManager.getAction(actionId)
     val event = AnActionEvent.createFromAnAction(action, null, "",
@@ -379,20 +386,20 @@ class RetypeSession(
                                                    editor.component))
     action.beforeActionPerformedUpdate(event)
     actionManager.fireBeforeActionPerformed(action, event.dataContext, event)
-    LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, System.currentTimeMillis())
+    LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
     action.actionPerformed(event)
     actionManager.fireAfterActionPerformed(action, event.dataContext, event)
   }
 
   private fun logThreadDump() {
-    if (editor.isProcessingTypedAction) {
+    if (editor.isProcessingTypedAction || waitingForTimerInvokeLater) {
       threadDumps.add(ThreadDumper.dumpThreadsToString())
       if (threadDumps.size > 200) {
         threadDumps.subList(0, 100).clear()
       }
       synchronized(disposeLock) {
         if (!threadDumpAlarm.isDisposed) {
-          threadDumpAlarm.addRequest({ logThreadDump() }, 100)
+          threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
         }
       }
     }
