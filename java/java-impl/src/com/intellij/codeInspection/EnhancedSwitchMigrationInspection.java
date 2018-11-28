@@ -442,12 +442,27 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       for (SwitchBranch branch : branches) {
         if (branch.myIsFallthrough) return null;
       }
+      for (SwitchBranch branch : branches) {
+        boolean allBranchRefsWillBeValid = StreamEx.of(branch.myStatements)
+          .flatMap((PsiElement stmt) -> StreamEx.ofTree(stmt, el -> StreamEx.of(el.getChildren())))
+          .select(PsiReferenceExpression.class)
+          .map(PsiReference::resolve)
+          .select(PsiLocalVariable.class)
+          .allMatch(variable -> isInBranchOrOutside(switchStmt, branch, variable));
+        if (!allBranchRefsWillBeValid) return null;
+      }
       List<SwitchExpressionBranch> switchRules = new ArrayList<>();
       for (SwitchBranch branch : branches) {
         PsiStatement[] statements = branch.getStatements();
         switchRules.add(new SwitchExpressionBranch(branch.isDefault(), branch.getCaseExpressions(), new SwitchStatementBranch(statements), branch));
       }
       return new SwitchStatementReplacer(switchStmt, expression, switchRules);
+    }
+
+    private static boolean isInBranchOrOutside(@NotNull PsiSwitchStatement switchStmt,
+                                               SwitchBranch branch, PsiLocalVariable variable) {
+      return !PsiTreeUtil.isAncestor(switchStmt, variable, false)
+             || StreamEx.of(branch.myStatements).anyMatch(stmt -> PsiTreeUtil.isAncestor(stmt, variable, false));
     }
   }
 
