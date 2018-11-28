@@ -15,6 +15,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
 import com.intellij.internal.performance.currentLatencyRecordKey
+import com.intellij.internal.performance.latencyRecorderProperties
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
@@ -40,7 +41,7 @@ import java.util.*
 import kotlin.concurrent.timer
 
 /**
- * @property interfereFilesChangePeriod Set period for changes in interfere file.
+ * @property interfereFilesChangePeriod Set period in milliseconds for changes in interfere file.
  * "Interfere file" - file that will be created near by retyped and it will be periodically changed.
  * After retype session this file will be deleted.
  * Pass negative value to disable this functionality.
@@ -103,6 +104,11 @@ class RetypeSession(
     val vFile = FileDocumentManager.getInstance().getFile(document)
     val keyName = "${vFile?.name ?: "Unknown file"} (${document.textLength} chars)"
     currentLatencyRecordKey = LatencyDistributionRecordKey(keyName)
+    latencyRecorderProperties.putAll(mapOf("Delay" to "$delayMillis ms",
+                                           "Thread dump delay" to "$threadDumpDelay ms",
+                                           "Interfere file change period" to if (interfereFilesChangePeriod <= 0) "disabled" else "$interfereFilesChangePeriod ms"
+    ))
+
     scriptBuilder?.let {
       if (vFile != null) {
         val contentRoot = ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(vFile) ?: return@let
@@ -409,7 +415,7 @@ class RetypeSession(
     if (interfereFilesChangePeriod <= 0) return
     stopInterfereFileChanger = false
 
-    val file = File(editor.virtualFile.parent.path + "${File.separator}$interfereFileName")
+    val file = File(editor.virtualFile.parent.path, interfereFileName)
     file.createNewFile()
 
     val text = "// Text\n".repeat(500)

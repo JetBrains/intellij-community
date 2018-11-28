@@ -67,7 +67,7 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
     val retypeSession = RetypeSession(project, myFixture.editor as EditorImpl, 100, null, 0, interfereFilesChangePeriod = 10)
     retypeSession.start()
 
-    val interfereFile = File(file.virtualFile.parent.path + File.separator + retypeSession.interfereFileName)
+    val interfereFile = File(file.virtualFile.parent.path, retypeSession.interfereFileName)
     Assert.assertTrue(interfereFile.exists())
 
     fun explicitWait(noLongerThanMillis: Long, runUntilFalse: () -> Boolean): Boolean {

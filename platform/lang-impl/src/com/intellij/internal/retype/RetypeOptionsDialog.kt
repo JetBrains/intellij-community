@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.CheckBox
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
+import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JRadioButton
@@ -21,6 +23,10 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     private set
   var threadDumpDelay: Int by propComponentProperty(project, 100)
     private set
+  var backgroundChangesDelay: Int by propComponentProperty(project, 100)
+    private set
+  var enableBackgroundChanges: Boolean by propComponentProperty(project, false)
+    private set
   var fileCount: Int by propComponentProperty(project, 10)
     private set
   var retypeExtension: String by propComponentProperty(project, "")
@@ -28,17 +34,26 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
   var recordScript: Boolean by propComponentProperty(project, true)
     private set
 
-  private val typeDelaySpinner = JBIntSpinner(retypeDelay,0, 5000, 50)
-  private val threadDumpDelaySpinner = JBIntSpinner(threadDumpDelay,50, 5000, 50)
-  private val retypeCurrentFile = JRadioButton(if (editor?.selectionModel?.hasSelection() == true) "Retype selected text" else "Retype current file")
+  private val typeDelaySpinner = JBIntSpinner(retypeDelay, 0, 5000, 50)
+  private val threadDumpDelaySpinner = JBIntSpinner(threadDumpDelay, 50, 5000, 50)
+  private val interfereFileChaneDelaySpinner = JBIntSpinner(backgroundChangesDelay, 50, 5000, 50)
+  private val interfereFileChangerEnabled = JBCheckBox(null, enableBackgroundChanges)
+
+  private val retypeCurrentFile = JRadioButton(
+    if (editor?.selectionModel?.hasSelection() == true) "Retype selected text" else "Retype current file")
   private val retypeRandomFiles = JRadioButton("Retype")
   private val fileCountSpinner = JBIntSpinner(fileCount, 1, 5000)
-  private val extensionTextField = JTextField(retypeExtension,5)
-  private val recordCheckBox = CheckBox("Record script for performance testing plugin",true)
+  private val extensionTextField = JTextField(retypeExtension, 5)
+  private val recordCheckBox = CheckBox("Record script for performance testing plugin", true)
 
   init {
     init()
     title = "Retype Options"
+
+    interfereFileChangerEnabled.addItemListener {
+      interfereFileChaneDelaySpinner.isEnabled = it.stateChange == ItemEvent.SELECTED
+    }
+    interfereFileChaneDelaySpinner.isEnabled = false
   }
 
   override fun createCenterPanel(): JComponent {
@@ -51,11 +66,15 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     }
     updateEnabledState()
     return panel {
-      row(label = JLabel("Typing delay:")) {
+      row(label = JLabel("Typing delay (ms):")) {
         typeDelaySpinner()
       }
-      row(label = JLabel("Thread dump capture delay:")) {
+      row(label = JLabel("Thread dump capture delay (ms):")) {
         threadDumpDelaySpinner()
+      }
+      row(label = JLabel("Change files in background with period (ms):")) {
+        interfereFileChaneDelaySpinner()
+        interfereFileChangerEnabled()
       }
       buttonGroup(::updateEnabledState) {
         row {
@@ -85,6 +104,9 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     fileCount = fileCountSpinner.number
     retypeExtension = extensionTextField.text
     recordScript = recordCheckBox.isSelected
+
+    backgroundChangesDelay = interfereFileChaneDelaySpinner.number
+    enableBackgroundChanges = interfereFileChangerEnabled.isSelected
 
     super.doOKAction()
   }
