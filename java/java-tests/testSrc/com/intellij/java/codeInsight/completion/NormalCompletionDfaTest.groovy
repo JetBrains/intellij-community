@@ -15,10 +15,10 @@
  */
 package com.intellij.java.codeInsight.completion
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author peter
  */
@@ -116,4 +116,33 @@ public class FooImpl extends Foo {
     myFixture.assertPreferredCompletionItems 0, 'SString', 'SzNameInTheEnd', 'Serializable'
   }
 
+  void 'test no casts to inaccessible type'() {
+    myFixture.addClass '''
+package some;
+
+public abstract class PublicInterface {
+
+    public static PackagePrivateImplementation createPrivateImplementation() {
+        return new PackagePrivateImplementation();
+    }
+}
+
+class PackagePrivateImplementation extends PublicInterface {
+    public String getValue() { }
+}
+'''
+
+    myFixture.configureByText 'a.java', '''
+import some.PublicInterface;
+
+public class Main {
+
+    public static void main(String[] args) {
+        PublicInterface i = PublicInterface.createPrivateImplementation();
+        i.getV<caret>x
+    }
+}'''
+
+    assert myFixture.complete(CompletionType.BASIC, 2).size() == 0
+  }
 }
