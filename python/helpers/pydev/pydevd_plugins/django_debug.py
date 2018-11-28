@@ -1,6 +1,6 @@
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, dict_iter_items, DJANGO_SUSPEND, IS_PY2
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_iter_items, DJANGO_SUSPEND, IS_PY2, get_current_thread_id
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_file, normcase
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle import pydevd_vars
@@ -46,7 +46,6 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         if not hasattr(pydb, 'django_exception_break'):
             _init_plugin_breaks(pydb)
         pydb.django_exception_break[exception] = True
-        pydb.set_tracing_for_untraced_contexts_if_not_frame_eval()
         return True
     return False
 
@@ -150,7 +149,7 @@ def suspend_django(main_debugger, thread, frame, cmd=CMD_SET_BREAK):
     if frame.f_lineno is None:
         return None
 
-    pydevd_vars.add_additional_frame_by_id(get_thread_id(thread), {id(frame): frame})
+    pydevd_vars.add_additional_frame_by_id(get_current_thread_id(thread), {id(frame): frame})
 
     main_debugger.set_suspend(thread, cmd)
     thread.additional_info.suspend_type = DJANGO_SUSPEND
@@ -260,7 +259,7 @@ def _get_template_file_name(frame):
             pydev_log.debug("Source name is %s\n" % fname)
             return None
         else:
-            abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(str(fname))
+            abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(fname)
             return abs_path_real_path_and_base[1]
     except:
         pydev_log.debug(traceback.format_exc())

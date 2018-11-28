@@ -6,7 +6,8 @@ import time
 import pytest
 
 from tests_python import debugger_unittest
-from tests_python.debugger_unittest import get_free_port, overrides, IS_CPYTHON, IS_JYTHON, IS_IRONPYTHON
+from tests_python.debugger_unittest import get_free_port, overrides, IS_CPYTHON, IS_JYTHON, IS_IRONPYTHON, \
+    IS_PY3K
 
 import sys
 
@@ -64,6 +65,7 @@ class _WriterThreadCaseModuleWithEntryPoint(_WriterThreadCaseMSwitch):
 class AbstractWriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
 
     FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
+    DJANGO_FOLDER = None
 
     def _ignore_stderr_line(self, line):
         if debugger_unittest.AbstractWriterThread._ignore_stderr_line(self, line):
@@ -75,10 +77,11 @@ class AbstractWriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
         return False
 
     def get_command_line_args(self):
+        assert self.DJANGO_FOLDER is not None
         free_port = get_free_port()
         self.django_port = free_port
         return [
-            debugger_unittest._get_debugger_test_file(os.path.join('my_django_proj_17', 'manage.py')),
+            debugger_unittest._get_debugger_test_file(os.path.join(self.DJANGO_FOLDER, 'manage.py')),
             'runserver',
             '--noreload',
             str(free_port),
@@ -88,8 +91,9 @@ class AbstractWriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
         '''
             @param line: starts at 1
         '''
+        assert self.DJANGO_FOLDER is not None
         breakpoint_id = self.next_breakpoint_id()
-        template_file = debugger_unittest._get_debugger_test_file(os.path.join('my_django_proj_17', 'my_app', 'templates', 'my_app', template))
+        template_file = debugger_unittest._get_debugger_test_file(os.path.join(self.DJANGO_FOLDER, 'my_app', 'templates', 'my_app', template))
         self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'django-line', template_file, line, func))
         self.log.append('write_add_django_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
@@ -107,12 +111,17 @@ class AbstractWriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
                 for _ in range(10):
                     try:
                         stream = urlopen('http://127.0.0.1:%s/%s' % (outer.django_port, uri))
-                        self.contents = stream.read()
+                        contents = stream.read()
+                        if IS_PY3K:
+                            contents = contents.decode('utf-8')
+                        self.contents = contents
                         break
                     except IOError:
                         continue
 
-        return T()
+        t = T()
+        t.daemon = True
+        return t
 
 
 class DebuggerRunnerSimple(debugger_unittest.DebuggerRunner):
@@ -185,7 +194,7 @@ def case_setup():
 
 @pytest.fixture
 def case_setup_unhandled_exceptions(case_setup):
-    
+
     original = case_setup.test_file
 
     def check_test_suceeded_msg(writer, stdout, stderr):
@@ -196,7 +205,7 @@ def case_setup_unhandled_exceptions(case_setup):
         if 'ValueError: TEST SUCEEDED' not in stderr:
             raise AssertionError('"ValueError: TEST SUCEEDED" not in stderr.\nstdout:\n%s\n\nstderr:\n%s' % (
                 stdout, stderr))
-    
+
     def test_file(*args, **kwargs):
         kwargs.setdefault('check_test_suceeded_msg', check_test_suceeded_msg)
         kwargs.setdefault('additional_output_checks', additional_output_checks)
@@ -252,7 +261,10 @@ def case_setup_m_switch():
     class CaseSetup(object):
 
         @contextmanager
-        def test_file(self):
+        def test_file(self, **kwargs):
+            for key, value in kwargs.items():
+                assert hasattr(WriterThread, key)
+                setattr(WriterThread, key, value)
             with runner.check_case(WriterThread) as writer:
                 yield writer
 
@@ -270,8 +282,12 @@ def case_setup_m_switch_entry_point():
     class CaseSetup(object):
 
         @contextmanager
-        def test_file(self):
+        def test_file(self, **kwargs):
+            for key, value in kwargs.items():
+                assert hasattr(WriterThread, key)
+                setattr(WriterThread, key, value)
             with runner.check_case(WriterThread) as writer:
+
                 yield writer
 
     return CaseSetup()
@@ -288,8 +304,21 @@ def case_setup_django():
     class CaseSetup(object):
 
         @contextmanager
-        def test_file(self, filename):
-            WriterThread.TEST_FILE = debugger_unittest._get_debugger_test_file(filename)
+        def test_file(self, **kwargs):
+            import django
+            version = [int(x) for x in django.get_version().split('.')][:2]
+            if version == [1, 7]:
+                django_folder = 'my_django_proj_17'
+            elif version == [2, 1]:
+                django_folder = 'my_django_proj_21'
+            else:
+                raise AssertionError('Can only check django 1.7 and 2.1 right now. Found: %s' % (version,))
+
+            WriterThread.DJANGO_FOLDER = django_folder
+            for key, value in kwargs.items():
+                assert hasattr(WriterThread, key)
+                setattr(WriterThread, key, value)
+
             with runner.check_case(WriterThread) as writer:
                 yield writer
 
