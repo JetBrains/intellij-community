@@ -105,7 +105,7 @@ extension_folder, target_pydevd_name, target_frame_eval, force_cython = process_
 extension_name = "pydevd_cython"
 if target_pydevd_name is None:
     target_pydevd_name = extension_name
-build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython, extension_folder)
+build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython, extension_folder, True)
 
 if IS_PY36_OR_GREATER:
     extension_name = "pydevd_frame_evaluator"
