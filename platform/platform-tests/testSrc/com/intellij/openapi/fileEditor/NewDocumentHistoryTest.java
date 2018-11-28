@@ -27,6 +27,9 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     try {
       Disposer.dispose(myHistory);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myHistory = null;
       super.tearDown();

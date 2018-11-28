@@ -61,6 +61,9 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     try {
       FontLayoutService.setInstance(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

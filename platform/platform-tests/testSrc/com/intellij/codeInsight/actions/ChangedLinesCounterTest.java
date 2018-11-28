@@ -34,6 +34,9 @@ public class ChangedLinesCounterTest extends LightPlatformCodeInsightFixtureTest
     try {
       myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

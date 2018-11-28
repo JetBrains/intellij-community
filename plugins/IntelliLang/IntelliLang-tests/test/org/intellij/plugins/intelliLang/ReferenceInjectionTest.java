@@ -249,6 +249,9 @@ public class ReferenceInjectionTest extends AbstractLanguageInjectionTestCase {
     try {
       myFixture.disableInspections(new InjectedReferencesInspection());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

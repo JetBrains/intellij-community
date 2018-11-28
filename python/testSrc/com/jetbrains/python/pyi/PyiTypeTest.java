@@ -78,6 +78,9 @@ public class PyiTypeTest extends PyTestCase {
       }
       setLanguageLevel(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

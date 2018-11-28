@@ -43,6 +43,9 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
       PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
       PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyFunctionTypeAnnotationDialect.INSTANCE, (visitorClass, file) -> false);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

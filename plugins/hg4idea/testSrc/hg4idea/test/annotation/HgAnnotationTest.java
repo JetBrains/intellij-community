@@ -49,6 +49,9 @@ public class HgAnnotationTest extends HgPlatformTest {
     try {
       Clock.reset();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -27,6 +27,9 @@ public class MavenParameterGoalTest extends LightCodeInsightFixtureTestCase {
     try {
       MavenServerManager.getInstance().shutdown(true);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

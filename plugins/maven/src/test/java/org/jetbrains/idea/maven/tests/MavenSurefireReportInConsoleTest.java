@@ -42,6 +42,9 @@ public class MavenSurefireReportInConsoleTest extends LightCodeInsightFixtureTes
     try {
       MavenServerManager.getInstance().shutdown(true);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

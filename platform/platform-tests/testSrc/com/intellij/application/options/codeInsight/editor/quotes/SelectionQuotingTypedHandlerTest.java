@@ -55,6 +55,9 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = myPrevValue;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

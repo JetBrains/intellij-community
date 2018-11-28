@@ -40,9 +40,11 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends PlatformTestCa
     try {
       ((PsiManagerImpl)PsiManager.getInstance(getProject())).removeTreeChangePreprocessor(myTracker);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myTracker = null;
-
       super.tearDown();
     }
   }

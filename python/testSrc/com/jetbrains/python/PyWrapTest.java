@@ -48,6 +48,9 @@ public class PyWrapTest extends PyTestCase {
       settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap;
       pythonSettings.RIGHT_MARGIN = myOldMargin;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

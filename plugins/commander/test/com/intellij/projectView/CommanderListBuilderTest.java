@@ -44,6 +44,9 @@ public class CommanderListBuilderTest extends BaseProjectViewTestCase {
       Disposer.dispose(myCommander);
       myCommander = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

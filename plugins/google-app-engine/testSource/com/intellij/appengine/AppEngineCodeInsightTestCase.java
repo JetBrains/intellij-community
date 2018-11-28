@@ -69,6 +69,9 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     try {
       myCodeInsightFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -42,9 +42,11 @@ public class InconsistentResourceBundleInspectionTest extends JavaCodeInsightFix
     try {
       myInspection.clearSettings();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myInspection = null;
-
       super.tearDown();
     }
   }

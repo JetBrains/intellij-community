@@ -32,6 +32,9 @@ public class CopyActionSimpleHandlerTest extends CopyActionTest {
     try {
       CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE = myPrevValue;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

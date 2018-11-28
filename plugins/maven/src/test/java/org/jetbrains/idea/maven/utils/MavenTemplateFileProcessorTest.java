@@ -44,6 +44,9 @@ public class MavenTemplateFileProcessorTest extends LightPlatformCodeInsightFixt
     try {
       MavenServerManager.getInstance().shutdown(true);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

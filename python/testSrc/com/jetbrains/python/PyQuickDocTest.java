@@ -39,6 +39,9 @@ public class PyQuickDocTest extends LightMarkedTestCase {
       final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
       documentationSettings.setFormat(myFormat);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -60,6 +60,9 @@ public class BadPluginTest extends PlatformTestCase {
     try {
       System.setProperty(PathManager.PROPERTY_CONFIG_PATH, myOldConfigPath);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

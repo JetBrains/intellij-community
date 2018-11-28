@@ -60,6 +60,9 @@ public class PyMoveTest extends PyTestCase {
     try {
       SystemProperties.setTestUserName(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

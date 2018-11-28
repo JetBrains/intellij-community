@@ -65,6 +65,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     try {
       FontLayoutService.setInstance(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

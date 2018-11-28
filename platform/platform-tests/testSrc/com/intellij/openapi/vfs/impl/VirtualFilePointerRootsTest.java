@@ -53,6 +53,9 @@ public class VirtualFilePointerRootsTest extends PlatformTestCase {
       assertEquals(numberOfPointersBefore, myVirtualFilePointerManager.numberOfPointers());
       assertEquals(numberOfListenersBefore, myVirtualFilePointerManager.numberOfListeners());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myVirtualFilePointerManager = null;
       super.tearDown();

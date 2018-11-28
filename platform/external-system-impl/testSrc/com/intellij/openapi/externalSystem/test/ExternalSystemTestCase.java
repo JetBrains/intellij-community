@@ -166,6 +166,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
         myTestDir.deleteOnExit();
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
       resetClassFields(getClass());

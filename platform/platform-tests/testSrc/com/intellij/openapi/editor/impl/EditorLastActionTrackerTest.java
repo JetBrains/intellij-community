@@ -48,10 +48,12 @@ public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixture
     try {
       EditorActionManager.getInstance().setActionHandler(SAMPLE_ACTION, mySavedHandler);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myTracker = null;
       mySavedHandler = null;
-
       super.tearDown();
     }
   }

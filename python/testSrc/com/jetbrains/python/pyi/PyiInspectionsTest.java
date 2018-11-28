@@ -46,6 +46,9 @@ public class PyiInspectionsTest extends PyTestCase {
       PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
       PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyiLanguageDialect.getInstance(), (visitorClass, file) -> false);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

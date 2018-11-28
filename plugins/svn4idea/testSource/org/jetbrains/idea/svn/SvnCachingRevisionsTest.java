@@ -45,6 +45,9 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
       myVcs = null;
       FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -40,6 +40,9 @@ public class ProductivityFeaturesTest extends PlatformTestCase {
       myRegistry = null;
       myTracker = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

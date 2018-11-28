@@ -62,11 +62,13 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
       }
       if (myWorkingDirectory != null) TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myRealCodeStyleManger = null;
       myMockCodeStyleManager = null;
       myMockPlainTextFormattingModelBuilder = null;
-
       super.tearDown();
     }
   }

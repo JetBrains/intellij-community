@@ -56,6 +56,9 @@ public class Py3ResolveTest extends PyResolveTestCase {
     try {
       PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

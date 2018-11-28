@@ -71,9 +71,11 @@ public class FileTypesTest extends PlatformTestCase {
       FileTypeManagerImpl.reDetectAsync(false);
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFileTypeManager = null;
-
       super.tearDown();
     }
   }

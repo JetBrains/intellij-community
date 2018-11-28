@@ -85,7 +85,11 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   public void tearDown() throws Exception {
     try {
       Registry.get(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED).resetToDefault();
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }

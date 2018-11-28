@@ -39,6 +39,9 @@ public class PyCopyPasteTest extends PyTestCase {
     try {
       CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = myOldEnabled;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
