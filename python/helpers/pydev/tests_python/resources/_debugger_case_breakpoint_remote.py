@@ -6,6 +6,7 @@ if __name__ == '__main__':
     
     if root_dirname not in sys.path:
         sys.path.append(root_dirname)
+        
     import pydevd
     print('before pydevd.settrace')
     from _pydev_bundle import pydev_localhost

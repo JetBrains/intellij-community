@@ -145,14 +145,12 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                 try:
                     self.start_exec()
                     if hasattr(self, 'debugger'):
-                        import pydevd_tracing
-                        pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
+                        self.debugger.enable_tracing()
 
                     more = self.do_add_exec(code_fragment)
 
                     if hasattr(self, 'debugger'):
-                        import pydevd_tracing
-                        pydevd_tracing.SetTrace(None)
+                        self.debugger.disable_tracing()
 
                     self.finish_exec(more)
                 finally:
@@ -495,8 +493,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                 pydevd.apply_debugger_options(debugger_options)
                 self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
                 self.debugger.prepare_to_run()
-                import pydevd_tracing
-                pydevd_tracing.SetTrace(None)
+                self.debugger.disable_tracing()
             except:
                 traceback.print_exc()
                 sys.stderr.write('Failed to connect to target debugger.\n')

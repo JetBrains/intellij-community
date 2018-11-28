@@ -55,8 +55,6 @@ class LineBreakpoint(object):
         self.hit_condition = hit_condition
         self._hit_count = 0
         self._hit_condition_lock = threading.Lock()
-        # need for frame evaluation: list of code objects, which bytecode was modified by this breakpoint
-        self.code_objects = set()
         self.is_logpoint = is_logpoint
 
     @property

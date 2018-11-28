@@ -43,28 +43,46 @@ def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_
     return bytes(code_with_new_values), new_values
 
 
-def _modify_new_lines(code_to_modify, all_inserted_code):
+def _modify_new_lines(code_to_modify, offset, code_to_insert):
     """
-    Update new lines in order to hide inserted code inside the original code
-    :param code_to_modify: code to modify
-    :param all_inserted_code: list of tuples (offset, list of code instructions) with all inserted pieces of code
+    Update new lines: the bytecode inserted should be the last instruction of the previous line.
     :return: bytes sequence of code with updated lines offsets
     """
+    # There's a nice overview of co_lnotab in
+    # https://github.com/python/cpython/blob/3.6/Objects/lnotab_notes.txt
+
+    if code_to_modify.co_firstlineno == 1 and offset == 0 and code_to_modify.co_name == '<module>':
+        # There's a peculiarity here: if a breakpoint is added in the first line of a module, we
+        # can't replace the code because we require a line event to stop and the live event
+        # was already generated, so, fallback to tracing.
+        return None
+
     new_list = list(code_to_modify.co_lnotab)
-    abs_offset = prev_abs_offset = 0
-    i = 0
-    while i < len(new_list):
-        prev_abs_offset = abs_offset
-        abs_offset += new_list[i]
-        for (inserted_offset, inserted_code) in all_inserted_code:
-            if prev_abs_offset <= inserted_offset < abs_offset:
-                size_of_inserted = len(inserted_code)
-                new_list[i] += size_of_inserted
-                abs_offset += size_of_inserted
-        if new_list[i] > MAX_BYTE:
-            new_list[i] = new_list[i] - MAX_BYTE
-            new_list = new_list[:i] + [MAX_BYTE, 0] + new_list[i:]
-        i += 2
+    if not new_list:
+        # Could happen on a lambda (in this case, a breakpoint in the lambda should fallback to
+        # tracing).
+        return None
+
+    # As all numbers are relative, what we want is to hide the code we inserted in the previous line
+    # (it should be the last thing right before we increment the line so that we have a line event
+    # right after the inserted code).
+    bytecode_delta = len(code_to_insert)
+
+    byte_increments = code_to_modify.co_lnotab[0::2]
+    line_increments = code_to_modify.co_lnotab[1::2]
+
+
+    if offset == 0:
+        new_list[0] += bytecode_delta
+    else:
+        addr = 0
+        it = zip(byte_increments, line_increments)
+        for i, (byte_incr, _line_incr) in enumerate(it):
+            addr += byte_incr
+            if addr == offset:
+                new_list[i * 2] += bytecode_delta
+                break
+
     return bytes(new_list)
 
 
@@ -86,7 +104,7 @@ def _unpack_opargs(code, inserted_code_list, current_index):
                     inserted_offset, inserted_code = inserted_code_list[code_index]
                     if inserted_offset == i and inserted_code[0] == EXTENDED_ARG:
                         extended_arg = inserted_code[1] << 8
-            arg = code[i+1] | extended_arg
+            arg = code[i + 1] | extended_arg
             extended_arg = (arg << 8) if op == EXTENDED_ARG else 0
         else:
             arg = None
@@ -185,11 +203,13 @@ def insert_code(code_to_modify, code_to_insert, before_line):
     """
     linestarts = dict(dis.findlinestarts(code_to_modify))
     if before_line not in linestarts.values():
-        return code_to_modify
+        return False, code_to_modify
+
     offset = None
     for off, line_no in linestarts.items():
         if line_no == before_line:
             offset = off
+            break
 
     code_to_insert_list = add_jump_instruction(offset, code_to_insert)
     try:
@@ -204,7 +224,10 @@ def insert_code(code_to_modify, code_to_insert, before_line):
                                                      dis.haslocal)
         new_bytes, all_inserted_code = _update_label_offsets(code_to_modify.co_code, offset, list(code_to_insert_list))
 
-        new_lnotab = _modify_new_lines(code_to_modify, all_inserted_code)
+        new_lnotab = _modify_new_lines(code_to_modify, offset, code_to_insert_list)
+        if new_lnotab is None:
+            return False, code_to_modify
+
     except ValueError:
         traceback.print_exc()
         return False, code_to_modify
