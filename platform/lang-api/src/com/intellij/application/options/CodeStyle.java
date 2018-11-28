@@ -76,7 +76,7 @@ public class CodeStyle {
           DependencyList dependencies = CodeStyleSettingsModifierEP.modifySettings(modifiedSettings, file);
           if (!dependencies.isEmpty()) {
             dependencies.add(currSettings.getModificationTracker());
-            return new CachedValueProvider.Result<>(modifiedSettings, dependencies.getAll());
+            return new CachedValueProvider.Result<>(modifiedSettings, dependencies.getAll().toArray());
           }
           else {
             return null;
