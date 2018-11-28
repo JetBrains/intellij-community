@@ -214,4 +214,11 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
       }
     };
   }
+
+  @Nullable
+  @Override
+  public PsiElement getParentContainer(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, JsonProperty.class),
+                                JsonObject.class, JsonArray.class);
+  }
 }

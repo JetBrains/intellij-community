@@ -288,4 +288,10 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       }
     };
   }
+
+  @Override
+  public PsiElement getParentContainer(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class),
+                                       YAMLMapping.class, YAMLSequence.class);
+  }
 }

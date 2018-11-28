@@ -109,16 +109,14 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       }
     }
 
-    return htmlDescription == null
-           ? null
-           : appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, preferShort);
+    return appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, preferShort);
   }
 
-  @NotNull
+  @Nullable
   private static String appendNameTypeAndApi(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> position,
                                              @NotNull String apiInfo,
                                              @NotNull List<JsonSchemaType> possibleTypes,
-                                             @NotNull String htmlDescription, boolean preferShort) {
+                                             @Nullable String htmlDescription, boolean preferShort) {
     if (position.size() == 0) return htmlDescription;
 
     JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
@@ -132,11 +130,11 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     }
 
     if (preferShort) {
-      htmlDescription = "<b>" + name + "</b>" + type + apiInfo + "<br/>" + htmlDescription;
+      htmlDescription = "<b>" + name + "</b>" + type + apiInfo + (htmlDescription == null ? "" : ("<br/>" + htmlDescription));
     }
     else {
       htmlDescription = DocumentationMarkup.DEFINITION_START + name + type + apiInfo + DocumentationMarkup.DEFINITION_END +
-                        DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END;
+                        (htmlDescription == null ? "" : (DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END));
     }
     return htmlDescription;
   }

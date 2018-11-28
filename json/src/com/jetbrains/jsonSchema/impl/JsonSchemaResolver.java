@@ -15,10 +15,11 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonContainer;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class JsonSchemaResolver {
 
   @Nullable
   public PsiElement findNavigationTarget(boolean literalResolve,
-                                         @Nullable final JsonValue element,
+                                         @Nullable final PsiElement element,
                                          boolean acceptAdditionalPropertiesSchema) {
     final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder
       .buildTree(mySchema, myPosition, true, literalResolve, acceptAdditionalPropertiesSchema || !myIsName);
@@ -76,7 +77,7 @@ public class JsonSchemaResolver {
 
   @Nullable
   private static JsonSchemaObject selectSchema(@NotNull final JsonSchemaTreeNode resolveRoot,
-                                               @Nullable final JsonValue element, boolean topLevelSchema) {
+                                               @Nullable final PsiElement element, boolean topLevelSchema) {
     final MatchResult matchResult = MatchResult.create(resolveRoot);
     List<JsonSchemaObject> schemas = new ArrayList<>(matchResult.mySchemas);
     schemas.addAll(matchResult.myExcludingSchemas.stream().flatMap(Collection::stream).collect(Collectors.toList()));
@@ -94,8 +95,7 @@ public class JsonSchemaResolver {
     if (topLevelSchema) {
       parentAdapter = null;
     } else {
-      final JsonValue parentValue = PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, JsonProperty.class),
-                                                                JsonObject.class, JsonArray.class);
+      final PsiElement parentValue = walker.getParentContainer(element);
       if (parentValue == null || (parentAdapter = walker.createValueAdapter(parentValue)) == null) return null;
     }
 

@@ -78,4 +78,9 @@ public interface JsonLikePsiWalker {
     void removeIfComma(PsiElement forward);
     boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element);
   }
+
+  @Nullable
+  default PsiElement getParentContainer(PsiElement element) {
+    return null;
+  }
 }
