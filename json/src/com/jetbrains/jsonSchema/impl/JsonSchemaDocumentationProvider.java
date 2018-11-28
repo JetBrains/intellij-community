@@ -107,6 +107,12 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       else if (schema.getTypeVariants() != null) {
         possibleTypes.addAll(schema.getTypeVariants());
       }
+      else {
+        final JsonSchemaType guessedType = schema.guessType();
+        if (guessedType != null) {
+          possibleTypes.add(guessedType);
+        }
+      }
     }
 
     return appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, preferShort);
