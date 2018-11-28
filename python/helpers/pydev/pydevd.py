@@ -258,7 +258,7 @@ class AbstractSingleNotificationBehavior(object):
                 if global_suspend_time > self._last_suspend_notification_time:
                     self._last_suspend_notification_time = global_suspend_time
                     # Notify about any thread which is currently suspended.
-                    self.send_suspend_notification(next(iter(self._suspended_thread_ids)))
+                    self.send_suspend_notification(next(iter(self._suspended_thread_ids)), CMD_THREAD_SUSPEND)
 
     @contextmanager
     def notify_thread_suspended(self, thread_id, stop_reason):
