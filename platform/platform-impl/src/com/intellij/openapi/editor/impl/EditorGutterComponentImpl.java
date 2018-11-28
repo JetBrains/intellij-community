@@ -341,8 +341,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintAnnotations(g, startVisualLine, endVisualLine);
 
       if (focusModeRange != null) {
-        int startY = myEditor.visualLineToY(startVisualLine);
-        int endY = myEditor.visualLineToY(endVisualLine);
+        int startY = Math.max(myEditor.visualLineToY(startVisualLine), clip.y);
+        int endY = Math.min(myEditor.visualLineToY(endVisualLine), (clip.y + clip.height));
         g.setClip(clip.x, startY, clip.width, endY - startY);
       }
 
