@@ -1,10 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.*
-import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
+import org.jetbrains.plugins.groovy.util.lazyPreventingRecursion
 
 class ClassResolveResult(
   clazz: PsiClass,
@@ -31,9 +30,7 @@ class ClassResolveResult(
     contextSubstitutor
   }
 
-  private val inferredSubstitutor: PsiSubstitutor by lazyPub {
-    RecursionManager.doPreventingRecursion(this, false) {
-      buildTopLevelSession(place).inferSubst(this)
-    } ?: error("Recursion prevented")
+  private val inferredSubstitutor: PsiSubstitutor by lazyPreventingRecursion {
+    buildTopLevelSession(place).inferSubst(this)
   }
 }
