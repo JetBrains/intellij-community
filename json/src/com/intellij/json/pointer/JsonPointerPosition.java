@@ -73,21 +73,21 @@ public class JsonPointerPosition {
   }
 
   public boolean isArray(int pos) {
-    return steps.size() >= pos && steps.get(pos).isFromArray();
+    return checkPosInRange(pos) && steps.get(pos).isFromArray();
   }
 
   public boolean isObject(int pos) {
-    return steps.size() >= pos && steps.get(pos).isFromObject();
+    return checkPosInRange(pos) && steps.get(pos).isFromObject();
   }
 
   @Nullable
   public JsonPointerPosition skip(int count) {
-    return steps.size() >= count ? new JsonPointerPosition(steps.subList(count, steps.size())) : null;
+    return checkPosInRange(count) ? new JsonPointerPosition(steps.subList(count, steps.size())) : null;
   }
 
   @Nullable
   public JsonPointerPosition trimTail(int count) {
-    return steps.size() >= count ? new JsonPointerPosition(steps.subList(0, steps.size() - count)) : null;
+    return checkPosInRange(count) ? new JsonPointerPosition(steps.subList(0, steps.size() - count)) : null;
   }
 
   @Nullable
@@ -123,6 +123,10 @@ public class JsonPointerPosition {
   @Override
   public String toString() {
     return steps.stream().map(Object::toString).collect(Collectors.joining("->", "steps: <", ">"));
+  }
+
+  private boolean checkPosInRange(int pos) {
+    return steps.size() > pos;
   }
 
   static class Step {
