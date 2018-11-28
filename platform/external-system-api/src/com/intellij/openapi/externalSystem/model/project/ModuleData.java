@@ -2,7 +2,7 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,12 +226,12 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Nullable
   public String getIdeGrouping() {
-    return StringUtil.isEmpty(myGroup) ? getExternalName() : getGroup() + '.' + getExternalName();
+    return getLinkedExternalProjectPath();
   }
 
   @Nullable
   public String getIdeParentGrouping() {
-    return StringUtil.nullize(getGroup());
+    return PathUtil.getParentPath(getLinkedExternalProjectPath());
   }
 
   @Override
