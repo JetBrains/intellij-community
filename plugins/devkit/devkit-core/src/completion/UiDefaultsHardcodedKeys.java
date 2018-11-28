@@ -17,6 +17,7 @@ import java.util.Set;
 @ApiStatus.Experimental
 public final class UiDefaultsHardcodedKeys {
   // hardcoded because these keys can differ from platform to platform and from theme to theme.
+  @SuppressWarnings("SpellCheckingInspection")
   public static final Set<String> UI_DEFAULTS_KEYS = Sets.newHashSet(
     "AATextInfoPropertyKey",
     "AbstractButton.click.textAndMnemonic",
@@ -1073,6 +1074,7 @@ public final class UiDefaultsHardcodedKeys {
     "com.intellij.ide.ui.laf.intellij.WinIntelliJPasswordFieldUI",
     "com.intellij.ide.ui.laf.intellij.WinIntelliJRadioButtonUI",
     "com.intellij.ide.ui.laf.intellij.WinIntelliJSpinnerUI",
+    "com.intellij.ide.ui.laf.intellij.WinIntelliJSliderUI",
     "com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI",
     "com.intellij.ui.components.JBScrollBar",
     "com.intellij.ui.mac.MacPopupMenuUI",
@@ -1146,6 +1148,7 @@ public final class UiDefaultsHardcodedKeys {
     "javax.swing.plaf.basic.BasicTableUI",
     "javax.swing.plaf.basic.BasicTextAreaUI",
     "javax.swing.plaf.basic.BasicTextPaneUI",
+    "javax.swing.plaf.basic.BasicToolBarSeparatorUI",
     "javax.swing.plaf.basic.BasicSpinnerUI",
     "javax.swing.plaf.basic.BasicViewportUI",
     "javax.swing.plaf.metal.MetalButtonUI",
