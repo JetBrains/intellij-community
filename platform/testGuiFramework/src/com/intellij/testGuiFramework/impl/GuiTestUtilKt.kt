@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.impl.GuiRobotHolder.robot
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.EngravedLabel
@@ -269,6 +270,10 @@ object GuiTestUtilKt {
       throw IllegalStateException("the condition is not satisfied")
     }
   }
+
+  fun <T : Component> isComponentShowing(componentClass: Class<T>): Boolean = ignoreComponentLookupException {
+    robot.findComponent(null, componentClass) { it.isShowing }
+  } != null
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
     val result = LinkedList<ComponentType>()
