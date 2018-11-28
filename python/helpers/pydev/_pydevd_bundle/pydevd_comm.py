@@ -229,7 +229,7 @@ class PyDBDaemonThread(threading.Thread):
 
     def _stop_trace(self):
         if self.pydev_do_not_trace:
-            pydevd_tracing.SetTrace(None, apply_to_pydevd_thread=True)  # no debugging on this thread
+            pydevd_tracing.SetTrace(None)  # no debugging on this thread
 
 
 def mark_as_pydevd_daemon_thread(thread):

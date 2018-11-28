@@ -1,6 +1,6 @@
 import traceback
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
-from _pydevd_bundle.pydevd_constants import get_thread_id, STATE_SUSPEND, dict_iter_items, dict_keys, JINJA2_SUSPEND
+from _pydevd_bundle.pydevd_constants import get_current_thread_id, STATE_SUSPEND, dict_iter_items, dict_keys, JINJA2_SUSPEND
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 from _pydevd_bundle import pydevd_vars
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_file
@@ -34,7 +34,6 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         if not hasattr(pydb, 'jinja2_exception_break'):
             _init_plugin_breaks(pydb)
         pydb.jinja2_exception_break[exception] = True
-        pydb.set_tracing_for_untraced_contexts_if_not_frame_eval()
         return True
     return False
 
@@ -74,7 +73,7 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     if frame.f_lineno is None:
         return None
 
-    pydevd_vars.add_additional_frame_by_id(get_thread_id(thread), {id(frame): frame})
+    pydevd_vars.add_additional_frame_by_id(get_current_thread_id(thread), {id(frame): frame})
     pydb.set_suspend(thread, cmd)
 
     thread.additional_info.suspend_type = JINJA2_SUSPEND
@@ -207,7 +206,7 @@ def _get_jinja2_template_line(frame):
 def _get_jinja2_template_filename(frame):
     if '__jinja_template__' in frame.f_globals:
         fname = frame.f_globals['__jinja_template__'].filename
-        abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(str(fname))
+        abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(fname)
         return abs_path_real_path_and_base[1]
     return None
 

@@ -52,40 +52,37 @@ class DebugProperty(object):
         global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_getter_trace:
-                pydevd_tracing.SetTrace(None)
+                global_debugger.disable_tracing()
             if self.fget is None:
                 raise AttributeError("unreadable attribute")
             return self.fget(obj)
         finally:
             if global_debugger is not None:
-                pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
-
+                global_debugger.enable_tracing()
 
     def __set__(self, obj, value):
         global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_setter_trace:
-                pydevd_tracing.SetTrace(None)
+                global_debugger.disable_tracing()
             if self.fset is None:
                 raise AttributeError("can't set attribute")
             self.fset(obj, value)
         finally:
             if global_debugger is not None:
-                pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
-
+                global_debugger.enable_tracing()
 
     def __delete__(self, obj):
         global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_deleter_trace:
-                pydevd_tracing.SetTrace(None)
+                global_debugger.disable_tracing()
             if self.fdel is None:
                 raise AttributeError("can't delete attribute")
             self.fdel(obj)
         finally:
             if global_debugger is not None:
-                pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
-
+                global_debugger.enable_tracing()
 
     def getter(self, fget):
         """Overriding getter decorator for the property
