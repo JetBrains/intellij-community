@@ -4,7 +4,6 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
@@ -605,18 +604,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     return panel;
   }
 
-  private List<String> computeConfigurationVariableNames() {
-    final List<String> result = new ArrayList<>(TemplateImplUtil.parseVariables(myConfiguration.getMatchOptions().getSearchPattern()).keySet());
-    if (myReplace) {
-      for (String var : TemplateImplUtil.parseVariables(myConfiguration.getReplaceOptions().getReplacement()).keySet()) {
-        if (!result.contains(var)) {
-          result.add(var + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
-        }
-      }
-    }
-    return result;
-  }
-
   Project getProject() {
     return mySearchContext.getProject();
   }
@@ -677,7 +664,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     if (!result) return;
 
     myAlarm.cancelAllRequests();
-    removeUnusedVariableConstraints();
+    myConfiguration.removeUnusedVariables();
     final SearchScope scope = myScopePanel.getScope();
     if (scope == null) return;
     super.doOKAction();
@@ -701,14 +688,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private void removeUnusedVariableConstraints() {
-    final List<String> variableNames = computeConfigurationVariableNames();
-    variableNames.add(Configuration.CONTEXT_VAR_NAME);
-    myConfiguration.getMatchOptions().retainVariableConstraints(variableNames);
-  }
-
   public Configuration getConfiguration() {
-    removeUnusedVariableConstraints();
     saveConfiguration();
     return myConfiguration;
   }
