@@ -112,6 +112,10 @@ public interface SearchEverywhereContributor<F> {
     return true;
   }
 
+  default boolean isEmptyPatternSupported() {
+    return false;
+  }
+
   @NotNull
   static List<SearchEverywhereContributorFactory<?>> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());

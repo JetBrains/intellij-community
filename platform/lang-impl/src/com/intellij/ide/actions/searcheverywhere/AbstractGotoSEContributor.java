@@ -71,13 +71,9 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   @Override
   public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<F> filter,
                             @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
-    if (myProject == null) {
-      return; //nothing to search
-    }
-
-    if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
-      return;
-    }
+    if (myProject == null) return; //nothing to search
+    if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
+    if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) return;
 
     String suffix = pattern.endsWith(fullMatchSearchSuffix) ? fullMatchSearchSuffix : "";
     String searchString = filterControlSymbols(pattern) + suffix;
@@ -88,6 +84,8 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+      if (progressIndicator.isCanceled()) return;
+
       PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
       ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
       try {
