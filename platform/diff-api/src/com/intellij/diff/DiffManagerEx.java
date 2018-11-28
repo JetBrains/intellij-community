@@ -50,6 +50,9 @@ public abstract class DiffManagerEx extends DiffManager {
   @CalledInAwt
   public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request);
 
+  @CalledInAwt
+  public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request, @NotNull DiffDialogHints hints);
+
   @NotNull
   public abstract List<DiffTool> getDiffTools();
 
