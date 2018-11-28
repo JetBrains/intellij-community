@@ -64,12 +64,20 @@ class MethodProcessor(
     }
     if (name != getName(state, element)) return true
 
-    if (typeArguments.isNotEmpty()) {
-      val newSub = state[PsiSubstitutor.KEY].putAll(element.typeParameters, typeArguments)
-      myCandidates += BaseMethodResolveResult(element, place, state.put(PsiSubstitutor.KEY, newSub), arguments)
-    }
-    else {
-      myCandidates += MethodResolveResult(element, place, state, arguments)
+    myCandidates += when {
+      !element.hasTypeParameters() -> {
+        // ignore explicit type arguments if there are no type parameters => no inference needed
+        BaseMethodResolveResult(element, place, state, arguments)
+      }
+      typeArguments.isEmpty() -> {
+        // generic method call without explicit type arguments => needs inference
+        MethodResolveResult(element, place, state, arguments)
+      }
+      else -> {
+        // generic method call with explicit type arguments => inference happens right here
+        val substitutor = state[PsiSubstitutor.KEY].putAll(element.typeParameters, typeArguments)
+        BaseMethodResolveResult(element, place, state.put(PsiSubstitutor.KEY, substitutor), arguments)
+      }
     }
     myApplicable = null
     return true
