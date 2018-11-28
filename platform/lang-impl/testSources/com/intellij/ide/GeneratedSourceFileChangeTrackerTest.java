@@ -39,6 +39,7 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
 
   @Override
   protected void setUp() throws Exception {
+    GeneratedSourceFileChangeTrackerImpl.IN_TRACKER_TEST = true;
     super.setUp();
     Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).registerExtension(myGeneratedSourcesFilter);
   }
@@ -48,7 +49,11 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
     try {
       Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
+      GeneratedSourceFileChangeTrackerImpl.IN_TRACKER_TEST = false;
       super.tearDown();
     }
   }

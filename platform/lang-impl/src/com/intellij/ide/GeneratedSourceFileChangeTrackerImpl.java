@@ -41,6 +41,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
   private final SingleAlarm myCheckingQueue;
   private final Set<VirtualFile> myFilesToCheck = Collections.synchronizedSet(new HashSet<>());
   private final Set<VirtualFile> myEditedGeneratedFiles = Collections.synchronizedSet(new HashSet<>());
+  public static boolean IN_TRACKER_TEST;
 
   public GeneratedSourceFileChangeTrackerImpl(Project project, FileDocumentManager documentManager, EditorNotifications editorNotifications) {
     myProject = project;
@@ -75,6 +76,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
 
   @Override
   public void projectOpened() {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !IN_TRACKER_TEST) return; // too many useless listeners which slow down tests and leak threads
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
