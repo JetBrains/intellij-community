@@ -18,9 +18,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.*
 import org.jetbrains.uast.*
-import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
-import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
 
 abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments, JvmDeclarationUElement {
@@ -70,13 +68,12 @@ private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
   when (uParent) {
     is JavaUCodeBlockExpression -> {
       val codeBlockParent = uParent.uastParent
-      if (codeBlockParent is JavaUExpressionList && codeBlockParent.kind == JavaSpecialExpressionKinds.SWITCH) {
+      if (codeBlockParent is JavaUSwitchEntryList) {
         if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatement }) {
           return codeBlockParent
         }
-        val uSwitchExpression = codeBlockParent.uastParent as? JavaUSwitchExpression ?: return uParent
         val psiElement = psi ?: return uParent
-        return findUSwitchClauseBody(uSwitchExpression, psiElement) ?: return codeBlockParent
+        return codeBlockParent.findUSwitchEntryForBodyStatementMember(psiElement)?.body ?: return codeBlockParent
       }
       if (codeBlockParent is JavaUSwitchExpression) {
         return unwrapSwitch(codeBlockParent)

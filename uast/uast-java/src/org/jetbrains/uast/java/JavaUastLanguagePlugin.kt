@@ -24,7 +24,6 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
-import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
 class JavaUastLanguagePlugin : UastLanguagePlugin {
   override val priority: Int = 0
@@ -293,9 +292,9 @@ internal object JavaConverter {
         is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression(el.parent?.toUElement()) }
         is PsiSwitchLabelStatement -> expr<UExpression> {
           when {
-            givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findUSwitchEntry(givenParent, el)
+            givenParent is JavaUSwitchEntryList -> givenParent.findUSwitchEntryForLabel(el)
             givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchStatement::class.java)?.let {
-              findUSwitchEntry(JavaUSwitchExpression(it, null).body, el)
+              JavaUSwitchExpression(it, null).body.findUSwitchEntryForLabel(el)
             }
             else -> null
           }

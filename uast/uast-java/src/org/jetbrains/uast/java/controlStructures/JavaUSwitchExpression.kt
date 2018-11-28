@@ -15,7 +15,10 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiSwitchLabelStatement
+import com.intellij.psi.PsiSwitchStatement
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
@@ -27,57 +30,76 @@ class JavaUSwitchExpression(
 ) : JavaAbstractUExpression(givenParent), USwitchExpression {
   override val expression: UExpression by lz { JavaConverter.convertOrEmpty(psi.expression, this) }
 
-  override val body: UExpressionList by lz {
-    object : JavaUExpressionList(psi, JavaSpecialExpressionKinds.SWITCH, this) {
-      override fun asRenderString() = expressions.joinToString("\n") {
-        it.asRenderString().withMargin
-      }
-    }.apply {
-      expressions = this@JavaUSwitchExpression.psi.body?.convertToSwitchEntryList(this) ?: emptyList()
-    }
-  }
-
+  override val body: JavaUSwitchEntryList by lz { JavaUSwitchEntryList(psi, this) }
 
   override val switchIdentifier: UIdentifier
     get() = UIdentifier(psi.getChildByRole(ChildRole.SWITCH_KEYWORD), this)
+
 }
 
-private fun PsiCodeBlock.convertToSwitchEntryList(containingElement: UExpression): List<JavaUSwitchEntry> {
-  var currentLabels = listOf<PsiSwitchLabelStatement>()
-  var currentBody = listOf<PsiStatement>()
-  val result = mutableListOf<JavaUSwitchEntry>()
-  for (statement in statements) {
-    if (statement is PsiSwitchLabelStatement) {
-      if (currentBody.isEmpty()) {
-        currentLabels += statement
+class JavaUSwitchEntryList(override val psi: PsiSwitchStatement, override val uastParent: JavaUSwitchExpression) :
+  JavaAbstractUExpression(uastParent), UExpressionList {
+
+  override val kind: UastSpecialExpressionKind
+    get() = JavaSpecialExpressionKinds.SWITCH
+
+  override fun asRenderString() = expressions.joinToString("\n") {
+    it.asRenderString().withMargin
+  }
+
+  private val switchEntries: Lazy<List<JavaUSwitchEntry>> = lazy {
+    val statements = psi.body?.statements ?: return@lazy emptyList<JavaUSwitchEntry>()
+    var currentLabels = listOf<PsiSwitchLabelStatement>()
+    var currentBody = listOf<PsiStatement>()
+    val result = mutableListOf<JavaUSwitchEntry>()
+    for (statement in statements) {
+      if (statement is PsiSwitchLabelStatement) {
+        if (currentBody.isEmpty()) {
+          currentLabels += statement
+        }
+        else if (currentLabels.isNotEmpty()) {
+          result += JavaUSwitchEntry(currentLabels, currentBody, this)
+          currentLabels = listOf(statement)
+          currentBody = listOf<PsiStatement>()
+        }
       }
-      else if (currentLabels.isNotEmpty()) {
-        result += JavaUSwitchEntry(currentLabels, currentBody, containingElement)
-        currentLabels = listOf(statement)
-        currentBody = listOf<PsiStatement>()
+      else {
+        currentBody += statement
       }
     }
-    else {
-      currentBody += statement
+    if (currentLabels.isNotEmpty()) {
+      result += JavaUSwitchEntry(currentLabels, currentBody, this)
     }
+    result
+
   }
-  if (currentLabels.isNotEmpty()) {
-    result += JavaUSwitchEntry(currentLabels, currentBody, containingElement)
+
+  override val expressions: List<JavaUSwitchEntry> get() = switchEntries.value
+
+  fun findUSwitchEntryForLabel(switchLabelStatement: PsiSwitchLabelStatement): JavaUSwitchEntry? {
+    if (switchEntries.isInitialized()) return switchEntries.value.find { it.labels.contains(switchLabelStatement) }
+
+    val bodyStart = switchLabelStatement.nextSiblings.find { it !is PsiSwitchLabelStatement } ?: return null
+    val body = bodyStart.nextSiblings.takeWhile { it !is PsiSwitchLabelStatement }.filterIsInstance<PsiStatement>().toList()
+    val labels = switchLabelStatement.prevSiblings.takeWhile { it is PsiSwitchLabelStatement }.filterIsInstance<PsiSwitchLabelStatement>().toList()
+
+    return JavaUSwitchEntry(labels, body, this)
   }
-  return result
+
+  fun findUSwitchEntryForBodyStatementMember(psi: PsiElement): JavaUSwitchEntry? {
+    if (switchEntries.isInitialized()) return switchEntries.value.find { it.body.expressions.any { it.psi == psi } }
+
+    val statement = psi as? PsiStatement ?: // PsiBreakStatement for instance
+                    psi.parent as? PsiStatement ?: // expressions inside case body
+                    return null
+    val psiSwitchLabelStatement = statement.prevSiblings.filterIsInstance<PsiSwitchLabelStatement>().firstOrNull() ?: return null
+    return findUSwitchEntryForLabel(psiSwitchLabelStatement)
+  }
+
 }
 
-internal fun findUSwitchEntry(body: UExpressionList, el: PsiSwitchLabelStatement): JavaUSwitchEntry? =
-  body.also { require(it.kind == JavaSpecialExpressionKinds.SWITCH) }
-    .expressions.find { (it as? JavaUSwitchEntry)?.labels?.contains(el) ?: false } as? JavaUSwitchEntry
-
-internal fun findUSwitchClauseBody(switch: JavaUSwitchExpression, psi: PsiElement): UExpressionList? {
-  val bodyExpressions = switch.body.expressions
-  val uExpression = bodyExpressions.find {
-    (it as JavaUSwitchEntry).body.expressions.any { it.psi == psi }
-  } ?: return null
-  return (uExpression as JavaUSwitchEntry).body
-}
+private val PsiElement.nextSiblings: Sequence<PsiElement> get() = generateSequence(this) { it.nextSibling }
+private val PsiElement.prevSiblings: Sequence<PsiElement> get() = generateSequence(this) { it.prevSibling }
 
 
 class JavaUSwitchEntry(
