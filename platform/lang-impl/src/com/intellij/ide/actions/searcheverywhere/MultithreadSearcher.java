@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -247,7 +248,7 @@ class MultithreadSearcher implements SESearcher {
         .stream()
         .flatMap(Collection::stream)
         .forEach(info -> {
-          SEResultsEqualityProvider.Action action = myEqualityProvider.compareItems(newElement, info);
+          SEResultsEqualityProvider.Action action = ReadAction.compute(() -> myEqualityProvider.compareItems(newElement, info));
           if (action != SEResultsEqualityProvider.Action.DO_NOTHING) {
             res.get(action).add(info);
           }
