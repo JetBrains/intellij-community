@@ -15,6 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,9 +39,9 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchema
 public class JsonSchemaResolver {
   @NotNull private final JsonSchemaObject mySchema;
   private final boolean myIsName;
-  @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> myPosition;
+  @NotNull private final JsonPointerPosition myPosition;
 
-  public JsonSchemaResolver(@NotNull JsonSchemaObject schema, boolean isName, @NotNull List<JsonSchemaVariantsTreeBuilder.Step> position) {
+  public JsonSchemaResolver(@NotNull JsonSchemaObject schema, boolean isName, @NotNull JsonPointerPosition position) {
     mySchema = schema;
     myIsName = isName;
     myPosition = position;
@@ -50,11 +50,11 @@ public class JsonSchemaResolver {
   public JsonSchemaResolver(@NotNull JsonSchemaObject schema) {
     mySchema = schema;
     myIsName = true;
-    myPosition = Collections.emptyList();
+    myPosition = new JsonPointerPosition();
   }
 
   public MatchResult detailedResolve() {
-    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(mySchema, myPosition, false, false, !myIsName);
+    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(mySchema, myPosition, false, !myIsName);
     return MatchResult.create(node);
   }
 
@@ -67,11 +67,10 @@ public class JsonSchemaResolver {
   }
 
   @Nullable
-  public PsiElement findNavigationTarget(boolean literalResolve,
-                                         @Nullable final PsiElement element,
+  public PsiElement findNavigationTarget(@Nullable final PsiElement element,
                                          boolean acceptAdditionalPropertiesSchema) {
     final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder
-      .buildTree(mySchema, myPosition, true, literalResolve, acceptAdditionalPropertiesSchema || !myIsName);
+      .buildTree(mySchema, myPosition, true, acceptAdditionalPropertiesSchema || !myIsName);
     return getSchemaNavigationItem(selectSchema(node, element, myPosition.isEmpty()));
   }
 

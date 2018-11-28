@@ -3,6 +3,7 @@ package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -13,9 +14,9 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
-import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
@@ -23,7 +24,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -68,7 +68,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public PsiElement goUpToCheckable(@NotNull PsiElement element) {
+  public PsiElement findElementToCheck(@NotNull PsiElement element) {
     PsiElement current = element;
     while (current != null && !(current instanceof PsiFile)) {
       if (current instanceof YAMLValue || current instanceof YAMLKeyValue) {
@@ -80,7 +80,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public boolean isNameQuoted() {
+  public boolean requiresNameQuotes() {
     return false;
   }
 
@@ -91,12 +91,12 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public boolean onlyDoubleQuotesForStringLiterals() {
-    return false;
+  public boolean allowsSingleQuotes() {
+    return true;
   }
 
   @Override
-  public boolean hasPropertiesBehindAndNoComma(@NotNull PsiElement element) {
+  public boolean hasMissingCommaAfter(@NotNull PsiElement element) {
     return false;
   }
 
@@ -127,8 +127,8 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
   @Nullable
   @Override
-  public List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
-    final List<JsonSchemaVariantsTreeBuilder.Step> steps = new ArrayList<>();
+  public JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
+    JsonPointerPosition pos = new JsonPointerPosition();
     PsiElement current = element;
     while (!breakCondition(current)) {
       final PsiElement position = current;
@@ -145,7 +145,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
           }
         }
         if (idx != -1) {
-          steps.add(JsonSchemaVariantsTreeBuilder.Step.createArrayElementStep(idx));
+          pos.addPrecedingStep(idx);
         }
       } else if (current instanceof YAMLSequenceItem) {
         // do nothing - handled by the upper condition
@@ -153,12 +153,12 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)current).getName());
         current = current.getParent();
         if (!(current instanceof YAMLMapping)) return null;//incorrect syntax?
-        steps.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(propertyName));
+        pos.addPrecedingStep(propertyName);
       } else if (current instanceof YAMLMapping && position instanceof YAMLKeyValue) {
         // if either value or not first in the chain - needed for completion variant
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)position).getName());
         if (propertyName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) continue;
-        steps.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(propertyName));
+        pos.addPrecedingStep(propertyName);
       } else if (breakCondition(current)) {
         break;
       } else {
@@ -172,8 +172,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return null;//something went wrong
       }
     }
-    Collections.reverse(steps);
-    return steps;
+    return pos;
   }
 
   private static boolean breakCondition(PsiElement current) {
@@ -182,7 +181,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public boolean quotesForStringLiterals() {
+  public boolean requiresValueQuotes() {
     return false;
   }
 
@@ -192,18 +191,12 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  @Nullable public String defaultObjectValueDescription() { return "{...}"; }
-
-  @Override
   public String getDefaultArrayValue() {
     return "- ";
   }
 
   @Override
-  @Nullable public String defaultArrayValueDescription() { return "[...]"; }
-
-  @Override
-  public boolean invokeEnterBeforeObjectAndArray() {
+  public boolean hasWhitespaceDelimitedCodeBlocks() {
     return true;
   }
 
@@ -226,8 +219,8 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public QuickFixAdapter getQuickFixAdapter(Project project) {
-    return new QuickFixAdapter() {
+  public JsonLikeSyntaxAdapter getSyntaxAdapter(Project project) {
+    return new JsonLikeSyntaxAdapter() {
       private final YAMLElementGenerator myGenerator = YAMLElementGenerator.getInstance(project);
 
       @Nullable

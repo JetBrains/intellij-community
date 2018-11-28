@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -76,21 +77,20 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
-    final PsiElement checkable = walker.goUpToCheckable(element);
+    final PsiElement checkable = walker.findElementToCheck(element);
     if (checkable == null) return null;
-    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true);
+    final JsonPointerPosition position = walker.findPosition(checkable, true);
     if (position == null) return null;
     if (forcedPropName != null) {
       if (isWhitespaceOrComment(element)) {
-        position.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
+        position.addFollowingStep(forcedPropName);
       }
       else {
         if (position.isEmpty()) {
           return null;
         }
-        final JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
-        if (lastStep.getName() == null) return null;
-        position.set(position.size() - 1, JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
+        if (position.isArray(position.size() - 1)) return null;
+        position.replaceStep(position.size() - 1, forcedPropName);
       }
     }
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
@@ -119,14 +119,13 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
-  private static String appendNameTypeAndApi(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> position,
+  private static String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
                                              @NotNull String apiInfo,
                                              @NotNull List<JsonSchemaType> possibleTypes,
                                              @Nullable String htmlDescription, boolean preferShort) {
     if (position.size() == 0) return htmlDescription;
 
-    JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
-    String name = lastStep.getName();
+    String name = position.getLastName();
     if (name == null) return htmlDescription;
 
     String type = "";

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -9,11 +10,9 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
-import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,14 +29,20 @@ public interface JsonLikePsiWalker {
   ThreeState isName(PsiElement element);
 
   boolean isPropertyWithValue(@NotNull PsiElement element);
-  PsiElement goUpToCheckable(@NotNull final PsiElement element);
+
+  PsiElement findElementToCheck(@NotNull final PsiElement element);
+
   @Nullable
-  List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull final PsiElement element, boolean forceLastTransition);
-  boolean isNameQuoted();
-  boolean onlyDoubleQuotesForStringLiterals();
-  default boolean quotesForStringLiterals() { return true; }
-  boolean hasPropertiesBehindAndNoComma(@NotNull PsiElement element);
+  JsonPointerPosition findPosition(@NotNull final PsiElement element, boolean forceLastTransition);
+
+  boolean requiresNameQuotes();
+  default boolean requiresValueQuotes() { return true; }
+  boolean allowsSingleQuotes();
+
+  boolean hasMissingCommaAfter(@NotNull PsiElement element);
+
   Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition);
+
   @Nullable
   JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element);
   boolean isTopJsonElement(@NotNull PsiElement element);
@@ -60,24 +65,13 @@ public interface JsonLikePsiWalker {
   }
 
   default String getDefaultObjectValue() { return "{}"; }
-  @Nullable default String defaultObjectValueDescription() { return null; }
   default String getDefaultArrayValue() { return "[]"; }
-  @Nullable default String defaultArrayValueDescription() { return null; }
 
-  default boolean invokeEnterBeforeObjectAndArray() { return false; }
+  default boolean hasWhitespaceDelimitedCodeBlocks() { return false; }
 
   default String getNodeTextForValidation(PsiElement element) { return element.getText(); }
 
-  default QuickFixAdapter getQuickFixAdapter(Project project) { return null; }
-  interface QuickFixAdapter {
-    @Nullable PsiElement getPropertyValue(PsiElement property);
-    default @NotNull PsiElement adjustValue(@NotNull PsiElement value) { return value; }
-    @Nullable String getPropertyName(PsiElement property);
-    @NotNull PsiElement createProperty(@NotNull final String name, @NotNull final String value);
-    boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement);
-    void removeIfComma(PsiElement forward);
-    boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element);
-  }
+  default JsonLikeSyntaxAdapter getSyntaxAdapter(Project project) { return null; }
 
   @Nullable
   default PsiElement getParentContainer(PsiElement element) {

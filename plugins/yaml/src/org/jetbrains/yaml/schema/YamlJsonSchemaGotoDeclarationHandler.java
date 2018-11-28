@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -12,12 +13,9 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
-import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
-
-import java.util.List;
 
 public class YamlJsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
   @Nullable
@@ -31,12 +29,12 @@ public class YamlJsonSchemaGotoDeclarationHandler implements GotoDeclarationHand
     final PsiFile containingFile = literal.getContainingFile();
     final VirtualFile file = containingFile.getVirtualFile();
     if (file == null || !service.isApplicableToFile(file)) return null;
-    final List<JsonSchemaVariantsTreeBuilder.Step> steps = new YamlJsonPsiWalker().findPosition(literal, true);
+    final JsonPointerPosition steps = new YamlJsonPsiWalker().findPosition(literal, true);
     if (steps == null) return null;
     final JsonSchemaObject schemaObject = service.getSchemaObject(file);
     if (schemaObject != null) {
       final PsiElement target = new JsonSchemaResolver(schemaObject, false, steps)
-        .findNavigationTarget(false, literal.getValue(),
+        .findNavigationTarget(literal.getValue(),
                               JsonSchemaService.isSchemaFile(containingFile));
       if (target != null) {
         return new PsiElement[] {target};

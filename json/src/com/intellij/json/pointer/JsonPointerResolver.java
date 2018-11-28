@@ -1,11 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.jsonSchema;
+package com.intellij.json.pointer;
 
 import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
-import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +22,8 @@ public class JsonPointerResolver {
   @Nullable
   public JsonValue resolve() {
     JsonValue root = myRoot;
-    final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonSchemaVariantsTreeBuilder.buildSteps(myPointer);
-    for (JsonSchemaVariantsTreeBuilder.Step step : steps) {
+    final List<JsonPointerPosition.Step> steps = JsonPointerPosition.parsePointer(myPointer).getSteps();
+    for (JsonPointerPosition.Step step : steps) {
       String name = step.getName();
       if (name != null) {
         if (!(root instanceof JsonObject)) return null;
@@ -55,6 +54,4 @@ public class JsonPointerResolver {
     }
     return root;
   }
-
-
 }
