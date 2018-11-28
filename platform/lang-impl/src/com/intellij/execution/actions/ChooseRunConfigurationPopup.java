@@ -922,14 +922,15 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.add(createEditAction());
     }
 
-    final RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
     if (selectedConfiguration != null) {
       addActionsForSelected(selectedConfiguration, project, result);
     }
 
     Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
     List<FolderWrapper> folderWrappers = new SmartList<>();
-    for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(false).values()) {
+    for (Map<String, List<RunnerAndConfigurationSettings>> structure : runManager.getConfigurationsGroupedByTypeAndFolder(false).values()) {
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
         final String folderName = entry.getKey();
         if (folderName != null) {
