@@ -118,7 +118,8 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFilesFrom) {
+    Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(copiedFilesFrom);
     (new Task.ConditionalModal(myProject,
                                HgVcsMessages.message("hg4idea.add.progress"),
                                false,
