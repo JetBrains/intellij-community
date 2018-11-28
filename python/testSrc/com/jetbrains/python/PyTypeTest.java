@@ -3329,6 +3329,12 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  public void testIndirectlyImportedReturnTypeInDocstring() {
+    doMultiFileTest("Repository", "from github.MainClass import func()\n" +
+                                  "\n" +
+                                  "expr = func()");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
