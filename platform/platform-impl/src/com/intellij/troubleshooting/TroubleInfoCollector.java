@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.settingsSummary;
+package com.intellij.troubleshooting;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
+import com.intellij.troubleshooting.ui.CollectTroubleshootingInformationDialog;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 /**
- * @deprecated use {@link com.intellij.troubleshooting.TroubleInfoCollector}. To be removed in IDEA 2020.1.
+ * Implement this interface and register the implementation as com.intellij.troubleInfoCollector extension
+ * to see result of {@link #collectInfo} in "Help|Collect Troubleshooting Information" dialog.
+ * <p>
+ * Implement toString() for better presentation in {@link CollectTroubleshootingInformationDialog}
  */
-@Deprecated
-public interface ProblemType {
-  ExtensionPointName<ProblemType> EP_SETTINGS = ExtensionPointName.create("com.intellij.settingsSummaryFactory");
+public interface TroubleInfoCollector {
+  ExtensionPointName<TroubleInfoCollector> EP_SETTINGS = ExtensionPointName.create("com.intellij.troubleInfoCollector");
 
   @NotNull
   String collectInfo(@NotNull Project project);

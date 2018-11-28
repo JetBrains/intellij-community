@@ -577,7 +577,7 @@
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
         <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
-        <action id="CollectSettings" class="com.intellij.ide.actions.CollectSettingsAction" text="Settings Summary"/>
+        <action id="CollectTroubleshootingInformation" class="com.intellij.ide.actions.CollectTroubleshootingInformationAction" text="Collect Troubleshooting Information"/>
         <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
         <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
         <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>

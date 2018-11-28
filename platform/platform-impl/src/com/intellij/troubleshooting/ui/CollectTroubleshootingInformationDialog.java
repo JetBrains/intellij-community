@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.settingsSummary.ui;
+package com.intellij.troubleshooting.ui;
 
 
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -21,6 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.settingsSummary.ProblemType;
+import com.intellij.troubleshooting.ProblemTypeAdapter;
+import com.intellij.troubleshooting.TroubleInfoCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,22 +33,27 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public class SettingsSummaryDialog extends DialogWrapper {
+public class CollectTroubleshootingInformationDialog extends DialogWrapper {
   private JTextArea summary;
   private JPanel centerPanel;
-  private ComboBox<ProblemType> problemTypeBox;
+  private ComboBox<TroubleInfoCollector> troubleTypeBox;
 
-  public SettingsSummaryDialog(@NotNull Project project) {
+  @SuppressWarnings("deprecation")
+  public CollectTroubleshootingInformationDialog(@NotNull Project project) {
     super(project);
-    setTitle("Settings Summary");
-    ProblemType[] extensions = ProblemType.EP_SETTINGS.getExtensions();
-    for(ProblemType problemType: extensions){
-      problemTypeBox.addItem(problemType);
+    setTitle("Collect Troubleshooting Information");
+    TroubleInfoCollector[] extensions = TroubleInfoCollector.EP_SETTINGS.getExtensions();
+    for(TroubleInfoCollector troubleInfoCollector : extensions){
+      troubleTypeBox.addItem(troubleInfoCollector);
     }
-    problemTypeBox.addItemListener(new ItemListener() {
+    ProblemType[] legacyExtensions = ProblemType.EP_SETTINGS.getExtensions();
+    for(ProblemType problemType : legacyExtensions){
+      troubleTypeBox.addItem(new ProblemTypeAdapter(problemType));
+    }
+    troubleTypeBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        ProblemType item = (ProblemType)e.getItem();
+        TroubleInfoCollector item = (TroubleInfoCollector)e.getItem();
         summary.setText(item.collectInfo(project));
       }
     });
