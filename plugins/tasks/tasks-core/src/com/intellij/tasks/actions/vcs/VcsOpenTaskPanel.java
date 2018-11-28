@@ -97,6 +97,9 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myBranchName.setVisible(false);
       myFromLabel.setVisible(false);
       myBranchFrom.setVisible(false);
+      myUseBranch.setSelected(false);
+      myUseBranch.setVisible(false);
+      myUseBranchCombo.setVisible(false);
     }
     else {
       String branchName = getBranchName(task);
