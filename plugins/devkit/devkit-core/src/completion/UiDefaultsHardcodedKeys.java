@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.completion;
 
-import com.google.common.collect.Sets;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
@@ -18,7 +18,7 @@ import java.util.Set;
 public final class UiDefaultsHardcodedKeys {
   // hardcoded because these keys can differ from platform to platform and from theme to theme.
   @SuppressWarnings("SpellCheckingInspection")
-  public static final Set<String> UI_DEFAULTS_KEYS = Sets.newHashSet(
+  public static final Set<String> UI_DEFAULTS_KEYS = ContainerUtil.immutableSet(
     "AATextInfoPropertyKey",
     "AbstractButton.click.textAndMnemonic",
     "AbstractDocument.addition.textAndMnemonic",
@@ -1187,7 +1187,7 @@ public final class UiDefaultsHardcodedKeys {
   );
 
 
-  public static final Set<String> NAMED_COLORS = Sets.newHashSet(
+  public static final Set<String> NAMED_COLORS = ContainerUtil.immutableSet(
     "ActionButton.hoverBackground",
     "ActionButton.hoverBorderColor",
     "ActionButton.pressedBackground",
@@ -1429,5 +1429,5 @@ public final class UiDefaultsHardcodedKeys {
     "tooltips.description.title.text.color"
   );
 
-  public static final Set<String> ALL_KEYS = Sets.union(UI_DEFAULTS_KEYS, NAMED_COLORS);
+  public static final Set<String> ALL_KEYS = ContainerUtil.unmodifiableOrEmptySet(ContainerUtil.union(UI_DEFAULTS_KEYS, NAMED_COLORS));
 }
