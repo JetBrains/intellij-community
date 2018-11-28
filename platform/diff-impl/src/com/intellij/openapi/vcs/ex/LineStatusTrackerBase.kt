@@ -359,7 +359,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     }
   }
 
-  override fun transferLineToFromVcs(line: Int, approximate: Boolean): Int {
+  override fun transferLineFromVcs(line: Int, approximate: Boolean): Int {
     return transferLine(line, approximate, true)
   }
 

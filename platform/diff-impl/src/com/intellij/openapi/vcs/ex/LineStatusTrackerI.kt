@@ -28,7 +28,7 @@ interface LineStatusTrackerI<out R : Range> {
   fun isLineModified(line: Int): Boolean
   fun isRangeModified(startLine: Int, endLine: Int): Boolean
 
-  fun transferLineToFromVcs(line: Int, approximate: Boolean): Int
+  fun transferLineFromVcs(line: Int, approximate: Boolean): Int
   fun transferLineToVcs(line: Int, approximate: Boolean): Int
 
 
