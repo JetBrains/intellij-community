@@ -5,7 +5,10 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.UnknownConfigurationType;
-import com.intellij.execution.impl.*;
+import com.intellij.execution.impl.EditConfigurationsDialog;
+import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
@@ -43,6 +46,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.execution.impl.RunConfigurationListManagerHelperKt.compareTypesForUi;
 
 public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
@@ -930,24 +935,25 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
     List<FolderWrapper> folderWrappers = new SmartList<>();
-    for (Map<String, List<RunnerAndConfigurationSettings>> structure : runManager.getConfigurationsGroupedByTypeAndFolder(false).values()) {
-      for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
+    for (Map<String, List<RunnerAndConfigurationSettings>> folderToConfigurations : runManager.getConfigurationsGroupedByTypeAndFolder(false).values()) {
+      for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : folderToConfigurations.entrySet()) {
         final String folderName = entry.getKey();
+        List<RunnerAndConfigurationSettings> configurations = entry.getValue();
         if (folderName != null) {
-          boolean isSelected = entry.getValue().contains(selectedConfiguration);
+          boolean isSelected = configurations.contains(selectedConfiguration);
           if (isSelected) {
             assert selectedConfiguration != null;
           }
           FolderWrapper folderWrapper = new FolderWrapper(project, executorProvider,
                                                           folderName + (isSelected ? "  (mnemonic is to \"" + selectedConfiguration.getName() + "\")" : ""),
-                                                          entry.getValue());
+                                                          configurations);
           if (isSelected) {
             folderWrapper.setMnemonic(1);
           }
           folderWrappers.add(folderWrapper);
         }
         else {
-          for (RunnerAndConfigurationSettings configuration : entry.getValue()) {
+          for (RunnerAndConfigurationSettings configuration : configurations) {
             final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
             if (configuration == selectedConfiguration) {
               wrapped.setMnemonic(1);
@@ -957,34 +963,38 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
     }
-    boolean moveFoldersToTop = Registry.is("run.popup.move.folders.to.top");
-    if (moveFoldersToTop) {
+
+    boolean isMoveFoldersToTop = Registry.is("run.popup.move.folders.to.top", false);
+    if (isMoveFoldersToTop) {
       result.addAll(folderWrappers);
     }
     if (!DumbService.isDumb(project)) {
       populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration);
     }
-    final int topIndex = result.size() - 1;
     result.addAll(wrappedExisting.values());
-    if (!moveFoldersToTop) {
-      for (FolderWrapper folderWrapper : folderWrappers) {
-        int bestIndex = topIndex;
-        for (int index = topIndex; index < result.size(); index++) {
-          bestIndex = index;
-          ConfigurationType folderType = ObjectUtils.notNull(folderWrapper.getType(), UnknownConfigurationType.getInstance());
-          ItemWrapper item = result.get(index);
-          ConfigurationType currentType = item.getType();
-          int m = currentType == null ?
-                  1 :
-                  RunConfigurationListManagerHelperKt.compareTypesForUi(folderType, currentType);
-          if (m < 0 || (m == 0 && !(item instanceof FolderWrapper))) {
-            break;
-          }
-        }
-        result.add(bestIndex, folderWrapper);
-      }
+    if (!isMoveFoldersToTop) {
+      addFolders(result, folderWrappers);
     }
     return result;
+  }
+
+  private static void addFolders(@NotNull List<ItemWrapper> result, @NotNull List<FolderWrapper> folderWrappers) {
+    final int topIndex = result.size() - 1;
+    for (FolderWrapper folderWrapper : folderWrappers) {
+      int bestIndex = topIndex;
+      for (int index = topIndex; index < result.size(); index++) {
+        bestIndex = index;
+        ItemWrapper item = result.get(index);
+        ConfigurationType currentType = item.getType();
+        int m = currentType == null
+                ? 1
+                : compareTypesForUi(ObjectUtils.notNull(folderWrapper.getType(), UnknownConfigurationType.getInstance()), currentType);
+        if (m < 0 || (m == 0 && !(item instanceof FolderWrapper))) {
+          break;
+        }
+      }
+      result.add(bestIndex, folderWrapper);
+    }
   }
 
   private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<ItemWrapper> result) {
