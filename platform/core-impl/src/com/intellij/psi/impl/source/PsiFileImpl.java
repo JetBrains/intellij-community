@@ -115,7 +115,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return null;
   }
 
-  protected FileElement derefTreeElement() {
+  FileElement derefTreeElement() {
     return myTrees.derefTreeElement();
   }
 
@@ -337,7 +337,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntCallSuperClone"})
+  @SuppressWarnings("CloneDoesntCallSuperClone")
   protected PsiFileImpl clone() {
     FileViewProvider viewProvider = getViewProvider();
     FileViewProvider providerCopy = viewProvider.clone();
@@ -990,7 +990,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     putInfo(this, info);
   }
 
-  public static void putInfo(PsiFile psiFile, Map<String, String> info) {
+  public static void putInfo(@NotNull PsiFile psiFile, @NotNull Map<String, String> info) {
     info.put("fileName", psiFile.getName());
     info.put("fileType", psiFile.getFileType().toString());
   }

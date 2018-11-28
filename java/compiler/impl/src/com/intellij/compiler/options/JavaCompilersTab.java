@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
@@ -149,7 +148,6 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     finally {
       BuildManager.getInstance().clearState(myProject);
       PsiManager.getInstance(myProject).dropPsiCaches();
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
     }
   }
 

@@ -839,7 +839,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         Project project = getProject();
         myHasFilesOutOfProjectRoots = result =
           project != null && !project.isDefault() &&
-          myFiles.stream().anyMatch(file -> FileIndexFacade.getInstance(project).getModuleForFile(file) == null);
+          ContainerUtil.find(myFiles, file -> FileIndexFacade.getInstance(project).getModuleForFile(file) != null) == null;
       }
       return result;
     }

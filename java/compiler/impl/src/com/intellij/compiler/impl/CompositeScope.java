@@ -72,7 +72,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
   }
 
   @Override
-  public boolean belongs(String url) {
+  public boolean belongs(@NotNull String url) {
     for (CompileScope scope : myScopes) {
       if (scope.belongs(url)) {
         return true;

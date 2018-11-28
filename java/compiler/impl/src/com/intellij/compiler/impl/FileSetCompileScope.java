@@ -34,7 +34,7 @@ import java.util.*;
 public class FileSetCompileScope extends ExportableUserDataHolderBase implements CompileScope {
   private final Set<VirtualFile> myRootFiles = new HashSet<>();
   private final Set<String> myDirectoryUrls = new HashSet<>();
-  private Set<String> myUrls = null; // urls caching
+  private Set<String> myUrls; // urls caching
   private final Module[] myAffectedModules;
 
   public FileSetCompileScope(final Collection<VirtualFile> files, Module[] modules) {
@@ -82,7 +82,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
   }
 
   @Override
-  public boolean belongs(String url) {
+  public boolean belongs(@NotNull String url) {
     //url = CompilerUtil.normalizePath(url, '/');
     if (getUrls().contains(url)) {
       return true;
