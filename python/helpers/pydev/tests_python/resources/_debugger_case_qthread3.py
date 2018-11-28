@@ -2,7 +2,10 @@ import time
 import sys
 
 try:
-    from PySide import QtCore  # @UnresolvedImport
+    try:
+        from PySide import QtCore  # @UnresolvedImport
+    except:
+        from PySide2 import QtCore  # @UnresolvedImport
 except:
     try:
         from PyQt4 import QtCore
@@ -19,8 +22,7 @@ class Runnable(QtCore.QRunnable):
         count = 0
         app = QtCore.QCoreApplication.instance()
         while count < 5:
-            print("Increasing")
-            time.sleep(.5)
+            print("Increasing")  # break here
             count += 1
         app.quit()
 

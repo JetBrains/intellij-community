@@ -17,10 +17,10 @@ import traceback
 from functools import partial
 from collections import defaultdict
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, \
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, get_current_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
-    IS_PY2, NULL
+    IS_PY2, NULL, NO_FTRACE
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -48,7 +48,7 @@ from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import (
     trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning)
 from _pydevd_frame_eval.pydevd_frame_eval_main import (
-    frame_eval_func, enable_cache_frames_without_breaks, dummy_trace_dispatch, show_frame_eval_warning)
+    frame_eval_func, dummy_trace_dispatch, show_frame_eval_warning)
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
@@ -353,6 +353,9 @@ class PyDB(object):
 
         self.breakpoints = {}
 
+        # mtime to be raised when breakpoints change
+        self.mtime = 0
+
         self.file_to_id_to_line_breakpoint = {}
         self.file_to_id_to_plugin_breakpoint = {}
 
@@ -417,15 +420,89 @@ class PyDB(object):
         self.redirect_output = False
 
         # this flag disables frame evaluation even if it's available
-        self.do_not_use_frame_eval = False
+        self.use_frame_eval = True
         self.stop_on_start = False
 
         # If True, pydevd will send a single notification when all threads are suspended/resumed.
         self._threads_suspended_single_notification = ThreadsSuspendedSingleNotification(self)
+
+        self._local_thread_trace_func = threading.local()
+
         # sequence id of `CMD_PROCESS_CREATED` command -> threading.Event
         self.process_created_msg_received_events = dict()
         # the role PyDB plays in the communication with IDE
         self.communication_role = None
+
+    def get_thread_local_trace_func(self):
+        try:
+            thread_trace_func = self._local_thread_trace_func.thread_trace_func
+        except AttributeError:
+            thread_trace_func = self.trace_dispatch
+        return thread_trace_func
+
+    def enable_tracing(self, thread_trace_func=None):
+        '''
+        Enables tracing.
+
+        If in regular mode (tracing), will set the tracing function to the tracing
+        function for this thread -- by default it's `PyDB.trace_dispatch`, but after
+        `PyDB.enable_tracing` is called with a `thread_trace_func`, the given function will
+        be the default for the given thread.
+        '''
+        if self.frame_eval_func is not None:
+            self.frame_eval_func()
+            pydevd_tracing.SetTrace(self.dummy_trace_dispatch)
+            return
+
+        if thread_trace_func is None:
+            thread_trace_func = self.get_thread_local_trace_func()
+        else:
+            self._local_thread_trace_func.thread_trace_func = thread_trace_func
+
+        pydevd_tracing.SetTrace(thread_trace_func)
+
+    def disable_tracing(self):
+        pydevd_tracing.SetTrace(None)
+
+    def on_breakpoints_changed(self, removed=False):
+        '''
+        When breakpoints change, we have to re-evaluate all the assumptions we've made so far.
+        '''
+        if not self.ready_to_run:
+            # No need to do anything if we're still not running.
+            return
+
+        self.mtime += 1
+        if not removed:
+            # When removing breakpoints we can leave tracing as was, but if a breakpoint was added
+            # we have to reset the tracing for the existing functions to be re-evaluated.
+            self.set_tracing_for_untraced_contexts()
+
+    def set_tracing_for_untraced_contexts(self, ignore_current_thread=False):
+        # Enable the tracing for existing threads (because there may be frames being executed that
+        # are currently untraced).
+        ignore_thread = None
+        if ignore_current_thread:
+            ignore_thread = threading.current_thread()
+
+        threads = threadingEnumerate()
+        try:
+            for t in threads:
+                if getattr(t, 'is_pydev_daemon_thread', False) or t is ignore_thread:
+                    continue
+
+                additional_info = set_additional_thread_info(t)
+                frame = additional_info.get_topmost_frame(t)
+                try:
+                    if frame is not None:
+                        self.set_trace_for_frame_and_parents(frame)
+                finally:
+                    frame = None
+        finally:
+            frame = None
+            t = None
+            threads = None
+            additional_info = None
 
     @property
     def multi_threads_single_notification(self):
@@ -675,7 +752,7 @@ class PyDB(object):
                 # Actually process the commands now (make sure we don't have a lock for _lock_running_thread_ids
                 # acquired at this point as it could lead to a deadlock if some command evaluated tried to
                 # create a thread and wait for it -- which would try to notify about it getting that lock).
-                curr_thread_id = get_thread_id(threadingCurrentThread())
+                curr_thread_id = get_current_thread_id(threadingCurrentThread())
 
                 for thread_id in (curr_thread_id, '*'):
                     queue = self.get_internal_queue(thread_id)
@@ -709,42 +786,6 @@ class PyDB(object):
                         # this is how we exit
                         for int_cmd in cmds_to_add_back:
                             queue.put(int_cmd)
-
-    def disable_tracing_while_running_if_frame_eval(self):
-        pydevd_tracing.settrace_while_running_if_frame_eval(self, self.dummy_trace_dispatch)
-
-    def enable_tracing_in_frames_while_running_if_frame_eval(self):
-        pydevd_tracing.settrace_while_running_if_frame_eval(self, self.trace_dispatch)
-
-    def set_tracing_for_untraced_contexts_if_not_frame_eval(self, ignore_frame=None):
-        if self.frame_eval_func is not None:
-            return
-        self.set_tracing_for_untraced_contexts(ignore_frame)
-
-    def set_tracing_for_untraced_contexts(self, ignore_frame=None):
-        # Enable the tracing for existing threads (because there may be frames being executed that
-        # are currently untraced).
-        if self.frame_eval_func is not None:
-            return
-        threads = threadingEnumerate()
-        try:
-            for t in threads:
-                if getattr(t, 'is_pydev_daemon_thread', False):
-                    continue
-
-                additional_info = set_additional_thread_info(t)
-                frame = additional_info.get_topmost_frame(t)
-                try:
-                    if frame is not None and frame is not ignore_frame:
-                        self.set_trace_for_frame_and_parents(frame)
-                finally:
-                    frame = None
-        finally:
-            frame = None
-            t = None
-            threads = None
-            additional_info = None
-
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
         break_dict = {}
@@ -972,7 +1013,7 @@ class PyDB(object):
         finally:
             self._main_lock.release()
 
-    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace", send_suspend_message=True, is_unhandled_exception=False): #@UnusedVariable
+    def do_wait_suspend(self, thread, frame, event, arg, send_suspend_message=True, is_unhandled_exception=False): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
@@ -985,12 +1026,14 @@ class PyDB(object):
         thread_stack_str = ''   # @UnusedVariable -- this is here so that `make_get_thread_stack_message`
         # can retrieve it later.
 
-        thread_id = get_thread_id(thread)
+        thread_id = get_current_thread_id(thread)
         stop_reason = thread.stop_reason
 
         if send_suspend_message:
             # Send the suspend message
             message = thread.additional_info.pydev_message
+            suspend_type = thread.additional_info.trace_suspend_type
+            thread.additional_info.trace_suspend_type = 'trace'  # Reset to trace mode for next call.
             frame_to_lineno = {}
             if is_unhandled_exception:
                 # arg must be the exception info (tuple(exc_type, exc, traceback))
@@ -1032,7 +1075,7 @@ class PyDB(object):
                 self.process_internal_commands()
                 time.sleep(0.01)
 
-        self.cancel_async_evaluation(get_thread_id(thread), str(id(frame)))
+        self.cancel_async_evaluation(get_current_thread_id(thread), str(id(frame)))
 
         # process any stepping instructions
         if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
@@ -1063,7 +1106,7 @@ class PyDB(object):
                     thread.stop_reason = CMD_THREAD_SUSPEND
                     # return to the suspend state and wait for other command (without sending any
                     # additional notification to the client).
-                    self._do_wait_suspend(thread, frame, event, arg, suspend_type, send_suspend_message=False)
+                    self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread)
                     return
             else:
                 try:
@@ -1077,12 +1120,12 @@ class PyDB(object):
                     info.pydev_message = ''
 
                 if stop:
-                    cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
+                    cmd = self.cmd_factory.make_thread_run_message(get_current_thread_id(thread), info.pydev_step_cmd)
                     self.writer.add_command(cmd)
                     if suspend_type == "trace":
                         info.pydev_state = STATE_SUSPEND
                         thread.stop_reason= CMD_SET_NEXT_STATEMENT
-                        self.do_wait_suspend(thread, frame, event, arg, "trace")
+                        self.do_wait_suspend(thread, frame, event, arg)
                     else:
                         info.pydev_step_stop = frame
                     return
@@ -1091,7 +1134,7 @@ class PyDB(object):
                     info.pydev_state = STATE_SUSPEND
                     thread.stop_reason = CMD_THREAD_SUSPEND
                     # return to the suspend state and wait for other command
-                    self.do_wait_suspend(thread, frame, event, arg, suspend_type, send_suspend_message=False)
+                    self.do_wait_suspend(thread, frame, event, arg, send_suspend_message=False)
                     return
 
         elif info.pydev_step_cmd == CMD_STEP_RETURN:
@@ -1108,18 +1151,8 @@ class PyDB(object):
                 info.pydev_step_cmd = -1
                 info.pydev_state = STATE_RUN
 
-        if self.frame_eval_func is not None and info.pydev_state == STATE_RUN:
-            if info.pydev_step_cmd == -1:
-                if not self.do_not_use_frame_eval:
-                    self.SetTrace(self.dummy_trace_dispatch)
-                    self.set_trace_for_frame_and_parents(frame, dispatch_func=dummy_trace_dispatch)
-            else:
-                self.set_trace_for_frame_and_parents(frame)
-                # enable old tracing function for stepping
-                self.SetTrace(self.trace_dispatch)
-
         del frame
-        cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
+        cmd = self.cmd_factory.make_thread_run_message(get_current_thread_id(thread), info.pydev_step_cmd)
         self.writer.add_command(cmd)
 
         with CustomFramesContainer.custom_frames_lock:
@@ -1136,7 +1169,7 @@ class PyDB(object):
             try:
                 add_exception_to_frame(frame, arg)
                 self.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
-                self.do_wait_suspend(thread, frame, 'exception', arg, "trace", is_unhandled_exception=True)
+                self.do_wait_suspend(thread, frame, 'exception', arg, is_unhandled_exception=True)
             except KeyboardInterrupt as e:
                 raise e
             except:
@@ -1146,22 +1179,17 @@ class PyDB(object):
             pydevd_vars.remove_additional_frame_by_id(thread_id)
             frame = None
 
-    def set_trace_for_frame_and_parents(self, frame, also_add_to_passed_frame=True, dispatch_func=None):
-        if dispatch_func is None:
+    def set_trace_for_frame_and_parents(self, frame, **kwargs):
+        disable = kwargs.pop('disable', False)
+        assert not kwargs
+        if disable:
+            dispatch_func = NO_FTRACE
+        else:
             dispatch_func = self.trace_dispatch
-
-        if also_add_to_passed_frame:
-            self._update_trace(frame, dispatch_func)
-
-        frame = frame.f_back
         while frame is not None:
-            self._update_trace(frame, dispatch_func)
-
+            frame.f_trace = dispatch_func
             frame = frame.f_back
-        del frame
 
-    def _update_trace(self, frame, dispatch_func):
-        frame.f_trace = dispatch_func
         del frame
 
     def _create_pydb_command_thread(self):
@@ -1289,20 +1317,18 @@ class PyDB(object):
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
 
-            if self.break_on_caught_exceptions or (self.plugin and self.plugin.has_exception_breaks()) or self.signature_factory:
-                # disable frame evaluation if there are exception breakpoints with 'On raise' activation policy
-                # or if there are plugin exception breakpoints or if collecting run-time types is enabled
-                self.frame_eval_func = None
+            # TODO Liza: Won't it break plugins?!
 
             # call prepare_to_run when we already have all information about breakpoints
             self.prepare_to_run()
 
         t = threadingCurrentThread()
+        thread_id = get_current_thread_id(t)
 
         if self.thread_analyser is not None:
             wrap_threads()
             self.thread_analyser.set_start_time(cur_time())
-            send_message("threading_event", 0, t.getName(), get_thread_id(t), "thread", "start", file, 1, None, parent=get_thread_id(t))
+            send_message("threading_event", 0, t.getName(), thread_id, "thread", "start", file, 1, None, parent=get_thread_id(t))
 
         if self.asyncio_analyser is not None:
             if IS_PY36_OR_GREATER:
@@ -1322,7 +1348,6 @@ class PyDB(object):
             sys.exc_clear()
 
         # Notify that the main thread is created.
-        thread_id = get_thread_id(t)
         self.notify_thread_created(thread_id, t)
 
         if self.stop_on_start:
@@ -1331,7 +1356,7 @@ class PyDB(object):
 
         # Note: important: set the tracing right before calling _exec.
         if set_trace:
-            pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
+            self.enable_tracing()
 
         return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
 
@@ -1376,7 +1401,7 @@ class PyDB(object):
         from _pydevd_bundle import pydevd_frame_utils
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
                                                                             os.path.abspath(os.path.dirname(__file__))), globals, globals)
-        thread_id = get_thread_id(thread)
+        thread_id = get_current_thread_id(thread)
         pydevd_vars.add_additional_frame_by_id(thread_id, {id(frame): frame})
 
         cmd = self.cmd_factory.make_show_console_message(thread_id, frame)
@@ -1392,7 +1417,6 @@ class PyDB(object):
     trace_dispatch = _trace_dispatch
     frame_eval_func = frame_eval_func
     dummy_trace_dispatch = dummy_trace_dispatch
-    enable_cache_frames_without_breaks = enable_cache_frames_without_breaks
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
@@ -1596,13 +1620,13 @@ def _locked_settrace(
             init_stderr_redirect()
 
         patch_stdin(debugger)
-        debugger.set_trace_for_frame_and_parents(get_frame(), False)
+        debugger.set_trace_for_frame_and_parents(get_frame().f_back)
 
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
         try:
             for _frameId, custom_frame in dict_iter_items(CustomFramesContainer.custom_frames):
-                debugger.set_trace_for_frame_and_parents(custom_frame.frame, False)
+                debugger.set_trace_for_frame_and_parents(custom_frame.frame)
         finally:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
@@ -1613,22 +1637,15 @@ def _locked_settrace(
         while not debugger.ready_to_run:
             time.sleep(0.1)  # busy wait until we receive run command
 
-        global forked
-        frame_eval_for_tracing = debugger.frame_eval_func
-        if frame_eval_func is not None and not forked:
-            # Disable frame evaluation for Remote Debug Server
-            frame_eval_for_tracing = None
-
-        # note that we do that through pydevd_tracing.SetTrace so that the tracing
-        # is not warned to the user!
-        pydevd_tracing.SetTrace(debugger.trace_dispatch, frame_eval_for_tracing, debugger.dummy_trace_dispatch)
+        # TODO Liza: it will break frame eval for multiprocess debugging?!
+        debugger.enable_tracing()
 
         if not trace_only_current_thread:
             # Trace future threads?
             debugger.patch_threads()
 
             # As this is the first connection, also set tracing for any untraced threads
-            debugger.set_tracing_for_untraced_contexts(ignore_frame=get_frame())
+            debugger.set_tracing_for_untraced_contexts(ignore_current_thread=True)
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
@@ -1639,12 +1656,12 @@ def _locked_settrace(
         # ok, we're already in debug mode, with all set, so, let's just set the break
         debugger = get_global_debugger()
 
-        debugger.set_trace_for_frame_and_parents(get_frame(), also_add_to_passed_frame=False)
+        debugger.set_trace_for_frame_and_parents(get_frame().f_back)
 
         t = threadingCurrentThread()
         additional_info = set_additional_thread_info(t)
 
-        pydevd_tracing.SetTrace(debugger.trace_dispatch, debugger.frame_eval_func, debugger.dummy_trace_dispatch)
+        debugger.enable_tracing()
 
         if not trace_only_current_thread:
             # Trace future threads?
@@ -1682,8 +1699,7 @@ def stoptrace():
 
         if debugger:
 
-            debugger.set_trace_for_frame_and_parents(
-                get_frame(), also_add_to_passed_frame=True, dispatch_func=lambda *args:None)
+            debugger.set_trace_for_frame_and_parents(get_frame(), disable=True)
             debugger.exiting()
 
             kill_all_pydev_threads()

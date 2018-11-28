@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_thread_id, get_global_debugger, IS_WINDOWS, IS_JYTHON
+from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_JYTHON, get_current_thread_id
 from _pydev_bundle import pydev_log
 
 try:
@@ -59,7 +59,7 @@ def _on_forked_process():
 
 def _on_set_trace_for_new_thread(global_debugger):
     if global_debugger is not None:
-        global_debugger.SetTrace(global_debugger.trace_dispatch, global_debugger.frame_eval_func, global_debugger.dummy_trace_dispatch)
+        global_debugger.enable_tracing()
 
 
 #===============================================================================
@@ -630,8 +630,11 @@ class _NewThreadStartupWithTrace:
                 # currentThread).
                 t = threading.currentThread()
                 
+            if t.ident is None:
+                t._set_ident()
+
             if not getattr(t, 'is_pydev_daemon_thread', False):
-                thread_id = get_thread_id(t)
+                thread_id = get_current_thread_id(t)
                 global_debugger.notify_thread_created(thread_id, t)
                 _on_set_trace_for_new_thread(global_debugger)
             

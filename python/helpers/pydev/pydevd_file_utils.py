@@ -522,6 +522,15 @@ def get_abs_path_real_path_and_base_from_file(f):
     try:
         return NORM_PATHS_AND_BASE_CONTAINER[f]
     except:
+        if _NormPaths is None:  # Interpreter shutdown
+            return f
+
+        if f is not None:
+            if f.endswith('.pyc'):
+                f = f[:-1]
+            elif f.endswith('$py.class'):
+                f = f[:-len('$py.class')] + '.py'
+
         abs_path, real_path = _NormPaths(f)
         base = basename(real_path)
         ret = abs_path, real_path, base
@@ -538,11 +547,8 @@ def get_abs_path_real_path_and_base_from_frame(frame):
         if f is not None and f.startswith (('build/bdist.', 'build\\bdist.')):
             # files from eggs in Python 2.7 have paths like build/bdist.linux-x86_64/egg/<path-inside-egg>
             f = frame.f_globals['__file__']
-        if f is not None:
-            if f.endswith('.pyc'):
-                f = f[:-1]
-            elif f.endswith('$py.class'):
-                f = f[:-len('$py.class')] + '.py'
+        if get_abs_path_real_path_and_base_from_file is None:  # Interpreter shutdown
+            return f
 
         ret = get_abs_path_real_path_and_base_from_file(f)
         # Also cache based on the frame.f_code.co_filename (if we had it inside build/bdist it can make a difference).

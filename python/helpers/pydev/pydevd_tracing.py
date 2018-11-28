@@ -68,31 +68,19 @@ def _internal_set_trace(tracing_func):
         TracingFunctionHolder._original_tracing(tracing_func)
 
 
-def SetTrace(tracing_func, frame_eval_func=None, dummy_tracing_func=None, apply_to_pydevd_thread=False):
-    if tracing_func is not None and frame_eval_func is not None:
-        # There is no need to set tracing function if frame evaluation is available
-        frame_eval_func()
-        tracing_func = dummy_tracing_func
-
+def SetTrace(tracing_func):
     if TracingFunctionHolder._original_tracing is None:
         #This may happen before replace_sys_set_trace_func is called.
         sys.settrace(tracing_func)
         return
 
-    current_thread = threading.currentThread()
-    do_not_trace_before = getattr(current_thread, 'pydev_do_not_trace', None)
-    if not apply_to_pydevd_thread:
-        if do_not_trace_before:
-            return
     try:
         TracingFunctionHolder._lock.acquire()
-        current_thread.pydev_do_not_trace = True  # avoid settrace reentering
         TracingFunctionHolder._warn = False
         _internal_set_trace(tracing_func)
         TracingFunctionHolder._warn = True
     finally:
         TracingFunctionHolder._lock.release()
-        current_thread.pydev_do_not_trace = do_not_trace_before
 
 
 def replace_sys_set_trace_func():
@@ -104,31 +92,3 @@ def restore_sys_set_trace_func():
     if TracingFunctionHolder._original_tracing is not None:
         sys.settrace = TracingFunctionHolder._original_tracing
         TracingFunctionHolder._original_tracing = None
-
-def settrace_while_running_if_frame_eval(py_db, trace_func):
-    if not py_db.ready_to_run:
-        # do it if only debug session is started
-        return
-
-    if py_db.frame_eval_func is None:
-        return
-
-    try:
-        for t in pydevd_utils.get_non_pydevd_threads():
-            additional_info = getattr(t, 'additional_info', None)
-            if additional_info is None:
-                # that's ok, no info currently set
-                continue
-
-            frame = additional_info.get_topmost_frame(t)
-            if frame is not None:
-                try:
-                    py_db.set_trace_for_frame_and_parents(frame, dispatch_func=trace_func)
-                finally:
-                    frame = None
-            py_db.enable_cache_frames_without_breaks(False)
-            # sometimes (when script enters new frames too fast), we can't enable tracing only in the appropriate
-            # frame. So, if breakpoint was added during run, we should disable frame evaluation forever.
-            py_db.do_not_use_frame_eval = True
-    except:
-        traceback.print_exc()

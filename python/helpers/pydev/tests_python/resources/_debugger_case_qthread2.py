@@ -2,7 +2,10 @@ import time
 import sys
 
 try:
-    from PySide import QtCore  # @UnresolvedImport
+    try:
+        from PySide import QtCore  # @UnresolvedImport
+    except:
+        from PySide2 import QtCore  # @UnresolvedImport
 except:
     try:
         from PyQt4 import QtCore
@@ -21,8 +24,7 @@ class SomeObject(QtCore.QObject):
     def long_running(self):
         count = 0
         while count < 5:
-            time.sleep(.5)
-            print("Increasing")
+            print("Increasing")  # break here
             count += 1
         self.finished.emit()
 

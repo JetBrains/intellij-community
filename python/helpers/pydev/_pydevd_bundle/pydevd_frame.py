@@ -10,7 +10,7 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm_constants import (CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE)
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_current_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
     dict_keys, RETURN_VALUES_DICT, NO_FTRACE
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame, ignore_exception_trace
@@ -323,7 +323,7 @@ class PyDBFrame:
                     f = f.f_back
                 f = None
 
-                thread_id = get_thread_id(thread)
+                thread_id = get_current_thread_id(thread)
                 pydevd_vars.add_additional_frame_by_id(thread_id, frame_id_to_frame)
                 try:
                     main_debugger.send_caught_exception_stack(thread, arg, id(frame))
@@ -625,7 +625,7 @@ class PyDBFrame:
                         # line event at the same place (so, if there's a module with a print() in the first line
                         # the user will hit that line twice, which is not what we want).
                         #
-                        # As for lamdba, as it only has a single statement, it's not interesting to trace
+                        # As for lambda, as it only has a single statement, it's not interesting to trace
                         # its call and later its line event as they're usually in the same line.
 
                         # No need to reset frame.f_trace to keep the same trace function.

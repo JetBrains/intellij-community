@@ -2,7 +2,7 @@ import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_thread_id, IS_IRONPYTHON, NO_FTRACE
+from _pydevd_bundle.pydevd_constants import get_current_thread_id, IS_IRONPYTHON, NO_FTRACE
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
@@ -22,6 +22,16 @@ from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_inf
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
 
+# Note: this is different from pydevd_constants.thread_get_ident because we want Jython
+# to be None here because it also doesn't have threading._active.
+try:
+    threading_get_ident = threading.get_ident  # Python 3
+except:
+    try:
+        threading_get_ident = threading._get_ident  # Python 2
+    except:
+        threading_get_ident = None  # Jython
+
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 # cdef dict global_cache_skips
 # cdef dict global_cache_frame_skips
@@ -37,22 +47,22 @@ global_cache_frame_skips = {}
 
 # IFDEF CYTHON
 # cdef class SafeCallWrapper:
-#   cdef method_object
-#   def __init__(self, method_object):
-#       self.method_object = method_object
-#   def  __call__(self, *args):
-#       #Cannot use 'self' once inside the delegate call since we are borrowing the self reference f_trace field
-#       #in the frame, and that reference might get destroyed by set trace on frame and parents
-#       cdef PyObject* method_obj = <PyObject*> self.method_object
-#       Py_INCREF(<object>method_obj)
-#       ret = (<object>method_obj)(*args)
-#       Py_XDECREF (method_obj)
-#       return SafeCallWrapper(ret) if ret is not None else None
+#     cdef method_object
+#     def __init__(self, method_object):
+#         self.method_object = method_object
+#     def  __call__(self, *args):
+#         #Cannot use 'self' once inside the delegate call since we are borrowing the self reference f_trace field
+#         #in the frame, and that reference might get destroyed by set trace on frame and parents
+#         cdef PyObject* method_obj = <PyObject*> self.method_object
+#         Py_INCREF(<object>method_obj)
+#         ret = (<object>method_obj)(*args)
+#         Py_XDECREF (method_obj)
+#         return SafeCallWrapper(ret) if ret is not None else None
 # ELSE
 # ENDIF
 
 
-def trace_dispatch(py_db, frame, event, arg):
+def fix_top_level_trace_and_get_trace_func(py_db, frame):
     # IFDEF CYTHON
     # cdef str filename;
     # cdef str name;
@@ -76,8 +86,7 @@ def trace_dispatch(py_db, frame, event, arg):
         if name == 'threading':
             if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
                 # We need __bootstrap_inner, not __bootstrap.
-                if event != 'call': frame.f_trace = NO_FTRACE
-                return None
+                return None, False
 
             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
                 # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
@@ -95,8 +104,7 @@ def trace_dispatch(py_db, frame, event, arg):
         elif name == 'pydevd':
             if f_unhandled.f_code.co_name in ('run', 'main'):
                 # We need to get to _exec
-                if event != 'call': frame.f_trace = NO_FTRACE
-                return None
+                return None, False
 
             if f_unhandled.f_code.co_name == '_exec':
                 force_only_unhandled_tracer = True
@@ -110,12 +118,17 @@ def trace_dispatch(py_db, frame, event, arg):
     if thread is None:
         # Important: don't call threadingCurrentThread if we're in the threading module
         # to avoid creating dummy threads.
-        thread = threadingCurrentThread()
+        if threading_get_ident is not None:
+            thread = threading._active.get(threading_get_ident())
+            if thread is None:
+                return None, False
+        else:
+            # Jython does not have threading.get_ident().
+            thread = threadingCurrentThread()
 
     if getattr(thread, 'pydev_do_not_trace', None):
-        SetTrace(None, apply_to_pydevd_thread=True)
-        if event != 'call': frame.f_trace = NO_FTRACE
-        return None
+        SetTrace(None)
+        return None, False
 
     try:
         additional_info = thread.additional_info
@@ -124,13 +137,13 @@ def trace_dispatch(py_db, frame, event, arg):
     except:
         additional_info = set_additional_thread_info(thread)
 
-    # print('enter thread tracer', thread, get_thread_id(thread))
+    # print('enter thread tracer', thread, get_current_thread_id(thread))
     args = (py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips)
 
     if f_unhandled is not None:
         if f_unhandled.f_back is None and not force_only_unhandled_tracer:
             # Happens when we attach to a running program.
-            top_level_thread_tracer = TopLevelThreadTracerNoBackFrame(ThreadTracer(args).__call__, args)
+            top_level_thread_tracer = TopLevelThreadTracerNoBackFrame(ThreadTracer(args), args)
         else:
             # Stop in some internal place to report about unhandled exceptions
             top_level_thread_tracer = TopLevelThreadTracerOnlyUnhandledExceptions(args)
@@ -147,16 +160,24 @@ def trace_dispatch(py_db, frame, event, arg):
         # ENDIF
 
         if frame is f_unhandled:
-            return f_unhandled.f_trace(frame, event, arg)
+            return f_unhandled.f_trace, False
 
     thread_tracer = ThreadTracer(args)
 # IFDEF CYTHON
 #     thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
 # ELSE
 # ENDIF
+    return thread_tracer, True
 
-    SetTrace(thread_tracer.__call__)
-    return thread_tracer.__call__(frame, event, arg)
+
+def trace_dispatch(py_db, frame, event, arg):
+    thread_trace_func, apply_to_settrace = fix_top_level_trace_and_get_trace_func(py_db, frame)
+    if thread_trace_func is None:
+        if event != 'call': frame.f_trace = NO_FTRACE
+        return None
+    if apply_to_settrace:
+        py_db.enable_tracing(thread_trace_func)
+    return thread_trace_func(frame, event, arg)
 
 
 # IFDEF CYTHON
@@ -357,7 +378,7 @@ class ThreadTracer:
 
             # if thread is not alive, cancel trace_dispatch processing
             if not is_thread_alive(t):
-                py_db.notify_thread_not_alive(get_thread_id(t))
+                py_db.notify_thread_not_alive(get_current_thread_id(t))
                 if event != 'call': frame.f_trace = NO_FTRACE
                 return None  # suspend tracing
 

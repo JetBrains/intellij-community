@@ -2,7 +2,10 @@ import time
 import sys
 
 try:
-    from PySide import QtCore  # @UnresolvedImport
+    try:
+        from PySide import QtCore  # @UnresolvedImport
+    except:
+        from PySide2 import QtCore  # @UnresolvedImport
 except:
     try:
         from PyQt4 import QtCore
@@ -16,8 +19,8 @@ class AThread(QtCore.QThread):
     def run(self):
         count = 0
         while count < 5:
-            time.sleep(.5)
-            print("Increasing", count);sys.stdout.flush()
+            print("Increasing", count)  # break here
+            sys.stdout.flush()
             count += 1
 
 app = QtCore.QCoreApplication([])
