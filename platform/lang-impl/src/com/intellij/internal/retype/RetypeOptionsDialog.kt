@@ -33,6 +33,8 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     private set
   var recordScript: Boolean by propComponentProperty(project, true)
     private set
+  var restoreOriginalText: Boolean by propComponentProperty(project, true)
+    private set
 
   private val typeDelaySpinner = JBIntSpinner(retypeDelay, 0, 5000, 50)
   private val threadDumpDelaySpinner = JBIntSpinner(threadDumpDelay, 50, 5000, 50)
@@ -45,6 +47,7 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
   private val fileCountSpinner = JBIntSpinner(fileCount, 1, 5000)
   private val extensionTextField = JTextField(retypeExtension, 5)
   private val recordCheckBox = CheckBox("Record script for performance testing plugin", true)
+  private val restoreTextBox = JBCheckBox("Restore original text after retype", restoreOriginalText)
 
   init {
     init()
@@ -90,6 +93,9 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
       row {
         recordCheckBox()
       }
+      row {
+        restoreTextBox()
+      }
     }
   }
 
@@ -107,6 +113,8 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
 
     backgroundChangesDelay = interfereFileChaneDelaySpinner.number
     enableBackgroundChanges = interfereFileChangerEnabled.isSelected
+
+    restoreOriginalText = restoreTextBox.isSelected
 
     super.doOKAction()
   }

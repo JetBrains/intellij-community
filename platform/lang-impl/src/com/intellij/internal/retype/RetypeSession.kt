@@ -53,7 +53,8 @@ class RetypeSession(
   private val scriptBuilder: StringBuilder?,
   private val threadDumpDelay: Int,
   private val threadDumps: MutableList<String> = mutableListOf(),
-  private val interfereFilesChangePeriod: Long = -1
+  private val interfereFilesChangePeriod: Long = -1,
+  private val restoreText: Boolean = !ApplicationManager.getApplication().isUnitTestMode
 ) : Disposable {
   private val document = editor.document
 
@@ -131,7 +132,7 @@ class RetypeSession(
   private fun correctText(text: String) = "%replaceText ${text.replace('\n', '\u32E1')}\n"
 
   fun stop(startNext: Boolean) {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    if (restoreText) {
       WriteCommandAction.runWriteCommandAction(project) { document.replaceString(0, document.textLength, originalText) }
     }
     synchronized(disposeLock) {
