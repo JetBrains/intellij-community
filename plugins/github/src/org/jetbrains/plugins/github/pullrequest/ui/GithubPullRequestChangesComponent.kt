@@ -42,7 +42,7 @@ internal class GithubPullRequestChangesComponent(project: Project) : GithubDataL
   override fun handleError(error: Throwable) {
     changesBrowser.emptyText
       .clear()
-      .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      .appendText("Can't load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
   }
 

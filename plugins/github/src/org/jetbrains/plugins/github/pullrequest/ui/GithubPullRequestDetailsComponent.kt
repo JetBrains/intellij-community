@@ -39,7 +39,7 @@ internal class GithubPullRequestDetailsComponent(iconProviderFactory: CachingGit
   override fun handleError(error: Throwable) {
     detailsPanel.emptyText
       .clear()
-      .appendText("Cannot load details", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      .appendText("Can't load details", SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
   }
 
