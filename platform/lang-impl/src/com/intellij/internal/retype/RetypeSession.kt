@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.playback.commands.ActionCommand
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.Alarm
 import java.awt.event.KeyEvent
 import java.io.File
@@ -201,10 +202,14 @@ class RetypeSession(
           it.append("%delayType $delayMillis|$c\n")
         }
       }
-      IdeEventQueue.getInstance().postEvent(
-        KeyEvent(editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_UNDEFINED, c))
-      IdeEventQueue.getInstance().postEvent(
-        KeyEvent(editor.component, KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0, KeyEvent.VK_UNDEFINED, c))
+
+      val eventTimestamp = System.currentTimeMillis()
+      IdeFocusManager.findInstance().requestFocus(editor.component, true).doWhenDone {
+        IdeEventQueue.getInstance().postEvent(
+          KeyEvent(editor.component, KeyEvent.KEY_PRESSED, eventTimestamp, 0, KeyEvent.VK_UNDEFINED, c))
+        IdeEventQueue.getInstance().postEvent(
+          KeyEvent(editor.component, KeyEvent.KEY_TYPED, eventTimestamp, 0, KeyEvent.VK_UNDEFINED, c))
+      }
       typedRightBefore = true
     }
     queueNextOrStop()
