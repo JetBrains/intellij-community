@@ -24,31 +24,6 @@ class ResolveAssertionsTest implements ResolveTest {
   CodeInsightTestFixture getFixture() { myFixtureRule.fixture }
 
   @Test
-  void 'applicability not computed for single result'() {
-    def result = advancedResolveByText '''\
-static void foo(String s, Closure c) {}
-<caret>foo {
-  bar 
-}
-'''
-    assert result instanceof MethodResolveResult
-//    assert !result.getApplicabilityDelegate().initialized
-  }
-
-  @Test
-  void 'applicability is computed when two results'() {
-    def result = advancedResolveByText '''\
-static void foo(String s, Closure c) {}
-static void foo(Closure c) {} 
-<caret>foo {
-  bar 
-}
-'''
-    assert result instanceof MethodResolveResult
-//    assert result.getApplicabilityDelegate().initialized
-  }
-
-  @Test
   void 'test substitutor is not computed within resolve'() {
     def result = advancedResolveByText '''\
 [1, 2, 3].with {
