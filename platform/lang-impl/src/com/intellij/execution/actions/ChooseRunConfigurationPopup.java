@@ -924,37 +924,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     final RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
     if (selectedConfiguration != null) {
-      boolean isFirst = true;
-      final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
-      for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration.getConfiguration())) {
-        result.add(new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
-          {
-            setChecked(getValue().equals(activeTarget));
-          }
-
-          @Override
-          public Icon getIcon() {
-            return getValue().getIcon();
-          }
-
-          @Override
-          public String getText() {
-            return getValue().getDisplayName();
-          }
-
-          @Override
-          public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
-            ExecutionTargetManager.setActiveTarget(project, getValue());
-            ExecutionUtil.runConfiguration(selectedConfiguration, executor);
-          }
-
-          @Override
-          public boolean available(Executor executor) {
-            return true;
-          }
-        });
-        isFirst = false;
-      }
+      addActionsForSelected(selectedConfiguration, project, result);
     }
 
     Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
@@ -1014,6 +984,38 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
     }
     return result;
+  }
+
+  private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<ItemWrapper> result) {
+    boolean isFirst = true;
+    final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
+    for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration.getConfiguration())) {
+      ItemWrapper<ExecutionTarget> itemWrapper = new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
+        @Override
+        public Icon getIcon() {
+          return getValue().getIcon();
+        }
+
+        @Override
+        public String getText() {
+          return getValue().getDisplayName();
+        }
+
+        @Override
+        public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+          ExecutionTargetManager.setActiveTarget(project, getValue());
+          ExecutionUtil.runConfiguration(selectedConfiguration, executor);
+        }
+
+        @Override
+        public boolean available(Executor executor) {
+          return true;
+        }
+      };
+      itemWrapper.setChecked(eachTarget.equals(activeTarget));
+      result.add(itemWrapper);
+      isFirst = false;
+    }
   }
 
   @NotNull
