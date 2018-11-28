@@ -914,48 +914,12 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  public static ItemWrapper[] createSettingsList(@NotNull Project project, @NotNull ExecutorProvider executorProvider, boolean createEditAction) {
+  @NotNull
+  public static List<ItemWrapper> createSettingsList(@NotNull Project project, @NotNull ExecutorProvider executorProvider, boolean isCreateEditAction) {
     List<ItemWrapper> result = new ArrayList<>();
 
-    if (createEditAction) {
-      ItemWrapper<Void> edit = new ItemWrapper<Void>(null) {
-        @Override
-        public Icon getIcon() {
-          return AllIcons.Actions.EditSource;
-        }
-
-        @Override
-        public String getText() {
-          return UIUtil.removeMnemonic(ActionsBundle.message("action.editRunConfigurations.text"));
-        }
-
-        @Override
-        public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
-          if (new EditConfigurationsDialog(project) {
-            @Override
-            protected void init() {
-              setOKButtonText(executor.getStartActionText());
-              setOKButtonIcon(executor.getIcon());
-              myExecutor = executor;
-              super.init();
-            }
-          }.showAndGet()) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
-              if (configuration != null) {
-                ExecutionUtil.runConfiguration(configuration, executor);
-              }
-            }, project.getDisposed());
-          }
-        }
-
-        @Override
-        public boolean available(Executor executor) {
-          return true;
-        }
-      };
-      edit.setMnemonic(0);
-      result.add(edit);
+    if (isCreateEditAction) {
+      result.add(createEditAction());
     }
 
     final RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
@@ -1037,18 +1001,61 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         for (int index = topIndex; index < result.size(); index++) {
           bestIndex = index;
           ConfigurationType folderType = ObjectUtils.notNull(folderWrapper.getType(), UnknownConfigurationType.getInstance());
-          ConfigurationType currentType = result.get(index).getType();
+          ItemWrapper item = result.get(index);
+          ConfigurationType currentType = item.getType();
           int m = currentType == null ?
                   1 :
                   RunConfigurationListManagerHelperKt.compareTypesForUi(folderType, currentType);
-          if (m < 0 || (m == 0 && !(result.get(index) instanceof FolderWrapper))) {
+          if (m < 0 || (m == 0 && !(item instanceof FolderWrapper))) {
             break;
           }
         }
         result.add(bestIndex, folderWrapper);
       }
     }
-    return result.toArray(new ItemWrapper[0]);
+    return result;
+  }
+
+  @NotNull
+  private static ItemWrapper<Void> createEditAction() {
+    ItemWrapper<Void> result = new ItemWrapper<Void>(null) {
+      @Override
+      public Icon getIcon() {
+        return AllIcons.Actions.EditSource;
+      }
+
+      @Override
+      public String getText() {
+        return UIUtil.removeMnemonic(ActionsBundle.message("action.editRunConfigurations.text"));
+      }
+
+      @Override
+      public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+        if (new EditConfigurationsDialog(project) {
+          @Override
+          protected void init() {
+            setOKButtonText(executor.getStartActionText());
+            setOKButtonIcon(executor.getIcon());
+            myExecutor = executor;
+            super.init();
+          }
+        }.showAndGet()) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
+            if (configuration != null) {
+              ExecutionUtil.runConfiguration(configuration, executor);
+            }
+          }, project.getDisposed());
+        }
+      }
+
+      @Override
+      public boolean available(Executor executor) {
+        return true;
+      }
+    };
+    result.setMnemonic(0);
+    return result;
   }
 
   private static void populateWithDynamicRunners(final List<? super ItemWrapper> result,

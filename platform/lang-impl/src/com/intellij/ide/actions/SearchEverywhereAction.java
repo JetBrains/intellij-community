@@ -1594,7 +1594,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Nullable
     private ChooseRunConfigurationPopup.ItemWrapper getRunConfigurationByName(String name) {
-      final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
+      final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers =
         ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
           @Override
           public Executor getExecutor() {
@@ -1631,7 +1631,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return configurations;
       }
       final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
-      final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
+      final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers =
         ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
           @Override
           public Executor getExecutor() {
@@ -1929,7 +1929,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         SwingUtilities.invokeLater(() -> {
           if (isCanceled()) return;
 
-          for (Object element : new ArrayList(elements)) {
+          for (Object element : new ArrayList<>(elements)) {
             if (element instanceof AnAction) {
               if (!isEnabled((AnAction)element)) {
                 elements.remove(element);
@@ -2152,7 +2152,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                  int shift = 0;
                  int i = index+1;
                  for (Object o : result) {
-                   //noinspection unchecked
                    myListModel.insertElementAt(o, i);
                    shift++;
                    i++;
