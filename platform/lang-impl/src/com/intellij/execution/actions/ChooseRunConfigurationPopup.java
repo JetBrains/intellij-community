@@ -290,10 +290,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (this == o) return true;
       if (!(o instanceof ItemWrapper)) return false;
 
-      ItemWrapper that = (ItemWrapper)o;
-
-      if (myValue != null ? !myValue.equals(that.myValue) : that.myValue != null) return false;
-
+      if (!Objects.equals(myValue, ((ItemWrapper)o).myValue)) return false;
       return true;
     }
 
