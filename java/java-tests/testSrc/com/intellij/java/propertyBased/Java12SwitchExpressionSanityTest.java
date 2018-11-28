@@ -60,7 +60,12 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
     );
 
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
-      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaIntentionPolicy()) {
+      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaIntentionPolicy() {
+        @Override
+        protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+          return super.shouldSkipByFamilyName(familyName) || "Make Call Chain Into Call Sequence".equals(familyName);
+        }
+      }) {
         @Override
         protected int generateDocOffset(@NotNull Environment env, @Nullable String logMessage) {
           Collection<PsiSwitchBlock> children = PsiTreeUtil.findChildrenOfType(getFile(), PsiSwitchBlock.class);
