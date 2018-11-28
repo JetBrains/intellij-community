@@ -32,6 +32,9 @@ public class EditorConfigFileSettingsTest extends LightPlatformTestCase {
     try {
       Utils.setFullSettingsSupportEnabled(false);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
