@@ -8,6 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
@@ -37,5 +40,18 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     deleteFile(file);
     make(module);
     assertOutput(module, fs().file("B.class"));
+  }
+
+
+  public void testSymlinksInSources() throws IOException {
+    final VirtualFile file = createFile("src/A.java", "public class A {}");
+    VirtualFile srcRoot = file.getParent();
+    final File linkFile = new File(srcRoot.getParent().getPath(), "src-link");
+    FileUtil.delete(linkFile); // ensure the link does not exist
+    final Path symlink = Files.createSymbolicLink(linkFile.toPath(), FileSystems.getDefault().getPath(srcRoot.getPath()));
+
+    final Module module = addModule("a", srcRoot.getParent().findChild(symlink.getFileName().toString()));
+    make(module);
+    assertOutput(module, fs().file("A.class"));
   }
 }
