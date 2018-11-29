@@ -558,7 +558,9 @@ class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNoti
   override fun getKey(): Key<EditorNotificationPanel> = RETYPE_SESSION_NOTIFICATION_KEY
 
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
-    val retypeSession = (fileEditor as PsiAwareTextEditorImpl).editor.getUserData(RETYPE_SESSION_KEY)
+    if (fileEditor !is PsiAwareTextEditorImpl) return null
+
+    val retypeSession = fileEditor.editor.getUserData(RETYPE_SESSION_KEY)
     if (retypeSession == null) return null
 
     val panel: EditorNotificationPanel
