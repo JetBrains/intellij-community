@@ -241,6 +241,9 @@ class RetypeSession(
   override fun dispose() {
   }
 
+  private fun inFocus(): Boolean =
+    editor.contentComponent == IdeFocusManager.findInstance().focusOwner && ApplicationManager.getApplication().isActive
+
   private fun runLoop() {
     while (true) {
       if (pos == endPos || stopTimer) break
@@ -267,7 +270,7 @@ class RetypeSession(
 
   private fun typeNextInEDT(timerTick: Long, expectedTimerTick: Long) {
     if (retypePaused) {
-      if (editor.contentComponent == IdeFocusManager.findInstance().focusOwner) {
+      if (inFocus()) {
         // Resume retyping on editor focus
         retypePaused = false
       }
@@ -307,7 +310,7 @@ class RetypeSession(
     }
 
     // Do not perform typing if editor is not in focus
-    if (editor.contentComponent != IdeFocusManager.findInstance().focusOwner) retypePaused = true
+    if (!inFocus()) retypePaused = true
 
     if (retypePaused) {
       checkStop()
