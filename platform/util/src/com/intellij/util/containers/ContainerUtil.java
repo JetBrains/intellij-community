@@ -1604,12 +1604,15 @@ public class ContainerUtil extends ContainerUtilRt {
    * @param items list
    * @param maxItems size of the result will be equal or less than {@code maxItems}
    * @param <T> type of list
-   * @return new list with no more than {@code maxItems} first elements
+   * @return list with no more than {@code maxItems} first elements
    */
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> getFirstItems(@NotNull final List<T> items, int maxItems) {
-    return items.subList(0, Math.min(maxItems, items.size()));
+    if (maxItems < 0) {
+      throw new IllegalArgumentException("Expected non-negative maxItems; got: "+maxItems);
+    }
+    return maxItems >= items.size() ? items : items.subList(0, maxItems);
   }
 
   @Nullable

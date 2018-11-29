@@ -108,7 +108,7 @@ public abstract class GrMapType extends GrLiteralClassType {
       components.add(getInternalCanonicalText(entry.first) + ":" + getInternalCanonicalText(entry.second));
     }
     boolean tooMany = components.size() > 2;
-    final List<String> theFirst = components.subList(0, Math.min(2, components.size()));
+    final List<String> theFirst = ContainerUtil.getFirstItems(components, 2);
     return "[" + StringUtil.join(theFirst, ", ") + (tooMany ? ",..." : "") + "]";
   }
 

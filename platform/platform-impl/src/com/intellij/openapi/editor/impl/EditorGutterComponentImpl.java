@@ -844,9 +844,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         newValue = preprocessor.processMarkers(value);
       }
 
-      if (newValue.size() >= 5) { // Don't allow more than 5 icons per line
-        newValue = newValue.subList(0, 4);
-      }
+      // Don't allow more than 5 icons per line
+      newValue = ContainerUtil.getFirstItems(newValue, 4);
 
       return newValue;
     });

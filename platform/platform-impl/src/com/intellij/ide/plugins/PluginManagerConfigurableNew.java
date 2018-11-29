@@ -781,7 +781,7 @@ public class PluginManagerConfigurableNew
           if (allDescriptors != null) {
             addGroup(groups, "Repository: " + host, "repository:\"" + host + "\"", descriptors -> {
               int allSize = allDescriptors.size();
-              descriptors.addAll(allDescriptors.subList(0, Math.min(ITEMS_PER_GROUP, allSize)));
+              descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
               PluginsGroup.sortByName(descriptors);
               return allSize > ITEMS_PER_GROUP;
             });

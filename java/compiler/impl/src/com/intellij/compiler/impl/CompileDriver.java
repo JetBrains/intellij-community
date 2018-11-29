@@ -736,7 +736,7 @@ public class CompileDriver {
     String nameToSelect = null;
     final StringBuilder names = new StringBuilder();
     final int maxModulesToShow = 10;
-    for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
+    for (String name : ContainerUtil.getFirstItems(modules, maxModulesToShow)) {
       if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
         nameToSelect = name;
       }

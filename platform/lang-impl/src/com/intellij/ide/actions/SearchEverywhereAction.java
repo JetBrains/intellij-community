@@ -857,9 +857,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     history.add(0, new HistoryItem(text, type == null ? null : type.name(), fqn));
 
-    if (history.size() > MAX_SEARCH_EVERYWHERE_HISTORY) {
-      history = history.subList(0, MAX_SEARCH_EVERYWHERE_HISTORY);
-    }
+    history = ContainerUtil.getFirstItems(history, MAX_SEARCH_EVERYWHERE_HISTORY);
     final String[] newValues = new String[history.size()];
     for (int i = 0; i < newValues.length; i++) {
       newValues[i] = history.get(i).toString();

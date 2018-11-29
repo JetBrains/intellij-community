@@ -114,7 +114,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
       Map<VirtualFile, CompressedRefs> refs = data.getRefs();
       List<GraphCommit<Integer>> compoundList = multiRepoJoin(commits);
-      compoundList = compoundList.subList(0, Math.min(myRecentCommitCount, compoundList.size()));
+      compoundList = ContainerUtil.getFirstItems(compoundList, myRecentCommitCount);
       myDataPack = DataPack.build(compoundList, refs, myProviders, myStorage, false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
       return myDataPack;

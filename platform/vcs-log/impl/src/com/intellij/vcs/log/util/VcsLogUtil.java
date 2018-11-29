@@ -157,7 +157,7 @@ public class VcsLogUtil {
 
   @NotNull
   public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
-    return list.subList(0, Math.min(list.size(), max));
+    return ContainerUtil.getFirstItems(list, max);
   }
 
   @Nullable

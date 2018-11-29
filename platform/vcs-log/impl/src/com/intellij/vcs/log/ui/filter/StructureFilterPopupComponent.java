@@ -157,9 +157,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
                                                    @NotNull Comparator<F> comparator,
                                                    @NotNull NotNullFunction<F, String> getText) {
     List<F> filesToDisplay = ContainerUtil.sorted(files, comparator);
-    if (files.size() > 10) {
-      filesToDisplay = filesToDisplay.subList(0, 10);
-    }
+    filesToDisplay = ContainerUtil.getFirstItems(filesToDisplay, 10);
     String tooltip = StringUtil.join(filesToDisplay, getText, "\n");
     if (files.size() > 10) {
       tooltip += "\n...";
