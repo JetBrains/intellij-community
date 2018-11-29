@@ -71,12 +71,12 @@ class FilePointerPartNode {
    * or -1 if there is no match.
    * <p>Recursive nodes (i.e. the nodes containing VFP with recursive==true) will be added to outDirs.
    * @param parentName is equal to {@code parent != null ? parent.getName() : null}
-   * @param childNameLength is equal to {@code childName.length()}
+   *
    */
   private int position(@Nullable VirtualFile parent,
                        @Nullable CharSequence parentName,
                        boolean separator,
-                       @NotNull CharSequence childName, int childStart, int childNameLength,
+                       @NotNull CharSequence childName, int childStart,
                        @NotNull FilePointerPartNode[] outNode,
                        @Nullable List<? super FilePointerPartNode> outDirs) {
     int partStart;
@@ -88,7 +88,7 @@ class FilePointerPartNode {
       VirtualFile gParent = parent.getParent();
       CharSequence gParentName = gParent == null ? null : gParent.getNameSequence();
       boolean gSeparator = gParentName != null && !StringUtil.equals(gParentName, "/");
-      partStart = position(gParent, gParentName, gSeparator, parentName, 0, parentName.length(), outNode, outDirs);
+      partStart = position(gParent, gParentName, gSeparator, parentName, 0, outNode, outDirs);
       if (partStart == -1) return -1;
     }
 
@@ -108,7 +108,7 @@ class FilePointerPartNode {
     int index = indexOfFirstDifferentChar(childName, childStart, found.part, partStart);
 
     found.addRecursiveDirectoryPtr(outDirs);
-    if (index == childNameLength) {
+    if (index == childName.length()) {
       return partStart + index - childStart;
     }
 
@@ -116,7 +116,7 @@ class FilePointerPartNode {
       // go to children
       for (FilePointerPartNode child : found.children) {
         // do not accidentally modify outDirs
-        int childPos = child.position(null, null, childSeparator, childName, index, childNameLength, outNode, null);
+        int childPos = child.position(null, null, childSeparator, childName, index, outNode, null);
         if (childPos != -1) {
           addRecursiveDirectoryPtr(outDirs);
 
@@ -145,7 +145,7 @@ class FilePointerPartNode {
                                @NotNull List<? super FilePointerPartNode> out) {
     CharSequence parentName = parent == null ? null : parent.getNameSequence();
     FilePointerPartNode[] outNode = new FilePointerPartNode[1];
-    int position = position(parent, parentName, separator, childName, 0, childName.length(), outNode, out);
+    int position = position(parent, parentName, separator, childName, 0, outNode, out);
     if (position != -1) {
       FilePointerPartNode node = outNode[0];
       addAllPointersUnder(node, out);
