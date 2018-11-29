@@ -121,7 +121,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
         continue;
       }
       List<InspectionToolWrapper> tools = inspectionProfile.findToolsById((String)value, target);
-      if (tools == null) {
+      if (tools.isEmpty()) {
         continue;
       }
 

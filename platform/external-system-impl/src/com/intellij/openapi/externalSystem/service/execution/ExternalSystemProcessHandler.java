@@ -26,10 +26,9 @@ import com.intellij.openapi.util.io.StreamUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
+import java.nio.channels.Channels;
+import java.nio.channels.Pipe;
 
 /**
  * @author Vladislav.Soroka
@@ -48,8 +47,9 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     myExecutionName = executionName;
     if (task instanceof UserDataHolder) {
       try {
-        PipedInputStream inputStream = new MyPipedInputStream();
-        myProcessInput = new MyPipedOutputStream(inputStream);
+        Pipe pipe = Pipe.open();
+        InputStream inputStream = new BufferedInputStream(Channels.newInputStream(pipe.source()));
+        myProcessInput = new BufferedOutputStream(Channels.newOutputStream(pipe.sink()));
         ((UserDataHolder)task).putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, inputStream);
       }
       catch (IOException e) {
@@ -121,53 +121,6 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     }
     finally {
       myTask = null;
-    }
-  }
-
-  /**
-   * @see <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4545831">JDK-4545831: PipedInputStream performance problems</a>
-   * @see <a href="https://bugs.openjdk.java.net/browse/JDK-8014239">JDK-8014239: PipedInputStream not notifying waiting readers on receive</a>
-   */
-  private static class MyPipedInputStream extends PipedInputStream {
-    MyPipedInputStream() {
-      super();
-    }
-
-    @Override
-    public synchronized int read(byte[] b, int off, int len) throws IOException {
-      try {
-        return super.read(b, off, len);
-      }
-      finally {
-        //noinspection SynchronizeOnThis
-        notifyAll();
-      }
-    }
-  }
-
-  /**
-   * @see <a href="https://bugs.openjdk.java.net/browse/JDK-8014239">JDK-8014239: PipedInputStream not notifying waiting readers on receive</a>
-   */
-  private static class MyPipedOutputStream extends PipedOutputStream {
-    MyPipedOutputStream(PipedInputStream snk) throws IOException {
-      super(snk);
-    }
-
-    @Override
-    public void write(int b) throws IOException {
-      super.write(b);
-      flush();
-    }
-
-    @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-      super.write(b, off, len);
-      flush();
-    }
-
-    @Override
-    public void write(@NotNull byte[] b) throws IOException {
-      write(b, 0, b.length);
     }
   }
 }

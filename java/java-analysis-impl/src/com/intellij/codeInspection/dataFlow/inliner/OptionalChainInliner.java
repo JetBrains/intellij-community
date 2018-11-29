@@ -290,7 +290,7 @@ public class OptionalChainInliner implements CallInliner {
     PsiExpression argument = qualifierCall.getArgumentList().getExpressions()[0];
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
       builder
-        .pushExpression(argument, NullabilityProblemKind.passingNullableToNotNullParameter)
+        .pushExpression(argument, NullabilityProblemKind.passingToNotNullParameter)
         .boxUnbox(argument, optionalElementType)
         .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), true), qualifierCall)
         .pop();

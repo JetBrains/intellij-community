@@ -62,6 +62,8 @@ val latencyMap: MutableMap<LatencyDistributionRecordKey, LatencyDistributionReco
 
 var currentLatencyRecordKey: LatencyDistributionRecordKey? = null
 
+val latencyRecorderProperties: MutableMap<String, String> = mutableMapOf()
+
 fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
   val key = currentLatencyRecordKey ?: run {
     val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return

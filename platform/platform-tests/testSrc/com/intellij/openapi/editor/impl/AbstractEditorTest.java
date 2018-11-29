@@ -177,6 +177,10 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     return addInlay(offset, false);
   }
 
+  public static Inlay addInlay(int offset, int widthInPixels) {
+    return EditorTestUtil.addInlay(myEditor, offset, false, widthInPixels);
+  }
+
   public static Inlay addInlay(int offset, boolean relatesToPrecedingText) {
     return EditorTestUtil.addInlay(myEditor, offset, relatesToPrecedingText);
   }

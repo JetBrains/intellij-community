@@ -24,8 +24,9 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
+import com.intellij.openapi.vcs.ex.ExclusionState;
+import com.intellij.openapi.vcs.ex.LocalRange;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -374,7 +375,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     public void decorate(Change change, SimpleColoredComponent renderer, boolean isShowFlatten) {
       PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
       if (tracker != null) {
-        List<PartialLocalLineStatusTracker.LocalRange> ranges = tracker.getRanges();
+        List<LocalRange> ranges = tracker.getRanges();
         if (ranges != null) {
           int rangesToCommit = ContainerUtil.count(ranges, it -> {
             return it.getChangelistId().equals(myChangeList.getId()) && !it.isExcludedFromCommit();

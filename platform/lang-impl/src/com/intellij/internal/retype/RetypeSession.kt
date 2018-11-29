@@ -11,9 +11,11 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
 import com.intellij.internal.performance.currentLatencyRecordKey
+import com.intellij.internal.performance.latencyRecorderProperties
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
@@ -31,27 +33,102 @@ import com.intellij.openapi.ui.playback.commands.ActionCommand
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.Alarm
+import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
+import kotlin.concurrent.timer
 
+fun String.toReadable() = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
+
+class RetypeLog {
+  private val log = arrayListOf<String>()
+  private var currentTyping: String? = null
+  private var currentCompletion: String? = null
+  var typedChars = 0
+      private set
+  var completedChars = 0
+      private set
+
+  fun recordTyping(c: Char) {
+    if (currentTyping == null) {
+      flushCompletion()
+      currentTyping = ""
+    }
+    currentTyping += c.toString().toReadable()
+    typedChars++
+  }
+
+  fun recordCompletion(c: Char) {
+    if (currentCompletion == null) {
+      flushTyping()
+      currentCompletion = ""
+    }
+    currentCompletion += c.toString().toReadable()
+    completedChars++
+  }
+
+  fun recordDesync(message: String) {
+    flush()
+    log.add("Desync: $message")
+  }
+
+  fun flush() {
+    flushTyping()
+    flushCompletion()
+  }
+
+  private fun flushTyping() {
+    if (currentTyping != null) {
+      log.add("Type: $currentTyping")
+      currentTyping = null
+    }
+  }
+
+  private fun flushCompletion() {
+    if (currentCompletion != null) {
+      log.add("Complete: $currentCompletion")
+      currentCompletion = null
+    }
+  }
+
+  fun printToStdout() {
+    for (s in log) {
+      println(s)
+    }
+  }
+}
+
+/**
+ * @property interfereFilesChangePeriod Set period in milliseconds for changes in interfere file.
+ * "Interfere file" - file that will be created near by retyped and it will be periodically changed.
+ * After retype session this file will be deleted.
+ * Pass negative value to disable this functionality.
+ */
 class RetypeSession(
   private val project: Project,
   private val editor: EditorImpl,
   private val delayMillis: Int,
   private val scriptBuilder: StringBuilder?,
   private val threadDumpDelay: Int,
-  private val threadDumps: MutableList<String> = mutableListOf()
+  private val threadDumps: MutableList<String> = mutableListOf(),
+  private val interfereFilesChangePeriod: Long = -1,
+  private val restoreText: Boolean = !ApplicationManager.getApplication().isUnitTestMode
 ) : Disposable {
   private val document = editor.document
-  private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
+
+  // -- Alarms
+  private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private val threadDumpAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
+
   private val originalText = document.text
   private var pos = 0
   private val endPos: Int
   private val tailLength: Int
-  private var typedChars = 0
-  private var completedChars = 0
+
+  private val log = RetypeLog()
+
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
   private val oldAddUnambiguous = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
   private val oldOptimize = CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly
@@ -61,6 +138,14 @@ class RetypeSession(
 
   private var skipLookupSuggestion = false
   private var textBeforeLookupSelection: String? = null
+  @Volatile private var waitingForTimerInvokeLater: Boolean = false
+
+  // This stack will contain autocompletion elements
+  // E.g. "}", "]", "*/", "* @return"
+  private val completionStack = ArrayDeque<String>()
+
+  private var stopInterfereFileChanger = false
+  val interfereFileName = "IdeaRetypeBackgroundChanges.java"
 
   init {
     if (editor.selectionModel.hasSelection()) {
@@ -79,6 +164,11 @@ class RetypeSession(
     val vFile = FileDocumentManager.getInstance().getFile(document)
     val keyName = "${vFile?.name ?: "Unknown file"} (${document.textLength} chars)"
     currentLatencyRecordKey = LatencyDistributionRecordKey(keyName)
+    latencyRecorderProperties.putAll(mapOf("Delay" to "$delayMillis ms",
+                                           "Thread dump delay" to "$threadDumpDelay ms",
+                                           "Interfere file change period" to if (interfereFilesChangePeriod <= 0) "disabled" else "$interfereFilesChangePeriod ms"
+    ))
+
     scriptBuilder?.let {
       if (vFile != null) {
         val contentRoot = ProjectRootManager.getInstance(project).fileIndex.getContentRootForFile(vFile) ?: return@let
@@ -94,13 +184,14 @@ class RetypeSession(
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
     }
     CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = false
+    runInterfereFileChanger()
     queueNextOrStop()
   }
 
   private fun correctText(text: String) = "%replaceText ${text.replace('\n', '\u32E1')}\n"
 
   fun stop(startNext: Boolean) {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    if (restoreText) {
       WriteCommandAction.runWriteCommandAction(project) { document.replaceString(0, document.textLength, originalText) }
     }
     synchronized(disposeLock) {
@@ -113,11 +204,14 @@ class RetypeSession(
     }
     CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = oldOptimize
 
-    currentLatencyRecordKey?.details = "typed $typedChars chars, completed $completedChars chars"
+    currentLatencyRecordKey?.details = "typed ${log.typedChars} chars, completed ${log.completedChars} chars"
+    log.flush()
+    log.printToStdout()
     currentLatencyRecordKey = null
     if (startNext) {
       startNextCallback?.invoke()
     }
+    stopInterfereFileChanger = true
   }
 
   override fun dispose() {
@@ -132,6 +226,13 @@ class RetypeSession(
   private fun typeNext() {
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
+    val timerTick = System.currentTimeMillis()
+    waitingForTimerInvokeLater = true
+    ApplicationManager.getApplication().invokeLater { typeNextInEDT(timerTick) }
+  }
+
+  private fun typeNextInEDT(timerTick: Long) {
+    waitingForTimerInvokeLater = false
     val processNextEvent = handleIdeaIntelligence()
     if (processNextEvent) return
 
@@ -149,14 +250,14 @@ class RetypeSession(
         scriptBuilder?.append("${ActionCommand.PREFIX} ${IdeActions.ACTION_CHOOSE_LOOKUP_ITEM}\n")
         typedRightBefore = false
         textBeforeLookupSelection = document.text
-        executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)
+        executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM, timerTick)
         queueNextOrStop()
         return
       }
     }
 
     val c = originalText[pos++]
-    typedChars++
+    log.recordTyping(c)
 
     // Reset lookup related variables
     textBeforeLookupSelection = null
@@ -164,7 +265,7 @@ class RetypeSession(
 
     if (c == '\n') {
       scriptBuilder?.append("${ActionCommand.PREFIX} ${IdeActions.ACTION_EDITOR_ENTER}\n")
-      executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+      executeEditorAction(IdeActions.ACTION_EDITOR_ENTER, timerTick)
       typedRightBefore = false
     }
     else {
@@ -177,7 +278,13 @@ class RetypeSession(
           it.append("%delayType $delayMillis|$c\n")
         }
       }
-      editor.type(c.toString())
+
+      IdeFocusManager.findInstance().requestFocus(editor.component, true).doWhenDone {
+        IdeEventQueue.getInstance().postEvent(
+          KeyEvent(editor.component, KeyEvent.KEY_PRESSED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
+        IdeEventQueue.getInstance().postEvent(
+          KeyEvent(editor.component, KeyEvent.KEY_TYPED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
+      }
       typedRightBefore = true
     }
     queueNextOrStop()
@@ -187,14 +294,13 @@ class RetypeSession(
    * @return if next queue event should be processed
    */
   private fun handleIdeaIntelligence(): Boolean {
-    // This stack will contain autocompletion elements
-    // E.g. "}", "]", "*/", "* @return"
-    val completionStack = ArrayDeque<String>()
-
-    if (document.text.take(pos) != originalText.take(pos)) {
+    val actualBeforeCaret = document.text.take(pos)
+    val expectedBeforeCaret = originalText.take(pos)
+    if (actualBeforeCaret != expectedBeforeCaret) {
       // Unexpected changes before current cursor position
       // (may be unwanted import)
       if (textBeforeLookupSelection != null) {
+        log.recordDesync("Restoring text before lookup (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(5).toReadable()} ")
         // Unexpected changes was made by lookup.
         // Restore previous text state and set flag to skip further suggestions until whitespace will be typed
         WriteCommandAction.runWriteCommandAction(project) {
@@ -203,10 +309,11 @@ class RetypeSession(
         skipLookupSuggestion = true
       }
       else {
+        log.recordDesync("Restoring entire text (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(5).toReadable()} ")
         // There changes wasn't made by lookup, so we don't know how to handle them
         // Restore text as it should be at this point without any intelligence
         WriteCommandAction.runWriteCommandAction(project) {
-          document.replaceText(originalText.take(pos) + originalText.takeLast(endPos), document.modificationStamp + 1)
+          document.replaceText(expectedBeforeCaret + originalText.takeLast(originalText.length - endPos), document.modificationStamp + 1)
         }
       }
     }
@@ -218,10 +325,11 @@ class RetypeSession(
              && originalText[pos] == document.text[pos]
              && document.text[pos] !in listOf('\n') // Don't count line breakers because we want to enter "enter" explicitly
       ) {
+        log.recordCompletion(document.text[pos])
         pos++
-        completedChars++
       }
       if (editor.caretModel.offset > pos) {
+        log.recordDesync("Deleting extra characters: ${document.text.substring(pos, editor.caretModel.offset).toReadable()}")
         WriteCommandAction.runWriteCommandAction(project) {
           // Delete symbols not from original text and move caret
           document.deleteString(pos, editor.caretModel.offset)
@@ -244,7 +352,9 @@ class RetypeSession(
           if (originalText.substring(pos).take(origIndexOfFirstComp) != document.text.substring(pos).take(origIndexOfFirstComp)) {
             // We have some unexpected chars before completion. Remove them
             WriteCommandAction.runWriteCommandAction(project) {
-              document.replaceString(pos, pos + docIndexOfFirstComp, originalText.substring(pos, pos + origIndexOfFirstComp))
+              val replacement = originalText.substring(pos, pos + origIndexOfFirstComp)
+              log.recordDesync("Replacing extra characters before completion: ${document.text.substring(pos, pos + docIndexOfFirstComp).toReadable()} -> ${replacement.toReadable()}")
+              document.replaceString(pos, pos + docIndexOfFirstComp, replacement)
             }
           }
           pos += origIndexOfFirstComp + firstCompletion.length
@@ -257,6 +367,7 @@ class RetypeSession(
           // Completion is wrong and original text doesn't contain it
           // Remove this completion
           val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
+          log.recordDesync("Removing wrong completion: ${document.text.substring(pos, pos + docIndexOfFirstComp).toReadable()}")
           WriteCommandAction.runWriteCommandAction(project) {
             document.replaceString(pos, pos + docIndexOfFirstComp + firstCompletion.length, "")
           }
@@ -343,7 +454,7 @@ class RetypeSession(
            !Character.isJavaIdentifierPart(textAtLookup[lookupString.length] + 1)
   }
 
-  private fun executeEditorAction(actionId: String) {
+  private fun executeEditorAction(actionId: String, timerTick: Long) {
     val actionManager = ActionManagerEx.getInstanceEx()
     val action = actionManager.getAction(actionId)
     val event = AnActionEvent.createFromAnAction(action, null, "",
@@ -351,21 +462,43 @@ class RetypeSession(
                                                    editor.component))
     action.beforeActionPerformedUpdate(event)
     actionManager.fireBeforeActionPerformed(action, event.dataContext, event)
-    LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, System.currentTimeMillis())
+    LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
     action.actionPerformed(event)
     actionManager.fireAfterActionPerformed(action, event.dataContext, event)
   }
 
   private fun logThreadDump() {
-    if (editor.isProcessingTypedAction) {
+    if (editor.isProcessingTypedAction || waitingForTimerInvokeLater) {
       threadDumps.add(ThreadDumper.dumpThreadsToString())
       if (threadDumps.size > 200) {
         threadDumps.subList(0, 100).clear()
       }
       synchronized(disposeLock) {
         if (!threadDumpAlarm.isDisposed) {
-          threadDumpAlarm.addRequest({ logThreadDump() }, 100)
+          threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
         }
+      }
+    }
+  }
+
+  private fun runInterfereFileChanger() {
+    if (interfereFilesChangePeriod <= 0) return
+    stopInterfereFileChanger = false
+
+    val file = File(editor.virtualFile.parent.path, interfereFileName)
+    file.createNewFile()
+
+    val text = "// Text\n".repeat(500)
+    file.writeText(text)
+
+    // Increment this counter to make vision that something really changes.
+    var counter = 0
+    timer(period = interfereFilesChangePeriod) {
+      counter++
+      file.writeText("$text  Additional ${counter}")
+      if (stopInterfereFileChanger) {
+        file.delete()
+        cancel()
       }
     }
   }

@@ -3,10 +3,13 @@ package com.intellij.java.psi.resolve
 
 
 import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase 
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class LightResolveClassTest extends LightCodeInsightFixtureTestCase {
 
   void "test no loading for star imported class when named import matches"() {

@@ -20,6 +20,7 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
@@ -118,12 +119,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     final Optional<VirtualFile> optional = findBuiltInSchemaByReference(reference);
     return optional.orElseGet(() -> {
       if (reference.startsWith("#")) return referent;
-      return JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference));
+      return JsonFileResolver.resolveSchemaByReference(referent, JsonPointerUtil.normalizeId(reference));
     });
   }
 
   private Optional<VirtualFile> findBuiltInSchemaByReference(@NotNull String reference) {
-    String id = JsonSchemaService.normalizeId(reference);
+    String id = JsonPointerUtil.normalizeId(reference);
     if (!myBuiltInSchemaIds.getValue().contains(id)) return Optional.empty();
     return myState.getFiles().stream()
         .filter(file -> id.equals(JsonCachedValues.getSchemaId(file, myProject)))

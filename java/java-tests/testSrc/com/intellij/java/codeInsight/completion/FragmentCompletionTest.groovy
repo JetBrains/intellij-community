@@ -24,10 +24,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.PairFunction
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
   void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
     final String text = CommonClassNames.JAVA_LANG_OBJECT + ".<caret>"

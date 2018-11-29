@@ -235,7 +235,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       setVariableState(var, state.withFacts(facts));
       SpecialFieldValue specialFieldValue = facts.get(DfaFactType.SPECIAL_FIELD_VALUE);
       if (specialFieldValue != null) {
-        setVarValue((DfaVariableValue)specialFieldValue.getField().createValue(myFactory, var), specialFieldValue.toConstant(myFactory));
+        DfaValue targetSpecialField = specialFieldValue.getField().createValue(myFactory, var);
+        if (targetSpecialField instanceof DfaVariableValue) {
+          setVarValue((DfaVariableValue)targetSpecialField, specialFieldValue.toConstant(myFactory));
+        }
       }
     }
     else if (DfaUtil.isComparedByEquals(value.getType()) && !DfaUtil.isComparedByEquals(var.getType())) {

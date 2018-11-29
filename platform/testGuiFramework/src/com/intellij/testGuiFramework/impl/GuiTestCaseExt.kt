@@ -129,7 +129,7 @@ fun GuiTestCase.waitAMoment() {
     }
   }
 
-  val maxAttemptsWaitForBackgroundTasks = 3
+  val maxAttemptsWaitForBackgroundTasks = 5
   var currentAttempt = maxAttemptsWaitForBackgroundTasks
   while (isWaitIndicatorPresent() && currentAttempt >= 0){
     waitBackgroundTaskOneAttempt()
@@ -151,7 +151,7 @@ fun GuiTestCase.waitAMoment() {
 fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality) {
   ideFrame {
     logInfo("Check that $name -> ${expectedItem.joinToString(" -> ")} exists in a tree element")
-    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate, timeout = Timeouts.seconds03) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
   }
 }
 

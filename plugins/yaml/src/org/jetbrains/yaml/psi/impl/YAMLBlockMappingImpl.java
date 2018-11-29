@@ -1,6 +1,7 @@
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,6 +16,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
+import java.util.Collection;
 import java.util.List;
 
 public class YAMLBlockMappingImpl extends YAMLMappingImpl {
@@ -141,8 +143,14 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
       int indent = YAMLUtil.getIndentToThisElement(this);
       String text = YAMLElementGenerator.createChainedKey(keyComponents, indent);
       final YAMLElementGenerator generator = YAMLElementGenerator.getInstance(getProject());
-      YAMLKeyValue newKeyValue =
-        PsiTreeUtil.collectElementsOfType(generator.createDummyYamlWithText(text), YAMLKeyValue.class).iterator().next();
+      Collection<YAMLKeyValue> values = PsiTreeUtil.collectElementsOfType(generator.createDummyYamlWithText(text), YAMLKeyValue.class);
+      if (values.isEmpty()) {
+        Logger.getInstance(YAMLBlockMappingImpl.class).error(
+          "No one key-value created: input sequence = " + keyComponents + " generated text = '" + text + "'"
+        );
+        return null;
+      }
+      YAMLKeyValue newKeyValue = values.iterator().next();
       insertKeyValueAtOffset(newKeyValue, preferableOffset);
       keyValue = getKeyValueByKey(head);
       assert keyValue != null;

@@ -21,6 +21,7 @@ import junit.framework.TestCase
 /**
  * @author peter
  */
+@CompileStatic
 class ThreadDumpParserTest extends TestCase {
   void "test waiting threads are not locking"() {
     String text = """

@@ -813,15 +813,16 @@ class A { Closure foo = { 42 } }
     doExprTest 'int[][1].class', 'java.lang.Class<java.lang.Object>'
   }
 
-
   void testClassReference() {
     doExprTest '[].class', "java.lang.Class<java.util.List>"
     doExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
     doExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+    doExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
 
     doCSExprTest '[].class', "java.lang.Class<java.util.List>"
     doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
     doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+    doCSExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
   }
 
   void testUnknownClass() {
@@ -932,5 +933,9 @@ class W {
     doExprTest 'def a; a ?= "hello"', 'java.lang.String'
     doExprTest 'def a = ""; a ?= null', 'java.lang.String'
     doExprTest 'def a = "s"; a ?= 1', '[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]'
+  }
+
+  void 'test spread asImmutable()'() {
+    doExprTest('List<List<String>> a; a*.asImmutable()', 'java.util.ArrayList<java.util.List<java.lang.String>>')
   }
 }

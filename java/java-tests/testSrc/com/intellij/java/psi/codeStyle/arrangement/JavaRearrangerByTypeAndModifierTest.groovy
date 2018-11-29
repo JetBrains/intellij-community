@@ -15,6 +15,8 @@
  */
 package com.intellij.java.psi.codeStyle.arrangement
 
+import groovy.transform.CompileStatic
+
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
 
@@ -22,6 +24,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
  * @author Denis Zhdanov
  * @since 8/28/12 6:42 PM
  */
+@CompileStatic
 class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerTest {
 
   void "test complex sample"() {

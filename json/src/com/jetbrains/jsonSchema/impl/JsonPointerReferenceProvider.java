@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonFileType;
+import com.intellij.json.pointer.JsonPointerResolver;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.JsonPointerResolver;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
       }
     }
     if (!myIsSchemaProperty) {
-      String relativePath = normalizeSlashes(JsonSchemaService.normalizeId(splitter.getRelativePath()));
+      String relativePath = normalizeSlashes(normalizeId(splitter.getRelativePath()));
       List<String> parts1 = split(relativePath);
       String[] strings = ContainerUtil.toArray(parts1, String[]::new);
       List<String> parts2 = split(normalizeSlashes(originalText.substring(hash + 1)));
@@ -176,7 +176,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
       if (schemaFile == null) return null;
     }
 
-    final String normalized = JsonSchemaService.normalizeId(splitter.getRelativePath());
+    final String normalized = normalizeId(splitter.getRelativePath());
     if (!alwaysRoot && (StringUtil.isEmptyOrSpaces(normalized) || split(normalizeSlashes(normalized)).size() == 0)) {
       return element.getManager().findFile(schemaFile);
     }

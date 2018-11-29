@@ -88,6 +88,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     });
     myCreateChangelist.setSelected(myTaskManager.getState().createChangelist);
     myShelveChanges.setSelected(myTaskManager.getState().shelveChanges);
+    myChangelistName.setText(getChangelistName(task));
 
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
     if (handlers.length == 0) {
@@ -96,6 +97,9 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myBranchName.setVisible(false);
       myFromLabel.setVisible(false);
       myBranchFrom.setVisible(false);
+      myUseBranch.setSelected(false);
+      myUseBranch.setVisible(false);
+      myUseBranchCombo.setVisible(false);
     }
     else {
       String branchName = getBranchName(task);
@@ -144,9 +148,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       }
       myBranchFrom.setRenderer(new TaskInfoCellRenderer(myBranchFrom));
       myUseBranchCombo.setRenderer(new TaskInfoCellRenderer(myUseBranchCombo));
-
       myBranchName.setText(branchName);
-      myChangelistName.setText(getChangelistName(task));
     }
 
     updateFields(true);

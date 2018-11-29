@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -2286,5 +2285,16 @@ class A { public static foo() { 45 } }
 def a = A // class instance
 a.<caret>foo()
 ''', GrMethod
+  }
+
+  void 'test vararg vs positional'() {
+    def method = resolveByText '''\
+static usage(String[] label) {
+  <caret>foo(label)
+}
+static <T> List<T> foo(T t) {}
+static <T> List<T> foo(T... values) {}
+''', GrMethod
+    assert method.parameterList.parameters.first().type instanceof PsiEllipsisType
   }
 }

@@ -669,4 +669,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testAssertNullEphemeral() { doTest(); }
   public void testNotNullAnonymousConstructor() { doTest(); }
   public void testCaughtNPE() { doTest(); }
+  public void testTernaryNullability() { doTest(); }
+  public void testRewriteFinal() { doTest(); }
 }

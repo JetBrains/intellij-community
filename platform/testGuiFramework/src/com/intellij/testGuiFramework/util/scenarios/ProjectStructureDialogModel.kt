@@ -58,15 +58,9 @@ fun ProjectStructureDialogModel.checkInProjectStructure(actions: GuiTestCase.()-
 }
 
 fun ProjectStructureDialogModel.checkLibraryPresent(vararg library: String){
-  with(guiTestCase){
-    val dialog = connectDialog()
-    with(dialog){
-      val tabs = jList(menuLibraries)
-      logUIStep("Click '$menuLibraries'")
-      tabs.clickItem(menuLibraries)
-      testTreeItemExist(itemLibrary, *library)
-      jTree(*library).clickPath()
-    }
+  checkLibrary {
+    guiTestCase.testTreeItemExist(itemLibrary, *library)
+    jTree(*library).clickPath()
   }
 }
 
@@ -93,4 +87,8 @@ fun ProjectStructureDialogModel.checkSDK(checks: JDialogFixture.()->Unit){
 
 fun ProjectStructureDialogModel.checkFacet(checks: JDialogFixture.()->Unit){
   checkPage(menuFacets, checks)
+}
+
+fun ProjectStructureDialogModel.checkLibrary(checks: JDialogFixture.()->Unit){
+  checkPage(menuLibraries, checks)
 }

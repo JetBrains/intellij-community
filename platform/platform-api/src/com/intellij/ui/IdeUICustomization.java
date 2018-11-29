@@ -24,6 +24,13 @@ public class IdeUICustomization {
   }
 
   /**
+   * Returns the name to be displayed in the UI for the "Project" concept (Rider changes this to "Solution").
+   */
+  public String getProjectDisplayName() {
+    return StringUtil.capitalize(getProjectConceptName());
+  }
+
+  /**
    * Returns the name of the "Close Project" action (with mnenonic if needed).
    */
   public String getCloseProjectActionText() {

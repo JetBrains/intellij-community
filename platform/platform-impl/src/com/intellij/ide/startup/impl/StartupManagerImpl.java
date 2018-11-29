@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -349,11 +350,13 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private static void runActivity(Runnable runnable) {
+  public static void runActivity(Runnable runnable) {
     ProgressManager.checkCanceled();
-
     try {
       runnable.run();
+    }
+    catch (ServiceNotReadyException e) {
+      LOG.error(new Exception(e));
     }
     catch (ProcessCanceledException e) {
       throw e;

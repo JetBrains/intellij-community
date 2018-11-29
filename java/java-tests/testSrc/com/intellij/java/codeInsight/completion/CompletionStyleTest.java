@@ -324,19 +324,6 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     return LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      LookupManager.hideActiveLookup(getProject());
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
   public void testAfterNew15() {
     final LanguageLevelProjectExtension ll = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel old = ll.getLanguageLevel();

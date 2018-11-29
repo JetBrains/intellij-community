@@ -125,6 +125,9 @@ public class ConditionalExpressionInspection extends BaseInspection {
           expression = (PsiConditionalExpression)expressionStatement.getExpression();
         }
       }
+      else if (expressionParent instanceof PsiExpressionStatement && expressionParent.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+        expression = RefactoringUtil.ensureCodeBlock(expression);
+      }
       final PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
       if (statement == null) {
         return;

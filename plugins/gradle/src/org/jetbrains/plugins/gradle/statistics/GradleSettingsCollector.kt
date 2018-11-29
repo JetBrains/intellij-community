@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getEnumUsage
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings
 
 class GradleSettingsCollector : ProjectUsagesCollector() {
   override fun getGroupId() = "statistics.build.gradle.state"
@@ -34,12 +33,9 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
       usages.add(getBooleanUsage("createModulePerSourceSet", setting.isResolveModulePerSourceSet))
       usages.add(UsageDescriptor("gradleJvm." + ConvertUsagesUtil.escapeDescriptorName(setting.gradleJvm ?: "empty"), 1))
       usages.add(UsageDescriptor("gradleVersion." + setting.resolveGradleVersion().version, 1))
+      usages.add(getBooleanUsage("delegateBuildRun", setting.effectiveDelegatedBuild.toBoolean()))
+      usages.add(getEnumUsage("preferredTestRunner", setting.effectiveTestRunner))
     }
-
-    // running settings
-    val runningSettings = GradleSystemRunningSettings.getInstance()
-    usages.add(getBooleanUsage("delegateBuildRun", runningSettings.isUseGradleAwareMake))
-    usages.add(getEnumUsage("preferredTestRunner", runningSettings.preferredTestRunner))
     return usages
   }
 

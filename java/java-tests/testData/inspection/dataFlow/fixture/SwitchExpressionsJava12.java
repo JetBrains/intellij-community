@@ -171,4 +171,26 @@ public class SwitchExpressionsJava12 {
     if (i == 100 && <warning descr="Condition 'x == 1' is always 'true' when reached">x == 1</warning>) {}
     if (i == 200 && (<warning descr="Condition 'x == 2 || x == 3' is always 'true' when reached">x == 2 || <warning descr="Condition 'x == 3' is always 'true' when reached">x == 3</warning></warning>)) {}
   }
+
+  int i;
+  
+  void testSwitchIncompleteBreak(X e) {
+    int z;
+    z = switch (e) {
+      case A:
+        i = 1;
+        break 2;
+      case B:
+        i = 2;
+        break 3;
+      case C:
+        i = 3;
+        <error descr="Missing break value">break;</error>
+      default: {
+        i = 10;
+        break 10;/* todo one two */
+      }
+    };
+    System.out.println("i = " + i);
+  }
 }

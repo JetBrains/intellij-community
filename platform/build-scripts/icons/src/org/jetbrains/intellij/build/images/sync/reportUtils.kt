@@ -6,42 +6,33 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-internal fun report(context: Context, skipped: Int) : String {
+internal fun report(context: Context, skipped: Int): String {
   val (devIcons, icons) = context.devIcons.size to context.icons.size
-  if (isUnderTeamCity()) {
-    findCommitsToSync(context)
-    createReviews(context)
-    val investigator = if (context.isFail() && context.assignInvestigation) {
-      assignInvestigation(context)
-    }
-    else null
-    if (context.notifySlack) sendNotification(investigator, context)
-  }
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
   @Suppress("Duplicates")
   var report = when {
     context.iconsCommitHashesToSync.isNotEmpty() -> """
       |${context.iconsRepoName} commits ${context.iconsCommitHashesToSync.joinToString()} are synced into ${context.devRepoName}:
-      | ${context.addedByDesigners.logIcons("added")}
-      | ${context.removedByDesigners.logIcons("removed")}
-      | ${context.modifiedByDesigners.logIcons("modified")}
+      | ${context.byDesigners.added.logIcons("added")}
+      | ${context.byDesigners.removed.logIcons("removed")}
+      | ${context.byDesigners.modified.logIcons("modified")}
     """.trimMargin()
     context.devIconsCommitHashesToSync.isNotEmpty() -> """
       |${context.devRepoName} commits ${context.devIconsCommitHashesToSync.joinToString()} are synced into ${context.iconsRepoName}:
-      | ${context.addedByDev.logIcons("added")}
-      | ${context.removedByDev.logIcons("removed")}
-      | ${context.modifiedByDev.logIcons("modified")}
+      | ${context.byDev.added.logIcons("added")}
+      | ${context.byDev.removed.logIcons("removed")}
+      | ${context.byDev.modified.logIcons("modified")}
     """.trimMargin()
     else -> """
       |$devIcons icons are found in ${context.devRepoName}:
-      | ${context.addedByDev.logIcons("added")}
-      | ${context.removedByDev.logIcons("removed")}
-      | ${context.modifiedByDev.logIcons("modified")}
+      | ${context.byDev.added.logIcons("added")}
+      | ${context.byDev.removed.logIcons("removed")}
+      | ${context.byDev.modified.logIcons("modified")}
       |$icons icons are found in ${context.iconsRepoName}:
-      | ${context.addedByDesigners.logIcons("added")}
-      | ${context.removedByDesigners.logIcons("removed")}
-      | ${context.modifiedByDesigners.logIcons("modified")}
+      | ${context.byDesigners.added.logIcons("added")}
+      | ${context.byDesigners.removed.logIcons("removed")}
+      | ${context.byDesigners.modified.logIcons("modified")}
       |${context.consistent.size} consistent icons in both repos
     """.trimMargin()
   }
@@ -51,11 +42,11 @@ internal fun report(context: Context, skipped: Int) : String {
   return report
 }
 
-private fun findCommitsToSync(context: Context) {
+internal fun findCommitsToSync(context: Context) {
   // TODO: refactor it
   fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
   if ((context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) && context.devSyncRequired()) {
-    context.iconsCommitsToSync = findCommitsByRepo(UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.iconsChanges()) {
+    context.iconsCommitsToSync = findCommitsByRepo(context, UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.byDesigners) {
       context.devIcons[it] ?: {
         val change = context.devRepoRoot.resolve(it)
         guessGitObject(changesToReposMap(change), change)
@@ -63,7 +54,7 @@ private fun findCommitsToSync(context: Context) {
     }
   }
   if ((context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) && context.iconsSyncRequired()) {
-    context.devCommitsToSync = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.devChanges()) {
+    context.devCommitsToSync = findCommitsByRepo(context, UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.byDev) {
       context.icons[it] ?: guessGitObject(context.iconsRepo, context.iconsRepoDir.resolve(it))
     }
   }
@@ -134,47 +125,58 @@ private fun postVerificationResultToReview(review: Review) {
               "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
 }
 
-private fun createReviewForIcons(context: Context, user: String, email: String): Review? {
-  if (!context.doSyncIconsAndCreateReview || context.devCommitsToSync.isEmpty()) return null
+private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
+  if (!context.doSyncIconsAndCreateReview || context.devCommitsToSync.isEmpty()) return emptyList()
   val repos = listOf(context.iconsRepo)
-  return withTmpBranch(repos) { branch ->
-    val commitsForReview = commitAndPush(branch, user, email, context.devCommitsToSync.commitMessage(), repos)
-    val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
-    context.devCommitsToSync.values.parallelStream()
-      .flatMap { it.stream() }
-      .map { it.committerEmail }
-      .distinct()
-      .forEach { addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, it) }
-    review
-  }
+  return context.devCommitsToSync.values.flatten()
+    .groupBy(CommitInfo::committerEmail)
+    .entries.parallelStream()
+    .map {
+      val (committer, commits) = it
+      withTmpBranch(repos) { branch ->
+        commits.forEach { commit ->
+          val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
+          log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
+          syncIconsRepo(context, change)
+        }
+        val commitsForReview = commitAndPush(branch, user, email, commits.groupBy(CommitInfo::repo).commitMessage(), repos)
+        val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
+        addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer)
+        review
+      }
+    }.filter(Objects::nonNull).map { it as Review }.toList()
 }
 
-private fun createReviews(context: Context) = callSafely {
+internal fun createReviews(context: Context) = callSafely {
   val (user, email) = System.getProperty("upsource.user.name") to System.getProperty("upsource.user.email")
   context.createdReviews = Stream.of(
-    { createReviewForDev(context, user, email) },
+    { createReviewForDev(context, user, email)?.let { listOf(it) } ?: emptyList() },
     { createReviewForIcons(context, user, email) }
-  ).parallel().map { it() }
+  ).parallel().flatMap { it().stream() }
     .filter(Objects::nonNull)
     .map { it as Review }
     .toList()
 }
 
-private fun assignInvestigation(context: Context): Investigator? =
+internal fun assignInvestigation(context: Context): Investigator? =
   callSafely {
     val commits = if (context.iconsSyncRequired()) context.devCommitsToSync else context.iconsCommitsToSync
+    if (commits.isEmpty()) {
+      log("No commits, no investigation")
+      return@callSafely null
+    }
     val investigator = commits.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let {
+      log("Assigning investigation to ${it.committerEmail} as author of latest change ${it.hash}")
       Investigator(it.committerEmail, commits)
     } ?: Investigator()
     assignInvestigation(investigator, context)
   }
 
-private fun findCommitsByRepo(projectId: String?, root: File,
-                              changes: Collection<String>,
+private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes,
                               resolveGitObject: (String) -> GitObject
 ): Map<File, Collection<CommitInfo>> {
   var alreadyInReview = emptyList<String>()
-  var commits = findCommits(root, changes.asSequence())
+  var commits = findCommits(context, root, changes)
   if (commits.isEmpty()) return emptyMap()
   val titles = if (!projectId.isNullOrEmpty()) getOpenIconsReviewTitles(projectId!!) else emptyList()
   val before = commits.size
@@ -193,7 +195,7 @@ private fun findCommitsByRepo(projectId: String?, root: File,
     .forEach {
       val (repo, skipped) = it
       log("Already in review, skipping: $skipped")
-      unstageFiles(skipped, repo)
+      unStageFiles(skipped, repo)
     }
   log("$projectId: ${commits.size} commits found")
   return commits.map { it.key }.groupBy(CommitInfo::repo)
@@ -211,19 +213,30 @@ internal fun changesToReposMap(change: File): File {
   return changesToReposMap[change]!!
 }
 
-private fun findCommits(root: File, changes: Sequence<String>) = changes.map { change ->
-  val absoluteFile = root.resolve(change)
-  val repo = changesToReposMap(absoluteFile)
-  val commit = latestChangeCommit(absoluteFile.toRelativeString(repo), repo)
-  if (commit != null) commit to change else null
-}.filterNotNull().groupBy({ it.first }, { it.second })
+private fun findCommits(context: Context, root: File, changes: Changes) = changes.all()
+  .mapNotNull { change ->
+    val absoluteFile = root.resolve(change)
+    val repo = changesToReposMap(absoluteFile)
+    val commit = latestChangeCommit(absoluteFile.toRelativeString(repo), repo)
+    if (commit != null) commit to change else null
+  }.onEach {
+    val commit = it.first.hash
+    val change = it.second
+    if (!context.byCommit.containsKey(commit)) context.byCommit[commit] = Changes(changes.includeRemoved)
+    val commitChange = context.byCommit[commit]!!
+    when {
+      changes.added.contains(change) -> commitChange.added += change
+      changes.modified.contains(change) -> commitChange.modified += change
+      changes.removed.contains(change) -> commitChange.removed += change
+    }
+  }.groupBy({ it.first }, { it.second })
 
 private fun commitAndPush(branch: String, user: String, email: String, message: String, repos: Collection<File>) = repos.map {
   initGit(it, user, email)
   commitAndPush(it, branch, message)
 }
 
-private fun sendNotification(investigator: Investigator?, context: Context) {
+internal fun sendNotification(investigator: Investigator?, context: Context) {
   callSafely {
     if (isNotificationRequired(context)) {
       notifySlackChannel(investigator, context)
@@ -234,17 +247,18 @@ private fun sendNotification(investigator: Investigator?, context: Context) {
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 
 internal fun Context.report(slack: Boolean = false): String {
-  val iconsSync = when {
-    iconsSyncRequired() && iconsReview() != null -> iconsReview()!!.let {
-      val link = if (slack) slackLink(it.id, it.url) else it.url
-      "To sync $iconsRepoName see $link\n"
-    }
-    else -> ""
+  val iconsSync = if (iconsSyncRequired() && iconsReviews().isNotEmpty()) {
+    "To sync $iconsRepoName see ${iconsReviews().joinToString {
+      if (slack) slackLink(it.id, it.url) else it.url
+    }}" + if (slack) "\n" else ""
   }
-  val devSync = devReview()?.let {
-    val link = if (slack) slackLink(it.id, it.url) else it.url
-    "To sync $devRepoName see $link\n"
-  } ?: ""
+  else ""
+  val devSync = if (devReviews().isNotEmpty()) {
+    "To sync $devRepoName see ${devReviews().joinToString {
+      if (slack) slackLink(it.id, it.url) else it.url
+    }}" + if (slack) "\n" else ""
+  }
+  else ""
   return iconsSync + devSync
 }
 

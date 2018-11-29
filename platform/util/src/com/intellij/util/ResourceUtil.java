@@ -66,17 +66,18 @@ public class ResourceUtil {
   /**
    * Copied from java.util.ResourceBundle implementation
    */
-  private static List<String> calculateBundleNames(String baseName, Locale locale) {
+  @NotNull
+  private static List<String> calculateBundleNames(@NotNull String baseName, @NotNull Locale locale) {
     final List<String> result = new ArrayList<String>(3);
+
+    result.add(0, baseName);
+
     final String language = locale.getLanguage();
     final int languageLength = language.length();
     final String country = locale.getCountry();
     final int countryLength = country.length();
     final String variant = locale.getVariant();
     final int variantLength = variant.length();
-
-    result.add(0, baseName);
-
     if (languageLength + countryLength + variantLength == 0) {
       //The locale is "", "", "".
       return result;

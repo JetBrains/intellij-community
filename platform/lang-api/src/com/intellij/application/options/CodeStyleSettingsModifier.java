@@ -13,6 +13,8 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public interface CodeStyleSettingsModifier {
+  DependencyList UNMODIFIED = new DependencyList();
+
   @NotNull
   Dependencies modifySettings(@NotNull CodeStyleSettings baseSettings, @NotNull PsiFile file);
 
@@ -49,7 +51,7 @@ public interface CodeStyleSettingsModifier {
     }
 
     public void add(@NotNull Dependencies dependencies) {
-      myDependencies.add(dependencies.getAll());
+      myDependencies.addAll(dependencies.getAll());
     }
 
     @Override

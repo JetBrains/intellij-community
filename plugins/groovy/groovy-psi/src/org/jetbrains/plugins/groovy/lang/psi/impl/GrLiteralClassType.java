@@ -138,11 +138,6 @@ public abstract class GrLiteralClassType extends PsiClassType {
     return myLanguageLevel;
   }
 
-  @NotNull
-  public GlobalSearchScope getScope() {
-    return myScope;
-  }
-
   @Override
   @Nullable
   public PsiClass resolve() {

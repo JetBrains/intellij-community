@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
@@ -106,8 +105,6 @@ private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
   val elementClassHint = getHint(ElementClassHint.KEY) ?: return true
   return kind.declarationKinds.any(elementClassHint::shouldProcess)
 }
-
-fun wrapClassType(type: PsiType?, context: PsiElement): PsiType? = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
 
 fun getDefaultConstructor(clazz: PsiClass): PsiMethod {
   return getCachedValue(clazz) {

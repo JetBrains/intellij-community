@@ -52,6 +52,9 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       myModule = null;

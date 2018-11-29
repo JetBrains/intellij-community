@@ -552,7 +552,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                                            @NotNull PsiElement context,
                                                            @NotNull PsiElement elementToHighlight) {
     if (targetType == null || actualType == null) return;
-    final ConversionResult result = TypesUtil.canAssignWithinMultipleAssignment(targetType, actualType, context);
+    final ConversionResult result = TypesUtil.canAssignWithinMultipleAssignment(targetType, actualType);
     if (result == ConversionResult.OK) return;
     registerError(
       elementToHighlight,

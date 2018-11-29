@@ -26,7 +26,7 @@ class Test {
     Object x = null;
     doNotNull(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">x</warning>);
     x = null;
-    doNotNull(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">(x)</warning>);
+    doNotNull((<warning descr="Passing 'null' argument to parameter annotated as @NotNull">x</warning>));
   }
 
   @NotNull Object testReturn(Object x1, Object x2) {

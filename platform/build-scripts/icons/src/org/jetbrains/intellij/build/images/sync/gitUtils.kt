@@ -106,7 +106,7 @@ internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File {
   }
 }
 
-internal fun unstageFiles(files: List<String>, repo: File) {
+internal fun unStageFiles(files: List<String>, repo: File) {
   // OS has argument length limit
   splitAndTry(1000, files, repo) {
     execute(repo, GIT, "reset", "HEAD", *it.toTypedArray())

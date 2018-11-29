@@ -285,10 +285,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         List<? extends IdeaSourceDirectory> resourceDirectories = Collections.emptyList();
         List<? extends IdeaSourceDirectory> testResourceDirectories = Collections.emptyList();
         try {
+          final Set<File> notResourceDirs = collectExplicitNonResourceDirectories(externalProject);
+
           resourceDirectories = gradleContentRoot.getResourceDirectories().getAll();
-          removeAll(sourceDirectories, resourceDirectories);
+          removeDuplicateResources(sourceDirectories, resourceDirectories, notResourceDirs);
           testResourceDirectories = gradleContentRoot.getTestResourceDirectories().getAll();
-          removeAll(testDirectories, testResourceDirectories);
+          removeDuplicateResources(testDirectories, testResourceDirectories, notResourceDirs);
         }
         catch (UnsupportedMethodException e) {
           oldGradle = true;
@@ -340,6 +342,28 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         }
       }
     });
+  }
+
+  private static void removeDuplicateResources(@NotNull List<? extends IdeaSourceDirectory> sourceDirectories,
+                                               @NotNull List<? extends IdeaSourceDirectory> resourceDirectories,
+                                               @NotNull Set<File> notResourceDirs) {
+
+
+    resourceDirectories.removeIf(ideaSourceDirectory -> notResourceDirs.contains(ideaSourceDirectory.getDirectory()));
+    removeAll(sourceDirectories, resourceDirectories);
+  }
+
+  @NotNull
+  private static Set<File> collectExplicitNonResourceDirectories(@Nullable ExternalProject externalProject) {
+    if (externalProject == null) {
+      return Collections.emptySet();
+    }
+
+    return externalProject.getSourceSets().values().stream()
+      .flatMap(ss -> ss.getSources().entrySet().stream()
+        .filter(e -> !e.getKey().isResource())
+        .flatMap(e -> e.getValue().getSrcDirs().stream()))
+      .collect(Collectors.toCollection(() -> ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY)));
   }
 
   private static void removeAll(List<? extends IdeaSourceDirectory> list, List<? extends IdeaSourceDirectory> toRemove) {

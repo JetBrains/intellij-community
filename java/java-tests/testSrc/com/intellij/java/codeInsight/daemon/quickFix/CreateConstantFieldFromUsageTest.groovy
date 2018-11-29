@@ -2,9 +2,12 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class CreateConstantFieldFromUsageTest extends LightCodeInsightFixtureTestCase {
 
   void "test add import when there is a single type variant"() {

@@ -26,12 +26,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val notifySlack: Boolean
   lateinit var iconsRepo: File
   lateinit var devRepoRoot: File
-  var addedByDev: MutableCollection<String> = mutableListOf()
-  var removedByDev: MutableCollection<String> = mutableListOf()
-  var modifiedByDev: MutableCollection<String> = mutableListOf()
-  val addedByDesigners: MutableCollection<String> = mutableListOf()
-  val removedByDesigners: MutableCollection<String> = mutableListOf()
-  val modifiedByDesigners: MutableCollection<String> = mutableListOf()
+  val byDev = Changes()
+  val byCommit = mutableMapOf<String, Changes>()
   val consistent: MutableCollection<String> = mutableListOf()
   var createdReviews: Collection<Review> = emptyList()
   lateinit var icons: Map<String, GitObject>
@@ -42,17 +38,20 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val devIconsCommitHashesToSync: MutableSet<String>
   lateinit var devIconsFilter: (File) -> Boolean
 
-  fun devChanges() = addedByDev + removedByDev + modifiedByDev
-  fun iconsChanges() = addedByDesigners + modifiedByDesigners +
-                       (if (doSyncRemovedIconsInDev) removedByDesigners else emptyList())
+  fun devChanges() = byDev.all()
+  fun iconsChanges() = byDesigners.all()
 
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
-  fun devReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_DEV_PROJECT_ID }
-  fun iconsReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_ICONS_PROJECT_ID }
+  fun devReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_DEV_PROJECT_ID }
+  fun iconsReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_ICONS_PROJECT_ID }
   fun verifyDevIcons() = devIconsVerifier?.run()
-  fun doFail(report: String) = errorHandler.accept(report)
+  fun doFail(report: String) {
+    log(report)
+    errorHandler.accept(report)
+  }
+
   fun isFail() = (notifySlack || assignInvestigation) &&
                  (iconsSyncRequired() || failIfSyncDevIconsRequired && devSyncRequired())
 
@@ -113,6 +112,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     iconsCommitHashesToSync = commits(iconsCommitHashesToSyncArg)
     devIconsCommitHashesToSync = commits(devIconsCommitHashesToSyncArg)
       .takeIf { it.isNotEmpty() } ?: System.getProperty("teamcity.build.changedFiles.file")
+      ?.takeIf { System.getProperty(devIconsCommitHashesToSyncArg)?.let(String::trim) != "*" }
       ?.takeIf { !isScheduled() }
       ?.let(::File)
       ?.takeIf(File::exists)
@@ -120,7 +120,12 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.takeIf { !it.contains("<personal>") }
       ?.let(StringUtil::splitByLines)
       ?.mapNotNull {
-        val (file, _, commit) = it.split(':')
+        val split = it.split(':')
+        if (split.size != 3) {
+          log("WARNING: malformed line in 'teamcity.build.changedFiles.file' : $it")
+          return@mapNotNull null
+        }
+        val (file, _, commit) = split
         if (ImageExtension.fromName(file) != null) commit else null
       }?.toMutableSet() ?: mutableSetOf()
     doSyncIconsRepo = bool(syncIconsArg)
@@ -132,4 +137,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     assignInvestigation = bool(assignInvestigationArg)
     notifySlack = bool(notifySlackArg)
   }
+
+  val byDesigners = Changes(includeRemoved = doSyncRemovedIconsInDev)
 }

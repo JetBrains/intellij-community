@@ -24,9 +24,12 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.ClassConditionKey
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class GlobalMemberNameCompletionTest extends LightCodeInsightFixtureTestCase {
 
   void testMethodName() throws Exception {

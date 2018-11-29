@@ -46,6 +46,8 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   @Nullable
   @Override
   public IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile psiFile) {
+    if (Utils.isFullSettingsSupport()) return null;
+
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return null;
 

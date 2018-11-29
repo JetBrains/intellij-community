@@ -51,7 +51,7 @@ public final class PyMagicLiteralTools {
    * @return true if magic
    */
   public static boolean couldBeMagicLiteral(@NotNull final PsiElement element) {
-    return (element instanceof StringLiteralExpression) &&
+    return (element instanceof StringLiteralExpression) && (element.getReferences().length == 0) &&
            Arrays.stream(PyMagicLiteralExtensionPoint.EP_NAME.getExtensions()).anyMatch(o-> o.isEnabled(element));
   }
 

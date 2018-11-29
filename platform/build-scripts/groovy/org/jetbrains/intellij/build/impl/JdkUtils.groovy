@@ -23,7 +23,7 @@ class JdkUtils {
     }
   }
 
-  static String computeJdkHome(BuildMessages messages, String propertyName, String defaultDir, String envVarName) {
+  static String computeJdkHome(BuildMessages messages, String propertyName, String defaultDir, String envVarName, boolean requireJdk8 = true) {
     String jdkDir = System.getProperty(propertyName)
     if (jdkDir != null) {
       return jdkDir
@@ -42,9 +42,13 @@ class JdkUtils {
         jdkDir = getCurrentJdk()
         def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(jdkDir)
         if (propertyName.contains("8") && !jdkInfo.version.contains("1.8.")) {
-          messages.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable" +
-                         " aren't defined and default JDK $jdkDir ($jdkInfo) cannot be used as JDK 1.8")
-          return null
+          def msg = "JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable" +
+                    " aren't defined and default JDK $jdkDir ($jdkInfo) cannot be used as JDK 1.8"
+          if (requireJdk8) {
+            messages.error(msg)
+            return null
+          }
+          messages.warning(msg)
         }
         messages.info("'$envVarName' isn't defined and '$defaultDir' doesn't exist, $propertyName set to $jdkDir")
       }

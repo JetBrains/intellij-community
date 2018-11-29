@@ -72,8 +72,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected LocalQuickFix createMutabilityViolationFix(ProblemsHolder holder, PsiElement violation) {
-    return WrapWithMutableCollectionFix.createFix(violation, holder.isOnTheFly());
+  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation, boolean onTheFly) {
+    return WrapWithMutableCollectionFix.createFix(violation, onTheFly);
   }
 
   @Nullable

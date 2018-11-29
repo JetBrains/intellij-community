@@ -124,19 +124,19 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
       externalProjectDataCache.findExternalProject(externalRootProject, rootModel.getModule());
     if (externalSourceSets.isEmpty()) return false;
 
-    boolean isGradleAwareMake = GradleSystemRunningSettings.getInstance().isUseGradleAwareMake();
+    boolean isDelegatedBuildEnabled = GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabled(rootModel.getModule());
     for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
       if (includeTests) {
-        if (isGradleAwareMake) {
+        if (isDelegatedBuildEnabled) {
           addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST), result, true);
         }
-        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE), result, isGradleAwareMake);
+        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE), result, isDelegatedBuildEnabled);
       }
       if (includeProduction) {
-        if (isGradleAwareMake) {
+        if (isDelegatedBuildEnabled) {
           addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.SOURCE), result, true);
         }
-        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE), result, isGradleAwareMake);
+        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE), result, isDelegatedBuildEnabled);
       }
     }
 

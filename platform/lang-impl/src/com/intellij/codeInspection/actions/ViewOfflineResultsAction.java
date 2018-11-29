@@ -164,6 +164,7 @@ public class ViewOfflineResultsAction extends AnAction {
       profile = null;
     }
     final InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
+      @NotNull
       @Override
       public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
         return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);

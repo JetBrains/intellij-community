@@ -23,11 +23,13 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
+@CompileStatic
 class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
   void "test if null return null"() {

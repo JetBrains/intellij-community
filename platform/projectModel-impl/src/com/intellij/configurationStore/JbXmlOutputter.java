@@ -326,7 +326,7 @@ public class JbXmlOutputter {
    * This will handle printing a string.  Escapes the element entities,
    * trims interior whitespace, etc. if necessary.
    */
-  private void printString(@NotNull Element parentElement, @NotNull Writer out, String str) throws IOException {
+  private void printString(@NotNull Writer out, String str) throws IOException {
     if (format.getTextMode() == Format.TextMode.NORMALIZE) {
       str = Text.normalizeString(str);
     }
@@ -390,13 +390,13 @@ public class JbXmlOutputter {
     if (nextNonText(content, start) < size) {
       // case Mixed Content - normal indentation
       newline(out);
-      printContentRange(element, out, content, start, size, level + 1);
+      printContentRange(out, content, start, size, level + 1);
       newline(out);
       indent(out, level);
     }
     else {
       // case all CDATA or Text - no indentation
-      printTextRange(element, out, content, start, size);
+      printTextRange(out, content, start, size);
     }
     return true;
   }
@@ -413,7 +413,7 @@ public class JbXmlOutputter {
    * @param out     <code>Writer</code> to use.
    * @param level   <code>int</code> level of indentation.
    */
-  private void printContentRange(@NotNull Element parentElement, @NotNull Writer out, @NotNull List<Content> content, int start, int end, int level) throws IOException {
+  private void printContentRange(@NotNull Writer out, @NotNull List<Content> content, int start, int end, int level) throws IOException {
     boolean firstNode; // Flag for 1st node in content
     Content next;       // Node we're about to print
     int first, index;  // Indexes into the list of content
@@ -435,7 +435,7 @@ public class JbXmlOutputter {
             newline(out);
           }
           indent(out, level);
-          printTextRange(parentElement, out, content, first, index);
+          printTextRange(out, content, first, index);
         }
         continue;
       }
@@ -474,7 +474,7 @@ public class JbXmlOutputter {
    * @param end     index of last content node (exclusive).
    * @param out     <code>Writer</code> to use.
    */
-  private void printTextRange(@NotNull Element parentElement, @NotNull Writer out, @NotNull List<Content> content, int start, int end) throws IOException {
+  private void printTextRange(@NotNull Writer out, @NotNull List<Content> content, int start, int end) throws IOException {
     // remove leading whitespace-only nodes
     start = skipLeadingWhite(content, start);
     if (start >= content.size()) {
@@ -519,7 +519,7 @@ public class JbXmlOutputter {
         printEntityRef(out, (EntityRef)node);
       }
       else {
-        printString(parentElement, out, next);
+        printString(out, next);
       }
 
       previous = next;

@@ -59,7 +59,7 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
   @Override
   protected void onSchemeChanged(@Nullable T scheme) {
     if (scheme != null) {
-      ((AbstractDescriptionAwareSchemesPanel<T>) mySchemesPanel).showDescription();
+      ((AbstractDescriptionAwareSchemesPanel<T>) mySchemesPanel).showDescription(scheme);
     }
   }
 }

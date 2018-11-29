@@ -40,6 +40,9 @@ public abstract class ResolveTestCase extends PsiTestCase {
         myDocument = null;
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

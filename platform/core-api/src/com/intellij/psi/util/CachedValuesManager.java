@@ -52,7 +52,7 @@ public abstract class CachedValuesManager {
    * the details.
    *
    * @param provider computes values.
-   * @param trackValue if value tracking required. T should be trackable in this case.
+   * @param trackValue if value tracking is required. T should be trackable in this case.
    * @return new CachedValue instance.
    */
   @NotNull
@@ -103,7 +103,7 @@ public abstract class CachedValuesManager {
    * @param dataHolder holder to store the cached value, e.g. a PsiElement.
    * @param key key to store the cached value.
    * @param provider provider creating the cached value.
-   * @param trackValue if value tracking required. T should be trackable in this case.
+   * @param trackValue if value tracking is required (T should be trackable in that case). See {@link #createCachedValue(CachedValueProvider, boolean)} for more details.
    * @return up-to-date value.
    */
   public abstract <T> T getCachedValue(@NotNull UserDataHolder dataHolder,

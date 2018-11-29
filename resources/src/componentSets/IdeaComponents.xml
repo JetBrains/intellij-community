@@ -32,6 +32,7 @@
   <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="Misc.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="Compiler.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/idea-plugin/*)"/>

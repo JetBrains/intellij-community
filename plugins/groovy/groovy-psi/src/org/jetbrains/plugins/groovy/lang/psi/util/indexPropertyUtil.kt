@@ -62,7 +62,7 @@ fun GrIndexProperty.isClassLiteral(): Boolean {
 
 fun GrIndexProperty.getArrayClassType(): PsiType? {
   val arrayTypeBase = getClassReferenceFromExpression(this) ?: return null
-  return TypesUtil.createJavaLangClassType(arrayTypeBase, project, resolveScope)
+  return TypesUtil.createJavaLangClassType(arrayTypeBase, this)
 }
 
 /**

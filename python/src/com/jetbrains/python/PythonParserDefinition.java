@@ -26,15 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Keith Lea
  */
 public class PythonParserDefinition implements ParserDefinition {
-  private final TokenSet myWhitespaceTokens;
-  private final TokenSet myCommentTokens;
-  private final TokenSet myStringLiteralTokens;
-
-  public PythonParserDefinition() {
-    myWhitespaceTokens = TokenSet.create(PyTokenTypes.LINE_BREAK, PyTokenTypes.SPACE, PyTokenTypes.TAB, PyTokenTypes.FORMFEED);
-    myCommentTokens = TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT);
-    myStringLiteralTokens = TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.STRING_LITERAL_EXPRESSION));
-  }
 
   @Override
   @NotNull
@@ -50,19 +41,19 @@ public class PythonParserDefinition implements ParserDefinition {
   @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
-    return myWhitespaceTokens;
+    return TokenSet.create(PyTokenTypes.LINE_BREAK, PyTokenTypes.SPACE, PyTokenTypes.TAB, PyTokenTypes.FORMFEED);
   }
 
   @Override
   @NotNull
   public TokenSet getCommentTokens() {
-    return myCommentTokens;
+    return TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT);
   }
 
   @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
-    return myStringLiteralTokens;
+    return TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.STRING_LITERAL_EXPRESSION));
   }
 
   @Override

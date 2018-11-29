@@ -13,9 +13,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -95,7 +95,7 @@ public class TerminalView {
     }
 
     myToolWindow = toolWindow;
-    ((ToolWindowImpl)myToolWindow).setTabActions(new AnAction("New Session", "Create new session", AllIcons.General.Add) {
+    ((ToolWindowImpl)myToolWindow).setTabActions(new DumbAwareAction("New Session", "Create new session", AllIcons.General.Add) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         newTab(null);
@@ -143,7 +143,13 @@ public class TerminalView {
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState) {
-    createNewTab(null, terminalRunner, myToolWindow, tabState);
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    if (window != null && window.isAvailable()) {
+      // ensure TerminalToolWindowFactory.createToolWindowContent gets called
+      ((ToolWindowImpl)window).ensureContentInitialized();
+      createNewTab(null, terminalRunner, myToolWindow, tabState);
+      window.activate(null);
+    }
   }
 
   private Content newTab(@Nullable JBTerminalWidget terminalWidget) {
@@ -210,12 +216,16 @@ public class TerminalView {
 
       @Override
       public void onPreviousTabSelected() {
-        toolWindow.getContentManager().selectPreviousContent();
+        if (toolWindow.getContentManager().getContentCount() > 1) {
+          toolWindow.getContentManager().selectPreviousContent();
+        }
       }
 
       @Override
       public void onNextTabSelected() {
-        toolWindow.getContentManager().selectNextContent();
+        if (toolWindow.getContentManager().getContentCount() > 1) {
+          toolWindow.getContentManager().selectNextContent();
+        }
       }
 
       @Override

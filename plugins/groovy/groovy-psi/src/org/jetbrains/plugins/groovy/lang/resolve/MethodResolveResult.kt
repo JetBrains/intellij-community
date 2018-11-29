@@ -10,6 +10,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
+import org.jetbrains.plugins.groovy.util.lazyPreventingRecursion
 import kotlin.reflect.jvm.isAccessible
 
 class MethodResolveResult(
@@ -29,7 +30,7 @@ class MethodResolveResult(
 
   override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
 
-  private val fullSubstitutor by lazyPub {
+  private val fullSubstitutor by lazyPreventingRecursion {
     buildTopLevelSession(place).inferSubst(this)
   }
 

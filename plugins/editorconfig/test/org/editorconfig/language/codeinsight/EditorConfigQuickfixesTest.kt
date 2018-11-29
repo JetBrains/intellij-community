@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 class EditorConfigQuickfixesTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/quickfixes/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/quickfixes/"
 
   fun testCleanupValueList() =
     doTest(EditorConfigUnexpectedCommaInspection::class,

@@ -45,6 +45,9 @@ import java.io.File;
     try {
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

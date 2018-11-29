@@ -32,7 +32,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupMaven
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupNodeJs
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpring
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpringInitializer
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpringInitializr
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppDeprecated
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppExperimental
@@ -91,7 +91,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val groupJavaFX = "Java FX"
     const val groupAndroid = "Android"
     const val groupIntelliJPlatformPlugin = "IntelliJ Platform Plugin"
-    const val groupSpringInitializer = "Spring Initializer"
+    const val groupSpringInitializr = "Spring Initializr"
     const val groupMaven = "Maven"
     const val groupGradle = "Gradle"
     const val groupGroovy = "Groovy"
@@ -127,7 +127,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
   enum class Groups(private val title: String) {
     Java(groupJava), JavaEnterprise(groupJavaEnterprise), JBoss(groupJBoss),
     J2ME(groupJ2ME), Clouds(groupClouds), Spring(groupSpring), JavaFX(groupJavaFX),
-    Android(groupAndroid), IPPlugin(groupIntelliJPlatformPlugin), SpringInitializer(groupSpringInitializer),
+    Android(groupAndroid), IPPlugin(groupIntelliJPlatformPlugin), SpringInitializr(groupSpringInitializr),
     Maven(groupMaven), Gradle(groupGradle), Groovy(groupGroovy), Griffon(groupGriffon),
     Grails(groupGrails), ApplicationForge(groupApplicationForge), Kotlin(groupKotlin),
     StaticWeb(groupStaticWeb), NodeJs(groupNodeJs), Flash(groupFlash), Empty(groupEmptyProject)
@@ -552,7 +552,8 @@ fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Librar
 fun NewProjectDialogModel.waitLoadingTemplates() {
   GuiTestUtilKt.waitProgressDialogUntilGone(
     GuiRobotHolder.robot,
-    progressTitle = progressLoadingTemplates
+    progressTitle = progressLoadingTemplates,
+    timeoutToAppear = Timeouts.seconds05
   )
 }
 

@@ -14,7 +14,6 @@ public final class ImagesIcons {
     return IconLoader.getIcon(path, ImagesIcons.class);
   }
 
-  public static final Icon EditExternally = load("/org/intellij/images/icons/EditExternally.png"); // 16x16
   public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.svg"); // 16x16
   public static final Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png"); // 75x86
   public static final Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png"); // 75x82

@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -56,7 +57,7 @@ public class JsonSchemaComplianceChecker {
   public void annotate(@NotNull final PsiElement element) {
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
     if (firstProp != null) {
-      final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(firstProp.getDelegate(), true);
+      final JsonPointerPosition position = myWalker.findPosition(firstProp.getDelegate(), true);
       if (position == null || position.isEmpty()) return;
       final MatchResult result = new JsonSchemaResolver(myRootSchema, false, position).detailedResolve();
       for (JsonValueAdapter value : firstProp.getValues()) {
@@ -125,7 +126,7 @@ public class JsonSchemaComplianceChecker {
     if (checkIfAlreadyProcessed(psiElement)) return;
     String value = validationError.getMessage();
     if (myMessagePrefix != null) value = myMessagePrefix + value;
-    LocalQuickFix[] fix = validationError.createFixes(myWalker.getQuickFixAdapter(myHolder.getProject()));
+    LocalQuickFix[] fix = validationError.createFixes(myWalker.getSyntaxAdapter(myHolder.getProject()));
     if (fix.length == 0) {
       myHolder.registerProblem(psiElement, range, value);
     }

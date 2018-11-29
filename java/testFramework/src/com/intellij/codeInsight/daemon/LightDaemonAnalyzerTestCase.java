@@ -58,6 +58,9 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
       ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

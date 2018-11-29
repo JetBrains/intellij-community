@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -8,7 +9,8 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.impl.matcher.compiler.StringToConstraintsTransformer;
-import gnu.trove.THashSet;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -83,11 +85,14 @@ public class MatchOptions implements JDOMExternalizable {
     variableConstraints.put(constraint.getName(), constraint);
   }
 
-  public void retainVariableConstraints(Collection<String> names) {
-    if (variableConstraints.isEmpty()) {
-      return;
-    }
-    final THashSet<String> nameSet = new THashSet<>(names);
+  public Set<String> getUsedVariableNames() {
+    final LinkedHashSet<String> set = TemplateImplUtil.parseVariableNames(pattern);
+    set.add(Configuration.CONTEXT_VAR_NAME);
+    return set;
+  }
+
+  public void removeUnusedVariables() {
+    final Set<String> nameSet = getUsedVariableNames();
     for (final Iterator<String> iterator = variableConstraints.keySet().iterator(); iterator.hasNext(); ) {
       final String key = iterator.next();
       if (!nameSet.contains(key)) {
@@ -95,7 +100,6 @@ public class MatchOptions implements JDOMExternalizable {
       }
     }
   }
-
   public MatchVariableConstraint getVariableConstraint(String name) {
     return variableConstraints.get(name);
   }
@@ -181,8 +185,11 @@ public class MatchOptions implements JDOMExternalizable {
       element.setAttribute(SCOPE_TYPE, Scopes.getType(scope).toString()).setAttribute(SCOPE_DESCRIPTOR, Scopes.getDescriptor(scope));
     }
 
+    final Set<String> constraintNames = getUsedVariableNames();
     for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
-      if (matchVariableConstraint.isArtificial()) continue;
+      if (matchVariableConstraint.isArtificial() || !constraintNames.contains(matchVariableConstraint.getName())) {
+        continue;
+      }
       final Element infoElement = new Element(CONSTRAINT_TAG_NAME);
       element.addContent(infoElement);
       matchVariableConstraint.writeExternal(infoElement);
@@ -263,12 +270,12 @@ public class MatchOptions implements JDOMExternalizable {
     if (caseSensitiveMatch != matchOptions.caseSensitiveMatch) return false;
     if (looseMatching != matchOptions.looseMatching) return false;
     if (recursiveSearch != matchOptions.recursiveSearch) return false;
-    if (scope != null ? !scope.equals(matchOptions.scope) : matchOptions.scope != null) return false;
+    if (!Objects.equals(scope, matchOptions.scope)) return false;
     if (!pattern.equals(matchOptions.pattern)) return false;
     if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
     if (myFileType != matchOptions.myFileType) return false;
-    if (myDialect != null ? !myDialect.equals(matchOptions.myDialect) : matchOptions.myDialect != null) return false;
-    if (myPatternContext != null ? !myPatternContext.equals(matchOptions.myPatternContext) : matchOptions.myPatternContext != null) return false;
+    if (!Objects.equals(myDialect, matchOptions.myDialect)) return false;
+    if (!Objects.equals(myPatternContext, matchOptions.myPatternContext)) return false;
 
     return true;
   }

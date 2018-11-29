@@ -218,7 +218,7 @@ class ActionUpdater {
   }
 
   boolean hasVisibleChildren(ActionGroup group) {
-    return hasVisibleChildren(group, myCheapStrategy);
+    return hasVisibleChildren(group, myRealUpdateStrategy);
   }
 
   private boolean hasVisibleChildren(ActionGroup group, UpdateStrategy strategy) {

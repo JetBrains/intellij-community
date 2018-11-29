@@ -593,7 +593,7 @@ public class CFGBuilder {
       }
       return this;
     }
-    return pushExpression(functionalExpression, NullabilityProblemKind.passingNullableToNotNullParameter).pop();
+    return pushExpression(functionalExpression, NullabilityProblemKind.passingToNotNullParameter).pop();
   }
 
   /**

@@ -14,14 +14,21 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 
 fun mapApplicability(map: Map<Argument, PsiParameter>, erasureSubstitutor: PsiSubstitutor, context: PsiElement): Applicability {
   for ((argument, parameter) in map) {
-    val argumentAssignability = argumentApplicability(argument, context) {
-      TypeConversionUtil.erasure(parameter.type, erasureSubstitutor)
-    }
+    val argumentAssignability = argumentApplicability(argument, parameter, erasureSubstitutor, context)
     if (argumentAssignability != Applicability.applicable) {
       return argumentAssignability
     }
   }
   return Applicability.applicable
+}
+
+fun argumentApplicability(argument: Argument,
+                          parameter: PsiParameter,
+                          erasureSubstitutor: PsiSubstitutor,
+                          context: PsiElement): Applicability {
+  return argumentApplicability(argument, context) {
+    TypeConversionUtil.erasure(parameter.type, erasureSubstitutor)
+  }
 }
 
 fun argumentApplicability(argument: Argument, context: PsiElement, parameterTypeComputable: () -> PsiType?): Applicability {

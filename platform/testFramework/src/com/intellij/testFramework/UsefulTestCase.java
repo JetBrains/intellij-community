@@ -174,39 +174,34 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      // don't use method references here to make stack trace reading easier
-      //noinspection Convert2MethodRef
-      new RunAll(
-        () -> disposeRootDisposable(),
-        () -> cleanupSwingDataStructures(),
-        () -> cleanupDeleteOnExitHookList(),
-        () -> Disposer.setDebugMode(true),
-        () -> {
-          if (shouldContainTempFiles()) {
-            FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-            if (hasTmpFilesToKeep()) {
-              File[] files = new File(myTempDir).listFiles();
-              if (files != null) {
-                for (File file : files) {
-                  if (!shouldKeepTmpFile(file)) {
-                    FileUtil.delete(file);
-                  }
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
+    new RunAll(
+      () -> disposeRootDisposable(),
+      () -> cleanupSwingDataStructures(),
+      () -> cleanupDeleteOnExitHookList(),
+      () -> Disposer.setDebugMode(true),
+      () -> {
+        if (shouldContainTempFiles()) {
+          FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
+          if (hasTmpFilesToKeep()) {
+            File[] files = new File(myTempDir).listFiles();
+            if (files != null) {
+              for (File file : files) {
+                if (!shouldKeepTmpFile(file)) {
+                  FileUtil.delete(file);
                 }
               }
             }
-            else {
-              FileUtil.delete(new File(myTempDir));
-            }
           }
-        },
-        () -> UIUtil.removeLeakingAppleListeners(),
-        () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
-      ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
-    }
-    finally {
-      super.tearDown();
-    }
+          else {
+            FileUtil.delete(new File(myTempDir));
+          }
+        }
+      },
+      () -> UIUtil.removeLeakingAppleListeners(),
+      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
+    ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
 
   protected final void disposeRootDisposable() {
@@ -1093,7 +1088,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
     EdtTestUtil.runInEdtAndWait(() -> {
       Application application = ApplicationManager.getApplication();
-      if (application != null) {
+      if (application != null && !application.isDisposed()) {
         FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
         if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
 
