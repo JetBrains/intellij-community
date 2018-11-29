@@ -198,6 +198,9 @@ public class JBEditorTabs extends JBTabsImpl {
       maxLength = vertical ? r.width : r.height;
     }
 
+    minOffset--;
+    maxOffset++;
+
     Rectangle r2 = new Rectangle(0, 0, getWidth(), getHeight());
 
     Rectangle beforeTabs;
