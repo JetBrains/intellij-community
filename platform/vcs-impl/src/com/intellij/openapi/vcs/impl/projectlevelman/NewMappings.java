@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.*;
-import static java.util.Collections.singletonList;
 import static java.util.function.Function.identity;
 
 public class NewMappings {
@@ -63,14 +62,7 @@ public class NewMappings {
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
     myActiveVcses = new AbstractVcs[0];
 
-    if (!myProject.isDefault()) {
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping("", "");
-      myVcsToPaths.putValue("", mapping);
-      mySortedMappings = new VcsDirectoryMapping[]{mapping};
-    }
-    else {
-      mySortedMappings = VcsDirectoryMapping.EMPTY_ARRAY;
-    }
+    mySortedMappings = VcsDirectoryMapping.EMPTY_ARRAY;
     myActivated = false;
 
     vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, (DumbAwareRunnable)() -> {
@@ -190,17 +182,9 @@ public class NewMappings {
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
     LOG.debug("setDirectoryMappings, size: " + items.size());
 
-    final List<VcsDirectoryMapping> itemsCopy;
-    if (items.isEmpty()) {
-      itemsCopy = singletonList(new VcsDirectoryMapping("", ""));
-    }
-    else {
-      itemsCopy = items;
-    }
-
     updateVcsMappings(() -> {
       myVcsToPaths.clear();
-      for (VcsDirectoryMapping mapping : itemsCopy) {
+      for (VcsDirectoryMapping mapping : items) {
         myVcsToPaths.putValue(mapping.getVcs(), mapping);
       }
     });
