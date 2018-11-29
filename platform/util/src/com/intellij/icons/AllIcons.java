@@ -951,7 +951,6 @@ public class AllIcons {
     public static final Icon Remove = IconLoader.getIcon("/general/remove.svg"); // 16x16
     public static final Icon Reset = IconLoader.getIcon("/general/reset.svg"); // 16x16
     public static final Icon RunWithCoverage = IconLoader.getIcon("/general/runWithCoverage.svg"); // 16x16
-    public static final Icon SafeMode = IconLoader.getIcon("/general/safeMode.png"); // 13x13
     public static final Icon SeparatorH = IconLoader.getIcon("/general/separatorH.svg"); // 16x16
     public static final Icon Settings = IconLoader.getIcon("/general/settings.svg"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.svg"); // 16x16
@@ -1366,6 +1365,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Run = AllIcons.RunConfigurations.TestState.Run;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.InspectionsTrafficOff */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SafeMode = AllIcons.General.InspectionsTrafficOff;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")

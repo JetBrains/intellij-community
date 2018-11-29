@@ -74,6 +74,7 @@ deprecated: projectSettings.png -> /general/gearPlain.svg; to be removed in IDEA
 deprecated: readHelp.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
 deprecated: recursive.png -> /actions/showAsTree.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree
 deprecated: run.png -> /runConfigurations/testState/run.png; to be removed in IDEA 2020 - use AllIcons.RunConfigurations.TestState.Run
+deprecated: safeMode.png -> /general/inspectionsTrafficOff.svg; to be removed in IDEA 2020 - use AllIcons.General.InspectionsTrafficOff
 deprecated: searchEverywhereGear.png; to be removed in IDEA 2020
 deprecated: secondaryGroup.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
 deprecated: show_to_override.png; to be removed in IDEA 2020
