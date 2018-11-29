@@ -39,6 +39,7 @@ import java.util.List;
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
@@ -131,7 +132,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
 
-    RootUrlInfo root = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(file);
+    RootUrlInfo root = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
     if (root == null) {
       throw new VcsException("Can not find working copy for file: " + file.getPath());
     }
