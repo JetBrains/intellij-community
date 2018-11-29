@@ -357,6 +357,7 @@ class RetypeSession(
               document.replaceString(pos, pos + docIndexOfFirstComp, replacement)
             }
           }
+          (pos until pos + origIndexOfFirstComp + firstCompletion.length).forEach { log.recordCompletion(document.text[it]) }
           pos += origIndexOfFirstComp + firstCompletion.length
           editor.caretModel.moveToOffset(pos)
           completionStack.removeLast()
