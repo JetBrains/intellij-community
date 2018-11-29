@@ -53,6 +53,7 @@ deprecated: hideWarnings.png; to be removed in IDEA 2020
 deprecated: ijLogo.png; to be removed in IDEA 2020
 deprecated: importProject.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
 deprecated: ImportSettings.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
+deprecated: inspectionsOff.png -> /ide/hectorOff.svg; to be removed in IDEA 2020 - use AllIcons.Ide.HectorOff
 deprecated: jdk.png; to be removed in IDEA 2020
 deprecated: keyboardShortcut.png; to be removed in IDEA 2020
 deprecated: keymap.png; to be removed in IDEA 2020

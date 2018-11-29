@@ -920,7 +920,6 @@ public class AllIcons {
     public static final Icon InlineAddHover = IconLoader.getIcon("/general/inlineAddHover.svg"); // 16x16
     public static final Icon InspectionsError = IconLoader.getIcon("/general/inspectionsError.svg"); // 14x14
     public static final Icon InspectionsEye = IconLoader.getIcon("/general/inspectionsEye.svg"); // 14x14
-    public static final Icon InspectionsOff = IconLoader.getIcon("/general/inspectionsOff.png"); // 16x16
     public static final Icon InspectionsOK = IconLoader.getIcon("/general/inspectionsOK.svg"); // 14x14
     public static final Icon InspectionsPause = IconLoader.getIcon("/general/inspectionsPause.svg"); // 14x14
     public static final Icon InspectionsTrafficOff = IconLoader.getIcon("/general/inspectionsTrafficOff.svg"); // 14x14
@@ -1255,6 +1254,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ImportSettings = AllIcons.ToolbarDecorator.Import;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.HectorOff */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon InspectionsOff = AllIcons.Ide.HectorOff;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
