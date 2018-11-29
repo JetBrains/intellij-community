@@ -20,6 +20,7 @@ import java.io.Writer;
 import java.util.List;
 
 // expandEmptyElements is ignored
+@SuppressWarnings("Duplicates")
 public class JbXmlOutputter extends BaseXmlOutputter {
   private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
 
@@ -182,21 +183,7 @@ public class JbXmlOutputter extends BaseXmlOutputter {
       }
     }
     if (!piProcessed) {
-      String rawData = pi.getData();
-
-      // Write <?target data?> or if no data then just <?target?>
-      if (rawData != null && !rawData.isEmpty()) {
-        out.write("<?");
-        out.write(target);
-        out.write(" ");
-        out.write(rawData);
-        out.write("?>");
-      }
-      else {
-        out.write("<?");
-        out.write(target);
-        out.write("?>");
-      }
+      writeProcessingInstruction(out, pi, target);
     }
   }
 

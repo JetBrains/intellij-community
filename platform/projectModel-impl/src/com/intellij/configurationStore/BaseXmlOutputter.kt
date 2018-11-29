@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import org.jdom.DocType
+import org.jdom.ProcessingInstruction
 import java.io.IOException
 import java.io.Writer
 
@@ -42,5 +43,19 @@ abstract class BaseXmlOutputter(protected val lineSeparator: String) {
       out.write("]")
     }
     out.write(">")
+  }
+
+  @Throws(IOException::class)
+  protected fun writeProcessingInstruction(out: Writer, pi: ProcessingInstruction, target: String) {
+    out.write("<?")
+    out.write(target)
+
+    val rawData = pi.data
+    if (rawData != null && !rawData.isEmpty()) {
+      out.write(" ")
+      out.write(rawData)
+    }
+
+    out.write("?>")
   }
 }
