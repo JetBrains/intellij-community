@@ -38,8 +38,6 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.equals("Remove") || // IDEA-177220
-           actionText.equals("Add \"use strict\" pragma") || // IDEA-187427
-           actionText.matches("Suppress for .* in injection") || // IDEA-187427
            super.shouldSkipIntention(actionText);
   }
 
@@ -84,7 +82,6 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Fix doc comment") || //change formatting settings
            actionText.startsWith("Add Javadoc") ||
-           actionText.equals("Collapse 'catch' blocks") || // IDEA-195991
            super.shouldSkipIntention(actionText);
   }
 
