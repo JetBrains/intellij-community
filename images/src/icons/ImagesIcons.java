@@ -14,10 +14,18 @@ public final class ImagesIcons {
     return IconLoader.getIcon(path, ImagesIcons.class);
   }
 
+  private static Icon load(String path, Class<?> clazz) {
+    return IconLoader.getIcon(path, clazz);
+  }
+
   public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.svg"); // 16x16
   public static final Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png"); // 75x86
   public static final Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png"); // 75x82
   public static final Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.svg"); // 13x13
-  public static final Icon ToggleGrid = load("/org/intellij/images/icons/ToggleGrid.svg"); // 16x16
   public static final Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.svg"); // 16x16
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Graph.Grid */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon ToggleGrid = load("/graph/grid.svg", com.intellij.icons.AllIcons.class);
 }

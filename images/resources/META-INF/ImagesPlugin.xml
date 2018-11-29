@@ -60,7 +60,7 @@
       <reference id="Images.ToggleTransparencyChessboard"/>
       <action class="org.intellij.images.editor.actions.ToggleGridAction"
               id="Images.Editor.ToggleGrid"
-              icon="ImagesIcons.ToggleGrid"
+              icon="AllIcons.Graph.Grid"
               text="Show Grid">
         <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
       </action>
