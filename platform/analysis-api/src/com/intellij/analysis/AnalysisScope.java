@@ -33,6 +33,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +168,7 @@ public class AnalysisScope {
         if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile == null) return;
-          if (isFiltered(virtualFile)) {
+          if (isFilteredOut(virtualFile)) {
             return;
           }
           if (!shouldHighlightFile(file)) return;
@@ -178,7 +179,7 @@ public class AnalysisScope {
     };
   }
 
-  private boolean isFiltered(VirtualFile virtualFile) {
+  private boolean isFilteredOut(@NotNull VirtualFile virtualFile) {
     if (myFilter != null && !myFilter.contains(virtualFile)) {
       return true;
     }
@@ -192,6 +193,7 @@ public class AnalysisScope {
            ModuleRootManager.getInstance(myModule).getFileIndex();
   }
 
+  @NotNull
   private static String displayProjectRelativePath(@NotNull PsiFileSystemItem item) {
     VirtualFile virtualFile = item.getVirtualFile();
     LOG.assertTrue(virtualFile != null, item);
@@ -211,7 +213,7 @@ public class AnalysisScope {
       }
       if (myType == PROJECT) {  //optimization
         final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-        return index.isInContent(file) && !isFiltered(file);
+        return index.isInContent(file) && !isFilteredOut(file);
       }
       initFilesSet();
     }
@@ -264,7 +266,7 @@ public class AnalysisScope {
     accept(file -> {
       if (file.isDirectory()) return true;
       if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
-      if (fileIndex.isInContent(file) && !isFiltered(file)
+      if (fileIndex.isInContent(file) && !isFilteredOut(file)
           && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
         return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);
       }
@@ -275,11 +277,7 @@ public class AnalysisScope {
   public boolean accept(@NotNull final Processor<VirtualFile> processor) {
     if (myType == VIRTUAL_FILES) {
       if (myFilesSet == null) initFilesSet();
-      for (final VirtualFile file : myFilesSet) {
-        if (isFiltered(file)) continue;
-        if (!processor.process(file)) return false;
-      }
-      return true;
+      return ContainerUtil.process(myFilesSet, file -> isFilteredOut(file) || processor.process(file));
     }
     final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
@@ -331,7 +329,7 @@ public class AnalysisScope {
                                               @Nullable final SearchScope searchScope) {
     return fileOrDir -> {
       final boolean isInScope = ReadAction.compute(() -> {
-        if (isFiltered(fileOrDir)) return false;
+        if (isFilteredOut(fileOrDir)) return false;
         if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
         return searchScope == null || searchScope.contains(fileOrDir);
       });
@@ -410,7 +408,7 @@ public class AnalysisScope {
     //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
     final boolean processGeneratedFiles = GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project);
     return VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, fileOrDir -> {
-      if (isFiltered(fileOrDir)) return true;
+      if (isFilteredOut(fileOrDir)) return true;
       if (!processGeneratedFiles && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, project)) return true;
       return fileOrDir.isDirectory() || processor.process(fileOrDir);
     });
