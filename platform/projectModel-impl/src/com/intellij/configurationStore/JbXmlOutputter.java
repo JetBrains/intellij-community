@@ -297,8 +297,9 @@ public class JbXmlOutputter extends BaseXmlOutputter {
       logSensitiveInformationError(name, "Element");
     }
 
+    // checks only option tag
     name = element.getAttributeValue(Constants.NAME);
-    if (name != null && BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(name)) {
+    if (name != null && BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(name) && element.getAttribute("value") != null) {
       logSensitiveInformationError(name, "Element");
     }
   }

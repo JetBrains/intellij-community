@@ -700,6 +700,34 @@ internal class XmlSerializerTest {
   }
 
   @Test
+  fun `configuration name with password word`() {
+    @Tag("bean")
+    class Bean {
+      @OptionTag(tag ="configuration", valueAttribute = "bar")
+      var password: String? = null
+    }
+
+    val bean = Bean()
+    bean.password = "ab"
+    // it is not part of XML bindings to ensure that even if you will use JDOM directly, you cannot output sensitive data
+    // so, testSerializer must not throw error
+    val element = assertSerializer(bean, """
+     <bean>
+       <configuration name="password" bar="ab" />
+     </bean>
+    """.trimIndent())
+
+    val xmlWriter = JbXmlOutputter(true)
+    val stringWriter = StringWriter()
+    xmlWriter.output(element, stringWriter)
+    assertThat(stringWriter.toString()).isEqualTo("""
+      <bean>
+        <configuration name="password" bar="ab" />
+      </bean>
+    """.trimIndent())
+  }
+
+  @Test
   fun cdataAfterNewLine() {
     @Tag("bean")
     data class Bean(@Tag val description: String? = null)
