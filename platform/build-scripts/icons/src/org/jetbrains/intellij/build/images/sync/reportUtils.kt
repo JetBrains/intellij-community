@@ -109,7 +109,7 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
 
 private fun verifyDevIcons(context: Context, repos: Collection<File>) {
   callSafely {
-    context.verifyDevIcons()
+    context.verifyDevIcons(repos)
   }
   repos.forEach { repo ->
     val status = gitStatus(repo)

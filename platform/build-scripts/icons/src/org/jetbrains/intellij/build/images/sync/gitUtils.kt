@@ -310,11 +310,11 @@ internal fun initGit(repo: File, user: String, email: String) {
 internal fun gitStatus(repo: File) =
   execute(repo, GIT, "status", "--short", "--untracked-files=no", "--ignored=no")
     .lineSequence()
-    .map { it.trim() }
-    .filter { it.isNotEmpty() }
+    .map(String::trim)
+    .filter(String::isNotEmpty)
     .map { if (it.contains("->")) it.split("->").last() else it }
     .map { if (it.contains(" ")) it.split(" ").last() else it }
-    .map { it.trim() }
+    .map(String::trim)
     .toList()
 
 internal enum class ChangeType { MODIFIED, ADDED, DELETED }

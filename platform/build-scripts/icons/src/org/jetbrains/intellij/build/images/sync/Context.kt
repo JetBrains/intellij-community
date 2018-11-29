@@ -10,7 +10,7 @@ import java.nio.file.Paths
 import java.util.function.Consumer
 
 internal class Context(private val errorHandler: Consumer<String> = Consumer { error(it) },
-                       private val devIconsVerifier: Runnable? = null) {
+                       private val devIconsVerifier: Consumer<Collection<File>>? = null) {
   val devRepoDir: File
   val iconsRepoDir: File
   val iconsRepoName: String
@@ -46,7 +46,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
 
   fun devReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_DEV_PROJECT_ID }
   fun iconsReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_ICONS_PROJECT_ID }
-  fun verifyDevIcons() = devIconsVerifier?.run()
+  fun verifyDevIcons(repos: Collection<File>) = devIconsVerifier?.accept(repos)
   fun doFail(report: String) {
     log(report)
     errorHandler.accept(report)
