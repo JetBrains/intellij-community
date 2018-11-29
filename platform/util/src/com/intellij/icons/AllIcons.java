@@ -2801,7 +2801,6 @@ public class AllIcons {
     public static final Icon ToolWindowChanges = IconLoader.getIcon("/toolwindows/toolWindowChanges.svg"); // 13x13
     public static final Icon ToolWindowCommander = IconLoader.getIcon("/toolwindows/toolWindowCommander.svg"); // 13x13
     public static final Icon ToolWindowCoverage = IconLoader.getIcon("/toolwindows/toolWindowCoverage.svg"); // 13x13
-    public static final Icon ToolWindowCvs = IconLoader.getIcon("/toolwindows/toolWindowCvs.png"); // 13x13
     public static final Icon ToolWindowDebugger = IconLoader.getIcon("/toolwindows/toolWindowDebugger.svg"); // 13x13
     public static final Icon ToolWindowFavorites = IconLoader.getIcon("/toolwindows/toolWindowFavorites.svg"); // 13x13
     public static final Icon ToolWindowFind = IconLoader.getIcon("/toolwindows/toolWindowFind.svg"); // 13x13
@@ -2818,6 +2817,11 @@ public class AllIcons {
     public static final Icon ToolWindowTodo = IconLoader.getIcon("/toolwindows/toolWindowTodo.svg"); // 13x13
     public static final Icon ToolWindowUIDesigner = IconLoader.getIcon("/toolwindows/toolWindowUIDesigner.svg"); // 13x13
     public static final Icon WebToolWindow = IconLoader.getIcon("/toolwindows/webToolWindow.svg"); // 13x13
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ToolWindowCvs = IconLoader.getIcon("/toolwindows/toolWindowCvs.png");
 
   }
 
