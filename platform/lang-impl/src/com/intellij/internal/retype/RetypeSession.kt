@@ -261,6 +261,15 @@ class RetypeSession(
       }
     }
 
+    if (editor.contentComponent != IdeFocusManager.findInstance().focusOwner) {
+      // Do not perform typing if editor is not in focus
+      queueNextOrStop()
+      return
+    }
+
+    // Restore caret position (E.g. user clicks accidentally on another position)
+    if (editor.caretModel.offset != pos) editor.caretModel.moveToOffset(pos)
+
     val c = originalText[pos++]
     log.recordTyping(c)
 
@@ -284,12 +293,10 @@ class RetypeSession(
         }
       }
 
-      IdeFocusManager.findInstance().requestFocus(editor.component, true).doWhenDone {
-        IdeEventQueue.getInstance().postEvent(
-          KeyEvent(editor.component, KeyEvent.KEY_PRESSED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
-        IdeEventQueue.getInstance().postEvent(
-          KeyEvent(editor.component, KeyEvent.KEY_TYPED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
-      }
+      IdeEventQueue.getInstance().postEvent(
+        KeyEvent(editor.component, KeyEvent.KEY_PRESSED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
+      IdeEventQueue.getInstance().postEvent(
+        KeyEvent(editor.component, KeyEvent.KEY_TYPED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
       typedRightBefore = true
     }
     queueNextOrStop()
