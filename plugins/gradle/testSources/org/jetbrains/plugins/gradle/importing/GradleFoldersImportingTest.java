@@ -369,6 +369,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         \--- project1
         |       \--- project2
         \--- project3
+                \--- src
+                       \--- main
+                       \--- test
      */
     createProjectSubFile("settings.gradle"
       , "include (':project1', ':project1:project2', ':project1:project3')\n" +
@@ -397,6 +400,24 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
                   "rootName.project1.project3.test");
     assertContentRoots("rootName.project1.project3",
                        FileUtil.toSystemIndependentName(new File(getProjectPath(), "project3").getAbsolutePath()));
+
+    getCurrentExternalProjectSettings().setUseQualifiedModuleNames(false);
+
+    importProject();
+    assertModules("rootName",
+                  "project1",
+                  "project2",
+                  "project3",
+                  "project3_main",
+                  "project3_test");
+
+    assertContentRoots("project3",
+                       FileUtil.toSystemIndependentName(new File(getProjectPath(), "project3").getAbsolutePath()));
+
+    assertModuleGroupPath("rootName", "rootName");
+    assertModuleGroupPath("project1", "rootName", "project1");
+    assertModuleGroupPath("project2", "rootName", "project1", "project2");
+    assertModuleGroupPath("project3", "rootName", "project1", "project3");
   }
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {

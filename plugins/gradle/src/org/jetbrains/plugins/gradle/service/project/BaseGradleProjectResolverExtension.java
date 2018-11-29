@@ -146,10 +146,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
       String[] moduleGroup = null;
       if (!resolverCtx.isUseQualifiedModuleNames()) {
-        String gradlePath = gradleModule.getGradleProject().getPath();
-        final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
-        moduleGroup = isRootModule ? new String[]{mainModuleData.getInternalName()} : ArrayUtil.remove(gradlePath.split(":"), 0);
-        mainModuleData.setIdeModuleGroup(isRootModule ? null : moduleGroup);
+        moduleGroup = getIdeModuleGroup(mainModuleData.getInternalName(), gradleModule);
+        mainModuleData.setIdeModuleGroup(moduleGroup);
       }
 
       for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
@@ -227,6 +225,18 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     return mainModuleNode;
+  }
+
+  @NotNull
+  protected String[] getIdeModuleGroup(String moduleName, IdeaModule gradleModule) {
+    String[] moduleGroup;
+    final String gradlePath = gradleModule.getGradleProject().getPath();
+    final String rootName = gradleModule.getProject().getName();
+    final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
+    moduleGroup = isRootModule
+                  ? new String[]{ moduleName }
+                  : (rootName + gradlePath).split(":");
+    return moduleGroup;
   }
 
   @Nullable
