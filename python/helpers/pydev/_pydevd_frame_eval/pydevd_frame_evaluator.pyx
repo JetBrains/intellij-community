@@ -169,7 +169,7 @@ cdef FuncCodeInfo get_func_code_info(PyCodeObject * code_obj):
 
     cdef object main_debugger = GlobalDebuggerHolder.global_dbg
     
-    cdef PyObject * extra
+    cdef void * extra
     _PyCode_GetExtra(<PyObject *> code_obj, _code_extra_index, & extra)
     if extra is not NULL:
         extra_obj = <PyObject *> extra
