@@ -32,7 +32,7 @@ import java.util.Optional;
 /**
  * @author vlan
  */
-public class DumbAwareHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
+public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
 
   @Override
   public void visitPyFunction(PyFunction node) {
