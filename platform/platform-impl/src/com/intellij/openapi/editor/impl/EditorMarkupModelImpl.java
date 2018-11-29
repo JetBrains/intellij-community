@@ -1079,7 +1079,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       endY = myEditorScrollbarTop + myEditor.visualLineToY(endLineNumber);
     }
     else {
-      int editorEndY = myEditor.visualLineToY(startLineNumber);
+      int editorEndY = myEditor.visualLineToY(endLineNumber);
       endY = myEditorScrollbarTop + (int)((float)editorEndY / myEditorSourceHeight * editorTargetHeight);
     }
     if (endY < startY) endY = startY;
