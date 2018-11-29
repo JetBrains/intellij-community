@@ -192,6 +192,10 @@ class RetypeSession(
   private fun correctText(text: String) = "%replaceText ${text.replace('\n', '\u32E1')}\n"
 
   fun stop(startNext: Boolean) {
+    for (retypeFileAssistant in RetypeFileAssistant.EP_NAME.extensions) {
+      retypeFileAssistant.retypeDone(editor)
+    }
+
     if (restoreText) {
       WriteCommandAction.runWriteCommandAction(project) { document.replaceString(0, document.textLength, originalText) }
     }

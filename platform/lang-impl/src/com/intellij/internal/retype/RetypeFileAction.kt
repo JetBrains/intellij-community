@@ -103,6 +103,8 @@ class RetypeFileAction : AnAction() {
 
 interface RetypeFileAssistant {
   fun acceptLookupElement(element: LookupElement): Boolean
+  fun retypeDone(editor: Editor) {
+  }
 
   companion object {
     val EP_NAME = ExtensionPointName.create<RetypeFileAssistant>("com.intellij.retypeFileAssistant")
