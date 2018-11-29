@@ -45,7 +45,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   //store map from local branch to related cached remote branch hash per repository
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPull = newConcurrentMap();
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPush = newConcurrentMap();
-  @NotNull private final MultiMap<GitRepository, GitRemote> myAuthErrorMap = MultiMap.createConcurrentSet();
+  @NotNull private final MultiMap<GitRepository, GitRemote> myErrorMap = MultiMap.createConcurrentSet();
   @NotNull private final Project myProject;
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
   @NotNull private final GitRepositoryManager myRepositoryManager;
@@ -71,7 +71,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   public boolean hasAuthenticationProblems() {
-    return !myAuthErrorMap.isEmpty();
+    return !myErrorMap.isEmpty();
   }
 
   public void startScheduling() {
@@ -201,10 +201,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
-        myAuthErrorMap.remove(repository, remote);
+        myErrorMap.remove(repository, remote);
       }
-      else if (lsRemoteResult.isAuthenticationFailed()) {
-        myAuthErrorMap.putValue(repository, remote);
+      else {
+        myErrorMap.putValue(repository, remote);
       }
     });
     return result;
@@ -285,7 +285,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @Override
   public void authenticationSucceeded(@NotNull GitRepository repository, @NotNull GitRemote remote) {
-    Collection<GitRemote> remotes = myAuthErrorMap.get(repository);
+    Collection<GitRemote> remotes = myErrorMap.get(repository);
     myAuthSuccessMap.putValue(repository, remote);
     if (remotes.contains(remote)) {
       MultiMap<GitRemote, GitBranchTrackInfo> trackInfoByRemotes = groupTrackInfoByRemotes(repository);
