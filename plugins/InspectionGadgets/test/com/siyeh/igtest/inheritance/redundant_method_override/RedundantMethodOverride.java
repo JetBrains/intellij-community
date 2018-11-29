@@ -346,9 +346,24 @@ class X9 {
   void x(@NotNull Object o) {
     x(null);
   }
+
+  void x() {
+    System.out.println();
+    System.out.println();
+    System.out.println();
+  }
 }
 class X10 extends X9{
   void x(@NotNull Object o) {
     ((X2)o).x(null);
+  }
+
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>() {
+    {
+      ;
+      System.out.println();
+      System.out.println();
+    }
+    System.out.println();
   }
 }
