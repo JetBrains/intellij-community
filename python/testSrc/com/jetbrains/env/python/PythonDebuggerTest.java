@@ -1989,7 +1989,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testExecutableScriptDebug() {
-    
+
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_executable_script_debug.py") {
