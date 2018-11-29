@@ -323,7 +323,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return null;
     }
 
-    if (nominal == null) return inferred;
+    if (nominal == null) {
+      if (inferred.equals(PsiType.NULL) && PsiUtil.isCompileStatic(refExpr)) {
+        return TypesUtil.getJavaLangObject(refExpr);
+      }
+      else {
+        return inferred;
+      }
+    }
     if (!TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(nominal), inferred, false)) {
       if (resolved instanceof GrVariable && ((GrVariable)resolved).getTypeElementGroovy() != null) {
         return nominal;

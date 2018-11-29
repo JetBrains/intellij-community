@@ -787,6 +787,20 @@ class A { Closure foo = { 42 } }
     }
   }
 
+  void 'test variable type from null initializer'() {
+    doTest 'def v = null; <caret>v', 'null'
+  }
+
+  void 'test variable type from null initializer @CompileStatic'() {
+    doTest '''\
+@groovy.transform.CompileStatic
+def foo() {
+  def v = null
+  <caret>v
+}
+''', JAVA_LANG_OBJECT
+  }
+
   void testClassExpressions() {
     doExprTest 'String[]', 'java.lang.Class<java.lang.String[]>'
     doExprTest 'Class[]', 'java.lang.Class<java.lang.Class[]>'
