@@ -17,7 +17,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.25"
+  id "com.jetbrains.python.envs" version "0.0.27"
 }
 
 
@@ -33,8 +33,8 @@ envs {
 
   python "python27", "2.7.15"
   python "python35", "3.5.4"
-  python "python36", "3.6.6"
-  python "python37", "3.7.0"
+  python "python36", "3.6.7"
+  python "python37", "3.7.1"
 
 //  conda "Anaconda3", "Anaconda3-5.0.0", "64", []
 }
