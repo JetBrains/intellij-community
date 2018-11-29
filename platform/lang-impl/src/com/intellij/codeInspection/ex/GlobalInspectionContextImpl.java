@@ -431,7 +431,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final List<Tools> globalSimpleTools = new ArrayList<>();
     initializeTools(globalTools, localTools, globalSimpleTools);
     appendPairedInspectionsForUnfairTools(globalTools, globalSimpleTools, localTools);
-
+    ProgressIndicatorUtils.dropResolveCacheRegularly(progressIndicator, getProject());
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
 
     if (runGlobalToolsOnly || localTools.isEmpty() && globalSimpleTools.isEmpty()) return;
@@ -957,12 +957,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     Task task = modal ? new Task.Modal(getProject(), title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cleanup(scope, profile, postRunnable, commandName, shouldApplyFix);
+        cleanup(scope, profile, postRunnable, commandName, shouldApplyFix, indicator);
       }
     } : new Task.Backgroundable(getProject(), title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cleanup(scope, profile, postRunnable, commandName, shouldApplyFix);
+        cleanup(scope, profile, postRunnable, commandName, shouldApplyFix, indicator);
       }
     };
     ProgressManager.getInstance().run(task);
@@ -972,14 +972,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                        @NotNull InspectionProfile profile,
                        @Nullable final Runnable postRunnable,
                        @Nullable final String commandName,
-                       @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
+                       @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix,
+                       @NotNull ProgressIndicator progressIndicator) {
     setCurrentScope(scope);
     final int fileCount = scope.getFileCount();
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null) {
-      progressIndicator.setIndeterminate(false);
-    }
-
+    progressIndicator.setIndeterminate(false);
+    ProgressIndicatorUtils.dropResolveCacheRegularly(progressIndicator, getProject());
     final SearchScope searchScope = ReadAction.compute(scope::toSearchScope);
     final TextRange range;
     if (searchScope instanceof LocalSearchScope) {
@@ -1003,9 +1001,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         private int myCount;
         @Override
         public void visitFile(PsiFile file) {
-          if (progressIndicator != null) {
-            progressIndicator.setFraction((double)++myCount / fileCount);
-          }
+          progressIndicator.setFraction((double)++myCount / fileCount);
           if (isBinary(file)) return;
           final List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (final Tools tools : inspectionTools) {

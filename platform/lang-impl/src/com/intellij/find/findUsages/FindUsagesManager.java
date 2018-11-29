@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -39,8 +40,10 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.search.*;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
@@ -79,12 +82,12 @@ public class FindUsagesManager {
   private static final Key<String> KEY_START_USAGE_AGAIN = Key.create("KEY_START_USAGE_AGAIN");
   @NonNls private static final String VALUE_START_USAGE_AGAIN = "START_AGAIN";
   private final Project myProject;
-  private final com.intellij.usages.UsageViewManager myAnotherManager;
+  private final UsageViewManager myAnotherManager;
 
   private PsiElement2UsageTargetComposite myLastSearchInFileData; // EDT only
   private final UsageHistory myHistory = new UsageHistory();
 
-  public FindUsagesManager(@NotNull Project project, @NotNull com.intellij.usages.UsageViewManager anotherManager) {
+  public FindUsagesManager(@NotNull Project project, @NotNull UsageViewManager anotherManager) {
     myProject = project;
     myAnotherManager = anotherManager;
   }
@@ -340,7 +343,9 @@ public class FindUsagesManager {
       PsiElement[] secondaryElements = ReadAction.compute(() -> PsiElement2UsageTargetAdapter.convertToPsiElements(secondaryTargets));
 
       Project project = ReadAction.compute(() -> scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject());
-      dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), project);
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      LOG.assertTrue(indicator != null, "Must run under progress. see ProgressManager.run*");
+      ProgressIndicatorUtils.dropResolveCacheRegularly(indicator, project);
 
       if (scopeFile != null) {
         optionsClone.searchScope = new LocalSearchScope(scopeFile);
@@ -425,26 +430,6 @@ public class FindUsagesManager {
                                                                null);
     myHistory.add(targets[0]);
     return usageView;
-  }
-
-  private static void dropResolveCacheRegularly(ProgressIndicator indicator, @NotNull final Project project) {
-    if (indicator instanceof ProgressIndicatorEx) {
-      ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
-        volatile long lastCleared = System.currentTimeMillis();
-
-        @Override
-        public void setFraction(double fraction) {
-          super.setFraction(fraction);
-          long current = System.currentTimeMillis();
-          if (current - lastCleared >= 500) {
-            lastCleared = current;
-            // fraction is changed when each file is processed =>
-            // resolve caches used when searching in that file are likely to be not needed anymore
-            PsiManager.getInstance(project).dropResolveCaches();
-          }
-        }
-      });
-    }
   }
 
   @NotNull

@@ -228,7 +228,7 @@ public class AnalysisScope {
     }
     else if (myType == DIRECTORY || myType == PROJECT || myType == MODULES || myType == MODULE || myType == CUSTOM) {
       myFilesSet = new THashSet<>();
-      accept(createFileSearcher(), false);
+      accept(createFileSearcher());
     }
     else if (myType == VIRTUAL_FILES) {
       myFilesSet = new THashSet<>();
@@ -256,10 +256,6 @@ public class AnalysisScope {
 
 
   public void accept(@NotNull final PsiElementVisitor visitor) {
-    accept(visitor, true);
-  }
-
-  private void accept(@NotNull final PsiElementVisitor visitor, final boolean clearResolveCache) {
     final boolean needReadAction = !ApplicationManager.getApplication().isReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     final FileIndex fileIndex = getFileIndex();
@@ -268,7 +264,7 @@ public class AnalysisScope {
       if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
       if (fileIndex.isInContent(file) && !isFilteredOut(file)
           && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
-        return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);
+        return processFile(file, visitor, psiManager, needReadAction);
       }
       return true;
     });
@@ -340,13 +336,12 @@ public class AnalysisScope {
   private static boolean processFile(@NotNull final VirtualFile vFile,
                                      @NotNull final PsiElementVisitor visitor,
                                      @NotNull final PsiManager psiManager,
-                                     final boolean needReadAction, 
-                                     final boolean clearResolveCache) {
+                                     final boolean needReadAction) {
     if (needReadAction && !ApplicationManager.getApplication().isDispatchThread()) {
-      commitAndRunInSmartMode(() -> doProcessFile(visitor, psiManager, vFile, clearResolveCache), psiManager.getProject());
+      commitAndRunInSmartMode(() -> doProcessFile(visitor, psiManager, vFile), psiManager.getProject());
     }
     else {
-      doProcessFile(visitor, psiManager, vFile, clearResolveCache);
+      doProcessFile(visitor, psiManager, vFile);
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return indicator == null || !indicator.isCanceled();
@@ -389,18 +384,14 @@ public class AnalysisScope {
     }
   }
 
-  private static void doProcessFile(@NotNull PsiElementVisitor visitor, @NotNull PsiManager psiManager, @NotNull VirtualFile vFile,
-                                    boolean clearResolveCache) {
+  private static void doProcessFile(@NotNull PsiElementVisitor visitor, @NotNull PsiManager psiManager, @NotNull VirtualFile vFile) {
     ProgressManager.checkCanceled();
     if (!vFile.isValid()) return;
 
     PsiFile psiFile = psiManager.findFile(vFile);
     if (psiFile == null || !shouldHighlightFile(psiFile)) return;
     psiFile.accept(visitor);
-    if (clearResolveCache) {
-      psiManager.dropResolveCaches();
-      InjectedLanguageManager.getInstance(psiManager.getProject()).dropFileCaches(psiFile);
-    }
+    InjectedLanguageManager.getInstance(psiManager.getProject()).dropFileCaches(psiFile);
   }
 
   protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<? super VirtualFile> processor) {
