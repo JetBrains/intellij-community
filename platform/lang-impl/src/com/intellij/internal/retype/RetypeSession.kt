@@ -125,7 +125,6 @@ class RetypeSession(
   private val document = editor.document
 
   // -- Alarms
-  private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private val threadDumpAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
   private val originalText = document.text
@@ -147,6 +146,10 @@ class RetypeSession(
   @Volatile
   private var waitingForTimerInvokeLater: Boolean = false
 
+  private var lastTimerTick = -1L
+  private var threadPoolTimerLag = 0L
+  private var totalTimerLag = 0L
+
   // This stack will contain autocompletion elements
   // E.g. "}", "]", "*/", "* @return"
   private val completionStack = ArrayDeque<String>()
@@ -155,6 +158,9 @@ class RetypeSession(
   val interfereFileName = "IdeaRetypeBackgroundChanges.java"
 
   var retypePaused: Boolean = false
+
+  private val timerThread = Thread(::runLoop)
+  private var stopTimer = false
 
   init {
     if (editor.selectionModel.hasSelection()) {
@@ -196,12 +202,14 @@ class RetypeSession(
     runInterfereFileChanger()
     EditorNotifications.getInstance(project).updateNotifications(editor.virtualFile)
     retypePaused = false
-    queueNextOrStop()
+    timerThread.start()
+    checkStop()
   }
 
   private fun correctText(text: String) = "%replaceText ${text.replace('\n', '\u32E1')}\n"
 
   fun stop(startNext: Boolean) {
+    stopTimer = true
     for (retypeFileAssistant in RetypeFileAssistant.EP_NAME.extensions) {
       retypeFileAssistant.retypeDone(editor)
     }
@@ -233,9 +241,11 @@ class RetypeSession(
   override fun dispose() {
   }
 
-  private fun queueNext() {
-    if (!alarm.isDisposed) {
-      alarm.addRequest({ typeNext() }, delayMillis)
+  private fun runLoop() {
+    while (true) {
+      if (pos == endPos || stopTimer) break
+      Thread.sleep(delayMillis.toLong())
+      typeNext()
     }
   }
 
@@ -244,19 +254,31 @@ class RetypeSession(
 
     val timerTick = System.currentTimeMillis()
     waitingForTimerInvokeLater = true
-    ApplicationManager.getApplication().invokeLater { typeNextInEDT(timerTick) }
+
+    val expectedTimerTick = if (lastTimerTick != -1L) lastTimerTick + delayMillis else -1L
+    if (lastTimerTick != -1L) {
+      threadPoolTimerLag += (timerTick - expectedTimerTick)
+    }
+    lastTimerTick = timerTick
+    ApplicationManager.getApplication().invokeLater {
+      typeNextInEDT(timerTick, expectedTimerTick)
+    }
   }
 
-  private fun typeNextInEDT(timerTick: Long) {
+  private fun typeNextInEDT(timerTick: Long, expectedTimerTick: Long) {
     if (retypePaused) {
       if (editor.contentComponent == IdeFocusManager.findInstance().focusOwner) {
         // Resume retyping on editor focus
         retypePaused = false
       }
       else {
-        queueNextOrStop()
+        checkStop()
         return
       }
+    }
+
+    if (expectedTimerTick != -1L) {
+      totalTimerLag += (System.currentTimeMillis() - expectedTimerTick)
     }
 
     EditorNotifications.getInstance(project).updateAllNotifications()
@@ -266,7 +288,7 @@ class RetypeSession(
 
     if (TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       TemplateManager.getInstance(project).finishTemplate(editor)
-      queueNextOrStop()
+      checkStop()
       return
     }
 
@@ -279,7 +301,7 @@ class RetypeSession(
         typedRightBefore = false
         textBeforeLookupSelection = document.text
         executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM, timerTick)
-        queueNextOrStop()
+        checkStop()
         return
       }
     }
@@ -288,7 +310,7 @@ class RetypeSession(
     if (editor.contentComponent != IdeFocusManager.findInstance().focusOwner) retypePaused = true
 
     if (retypePaused) {
-      queueNextOrStop()
+      checkStop()
       return
     }
 
@@ -324,7 +346,7 @@ class RetypeSession(
         KeyEvent(editor.component, KeyEvent.KEY_TYPED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
       typedRightBefore = true
     }
-    queueNextOrStop()
+    checkStop()
   }
 
   /**
@@ -402,7 +424,7 @@ class RetypeSession(
           pos += origIndexOfFirstComp + firstCompletion.length
           editor.caretModel.moveToOffset(pos)
           completionStack.removeLast()
-          queueNextOrStop()
+          checkStop()
           return true
         }
         else if (origIndexOfFirstCompletion < 0) {
@@ -414,7 +436,7 @@ class RetypeSession(
             document.replaceString(pos, pos + docIndexOfFirstComp + firstCompletion.length, "")
           }
           completionStack.removeLast()
-          queueNextOrStop()
+          checkStop()
           return true
         }
       }
@@ -451,11 +473,8 @@ class RetypeSession(
     }
   }
 
-  private fun queueNextOrStop() {
-    if (pos < endPos) {
-      queueNext()
-    }
-    else {
+  private fun checkStop() {
+    if (pos == endPos) {
       stop(true)
 
       if (startNextCallback == null && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -468,6 +487,8 @@ class RetypeSession(
           }
           OpenFileDescriptor(project, vFile).navigate(true)
         }
+        latencyRecorderProperties["Thread pool timer lag"] = "$threadPoolTimerLag ms"
+        latencyRecorderProperties["Total timer lag"] = "$totalTimerLag ms"
         TypingLatencyReportDialog(project, threadDumps).show()
       }
     }
