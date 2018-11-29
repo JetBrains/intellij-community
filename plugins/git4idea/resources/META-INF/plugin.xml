@@ -257,6 +257,7 @@
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
 
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
+    <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
   </extensions>
 
   <extensionPoints>
