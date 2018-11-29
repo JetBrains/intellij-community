@@ -8,7 +8,11 @@ import java.io.Writer
 
 abstract class BaseXmlOutputter(protected val lineSeparator: String) {
   companion object {
-    fun isSavePasswordField(name: String) = name.contains("remember", ignoreCase = true) || name.contains("keep", ignoreCase = true) || name.contains("save", ignoreCase = true)
+    fun isNameIndicatesSensitiveInformation(name: String): Boolean {
+      return name.contains("password") && !(name.contains("remember", ignoreCase = true) ||
+                                            name.contains("keep", ignoreCase = true) ||
+                                            name.contains("save", ignoreCase = true))
+    }
   }
 
   /**

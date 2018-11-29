@@ -3,10 +3,7 @@
 
 package com.intellij.configurationStore.xml
 
-import com.intellij.configurationStore.StoredPropertyStateTest
-import com.intellij.configurationStore.clearBindingCache
-import com.intellij.configurationStore.deserialize
-import com.intellij.configurationStore.serialize
+import com.intellij.configurationStore.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertConcurrent
@@ -14,12 +11,15 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.Property
 import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
+import java.io.StringWriter
 import java.util.*
 
 @RunWith(Suite::class)
@@ -627,26 +627,80 @@ internal class XmlSerializerTest {
     testSerializer("<BeanWithDefaultAttributeName foo=\"foo\" />", BeanWithDefaultAttributeName())
   }
 
-  private class Bean2 {
-    @Attribute
-    var ab: String? = null
+  @Test
+  fun ordered() {
+    @Tag("bean")
+    class Bean {
+      @Attribute
+      var ab: String? = null
 
-    @Attribute
-    var module: String? = null
+      @Attribute
+      var module: String? = null
 
-    @Suppress("unused")
-    @Attribute
-    var ac: String? = null
-  }
+      @Suppress("unused")
+      @Attribute
+      var ac: String? = null
+    }
 
-  @Test fun ordered() {
-    val bean = Bean2()
+    val bean = Bean()
     bean.module = "module"
     bean.ab = "ab"
-    testSerializer("<Bean2 ab=\"ab\" module=\"module\" />", bean, SkipDefaultsSerializationFilter())
+    testSerializer("<bean ab=\"ab\" module=\"module\" />", bean, SkipDefaultsSerializationFilter())
   }
 
-  @Test fun cdataAfterNewLine() {
+  @Test
+  fun `do not store password as attribute`() {
+    @Tag("bean")
+    class Bean {
+      @Attribute
+      var password: String? = null
+
+      @Attribute
+      var foo: String? = null
+    }
+
+    val bean = Bean()
+    bean.foo = "module"
+    bean.password = "ab"
+    // it is not part of XML bindings to ensure that even if you will use JDOM directly, you cannot output sensitive data
+    // so, testSerializer must not throw error
+    val element = assertSerializer(bean, "<bean password=\"ab\" foo=\"module\" />")
+
+    assertThatThrownBy {
+      val xmlWriter = JbXmlOutputter(true)
+      xmlWriter.output(element, StringWriter())
+    }.hasMessage("Attribute \"password\" probably contains sensitive information")
+  }
+
+  @Test
+  fun `do not store password as element`() {
+    @Tag("bean")
+    class Bean {
+      var password: String? = null
+
+      @Attribute
+      var foo: String? = null
+    }
+
+    val bean = Bean()
+    bean.foo = "module"
+    bean.password = "ab"
+    // it is not part of XML bindings to ensure that even if you will use JDOM directly, you cannot output sensitive data
+    // so, testSerializer must not throw error
+    val element = assertSerializer(bean, """
+      <bean foo="module">
+        <option name="password" value="ab" />
+      </bean>
+    """.trimIndent())
+
+    assertThatThrownBy {
+      val xmlWriter = JbXmlOutputter(true)
+      xmlWriter.output(element, StringWriter())
+    }.hasMessage("Element \"password\" probably contains sensitive information")
+  }
+
+  @Test
+  fun cdataAfterNewLine() {
     @Tag("bean")
     data class Bean(@Tag val description: String? = null)
 
@@ -687,7 +741,7 @@ internal class XmlSerializerTest {
 //  }
 }
 
-internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter?, description: String = "Serialization failure"): Element {
+internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter? = null, description: String = "Serialization failure"): Element {
   val element = bean.serialize(filter, createElementIfEmpty = true)!!
   assertThat(element).`as`(description).isEqualTo(expected)
   return element

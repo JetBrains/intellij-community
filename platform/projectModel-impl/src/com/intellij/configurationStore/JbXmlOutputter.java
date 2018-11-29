@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.Constants;
 import org.jdom.*;
 import org.jdom.output.Format;
 import org.jetbrains.annotations.NotNull;
@@ -35,21 +36,36 @@ public class JbXmlOutputter extends BaseXmlOutputter {
   @Nullable
   private final PathMacroFilter macroFilter;
 
+  private final boolean isForbidSensitiveData;
+
+  public JbXmlOutputter(boolean isForbidSensitiveData) {
+    this("\n", null, null, null, isForbidSensitiveData);
+  }
+
   public JbXmlOutputter(@NotNull String lineSeparator,
+                          @Nullable JDOMUtil.ElementOutputFilter elementFilter,
+                          @Nullable ReplacePathToMacroMap macroMap,
+                          @Nullable PathMacroFilter macroFilter) {
+    this(lineSeparator, elementFilter, macroMap, macroFilter, true);
+  }
+
+  private JbXmlOutputter(@NotNull String lineSeparator,
                         @Nullable JDOMUtil.ElementOutputFilter elementFilter,
                         @Nullable ReplacePathToMacroMap macroMap,
-                        @Nullable PathMacroFilter macroFilter) {
+                        @Nullable PathMacroFilter macroFilter,
+                        boolean isForbidSensitiveData) {
     super(lineSeparator);
 
     this.format = DEFAULT_FORMAT.getLineSeparator().equals(lineSeparator) ? DEFAULT_FORMAT : JDOMUtil.createFormat(lineSeparator);
     this.elementFilter = elementFilter;
     this.macroMap = macroMap;
     this.macroFilter = macroFilter;
+    this.isForbidSensitiveData = isForbidSensitiveData;
   }
 
   public static void collapseMacrosAndWrite(@NotNull Element element, @NotNull ComponentManager project, @NotNull Writer writer) throws IOException {
     PathMacroManager macroManager = PathMacroManager.getInstance(project);
-    JbXmlOutputter xmlWriter = new JbXmlOutputter("\n", null, macroManager.getReplacePathMap(), macroManager.getMacroFilter());
+    JbXmlOutputter xmlWriter = new JbXmlOutputter("\n", null, macroManager.getReplacePathMap(), macroManager.getMacroFilter(), true);
     xmlWriter.output(element, writer);
   }
 
@@ -275,9 +291,25 @@ public class JbXmlOutputter extends BaseXmlOutputter {
     out.write('>');
   }
 
+  private static void checkIsElementContainsSensitiveInformation(@NotNull Element element) {
+    String name = element.getName();
+    if (BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(name)) {
+      logSensitiveInformationError(name, "Element");
+    }
+
+    name = element.getAttributeValue(Constants.NAME);
+    if (name != null && BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(name)) {
+      logSensitiveInformationError(name, "Element");
+    }
+  }
+
+  private static void logSensitiveInformationError(@NotNull String name, @NotNull String elementKind) {
+    Logger.getInstance(JbXmlOutputter.class).error(elementKind + " \"" + name + "\" probably contains sensitive information");
+  }
+
   protected boolean writeContent(@NotNull Writer out, @NotNull Element element, int level) throws IOException {
-    if (element.getName().contains("password") && !BaseXmlOutputter.Companion.isSavePasswordField(element.getName())) {
-      Logger.getInstance(JbXmlOutputter.class).error("Element " + element.getName() + " probably contains sensitive information");
+    if (isForbidSensitiveData) {
+      checkIsElementContainsSensitiveInformation(element);
     }
 
     List<Content> content = element.getContent();
@@ -452,8 +484,8 @@ public class JbXmlOutputter extends BaseXmlOutputter {
         value = attribute.getValue();
       }
 
-      if (attribute.getName().contains("password") && !BaseXmlOutputter.Companion.isSavePasswordField(attribute.getName())) {
-        Logger.getInstance(JbXmlOutputter.class).error("Attribute " + attribute.getName() + " probably contains sensitive information");
+      if (isForbidSensitiveData && BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(attribute.getName())) {
+        logSensitiveInformationError(attribute.getName(), "Attribute");
       }
 
       out.write(escapeAttributeEntities(value));
