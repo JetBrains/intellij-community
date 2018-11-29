@@ -293,7 +293,8 @@ public class JbXmlOutputter extends BaseXmlOutputter {
 
   private static void checkIsElementContainsSensitiveInformation(@NotNull Element element) {
     String name = element.getName();
-    if (BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(name)) {
+    //noinspection SpellCheckingInspection
+    if (BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(name) && !name.equals("omniauth-multipassword")) {
       logSensitiveInformationError(name, "Element");
     }
 
