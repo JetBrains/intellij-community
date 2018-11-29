@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -41,6 +42,7 @@ import java.util.function.Function;
 public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private static final ChainSelector DEFAULT_CHAIN_SELECTOR = ChainSelector.byIndex(0);
   private static final LibrarySupportProvider DEFAULT_LIBRARY_SUPPORT_PROVIDER = new StandardLibrarySupportProvider();
+  private final Logger LOG = Logger.getInstance(getClass());
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
 
   @Override
@@ -160,6 +162,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
           @Override
           public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
+            LOG.warn("Compilation failed. Trace expression: " + traceExpression);
             complete(chain, null, message, FailureReason.COMPILATION);
           }
         });
