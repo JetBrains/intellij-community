@@ -19,6 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -32,6 +35,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -232,7 +236,10 @@ public class FoldingUpdate {
     TextRange docRange = TextRange.from(0, document.getTextLength());
     Comparator<Language> preferBaseLanguage = Comparator.comparing((Language l) -> l != viewProvider.getBaseLanguage());
     List<Language> languages = ContainerUtil.sorted(viewProvider.getLanguages(), preferBaseLanguage.thenComparing(Language::getID));
-    for (final Language language : languages) {
+
+    DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence()) : null;
+
+    for (Language language : languages) {
       final PsiFile psi = viewProvider.getPsi(language);
       final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
       if (psi != null && foldingBuilder != null) {
@@ -242,15 +249,32 @@ public class FoldingUpdate {
             LOG.error("No PSI for folding descriptor " + descriptor);
             continue;
           }
-          if (!docRange.contains(descriptor.getRange())) {
+          TextRange range = descriptor.getRange();
+          if (!docRange.contains(range)) {
             diagnoseIncorrectRange(psi, document, language, foldingBuilder, descriptor, psiElement);
             continue;
           }
+
+          if (copyDoc != null && !addNonConflictingRegion(copyDoc, range)) {
+            continue;
+          }
+
           RegionInfo regionInfo = new RegionInfo(descriptor, psiElement, foldingBuilder);
           elementsToFold.add(regionInfo);
         }
       }
     }
+  }
+
+  private static boolean addNonConflictingRegion(DocumentEx document, TextRange range) {
+    int start = range.getStartOffset();
+    int end = range.getEndOffset();
+    Processor<RangeMarker> areNonConflicting = rm -> range.contains(rm) || TextRange.create(rm).contains(range);
+    if (!document.processRangeMarkersOverlappingWith(start, end, areNonConflicting)) {
+      return false;
+    }
+    document.createRangeMarker(start, end);
+    return true;
   }
 
   private static void diagnoseIncorrectRange(@NotNull PsiFile file,
