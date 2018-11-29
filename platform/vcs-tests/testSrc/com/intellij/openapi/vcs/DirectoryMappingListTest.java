@@ -104,20 +104,19 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   public void testSamePrefix() {
     myMappings.setMapping(myRootPath + "/a", "CVS");
     myMappings.setMapping(myRootPath + "/a-b", "mock2");
-    assertEquals(3, myMappings.getDirectoryMappings().size());
+    assertEquals(2, myMappings.getDirectoryMappings().size());
     myMappings.cleanupMappings();
-    assertEquals(3, myMappings.getDirectoryMappings().size());
+    assertEquals(2, myMappings.getDirectoryMappings().size());
     assertEquals("mock2", myMappings.getVcsFor(myProjectRoot.findChild("a-b")));
     assertEquals("CVS", myMappings.getVcsFor(myProjectRoot.findChild("a")));
   }
 
   public void testSamePrefixEmpty() {
     myMappings.setMapping(myRootPath + "/a", "CVS");
-    assertEquals("", myMappings.getVcsFor(myProjectRoot.findChild("a-b")));
+    assertNull(myMappings.getVcsFor(myProjectRoot.findChild("a-b")));
   }
 
   public void testSame() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent/path", "CVS");
 
     final String[] children = {
@@ -138,7 +137,6 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   }
 
   public void testHierarchy() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
 
     final String[] children = {
@@ -154,7 +152,6 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   }
 
   public void testNestedInnerCopy() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
     myMappings.setMapping(myRootPath + "/parent/child", "mock");
 
