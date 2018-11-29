@@ -1574,10 +1574,26 @@ public class AllIcons {
   public final static class Ide {
 
     public final static class Dnd {
-      public static final Icon Bottom = IconLoader.getIcon("/ide/dnd/bottom.png"); // 16x16
-      public static final Icon Left = IconLoader.getIcon("/ide/dnd/left.png"); // 16x16
-      public static final Icon Right = IconLoader.getIcon("/ide/dnd/right.png"); // 16x16
-      public static final Icon Top = IconLoader.getIcon("/ide/dnd/top.png"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowUp */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Bottom = AllIcons.General.ArrowUp;
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Left = AllIcons.General.ArrowRight;
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Right = AllIcons.General.ArrowLeft;
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Top = AllIcons.General.ArrowDown;
 
     }
     public static final Icon ErrorPoint = IconLoader.getIcon("/ide/errorPoint.svg"); // 6x6
