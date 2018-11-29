@@ -285,6 +285,11 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
     try:
         main_debugger: object = GlobalDebuggerHolder.global_dbg
 
+        if not hasattr(main_debugger, "break_on_caught_exceptions") or not hasattr(main_debugger, "has_plugin_exception_breaks")\
+                or not hasattr(main_debugger, "signature_factory"):
+            # Debugger isn't fully initialized here yet
+            return _PyEval_EvalFrameDefault(frame_obj, exc)
+
         if thread_info.thread_trace_func is None:
             frame = <object> frame_obj
             trace_func, apply_to_global = fix_top_level_trace_and_get_trace_func(main_debugger, frame)
