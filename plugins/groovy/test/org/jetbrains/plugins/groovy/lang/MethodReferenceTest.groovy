@@ -99,14 +99,14 @@ class D {
   static long 'new'(String b) { 42l }
 }
 '''
-    typingTest 'def ref = D::new; ref(1)', 'D'
-    typingTest 'def ref = D::new; ref("hello")', 'long'
+    expressionTypeTest 'def ref = D::new; ref(1)', 'D'
+    expressionTypeTest 'def ref = D::new; ref("hello")', 'long'
   }
 
   void 'test array typing'() {
-    typingTest 'Integer[]::new(0)', 'java.lang.Integer[]'
-    typingTest 'int[][]::new(0)', 'int[][]'
-    typingTest 'int[][]::new(1, 2)', 'int[][]'
+    expressionTypeTest 'Integer[]::new(0)', 'java.lang.Integer[]'
+    expressionTypeTest 'int[][]::new(0)', 'int[][]'
+    expressionTypeTest 'int[][]::new(1, 2)', 'int[][]'
   }
 
   void 'test constructors highlighting'() { highlightingTest() }
