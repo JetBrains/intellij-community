@@ -417,7 +417,9 @@ internal fun createDataWriterForElement(element: Element): DataWriter {
     override fun hasData(filter: DataWriterFilter) = filter.hasData(element)
 
     override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
-      output.bufferedWriter().use { JbXmlOutputter(lineSeparator, filter?.toElementFilter(), null, null).output(element, it) }
+      output.bufferedWriter().use {
+        JbXmlOutputter(lineSeparator, elementFilter = filter?.toElementFilter()).output(element, it)
+      }
     }
   }
 }

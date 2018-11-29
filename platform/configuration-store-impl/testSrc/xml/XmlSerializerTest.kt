@@ -667,7 +667,7 @@ internal class XmlSerializerTest {
     val element = assertSerializer(bean, "<bean password=\"ab\" foo=\"module\" />")
 
     assertThatThrownBy {
-      val xmlWriter = JbXmlOutputter(true)
+      val xmlWriter = JbXmlOutputter()
       xmlWriter.output(element, StringWriter())
     }.hasMessage("Attribute \"password\" probably contains sensitive information")
   }
@@ -694,7 +694,7 @@ internal class XmlSerializerTest {
     """.trimIndent())
 
     assertThatThrownBy {
-      val xmlWriter = JbXmlOutputter(true)
+      val xmlWriter = JbXmlOutputter()
       xmlWriter.output(element, StringWriter())
     }.hasMessage("Element \"password\" probably contains sensitive information")
   }
@@ -717,7 +717,7 @@ internal class XmlSerializerTest {
      </bean>
     """.trimIndent())
 
-    val xmlWriter = JbXmlOutputter(true)
+    val xmlWriter = JbXmlOutputter()
     val stringWriter = StringWriter()
     xmlWriter.output(element, stringWriter)
     assertThat(stringWriter.toString()).isEqualTo("""

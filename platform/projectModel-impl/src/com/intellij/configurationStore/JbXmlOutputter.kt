@@ -1,343 +1,301 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.configurationStore;
+@file:Suppress("Duplicates")
 
-import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.application.PathMacroFilter;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.Constants;
-import org.jdom.*;
-import org.jdom.output.Format;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.configurationStore
 
-import javax.xml.transform.Result;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.List;
+import com.intellij.application.options.ReplacePathToMacroMap
+import com.intellij.openapi.application.PathMacroFilter
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.xmlb.Constants
+import org.jdom.*
+import org.jdom.output.Format
+import java.io.IOException
+import java.io.StringWriter
+import java.io.Writer
+import javax.xml.transform.Result
+
+private val DEFAULT_FORMAT = JDOMUtil.createFormat("\n")
 
 // expandEmptyElements is ignored
-@SuppressWarnings("Duplicates")
-public class JbXmlOutputter extends BaseXmlOutputter {
-  private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
+open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n",
+                                                        private val elementFilter: JDOMUtil.ElementOutputFilter? = null,
+                                                        private val macroMap: ReplacePathToMacroMap? = null,
+                                                        private val macroFilter: PathMacroFilter? = null,
+                                                        private val isForbidSensitiveData: Boolean = true) : BaseXmlOutputter(lineSeparator) {
+  companion object {
+    @JvmStatic
+    @Throws(IOException::class)
+    fun collapseMacrosAndWrite(element: Element, project: ComponentManager, writer: Writer) {
+      val macroManager = PathMacroManager.getInstance(project)
+      JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter).output(element, writer)
+    }
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun collapseMacrosAndWrite(element: Element, project: ComponentManager): String {
+      val writer = StringWriter()
+      collapseMacrosAndWrite(element, project, writer)
+      return writer.toString()
+    }
+
+    private fun checkIsElementContainsSensitiveInformation(element: Element) {
+      var name: String? = element.name
+
+      @Suppress("SpellCheckingInspection")
+      if (BaseXmlOutputter.isNameIndicatesSensitiveInformation(name!!) && name != "omniauth-multipassword") {
+        logSensitiveInformationError(name, "Element")
+      }
+
+      // checks only option tag
+      name = element.getAttributeValue(Constants.NAME)
+      if (name != null && BaseXmlOutputter.isNameIndicatesSensitiveInformation(name) && element.getAttribute("value") != null) {
+        logSensitiveInformationError(name, "Element")
+      }
+    }
+
+    private fun logSensitiveInformationError(name: String, elementKind: String) {
+      Logger.getInstance(JbXmlOutputter::class.java).error("$elementKind \"$name\" probably contains sensitive information")
+    }
+
+    fun escapeElementEntities(str: String?): String {
+      return JDOMUtil.escapeText(str!!, false, false)
+    }
+  }
 
   // For normal output
-  private final Format format;
-  @Nullable
-  private final JDOMUtil.ElementOutputFilter elementFilter;
-
-  @Nullable
-  private final ReplacePathToMacroMap macroMap;
-  @Nullable
-  private final PathMacroFilter macroFilter;
-
-  private final boolean isForbidSensitiveData;
-
-  public JbXmlOutputter(boolean isForbidSensitiveData) {
-    this("\n", null, null, null, isForbidSensitiveData);
-  }
-
-  public JbXmlOutputter(@NotNull String lineSeparator,
-                          @Nullable JDOMUtil.ElementOutputFilter elementFilter,
-                          @Nullable ReplacePathToMacroMap macroMap,
-                          @Nullable PathMacroFilter macroFilter) {
-    this(lineSeparator, elementFilter, macroMap, macroFilter, true);
-  }
-
-  private JbXmlOutputter(@NotNull String lineSeparator,
-                        @Nullable JDOMUtil.ElementOutputFilter elementFilter,
-                        @Nullable ReplacePathToMacroMap macroMap,
-                        @Nullable PathMacroFilter macroFilter,
-                        boolean isForbidSensitiveData) {
-    super(lineSeparator);
-
-    this.format = DEFAULT_FORMAT.getLineSeparator().equals(lineSeparator) ? DEFAULT_FORMAT : JDOMUtil.createFormat(lineSeparator);
-    this.elementFilter = elementFilter;
-    this.macroMap = macroMap;
-    this.macroFilter = macroFilter;
-    this.isForbidSensitiveData = isForbidSensitiveData;
-  }
-
-  public static void collapseMacrosAndWrite(@NotNull Element element, @NotNull ComponentManager project, @NotNull Writer writer) throws IOException {
-    PathMacroManager macroManager = PathMacroManager.getInstance(project);
-    JbXmlOutputter xmlWriter = new JbXmlOutputter("\n", null, macroManager.getReplacePathMap(), macroManager.getMacroFilter(), true);
-    xmlWriter.output(element, writer);
-  }
-
-  @NotNull
-  public static String collapseMacrosAndWrite(@NotNull Element element, @NotNull ComponentManager project) throws IOException {
-    StringWriter writer = new StringWriter();
-    collapseMacrosAndWrite(element, project, writer);
-    return writer.toString();
-  }
+  private val format = if (DEFAULT_FORMAT.lineSeparator == lineSeparator) DEFAULT_FORMAT else JDOMUtil.createFormat(lineSeparator)
 
   /**
-   * This will print the <code>Document</code> to the given Writer.
+   * This will print the `Document` to the given Writer.
    *
-   * <p>
+   *
+   *
    * Warning: using your own Writer may cause the outputter's
    * preferred character encoding to be ignored.  If you use
    * encodings other than UTF-8, we recommend using the method that
    * takes an OutputStream instead.
-   * </p>
    *
-   * @param doc <code>Document</code> to format.
-   * @param out <code>Writer</code> to use.
+   *
+   * @param doc `Document` to format.
+   * @param out `Writer` to use.
    * @throws IOException - if there's any problem writing.
    */
-  public void output(Document doc, Writer out) throws IOException {
-    printDeclaration(out, format.getEncoding());
+  @Throws(IOException::class)
+  fun output(doc: Document, out: Writer) {
+    printDeclaration(out, format.encoding)
 
     // Print out root element, as well as any root level comments and processing instructions, starting with no indentation
-    List<Content> content = doc.getContent();
-    for (Content obj : content) {
-      if (obj instanceof Element) {
-        printElement(out, doc.getRootElement(), 0);
-      }
-      else if (obj instanceof Comment) {
-        printComment(out, (Comment)obj);
-      }
-      else if (obj instanceof ProcessingInstruction) {
-        printProcessingInstruction(out, (ProcessingInstruction)obj);
-      }
-      else if (obj instanceof DocType) {
-        printDocType(out, doc.getDocType());
-        // Always print line separator after declaration, helps the
-        // output look better and is semantically inconsequential
-        writeLineSeparator(out);
+    val content = doc.content
+    for (obj in content) {
+      when (obj) {
+        is Element -> printElement(out, doc.rootElement, 0)
+        is Comment -> printComment(out, obj)
+        is ProcessingInstruction -> printProcessingInstruction(out, obj)
+        is DocType -> {
+          printDocType(out, doc.docType)
+          // Always print line separator after declaration, helps the
+          // output look better and is semantically inconsequential
+          writeLineSeparator(out)
+        }
       }
 
-      newline(out);
-      indent(out, 0);
+      newline(out)
+      indent(out, 0)
     }
 
     // Output final line separator
     // We output this no matter what the newline flags say
-    writeLineSeparator(out);
+    writeLineSeparator(out)
 
-    out.flush();
+    out.flush()
   }
 
-  private void writeLineSeparator(Writer out) throws IOException {
-    if (format.getLineSeparator() != null) {
-      out.write(format.getLineSeparator());
+  @Throws(IOException::class)
+  private fun writeLineSeparator(out: Writer) {
+    if (format.lineSeparator != null) {
+      out.write(format.lineSeparator)
     }
   }
 
   /**
-   * Print out the <code>{@link DocType}</code>.
+   * Print out the `[DocType]`.
    *
-   * @param doctype <code>DocType</code> to output.
-   * @param out     <code>Writer</code> to use.
+   * @param doctype `DocType` to output.
+   * @param out     `Writer` to use.
    */
-  public void output(DocType doctype, Writer out) throws IOException {
-    printDocType(out, doctype);
-    out.flush();
+  @Throws(IOException::class)
+  fun output(doctype: DocType, out: Writer) {
+    printDocType(out, doctype)
+    out.flush()
   }
 
-  public void output(@NotNull Element element, @NotNull Writer out) throws IOException {
-    printElement(out, element, 0);
+  @Throws(IOException::class)
+  fun output(element: Element, out: Writer) {
+    printElement(out, element, 0)
   }
 
   /**
    * This will handle printing of the declaration.
    * Assumes XML version 1.0 since we don't directly know.
    *
-   * @param out      <code>Writer</code> to use.
+   * @param out      `Writer` to use.
    * @param encoding The encoding to add to the declaration
    */
-  private void printDeclaration(Writer out, String encoding) throws IOException {
+  @Throws(IOException::class)
+  private fun printDeclaration(out: Writer, encoding: String) {
     // Only print the declaration if it's not being omitted
-    if (!format.getOmitDeclaration()) {
+    if (!format.omitDeclaration) {
       // Assume 1.0 version
-      out.write("<?xml version=\"1.0\"");
-      if (!format.getOmitEncoding()) {
-        out.write(" encoding=\"" + encoding + "\"");
+      out.write("<?xml version=\"1.0\"")
+      if (!format.omitEncoding) {
+        out.write(" encoding=\"$encoding\"")
       }
-      out.write("?>");
+      out.write("?>")
 
       // Print new line after decl always, even if no other new lines
       // Helps the output look better and is semantically
       // inconsequential
-      writeLineSeparator(out);
+      writeLineSeparator(out)
     }
-  }
-
-  /**
-   * This will handle printing of comments.
-   *
-   * @param comment <code>Comment</code> to write.
-   * @param out     <code>Writer</code> to use.
-   */
-  private static void printComment(Writer out, Comment comment)
-    throws IOException {
-    out.write("<!--");
-    out.write(comment.getText());
-    out.write("-->");
   }
 
   /**
    * This will handle printing of processing instructions.
    *
-   * @param pi  <code>ProcessingInstruction</code> to write.
-   * @param out <code>Writer</code> to use.
+   * @param pi  `ProcessingInstruction` to write.
+   * @param out `Writer` to use.
    */
-  private void printProcessingInstruction(Writer out, ProcessingInstruction pi) throws IOException {
-    String target = pi.getTarget();
-    boolean piProcessed = false;
+  @Throws(IOException::class)
+  private fun printProcessingInstruction(out: Writer, pi: ProcessingInstruction) {
+    val target = pi.target
+    var piProcessed = false
 
-    if (!format.getIgnoreTrAXEscapingPIs()) {
-      if (target.equals(Result.PI_DISABLE_OUTPUT_ESCAPING)) {
-        piProcessed = true;
+    if (!format.ignoreTrAXEscapingPIs) {
+      if (target == Result.PI_DISABLE_OUTPUT_ESCAPING) {
+        piProcessed = true
       }
-      else if (target.equals(Result.PI_ENABLE_OUTPUT_ESCAPING)) {
-        piProcessed = true;
+      else if (target == Result.PI_ENABLE_OUTPUT_ESCAPING) {
+        piProcessed = true
       }
     }
     if (!piProcessed) {
-      writeProcessingInstruction(out, pi, target);
+      writeProcessingInstruction(out, pi, target)
     }
   }
 
   /**
-   * This will handle printing a <code>{@link EntityRef}</code>.
-   * Only the entity reference such as <code>&amp;entity;</code>
-   * will be printed. However, subclasses are free to override
-   * this method to print the contents of the entity instead.
+   * This will handle printing of `[CDATA]` text.
    *
-   * @param entity <code>EntityRef</code> to output.
-   * @param out    <code>Writer</code> to use.
+   * @param cdata `CDATA` to output.
+   * @param out   `Writer` to use.
    */
-  private static void printEntityRef(Writer out, EntityRef entity)
-    throws IOException {
-    out.write("&");
-    out.write(entity.getName());
-    out.write(";");
-  }
-
-  /**
-   * This will handle printing of <code>{@link CDATA}</code> text.
-   *
-   * @param cdata <code>CDATA</code> to output.
-   * @param out   <code>Writer</code> to use.
-   */
-  private void printCDATA(Writer out, CDATA cdata) throws IOException {
-    String str;
-    if (format.getTextMode() == Format.TextMode.NORMALIZE) {
-      str = cdata.getTextNormalize();
+  @Throws(IOException::class)
+  private fun printCDATA(out: Writer, cdata: CDATA) {
+    var str: String
+    if (format.textMode == Format.TextMode.NORMALIZE) {
+      str = cdata.textNormalize
     }
     else {
-      str = format.getTextMode() == Format.TextMode.TRIM ? cdata.getText().trim() : cdata.getText();
+      str = cdata.text
+      if (format.textMode == Format.TextMode.TRIM) {
+        str = str.trim()
+      }
     }
-    out.write("<![CDATA[");
-    out.write(str);
-    out.write("]]>");
+    out.write("<![CDATA[")
+    out.write(str)
+    out.write("]]>")
   }
 
   /**
    * This will handle printing a string.  Escapes the element entities,
    * trims interior whitespace, etc. if necessary.
    */
-  private void printString(@NotNull Writer out, String str) throws IOException {
-    if (format.getTextMode() == Format.TextMode.NORMALIZE) {
-      str = Text.normalizeString(str);
+  @Throws(IOException::class)
+  private fun printString(out: Writer, str: String?) {
+    var normalizedString = str
+    if (format.textMode == Format.TextMode.NORMALIZE) {
+      normalizedString = Text.normalizeString(normalizedString)
     }
-    else if (format.getTextMode() == Format.TextMode.TRIM) {
-      str = str.trim();
+    else if (format.textMode == Format.TextMode.TRIM) {
+      normalizedString = normalizedString!!.trim()
     }
 
     if (macroMap != null) {
-      str = macroMap.substitute(str, SystemInfoRt.isFileSystemCaseSensitive);
+      normalizedString = macroMap.substitute(normalizedString, SystemInfoRt.isFileSystemCaseSensitive)
     }
-    out.write(escapeElementEntities(str));
+    out.write(escapeElementEntities(normalizedString))
   }
 
   /**
-   * This will handle printing of a <code>{@link Element}</code>,
-   * its <code>{@link Attribute}</code>s, and all contained (child)
+   * This will handle printing of a `[Element]`,
+   * its `[Attribute]`s, and all contained (child)
    * elements, etc.
    *
-   * @param element <code>Element</code> to output.
-   * @param out     <code>Writer</code> to use.
-   * @param level   <code>int</code> level of indention.
+   * @param element `Element` to output.
+   * @param out     `Writer` to use.
+   * @param level   `int` level of indention.
    */
-  public void printElement(@NotNull Writer out, @NotNull Element element, int level) throws IOException {
+  @Throws(IOException::class)
+  fun printElement(out: Writer, element: Element, level: Int) {
     if (elementFilter != null && !elementFilter.accept(element, level)) {
-      return;
+      return
     }
 
     // Print the beginning of the tag plus attributes and any
     // necessary namespace declarations
-    out.write('<');
-    printQualifiedName(out, element);
+    out.write('<'.toInt())
+    printQualifiedName(out, element)
 
     if (element.hasAttributes()) {
-      printAttributes(out, element.getAttributes());
+      printAttributes(out, element.attributes)
     }
 
     // depending on the settings (newlines, textNormalize, etc), we may or may not want to print all of the content,
     // so determine the index of the start of the content we're interested in based on the current settings.
     if (!writeContent(out, element, level)) {
-      return;
+      return
     }
 
-    out.write("</");
-    printQualifiedName(out, element);
-    out.write('>');
+    out.write("</")
+    printQualifiedName(out, element)
+    out.write('>'.toInt())
   }
 
-  private static void checkIsElementContainsSensitiveInformation(@NotNull Element element) {
-    String name = element.getName();
-    //noinspection SpellCheckingInspection
-    if (BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(name) && !name.equals("omniauth-multipassword")) {
-      logSensitiveInformationError(name, "Element");
-    }
-
-    // checks only option tag
-    name = element.getAttributeValue(Constants.NAME);
-    if (name != null && BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(name) && element.getAttribute("value") != null) {
-      logSensitiveInformationError(name, "Element");
-    }
-  }
-
-  private static void logSensitiveInformationError(@NotNull String name, @NotNull String elementKind) {
-    Logger.getInstance(JbXmlOutputter.class).error(elementKind + " \"" + name + "\" probably contains sensitive information");
-  }
-
-  protected boolean writeContent(@NotNull Writer out, @NotNull Element element, int level) throws IOException {
+  @Throws(IOException::class)
+  protected open fun writeContent(out: Writer, element: Element, level: Int): Boolean {
     if (isForbidSensitiveData) {
-      checkIsElementContainsSensitiveInformation(element);
+      checkIsElementContainsSensitiveInformation(element)
     }
 
-    List<Content> content = element.getContent();
-    int start = skipLeadingWhite(content, 0);
-    int size = content.size();
+    val content = element.content
+    val start = skipLeadingWhite(content, 0)
+    val size = content.size
     if (start >= size) {
       // content is empty or all insignificant whitespace
-      out.write(" />");
-      return false;
+      out.write(" />")
+      return false
     }
 
-    out.write('>');
+    out.write('>'.toInt())
 
     // for a special case where the content is only CDATA or Text we don't want to indent after the start or before the end tag
     if (nextNonText(content, start) < size) {
       // case Mixed Content - normal indentation
-      newline(out);
-      printContentRange(out, content, start, size, level + 1);
-      newline(out);
-      indent(out, level);
+      newline(out)
+      printContentRange(out, content, start, size, level + 1)
+      newline(out)
+      indent(out, level)
     }
     else {
       // case all CDATA or Text - no indentation
-      printTextRange(out, content, start, size);
+      printTextRange(out, content, start, size)
     }
-    return true;
+    return true
   }
 
   /**
@@ -346,179 +304,173 @@ public class JbXmlOutputter extends BaseXmlOutputter {
    * starting index is inclusive, while the ending index is
    * exclusive.
    *
-   * @param content <code>List</code> of content to output
+   * @param content `List` of content to output
    * @param start   index of first content node (inclusive.
    * @param end     index of last content node (exclusive).
-   * @param out     <code>Writer</code> to use.
-   * @param level   <code>int</code> level of indentation.
+   * @param out     `Writer` to use.
+   * @param level   `int` level of indentation.
    */
-  private void printContentRange(@NotNull Writer out, @NotNull List<Content> content, int start, int end, int level) throws IOException {
-    boolean firstNode; // Flag for 1st node in content
-    Content next;       // Node we're about to print
-    int first, index;  // Indexes into the list of content
+  @Throws(IOException::class)
+  private fun printContentRange(out: Writer, content: List<Content>, start: Int, end: Int, level: Int) {
+    var firstNode: Boolean // Flag for 1st node in content
+    var next: Content       // Node we're about to print
+    var first: Int
+    var index: Int  // Indexes into the list of content
 
-    index = start;
+    index = start
     while (index < end) {
-      firstNode = index == start;
-      next = content.get(index);
+      firstNode = index == start
+      next = content[index]
 
       // Handle consecutive CDATA, Text, and EntityRef nodes all at once
-      if (next instanceof Text || next instanceof EntityRef) {
-        first = skipLeadingWhite(content, index);
+      if (next is Text || next is EntityRef) {
+        first = skipLeadingWhite(content, index)
         // Set index to next node for loop
-        index = nextNonText(content, first);
+        index = nextNonText(content, first)
 
         // If it's not all whitespace - print it!
         if (first < index) {
           if (!firstNode) {
-            newline(out);
+            newline(out)
           }
-          indent(out, level);
-          printTextRange(out, content, first, index);
+          indent(out, level)
+          printTextRange(out, content, first, index)
         }
-        continue;
+        continue
       }
 
       // Handle other nodes
       if (!firstNode) {
-        newline(out);
+        newline(out)
       }
 
-      indent(out, level);
+      indent(out, level)
 
-      if (next instanceof Comment) {
-        printComment(out, (Comment)next);
-      }
-      else if (next instanceof Element) {
-        printElement(out, (Element)next, level);
-      }
-      else if (next instanceof ProcessingInstruction) {
-        printProcessingInstruction(out, (ProcessingInstruction)next);
-      }
-      else {
-        // XXX if we get here then we have a illegal content, for now we'll just ignore it (probably should throw a exception)
+      when (next) {
+        is Comment -> printComment(out, next)
+        is Element -> printElement(out, next, level)
+        is ProcessingInstruction -> printProcessingInstruction(out, next)
+        else -> {
+          // XXX if we get here then we have a illegal content, for now we'll just ignore it (probably should throw a exception)
+        }
       }
 
-      index++;
+      index++
     }
   }
 
   /**
-   * This will handle printing of a sequence of <code>{@link CDATA}</code>
-   * or <code>{@link Text}</code> nodes.  It is an error to have any other
+   * This will handle printing of a sequence of `[CDATA]`
+   * or `[Text]` nodes.  It is an error to have any other
    * pass this method any other type of node.
    *
-   * @param content <code>List</code> of content to output
+   * @param content `List` of content to output
    * @param start   index of first content node (inclusive).
    * @param end     index of last content node (exclusive).
-   * @param out     <code>Writer</code> to use.
+   * @param out     `Writer` to use.
    */
-  private void printTextRange(@NotNull Writer out, @NotNull List<Content> content, int start, int end) throws IOException {
-    // remove leading whitespace-only nodes
-    start = skipLeadingWhite(content, start);
-    if (start >= content.size()) {
-      return;
+  @Throws(IOException::class)
+  private fun printTextRange(out: Writer, content: List<Content>, start: Int, end: Int) {
+    @Suppress("NAME_SHADOWING")
+    val start = skipLeadingWhite(content, start)
+    if (start >= content.size) {
+      return
     }
 
     // and remove trialing whitespace-only nodes
-    end = skipTrailingWhite(content, end);
+    @Suppress("NAME_SHADOWING")
+    val end = skipTrailingWhite(content, end)
 
-    String previous = null;
-    for (int i = start; i < end; i++) {
-      Content node = content.get(i);
+    var previous: String? = null
+    for (i in start until end) {
+      val node = content[i]
 
       // get the unmangled version of the text we are about to print
-      String next;
-      if (node instanceof Text) {
-        next = ((Text)node).getText();
-      }
-      else if (node instanceof EntityRef) {
-        next = "&" + node.getValue() + ";";
-      }
-      else {
-        throw new IllegalStateException("Should see only CDATA, Text, or EntityRef");
+      val next: String?
+      when (node) {
+        is Text -> next = node.text
+        is EntityRef -> next = "&" + node.getValue() + ";"
+        else -> throw IllegalStateException("Should see only CDATA, Text, or EntityRef")
       }
 
-      if (next == null || next.isEmpty()) {
-        continue;
+      if (next.isNullOrEmpty()) {
+        continue
       }
 
       // determine if we need to pad the output (padding is only need in trim or normalizing mode)
-      if (previous != null && (format.getTextMode() == Format.TextMode.NORMALIZE || format.getTextMode() == Format.TextMode.TRIM)) {
-        if (endsWithWhite(previous) || startsWithWhite(next)) {
-          out.write(' ');
+      if (previous != null && (format.textMode == Format.TextMode.NORMALIZE || format.textMode == Format.TextMode.TRIM)) {
+        if (endsWithWhite(previous) || startsWithWhite(next!!)) {
+          out.write(' '.toInt())
         }
       }
 
       // print the node
-      if (node instanceof CDATA) {
-        printCDATA(out, (CDATA)node);
-      }
-      else if (node instanceof EntityRef) {
-        printEntityRef(out, (EntityRef)node);
-      }
-      else {
-        printString(out, next);
+      when (node) {
+        is CDATA -> printCDATA(out, node)
+        is EntityRef -> printEntityRef(out, node)
+        else -> printString(out, next)
       }
 
-      previous = next;
+      previous = next
     }
   }
 
   /**
-   * This will handle printing of a <code>{@link Attribute}</code> list.
+   * This will handle printing of a `[Attribute]` list.
    *
-   * @param attributes <code>List</code> of Attribute objects
-   * @param out        <code>Writer</code> to use
+   * @param attributes `List` of Attribute objects
+   * @param out        `Writer` to use
    */
-  private void printAttributes(@NotNull Writer out, @NotNull List<Attribute> attributes) throws IOException {
-    for (Attribute attribute : attributes) {
-      out.write(' ');
-      printQualifiedName(out, attribute);
-      out.write('=');
-      out.write('"');
+  @Throws(IOException::class)
+  private fun printAttributes(out: Writer, attributes: List<Attribute>) {
+    for (attribute in attributes) {
+      out.write(' '.toInt())
+      printQualifiedName(out, attribute)
+      out.write('='.toInt())
+      out.write('"'.toInt())
 
-      String value;
-      if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
-        value = macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false);
+      val value = if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
+        macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false)
       }
       else {
-        value = attribute.getValue();
+        attribute.value
       }
 
-      if (isForbidSensitiveData && BaseXmlOutputter.Companion.isNameIndicatesSensitiveInformation(attribute.getName())) {
-        logSensitiveInformationError(attribute.getName(), "Attribute");
+      if (isForbidSensitiveData && BaseXmlOutputter.isNameIndicatesSensitiveInformation(attribute.name)) {
+        logSensitiveInformationError(attribute.name, "Attribute")
       }
 
-      out.write(escapeAttributeEntities(value));
-      out.write('"');
+      out.write(escapeAttributeEntities(value))
+      out.write('"'.toInt())
     }
   }
 
   /**
    * This will print a newline only if indent is not null.
    *
-   * @param out <code>Writer</code> to use
+   * @param out `Writer` to use
    */
-  private void newline(Writer out) throws IOException {
-    if (format.getIndent() != null) {
-      writeLineSeparator(out);
+  @Throws(IOException::class)
+  private fun newline(out: Writer) {
+    if (format.indent != null) {
+      writeLineSeparator(out)
     }
   }
 
   /**
    * This will print indents only if indent is not null or the empty string.
    *
-   * @param out   <code>Writer</code> to use
+   * @param out   `Writer` to use
    * @param level current indent level
    */
-  private void indent(Writer out, int level) throws IOException {
-    if (StringUtil.isEmpty(format.getIndent())) {
-      return;
+  @Throws(IOException::class)
+  private fun indent(out: Writer, level: Int) {
+    if (format.indent.isNullOrEmpty()) {
+      return
     }
 
-    for (int i = 0; i < level; i++) {
-      out.write(format.getIndent());
+    for (i in 0 until level) {
+      out.write(format.indent)
     }
   }
 
@@ -526,122 +478,129 @@ public class JbXmlOutputter extends BaseXmlOutputter {
   // index = content.size() is returned if content contains
   // all whitespace.
   // @param start index to begin search (inclusive)
-  private int skipLeadingWhite(@NotNull List<Content> content, int start) {
-    if (start < 0) {
-      start = 0;
+  private fun skipLeadingWhite(content: List<Content>, start: Int): Int {
+    var index = start
+    if (index < 0) {
+      index = 0
     }
 
-    int index = start;
-    int size = content.size();
-    if (format.getTextMode() == Format.TextMode.TRIM_FULL_WHITE
-        || format.getTextMode() == Format.TextMode.NORMALIZE
-        || format.getTextMode() == Format.TextMode.TRIM) {
+    val size = content.size
+    val textMode = format.textMode
+    if (textMode == Format.TextMode.TRIM_FULL_WHITE || textMode == Format.TextMode.NORMALIZE || textMode == Format.TextMode.TRIM) {
       while (index < size) {
-        if (!isAllWhitespace(content.get(index))) {
-          return index;
+        if (!isAllWhitespace(content[index])) {
+          return index
         }
-        index++;
+        index++
       }
     }
-    return index;
+    return index
   }
 
   // Return the index + 1 of the last non-all-whitespace CDATA or
   // Text node,  index < 0 is returned
   // if content contains all whitespace.
   // @param start index to begin search (exclusive)
-  private int skipTrailingWhite(List<Content> content, int start) {
-    int size = content.size();
-    if (start > size) {
-      start = size;
+  private fun skipTrailingWhite(content: List<Content>, start: Int): Int {
+    var index = start
+    val size = content.size
+    if (index > size) {
+      index = size
     }
 
-    int index = start;
-    if (format.getTextMode() == Format.TextMode.TRIM_FULL_WHITE
-        || format.getTextMode() == Format.TextMode.NORMALIZE
-        || format.getTextMode() == Format.TextMode.TRIM) {
+    val textMode = format.textMode
+    if (textMode == Format.TextMode.TRIM_FULL_WHITE || textMode == Format.TextMode.NORMALIZE || textMode == Format.TextMode.TRIM) {
       while (index >= 0) {
-        if (!isAllWhitespace(content.get(index - 1))) {
-          break;
+        if (!isAllWhitespace(content[index - 1])) {
+          break
         }
-        --index;
+        --index
       }
     }
-    return index;
+    return index
+  }
+}
+
+// Return the next non-CDATA, non-Text, or non-EntityRef node,
+// index = content.size() is returned if there is no more non-CDATA,
+// non-Text, or non-EntryRef nodes
+// @param start index to begin search (inclusive)
+private fun nextNonText(content: List<Content>, start: Int): Int {
+  var index = start
+  if (index < 0) {
+    index = 0
   }
 
-  // Return the next non-CDATA, non-Text, or non-EntityRef node,
-  // index = content.size() is returned if there is no more non-CDATA,
-  // non-Text, or non-EntryRef nodes
-  // @param start index to begin search (inclusive)
-  private static int nextNonText(List<Content> content, int start) {
-    if (start < 0) {
-      start = 0;
+  val size = content.size
+  while (index < size) {
+    val node = content[index]
+    if (!(node is Text || node is EntityRef)) {
+      return index
     }
+    index++
+  }
+  return size
+}
 
-    int index = start;
-    int size = content.size();
-    while (index < size) {
-      Content node = content.get(index);
-      if (!(node instanceof Text || node instanceof EntityRef)) {
-        return index;
-      }
-      index++;
+private fun printEntityRef(out: Writer, entity: EntityRef) {
+  out.write("&")
+  out.write(entity.name)
+  out.write(";")
+}
+
+private fun printComment(out: Writer, comment: Comment) {
+  out.write("<!--")
+  out.write(comment.text)
+  out.write("-->")
+}
+
+private fun isAllWhitespace(obj: Content): Boolean {
+  val str: String
+  if (obj is Text) {
+    str = obj.text
+  }
+  else {
+    return false
+  }
+
+  for (i in 0 until str.length) {
+    if (!Verifier.isXMLWhitespace(str[i])) {
+      return false
     }
-    return size;
   }
+  return true
+}
 
-  private static boolean isAllWhitespace(Content obj) {
-    String str;
-    if (obj instanceof Text) {
-      str = ((Text)obj).getText();
-    }
-    else {
-      return false;
-    }
+private fun startsWithWhite(str: String): Boolean {
+  return !StringUtil.isEmpty(str) && Verifier.isXMLWhitespace(str[0])
+}
 
-    for (int i = 0; i < str.length(); i++) {
-      if (!Verifier.isXMLWhitespace(str.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
+// Determine if a string ends with a XML whitespace.
+private fun endsWithWhite(str: String): Boolean {
+  return !StringUtil.isEmpty(str) && Verifier.isXMLWhitespace(str[str.length - 1])
+}
+
+private fun escapeAttributeEntities(str: String): String {
+  return JDOMUtil.escapeText(str, false, true)
+}
+
+@Throws(IOException::class)
+private fun printQualifiedName(out: Writer, e: Element) {
+  if (!e.namespace.prefix.isEmpty()) {
+    out.write(e.namespace.prefix)
+    out.write(':'.toInt())
   }
+  out.write(e.name)
+}
 
-  // Determine if a string starts with a XML whitespace.
-  private static boolean startsWithWhite(String str) {
-    return !StringUtil.isEmpty(str) && Verifier.isXMLWhitespace(str.charAt(0));
+// Support method to print a name without using att.getQualifiedName()
+// and thus avoiding a StringBuffer creation and memory churn
+@Throws(IOException::class)
+private fun printQualifiedName(out: Writer, a: Attribute) {
+  val prefix = a.namespace.prefix
+  if (!StringUtil.isEmpty(prefix)) {
+    out.write(prefix)
+    out.write(':'.toInt())
   }
-
-  // Determine if a string ends with a XML whitespace.
-  private static boolean endsWithWhite(String str) {
-    return !StringUtil.isEmpty(str) && Verifier.isXMLWhitespace(str.charAt(str.length() - 1));
-  }
-
-  private static String escapeAttributeEntities(String str) {
-    return JDOMUtil.escapeText(str, false, true);
-  }
-
-  protected static String escapeElementEntities(String str) {
-    return JDOMUtil.escapeText(str, false, false);
-  }
-
-  private static void printQualifiedName(@NotNull Writer out, @NotNull Element e) throws IOException {
-    if (!e.getNamespace().getPrefix().isEmpty()) {
-      out.write(e.getNamespace().getPrefix());
-      out.write(':');
-    }
-    out.write(e.getName());
-  }
-
-  // Support method to print a name without using att.getQualifiedName()
-  // and thus avoiding a StringBuffer creation and memory churn
-  private static void printQualifiedName(Writer out, Attribute a) throws IOException {
-    String prefix = a.getNamespace().getPrefix();
-    if (!StringUtil.isEmpty(prefix)) {
-      out.write(prefix);
-      out.write(':');
-    }
-    out.write(a.getName());
-  }
+  out.write(a.name)
 }
