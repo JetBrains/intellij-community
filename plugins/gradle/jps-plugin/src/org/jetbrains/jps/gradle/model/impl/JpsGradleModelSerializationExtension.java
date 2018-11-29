@@ -44,7 +44,7 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
   @Override
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
     Element externalSystemComponent = JDomSerializationUtil.findComponent(rootElement, "ExternalSystem");
-    if ("GRADLE".equals(rootElement.getAttributeValue("external.system.id"))) {
+    if (GRADLE_SYSTEM_ID.equals(rootElement.getAttributeValue("external.system.id"))) {
       JpsGradleExtensionService.getInstance().getOrCreateExtension(module, rootElement.getAttributeValue("external.system.module.type"));
     }
     else if (externalSystemComponent != null && GRADLE_SYSTEM_ID.equals(externalSystemComponent.getAttributeValue("externalSystem"))) {
