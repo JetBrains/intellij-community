@@ -22,8 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
@@ -45,7 +43,6 @@ public abstract class GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitChangesSaver.class);
 
   @NotNull protected final Project myProject;
-  @NotNull protected final ChangeListManagerEx myChangeManager;
   @NotNull protected final Git myGit;
   @NotNull protected final ProgressIndicator myProgressIndicator;
   @NotNull protected final String myStashMessage;
@@ -74,7 +71,6 @@ public abstract class GitChangesSaver {
     myGit = git;
     myProgressIndicator = indicator;
     myStashMessage = stashMessage;
-    myChangeManager = ChangeListManagerImpl.getInstanceImpl(project);
   }
 
   /**
