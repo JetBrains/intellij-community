@@ -1803,14 +1803,26 @@ public class AllIcons {
 
   public final static class Mac {
     public static final Icon AppIconOk512 = IconLoader.getIcon("/mac/appIconOk512.png"); // 55x55
-    public static final Icon Tree_black_right_arrow = IconLoader.getIcon("/mac/tree_black_right_arrow.png"); // 11x11
-    public static final Icon Tree_white_down_arrow = IconLoader.getIcon("/mac/tree_white_down_arrow.png"); // 11x11
-    public static final Icon Tree_white_right_arrow = IconLoader.getIcon("/mac/tree_white_right_arrow.png"); // 11x11
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Text = IconLoader.getIcon("/mac/text.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tree_black_right_arrow = IconLoader.getIcon("/mac/tree_black_right_arrow.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tree_white_down_arrow = IconLoader.getIcon("/mac/tree_white_down_arrow.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Tree_white_right_arrow = IconLoader.getIcon("/mac/tree_white_right_arrow.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
