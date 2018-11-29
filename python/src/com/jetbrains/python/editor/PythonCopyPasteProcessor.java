@@ -105,26 +105,25 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final CaretModel caretModel = editor.getCaretModel();
     final SelectionModel selectionModel = editor.getSelectionModel();
     final Document document = editor.getDocument();
-    final int caretOffset = selectionModel.getSelectionStart() != selectionModel.getSelectionEnd() ?
-                            selectionModel.getSelectionStart() : caretModel.getOffset();
-    final int lineNumber = document.getLineNumber(caretOffset);
+    final int insertOffset = selectionModel.getSelectionStart();
+    final int lineNumber = document.getLineNumber(insertOffset);
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
     final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
     
-    final String linePrefix = document.getText(TextRange.create(lineStartOffset, caretOffset));
+    final String linePrefix = document.getText(TextRange.create(lineStartOffset, insertOffset));
     if (!StringUtil.isEmptyOrSpaces(linePrefix)) return text;
 
-    final PsiElement element = file.findElementAt(caretOffset);
+    final PsiElement element = file.findElementAt(insertOffset);
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
     text = addLeadingSpacesToNormalizeSelection(file, text);
     final String fragmentIndent = PyIndentUtil.findCommonIndent(text, false);
-    final String newIndent = inferBestIndent(file, document, caretOffset, lineNumber, fragmentIndent);
+    final String newIndent = inferBestIndent(file, document, insertOffset, lineNumber, fragmentIndent);
     String newText = PyIndentUtil.changeIndent(text, false, newIndent);
 
-    if (!selectionModel.hasSelection() && shouldPasteOnPreviousLine(file, text, caretOffset)) {
+    if (!selectionModel.hasSelection() && shouldPasteOnPreviousLine(file, text, insertOffset)) {
       caretModel.moveToOffset(lineStartOffset);
       if (StringUtil.isEmptyOrSpaces(line)) {
         ApplicationManager.getApplication().runWriteAction(() -> document.deleteString(lineStartOffset, lineEndOffset));
@@ -137,7 +136,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
     final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
     // TODO Combine shouldPasteOnPreviousLine() check with addLineBreak() as they really complement each other
-    if (addLinebreak(text, line, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd()) {
+    if (addLinebreak(text, line, useTabs) && !selectionModel.hasSelection()) {
       newText += "\n";
     }
     return newText;
