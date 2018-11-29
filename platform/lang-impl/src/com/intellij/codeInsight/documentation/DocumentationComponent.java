@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.ide.util.PropertiesComponent;
@@ -628,8 +627,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static Color getLinkColor() {
-    Color color = UIManager.getColor("Link.activeForeground");
-    return color != null ? color : IdeTooltipManager.getInstance().getLinkForeground(false);
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
   @Override

@@ -302,7 +302,7 @@
       "borderColor": "#FFFFFF"
     },
 
-    "ToolBar.comboBoxButtonBackground": "#000000",
+    "ComboBoxButton.background": "#000000",
 
     "ToolTip": {
       "background": "#450073",
