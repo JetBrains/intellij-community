@@ -162,12 +162,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
     final Document document = profile.createDocument(getProject(), myFileType, myDialect, text);
-    document.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull final DocumentEvent event) {
-        initiateValidation();
-      }
-    });
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -175,6 +169,8 @@ public class StructuralSearchDialog extends DialogWrapper {
         final EditorEx editor = super.createEditor();
         editor.setHorizontalScrollbarVisible(true);
         editor.setVerticalScrollbarVisible(true);
+        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+        assert profile != null;
         TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
         SubstitutionShortInfoHandler.install(editor, variableName -> {
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
@@ -202,6 +198,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     };
     textField.setPreferredSize(new Dimension(850, 150));
     textField.setMinimumSize(new Dimension(200, 50));
+    textField.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull final DocumentEvent event) {
+        initiateValidation();
+      }
+    });
     return textField;
   }
 
@@ -498,9 +500,12 @@ public class StructuralSearchDialog extends DialogWrapper {
           myFileType = item.getFileType();
           myDialect = item.getDialect();
           myContext = item.getContext();
-          mySearchCriteriaEdit.setFileType(myFileType);
-          myReplaceCriteriaEdit.setFileType(myFileType);
           final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+          assert profile != null;
+          final Document searchDocument = profile.createDocument(getProject(), myFileType, myDialect, mySearchCriteriaEdit.getText());
+          mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
+          final Document replaceDocument = profile.createDocument(getProject(), myFileType, myDialect, myReplaceCriteriaEdit.getText());
+          myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           myFilterPanel.setProfile(profile);
           initiateValidation();
         }
