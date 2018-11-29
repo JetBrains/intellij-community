@@ -68,8 +68,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -145,10 +145,6 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   public boolean hasMultipleDataToSelect() {
-    Object root = myTree.getModel().getRoot();
-    if (root instanceof CheckedTreeNode && ((CheckedTreeNode)root).getChildCount() == 1) {
-      return false;
-    }
     return myModulesCount > 1;
   }
 

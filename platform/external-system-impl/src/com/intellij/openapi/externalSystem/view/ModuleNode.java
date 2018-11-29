@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +71,7 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
   @Override
   protected List<? extends ExternalSystemNode> doBuildChildren() {
     List<ExternalSystemNode<?>> myChildNodes = ContainerUtil.newArrayList();
-    if (getExternalProjectsView().getGroupModules()) {
+    if (!myIsRoot && getExternalProjectsView().getGroupModules()) {
       List<ModuleNode> childModules = ContainerUtil.findAll(
         myAllModules,
         module -> module != this && StringUtil.equals(module.getIdeParentGrouping(), getIdeGrouping())
@@ -115,14 +114,13 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
   public boolean isVisible() {
     if (!myIsRoot && getExternalProjectsView().getGroupModules()) {
       ModuleNode parentModule = findParent(ModuleNode.class);
-
-      String actualParentModuleIdeGroup = parentModule != null ? parentModule.getIdeGrouping() : null;
-      ProjectNode parentProject = findParent(ProjectNode.class);
-      if (actualParentModuleIdeGroup == null && parentProject != null && parentProject.isSingleModuleProject()) {
-        actualParentModuleIdeGroup = parentProject.getName();
+      if (parentModule != null) {
+        return StringUtil.equals(parentModule.getIdeGrouping(), getIdeParentGrouping());
       }
-
-      return StringUtil.equals(actualParentModuleIdeGroup, getIdeParentGrouping());
+      ProjectNode parentProject = findParent(ProjectNode.class);
+      if (parentProject != null) {
+        return StringUtil.equals(parentProject.getIdeGrouping(), getIdeParentGrouping());
+      }
     }
     return super.isVisible();
   }

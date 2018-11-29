@@ -42,9 +42,19 @@ public class GradleSourceSetData extends ModuleData {
           moduleFileDirectoryPath, externalConfigPath);
   }
 
+  @Nullable
+  @Override
+  public String getIdeGrouping() {
+    return super.getIdeGrouping() + ":" + getSourceSetName();
+  }
+
   @Override
   @Nullable
   public String getIdeParentGrouping() {
-    return StringUtil.substringBeforeLast(getExternalName(), ":");
+    return super.getIdeGrouping();
+  }
+
+  private String getSourceSetName() {
+    return StringUtil.substringAfterLast(getExternalName(), ":");
   }
 }
