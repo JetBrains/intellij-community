@@ -1576,7 +1576,6 @@ public class AllIcons {
     public static final Icon External_link_arrow = IconLoader.getIcon("/ide/external_link_arrow.svg"); // 14x14
     public static final Icon FatalError_read = IconLoader.getIcon("/ide/fatalError-read.svg"); // 16x16
     public static final Icon FatalError = IconLoader.getIcon("/ide/fatalError.svg"); // 16x16
-    public static final Icon HectorNo = IconLoader.getIcon("/ide/hectorNo.png"); // 16x16
     public static final Icon HectorOff = IconLoader.getIcon("/ide/hectorOff.svg"); // 16x16
     public static final Icon HectorOn = IconLoader.getIcon("/ide/hectorOn.svg"); // 16x16
     public static final Icon HectorSyntax = IconLoader.getIcon("/ide/hectorSyntax.svg"); // 16x16
@@ -1681,6 +1680,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Error_notifications = AllIcons.General.Error;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.HectorOff */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon HectorNo = AllIcons.Ide.HectorOff;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Information */
     @SuppressWarnings("unused")
