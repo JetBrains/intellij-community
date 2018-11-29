@@ -4,43 +4,30 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
 public class CachedAnnotators {
-  private final ThreadLocalAnnotatorMap<String, Annotator> cachedAnnotators = new ThreadLocalAnnotatorMap<String, Annotator>() {
-    @NotNull
-    @Override
-    public Collection<Annotator> initialValue(@NotNull String languageId) {
-      Language language = Language.findLanguageByID(languageId);
-      return language == null ? ContainerUtil.emptyList() : LanguageAnnotators.INSTANCE.allForLanguageOrAny(language);
-    }
-  };
-
-  public CachedAnnotators(Project project) {
-    ExtensionPointListener<Annotator> listener = new ExtensionPointListener<Annotator>() {
+  private final CachedValue<ThreadLocalAnnotatorMap<String, Annotator>> myCache = new CachedValueImpl<>(() -> {
+    ThreadLocalAnnotatorMap<String, Annotator> map = new ThreadLocalAnnotatorMap<String, Annotator>() {
+      @NotNull
       @Override
-      public void extensionAdded(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
-        cachedAnnotators.clear();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
-        cachedAnnotators.clear();
+      public Collection<Annotator> initialValue(@NotNull String languageId) {
+        Language language = Language.findLanguageByID(languageId);
+        return language == null ? ContainerUtil.emptyList() : LanguageAnnotators.INSTANCE.allForLanguageOrAny(language);
       }
     };
-    LanguageAnnotators.INSTANCE.addListener(listener, project);
-  }
+    return CachedValueProvider.Result.create(map, LanguageAnnotators.INSTANCE);
+  });
 
   @NotNull
   List<Annotator> get(@NotNull String languageId) {
-    return cachedAnnotators.get(languageId);
+    return myCache.getValue().get(languageId);
   }
 }
