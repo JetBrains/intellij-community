@@ -47,7 +47,7 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
                              rootElement.getChildren().stream()
                                         .anyMatch(element -> GRADLE_SYSTEM_ID.equals(element.getAttributeValue("externalSystem")));
     if (isGradleModule) {
-      JpsGradleExtensionService.getInstance().getOrCreateExtension(module, rootElement);
+      JpsGradleExtensionService.getInstance().getOrCreateExtension(module, rootElement.getAttributeValue("external.system.module.type"));
     }
   }
 
