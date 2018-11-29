@@ -56,7 +56,7 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     interfereFileChangerEnabled.addItemListener {
       interfereFileChaneDelaySpinner.isEnabled = it.stateChange == ItemEvent.SELECTED
     }
-    interfereFileChaneDelaySpinner.isEnabled = false
+    interfereFileChaneDelaySpinner.isEnabled = interfereFileChangerEnabled.isSelected
   }
 
   override fun createCenterPanel(): JComponent {
