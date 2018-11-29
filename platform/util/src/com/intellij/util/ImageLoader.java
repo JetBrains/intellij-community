@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
@@ -20,10 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageFilter;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -440,6 +438,34 @@ public class ImageLoader implements Serializable {
     Image image = load(inputStream, scale);
     ImageDesc desc = new ImageDesc("", null, scale, IMG);
     return ImageConverterChain.create().withFilter(filter).withHiDPI(ScaleContext.create()).convert(image, desc);
+  }
+
+  public static @Nullable Image loadCustomIcon(@NotNull File f) throws IOException {
+    final Image icon = _loadImageFromFile(f);
+    if (icon == null)
+      return null;
+
+    final int w = icon.getWidth(null);
+    final int h = icon.getHeight(null);
+
+    if (w <= 0 || h <= 0) {
+      LOG.error("negative image size: w=" + w + ", h=" + h + ", path=" + f.getPath());
+      return null;
+    }
+
+    if (w > EmptyIcon.ICON_18.getIconWidth() || h > EmptyIcon.ICON_18.getIconHeight()) {
+      final double s = EmptyIcon.ICON_18.getIconWidth()/(double)Math.max(w, h);
+      return scaleImage(icon, s);
+    }
+
+    return icon;
+  }
+
+  private static @Nullable Image _loadImageFromFile(@NotNull File f) throws IOException {
+    final ScaleContext ctx = ScaleContext.create();
+    final double scale = ctx.getScale(PIX_SCALE); // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
+    final ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), null,  scale, StringUtil.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
+    return ImageUtil.ensureHiDPI(desc.load(), ctx);
   }
 
   private static Image load(@NotNull final InputStream inputStream, double scale) {
