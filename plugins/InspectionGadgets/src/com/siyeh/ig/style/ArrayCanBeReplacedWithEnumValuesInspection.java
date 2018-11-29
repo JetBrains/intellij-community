@@ -4,7 +4,6 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -81,17 +80,6 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
       for (int i = 0; i < initL; i++) {
           String value = enumValues.get(i);
-          //if (initializers[i] instanceof PsiMethodCallExpression && initL == 1) {
-          //  PsiMethodCallExpression methodExpr = (PsiMethodCallExpression)initializers[i];
-          //  PsiMethod methodR = methodExpr.resolveMethod();
-          //  if (methodR != null) {
-          //    PsiType returnV = methodR.getReturnType();
-          //    if (!initExprType.equals(returnV)) {
-          //      return;
-          //    }
-          //  }
-          //}
-          //else
             if (!(initializers[i] instanceof PsiReferenceExpression && initExprType.equals(initializers[i].getType()) && value.equals(((PsiReferenceExpression)initializers[i]).getReferenceName()))) {
             return;
         }
@@ -133,7 +121,7 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
           return;
         }
         final PsiElement element = descriptor.getPsiElement();
-        if (element instanceof PsiNewExpressionImpl || element instanceof PsiArrayInitializerExpression) {
+        if (element instanceof PsiNewExpression || element instanceof PsiArrayInitializerExpression) {
           final PsiExpression expression = (PsiExpression)element;
           PsiReplacementUtil.replaceExpression(expression, enumName + ".values()");
         }
