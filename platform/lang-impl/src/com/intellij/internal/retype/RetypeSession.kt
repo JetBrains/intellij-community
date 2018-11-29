@@ -47,9 +47,9 @@ class RetypeLog {
   private var currentTyping: String? = null
   private var currentCompletion: String? = null
   var typedChars = 0
-      private set
+    private set
   var completedChars = 0
-      private set
+    private set
 
   fun recordTyping(c: Char) {
     if (currentTyping == null) {
@@ -138,7 +138,8 @@ class RetypeSession(
 
   private var skipLookupSuggestion = false
   private var textBeforeLookupSelection: String? = null
-  @Volatile private var waitingForTimerInvokeLater: Boolean = false
+  @Volatile
+  private var waitingForTimerInvokeLater: Boolean = false
 
   // This stack will contain autocompletion elements
   // E.g. "}", "]", "*/", "* @return"
@@ -300,7 +301,8 @@ class RetypeSession(
       // Unexpected changes before current cursor position
       // (may be unwanted import)
       if (textBeforeLookupSelection != null) {
-        log.recordDesync("Restoring text before lookup (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(5).toReadable()} ")
+        log.recordDesync("Restoring text before lookup (expected ...${expectedBeforeCaret.takeLast(
+          5).toReadable()}, actual ...${actualBeforeCaret.takeLast(5).toReadable()} ")
         // Unexpected changes was made by lookup.
         // Restore previous text state and set flag to skip further suggestions until whitespace will be typed
         WriteCommandAction.runWriteCommandAction(project) {
@@ -309,7 +311,9 @@ class RetypeSession(
         skipLookupSuggestion = true
       }
       else {
-        log.recordDesync("Restoring entire text (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(5).toReadable()} ")
+        log.recordDesync(
+          "Restoring entire text (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(
+            5).toReadable()} ")
         // There changes wasn't made by lookup, so we don't know how to handle them
         // Restore text as it should be at this point without any intelligence
         WriteCommandAction.runWriteCommandAction(project) {
@@ -346,14 +350,15 @@ class RetypeSession(
         val origIndexOfFirstCompletion = originalText.substring(pos, endPos).trim().indexOf(firstCompletion)
 
         if (origIndexOfFirstCompletion == 0) {
-          // Next non-whitespace chars from original tests are from complation stack
+          // Next non-whitespace chars from original tests are from completion stack
           val origIndexOfFirstComp = originalText.substring(pos, endPos).indexOf(firstCompletion)
           val docIndexOfFirstComp = document.text.substring(pos).indexOf(firstCompletion)
           if (originalText.substring(pos).take(origIndexOfFirstComp) != document.text.substring(pos).take(origIndexOfFirstComp)) {
             // We have some unexpected chars before completion. Remove them
             WriteCommandAction.runWriteCommandAction(project) {
               val replacement = originalText.substring(pos, pos + origIndexOfFirstComp)
-              log.recordDesync("Replacing extra characters before completion: ${document.text.substring(pos, pos + docIndexOfFirstComp).toReadable()} -> ${replacement.toReadable()}")
+              log.recordDesync("Replacing extra characters before completion: ${document.text.substring(pos,
+                                                                                                        pos + docIndexOfFirstComp).toReadable()} -> ${replacement.toReadable()}")
               document.replaceString(pos, pos + docIndexOfFirstComp, replacement)
             }
           }
