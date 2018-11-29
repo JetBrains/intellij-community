@@ -37,7 +37,7 @@ public interface ContentManager extends Disposable, BusyObject {
 
   boolean removeContent(@NotNull Content content, final boolean dispose);
   @NotNull
-  ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean trackFocus, boolean forcedFocus);
+  ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean requestFocus, boolean forcedFocus);
 
   void setSelectedContent(@NotNull Content content);
   @NotNull
