@@ -74,6 +74,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.*;
@@ -394,6 +395,11 @@ public class ExternalSystemUtil {
       @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
+        String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+        DumbService.getInstance(project).suspendIndexingAndRun(title, () -> executeImpl(indicator));
+      }
+
+      private void executeImpl(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;
 
         if (indicator instanceof ProgressIndicatorEx) {
