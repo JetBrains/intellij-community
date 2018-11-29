@@ -69,7 +69,7 @@ internal fun createReview(projectId: String, branch: String, commits: Collection
     }
   }""")
   val review = UpsourceReview(reviewId, projectId, "$UPSOURCE/$projectId/review/$reviewId")
-  postComment(projectId, review, "Please review changes and run cherry-pick (don't forget to delete tmp branch $branch)")
+  postComment(projectId, review, "Please review changes and run cherry-pick into master (don't forget to delete tmp branch $branch)")
   return review
 }
 
