@@ -69,9 +69,15 @@ public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
   @NotNull
   @Override
   public JpsGradleModuleExtension getOrCreateExtension(@NotNull JpsModule module, Element rootElement) {
+    return getOrCreateExtension(module, rootElement.getAttributeValue("external.system.module.type"));
+  }
+
+  @Override
+  @NotNull
+  public JpsGradleModuleExtension getOrCreateExtension(@NotNull JpsModule module, @Nullable String moduleType) {
     JpsGradleModuleExtension extension = module.getContainer().getChild(JpsGradleModuleExtensionImpl.ROLE);
     if (extension == null) {
-      extension = new JpsGradleModuleExtensionImpl(rootElement.getAttributeValue("external.system.module.type"));
+      extension = new JpsGradleModuleExtensionImpl(moduleType);
       module.getContainer().setChild(JpsGradleModuleExtensionImpl.ROLE, extension);
     }
     return extension;
