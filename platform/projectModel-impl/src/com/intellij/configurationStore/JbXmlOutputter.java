@@ -1,55 +1,4 @@
-/*--
- Copyright (C) 2000-2007 Jason Hunter & Brett McLaughlin.
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
-
- 1. Redistributions of source code must retain the above copyright
-    notice, this list of conditions, and the following disclaimer.
-
- 2. Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions, and the disclaimer that follows
-    these conditions in the documentation and/or other materials
-    provided with the distribution.
-
- 3. The name "JDOM" must not be used to endorse or promote products
-    derived from this software without prior written permission.  For
-    written permission, please contact <request_AT_jdom_DOT_org>.
-
- 4. Products derived from this software may not be called "JDOM", nor
-    may "JDOM" appear in their name, without prior written permission
-    from the JDOM Project Management <request_AT_jdom_DOT_org>.
-
- In addition, we request (but do not require) that you include in the
- end-user documentation provided with the redistribution and/or in the
- software itself an acknowledgement equivalent to the following:
-     "This product includes software developed by the
-      JDOM Project (http://www.jdom.org/)."
- Alternatively, the acknowledgment may be graphical using the logos
- available at http://www.jdom.org/images/logos.
-
- THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
- WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED.  IN NO EVENT SHALL THE JDOM AUTHORS OR THE PROJECT
- CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- SUCH DAMAGE.
-
- This software consists of voluntary contributions made by many
- individuals on behalf of the JDOM Project and was originally
- created by Jason Hunter <jhunter_AT_jdom_DOT_org> and
- Brett McLaughlin <brett_AT_jdom_DOT_org>.  For more information
- on the JDOM Project, please see <http://www.jdom.org/>.
-
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
@@ -71,8 +20,7 @@ import java.io.Writer;
 import java.util.List;
 
 // expandEmptyElements is ignored
-@SuppressWarnings("Duplicates")
-public class JbXmlOutputter {
+public class JbXmlOutputter extends BaseXmlOutputter {
   private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
 
   // For normal output
@@ -89,6 +37,8 @@ public class JbXmlOutputter {
                         @Nullable JDOMUtil.ElementOutputFilter elementFilter,
                         @Nullable ReplacePathToMacroMap macroMap,
                         @Nullable PathMacroFilter macroFilter) {
+    super(lineSeparator);
+
     this.format = DEFAULT_FORMAT.getLineSeparator().equals(lineSeparator) ? DEFAULT_FORMAT : JDOMUtil.createFormat(lineSeparator);
     this.elementFilter = elementFilter;
     this.macroMap = macroMap;
@@ -198,43 +148,6 @@ public class JbXmlOutputter {
       // inconsequential
       writeLineSeparator(out);
     }
-  }
-
-  /**
-   * This handle printing the DOCTYPE declaration if one exists.
-   *
-   * @param docType <code>Document</code> whose declaration to write.
-   * @param out     <code>Writer</code> to use.
-   */
-  private void printDocType(Writer out, DocType docType) throws IOException {
-    String publicID = docType.getPublicID();
-    String systemID = docType.getSystemID();
-    String internalSubset = docType.getInternalSubset();
-    boolean hasPublic = false;
-
-    out.write("<!DOCTYPE ");
-    out.write(docType.getElementName());
-    if (publicID != null) {
-      out.write(" PUBLIC \"");
-      out.write(publicID);
-      out.write("\"");
-      hasPublic = true;
-    }
-    if (systemID != null) {
-      if (!hasPublic) {
-        out.write(" SYSTEM");
-      }
-      out.write(" \"");
-      out.write(systemID);
-      out.write("\"");
-    }
-    if (internalSubset != null && !internalSubset.isEmpty()) {
-      out.write(" [");
-      writeLineSeparator(out);
-      out.write(docType.getInternalSubset());
-      out.write("]");
-    }
-    out.write(">");
   }
 
   /**

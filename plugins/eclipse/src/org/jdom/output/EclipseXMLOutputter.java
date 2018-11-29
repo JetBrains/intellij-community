@@ -56,6 +56,7 @@
 
 package org.jdom.output;
 
+import com.intellij.configurationStore.BaseXmlOutputter;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.*;
 
@@ -115,7 +116,7 @@ import java.util.List;
  * @author  Bradley S. Huffman
  */
 @Generated("fork from JDOM")
-public class EclipseXMLOutputter implements Cloneable {
+public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
 
     private static final String CVS_ID =
       "@(#) $RCSfile: XMLOutputter.java,v $ $Revision: 1.112 $ $Date: 2004/09/01 06:08:18 $ $Name: jdom_1_0 $";
@@ -132,7 +133,6 @@ public class EclipseXMLOutputter implements Cloneable {
     /** Whether output escaping is enabled for the being processed
       * Element - default is <code>true</code> */
     private boolean escapeOutput = true;
-    private final String lineSeparator;
 
   // * * * * * * * * * * Constructors * * * * * * * * * *
     // * * * * * * * * * * Constructors * * * * * * * * * *
@@ -142,7 +142,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * {@link Format} matching {@link Format#getRawFormat}.
      */
     public EclipseXMLOutputter(String lineSeparator) {
-      this.lineSeparator = lineSeparator;
+      super(lineSeparator);
     }
 
 
@@ -368,7 +368,7 @@ public class EclipseXMLOutputter implements Cloneable {
                 printDocType(out, doc.getDocType());
                 // Always print line separator after declaration, helps the
                 // output look better and is semantically inconsequential
-                out.write(lineSeparator);
+                out.write(getLineSeparator());
             }
             else {
                 // XXX if we get here then we have a illegal content, for
@@ -666,46 +666,7 @@ public class EclipseXMLOutputter implements Cloneable {
         // Print new line after decl always, even if no other new lines
         // Helps the output look better and is semantically
         // inconsequential
-        out.write(lineSeparator);
-    }
-
-    /**
-     * This handle printing the DOCTYPE declaration if one exists.
-     *
-     * @param docType <code>Document</code> whose declaration to write.
-     * @param out <code>Writer</code> to use.
-     */
-    protected void printDocType(Writer out, DocType docType)
-                        throws IOException {
-
-        String publicID = docType.getPublicID();
-        String systemID = docType.getSystemID();
-        String internalSubset = docType.getInternalSubset();
-        boolean hasPublic = false;
-
-        out.write("<!DOCTYPE ");
-        out.write(docType.getElementName());
-        if (publicID != null) {
-            out.write(" PUBLIC \"");
-            out.write(publicID);
-            out.write("\"");
-            hasPublic = true;
-        }
-        if (systemID != null) {
-            if (!hasPublic) {
-                out.write(" SYSTEM");
-            }
-            out.write(" \"");
-            out.write(systemID);
-            out.write("\"");
-        }
-        if ((internalSubset != null) && (!internalSubset.equals(""))) {
-            out.write(" [");
-            out.write(lineSeparator);
-            out.write(docType.getInternalSubset());
-            out.write("]");
-        }
-        out.write(">");
+        out.write(getLineSeparator());
     }
 
     /**
@@ -1176,7 +1137,7 @@ public class EclipseXMLOutputter implements Cloneable {
      */
     private void newline(Writer out) throws IOException {
         //if (currentFormat.indent != null) {
-            out.write(lineSeparator);
+            out.write(getLineSeparator());
         //}
     }
 
@@ -1436,7 +1397,7 @@ public class EclipseXMLOutputter implements Cloneable {
                     entity = "&#xD;";
                     break;
                 case '\n' :
-                    entity = lineSeparator;
+                    entity = getLineSeparator();
                     break;
                 default :
                     //if (strategy.shouldEscape(ch)) {
