@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
-public class KeyedExtensionCollector<T, KeyT> {
+public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.KeyedExtensionCollector");
 
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<>(); // guarded by lock
@@ -33,7 +33,7 @@ public class KeyedExtensionCollector<T, KeyT> {
   @NonNls private final String lock;
 
   private final String myEpName;
-  private final List<ExtensionPointListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
 
   private final ExtensionPointAndAreaListener<KeyedLazyInstance<T>> myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
     @Override
@@ -47,28 +47,23 @@ public class KeyedExtensionCollector<T, KeyT> {
           LOG.error("No key specified for extension of class " + bean.getInstance().getClass());
           return;
         }
-        String skey = bean.getKey();
-        myCache.remove(skey);
-        for (ExtensionPointListener<T> listener : myListeners) {
-          listener.extensionAdded(bean.getInstance(), null);
-        }
+        myCache.remove(bean.getKey());
+        myTracker.incModificationCount();
       }
     }
 
     @Override
     public void extensionRemoved(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
       synchronized (lock) {
-        String skey = bean.getKey();
-        myCache.remove(skey);
-        for (ExtensionPointListener<T> listener : myListeners) {
-          listener.extensionRemoved(bean.getInstance(), null);
-        }
+        myCache.remove(bean.getKey());
+        myTracker.incModificationCount();
       }
     }
 
     @Override
     public void areaReplaced(@NotNull final ExtensionsArea area) {
       myCache.clear();
+      myTracker.incModificationCount();
     }
   };
   private final ExtensionPointAvailabilityListener myExtensionPointAvailabilityListener;
@@ -83,6 +78,7 @@ public class KeyedExtensionCollector<T, KeyT> {
           //noinspection unchecked
           ((ExtensionPointImpl)extensionPoint).addExtensionPointListener(myListener, false, null);
           myCache.clear();
+          myTracker.incModificationCount();
         }
       }
 
@@ -116,9 +112,7 @@ public class KeyedExtensionCollector<T, KeyT> {
       List<T> list = myExplicitExtensions.computeIfAbsent(skey, __ -> new SmartList<>());
       list.add(t);
       myCache.remove(skey);
-      for (ExtensionPointListener<T> listener : myListeners) {
-        listener.extensionAdded(t, null);
-      }
+      myTracker.incModificationCount();
     }
   }
 
@@ -133,9 +127,7 @@ public class KeyedExtensionCollector<T, KeyT> {
         }
       }
       myCache.remove(skey);
-      for (ExtensionPointListener<T> listener : myListeners) {
-        listener.extensionRemoved(t, null);
-      }
+      myTracker.incModificationCount();
     }
   }
 
@@ -145,7 +137,7 @@ public class KeyedExtensionCollector<T, KeyT> {
   }
 
   /**
-   * @see #findSingle(Object)
+   * @see #findSingle
    */
   @NotNull
   public List<T> forKey(@NotNull KeyT key) {
@@ -239,13 +231,13 @@ public class KeyedExtensionCollector<T, KeyT> {
     }
   }
 
-  public void addListener(@NotNull final ExtensionPointListener<T> listener, @NotNull Disposable parent) {
-    myListeners.add(listener);
-    Disposer.register(parent, () -> myListeners.remove(listener));
-  }
-
   @NotNull
   public String getName() {
     return myEpName;
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myTracker.getModificationCount();
   }
 }
