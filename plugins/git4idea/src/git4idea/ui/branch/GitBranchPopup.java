@@ -110,7 +110,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
     if (gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
       AnAction updateBranchInfoWithAuthenticationAction =
-        new DumbAwareAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
+        new DumbAwareAction("Update checks failed. Click to retry", null, AllIcons.General.Warning) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             gitBranchIncomingOutgoingManager.forceUpdateBranches(true);
