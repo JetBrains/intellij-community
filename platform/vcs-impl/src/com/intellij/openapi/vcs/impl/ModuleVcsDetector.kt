@@ -36,14 +36,14 @@ class ModuleVcsDetector(private val myProject: Project,
   }
 
   private inner class MyModulesListener : ModuleRootListener, ModuleListener {
-    private val myMappingsForRemovedModules: MutableList<Pair<String, VcsDirectoryMapping>> = mutableListOf()
+    private val myMappingsForRemovedModules: MutableList<VcsDirectoryMapping> = mutableListOf()
 
     override fun beforeRootsChange(event: ModuleRootEvent) {
       myMappingsForRemovedModules.clear()
     }
 
     override fun rootsChanged(event: ModuleRootEvent) {
-      myMappingsForRemovedModules.forEach { (_, mapping) -> myVcsManager.removeDirectoryMapping(mapping) }
+      myMappingsForRemovedModules.forEach { mapping -> myVcsManager.removeDirectoryMapping(mapping) }
       // the check calculates to true only before user has done any change to mappings, i.e. in case modules are detected/added automatically
       // on start etc (look inside)
       if (myVcsManager.needAutodetectMappings()) {
@@ -90,7 +90,7 @@ class ModuleVcsDetector(private val myProject: Project,
     var mappingsUpdated = false
     for (file in module.rootManager.contentRoots) {
       val vcs = myVcsManager.findVersioningVcs(file)
-      if (vcs != null && vcs !== myVcsManager.getVcsFor(file, module)) {
+      if (vcs != null && vcs !== myVcsManager.getVcsFor(file)) {
         myVcsManager.setAutoDirectoryMapping(file.path, vcs.name)
         mappingsUpdated = true
       }
@@ -100,10 +100,8 @@ class ModuleVcsDetector(private val myProject: Project,
     }
   }
 
-  private fun getMappings(module: Module): List<Pair<String, VcsDirectoryMapping>> {
-    val moduleName = module.name
+  private fun getMappings(module: Module): List<VcsDirectoryMapping> {
     return module.rootManager.contentRoots
       .mapNotNull { root -> myVcsManager.directoryMappings.firstOrNull { it.systemIndependentPath() == root.path } }
-      .map { moduleName to it }
   }
 }
