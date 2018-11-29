@@ -81,16 +81,16 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     myTable.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
-        final int keyCode = e.getKeyCode();
-        if (KeyboardUtils.isEnterKey(keyCode)) {
+      public void keyTyped(KeyEvent e) {
+        char keyChar = e.getKeyChar();
+        if (KeyboardUtils.isEnterKey(keyChar)) {
           handleClassSelection(myTable.getSelectedClass());
         }
-        else if (KeyboardUtils.isCharacter(e) || KeyboardUtils.isBackSpace(keyCode)) {
+        else if (KeyboardUtils.isPartOfJavaClassName(keyChar) || KeyboardUtils.isBackSpace(keyChar)) {
           final String text = myFilterTextField.getText();
-          final String newText = KeyboardUtils.isBackSpace(keyCode)
-            ? text.substring(0, text.length() - 1)
-            : text + e.getKeyChar();
+          final String newText = KeyboardUtils.isBackSpace(keyChar)
+                                 ? text.substring(0, text.length() - 1)
+                                 : text + keyChar;
           myFilterTextField.setText(newText);
           IdeFocusManager.getInstance(myProject).requestFocus(myFilterTextField, false);
         }
@@ -110,7 +110,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
       private void dispatch(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        if (myTable.isInClickableMode() && (KeyboardUtils.isCharacter(e) || KeyboardUtils.isEnterKey(keyCode))) {
+        if (myTable.isInClickableMode() && (KeyboardUtils.isPartOfJavaClassName(e.getKeyChar()) || KeyboardUtils.isEnterKey(keyCode))) {
           myTable.exitClickableMode();
           updateClassesAndCounts(true);
         }
