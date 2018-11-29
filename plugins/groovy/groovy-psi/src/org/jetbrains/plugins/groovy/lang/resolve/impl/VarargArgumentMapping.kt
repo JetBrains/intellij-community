@@ -31,9 +31,6 @@ class VarargArgumentMapping(
 
   private val mapping: MapWithVarargs? by lazyPub(fun(): MapWithVarargs? {
     val parameters = method.parameterList.parameters
-    if (isInvokedAsIs(arguments, parameters, erasureSubstitutor, context)) {
-      return Pair(arguments.zip(parameters).toMap(), emptySet())
-    }
     val regularParameters = parameters.init()
     val regularParametersCount = regularParameters.size
     if (arguments.size < regularParametersCount) {
@@ -100,14 +97,4 @@ class VarargArgumentMapping(
     }
     return Applicability.applicable
   }
-}
-
-private fun isInvokedAsIs(arguments: Arguments,
-                          parameters: Array<out PsiParameter>,
-                          erasureSubstitutor: PsiSubstitutor,
-                          context: PsiElement): Boolean {
-  if (arguments.size != parameters.size) return false
-  val argumentApplicability = argumentApplicability(arguments.last(), parameters.last(), erasureSubstitutor, context)
-  // call foo(X[]) as is, i.e. with argument of type X[] (or subtype)
-  return argumentApplicability == Applicability.applicable
 }
