@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 
@@ -140,14 +141,7 @@ public class GradleProjectResolverUtil {
     String defaultGroupId = resolverCtx.getDefaultGroupId();
     if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
-      String groupId = externalProject.getGroup();
-      if (StringUtil.isEmpty(groupId)) {
-        groupId = defaultGroupId;
-      }
-      if (StringUtil.isNotEmpty(groupId)) {
-        moduleName.append(groupId).append(delimiter);
-      }
-      moduleName.append(externalProject.getName());
+      moduleName.append(gradlePathToQualifiedName(gradleModule.getProject().getName(), externalProject.getQName()));
     }
     else {
       delimiter = "_";
@@ -162,6 +156,16 @@ public class GradleProjectResolverUtil {
       moduleName.append(sourceSetName);
     }
     return PathUtilRt.suggestFileName(moduleName.toString(), true, false);
+  }
+
+  @NotNull
+  private static String gradlePathToQualifiedName(@NotNull String rootName,
+                                                  @NotNull String gradlePath) {
+    return
+      (gradlePath.startsWith(":") ? rootName + "." : "")
+      + Arrays.stream(gradlePath.split(":"))
+        .filter(s -> !s.isEmpty())
+        .collect(Collectors.joining("."));
   }
 
   @NotNull
