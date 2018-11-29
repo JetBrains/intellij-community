@@ -495,14 +495,18 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   public void setFirstSize(final int size) {
     myFirstSize = Math.max(getMinSize(true), size);
-    doLayout();
-    repaint();
+    if (firstVisible()) {
+      doLayout();
+      repaint();
+    }
   }
 
   public void setLastSize(final int size) {
     myLastSize = Math.max(getMinSize(false), size);
-    doLayout();
-    repaint();
+    if (lastVisible()) {
+      doLayout();
+      repaint();
+    }
   }
 
   public int getFirstSize() {
