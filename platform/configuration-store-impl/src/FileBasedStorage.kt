@@ -206,7 +206,7 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  override fun toString(): String = file.systemIndependentPath
+  override fun toString() = file.systemIndependentPath
 }
 
 internal fun writeFile(file: Path?,

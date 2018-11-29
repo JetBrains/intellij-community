@@ -10,7 +10,9 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.Constants
 import org.jdom.*
 import org.jdom.output.Format
@@ -23,10 +25,11 @@ private val DEFAULT_FORMAT = JDOMUtil.createFormat("\n")
 
 // expandEmptyElements is ignored
 open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n",
-                                                        private val elementFilter: JDOMUtil.ElementOutputFilter? = null,
-                                                        private val macroMap: ReplacePathToMacroMap? = null,
-                                                        private val macroFilter: PathMacroFilter? = null,
-                                                        private val isForbidSensitiveData: Boolean = true) : BaseXmlOutputter(lineSeparator) {
+                                                    private val elementFilter: JDOMUtil.ElementOutputFilter? = null,
+                                                    private val macroMap: ReplacePathToMacroMap? = null,
+                                                    private val macroFilter: PathMacroFilter? = null,
+                                                    private val isForbidSensitiveData: Boolean = true,
+                                                    private val storageFilePathForDebugPurposes: String? = null) : BaseXmlOutputter(lineSeparator) {
   companion object {
     @JvmStatic
     @Throws(IOException::class)
@@ -41,25 +44,6 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       val writer = StringWriter()
       collapseMacrosAndWrite(element, project, writer)
       return writer.toString()
-    }
-
-    private fun checkIsElementContainsSensitiveInformation(element: Element) {
-      var name: String? = element.name
-
-      @Suppress("SpellCheckingInspection")
-      if (BaseXmlOutputter.isNameIndicatesSensitiveInformation(name!!) && name != "omniauth-multipassword") {
-        logSensitiveInformationError(name, "Element")
-      }
-
-      // checks only option tag
-      name = element.getAttributeValue(Constants.NAME)
-      if (name != null && BaseXmlOutputter.isNameIndicatesSensitiveInformation(name) && element.getAttribute("value") != null) {
-        logSensitiveInformationError(name, "Element")
-      }
-    }
-
-    private fun logSensitiveInformationError(name: String, elementKind: String) {
-      Logger.getInstance(JbXmlOutputter::class.java).error("$elementKind \"$name\" probably contains sensitive information")
     }
 
     fun escapeElementEntities(str: String?): String {
@@ -518,6 +502,29 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       }
     }
     return index
+  }
+
+  private fun checkIsElementContainsSensitiveInformation(element: Element) {
+    var name: String? = element.name
+
+    @Suppress("SpellCheckingInspection")
+    if (BaseXmlOutputter.isNameIndicatesSensitiveInformation(name!!) && name != "omniauth-multipassword") {
+      logSensitiveInformationError(name, "Element")
+    }
+
+    // checks only option tag
+    name = element.getAttributeValue(Constants.NAME)
+    if (name != null && BaseXmlOutputter.isNameIndicatesSensitiveInformation(name) && element.getAttribute("value") != null) {
+      logSensitiveInformationError(name, "Element")
+    }
+  }
+
+  private fun logSensitiveInformationError(name: String, elementKind: String) {
+    var message = "$elementKind \"$name\" probably contains sensitive information"
+    if (storageFilePathForDebugPurposes != null) {
+      message += " (file: ${storageFilePathForDebugPurposes.replace(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "~")})"
+    }
+    Logger.getInstance(JbXmlOutputter::class.java).error(message)
   }
 }
 

@@ -4,10 +4,12 @@
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.*
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.SystemProperties
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
@@ -694,9 +696,9 @@ internal class XmlSerializerTest {
     """.trimIndent())
 
     assertThatThrownBy {
-      val xmlWriter = JbXmlOutputter()
+      val xmlWriter = JbXmlOutputter(storageFilePathForDebugPurposes = "${FileUtilRt.toSystemIndependentName(SystemProperties.getUserHome())}/foo/bar.xml")
       xmlWriter.output(element, StringWriter())
-    }.hasMessage("Element \"password\" probably contains sensitive information")
+    }.hasMessage("Element \"password\" probably contains sensitive information (file: ~/foo/bar.xml)")
   }
 
   @Test
