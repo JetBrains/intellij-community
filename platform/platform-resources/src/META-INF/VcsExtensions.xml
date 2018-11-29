@@ -38,7 +38,9 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
                     serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"
-                        serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"
+                    serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 
