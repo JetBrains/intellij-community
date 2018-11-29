@@ -1,7 +1,7 @@
 class NotEnumMulti {
 
   public static void foo() {
-    testMethod(new TestEnum[][]<caret>{{TestEnum.ONE,"",""}});
+    testMethod(new TestEnum[][]{{TestEnum.ON<caret>E,"",""}});
   }
 
   private static void testMethod(TestEnum[] values) { }

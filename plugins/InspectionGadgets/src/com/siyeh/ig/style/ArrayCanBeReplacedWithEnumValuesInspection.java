@@ -4,16 +4,13 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -84,25 +81,28 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
       for (int i = 0; i < initL; i++) {
           String value = enumValues.get(i);
-          if (initializers[i] instanceof PsiMethodCallExpression && initL == 1) {
-            PsiMethodCallExpression methodExpr = (PsiMethodCallExpression)initializers[i];
-            PsiMethod methodR = methodExpr.resolveMethod();
-            if (methodR != null) {
-              PsiType returnV = methodR.getReturnType();
-              if (!initExprType.equals(returnV)) {
-                return;
-              }
-            }
-          }
-          else if (!(initializers[i] instanceof PsiReferenceExpression && initExprType.equals(initializers[i].getType()) && value.equals(((PsiReferenceExpression)initializers[i]).getReferenceName()))) {
+          //if (initializers[i] instanceof PsiMethodCallExpression && initL == 1) {
+          //  PsiMethodCallExpression methodExpr = (PsiMethodCallExpression)initializers[i];
+          //  PsiMethod methodR = methodExpr.resolveMethod();
+          //  if (methodR != null) {
+          //    PsiType returnV = methodR.getReturnType();
+          //    if (!initExprType.equals(returnV)) {
+          //      return;
+          //    }
+          //  }
+          //}
+          //else
+            if (!(initializers[i] instanceof PsiReferenceExpression && initExprType.equals(initializers[i].getType()) && value.equals(((PsiReferenceExpression)initializers[i]).getReferenceName()))) {
             return;
         }
       }
 
       final PsiElement parent = expression.getParent();
-      final String enumName = ((PsiClassReferenceType)initExprType).getReference().getText();
-      registerError(parent, enumName);
+      final String enumName = initClass.getName();
 
+      if (parent instanceof PsiNewExpression) {
+        registerError(parent, enumName);
+      } else registerError(expression, enumName);
     }
 
     private static class ArrayToEnumValueFix extends InspectionGadgetsFix {
@@ -129,12 +129,13 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
       @Override
       protected void doFix(Project project, ProblemDescriptor descriptor) {
+        if (enumName == null) {
+          return;
+        }
         final PsiElement element = descriptor.getPsiElement();
-        if (element instanceof PsiNewExpressionImpl) {
-          final PsiNewExpression newExpression = (PsiNewExpression)element;
-          if (enumName != null) {
-            PsiReplacementUtil.replaceExpression(newExpression, enumName + ".values()");
-          }
+        if (element instanceof PsiNewExpressionImpl || element instanceof PsiArrayInitializerExpression) {
+          final PsiExpression expression = (PsiExpression)element;
+          PsiReplacementUtil.replaceExpression(expression, enumName + ".values()");
         }
       }
     }

@@ -1,7 +1,7 @@
 class EnumRevOrder {
 
   public static void foo() {
-    testMethod(new TestEnum[]<caret>{TestEnum.THREE, TestEnum.TWO, TestEnum.ONE});
+    testMethod(new TestEnum[]{TestEnum.THR<caret>EE, TestEnum.TWO, TestEnum.ONE});
   }
 
   private static void testMethod(TestEnum[] values) { }

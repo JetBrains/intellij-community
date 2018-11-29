@@ -22,11 +22,11 @@ public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCas
 
   public void testMultiDArrayNoError() {assertQuickfixNotAvailable();}
 
-  public void testInnerEnum() {doTest("TestEnum.Inner");}
+  public void testInnerEnum() {doTest("Inner");}
 
-  public void testFooInit() {doTest("En");}
+  //public void testFooInit() {doTest("En");}
 
-  //public void testOuterEnumUse() {doTest("OuterEnum.TestEnum");}
+  public void testOuterEnumUse() {doTest("TestEnum");}
 
 
 
@@ -52,7 +52,6 @@ public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCas
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package outer;\n" +
       "public class OuterEnum {\n" +
       "    public enum TestEnum {\n" +
       "        A, B, C\n" +

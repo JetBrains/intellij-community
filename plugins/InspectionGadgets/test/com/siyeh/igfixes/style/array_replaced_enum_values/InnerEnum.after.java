@@ -1,7 +1,7 @@
 class InnerEnum {
 
   public static void foo() {
-    testMethod(TestEnum.Inner.values());
+    testMethod(Inner.values());
   }
 
   private static void testMethod(TestEnum.Inner[] values) {
