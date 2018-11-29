@@ -7,6 +7,10 @@ import java.io.IOException
 import java.io.Writer
 
 abstract class BaseXmlOutputter(protected val lineSeparator: String) {
+  companion object {
+    fun isSavePasswordField(name: String) = name.contains("remember", ignoreCase = true) || name.contains("keep", ignoreCase = true) || name.contains("save", ignoreCase = true)
+  }
+
   /**
    * This handle printing the DOCTYPE declaration if one exists.
    *

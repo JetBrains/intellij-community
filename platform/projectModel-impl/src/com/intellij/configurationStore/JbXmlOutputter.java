@@ -5,6 +5,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -275,6 +276,10 @@ public class JbXmlOutputter extends BaseXmlOutputter {
   }
 
   protected boolean writeContent(@NotNull Writer out, @NotNull Element element, int level) throws IOException {
+    if (element.getName().contains("password") && !BaseXmlOutputter.Companion.isSavePasswordField(element.getName())) {
+      Logger.getInstance(JbXmlOutputter.class).error("Element " + element.getName() + " probably contains sensitive information");
+    }
+
     List<Content> content = element.getContent();
     int start = skipLeadingWhite(content, 0);
     int size = content.size();
@@ -432,7 +437,7 @@ public class JbXmlOutputter extends BaseXmlOutputter {
    * @param attributes <code>List</code> of Attribute objects
    * @param out        <code>Writer</code> to use
    */
-  private void printAttributes(Writer out, List<Attribute> attributes) throws IOException {
+  private void printAttributes(@NotNull Writer out, @NotNull List<Attribute> attributes) throws IOException {
     for (Attribute attribute : attributes) {
       out.write(' ');
       printQualifiedName(out, attribute);
@@ -445,6 +450,10 @@ public class JbXmlOutputter extends BaseXmlOutputter {
       }
       else {
         value = attribute.getValue();
+      }
+
+      if (attribute.getName().contains("password") && !BaseXmlOutputter.Companion.isSavePasswordField(attribute.getName())) {
+        Logger.getInstance(JbXmlOutputter.class).error("Attribute " + attribute.getName() + " probably contains sensitive information");
       }
 
       out.write(escapeAttributeEntities(value));
