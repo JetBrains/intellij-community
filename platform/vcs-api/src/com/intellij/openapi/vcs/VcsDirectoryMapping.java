@@ -31,7 +31,7 @@ public class VcsDirectoryMapping {
   private String myVcs;
   private VcsRootSettings myRootSettings;
 
-  public VcsDirectoryMapping(@NotNull final String directory, final String vcs) {
+  public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs) {
     this(directory, vcs, null);
   }
 

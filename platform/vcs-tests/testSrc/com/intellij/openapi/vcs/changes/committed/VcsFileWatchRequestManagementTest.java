@@ -19,6 +19,7 @@ import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestsManager;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
@@ -45,8 +46,8 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-    myNewMappings = new NewMappings(myProject, vcsManager, FileStatusManager.getInstance(myProject));
+    myNewMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
+                                    FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
     myMockLocalFileSystem = new MyMockLocalFileSystem();
     myNewMappings.setFileWatchRequestsManager(new FileWatchRequestsManager(myProject, myNewMappings, myMockLocalFileSystem));
     myNewMappings.activateActiveVcses();

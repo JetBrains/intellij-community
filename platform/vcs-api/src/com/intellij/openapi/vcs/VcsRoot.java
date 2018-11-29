@@ -29,7 +29,7 @@ public class VcsRoot {
 
   private int hashcode;
 
-  public VcsRoot(@Nullable AbstractVcs vcs, @Nullable  VirtualFile path) {
+  public VcsRoot(@Nullable AbstractVcs vcs, @Nullable VirtualFile path) {
     myVcs = vcs;
     myPath = path;
   }
