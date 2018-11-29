@@ -302,7 +302,19 @@ internal data class CommitInfo(
   val repo: File
 )
 
-internal fun initGit(repo: File, user: String, email: String) {
+internal fun <T> withUser(repo: File, user: String, email: String, block: () -> T) : T {
+  val originalUser = execute(repo, GIT, "config", "user.name").removeSuffix(System.lineSeparator())
+  val originalEmail = execute(repo, GIT, "config", "user.email").removeSuffix(System.lineSeparator())
+  return try {
+    configureUser(repo, user, email)
+    block()
+  }
+  finally {
+    configureUser(repo, originalUser, originalEmail)
+  }
+}
+
+private fun configureUser(repo: File, user: String, email: String) {
   execute(repo, GIT, "config", "user.name", user)
   execute(repo, GIT, "config", "user.email", email)
 }

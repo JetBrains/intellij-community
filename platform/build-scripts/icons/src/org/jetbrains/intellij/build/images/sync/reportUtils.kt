@@ -231,10 +231,15 @@ private fun findCommits(context: Context, root: File, changes: Changes) = change
     }
   }.groupBy({ it.first }, { it.second })
 
-private fun commitAndPush(branch: String, user: String, email: String, message: String, repos: Collection<File>) = repos.map {
-  initGit(it, user, email)
-  commitAndPush(it, branch, message)
-}
+private fun commitAndPush(branch: String,
+                          user: String,
+                          email: String,
+                          message: String,
+                          repos: Collection<File>) = repos.parallelStream().map {
+  withUser(it, user, email) {
+    commitAndPush(it, branch, message)
+  }
+}.toList()
 
 internal fun sendNotification(investigator: Investigator?, context: Context) {
   callSafely {
