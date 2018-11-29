@@ -16,6 +16,7 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -76,6 +77,10 @@ class CompilationContextImpl implements CompilationContext {
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
+
+    if (!JdkVersionDetector.instance.detectJdkVersionInfo(gradleJdk).version.contains("1.8.")) {
+      gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
+    }
 
     def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
