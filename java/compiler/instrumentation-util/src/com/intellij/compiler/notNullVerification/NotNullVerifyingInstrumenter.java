@@ -25,12 +25,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   @SuppressWarnings("SSBasedInspection") private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  private static final boolean NEW_ASM;
-  static {
-    try { NEW_ASM = (Integer)Opcodes.class.getField("API_VERSION").get(null) > Opcodes.ASM6; }
-    catch (Exception e) { throw new RuntimeException(e); }
-  }
-
   private final Map<String, Map<Integer, String>> myMethodParamNames;
   private String myClassName;
   private boolean myIsModification = false;
@@ -159,10 +153,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     boolean hasOuterClassParameter = myEnclosed && myInner && "<init>".equals(name);
     // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
     final int syntheticCount = signature == null ? 0 : hasOuterClassParameter ? 1 : Math.max(0, args.length - getSignatureParameterCount(signature));
-    // workaround for ASM workaround for javac bug: http://forge.ow2.org/tracker/?func=detail&aid=317788&group_id=23&atid=100023
-    final int paramAnnotationOffset = !"<init>".equals(name) ? 0 : NEW_ASM
-      ? (myEnum ? -2 : myInner ? -1 : 0)
-      : signature != null && hasOuterClassParameter ? Math.max(0, args.length - getSignatureParameterCount(signature) - 1) : 0;
+    final int paramAnnotationOffset = !"<init>".equals(name) ? 0 : myEnum ? 2 : myInner ? 1 : 0;
 
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
@@ -214,8 +205,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       @Override
       public AnnotationVisitor visitParameterAnnotation(int parameter, String anno, boolean visible) {
         AnnotationVisitor base = mv.visitParameterAnnotation(parameter, anno, visible);
-        if (!NEW_ASM && parameter < myParamAnnotationOffset) return base;
-        return checkNotNullParameter(parameter - myParamAnnotationOffset, anno, base);
+        return checkNotNullParameter(parameter + myParamAnnotationOffset, anno, base);
       }
 
       private AnnotationVisitor checkNotNullParameter(int parameter, String anno, AnnotationVisitor av) {
