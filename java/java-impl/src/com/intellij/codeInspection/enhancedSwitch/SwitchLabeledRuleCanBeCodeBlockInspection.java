@@ -5,8 +5,10 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -44,11 +46,22 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
         }
       }
 
-      private void registerProblem(PsiSwitchLabeledRuleStatement statement, boolean isExpressionResult) {
-        holder.registerProblem(ObjectUtils.notNull(ObjectUtils.tryCast(statement.getFirstChild(), PsiKeyword.class), statement),
-                               message(isExpressionResult ? "inspection.switch.labeled.rule.can.be.code.block.expression.message"
+      private void registerProblem(@NotNull PsiSwitchLabeledRuleStatement statement, boolean isResultExpression) {
+        holder.registerProblem(getProblemElement(statement),
+                               message(isResultExpression ? "inspection.switch.labeled.rule.can.be.code.block.expression.message"
                                                           : "inspection.switch.labeled.rule.can.be.code.block.statement.message"),
-                               new WrapWithCodeBlockFix(isExpressionResult));
+                               new WrapWithCodeBlockFix(isResultExpression));
+      }
+
+      @NotNull
+      private PsiElement getProblemElement(@NotNull PsiSwitchLabeledRuleStatement statement) {
+        if (isOnTheFly) {
+          if (InspectionProjectProfileManager.isInformationLevel(getShortName(), statement) ||
+              ApplicationManager.getApplication().isUnitTestMode()) {
+            return statement;
+          }
+        }
+        return ObjectUtils.notNull(ObjectUtils.tryCast(statement.getFirstChild(), PsiKeyword.class), statement);
       }
     };
   }
@@ -56,8 +69,8 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
   private static class WrapWithCodeBlockFix implements LocalQuickFix {
     private final String myMessage;
 
-    WrapWithCodeBlockFix(boolean isExpressionResult) {
-      myMessage = message(isExpressionResult ? "inspection.switch.labeled.rule.can.be.code.block.fix.expression.name"
+    WrapWithCodeBlockFix(boolean isResultExpression) {
+      myMessage = message(isResultExpression ? "inspection.switch.labeled.rule.can.be.code.block.fix.expression.name"
                                              : "inspection.switch.labeled.rule.can.be.code.block.fix.statement.name");
     }
 
@@ -89,16 +102,13 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
     }
 
     private static void wrapExpression(PsiExpressionStatement expressionStatement) {
-      PsiExpression expression = expressionStatement.getExpression();
       CommentTracker tracker = new CommentTracker();
-      tracker.markUnchanged(expression);
-      tracker.replaceAndRestoreComments(expressionStatement, "{ break " + expression.getText() + "; }");
+      tracker.replaceAndRestoreComments(expressionStatement, "{ break " + tracker.text(expressionStatement) + " }");
     }
 
     private static void wrapStatement(@NotNull PsiStatement statement) {
       CommentTracker tracker = new CommentTracker();
-      tracker.markUnchanged(statement);
-      tracker.replaceAndRestoreComments(statement, "{ " + statement.getText() + " }");
+      tracker.replaceAndRestoreComments(statement, "{ " + tracker.text(statement) + " }");
     }
   }
 }
