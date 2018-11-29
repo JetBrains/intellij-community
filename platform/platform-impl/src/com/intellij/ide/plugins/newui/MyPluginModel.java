@@ -269,9 +269,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
     else if (success) {
       if (myDownloaded != null && myDownloaded.ui != null) {
-        PluginId pluginId = descriptor.getPluginId();
-        CellPluginComponent component =
-          ContainerUtil.find(myDownloaded.ui.plugins, _component -> pluginId.equals(_component.myPlugin.getPluginId()));
+        CellPluginComponent component = myDownloaded.ui.findComponent(descriptor);
         if (component != null) {
           ((ListPluginComponent)component).changeUpdateToRestart();
         }
@@ -279,6 +277,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (myUpdates != null) {
         myUpdates.titleWithCount();
       }
+      PluginUpdatesService.finishUpdate(descriptor);
     }
 
     info.indicator.cancel();

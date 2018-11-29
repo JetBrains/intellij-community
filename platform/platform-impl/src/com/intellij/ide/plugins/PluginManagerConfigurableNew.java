@@ -24,7 +24,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -128,6 +127,7 @@ public class PluginManagerConfigurableNew
   };
 
   private Runnable myShutdownCallback;
+  private Runnable myPluginUpdatesServiceCallback;
 
   private List<IdeaPluginDescriptor> myAllRepositoriesList;
   private Map<String, IdeaPluginDescriptor> myAllRepositoriesMap;
@@ -464,6 +464,9 @@ public class PluginManagerConfigurableNew
     myTabHeaderComponent.addTab("Installed");
     myTabHeaderComponent.addTab(myUpdatesTabName = new CountTabName(myTabHeaderComponent, "Updates"));
 
+    myPluginUpdatesServiceCallback =
+      PluginUpdatesService.connectConfigurableTab(countValue -> myUpdatesTabName.setCount(countValue == null ? 0 : countValue));
+
     createSearchPanels();
 
     int selectionTab = getStoredSelectionTab();
@@ -647,6 +650,11 @@ public class PluginManagerConfigurableNew
 
     Disposer.dispose(mySearchUpdateAlarm);
     myTrendingSearchPanel.dispose();
+
+    if (myPluginUpdatesServiceCallback != null) {
+      myPluginUpdatesServiceCallback.run();
+      myPluginUpdatesServiceCallback = null;
+    }
 
     if (myTrendingPanel != null) {
       myTrendingPanel.dispose();
@@ -885,16 +893,14 @@ public class PluginManagerConfigurableNew
                                             descriptor -> new ListPluginComponent(myPluginsModel, descriptor, true));
     registerCopyProvider(myUpdatesPanel);
 
-    Runnable runnable = () -> {
-      Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
+    myUpdatesRunnable = () -> {
+      myUpdatesPanel.clear();
+      myUpdatesPanel.startLoading();
 
-      ApplicationManager.getApplication().invokeLater(() -> {
+      PluginUpdatesService.calculateUpdates(updates -> {
         myUpdatesPanel.stopLoading();
 
-        if (ContainerUtil.isEmpty(updates)) {
-          myUpdatesTabName.setCount(0);
-        }
-        else {
+        if (!ContainerUtil.isEmpty(updates)) {
           PluginsGroup group = new PluginsGroup("Available Updates") {
             @Override
             public void titleWithCount() {
@@ -908,7 +914,6 @@ public class PluginManagerConfigurableNew
               title = myTitlePrefix + " (" + count + ")";
               updateTitle();
               rightAction.setVisible(count > 0);
-              myUpdatesTabName.setCount(count);
             }
           };
 
@@ -935,19 +940,13 @@ public class PluginManagerConfigurableNew
 
         myUpdatesPanel.doLayout();
         myUpdatesPanel.initialSelection();
-      }, ModalityState.any());
-    };
-
-    myUpdatesRunnable = () -> {
-      myUpdatesPanel.clear();
-      myUpdatesPanel.startLoading();
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      });
     };
 
     myUpdatesPanel.getEmptyText().setText("No updates available.")
       .appendSecondaryText("Check new updates", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myUpdatesRunnable.run());
 
-    ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    myUpdatesRunnable.run();
     return createScrollPane(myUpdatesPanel, false);
   }
 
@@ -1273,6 +1272,8 @@ public class PluginManagerConfigurableNew
       myAllRepositoriesMap = null;
       myCustomRepositoriesMap = null;
     }
+
+    PluginUpdatesService.recalculateUpdates();
 
     if (myTrendingPanel == null && myUpdatesPanel == null) {
       return;
