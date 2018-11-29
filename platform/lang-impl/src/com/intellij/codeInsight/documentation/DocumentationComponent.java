@@ -898,7 +898,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     AbstractPopup hint = myHint;
     if (hint == null || mySizeTrackerRegistered) return;
     mySizeTrackerRegistered = true;
-    hint.addResizeListener(() -> hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE), this);
+    hint.addResizeListener(() -> {
+      hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+      hint.storeDimensionSize();
+    }, this);
   }
 
   private int definitionPreferredWidth() {
