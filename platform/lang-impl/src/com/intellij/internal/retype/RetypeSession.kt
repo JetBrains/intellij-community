@@ -26,14 +26,20 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.playback.commands.ActionCommand
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotifications
+import com.intellij.ui.LightColors
 import com.intellij.util.Alarm
 import java.awt.event.KeyEvent
 import java.io.File
@@ -148,6 +154,8 @@ class RetypeSession(
   private var stopInterfereFileChanger = false
   val interfereFileName = "IdeaRetypeBackgroundChanges.java"
 
+  var retypePaused: Boolean = false
+
   init {
     if (editor.selectionModel.hasSelection()) {
       pos = editor.selectionModel.selectionStart
@@ -186,6 +194,8 @@ class RetypeSession(
     }
     CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = false
     runInterfereFileChanger()
+    EditorNotifications.getInstance(project).updateNotifications(editor.virtualFile)
+    retypePaused = false
     queueNextOrStop()
   }
 
@@ -217,6 +227,7 @@ class RetypeSession(
       startNextCallback?.invoke()
     }
     stopInterfereFileChanger = true
+    EditorNotifications.getInstance(project).updateAllNotifications()
   }
 
   override fun dispose() {
@@ -237,6 +248,18 @@ class RetypeSession(
   }
 
   private fun typeNextInEDT(timerTick: Long) {
+    if (retypePaused) {
+      if (editor.contentComponent == IdeFocusManager.findInstance().focusOwner) {
+        // Resume retyping on editor focus
+        retypePaused = false
+      }
+      else {
+        queueNextOrStop()
+        return
+      }
+    }
+
+    EditorNotifications.getInstance(project).updateAllNotifications()
     waitingForTimerInvokeLater = false
     val processNextEvent = handleIdeaIntelligence()
     if (processNextEvent) return
@@ -261,8 +284,10 @@ class RetypeSession(
       }
     }
 
-    if (editor.contentComponent != IdeFocusManager.findInstance().focusOwner) {
-      // Do not perform typing if editor is not in focus
+    // Do not perform typing if editor is not in focus
+    if (editor.contentComponent != IdeFocusManager.findInstance().focusOwner) retypePaused = true
+
+    if (retypePaused) {
       queueNextOrStop()
       return
     }
@@ -526,3 +551,29 @@ class RetypeSession(
 }
 
 val RETYPE_SESSION_KEY = Key.create<RetypeSession>("com.intellij.internal.retype.RetypeSession")
+val RETYPE_SESSION_NOTIFICATION_KEY = Key.create<EditorNotificationPanel>("com.intellij.internal.retype.RetypeSessionNotification")
+
+
+class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
+  override fun getKey(): Key<EditorNotificationPanel> = RETYPE_SESSION_NOTIFICATION_KEY
+
+  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
+    val retypeSession = (fileEditor as PsiAwareTextEditorImpl).editor.getUserData(RETYPE_SESSION_KEY)
+    if (retypeSession == null) return null
+
+    val panel: EditorNotificationPanel
+
+    if (retypeSession.retypePaused) {
+      panel = EditorNotificationPanel()
+      panel.setText("Pause retyping. Click on editor to resume")
+    }
+    else {
+      panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
+      panel.setText("Retyping")
+    }
+    panel.createActionLabel("Stop without report") {
+      retypeSession.stop(false)
+    }
+    return panel
+  }
+}
