@@ -163,7 +163,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public boolean removeContent(@NotNull Content content, final boolean dispose) {
-    return removeContent(content, true, dispose).isDone();
+    return removeContent(content, dispose, UIUtil.isFocusAncestor(content.getComponent()), false).isDone();
   }
 
   @NotNull
