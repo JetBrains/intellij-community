@@ -264,7 +264,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     if (nonWS == null || text.endsWith("\n")) {
       return true;
     }
-    if (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1)) {
+    if (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.containsLineBreak(text))) {
       return true;
     }
     return false;
@@ -285,7 +285,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   private static boolean addLinebreak(@NotNull String text, @NotNull String line, boolean useTabs) {
-    return (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1)
+    return (text.startsWith(useTabs ? "\t" : " ") || StringUtil.containsLineBreak(text))
            && !text.endsWith("\n") && !StringUtil.isEmptyOrSpaces(line);
   }
 
