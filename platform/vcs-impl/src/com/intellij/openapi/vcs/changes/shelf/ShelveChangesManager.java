@@ -407,8 +407,15 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   public ShelvedChangeList shelveChanges(final Collection<Change> changes,
                                          final String commitMessage,
                                          final boolean rollback,
-                                         boolean markToBeDeleted)
-    throws IOException, VcsException {
+                                         boolean markToBeDeleted) throws IOException, VcsException {
+    return shelveChanges(changes, commitMessage, rollback, markToBeDeleted, false);
+  }
+
+  public ShelvedChangeList shelveChanges(final Collection<Change> changes,
+                                         final String commitMessage,
+                                         final boolean rollback,
+                                         boolean markToBeDeleted,
+                                         boolean honorExcludedFromCommit) throws IOException, VcsException {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
       progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
@@ -433,7 +440,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       File patchFile = getPatchFileInConfigDir(schemePatchDir);
       ProgressManager.checkCanceled();
       final List<FilePatch> patches =
-        IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getBaseDir().getPresentableUrl(), false);
+        IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getBaseDir().getPresentableUrl(), false, honorExcludedFromCommit);
       ProgressManager.checkCanceled();
 
       CommitContext commitContext = new CommitContext();
