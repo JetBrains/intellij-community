@@ -40,6 +40,7 @@ class RetypeFileAction : AnAction() {
       if (!retypeOptionsDialog.showAndGet()) return
       val scriptBuilder = if (retypeOptionsDialog.recordScript) StringBuilder() else null
       val backgroundFileChangePeriod = if (retypeOptionsDialog.enableBackgroundChanges) retypeOptionsDialog.backgroundChangesDelay else -1
+      latencyMap.clear()
       if (retypeOptionsDialog.isRetypeCurrentFile) {
         val session = RetypeSession(project, editor!!, retypeOptionsDialog.retypeDelay, scriptBuilder, retypeOptionsDialog.threadDumpDelay,
                                     interfereFilesChangePeriod = backgroundFileChangePeriod.toLong(),
@@ -47,7 +48,6 @@ class RetypeFileAction : AnAction() {
         session.start()
       }
       else {
-        latencyMap.clear()
         val queue = RetypeQueue(project, retypeOptionsDialog.retypeDelay, retypeOptionsDialog.threadDumpDelay, scriptBuilder,
                                 backgroundFileChangePeriod.toLong(), retypeOptionsDialog.restoreOriginalText)
         if (!collectSizeSampledFiles(project,
