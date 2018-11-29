@@ -29,8 +29,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -39,10 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -83,30 +80,51 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-        super.visitSwitchStatement(statement);
-        final PsiExpression expression = statement.getExpression();
+        processSwitchBlock(statement);
+      }
+
+      @Override
+      public void visitSwitchExpression(PsiSwitchExpression expression) {
+        processSwitchBlock(expression);
+      }
+
+      public void processSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
+        final PsiExpression expression = switchBlock.getExpression();
         if (expression == null) return;
         final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
         if (aClass == null || !aClass.isEnum()) return;
         Set<String> constants = StreamEx.of(aClass.getAllFields()).select(PsiEnumConstant.class).map(PsiEnumConstant::getName)
           .toCollection(LinkedHashSet::new);
         if (constants.isEmpty()) return;
+        boolean hasDefault = false;
         ProblemHighlightType highlighting = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-        for (final PsiSwitchLabelStatement child : PsiTreeUtil
-          .getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatement.class)) {
+        for (PsiSwitchLabelStatementBase child : PsiTreeUtil
+          .getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class)) {
           if (child.isDefaultCase()) {
+            hasDefault = true;
             if (ignoreSwitchStatementsWithDefault) {
               if (!isOnTheFly) return;
               highlighting = ProblemHighlightType.INFORMATION;
             }
             continue;
           }
-          PsiEnumConstant enumConstant = findEnumConstant(child);
-          if (enumConstant == null || enumConstant.getContainingClass() != aClass) {
+          List<PsiEnumConstant> enumConstants = findEnumConstants(child);
+          if (enumConstants.isEmpty()) {
             // Syntax error or unresolved constant: do not report anything on incomplete code
             return;
           }
-          constants.remove(enumConstant.getName());
+          for (PsiEnumConstant constant : enumConstants) {
+            if (constant.getContainingClass() != aClass) {
+              // Syntax error or unresolved constant: do not report anything on incomplete code
+              return;
+            }
+            constants.remove(constant.getName());
+          }
+        }
+        if (!hasDefault && switchBlock instanceof PsiSwitchExpression) {
+          // non-exhaustive switch expression: it's a compilation error 
+          // and the compilation fix should be suggested instead of normal inspection
+          return;
         }
         if (constants.isEmpty()) return;
         CommonDataflow.DataflowResult dataflow = CommonDataflow.getDataflowResult(expression);
@@ -120,17 +138,17 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         }
         if (constants.isEmpty()) return;
         String message = buildErrorString(aClass.getQualifiedName(), constants);
-        CreateMissingSwitchBranchesFix fix = new CreateMissingSwitchBranchesFix(statement, constants);
+        CreateMissingSwitchBranchesFix fix = new CreateMissingSwitchBranchesFix(switchBlock, constants);
         if (highlighting == ProblemHighlightType.INFORMATION ||
-            InspectionProjectProfileManager.isInformationLevel(getShortName(), statement)) {
-          holder.registerProblem(statement, message, ProblemHighlightType.INFORMATION, fix);
+            InspectionProjectProfileManager.isInformationLevel(getShortName(), switchBlock)) {
+          holder.registerProblem(switchBlock, message, ProblemHighlightType.INFORMATION, fix);
         }
         else {
-          int length = statement.getFirstChild().getTextLength();
-          holder.registerProblem(statement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new TextRange(0, length), fix);
+          int length = switchBlock.getFirstChild().getTextLength();
+          holder.registerProblem(switchBlock, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new TextRange(0, length), fix);
           if (isOnTheFly) {
-            TextRange range = new TextRange(length, statement.getTextLength());
-            holder.registerProblem(statement, message, ProblemHighlightType.INFORMATION, range, fix);
+            TextRange range = new TextRange(length, switchBlock.getTextLength());
+            holder.registerProblem(switchBlock, message, ProblemHighlightType.INFORMATION, range, fix);
           }
         }
       }
@@ -139,10 +157,10 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
 
   private static class CreateMissingSwitchBranchesFix implements LocalQuickFix, IntentionAction {
     private final Set<String> myNames;
-    private final SmartPsiElementPointer<PsiSwitchStatement> myStatement;
+    private final SmartPsiElementPointer<PsiSwitchBlock> myBlock;
 
-    private CreateMissingSwitchBranchesFix(@NotNull PsiSwitchStatement statement, Set<String> names) {
-      myStatement = SmartPointerManager.createPointer(statement);
+    private CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, Set<String> names) {
+      myBlock = SmartPointerManager.createPointer(block);
       myNames = names;
     }
 
@@ -185,25 +203,30 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
     }
 
     public void invoke() {
-      PsiSwitchStatement switchStatement = myStatement.getElement();
-      if (switchStatement == null) return;
-      final PsiCodeBlock body = switchStatement.getBody();
-      final PsiExpression switchExpression = switchStatement.getExpression();
+      PsiSwitchBlock switchBlock = myBlock.getElement();
+      if (switchBlock == null) return;
+      final PsiCodeBlock body = switchBlock.getBody();
+      final PsiExpression switchExpression = switchBlock.getExpression();
       if (switchExpression == null) return;
       final PsiClassType switchType = (PsiClassType)switchExpression.getType();
       if (switchType == null) return;
       final PsiClass enumClass = switchType.resolve();
       if (enumClass == null) return;
+      boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
       if (body == null) {
         // replace entire switch statement if no code block is present
         @NonNls final StringBuilder newStatementText = new StringBuilder();
         CommentTracker commentTracker = new CommentTracker();
         newStatementText.append("switch(").append(commentTracker.text(switchExpression)).append("){");
         for (String missingName : myNames) {
-          newStatementText.append("case ").append(missingName).append(": break;");
+          if (isRuleBasedFormat) {
+            newStatementText.append("case ").append(missingName).append("-> {}");
+          } else {
+            newStatementText.append("case ").append(missingName).append(": break;");
+          }
         }
         newStatementText.append('}');
-        PsiReplacementUtil.replaceStatement(switchStatement, newStatementText.toString(), commentTracker);
+        commentTracker.replaceAndRestoreComments(switchBlock, newStatementText.toString());
         return;
       }
       List<PsiEnumConstant> allEnumConstants = StreamEx.of(enumClass.getAllFields()).select(PsiEnumConstant.class).toList();
@@ -213,8 +236,9 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       PsiEnumConstant nextEnumConstant = getNextEnumConstant(nextEnumConstants, missingEnumElements);
       PsiElement bodyElement = body.getFirstBodyElement();
       while (bodyElement != null) {
-        while (nextEnumConstant != null && findEnumConstant(bodyElement) == nextEnumConstant) {
-          addSwitchLabelStatementBefore(missingEnumElements.get(0), bodyElement);
+        List<PsiEnumConstant> constants = findEnumConstants(bodyElement);
+        while (nextEnumConstant != null && constants.contains(nextEnumConstant)) {
+          addSwitchLabelStatementBefore(missingEnumElements.get(0), bodyElement, isRuleBasedFormat);
           missingEnumElements.remove(0);
           if (missingEnumElements.isEmpty()) {
             break;
@@ -223,7 +247,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         }
         if (isDefaultSwitchLabelStatement(bodyElement)) {
           for (PsiEnumConstant missingEnumElement : missingEnumElements) {
-            addSwitchLabelStatementBefore(missingEnumElement, bodyElement);
+            addSwitchLabelStatementBefore(missingEnumElement, bodyElement, isRuleBasedFormat);
           }
           missingEnumElements.clear();
           break;
@@ -233,21 +257,21 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       if (!missingEnumElements.isEmpty()) {
         final PsiElement lastChild = body.getLastChild();
         for (PsiEnumConstant missingEnumElement : missingEnumElements) {
-          addSwitchLabelStatementBefore(missingEnumElement, lastChild);
+          addSwitchLabelStatementBefore(missingEnumElement, lastChild, isRuleBasedFormat);
         }
       }
     }
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      PsiSwitchStatement startSwitch = myStatement.getElement();
+      PsiSwitchBlock startSwitch = myBlock.getElement();
       if (startSwitch == null) return false;
       int offset = Math.min(editor.getCaretModel().getOffset(), startSwitch.getTextRange().getEndOffset() - 1);
-      PsiSwitchStatement currentSwitch = PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(offset), PsiSwitchStatement.class);
+      PsiSwitchBlock currentSwitch = PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(offset), PsiSwitchBlock.class);
       return currentSwitch == startSwitch;
     }
 
-    private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement, PsiElement anchor) {
+    private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement, PsiElement anchor, boolean isRuleBasedFormat) {
       if (anchor instanceof PsiSwitchLabelStatement) {
         PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(anchor);
         while (sibling instanceof PsiSwitchLabelStatement) {
@@ -257,10 +281,15 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       }
       final PsiElement parent = anchor.getParent();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
-      final PsiStatement caseStatement = factory.createStatementFromText("case " + missingEnumElement.getName() + ":", anchor);
-      parent.addBefore(caseStatement, anchor);
-      final PsiStatement breakStatement = factory.createStatementFromText("break;", anchor);
-      parent.addBefore(breakStatement, anchor);
+      if (isRuleBasedFormat) {
+        final PsiStatement caseStatement = factory.createStatementFromText("case " + missingEnumElement.getName() + "-> {}", anchor);
+        parent.addBefore(caseStatement, anchor);
+      } else {
+        final PsiStatement caseStatement = factory.createStatementFromText("case " + missingEnumElement.getName() + ":", anchor);
+        parent.addBefore(caseStatement, anchor);
+        final PsiStatement breakStatement = factory.createStatementFromText("break;", anchor);
+        parent.addBefore(breakStatement, anchor);
+      }
     }
 
     private static PsiEnumConstant getNextEnumConstant(Map<PsiEnumConstant, PsiEnumConstant> nextEnumConstants,
@@ -277,20 +306,27 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
     }
   }
 
-  private static PsiEnumConstant findEnumConstant(PsiElement element) {
-    if (!(element instanceof PsiSwitchLabelStatement)) {
-      return null;
+  @NotNull
+  private static List<PsiEnumConstant> findEnumConstants(PsiElement element) {
+    if (!(element instanceof PsiSwitchLabelStatementBase)) {
+      return Collections.emptyList();
     }
-    final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)element;
-    final PsiExpression value = switchLabelStatement.getCaseValue();
-    if (!(value instanceof PsiReferenceExpression)) {
-      return null;
+    final PsiSwitchLabelStatementBase switchLabelStatement = (PsiSwitchLabelStatementBase)element;
+    final PsiExpressionList list = switchLabelStatement.getCaseValues();
+    if (list == null) {
+      return Collections.emptyList();
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
-    final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiEnumConstant)) {
-      return null;
+    List<PsiEnumConstant> constants = new ArrayList<>();
+    for (PsiExpression value : list.getExpressions()) {
+      if (value instanceof PsiReferenceExpression) {
+        final PsiElement target = ((PsiReferenceExpression)value).resolve();
+        if (target instanceof PsiEnumConstant) {
+          constants.add((PsiEnumConstant)target);
+          continue;
+        }
+      }
+      return Collections.emptyList();
     }
-    return (PsiEnumConstant)target;
+    return constants;
   }
 }

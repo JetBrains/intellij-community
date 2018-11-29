@@ -124,6 +124,20 @@ public class SwitchUtils {
     }
   }
 
+  /**
+   * Returns true if given switch block has a rule-based format (like 'case 0 ->')
+   * @param block block to test
+   * @return true if given switch block has a rule-based format; false if it has conventional label-based format (like 'case 0:')
+   * If switch body has no labels yet and language level permits, rule-based format is assumed.
+   */
+  public static boolean isRuleFormatSwitch(PsiSwitchBlock block) {
+    if (PsiUtil.getLanguageLevel(block).isLessThan(LanguageLevel.JDK_12_PREVIEW)) {
+      return false;
+    }
+    PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
+    return label == null || label instanceof PsiSwitchLabeledRuleStatement;
+  }
+
   private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
     if (expression == null) {
       return false;
