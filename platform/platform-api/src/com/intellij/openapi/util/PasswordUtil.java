@@ -15,25 +15,28 @@ public class PasswordUtil {
 
   // weak encryption just to avoid plain text passwords in text files
   public static String encodePassword(@Nullable String password) {
-    String result = "";
     if (password == null) {
-      return result;
+      return "";
     }
+
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < password.length(); i++) {
-      result += Integer.toHexString(password.charAt(i) ^ 0xdfaa);
+      result.append(Integer.toHexString(password.charAt(i) ^ 0xdfaa));
     }
-    return result;
+    return result.toString();
   }
 
+  @NotNull
   public static String encodePassword(@Nullable char[] password) {
-    String result = "";
     if (password == null) {
-      return result;
+      return "";
     }
+
+    StringBuilder result = new StringBuilder();
     for (char c : password) {
-      result += Integer.toHexString(c ^ 0xdfaa);
+      result.append(Integer.toHexString(c ^ 0xdfaa));
     }
-    return result;
+    return result.toString();
   }
 
   public static String decodePassword(@Nullable String password) throws NumberFormatException {
