@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -797,11 +798,27 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
     Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      myPluginManagerUrl = url != null ? StringUtil.trimEnd(url, "/") : DEFAULT_PLUGINS_HOST;
+      if (url != null) {
+        myPluginManagerUrl = StringUtil.trimEnd(url, "/");
+      }
+
+      String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
+      if (listUrl != null) {
+        myPluginsListUrl = listUrl;
+      }
+
+      String channelListUrl = pluginsElement.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
+      if (channelListUrl != null) {
+        myChannelsListUrl = channelListUrl;
+      }
+
+      String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
+      if (downloadUrl != null) {
+        myPluginsDownloadUrl = downloadUrl;
+      }
 
       if (!getBuild().isSnapshot()) {
         myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
@@ -811,11 +828,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
       myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
+      myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
 
-    myPluginsListUrl = myPluginManagerUrl + "/plugins/list/";
-    myChannelsListUrl = myPluginManagerUrl + "/channels/list/";
-    myPluginsDownloadUrl = myPluginManagerUrl + "/pluginManager/";
+    myPluginManagerUrl = ObjectUtils.coalesce(myPluginsListUrl, DEFAULT_PLUGINS_HOST);
+    myPluginsListUrl = ObjectUtils.coalesce(myPluginsListUrl, myPluginManagerUrl + "/plugins/list/");
+    myChannelsListUrl = ObjectUtils.coalesce(myChannelsListUrl, myPluginManagerUrl + "/channels/list/");
+    myPluginsDownloadUrl = ObjectUtils.coalesce(myPluginsDownloadUrl, myPluginManagerUrl + "/pluginManager/");
 
     Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
