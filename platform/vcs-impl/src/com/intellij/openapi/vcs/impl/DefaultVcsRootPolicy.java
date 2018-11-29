@@ -17,18 +17,13 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
 public abstract class DefaultVcsRootPolicy {
   @NotNull protected final Project myProject;
 
@@ -40,19 +35,12 @@ public abstract class DefaultVcsRootPolicy {
     return ServiceManager.getService(project, DefaultVcsRootPolicy.class);
   }
 
+  /**
+   * Return roots that belong to the project (ex: all content roots).
+   * If 'Project' mapping is configured, all vcs roots for these roots will be put to the mappings.
+   */
   @NotNull
-  public abstract Collection<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName);
-
-  public abstract boolean matchesDefaultMapping(@NotNull VirtualFile file, final Object matchContext);
-
-  @Nullable
-  public abstract Object getMatchContext(final VirtualFile file);
-
-  @Nullable
-  public abstract VirtualFile getVcsRootFor(@NotNull VirtualFile file);
-
-  @NotNull
-  public abstract Collection<VirtualFile> getDirtyRoots();
+  public abstract Collection<VirtualFile> getDefaultVcsRoots();
 
   public String getProjectConfigurationMessage() {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(myProject);
