@@ -82,6 +82,12 @@ class JavaValuesTest : AbstractJavaValuesTest() {
   fun testEnumSwitch() = doTest("Simple/EnumSwitch.java")
 
   @Test
+  fun testEnhancedSwitch() = doTest("Simple/EnhancedSwitch.java")
+
+  @Test
+  fun testEnhancedSwitchComplexEvaluations() = doTest("Simple/EnhancedSwitchComplexEvaluations.java")
+
+  @Test
   fun testEnumSwitchConditionalBreak() = doTest("Simple/EnumSwitchConditionalBreak.java")
 
   @Test

@@ -113,7 +113,12 @@ class TreeBasedEvaluator(
 
     override fun visitBreakExpression(node: UBreakExpression, data: UEvaluationState): UEvaluationInfo {
       storeState(node, data)
-      return UNothingValue(node) to data storeResultFor node
+      return when (node) {
+        is UBreakWithValueExpression ->
+          node.valueExpression?.accept(chain, data)?.let { UBreakResult(it.value, node) } ?: UUndeterminedValue
+        else ->
+          UNothingValue(node)
+      } to data storeResultFor node
     }
 
     override fun visitContinueExpression(node: UContinueExpression, data: UEvaluationState): UEvaluationInfo {
@@ -523,9 +528,9 @@ class TreeBasedEvaluator(
             if (!clauseInfo.reachable) break
           }
           val clauseValue = clauseInfo.value
-          if (clauseValue is UNothingValue && clauseValue.containingLoopOrSwitch == node) {
+          if (exitingNode(clauseValue) == node) {
             // break from switch
-            resultInfo = resultInfo?.merge(clauseInfo) ?: clauseInfo
+            resultInfo = resultInfo merge getBreakResult(clauseInfo)
             if (caseCondition == UBooleanConstant.True) break@clausesLoop
             clauseInfo = subjectInfo
             fallThroughCondition = UBooleanConstant.False
@@ -544,6 +549,32 @@ class TreeBasedEvaluator(
         resultInfo = resultInfo.copy(UUndeterminedValue)
       }
       return resultInfo storeResultFor node
+    }
+
+    private fun exitingNode(uValue: UValue): UExpression? {
+      when (uValue) {
+        is UNothingValue -> return uValue.containingLoopOrSwitch
+        is UPhiValue -> {
+          for (value in uValue.values) if (value is UBreakResult) return value.containingLoopOrSwitch
+          for (value in uValue.values) if (value is UNothingValue) value.containingLoopOrSwitch?.let { return it }
+          return null
+        }
+        else -> return null
+      }
+    }
+
+    private fun getBreakResult(clauseInfo: UEvaluationInfo): UEvaluationInfo {
+      val clauseValue = clauseInfo.value
+      return when (clauseValue) {
+        is UBreakResult -> clauseValue.value to clauseInfo.state
+        is UPhiValue -> UPhiValue.create(clauseValue.values.map {
+          when (it) {
+            is UBreakResult -> it.value
+            else -> it
+          }
+        }) to clauseInfo.state
+        else -> clauseInfo
+      }
     }
 
     private fun evaluateLoop(

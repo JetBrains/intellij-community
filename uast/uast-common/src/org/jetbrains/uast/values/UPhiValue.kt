@@ -11,6 +11,9 @@ class UPhiValue private constructor(val values: Set<UValue>) : UValueBase() {
 
   override fun toString(): String = values.joinToString(prefix = "Phi(", postfix = ")", separator = ", ")
 
+  override val reachable: Boolean
+    get() = values.any { it.reachable }
+
   companion object {
     private const val PHI_LIMIT = 4
 
