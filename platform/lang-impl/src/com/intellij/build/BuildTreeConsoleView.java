@@ -211,7 +211,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           int lastSize = getLastSize();
           if (firstSize == 0 && lastSize == 0) {
             int width = Math.round(getWidth() / 2f);
-            setFirstSize(width);
+            if (width > 0) {
+              setFirstSize(width);
+            }
           }
         }
       }
