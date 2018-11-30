@@ -764,7 +764,7 @@ public class PyCallExpressionHelper {
       return ContainerUtil.map(PyUtil.filterTopPriorityResults(callees),
                                callee -> Pair.create(callee.getElement(), callee.getCallableType()));
     }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
+    else {
       final List<Pair<PyCallable, PyCallableType>> results = new ArrayList<>();
 
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
@@ -780,9 +780,6 @@ public class PyCallExpressionHelper {
       }
 
       return results;
-    }
-    else {
-      return Collections.emptyList();
     }
   }
 
@@ -1316,11 +1313,8 @@ public class PyCallExpressionHelper {
         implicitOffset = 0;
       }
     }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      implicitOffset = 1;
-    }
     else {
-      implicitOffset = 0;
+      implicitOffset = 1;
     }
     return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
   }

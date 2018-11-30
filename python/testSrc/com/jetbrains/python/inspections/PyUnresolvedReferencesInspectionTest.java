@@ -770,6 +770,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                  "print(<error descr=\"Unresolved reference 'module'\">module</error>)");
   }
 
+  // PY-32927
+  public void testPrefixExpressionOnClassHavingSkeletons() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
