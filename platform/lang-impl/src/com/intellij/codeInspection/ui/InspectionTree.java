@@ -59,17 +59,17 @@ import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COM
 public class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
 
-  @NotNull private final GlobalInspectionContextImpl myContext;
   private final InspectionTreeModel myModel;
 
   private boolean myQueueUpdate;
   private final OccurenceNavigator myOccurenceNavigator = new MyOccurrenceNavigator();
+  private final InspectionResultsView myView;
 
   public InspectionTree(@NotNull GlobalInspectionContextImpl context,
                         @NotNull InspectionResultsView view) {
+    myView = view;
     myModel = new InspectionTreeModel();
     setModel(new AsyncTreeModel(myModel, view));
-    myContext = context;
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
     setRootVisible(false);
@@ -78,10 +78,9 @@ public class InspectionTree extends Tree {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getSelectionModel().addTreeSelectionListener(e -> {
         if (isUnderQueueUpdate()) return;
-        InspectionResultsView view1 = getContext().getView();
-        if (view1 != null && !view1.isDisposed()) {
-          view1.syncRightPanel();
-          if (view1.isAutoScrollMode()) {
+        if (!myView.isDisposed()) {
+          myView.syncRightPanel();
+          if (myView.isAutoScrollMode()) {
             OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
           }
         }
@@ -93,9 +92,8 @@ public class InspectionTree extends Tree {
         @Override
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            InspectionResultsView view1 = getContext().getView();
-            if (view1 != null && !view1.isDisposed()) {
-              OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(view1), false);
+            if (myView != null && !myView.isDisposed()) {
+              OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myView), false);
             }
           }
         }
@@ -115,9 +113,8 @@ public class InspectionTree extends Tree {
           EdtInvocationManager.getInstance().invokeLater(() -> {
             expandPath(new TreePath(myModel.getRoot()));
             SmartExpander.installOn(InspectionTree.this);
-            InspectionResultsView v = getContext().getView();
-            if (v != null && !v.isDisposed()) {
-              v.syncRightPanel();
+            if (myView != null && !myView.isDisposed()) {
+              myView.syncRightPanel();
             }
           });
         }
@@ -162,10 +159,10 @@ public class InspectionTree extends Tree {
   public InspectionToolWrapper getSelectedToolWrapper(boolean allowDummy) {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) {
-      InspectionProfileImpl profile = myContext.getView().getCurrentProfile();
+      InspectionProfileImpl profile = myView.getCurrentProfile();
       String singleToolName = profile.getSingleTool();
       if (singleToolName != null) {
-        InspectionToolWrapper tool = profile.getInspectionTool(singleToolName, myContext.getProject());
+        InspectionToolWrapper tool = profile.getInspectionTool(singleToolName, myView.getProject());
         LOG.assertTrue(tool != null);
         return tool;
       }
@@ -345,7 +342,7 @@ public class InspectionTree extends Tree {
     if (isSingleInspectionRun) {
       return parent;
     }
-    return myModel.createInspectionNode(toolWrapper, myContext.getCurrentProfile(), parent);
+    return myModel.createInspectionNode(toolWrapper, myView.getCurrentProfile(), parent);
   }
 
   @NotNull
@@ -359,7 +356,7 @@ public class InspectionTree extends Tree {
     }
 
     InspectionTreeNode currentNode = groupedBySeverity
-                                     ? myModel.createSeverityGroupNode(myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar(),
+                                     ? myModel.createSeverityGroupNode(myView.getCurrentProfile().getProfileManager().getSeverityRegistrar(),
                                                                        errorLevel,
                                                                        myModel.getRoot())
                                      : myModel.getRoot();
@@ -496,7 +493,7 @@ public class InspectionTree extends Tree {
       return node.getChildren().stream().allMatch(this::shouldDelete);
     }
     else if (node instanceof InspectionNode) {
-      InspectionToolPresentation presentation = myContext.getPresentation(((InspectionNode)node).getToolWrapper());
+      InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(((InspectionNode)node).getToolWrapper());
       SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
       if (problemElements.isEmpty()) {
         return true;
@@ -508,7 +505,7 @@ public class InspectionTree extends Tree {
 
   @NotNull
   public GlobalInspectionContextImpl getContext() {
-    return myContext;
+    return myView.getGlobalInspectionContext();
   }
 
   @NotNull

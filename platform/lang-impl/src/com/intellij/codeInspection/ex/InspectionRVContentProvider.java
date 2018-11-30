@@ -272,7 +272,8 @@ public abstract class InspectionRVContentProvider {
           String packageName = entry.getKey();
           Module module = container.getModule(context.getProject());
           InspectionTreeNode moduleNode = module != null ? model.createModuleNode(module, parent) : null;
-          currentParent = model.createPackageNode(packageName, moduleNode == null ? parent : moduleNode);
+          InspectionTreeNode actualParent = moduleNode == null ? parent : moduleNode;
+          currentParent = packageName == null ? actualParent : model.createPackageNode(packageName, actualParent);
         }
         RefElementNode node = container.createNode(context.getPresentation(toolWrapper),
                                                    model,

@@ -181,7 +181,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
   }
 
   private synchronized <T extends InspectionTreeNode> T getOrAdd(Object userObject, Supplier<T> supplier, InspectionTreeNode parent) {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isDispatchThread());
     Children children = myChildren.computeIfAbsent(parent, __ -> new Children());
     if (userObject == null) {
       userObject = ObjectUtils.NULL;
