@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -148,18 +149,29 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
     }
 
     private static boolean hasMatchingCloseTag(PsiElement element, int offset) {
+      int balance = 0;
       while (element != null) {
         @NonNls final String text = element.getText();
         final int endIndex = StringUtil.indexOfIgnoreCase(text, "</code>", offset);
         final int end = endIndex >= 0 ? endIndex : text.length();
-        if (containsHtmlTag(text, offset, end) || StringUtil.containsAnyChar(text, "{}", offset, end)) {
+        if (text.equals("{")) {
+          balance++;
+        }
+        else if (text.equals("}")) {
+          balance--;
+          if (balance < 0) return false;
+        }
+        if (containsHtmlTag(text, offset, end)) {
           return false;
         }
         if (endIndex >= 0) {
-          return true;
+          return balance == 0;
         }
         offset = 0;
         element = element.getNextSibling();
+        if (element instanceof PsiInlineDocTag) {
+          return false;
+        }
       }
       return false;
     }
