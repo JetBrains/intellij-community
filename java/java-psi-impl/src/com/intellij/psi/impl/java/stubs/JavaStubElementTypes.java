@@ -33,7 +33,7 @@ public interface JavaStubElementTypes {
   JavaNameValuePairType NAME_VALUE_PAIR = new JavaNameValuePairType();
   JavaLiteralExpressionElementType LITERAL_EXPRESSION = new JavaLiteralExpressionElementType();
   LambdaExpressionElementType LAMBDA_EXPRESSION = new LambdaExpressionElementType();
-  MethodReferenceElementType METHOD_REFERENCE = new MethodReferenceElementType();
+  MethodReferenceElementType METHOD_REF_EXPRESSION = new MethodReferenceElementType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
   JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
