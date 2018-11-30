@@ -240,4 +240,14 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   public long getModificationCount() {
     return myTracker.getModificationCount();
   }
+
+  protected void ensureValuesLoaded() {
+    ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<T> bean : point.getExtensionList()) {
+        bean.getInstance();
+      }
+    }
+  }
+
 }

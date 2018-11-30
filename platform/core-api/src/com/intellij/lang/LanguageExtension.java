@@ -122,4 +122,9 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   protected T getDefaultImplementation() {
     return myDefaultImplementation;
   }
+
+  @Override
+  protected void ensureValuesLoaded() {
+    super.ensureValuesLoaded();
+  }
 }
