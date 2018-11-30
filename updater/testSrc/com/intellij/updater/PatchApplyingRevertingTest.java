@@ -577,6 +577,20 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     assertAppliedAndReverted(preparationResult);
   }
 
+  @Test
+  public void testExecutableFlagChange() throws Exception {
+    assumeFalse(Utils.IS_WINDOWS);
+
+    FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_executable"), "to_become_executable");
+    FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_plain"), "to_become_plain");
+    Utils.setExecutable(new File(myOlderDir, "bin/to_become_plain"), true);
+    resetNewerDir();
+    Utils.setExecutable(new File(myNewerDir, "bin/to_become_plain"), false);
+    Utils.setExecutable(new File(myNewerDir, "bin/to_become_executable"), true);
+
+    assertAppliedAndReverted();
+  }
+
 
   @Override
   protected Patch createPatch() throws IOException {

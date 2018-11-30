@@ -67,4 +67,14 @@ public class DigesterTest extends UpdaterTestCase {
       assertThat(e.getMessage()).startsWith("Absolute link");
     }
   }
+
+  @Test
+  public void testExecutables() throws Exception {
+    assumeFalse(Utils.IS_WINDOWS);
+    File testFile = new File(tempDir.getRoot(), "idea.bat");
+    Utils.copy(new File(dataDir, "bin/idea.bat"), testFile);
+    assertEquals(CHECKSUMS.IDEA_BAT, Digester.digestRegularFile(testFile, false));
+    Utils.setExecutable(testFile);
+    assertEquals(CHECKSUMS.IDEA_BAT | Digester.EXECUTABLE, Digester.digestRegularFile(testFile, false));
+  }
 }

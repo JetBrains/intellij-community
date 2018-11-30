@@ -113,8 +113,12 @@ public class Utils {
   }
 
   public static void setExecutable(File file) throws IOException {
+    setExecutable(file, true);
+  }
+
+  public static void setExecutable(File file, boolean executable) throws IOException {
     Runner.logger().info("Setting executable permissions for: " + file);
-    if (!file.setExecutable(true, false)) {
+    if (!file.setExecutable(executable, false)) {
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
