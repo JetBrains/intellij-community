@@ -8,7 +8,7 @@ import java.io.Writer
 
 abstract class BaseXmlOutputter(protected val lineSeparator: String) {
   companion object {
-    fun isNameIndicatesSensitiveInformation(name: String): Boolean {
+    fun doesNameSuggestSensitiveInformation(name: String): Boolean {
       if (name.contains("password")) {
         val isRemember = name.contains("remember", ignoreCase = true) ||
                          name.contains("keep", ignoreCase = true) ||

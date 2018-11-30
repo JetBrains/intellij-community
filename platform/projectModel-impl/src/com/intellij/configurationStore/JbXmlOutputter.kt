@@ -22,6 +22,7 @@ import java.io.StringWriter
 import java.io.Writer
 import java.util.Collections
 import javax.xml.transform.Result
+import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
 private val DEFAULT_FORMAT = JDOMUtil.createFormat("\n")
@@ -425,7 +426,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
         attribute.value
       }
 
-      if (isForbidSensitiveData && BaseXmlOutputter.isNameIndicatesSensitiveInformation(attribute.name)) {
+      if (isForbidSensitiveData && doesNameSuggestSensitiveInformation(attribute.name)) {
         logSensitiveInformationError("@${attribute.name}", "Attribute", attribute.parent)
       }
 
@@ -512,13 +513,13 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   private fun checkIsElementContainsSensitiveInformation(element: Element) {
     var name: String? = element.name
 
-    if (isNameIndicatesSensitiveInformation(name!!)) {
+    if (doesNameSuggestSensitiveInformation(name!!)) {
       logSensitiveInformationError(name, "Element", element.parentElement)
     }
 
     // checks only option tag
     name = element.getAttributeValue(Constants.NAME)
-    if (name != null && BaseXmlOutputter.isNameIndicatesSensitiveInformation(name) && element.getAttribute("value") != null) {
+    if (name != null && doesNameSuggestSensitiveInformation(name) && element.getAttribute("value") != null) {
       logSensitiveInformationError("@name=$name", "Element", element /* here not parentElement because it is attribute */)
     }
   }

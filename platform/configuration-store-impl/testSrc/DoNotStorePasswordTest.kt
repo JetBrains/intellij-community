@@ -2,6 +2,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.configurationStore.BaseXmlOutputter
 import com.intellij.openapi.application.ApplicationManager
@@ -72,7 +73,7 @@ class DoNotStorePasswordTest {
 
     for (accessor in XmlSerializerUtil.getAccessors(clazz)) {
       val name = accessor.name
-      if (BaseXmlOutputter.isNameIndicatesSensitiveInformation(name)) {
+      if (BaseXmlOutputter.doesNameSuggestSensitiveInformation(name)) {
         if (clazz.typeName != "com.intellij.docker.registry.DockerRegistry") {
           throw RuntimeException("${clazz.typeName}.${accessor.name}")
         }
