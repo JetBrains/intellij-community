@@ -9,9 +9,14 @@ import java.io.Writer
 abstract class BaseXmlOutputter(protected val lineSeparator: String) {
   companion object {
     fun isNameIndicatesSensitiveInformation(name: String): Boolean {
-      return name.contains("password") && !(name.contains("remember", ignoreCase = true) ||
-                                            name.contains("keep", ignoreCase = true) ||
-                                            name.contains("save", ignoreCase = true))
+      if (name.contains("password")) {
+        val isRemember = name.contains("remember", ignoreCase = true) ||
+                         name.contains("keep", ignoreCase = true) ||
+                         name.contains("use", ignoreCase = true) ||
+                         name.contains("save", ignoreCase = true)
+        return !isRemember
+      }
+      return false
     }
   }
 

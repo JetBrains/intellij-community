@@ -508,7 +508,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     var name: String? = element.name
 
     @Suppress("SpellCheckingInspection")
-    if (BaseXmlOutputter.isNameIndicatesSensitiveInformation(name!!)) {
+    if (isNameIndicatesSensitiveInformation(name!!)) {
       logSensitiveInformationError(name, "Element")
     }
 

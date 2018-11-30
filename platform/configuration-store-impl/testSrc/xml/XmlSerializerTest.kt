@@ -3,25 +3,23 @@
 
 package com.intellij.configurationStore.xml
 
-import com.intellij.configurationStore.*
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.configurationStore.StoredPropertyStateTest
+import com.intellij.configurationStore.clearBindingCache
+import com.intellij.configurationStore.deserialize
+import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.SystemProperties
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
-import com.intellij.util.xmlb.annotations.Property
 import junit.framework.TestCase
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
-import java.io.StringWriter
 import java.util.*
 
 @RunWith(Suite::class)
@@ -34,7 +32,8 @@ import java.util.*
   KotlinXmlSerializerTest::class,
   XmlSerializerConversionTest::class,
   XmlSerializerListTest::class,
-  XmlSerializerSetTest::class
+  XmlSerializerSetTest::class,
+  ForbidSensitiveInformationTest::class
 )
 class XmlSerializerTestSuite
 
@@ -648,85 +647,6 @@ internal class XmlSerializerTest {
     bean.module = "module"
     bean.ab = "ab"
     testSerializer("<bean ab=\"ab\" module=\"module\" />", bean, SkipDefaultsSerializationFilter())
-  }
-
-  @Test
-  fun `do not store password as attribute`() {
-    @Tag("bean")
-    class Bean {
-      @Attribute
-      var password: String? = null
-
-      @Attribute
-      var foo: String? = null
-    }
-
-    val bean = Bean()
-    bean.foo = "module"
-    bean.password = "ab"
-    // it is not part of XML bindings to ensure that even if you will use JDOM directly, you cannot output sensitive data
-    // so, testSerializer must not throw error
-    val element = assertSerializer(bean, "<bean password=\"ab\" foo=\"module\" />")
-
-    assertThatThrownBy {
-      val xmlWriter = JbXmlOutputter()
-      xmlWriter.output(element, StringWriter())
-    }.hasMessage("Attribute \"password\" probably contains sensitive information")
-  }
-
-  @Test
-  fun `do not store password as element`() {
-    @Tag("bean")
-    class Bean {
-      var password: String? = null
-
-      @Attribute
-      var foo: String? = null
-    }
-
-    val bean = Bean()
-    bean.foo = "module"
-    bean.password = "ab"
-    // it is not part of XML bindings to ensure that even if you will use JDOM directly, you cannot output sensitive data
-    // so, testSerializer must not throw error
-    val element = assertSerializer(bean, """
-      <bean foo="module">
-        <option name="password" value="ab" />
-      </bean>
-    """.trimIndent())
-
-    assertThatThrownBy {
-      val xmlWriter = JbXmlOutputter(storageFilePathForDebugPurposes = "${FileUtilRt.toSystemIndependentName(SystemProperties.getUserHome())}/foo/bar.xml")
-      xmlWriter.output(element, StringWriter())
-    }.hasMessage("Element \"password\" probably contains sensitive information (file: ~/foo/bar.xml)")
-  }
-
-  @Test
-  fun `configuration name with password word`() {
-    @Tag("bean")
-    class Bean {
-      @OptionTag(tag ="configuration", valueAttribute = "bar")
-      var password: String? = null
-    }
-
-    val bean = Bean()
-    bean.password = "ab"
-    // it is not part of XML bindings to ensure that even if you will use JDOM directly, you cannot output sensitive data
-    // so, testSerializer must not throw error
-    val element = assertSerializer(bean, """
-     <bean>
-       <configuration name="password" bar="ab" />
-     </bean>
-    """.trimIndent())
-
-    val xmlWriter = JbXmlOutputter()
-    val stringWriter = StringWriter()
-    xmlWriter.output(element, stringWriter)
-    assertThat(stringWriter.toString()).isEqualTo("""
-      <bean>
-        <configuration name="password" bar="ab" />
-      </bean>
-    """.trimIndent())
   }
 
   @Test
