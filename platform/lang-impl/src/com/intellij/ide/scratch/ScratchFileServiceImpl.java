@@ -41,7 +41,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
-import com.intellij.psi.stubs.StubElementTypeHolderEP;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProvider;
@@ -160,21 +159,10 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   public void dispose() {
   }
 
-  private static class LanguageLoader {
-    static {
-      // make sure languages are initialized to avoid PerFileMappingsBase.handleUnknownMapping()
-      for (StubElementTypeHolderEP holderEP : StubElementTypeHolderEP.EP_NAME.getExtensionList()) {
-        holderEP.initialize();
-      }
-    }
-    static void ensureLoaded() {}
-  }
-
   private static class MyLanguages extends PerFileMappingsBase<Language> {
 
     @Override
     public List<Language> getAvailableValues() {
-      LanguageLoader.ensureLoaded();
       return LanguageUtil.getFileLanguages();
     }
 
