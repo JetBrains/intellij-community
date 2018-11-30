@@ -2356,7 +2356,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.validateMousePointer(e);
     }
     else {
-      myGutterComponent.setActiveFoldRegion(null);
+      myGutterComponent.setActiveFoldRegions(Collections.emptyList());
       myDefaultCursor = getDefaultCursor(e);
       updateEditorCursor();
     }
