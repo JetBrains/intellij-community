@@ -13,10 +13,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,9 +73,7 @@ public class ListPluginComponent extends CellPluginComponent {
     addNameComponent(myBaselinePanel);
     myName.setVerticalAlignment(SwingConstants.TOP);
 
-    if (pluginForUpdate) {
-      createVersion();
-    }
+    createVersion(pluginForUpdate);
     updateErrors();
 
     if (!pluginForUpdate) {
@@ -159,7 +154,7 @@ public class ListPluginComponent extends CellPluginComponent {
   @NotNull
   private static AbstractLayoutManager createCheckboxIconLayout() {
     return new AbstractLayoutManager() {
-      JBValue offset = new JBValue.Float(12);
+      final JBValue offset = new JBValue.Float(12);
 
       @Override
       public Dimension preferredLayoutSize(Container parent) {
@@ -194,10 +189,24 @@ public class ListPluginComponent extends CellPluginComponent {
     };
   }
 
-  private void createVersion() {
+  private void createVersion(boolean pluginForUpdate) {
     String version = StringUtil.defaultIfEmpty(myPlugin.getVersion(), null);
-    if (version != null) {
-      myVersion = new JLabel("Version " + version);
+
+    if (version != null && (pluginForUpdate || !myPlugin.isBundled() || myPlugin.allowBundledUpdate())) {
+      String oldVersion = null;
+
+      if (pluginForUpdate) {
+        IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(myPlugin.getPluginId());
+        oldVersion = installedPlugin == null ? null : StringUtil.defaultIfEmpty(installedPlugin.getVersion(), null);
+      }
+      if (oldVersion == null) {
+        version = "v" + version;
+      }
+      else {
+        version = "Version " + oldVersion + " " + UIUtil.rightArrow() + " " + version;
+      }
+
+      myVersion = new JLabel(version);
       myVersion.setOpaque(false);
       myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myVersion));
     }
