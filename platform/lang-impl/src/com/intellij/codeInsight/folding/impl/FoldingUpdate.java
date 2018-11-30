@@ -35,7 +35,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,6 +237,7 @@ public class FoldingUpdate {
     List<Language> languages = ContainerUtil.sorted(viewProvider.getLanguages(), preferBaseLanguage.thenComparing(Language::getID));
 
     DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence()) : null;
+    List<RangeMarker> hardRefToRangeMarkers = new ArrayList<>();
 
     for (Language language : languages) {
       final PsiFile psi = viewProvider.getPsi(language);
@@ -255,7 +255,7 @@ public class FoldingUpdate {
             continue;
           }
 
-          if (copyDoc != null && !addNonConflictingRegion(copyDoc, range)) {
+          if (copyDoc != null && !addNonConflictingRegion(copyDoc, range, hardRefToRangeMarkers)) {
             continue;
           }
 
@@ -266,15 +266,23 @@ public class FoldingUpdate {
     }
   }
 
-  private static boolean addNonConflictingRegion(DocumentEx document, TextRange range) {
+  private static boolean addNonConflictingRegion(DocumentEx document, TextRange range, List<RangeMarker> hardRefToRangeMarkers) {
     int start = range.getStartOffset();
     int end = range.getEndOffset();
-    Processor<RangeMarker> areNonConflicting = rm -> range.contains(rm) || TextRange.create(rm).contains(range);
-    if (!document.processRangeMarkersOverlappingWith(start, end, areNonConflicting)) {
+    if (!document.processRangeMarkersOverlappingWith(start, end, rm -> !areConflicting(range, TextRange.create(rm)))) {
       return false;
     }
-    document.createRangeMarker(start, end);
+    RangeMarker marker = document.createRangeMarker(start, end);
+    hardRefToRangeMarkers.add(marker); //prevent immediate GC
     return true;
+  }
+
+  private static boolean areConflicting(TextRange range1, TextRange range2) {
+    if (range1.equals(range2)) return true;
+    if (range1.contains(range2) || range2.contains(range1)) return false;
+
+    TextRange intersection = range1.intersection(range2);
+    return intersection != null && !intersection.isEmpty();
   }
 
   private static void diagnoseIncorrectRange(@NotNull PsiFile file,
