@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.aliasAnnotations
 
+import com.intellij.testFramework.ExpectedHighlightingData
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 
@@ -127,7 +128,7 @@ class Foo {
   }
 
   void testInapplicableAttributeInAliasUsage() {
-    testHighlighting('''\
+    ExpectedHighlightingData.expectedDuplicatedHighlighting { testHighlighting('''\
 import groovy.transform.*
 
 @ToString(excludes = ['a', 'b'])
@@ -138,7 +139,7 @@ import groovy.transform.*
 class Foo {
     Integer a, b
 }
-''')
+''')}
   }
 
   void testAnnotationCollectorInterfaceWithAttrs() {

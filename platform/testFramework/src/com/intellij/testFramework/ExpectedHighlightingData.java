@@ -28,9 +28,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThreeState;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +55,9 @@ import static org.junit.Assert.*;
  * @author cdr
  */
 public class ExpectedHighlightingData {
+  public static final String EXPECTED_DUPLICATION_MESSAGE =
+    "Expected duplication problem. Please remove this wrapper, if there is no such problem any more";
+
   private static final String ERROR_MARKER = CodeInsightTestFixture.ERROR_MARKER;
   private static final String WARNING_MARKER = CodeInsightTestFixture.WARNING_MARKER;
   private static final String WEAK_WARNING_MARKER = CodeInsightTestFixture.WEAK_WARNING_MARKER;
@@ -65,6 +71,9 @@ public class ExpectedHighlightingData {
 
   private static final HighlightInfoType WHATEVER =
     new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, HighlighterColors.TEXT);
+
+  private static boolean isDuplicatedCheckDisabled = false;
+  private static int failedDuplicationChecks = 0;
 
   public static class ExpectedHighlightingSet {
     private final HighlightSeverity severity;
@@ -439,11 +448,34 @@ public class ExpectedHighlightingData {
   public void checkResult(Collection<HighlightInfo> infos, String text, @Nullable String filePath) {
     StringBuilder failMessage = new StringBuilder();
 
+    Set<HighlightInfo> expectedFound = new THashSet<>(new TObjectHashingStrategy<HighlightInfo>() {
+      @Override
+      public int computeHashCode(HighlightInfo object) {
+        return object.hashCode();
+      }
+      @Override
+      public boolean equals(HighlightInfo o1, HighlightInfo o2) {
+        return infoEquals(o1, o2);
+      }
+    });
     if (!myIgnoreExtraHighlighting) {
       for (HighlightInfo info : reverseCollection(infos)) {
-        if (!expectedInfosContainsInfo(info)) {
+        ThreeState state = expectedInfosContainsInfo(info);
+        if (state == ThreeState.NO) {
           reportProblem(failMessage, text, info, "extra ");
           failMessage.append(" [").append(info.type).append(']');
+        }
+        else if (state == ThreeState.YES) {
+          if (expectedFound.contains(info)) {
+            if (isDuplicatedCheckDisabled) {
+              //noinspection AssignmentToStaticFieldFromInstanceMethod
+              failedDuplicationChecks++;
+            }
+            else {
+              reportProblem(failMessage, text, info, "duplicated ");
+            }
+          }
+          expectedFound.add(info);
         }
       }
     }
@@ -558,6 +590,36 @@ public class ExpectedHighlightingData {
     return sb.toString();
   }
 
+  /** This is temporary wrapper to provide a time to fix failing tests */
+  public static void expectedDuplicatedHighlighting(@NotNull Runnable check) {
+    try {
+      isDuplicatedCheckDisabled = true;
+      failedDuplicationChecks = 0;
+      check.run();
+    }
+    finally {
+      isDuplicatedCheckDisabled = false;
+    }
+    if (failedDuplicationChecks == 0) {
+      throw new IllegalStateException(EXPECTED_DUPLICATION_MESSAGE);
+    }
+  }
+
+  /** This is temporary wrapper to provide a time to fix failing tests */
+  public static void expectedDuplicatedHighlightingThrowable(@NotNull ThrowableRunnable check) throws Throwable {
+    try {
+      isDuplicatedCheckDisabled = true;
+      failedDuplicationChecks = 0;
+      check.run();
+    }
+    finally {
+      isDuplicatedCheckDisabled = false;
+    }
+    if (failedDuplicationChecks == 0) {
+      throw new IllegalStateException(EXPECTED_DUPLICATION_MESSAGE);
+    }
+  }
+
   private static int[] composeText(StringBuilder sb,
                                    List<? extends Pair<String, HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
@@ -653,20 +715,20 @@ public class ExpectedHighlightingData {
     return false;
   }
 
-  private boolean expectedInfosContainsInfo(HighlightInfo info) {
-    if (info.getTextAttributes(null, null) == TextAttributes.ERASE_MARKER) return true;
+  private ThreeState expectedInfosContainsInfo(HighlightInfo info) {
+    if (info.getTextAttributes(null, null) == TextAttributes.ERASE_MARKER) return ThreeState.UNSURE;
     Collection<ExpectedHighlightingSet> expectedHighlights = myHighlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       if (highlightingSet.severity != info.getSeverity()) continue;
-      if (!highlightingSet.enabled) return true;
+      if (!highlightingSet.enabled) return ThreeState.UNSURE;
       Set<HighlightInfo> infos = highlightingSet.infos;
       for (HighlightInfo expectedInfo : infos) {
         if (infoEquals(expectedInfo, info)) {
-          return true;
+          return ThreeState.YES;
         }
       }
     }
-    return false;
+    return ThreeState.NO;
   }
 
   private static boolean infoEquals(HighlightInfo expectedInfo, HighlightInfo info) {
