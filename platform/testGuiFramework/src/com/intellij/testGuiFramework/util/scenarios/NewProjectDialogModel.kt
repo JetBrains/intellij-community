@@ -217,6 +217,7 @@ fun LibrariesSet.isSetNotEmpty() = !isSetEmpty()
  * Note: only one library/framework can be checked!
  * */
 fun NewProjectDialogModel.createJavaProject(projectPath: String,
+                                            projectSdk: String,
                                             libs: LibrariesSet = emptySet(),
                                             template: String = "",
                                             basePackage: String = "") {
@@ -224,6 +225,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Java)
+      if(projectSdk.isNotEmpty()) selectSdk(projectSdk)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
@@ -294,11 +296,16 @@ fun NewProjectDialogModel.typeGroupAndArtifact(group: String, artifact: String){
   }
 }
 
-fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
+fun NewProjectDialogModel.createGradleProject(
+  projectPath: String,
+  gradleOptions: NewProjectDialogModel.GradleProjectOptions,
+  projectSdk: String
+) {
   with(guiTestCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Gradle)
+      if(projectSdk.isNotEmpty()) selectSdk(projectSdk)
       setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
       if (gradleOptions.framework.isNotEmpty()) {
         checkboxTree(gradleOptions.framework).check()
@@ -358,12 +365,13 @@ fun NewProjectDialogModel.typeProjectNameAndLocation(projectPath: String){
   }
 }
 
-fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions) {
+fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions, projectSdk: String) {
   with(guiTestCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Maven)
       Pause.pause(2000L)
+      if(projectSdk.isNotEmpty()) selectSdk(projectSdk)
       if (mavenOptions.useArchetype) {
         logUIStep("Set `$checkCreateFromArchetype` checkbox")
         val archetypeCheckbox = checkbox(checkCreateFromArchetype)
@@ -462,7 +470,8 @@ fun NewProjectDialogModel.createKotlinMPProjectDeprecated(
 
 fun NewProjectDialogModel.createKotlinMPProject(
   projectPath: String,
-  templateName: String
+  templateName: String,
+  projectSdk: String
 ) {
   with(guiTestCase) {
     with(connectDialog()) {
@@ -470,6 +479,11 @@ fun NewProjectDialogModel.createKotlinMPProject(
       logUIStep("Select `$templateName` kind of project")
       jList(templateName).clickItem(templateName)
       button(buttonNext).click()
+      val gradleJvm = "Gradle JVM:"
+      waitForPageTransitionFinished {
+        combobox(gradleJvm).target().locationOnScreen
+      }
+      if(projectSdk.isNotEmpty()) selectSdk(projectSdk, gradleJvm)
       button(buttonNext).click()
       typeProjectNameAndLocation(projectPath)
       logUIStep("Close New Project dialog with Finish")
@@ -521,6 +535,7 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
  * */
 fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
                                                         projectPath: String,
+                                                        projectSdk: String,
                                                         libs: LibrariesSet) {
   with(guiTestCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
@@ -541,12 +556,12 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
   }
 }
 
-fun NewProjectDialogModel.createGroovyProject(projectPath: String, libs: LibrariesSet) {
-  createProjectInGroup(NewProjectDialogModel.Groups.Groovy, projectPath, libs)
+fun NewProjectDialogModel.createGroovyProject(projectPath: String, projectSdk: String, libs: LibrariesSet) {
+  createProjectInGroup(NewProjectDialogModel.Groups.Groovy, projectPath, projectSdk,  libs)
 }
 
-fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: LibrariesSet) {
-  createProjectInGroup(NewProjectDialogModel.Groups.Griffon, projectPath, libs)
+fun NewProjectDialogModel.createGriffonProject(projectPath: String, projectSdk: String, libs: LibrariesSet) {
+  createProjectInGroup(NewProjectDialogModel.Groups.Griffon, projectPath, projectSdk, libs)
 }
 
 fun NewProjectDialogModel.waitLoadingTemplates() {
@@ -580,17 +595,17 @@ fun NewProjectDialogModel.selectProjectGroup(group: NewProjectDialogModel.Groups
   }
 }
 
-fun NewProjectDialogModel.selectSdk(sdk: String) {
+fun NewProjectDialogModel.selectSdk(sdk: String, sdkField: String = "Project SDK:") {
   with(guiTestCase) {
     logUIStep("Going to select $sdk as a project SDK")
     with(connectDialog()) {
-      val sdkCombo = combobox("Project SDK:")
+      val sdkCombo = combobox(sdkField)
       val selectedItem = sdkCombo.listItems().firstOrNull { it.startsWith(sdk) }
       if (selectedItem != null)
         sdkCombo.selectItem(selectedItem)
       else
         throw IllegalStateException(
-          "Required SDK $sdk is absent in the \"Project SDK\" list. Found following values: ${sdkCombo.listItems()}")
+          "Required SDK $sdk is absent in the \"$sdkField\" list. Found following values: ${sdkCombo.listItems()}")
     }
   }
 }

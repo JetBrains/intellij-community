@@ -333,8 +333,7 @@ fun GuiTestCase.createJdk(jdkPath: String, jdkName: String = ""): String{
   lateinit  var installedJdkName: String
   welcomeFrame {
     actionLink("Configure").click()
-    popupMenu("Project Defaults").clickSearchedItem()
-    popupMenu("Project Structure").clickSearchedItem()
+    popupMenu("Structure for New Projects").clickSearchedItem()
     logUIStep("Open `$dialogName` dialog")
     dialog(dialogName) {
       jList("SDKs").clickItem("SDKs")
