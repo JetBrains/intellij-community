@@ -35,6 +35,7 @@ public abstract class BaseTransientPage implements IPage {
 
   @Override
   public void flush(@NotNull Novelty.Accessor novelty) {
+    // TODO: remove
     // do nothing
   }
 
@@ -43,8 +44,7 @@ public abstract class BaseTransientPage implements IPage {
     throw new UnsupportedOperationException();
   }
 
-  /*@Override
-  public abstract IPage mergeWithChildren(@NotNull Novelty.Accessor novelty);*/
+  protected abstract IPage mergeWithChildren(@NotNull Novelty.Accessor novelty);
 
   @Override
   @NotNull

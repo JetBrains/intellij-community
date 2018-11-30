@@ -4,6 +4,7 @@ package com.intellij.platform.onair.tree.functional;
 import com.intellij.platform.onair.storage.api.Address;
 import com.intellij.platform.onair.storage.api.KeyValueConsumer;
 import com.intellij.platform.onair.storage.api.Novelty;
+import com.intellij.platform.onair.storage.api.Storage;
 import com.intellij.platform.onair.tree.BTreeCommon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,12 +58,33 @@ public class BottomTransientPage extends BaseTransientPage {
                                @NotNull byte[] value,
                                boolean overwrite,
                                boolean[] result) {
-    throw new UnsupportedOperationException(); // TODO
+    int pos = BTreeCommon.binarySearch(backingArray, size, tree.keySize, 0, key);
+
+    if (pos >= 0) {
+      if (overwrite) {
+        values[pos] = value; // key is the same
+        result[0] = true;
+      }
+      return null;
+    }
+
+    // if found - insert at this position, else insert after found
+    pos = -pos - 1;
+
+    final BottomTransientPage page = BTreeCommon.insertAt(this, tree.base, novelty, pos, key, value);
+    result[0] = true;
+    return page;
   }
 
   @Override
   public boolean delete(@NotNull Novelty.Accessor novelty, long epoch, @NotNull byte[] key, byte[] value) {
-    throw new UnsupportedOperationException(); // TODO
+    final int pos = BTreeCommon.binarySearch(backingArray, size, tree.keySize, 0, key);
+    if (pos < 0) return false;
+
+    copyChildren(pos + 1, pos);
+    decrementSize(1);
+
+    return true;
   }
 
   @Override
@@ -92,16 +114,20 @@ public class BottomTransientPage extends BaseTransientPage {
   }
 
   @Override
-  public BottomTransientPage getTransientCopy(long epoch) {
+  public BottomTransientPage getTransientCopy(@NotNull Novelty.Accessor novelty,
+                                              @NotNull TransientBTreePrototype tree,
+                                              long epoch) {
     if (this.epoch >= epoch) {
       return this;
-    } else {
+    }
+    else {
+      // TODO: pass the 'tree'
       return copyOf(this, epoch, 0, size);
     }
   }
 
   @Override
-  public BaseTransientPage mergeWithChildren(@NotNull Novelty.Accessor novelty) {
+  public BottomTransientPage mergeWithChildren(@NotNull Novelty.Accessor novelty) {
     return this;
   }
 
@@ -115,9 +141,13 @@ public class BottomTransientPage extends BaseTransientPage {
     if (child instanceof byte[]) {
       return (byte[])child;
     }
+    final Storage storage = tree.storage;
+    if (storage == null) {
+      throw new IllegalStateException("tree is not persisted");
+    }
     final Address address = (Address)child;
     final boolean isNovelty = address.isNovelty();
-    return isNovelty ? novelty.lookup(address.getLowBytes()) : tree.storage.lookup(address);
+    return isNovelty ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
   }
 
   private void setTransient(int pos, byte[] key, byte[] child) {

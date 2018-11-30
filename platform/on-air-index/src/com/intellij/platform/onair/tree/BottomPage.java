@@ -3,6 +3,8 @@ package com.intellij.platform.onair.tree;
 
 import com.intellij.platform.onair.storage.api.*;
 import com.intellij.platform.onair.tree.functional.BaseTransientPage;
+import com.intellij.platform.onair.tree.functional.BottomTransientPage;
+import com.intellij.platform.onair.tree.functional.TransientBTreePrototype;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,8 +142,25 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  public BaseTransientPage getTransientCopy(long epoch) {
-    throw new UnsupportedOperationException(); // TODO
+  public BaseTransientPage getTransientCopy(@NotNull Novelty.Accessor novelty,
+                                            @NotNull TransientBTreePrototype tree,
+                                            long epoch) {
+    final int base = tree.base;
+    final int keySize = tree.keySize;
+    if (base != this.tree.getBase() || keySize != this.tree.getKeySize()) {
+      throw new IllegalArgumentException("invalid tree");
+    }
+
+    byte[] bytes = new byte[base * keySize];
+    Object[] values = new Object[base];
+
+    for (int i = 0; i < size; i++) {
+      final int keyOffset = (keySize + BYTES_PER_ADDRESS) * i;
+      System.arraycopy(backingArray, keyOffset, bytes, keySize* i, keySize);
+      values[i] = getValue(novelty, i);
+    }
+
+    return new BottomTransientPage(bytes, tree, size, epoch, values);
   }
 
   @Override

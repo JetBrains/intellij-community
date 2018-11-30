@@ -62,8 +62,7 @@ public abstract class BasePage implements IPage {
     return Arrays.copyOf(backingArray, tree.getKeySize()); // TODO: optimize
   }
 
-  @Override
-  public abstract BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty);
+  protected abstract BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty);
 
   @Nullable
   public abstract BasePage put(@NotNull Novelty.Accessor novelty,

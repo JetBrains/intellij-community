@@ -4,6 +4,7 @@ package com.intellij.platform.onair.tree;
 import com.intellij.platform.onair.storage.api.KeyValueConsumer;
 import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.tree.functional.BaseTransientPage;
+import com.intellij.platform.onair.tree.functional.TransientBTreePrototype;
 import org.jetbrains.annotations.NotNull;
 
 public interface IPage {
@@ -19,7 +20,9 @@ public interface IPage {
 
   long getMutableAddress();
 
-  BaseTransientPage getTransientCopy(long epoch);
+  BaseTransientPage getTransientCopy(@NotNull Novelty.Accessor novelty,
+                                     @NotNull TransientBTreePrototype tree,
+                                     long epoch);
 
   // crud
 
@@ -34,8 +37,6 @@ public interface IPage {
   // tree-specific methods
 
   void insertDirectly(@NotNull Novelty.Accessor novelty, final int pos, @NotNull byte[] key, Object child);
-
-  IPage mergeWithChildren(@NotNull Novelty.Accessor novelty); // del?
 
   IPage split(@NotNull Novelty.Accessor novelty, int from, int length);
 
