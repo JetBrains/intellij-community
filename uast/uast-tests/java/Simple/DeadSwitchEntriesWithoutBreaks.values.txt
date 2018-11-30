@@ -13,7 +13,7 @@ UFile (package = ) [public final enum DeadSwitchEntriesWithoutBreaks {...]
                         USimpleNameReferenceExpression (identifier = SECOND) [SECOND] = SECOND (enum entry)
                 UDeclarationsExpression [var result: int] = Undetermined
                     ULocalVariable (name = result) [var result: int]
-                USwitchExpression [switch (key) ...] = Undetermined
+                USwitchExpression [switch (key) ...] = 66
                     USimpleNameReferenceExpression (identifier = key) [key] = (var key = SECOND (enum entry))
                     UExpressionList (switch) [    FIRST -> {...    ] = Undetermined
                         USwitchClauseExpressionWithBody [FIRST -> {...] = Undetermined

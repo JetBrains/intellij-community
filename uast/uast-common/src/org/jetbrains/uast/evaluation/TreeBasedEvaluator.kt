@@ -505,6 +505,7 @@ class TreeBasedEvaluator(
 
       var resultInfo: UEvaluationInfo? = null
       var clauseInfo = subjectInfo
+      var lastConditionValue: UEvaluationInfo? = null
       var fallThroughCondition: UValue = UBooleanConstant.False
 
       fun List<UExpression>.evaluateAndFold(): UValue =
@@ -520,12 +521,14 @@ class TreeBasedEvaluator(
         if (caseCondition != UBooleanConstant.False) {
           for (bodyExpression in switchClauseWithBody.body.expressions) {
             clauseInfo = bodyExpression.accept(chain, clauseInfo.state)
+            if (clauseInfo.value !is UNothingValue)
+              lastConditionValue = clauseInfo
             if (!clauseInfo.reachable) break
           }
           val clauseValue = clauseInfo.value
           if (clauseValue is UNothingValue && clauseValue.containingLoopOrSwitch == node) {
             // break from switch
-            resultInfo = resultInfo?.merge(clauseInfo) ?: clauseInfo
+            resultInfo = resultInfo merge lastConditionValue merge clauseInfo
             if (caseCondition == UBooleanConstant.True) break@clausesLoop
             clauseInfo = subjectInfo
             fallThroughCondition = UBooleanConstant.False

@@ -34,4 +34,9 @@ data class UEvaluationInfo(val value: UValue, val state: UEvaluationState) {
     get() = value.reachable
 }
 
+infix fun UEvaluationInfo?.merge(otherInfo: UEvaluationInfo?): UEvaluationInfo? =
+  if (this != null)
+    if (otherInfo != null) this.merge(otherInfo) else this
+  else otherInfo
+
 infix fun UValue.to(state: UEvaluationState): UEvaluationInfo = UEvaluationInfo(this, state)
