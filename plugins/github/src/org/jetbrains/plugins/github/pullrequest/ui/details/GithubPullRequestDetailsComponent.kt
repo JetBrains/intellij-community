@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
+import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -46,7 +47,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
 
   override fun handleResult(result: GithubPullRequestDetailedWithHtml) {
     detailsPanel.details = result
-    if (!result.merged && result.mergeable == null) {
+    if (!result.merged && result.state == GithubIssueState.open && result.mergeable == null) {
       ApplicationManager.getApplication().invokeLater {
         dataLoader.reloadDetails(result.number)
       }
