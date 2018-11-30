@@ -6,6 +6,7 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.module.impl.ModulePath;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.TestFrameworkUtil;
@@ -22,9 +23,11 @@ import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
@@ -94,20 +97,10 @@ public class PathManagerEx {
    * <p/>
    * Hence, the order of relative paths for the single test group matters.
    */
-  private static final Map<TestDataLookupStrategy, List<String>> TEST_DATA_RELATIVE_PATHS
-    = new EnumMap<>(TestDataLookupStrategy.class);
-
-  static {
-    TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.ULTIMATE, Collections.singletonList(toSystemDependentName("testData")));
-    TEST_DATA_RELATIVE_PATHS.put(
-      TestDataLookupStrategy.COMMUNITY,
-      Collections.singletonList(toSystemDependentName("java/java-tests/testData"))
-    );
-    TEST_DATA_RELATIVE_PATHS.put(
-      TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE,
-      Collections.singletonList(toSystemDependentName("community/java/java-tests/testData"))
-    );
-  }
+  private static final List<Pair<TestDataLookupStrategy, String>> TEST_DATA_RELATIVE_PATHS = asList(
+    pair(TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, toSystemDependentName("community/java/java-tests/testData")),
+    pair(TestDataLookupStrategy.COMMUNITY, toSystemDependentName("java/java-tests/testData")),
+    pair(TestDataLookupStrategy.ULTIMATE, "testData"));
 
   /**
    * Shorthand for calling {@link #getTestDataPath(TestDataLookupStrategy)} with
@@ -206,22 +199,17 @@ public class PathManagerEx {
   @NonNls
   public static String getTestDataPath(TestDataLookupStrategy strategy) throws IllegalStateException {
     String homePath = PathManager.getHomePath();
-
-    List<String> relativePaths = TEST_DATA_RELATIVE_PATHS.get(strategy);
-    if (relativePaths.isEmpty()) {
-      throw new IllegalStateException(
-        "Can't determine test data path. Reason: no predefined relative paths are configured for test data" +
-        " lookup strategy " + strategy + ". Configured mappings: " + TEST_DATA_RELATIVE_PATHS);
-    }
-
-    File candidate = null;
-    for (String relativePath : relativePaths) {
-      candidate = new File(homePath, relativePath);
-      if (candidate.isDirectory()) {
-        return candidate.getPath();
+    for (Pair<TestDataLookupStrategy, String> pair : TEST_DATA_RELATIVE_PATHS) {
+      if (pair.first == strategy) {
+        File candidate = new File(homePath, pair.second);
+        if (candidate.isDirectory()) {
+          return candidate.getPath();
+        }
       }
     }
-    return candidate.getPath();
+    throw new IllegalStateException(
+      "Can't determine test data path for strategy '" + strategy + "' relative to home '" + homePath + "'." +
+      " Configured mappings: " + TEST_DATA_RELATIVE_PATHS);
   }
 
   /**
@@ -400,11 +388,9 @@ public class PathManagerEx {
    */
   private static TestDataLookupStrategy guessTestDataLookupStrategyOnDirectoryAvailability() {
     String homePath = PathManager.getHomePath();
-    for (Map.Entry<TestDataLookupStrategy, List<String>> entry : TEST_DATA_RELATIVE_PATHS.entrySet()) {
-      for (String relativePath : entry.getValue()) {
-        if (new File(homePath, relativePath).isDirectory()) {
-          return entry.getKey();
-        }
+    for (Pair<TestDataLookupStrategy, String> pair : TEST_DATA_RELATIVE_PATHS) {
+      if (new File(homePath, pair.second).isDirectory()) {
+        return pair.first;
       }
     }
     return TestDataLookupStrategy.ULTIMATE;
