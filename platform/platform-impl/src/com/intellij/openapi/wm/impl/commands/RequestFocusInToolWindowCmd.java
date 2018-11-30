@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -75,12 +74,12 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
       // Try to focus component which is preferred one for the tool window
       if (preferredFocusedComponent != null) {
-        requestFocus(preferredFocusedComponent).doWhenDone(() -> bringOwnerToFront());
+        requestFocus(preferredFocusedComponent);
       }
       else {
         // If there is no preferred component then try to focus tool window itself
         final JComponent componentToFocus = myToolWindow.getComponent();
-        requestFocus(componentToFocus).doWhenDone(() -> bringOwnerToFront());
+        requestFocus(componentToFocus);
       }
     }
     finally {
@@ -118,16 +117,13 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   }
 
 
-  @NotNull
-  private ActionCallback requestFocus(@NotNull final Component c) {
-    final ActionCallback result = new ActionCallback();
+  private void requestFocus(@NotNull final Component c) {
     final Alarm checkerAlarm = new Alarm();
     Runnable checker = new Runnable() {
       final long startTime = System.currentTimeMillis();
       @Override
       public void run() {
         if (System.currentTimeMillis() - startTime > 10000) {
-          result.setRejected();
           return;
         }
         if (c.isShowing()) {
@@ -137,9 +133,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
             if (defaultComponent != null) {
               myManager.getFocusManager().requestFocusInProject(
                 defaultComponent, myProject);
-              result.setDone();
-            } else {
-              result.setRejected();
+              bringOwnerToFront();
             }
           }
           myManager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(c));
@@ -150,7 +144,6 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       }
     };
     checkerAlarm.addRequest(checker, 0);
-    return result;
   }
 
   private void updateToolWindow(Component c) {
