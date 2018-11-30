@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
@@ -30,7 +29,6 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
 public class PathManagerEx {
-
   /**
    * All IDEA project files may be logically divided by the following criteria:
    * <ul>
@@ -212,9 +210,8 @@ public class PathManagerEx {
     List<String> relativePaths = TEST_DATA_RELATIVE_PATHS.get(strategy);
     if (relativePaths.isEmpty()) {
       throw new IllegalStateException(
-        String.format("Can't determine test data path. Reason: no predefined relative paths are configured for test data "
-                      + "lookup strategy %s. Configured mappings: %s", strategy, TEST_DATA_RELATIVE_PATHS)
-      );
+        "Can't determine test data path. Reason: no predefined relative paths are configured for test data" +
+        " lookup strategy " + strategy + ". Configured mappings: " + TEST_DATA_RELATIVE_PATHS);
     }
 
     File candidate = null;
@@ -223,11 +220,6 @@ public class PathManagerEx {
       if (candidate.isDirectory()) {
         return candidate.getPath();
       }
-    }
-
-    if (candidate == null) {
-      throw new IllegalStateException("Can't determine test data path. Looks like programming error - reached 'if' block that was "
-                                      + "never expected to be executed");
     }
     return candidate.getPath();
   }
@@ -247,7 +239,9 @@ public class PathManagerEx {
 
   @Nullable
   private static TestDataLookupStrategy guessTestDataLookupStrategyOnClassLocation() {
-    if (isLocatedInCommunity()) return TestDataLookupStrategy.COMMUNITY;
+    if (isLocatedInCommunity()) {
+      return TestDataLookupStrategy.COMMUNITY;
+    }
 
     // The general idea here is to find test class at the bottom of hierarchy and try to resolve test data lookup strategy
     // against it. Rationale is that there is a possible case that, say, 'ultimate' test class extends basic test class
@@ -267,7 +261,9 @@ public class PathManagerEx {
         continue;
       }
 
-      if (determineLookupStrategy(clazz) == TestDataLookupStrategy.ULTIMATE) return TestDataLookupStrategy.ULTIMATE;
+      if (determineLookupStrategy(clazz) == TestDataLookupStrategy.ULTIMATE) {
+        return TestDataLookupStrategy.ULTIMATE;
+      }
       if ((clazz.getModifiers() & Modifier.ABSTRACT) == 0) {
         testClass = clazz;
       }
@@ -319,28 +315,22 @@ public class PathManagerEx {
     return TestCase.class.isAssignableFrom(clazz) || TestFrameworkUtil.isJUnit4TestClass(clazz, true) || Parameterized.class.isAssignableFrom(clazz);
   }
 
-  @Nullable
   private static TestDataLookupStrategy determineLookupStrategy(Class<?> clazz) {
     // Check if resulting strategy is already cached for the target class.
     TestDataLookupStrategy result = CLASS_STRATEGY_CACHE.get(clazz);
-    if (result != null) {
-      return result;
-    }
+    if (result != null) return result;
 
-    FileSystemLocation classFileLocation = computeClassLocation(clazz);
-
+    FileSystemLocation location = computeClassLocation(clazz);
     // We know that project location is ULTIMATE if control flow reaches this place.
-    result = classFileLocation == FileSystemLocation.COMMUNITY ? TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE
-                                                               : TestDataLookupStrategy.ULTIMATE;
+    result = location == FileSystemLocation.COMMUNITY ? TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE : TestDataLookupStrategy.ULTIMATE;
     CLASS_STRATEGY_CACHE.put(clazz, result);
     return result;
   }
 
   public static void replaceLookupStrategy(Class<?> substitutor, Class<?>... initial) {
+    TestDataLookupStrategy strategy = determineLookupStrategy(substitutor);
     CLASS_STRATEGY_CACHE.clear();
-    for (Class<?> aClass : initial) {
-      CLASS_STRATEGY_CACHE.put(aClass, determineLookupStrategy(substitutor));
-    }
+    for (Class<?> aClass : initial) CLASS_STRATEGY_CACHE.put(aClass, strategy);
   }
 
   private static FileSystemLocation computeClassLocation(Class<?> clazz) {
