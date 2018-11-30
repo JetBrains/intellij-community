@@ -132,11 +132,19 @@ class JavaUSwitchEntry(
       override val expressions: List<UExpression>
 
       init {
-        val expressionsFromPsi = this@JavaUSwitchEntry.statements.map { JavaConverter.convertOrEmpty(it, this) }
+        val expressions = ArrayList<UExpression>(this@JavaUSwitchEntry.statements.size)
+        for (statement in this@JavaUSwitchEntry.statements) {
+          if (statement is PsiBreakStatement) {
+            statement.valueExpression?.let {
+              expressions.add(JavaConverter.convertOrEmpty(it, this))
+            }
+          }
+          expressions.add(JavaConverter.convertOrEmpty(statement, this))
+        }
         if (addDummyBreak)
-          expressions = expressionsFromPsi + DummyUBreakExpression(expressionsFromPsi.lastOrNull()?.sourcePsi ?: psi, this)
-        else
-          expressions = expressionsFromPsi
+          expressions.add(DummyUBreakExpression(expressions.lastOrNull()?.sourcePsi ?: psi, this))
+
+        this.expressions = expressions
       }
 
       override fun asRenderString() = buildString {

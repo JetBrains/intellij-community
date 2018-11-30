@@ -66,6 +66,7 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
 
 private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
   when (uParent) {
+    is UBreakExpression -> return uParent.uastParent ?: uParent
     is JavaUCodeBlockExpression -> {
       val codeBlockParent = uParent.uastParent
       if (codeBlockParent is JavaUSwitchEntryList) {

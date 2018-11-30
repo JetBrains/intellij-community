@@ -25,18 +25,22 @@ public class Main {
 
         final var numericString2: java.lang.String = switch (str)
             "foo" -> {
+                "FOO"
                 break
             }
 
             "bar" -> {
+                "BAR"
                 break
             }
 
             "baz" -> {
+                "bAz"
                 break
             }
 
             else -> {
+                "default"
                 break
             }
 
