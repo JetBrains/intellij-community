@@ -14,7 +14,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class RecordStateStatisticsInEventLog extends AnAction {
+public class RecordStateStatisticsEventLogAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
