@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
@@ -43,36 +43,7 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
     }
     final PsiType type = field.getType();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiExpression initializer = factory.createExpressionFromText(getDefaultValue(type), field);
+    final PsiExpression initializer = factory.createExpressionFromText(TypeUtils.getDefaultValue(type), field);
     field.setInitializer(initializer);
-  }
-
-  @NonNls
-  private static String getDefaultValue(PsiType type) {
-    if (PsiType.INT.equals(type)) {
-      return "0";
-    }
-    else if (PsiType.LONG.equals(type)) {
-      return "0L";
-    }
-    else if (PsiType.DOUBLE.equals(type)) {
-      return "0.0";
-    }
-    else if (PsiType.FLOAT.equals(type)) {
-      return "0.0F";
-    }
-    else if (PsiType.SHORT.equals(type)) {
-      return "(short)0";
-    }
-    else if (PsiType.BYTE.equals(type)) {
-      return "(byte)0";
-    }
-    else if (PsiType.BOOLEAN.equals(type)) {
-      return PsiKeyword.FALSE;
-    }
-    else if (PsiType.CHAR.equals(type)) {
-      return "(char)0";
-    }
-    return PsiKeyword.NULL;
   }
 }

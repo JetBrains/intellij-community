@@ -55,7 +55,7 @@ public class TypeUtils {
 
   public static PsiClassType getType(@NotNull String fqName, @NotNull PsiElement context) {
     final Project project = context.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final GlobalSearchScope scope = context.getResolveScope();
     return factory.createTypeByFQClassName(fqName, scope);
   }
@@ -292,5 +292,39 @@ public class TypeUtils {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Returns a textual representation of default value representable by given type
+   * @param type type to get the default value for
+   * @return the textual representation of default value
+   */
+  @NonNls
+  public static String getDefaultValue(PsiType type) {
+    if (PsiType.INT.equals(type)) {
+      return "0";
+    }
+    else if (PsiType.LONG.equals(type)) {
+      return "0L";
+    }
+    else if (PsiType.DOUBLE.equals(type)) {
+      return "0.0";
+    }
+    else if (PsiType.FLOAT.equals(type)) {
+      return "0.0F";
+    }
+    else if (PsiType.SHORT.equals(type)) {
+      return "(short)0";
+    }
+    else if (PsiType.BYTE.equals(type)) {
+      return "(byte)0";
+    }
+    else if (PsiType.BOOLEAN.equals(type)) {
+      return PsiKeyword.FALSE;
+    }
+    else if (PsiType.CHAR.equals(type)) {
+      return "'\0'";
+    }
+    return PsiKeyword.NULL;
   }
 }
