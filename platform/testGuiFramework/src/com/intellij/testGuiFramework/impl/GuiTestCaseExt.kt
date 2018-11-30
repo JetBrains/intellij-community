@@ -23,6 +23,7 @@ import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TestName
 import java.awt.IllegalComponentStateException
+import javax.swing.JTree
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -369,4 +370,47 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
       }
     }
   }
+}
+
+fun GuiTestCase.createJdk(jdkPath: String, jdkName: String = ""): String{
+  val dialogName = "Project Structure for New Projects"
+  logTestStep("Create a JDK on the path `$jdkPath`")
+  lateinit  var installedJdkName: String
+  welcomeFrame {
+    actionLink("Configure").click()
+    popupMenu("Project Defaults").clickSearchedItem()
+    popupMenu("Project Structure").clickSearchedItem()
+    logUIStep("Open `$dialogName` dialog")
+    dialog(dialogName) {
+      jList("SDKs").clickItem("SDKs")
+      val sdkTree: ExtendedJTreePathFixture = jTree()
+
+      fun JTree.getListOfInstalledSdks(): List<String> {
+        val root = model.root
+        return (0 until model.getChildCount(root))
+          .map { model.getChild(root, it).toString() }.toList()
+      }
+
+      val preInstalledSdks = sdkTree.tree.getListOfInstalledSdks()
+      installedJdkName = if(jdkName.isEmpty() || preInstalledSdks.contains(jdkName).not()){
+        actionButton("Add New SDK").click()
+        popupMenu("JDK").clickSearchedItem()
+        logUIStep("Open `Select Home Directory for JDK` dialog")
+        dialog("Select Home Directory for JDK") {
+          actionButton("Refresh").click()
+          logUIStep("Type the path `$jdkPath`")
+          typeText(jdkPath)
+          logUIStep("Close `Select Home Directory for JDK` dialog with OK")
+          button("OK").click()
+        }
+
+        val postInstalledSdks = sdkTree.tree.getListOfInstalledSdks()
+        postInstalledSdks.first { preInstalledSdks.contains(it).not() }
+      }
+      else jdkName
+      logUIStep("Close `Default Project Structure` dialog with OK")
+      button("OK").click()
+    } // dialog Project Structure
+  } // ideFrame
+  return installedJdkName
 }
