@@ -3,7 +3,7 @@ package com.siyeh.igtest.javadoc.html_tag_can_be_javadoc_tag;
 class HtmlTagCanBeJavadocTag {
 
   /**
-   * <warning descr="'<code>...</code>' can be replaced with '{@code ...}'"><code></warning>if (something) { this.doSomething(); }</code>
+   * <code>if (something) { this.doSomething(); }</code>
    * <warning descr="'<code>...</code>' can be replaced with '{@code ...}'"><code></warning>
    *     asdf
    * </code>
@@ -22,7 +22,7 @@ class HtmlTagCanBeJavadocTag {
   void extremeFormatting() {}
 
   /**
-   * Demo value.
+   * Demo value. Use <code>{</code> or <code>}</code>.
    */
   public int x;
 
