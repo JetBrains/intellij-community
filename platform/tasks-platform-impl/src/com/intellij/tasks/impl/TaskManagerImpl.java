@@ -609,6 +609,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
           @SuppressWarnings({"unchecked"})
           TaskRepository repository = (TaskRepository)XmlSerializer.deserialize(o, repositoryType.getRepositoryClass());
           repository.setRepositoryType(repositoryType);
+          repository.initializeRepository();
           repositories.add(repository);
         }
         catch (XmlSerializationException e) {
