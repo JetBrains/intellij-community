@@ -15,7 +15,6 @@ import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
@@ -109,14 +108,13 @@ public class PathManagerEx {
    * @return    test data path with {@link #guessTestDataLookupStrategy() guessed} lookup strategy
    * @throws IllegalStateException    as defined by {@link #getTestDataPath(TestDataLookupStrategy)}
    */
-  @NonNls
   public static String getTestDataPath() throws IllegalStateException {
     TestDataLookupStrategy strategy = guessTestDataLookupStrategy();
     return getTestDataPath(strategy);
   }
 
-  public static String getTestDataPath(String path) throws IllegalStateException {
-    return getTestDataPath() + path.replace('/', File.separatorChar);
+  public static String getTestDataPath(String relativePath) throws IllegalStateException {
+    return getTestDataPath() + toSystemDependentName(relativePath);
   }
 
   /**
@@ -162,12 +160,7 @@ public class PathManagerEx {
    * @return file under the home directory of 'community' project
    */
   public static File findFileUnderCommunityHome(String relativePath) {
-    File file = new File(PathManager.getCommunityHomePath(), toSystemDependentName(relativePath));
-    if (!file.exists()) {
-      throw new IllegalArgumentException("Cannot find file '" + relativePath + "' under '" +
-                                         PathManager.getCommunityHomePath() + "' directory");
-    }
-    return file;
+    return findFileByRelativePath(PathManager.getCommunityHomePath(), relativePath);
   }
 
   /**
@@ -175,7 +168,10 @@ public class PathManagerEx {
    * in the community project, and the 'ultimate' project otherwise)
    */
   public static File findFileUnderProjectHome(String relativePath, Class<? extends TestCase> testClass) {
-    String homePath = getHomePath(testClass);
+    return findFileByRelativePath(getHomePath(testClass), relativePath);
+  }
+
+  private static File findFileByRelativePath(String homePath, String relativePath) {
     File file = new File(homePath, toSystemDependentName(relativePath));
     if (!file.exists()) {
       throw new IllegalArgumentException("Cannot find file '" + relativePath + "' under '" + homePath + "' directory");
@@ -196,7 +192,6 @@ public class PathManagerEx {
    * @return            test data path for the given strategy
    * @throws IllegalStateException    if it's not possible to find valid test data path for the given strategy
    */
-  @NonNls
   public static String getTestDataPath(TestDataLookupStrategy strategy) throws IllegalStateException {
     String homePath = PathManager.getHomePath();
     for (Pair<TestDataLookupStrategy, String> pair : TEST_DATA_RELATIVE_PATHS) {
