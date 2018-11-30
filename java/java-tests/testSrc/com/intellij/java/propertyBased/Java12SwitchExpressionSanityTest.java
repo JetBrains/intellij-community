@@ -3,12 +3,13 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -45,7 +46,7 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_12_PREVIEW);
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_12_PREVIEW, getTestRootDisposable());
   }
 
   @NotNull
@@ -60,45 +61,29 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
     );
 
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
-      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaIntentionPolicy() {
-        @Override
-        protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
-          return super.shouldSkipByFamilyName(familyName) || "Make Call Chain Into Call Sequence".equals(familyName);
-        }
-      }) {
-        @Override
-        protected int generateDocOffset(@NotNull Environment env, @Nullable String logMessage) {
-          Collection<PsiSwitchBlock> children = PsiTreeUtil.findChildrenOfType(getFile(), PsiSwitchBlock.class);
-          if (children.isEmpty()) {
-            return super.generateDocOffset(env, logMessage);
-          }
+      file -> {
 
-          List<Generator<Integer>> generators = 
-            ContainerUtil.map(children, stmt ->
-            Generator.integers(stmt.getTextRange().getStartOffset(),
-                               stmt.getTextRange().getEndOffset()).noShrink());
-          return env.generateValue(Generator.anyOf(generators), logMessage);
-        }
-      }, new InvokeIntention(file, new IntentionPolicy() {
-                                      @Override
-                                      protected boolean shouldSkipIntention(@NotNull String actionText) {
-                                        return !"Replace with 'switch' expression".equals(actionText) && !"Replace with enhanced 'switch' statement".equals(actionText);
-                                      }
-                                    }) {
-        @Override
-        protected int generateDocOffset(@NotNull Environment env, @Nullable String logMessage) {
-          Collection<PsiSwitchBlock> children = PsiTreeUtil.findChildrenOfType(getFile(), PsiSwitchBlock.class);
-          if (children.isEmpty()) {
-            return super.generateDocOffset(env, logMessage);
+        InvokeIntentionAroundSwitch anyIntentionInSwitchRange = new InvokeIntentionAroundSwitch(file, new JavaIntentionPolicy() {
+          @Override
+          protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+            return super.shouldSkipByFamilyName(familyName) || "Make Call Chain Into Call Sequence".equals(familyName);
           }
+        });
 
-          List<Generator<Integer>> generators = 
-            ContainerUtil.map(children, stmt ->
-            Generator.integers(stmt.getFirstChild().getTextRange().getStartOffset(),
-                               stmt.getFirstChild().getTextRange().getEndOffset()).noShrink());
-          return env.generateValue(Generator.anyOf(generators), logMessage);
-        }
-      }, new StripTestDataMarkup(file));
+        InvokeIntentionAroundSwitch replaceToEnhancedSwitchIntention = new InvokeIntentionAroundSwitch(file, new IntentionPolicy() {
+          @Override
+          protected boolean shouldSkipIntention(@NotNull String actionText) {
+            return !"Replace with 'switch' expression".equals(actionText) && !"Replace with enhanced 'switch' statement".equals(actionText);
+          }
+        }) {
+          @Override
+          protected PsiElement getRangeElement(PsiSwitchBlock stmt) {
+            return stmt.getFirstChild();
+          }
+        };
+
+        return Generator.sampledFrom(anyIntentionInSwitchRange, replaceToEnhancedSwitchIntention, new StripTestDataMarkup(file));
+      };
 
     Supplier<MadTestingAction> fileChooser = MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> {
       try {
@@ -111,4 +96,27 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
     PropertyChecker.checkScenarios(fileChooser);
   }
 
+  private static class InvokeIntentionAroundSwitch extends InvokeIntention {
+    InvokeIntentionAroundSwitch(PsiFile file, final IntentionPolicy policy) {
+      super(file, policy);
+    }
+
+    @Override
+    protected int generateDocOffset(@NotNull Environment env, @Nullable String logMessage) {
+      Collection<PsiSwitchBlock> children = PsiTreeUtil.findChildrenOfType(getFile(), PsiSwitchBlock.class);
+      if (children.isEmpty()) {
+        return super.generateDocOffset(env, logMessage);
+      }
+
+      List<Generator<Integer>> generators = 
+        ContainerUtil.map(children, stmt ->
+        Generator.integers(getRangeElement(stmt).getTextRange().getStartOffset(),
+                           getRangeElement(stmt).getTextRange().getEndOffset()).noShrink());
+      return env.generateValue(Generator.anyOf(generators), logMessage);
+    }
+
+    protected PsiElement getRangeElement(PsiSwitchBlock stmt) {
+      return stmt;
+    }
+  }
 }
