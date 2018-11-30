@@ -25,7 +25,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -152,7 +151,8 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       while (element != null) {
         @NonNls final String text = element.getText();
         final int endIndex = StringUtil.indexOfIgnoreCase(text, "</code>", offset);
-        if (containsHtmlTag(text, offset, endIndex >= 0 ? endIndex : text.length())) {
+        final int end = endIndex >= 0 ? endIndex : text.length();
+        if (containsHtmlTag(text, offset, end) || StringUtil.containsAnyChar(text, "{}", offset, end)) {
           return false;
         }
         if (endIndex >= 0) {
@@ -160,9 +160,6 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
         }
         offset = 0;
         element = element.getNextSibling();
-        if (element instanceof PsiInlineDocTag) {
-          return false;
-        }
       }
       return false;
     }
@@ -170,7 +167,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
 
   private static final Pattern START_TAG_PATTERN = Pattern.compile("<([a-zA-Z])+([^>])*>");
 
-  private static boolean containsHtmlTag(String text, int startIndex, int endIndex) {
+  static boolean containsHtmlTag(String text, int startIndex, int endIndex) {
     final Matcher matcher = START_TAG_PATTERN.matcher(text);
     if (matcher.find(startIndex)) {
       return matcher.start() < endIndex;
