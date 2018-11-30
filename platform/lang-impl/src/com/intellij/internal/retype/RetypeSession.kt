@@ -373,12 +373,12 @@ class RetypeSession(
       }
       else {
         log.recordDesync(
-          "Restoring entire text (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(
-            5).toReadable()} ")
+          "Restoring text before caret (expected ...${expectedBeforeCaret.takeLast(5).toReadable()}, actual ...${actualBeforeCaret.takeLast(
+            5).toReadable()} | pos: $pos, caretOffset: ${editor.caretModel.offset}")
         // There changes wasn't made by lookup, so we don't know how to handle them
-        // Restore text as it should be at this point without any intelligence
+        // Restore text before caret as it should be at this point without any intelligence
         WriteCommandAction.runWriteCommandAction(project) {
-          document.replaceText(expectedBeforeCaret + originalText.takeLast(originalText.length - endPos), document.modificationStamp + 1)
+          document.replaceString(0, editor.caretModel.offset, expectedBeforeCaret)
         }
       }
     }
