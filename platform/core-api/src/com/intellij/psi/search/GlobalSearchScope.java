@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -791,7 +792,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
-    private final Collection<? extends VirtualFile> myFiles;
+    private final Set<? extends VirtualFile> myFiles;
     private final boolean mySearchOutsideRootModel;
     private volatile Boolean myHasFilesOutOfProjectRoots;
 
@@ -803,7 +804,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private FilesScope(@Nullable  Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots,
                        boolean searchOutsideRootModel) {
       super(project);
-      myFiles = files;
+      myFiles = new CompactVirtualFileSet(files);
+      ((CompactVirtualFileSet)myFiles).freeze();
       mySearchOutsideRootModel = searchOutsideRootModel;
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
     }

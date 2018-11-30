@@ -21,10 +21,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -71,8 +68,8 @@ public class AnalysisScope {
   private GlobalSearchScope myFilter;
   @Type protected int myType;
 
-  private final Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
-  protected Set<VirtualFile> myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
+  private CompactVirtualFileSet myVFiles;  // initial files and directories the scope is configured on
+  protected CompactVirtualFileSet myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   private boolean myIncludeTestSource = true;
 
@@ -143,7 +140,8 @@ public class AnalysisScope {
     myModule = null;
     myModules = null;
     myScope = null;
-    myVFiles = new HashSet<>(virtualFiles);
+    myVFiles = new CompactVirtualFileSet(virtualFiles);
+    myVFiles.freeze();
     myType = VIRTUAL_FILES;
   }
 
@@ -172,8 +170,9 @@ public class AnalysisScope {
             return;
           }
           if (!shouldHighlightFile(file)) return;
-          if (myFilesSet == null) return;
-          myFilesSet.add(virtualFile);
+          CompactVirtualFileSet fileSet = myFilesSet;
+          if (fileSet == null) return;
+          fileSet.add(virtualFile);
         }
       }
     };
@@ -222,35 +221,44 @@ public class AnalysisScope {
   }
 
   protected void initFilesSet() {
-    if (myType == FILE) {
-      myFilesSet = new HashSet<>(1);
-      myFilesSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
-    }
-    else if (myType == DIRECTORY || myType == PROJECT || myType == MODULES || myType == MODULE || myType == CUSTOM) {
-      myFilesSet = new THashSet<>();
-      accept(createFileSearcher());
-    }
-    else if (myType == VIRTUAL_FILES) {
-      myFilesSet = new THashSet<>();
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      for (Iterator<VirtualFile> iterator = myVFiles.iterator(); iterator.hasNext(); ) {
-        final VirtualFile vFile = iterator.next();
-        VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
-          @NotNull
-          @Override
-          public Result visitFileEx(@NotNull VirtualFile file) {
-            boolean ignored = fileIndex.isExcluded(file);
-            if (!ignored && !file.isDirectory()) {
-              myFilesSet.add(file);
+    switch (myType) {
+      case FILE:
+        myFilesSet = new CompactVirtualFileSet();
+        myFilesSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
+        myFilesSet.freeze();
+        break;
+      case DIRECTORY:
+      case PROJECT:
+      case MODULES:
+      case MODULE:
+      case CUSTOM:
+        myFilesSet = new CompactVirtualFileSet();
+        accept(createFileSearcher());
+        myFilesSet.freeze();
+        break;
+      case VIRTUAL_FILES:
+        myFilesSet = new CompactVirtualFileSet();
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+        for (Iterator<VirtualFile> iterator = myVFiles.iterator(); iterator.hasNext(); ) {
+          final VirtualFile vFile = iterator.next();
+          VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+            @NotNull
+            @Override
+            public Result visitFileEx(@NotNull VirtualFile file) {
+              boolean ignored = fileIndex.isExcluded(file);
+              if (!ignored && !file.isDirectory()) {
+                myFilesSet.add(file);
+              }
+              return ignored ? SKIP_CHILDREN : CONTINUE;
             }
-            return ignored ? SKIP_CHILDREN : CONTINUE;
-          }
-        });
+          });
 
-        if (vFile.isDirectory()) {
-          iterator.remove();
+          if (vFile.isDirectory()) {
+            iterator.remove();
+          }
         }
-      }
+        myFilesSet.freeze();
+        break;
     }
   }
 
@@ -273,7 +281,7 @@ public class AnalysisScope {
   public boolean accept(@NotNull final Processor<VirtualFile> processor) {
     if (myType == VIRTUAL_FILES) {
       if (myFilesSet == null) initFilesSet();
-      return ContainerUtil.process(myFilesSet, file -> isFilteredOut(file) || processor.process(file));
+      return myFilesSet.process(file -> isFilteredOut(file) || processor.process(file));
     }
     final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
@@ -506,7 +514,7 @@ public class AnalysisScope {
 
   @NotNull
   public Set<VirtualFile> getFiles() {
-    return myVFiles == null ? Collections.emptySet() : Collections.unmodifiableSet(myVFiles);
+    return myVFiles == null ? Collections.emptySet() : myVFiles;
   }
 
   @NotNull
@@ -536,7 +544,8 @@ public class AnalysisScope {
 
   public void invalidate(){
     if (myType == VIRTUAL_FILES) {
-      myVFiles.removeIf(virtualFile -> virtualFile == null || !virtualFile.isValid());
+      myVFiles = new CompactVirtualFileSet(ContainerUtil.filter(myVFiles, virtualFile -> virtualFile != null && virtualFile.isValid()));
+      myVFiles.freeze();
     }
     else {
       myFilesSet = null;
@@ -552,7 +561,8 @@ public class AnalysisScope {
         if (index.isInSourceContent(directory)) {
           return isTest == TestSourcesFilter.isTestSources(directory, myProject);
         }
-      } else if (myElement instanceof PsiFile) {
+      }
+      else if (myElement instanceof PsiFile) {
         final VirtualFile file = ((PsiFileSystemItem)myElement).getVirtualFile();
         if (file != null) {
           return isTest == TestSourcesFilter.isTestSources(file, myProject);
