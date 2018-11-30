@@ -179,23 +179,21 @@ public class ThreadTracker {
 
   private static boolean shouldIgnore(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
     if (!thread.isAlive()) return true;
-    if (isWellKnownOffender(thread)) return true;
+    if (isWellKnownOffender(thread.getName())) return true;
 
     if (stackTrace.length == 0) {
       return true; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
     }
-    if (isIdleApplicationPoolThread(thread, stackTrace)) return true;
+    if (isIdleApplicationPoolThread(stackTrace)) return true;
     return isIdleCommonPoolThread(thread, stackTrace);
   }
 
-  private static boolean isWellKnownOffender(@NotNull Thread thread) {
-    final String name = thread.getName();
-    return ContainerUtil.exists(wellKnownOffenders, name::contains);
+  private static boolean isWellKnownOffender(@NotNull String threadName) {
+    return ContainerUtil.exists(wellKnownOffenders, threadName::contains);
   }
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
-  private static boolean isIdleApplicationPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
-    if (!isWellKnownOffender(thread)) return false;
+  private static boolean isIdleApplicationPoolThread(@NotNull StackTraceElement[] stackTrace) {
     boolean insideTPEGetTask = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("getTask")
                            && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
