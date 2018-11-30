@@ -16,54 +16,9 @@ import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
-import org.junit.After
 import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
 import org.junit.rules.ErrorCollector
-import org.junit.rules.TestName
 import java.awt.IllegalComponentStateException
-
-open class GuiTestCaseExt : GuiTestCase() {
-
-  @Rule
-  @JvmField
-  val testMethod = TestName()
-
-  @Rule
-  @JvmField
-  val screenshotsDuringTest = ScreenshotsDuringTest(1000) // = 1 sec
-
-  @Rule
-  @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
-
-  val projectFolder: String by lazy {
-    projectsFolder.newFolder(testMethod.methodName).canonicalPath
-  }
-
-//  @Rule
-//  @JvmField
-//  val collector = object : ErrorCollector() {
-//    override fun addError(error: Throwable?) {
-//      val screenshotName = testName + "." + testMethod.methodName
-//      takeScreenshotOnFailure(error, screenshotName)
-//      super.addError(error)
-//    }
-//  }
-
-  @Before
-  open fun setUp() {
-    logStartTest(testMethod.methodName)
-  }
-
-  @After
-  fun tearDown() {
-    logEndTest(testMethod.methodName)
-  }
-
-  open fun isIdeFrameRun(): Boolean = true
-}
 
 fun <T> ErrorCollector.checkThat(value: T, matcher: Matcher<T>, reason: () -> String) {
   checkThat(reason(), value, matcher)

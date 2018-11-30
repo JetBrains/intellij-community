@@ -25,9 +25,11 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
-import org.junit.ClassRule
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
@@ -66,6 +68,10 @@ open class GuiTestCase {
 
   @Rule
   @JvmField
+  val screenshotsDuringTest = ScreenshotsDuringTest(500) // 0.5 sec
+
+  @Rule
+  @JvmField
   val guiTestRule = GuiTestRule()
 
   val projectsFolder: TemporaryFolder = guiTestRule.projectsFolder
@@ -76,6 +82,18 @@ open class GuiTestCase {
   val slash: String = File.separator
 
   private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
+
+  @Rule
+  @JvmField
+  val testMethod = TestName()
+
+  @Rule
+  @JvmField
+  val logActionsDuringTest = LogActionsDuringTest()
+
+  val projectFolder: String by lazy {
+    projectsFolder.newFolder(testMethod.methodName).canonicalPath
+  }
 
   fun robot() = guiTestRule.robot()
 
@@ -464,5 +482,17 @@ open class GuiTestCase {
     }, timeoutToDisappear)
 
   }
+
+  @Before
+  open fun setUp() {
+    logStartTest(testMethod.methodName)
+  }
+
+  @After
+  open fun tearDown() {
+    logEndTest(testMethod.methodName)
+  }
+
+  open fun isIdeFrameRun(): Boolean = true
 
 }
