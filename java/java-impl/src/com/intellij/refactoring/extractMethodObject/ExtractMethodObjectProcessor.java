@@ -915,6 +915,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     private void rebindExitStatement(final String objectName) {
       final PsiStatement exitStatementCopy = myExtractProcessor.myFirstExitStatementCopy;
       if (exitStatementCopy != null) {
+        myExtractProcessor.initDuplicates(null);
         myExtractProcessor.getDuplicates().clear();
         final Map<String, PsiVariable> outVarsNames = new HashMap<>();
         for (PsiVariable variable : myOutputVariables) {
