@@ -69,7 +69,7 @@ private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
     is JavaUCodeBlockExpression -> {
       val codeBlockParent = uParent.uastParent
       if (codeBlockParent is JavaUSwitchEntryList) {
-        if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatement }) {
+        if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatementBase }) {
           return codeBlockParent
         }
         val psiElement = psi ?: return uParent
@@ -81,8 +81,16 @@ private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
       return uParent
     }
 
+    is JavaUSwitchEntry -> {
+      val parentSourcePsi = uParent.sourcePsi
+      if (parentSourcePsi is PsiSwitchLabeledRuleStatement && parentSourcePsi.body?.children?.contains(psi) == true)
+        return uParent.body
+      else
+        return uParent
+    }
+
     is USwitchExpression -> {
-      val parentPsi = uParent.psi as PsiSwitchStatement
+      val parentPsi = uParent.psi as PsiSwitchBlock
       return if (this === uParent.body || branchHasElement(psi, parentPsi) { it === parentPsi.expression })
         uParent
       else

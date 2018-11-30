@@ -1,0 +1,53 @@
+UFile (package = )
+    UClass (name = Main)
+        UMethod (name = getString)
+            UBlockExpression
+                UDeclarationsExpression
+                    ULocalVariable (name = str)
+                        ULiteralExpression (value = "abc")
+                UDeclarationsExpression
+                    ULocalVariable (name = numericString)
+                        USwitchExpression
+                            USimpleNameReferenceExpression (identifier = str)
+                            UExpressionList (switch)
+                                USwitchClauseExpressionWithBody
+                                    ULiteralExpression (value = "foo")
+                                    UExpressionList (switch_entry)
+                                        ULiteralExpression (value = "FOO")
+                                USwitchClauseExpressionWithBody
+                                    ULiteralExpression (value = "bar")
+                                    UExpressionList (switch_entry)
+                                        ULiteralExpression (value = "BAR")
+                                USwitchClauseExpressionWithBody
+                                    ULiteralExpression (value = "baz")
+                                    UExpressionList (switch_entry)
+                                        ULiteralExpression (value = "bAz")
+                                USwitchClauseExpressionWithBody
+                                    UDefaultCaseExpression
+                                    UExpressionList (switch_entry)
+                                        ULiteralExpression (value = "default")
+                UDeclarationsExpression
+                    ULocalVariable (name = numericString2)
+                        USwitchExpression
+                            USimpleNameReferenceExpression (identifier = str)
+                            UExpressionList (switch)
+                                USwitchClauseExpressionWithBody
+                                    ULiteralExpression (value = "foo")
+                                    UExpressionList (switch_entry)
+                                        UBreakExpression (label = null)
+                                USwitchClauseExpressionWithBody
+                                    ULiteralExpression (value = "bar")
+                                    UExpressionList (switch_entry)
+                                        UBreakExpression (label = null)
+                                USwitchClauseExpressionWithBody
+                                    ULiteralExpression (value = "baz")
+                                    UExpressionList (switch_entry)
+                                        UBreakExpression (label = null)
+                                USwitchClauseExpressionWithBody
+                                    UDefaultCaseExpression
+                                    UExpressionList (switch_entry)
+                                        UBreakExpression (label = null)
+                UReturnExpression
+                    UBinaryExpression (operator = +)
+                        USimpleNameReferenceExpression (identifier = numericString)
+                        USimpleNameReferenceExpression (identifier = numericString2)

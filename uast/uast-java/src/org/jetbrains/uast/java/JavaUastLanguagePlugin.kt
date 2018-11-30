@@ -251,6 +251,7 @@ internal object JavaConverter {
         is PsiClassObjectAccessExpression -> expr<UClassLiteralExpression>(build(::JavaUClassLiteralExpression))
         is PsiArrayAccessExpression -> expr<UArrayAccessExpression>(build(::JavaUArrayAccessExpression))
         is PsiLambdaExpression -> expr<ULambdaExpression>(build(::JavaULambdaExpression))
+        is PsiSwitchExpression -> expr<USwitchExpression>(build(::JavaUSwitchExpression))
         else -> expr<UExpression>(build(::UnknownJavaExpression))
       }
     }
@@ -290,10 +291,10 @@ internal object JavaConverter {
         is PsiSynchronizedStatement -> expr<UBlockExpression>(build(::JavaUSynchronizedExpression))
         is PsiTryStatement -> expr<UTryExpression>(build(::JavaUTryExpression))
         is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression(el.parent?.toUElement()) }
-        is PsiSwitchLabelStatement -> expr<UExpression> {
+        is PsiSwitchLabelStatementBase -> expr<UExpression> {
           when {
             givenParent is JavaUSwitchEntryList -> givenParent.findUSwitchEntryForLabel(el)
-            givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchStatement::class.java)?.let {
+            givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchBlock::class.java)?.let {
               JavaUSwitchExpression(it, null).body.findUSwitchEntryForLabel(el)
             }
             else -> null

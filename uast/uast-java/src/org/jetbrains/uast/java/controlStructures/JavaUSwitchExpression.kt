@@ -15,17 +15,14 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiStatement
-import com.intellij.psi.PsiSwitchLabelStatement
-import com.intellij.psi.PsiSwitchStatement
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
 class JavaUSwitchExpression(
-  override val psi: PsiSwitchStatement,
+  override val psi: PsiSwitchBlock,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USwitchExpression {
   override val expression: UExpression by lz { JavaConverter.convertOrEmpty(psi.expression, this) }
@@ -37,7 +34,7 @@ class JavaUSwitchExpression(
 
 }
 
-class JavaUSwitchEntryList(override val psi: PsiSwitchStatement, override val uastParent: JavaUSwitchExpression) :
+class JavaUSwitchEntryList(override val psi: PsiSwitchBlock, override val uastParent: JavaUSwitchExpression) :
   JavaAbstractUExpression(uastParent), UExpressionList {
 
   override val kind: UastSpecialExpressionKind
@@ -49,10 +46,13 @@ class JavaUSwitchEntryList(override val psi: PsiSwitchStatement, override val ua
 
   private val switchEntries: Lazy<List<JavaUSwitchEntry>> = lazy {
     val statements = psi.body?.statements ?: return@lazy emptyList<JavaUSwitchEntry>()
-    var currentLabels = listOf<PsiSwitchLabelStatement>()
+    var currentLabels = listOf<PsiSwitchLabelStatementBase>()
     var currentBody = listOf<PsiStatement>()
     val result = mutableListOf<JavaUSwitchEntry>()
     for (statement in statements) {
+      if (statement is PsiSwitchLabeledRuleStatement) {
+        result += JavaUSwitchEntry(listOf(statement), listOfNotNull(statement.body), this)
+      }
       if (statement is PsiSwitchLabelStatement) {
         if (currentBody.isEmpty()) {
           currentLabels += statement
@@ -76,8 +76,12 @@ class JavaUSwitchEntryList(override val psi: PsiSwitchStatement, override val ua
 
   override val expressions: List<JavaUSwitchEntry> get() = switchEntries.value
 
-  fun findUSwitchEntryForLabel(switchLabelStatement: PsiSwitchLabelStatement): JavaUSwitchEntry? {
+  fun findUSwitchEntryForLabel(switchLabelStatement: PsiSwitchLabelStatementBase): JavaUSwitchEntry? {
     if (switchEntries.isInitialized()) return switchEntries.value.find { it.labels.contains(switchLabelStatement) }
+
+    if (switchLabelStatement is PsiSwitchLabeledRuleStatement) {
+      return JavaUSwitchEntry(listOf(switchLabelStatement), listOfNotNull(switchLabelStatement.body), this)
+    }
 
     val bodyStart = switchLabelStatement.nextSiblings.find { it !is PsiSwitchLabelStatement } ?: return null
     val body = bodyStart.nextSiblings.takeWhile { it !is PsiSwitchLabelStatement }.filterIsInstance<PsiStatement>().toList()
@@ -103,11 +107,11 @@ private val PsiElement.prevSiblings: Sequence<PsiElement> get() = generateSequen
 
 
 class JavaUSwitchEntry(
-  val labels: List<PsiSwitchLabelStatement>,
+  val labels: List<PsiSwitchLabelStatementBase>,
   val statements: List<PsiStatement>,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USwitchClauseExpressionWithBody {
-  override val psi: PsiSwitchLabelStatement = labels.first()
+  override val psi: PsiSwitchLabelStatementBase = labels.first()
 
   override val caseValues: List<UExpression> by lz {
     labels.mapNotNull {
