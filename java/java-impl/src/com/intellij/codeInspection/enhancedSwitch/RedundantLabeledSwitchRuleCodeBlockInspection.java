@@ -33,7 +33,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
         PsiStatement body = statement.getBody();
         if (body instanceof PsiBlockStatement) {
           PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
-          PsiStatement bodyStatement = unwrapSingleStatementCodeBlock(codeBlock);
+          PsiStatement bodyStatement = getSingleStatement(codeBlock);
 
           if (bodyStatement instanceof PsiBreakStatement) {
             PsiBreakStatement breakStatement = (PsiBreakStatement)bodyStatement;
@@ -61,7 +61,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
   }
 
   @Nullable
-  private static PsiStatement unwrapSingleStatementCodeBlock(PsiCodeBlock block) {
+  private static PsiStatement getSingleStatement(@NotNull PsiCodeBlock block) {
     PsiStatement firstStatement = PsiTreeUtil.getNextSiblingOfType(block.getLBrace(), PsiStatement.class);
     if (firstStatement != null && PsiTreeUtil.getNextSiblingOfType(firstStatement, PsiStatement.class) == null) {
       return firstStatement;
@@ -81,7 +81,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiBlockStatement body = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiBlockStatement.class);
       if (body != null && body.getParent() instanceof PsiSwitchLabeledRuleStatement) {
-        PsiStatement bodyStatement = unwrapSingleStatementCodeBlock(body.getCodeBlock());
+        PsiStatement bodyStatement = getSingleStatement(body.getCodeBlock());
         if (bodyStatement instanceof PsiBreakStatement) {
           unwrapBreakValue(body, (PsiBreakStatement)bodyStatement);
         }
