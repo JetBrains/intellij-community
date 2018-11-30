@@ -4,8 +4,6 @@ package com.intellij.compiler.notNullVerification;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.org.objectweb.asm.*;
-import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
-import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -33,7 +31,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private final Set<String> myNotNullAnnotations = new HashSet<String>();
   private boolean myEnum;
   private boolean myInner;
-  private boolean myEnclosed;
 
   private NotNullVerifyingInstrumenter(ClassVisitor classVisitor, ClassReader reader, String[] notNullAnnotations) {
     super(Opcodes.API_VERSION, classVisitor);
@@ -107,12 +104,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     }
   }
 
-  @Override
-  public void visitOuterClass(String owner, String name, String desc) {
-    super.visitOuterClass(owner, name, desc);
-    myEnclosed = true;
-  }
-
   private static class NotNullState {
     String message;
     String exceptionType;
@@ -150,9 +141,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
     final boolean isStatic = isStatic(access);
     final Type[] args = Type.getArgumentTypes(desc);
-    boolean hasOuterClassParameter = myEnclosed && myInner && "<init>".equals(name);
-    // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
-    final int syntheticCount = signature == null ? 0 : hasOuterClassParameter ? 1 : Math.max(0, args.length - getSignatureParameterCount(signature));
     final int paramAnnotationOffset = !"<init>".equals(name) ? 0 : myEnum ? 2 : myInner ? 1 : 0;
 
     final Type returnType = Type.getReturnType(desc);
@@ -189,7 +177,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           return checkNotNullMethod(desc, base);
         }
         if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER) {
-          return checkNotNullParameter(ref.getFormalParameterIndex() + syntheticCount, desc, base);
+          return checkNotNullParameter(ref.getFormalParameterIndex() + paramAnnotationOffset, desc, base);
         }
         return base;
       }
@@ -253,7 +241,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           String descrPattern = state.getNullParamMessage(paramName);
           String[] args = state.message != null
                           ? EMPTY_STRING_ARRAY
-                          : new String[]{paramName != null ? paramName : String.valueOf(param - syntheticCount), myClassName, name};
+                          : new String[]{paramName != null ? paramName : String.valueOf(param - paramAnnotationOffset), myClassName, name};
           reportError(state.exceptionType, end, descrPattern, args);
         }
       }
@@ -301,18 +289,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   private static boolean isStatic(int access) {
     return (access & ACC_STATIC) != 0;
-  }
-
-  private static int getSignatureParameterCount(String signature) {
-    final int[] count = {0};
-    new SignatureReader(signature).accept(new SignatureVisitor(Opcodes.ASM6) {
-      @Override
-      public SignatureVisitor visitParameterType() {
-        count[0]++;
-        return super.visitParameterType();
-      }
-    });
-    return count[0];
   }
 
   private static boolean isReferenceType(Type type) {
