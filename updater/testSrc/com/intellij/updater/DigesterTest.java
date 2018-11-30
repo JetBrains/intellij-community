@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 public class DigesterTest extends UpdaterTestCase {
   @Test
@@ -47,7 +47,7 @@ public class DigesterTest extends UpdaterTestCase {
 
   @Test
   public void testSymlinks() throws Exception {
-    assumeTrue(!UtilsTest.IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     File simpleLink = getTempFile("Readme.simple.link");
     Utils.createLink("Readme.txt", simpleLink);

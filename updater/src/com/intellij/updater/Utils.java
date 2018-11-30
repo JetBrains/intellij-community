@@ -5,14 +5,15 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Utils {
+  private static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
+  public static final boolean IS_WINDOWS = OS_NAME.startsWith("windows");
+  public static final boolean IS_MAC = OS_NAME.startsWith("mac");
+
   private static final long REQUIRED_FREE_SPACE = 2_000_000_000L;
 
   private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
