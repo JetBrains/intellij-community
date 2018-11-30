@@ -5,16 +5,18 @@ class SwitchExpressionMigration {
   private static String m(int n) {
       /*1*/
       /*2*/
+      /*3*/
       /*4*/
       /*5*/
-      /*6*/
-      return switch (n +/*3*/ n) {
-          /*7*/
-          /*8*/
-          /*9*/
-          case 1 -> "a";
-          case 2 -> "b";
-          default -> "?"/*10*/ + "!";
+      /*7*/
+      /*8*/
+      /*9*/
+      return switch (n) {
+          /*6*/
+          case 0 +/*cond*/ 1 -> "foo";
+          /*10*/
+          /*11*/
+          default -> "bar";
       };
   }
 }

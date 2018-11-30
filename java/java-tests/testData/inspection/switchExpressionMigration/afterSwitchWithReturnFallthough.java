@@ -4,7 +4,7 @@ import java.util.*;
 class SwitchExpressionMigration {
   private static String m(int n) {
       /*5*/
-      switch (n) {
+      return switch (n) {
           /*3*/
           /*4*/
           /*6*/
@@ -13,6 +13,6 @@ class SwitchExpressionMigration {
           case 1, 2 -> "b";
           case 3, 4 -> "c";
           default -> "?";
-      }
+      };
   }
 }
