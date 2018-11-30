@@ -54,9 +54,9 @@ class JavaUSwitchEntryList(override val psi: PsiSwitchBlock, override val uastPa
         val body = statement.body
         result += when (body) {
           is PsiBlockStatement ->
-            JavaUSwitchEntry(listOf(statement), body.codeBlock.statements.toList(), this)
+            JavaUSwitchEntry(listOf(statement), body.codeBlock.statements.toList(), this, false)
           else ->
-            JavaUSwitchEntry(listOf(statement), listOfNotNull(body), this)
+            JavaUSwitchEntry(listOf(statement), listOfNotNull(body), this, true)
         }
 
       }
@@ -87,7 +87,7 @@ class JavaUSwitchEntryList(override val psi: PsiSwitchBlock, override val uastPa
     if (switchEntries.isInitialized()) return switchEntries.value.find { it.labels.contains(switchLabelStatement) }
 
     if (switchLabelStatement is PsiSwitchLabeledRuleStatement) {
-      return JavaUSwitchEntry(listOf(switchLabelStatement), listOfNotNull(switchLabelStatement.body), this)
+      return JavaUSwitchEntry(listOf(switchLabelStatement), listOfNotNull(switchLabelStatement.body), this, true)
     }
 
     val bodyStart = switchLabelStatement.nextSiblings.find { it !is PsiSwitchLabelStatement } ?: return null
@@ -116,7 +116,8 @@ private val PsiElement.prevSiblings: Sequence<PsiElement> get() = generateSequen
 class JavaUSwitchEntry(
   val labels: List<PsiSwitchLabelStatementBase>,
   val statements: List<PsiStatement>,
-  givenParent: UElement?
+  givenParent: UElement?,
+  private val addDummyBreak: Boolean = false
 ) : JavaAbstractUExpression(givenParent), USwitchClauseExpressionWithBody {
   override val psi: PsiSwitchLabelStatementBase = labels.first()
 
@@ -135,8 +136,23 @@ class JavaUSwitchEntry(
   override val body: UExpressionList by lz {
     object : JavaUExpressionList(psi, JavaSpecialExpressionKinds.SWITCH_ENTRY, this) {
 
-      override val expressions: List<UExpression> =
-        this@JavaUSwitchEntry.statements.map { JavaConverter.convertOrEmpty(it, this) }
+      override val expressions: List<UExpression>
+
+      init {
+        val expressions = ArrayList<UExpression>(this@JavaUSwitchEntry.statements.size)
+        for (statement in this@JavaUSwitchEntry.statements) {
+          if (statement is PsiBreakStatement) {
+            statement.valueExpression?.let {
+              expressions.add(JavaConverter.convertOrEmpty(it, this))
+            }
+          }
+          expressions.add(JavaConverter.convertOrEmpty(statement, this))
+        }
+        if (addDummyBreak)
+          expressions.add(DummyUBreakExpression(expressions.lastOrNull()?.sourcePsi ?: psi, this))
+
+        this.expressions = expressions
+      }
 
       override fun asRenderString() = buildString {
         appendln("{")
@@ -145,6 +161,35 @@ class JavaUSwitchEntry(
       }
     }
   }
+
+
+}
+
+private class DummyUBreakExpression(private val referencePsi: PsiElement?, override val uastParent: UElement?) : UBreakExpression {
+  override val javaPsi: PsiElement? = null
+  override val sourcePsi: PsiElement? = null
+  override val psi: PsiElement?
+    get() = null
+  override val label: String?
+    get() = null
+  override val annotations: List<UAnnotation>
+    get() = emptyList()
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as DummyUBreakExpression
+
+    if (referencePsi != null && referencePsi != other.referencePsi) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return referencePsi?.hashCode() ?: 0
+  }
+
 }
 
 class JavaUDefaultCaseExpression(override val psi: PsiElement?, givenParent: UElement?)

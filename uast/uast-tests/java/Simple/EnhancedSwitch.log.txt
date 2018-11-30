@@ -4,7 +4,7 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = str)
-                        ULiteralExpression (value = "abc")
+                        ULiteralExpression (value = "baz")
                 UDeclarationsExpression
                     ULocalVariable (name = numericString)
                         USwitchExpression
@@ -20,19 +20,23 @@ UFile (package = )
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                                 UIdentifier (Identifier (println))
                                                 ULiteralExpression (value = "here")
+                                        ULiteralExpression (value = "FOO")
                                         UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "bar")
                                     UExpressionList (switch_entry)
                                         ULiteralExpression (value = "BAR")
+                                        UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "baz")
                                     UExpressionList (switch_entry)
                                         ULiteralExpression (value = "bAz")
+                                        UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     UDefaultCaseExpression
                                     UExpressionList (switch_entry)
                                         ULiteralExpression (value = "default")
+                                        UBreakExpression (label = null)
                 UDeclarationsExpression
                     ULocalVariable (name = numericString2)
                         USwitchExpression
@@ -41,10 +45,12 @@ UFile (package = )
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "foo")
                                     UExpressionList (switch_entry)
+                                        ULiteralExpression (value = "FOO")
                                         UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "bar")
                                     UExpressionList (switch_entry)
+                                        ULiteralExpression (value = "BAR")
                                         UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "baz")
@@ -56,10 +62,12 @@ UFile (package = )
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                                 UIdentifier (Identifier (println))
                                                 ULiteralExpression (value = "here")
+                                        ULiteralExpression (value = "bAz")
                                         UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     UDefaultCaseExpression
                                     UExpressionList (switch_entry)
+                                        ULiteralExpression (value = "default")
                                         UBreakExpression (label = null)
                 UReturnExpression
                     UBinaryExpression (operator = +)
