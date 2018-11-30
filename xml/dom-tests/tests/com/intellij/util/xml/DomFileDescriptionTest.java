@@ -72,10 +72,12 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     try {
       Disposer.dispose(myDisposable);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFooElementFile = null;
       myBarElementFile = null;
-
       super.tearDown();
     }
   }

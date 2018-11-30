@@ -126,6 +126,9 @@ public class ModuleDeleteProviderTest extends PlatformTestCase {
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

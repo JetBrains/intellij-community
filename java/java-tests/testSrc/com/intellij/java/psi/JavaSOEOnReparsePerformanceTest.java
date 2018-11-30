@@ -40,6 +40,9 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
         myHugeExpr = null;
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

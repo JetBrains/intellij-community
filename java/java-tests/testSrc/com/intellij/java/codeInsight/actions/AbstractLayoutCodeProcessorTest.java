@@ -105,9 +105,11 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     try {
       VfsTestUtil.deleteFile(myWorkingDirectory.getVirtualFile());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myWorkingDirectory = null;
-
       super.tearDown();
     }
   }

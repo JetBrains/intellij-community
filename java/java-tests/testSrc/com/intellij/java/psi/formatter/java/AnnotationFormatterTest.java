@@ -35,6 +35,9 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
     try {
       CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

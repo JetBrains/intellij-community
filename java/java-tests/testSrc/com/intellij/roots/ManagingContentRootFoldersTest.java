@@ -51,10 +51,12 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
         myModel.dispose();
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myModel = null;
       entry = null;
-
       super.tearDown();
     }
   }

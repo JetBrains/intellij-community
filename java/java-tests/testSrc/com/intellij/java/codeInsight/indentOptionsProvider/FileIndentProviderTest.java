@@ -57,11 +57,13 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
         Extensions.getRootArea().getExtensionPoint(FileIndentOptionsProvider.EP_NAME);
       extensionPoint.unregisterExtension(TEST_FILE_INDENT_OPTIONS_PROVIDER);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
-    myTestIndentOptions = null;
-    myUseOnFullReformat = false;
-
-    super.tearDown();
+      myTestIndentOptions = null;
+      myUseOnFullReformat = false;
+      super.tearDown();
     }
   }
 

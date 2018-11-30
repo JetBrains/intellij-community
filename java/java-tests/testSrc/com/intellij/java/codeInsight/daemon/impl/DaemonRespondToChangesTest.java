@@ -152,6 +152,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         ProjectManagerEx.getInstanceEx().forceCloseProject(project, false);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myDaemonCodeAnalyzer = null;
       super.tearDown();

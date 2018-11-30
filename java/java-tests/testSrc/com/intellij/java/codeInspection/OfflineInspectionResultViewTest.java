@@ -93,7 +93,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
   protected void tearDown() throws Exception {
     try {
       Disposer.dispose(myView);
-
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       InspectionProfileImpl.INIT_INSPECTIONS = false;

@@ -54,9 +54,11 @@ public class ModuleScopesTest extends ModuleTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-
       super.tearDown();
     }
   }
