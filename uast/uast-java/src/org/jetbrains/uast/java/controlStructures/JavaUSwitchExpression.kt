@@ -127,14 +127,15 @@ class JavaUSwitchEntry(
 
   override val body: UExpressionList by lz {
     object : JavaUExpressionList(psi, JavaSpecialExpressionKinds.SWITCH_ENTRY, this) {
+
+      override val expressions: List<UExpression> =
+        this@JavaUSwitchEntry.statements.map { JavaConverter.convertOrEmpty(it, this) }
+
       override fun asRenderString() = buildString {
         appendln("{")
         expressions.forEach { appendln(it.asRenderString().withMargin) }
         appendln("}")
       }
-    }.apply {
-      val statements = this@JavaUSwitchEntry.statements
-      expressions = statements.map { JavaConverter.convertOrEmpty(it, this) }
     }
   }
 }

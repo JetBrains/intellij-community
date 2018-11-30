@@ -49,8 +49,8 @@ class JavaUCallExpression(
     for (psiMethod in resolved) {
       val isVarArgs = psiMethod.parameterList.parameters.getOrNull(i)?.isVarArgs ?: continue
       if (isVarArgs) {
-        return JavaUExpressionList(null, UastSpecialExpressionKind.VARARGS, this).apply {
-          expressions = valueArguments.subList(i, valueArguments.size)
+        return JavaUExpressionList(null, UastSpecialExpressionKind.VARARGS, this) {
+          valueArguments.subList(i, valueArguments.size)
         }
       }
       return valueArguments.getOrNull(i)
