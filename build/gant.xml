@@ -2,6 +2,7 @@
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="project.home" value="${build.dir}/.."/>
   <property name="idea.lib" value="${project.home}/lib"/>
+  <property environment="env"/>
 
   <condition property="gant.target" value="default">
     <not>
@@ -20,8 +21,12 @@
     <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>
     </condition>
+    <condition property="java.path" value="${env.JDK_18_x64}" else="${java.home}">
+      <isset property="env.JDK_18_x64"/>
+    </condition>
+    <echo message="JDK_18_x64=${env.JDK_18_x64}, java.home=${java.home}, using java: ${java.path}"/>
     <exec executable="${gradle.home}/${gradlew}" dir="${gradle.home}" failonerror="true">
-      <env key="JAVA_HOME" value="${java.home}"/>
+      <env key="JAVA_HOME" value="${java.path}"/>
       <arg value="${gradle.daemon}"/>
       <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
       <arg value="setupBuildScriptsDeps"/>
