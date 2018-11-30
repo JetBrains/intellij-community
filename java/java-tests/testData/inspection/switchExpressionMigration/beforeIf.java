@@ -1,4 +1,4 @@
-// "Fix all 'Switch statement can be replaced with enhanced 'switch'' problems in file" "true"
+// "Fix all 'Statement can be replaced with enhanced 'switch'' problems in file" "true"
 import java.util.*;
 
 class SwitchExpressionMigration {
@@ -27,6 +27,15 @@ class SwitchExpressionMigration {
       return "foo";
     } else {
       return "bar";
+    }
+  }
+
+  private static String m3(int n, String s) {
+    long l = System.currentTimeMillis();
+    if<caret>(n != 0) {
+      l = 12l;
+    } else {
+      l = 22l;
     }
   }
 }

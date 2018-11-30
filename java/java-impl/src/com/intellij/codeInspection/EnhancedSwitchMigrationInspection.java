@@ -1,15 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         SwitchReplacer replacer = getSwitchReplacer(statement);
         if (replacer == null) return;
         PsiElement switchKeyword = statement.getFirstChild();
-        holder.registerProblem(switchKeyword, InspectionsBundle.message("inspection.switch.expression.migration.inspection.name"),
+        holder.registerProblem(switchKeyword, InspectionsBundle.message(
+          "inspection.switch.expression.migration.inspection.switch.description"),
                                new ReplaceWithSwitchExpressionFix(replacer.getType()));
       }
 
@@ -461,6 +461,16 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     public void replace(@NotNull PsiStatement switchStatement) {
       CommentTracker commentTracker = new CommentTracker();
       PsiSwitchBlock replacement = generateEnhancedSwitch(switchStatement, myExpressionBeingSwitched, myNewBranches, commentTracker, true);
+      PsiExpression initializer = myVariableToAssign.getInitializer();
+      if (initializer != null) {
+        List<PsiExpression> sideEffectExpressions = SideEffectChecker.extractSideEffectExpressions(initializer);
+        PsiStatement[] sideEffectStatements = StatementExtractor.generateStatements(sideEffectExpressions, initializer);
+        if (sideEffectStatements.length > 0) {
+          PsiStatement statement = tryCast(myVariableToAssign.getParent(), PsiStatement.class);
+          if (statement == null) return;
+          BlockUtils.addBefore(statement, sideEffectStatements);
+        }
+      }
       myVariableToAssign.setInitializer((PsiSwitchExpression)replacement);
       commentTracker.delete(switchStatement);
       commentTracker.insertCommentsBefore(myVariableToAssign);
@@ -497,12 +507,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       for (SwitchBranch branch : branches) {
         if (!isConvertibleBranch(branch)) return null;
         if (branch.isFallthrough() && branch.getStatements().length == 0) continue;
-        PsiExpressionStatement expressionStatement = tryCast(branch.getStatements()[0], PsiExpressionStatement.class);
-        if (expressionStatement == null) return null;
-        PsiAssignmentExpression assign = tryCast(expressionStatement.getExpression(), PsiAssignmentExpression.class);
-        if (assign == null) return null;
-        if (!ExpressionUtils.isReferenceTo(assign.getLExpression(), variable)) return null;
-        PsiExpression rExpression = assign.getRExpression();
+        PsiExpression rExpression = ExpressionUtils.getAssignmentTo(branch.getStatements()[0], variable);
         if (rExpression == null) return null;
         newBranches.add(new SwitchExpressionBranch(branch.isDefault(), branch.getCaseExpressions(), new SwitchRuleExpressionResult(rExpression), branch.getRelatedStatements()));
       }
