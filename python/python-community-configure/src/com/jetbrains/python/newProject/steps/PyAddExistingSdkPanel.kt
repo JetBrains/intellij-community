@@ -119,7 +119,16 @@ class PyAddExistingSdkPanel(project: Project?,
     remotePathField.mainPanel.isVisible = synchronizer != null
     if (synchronizer != null) {
       val defaultRemotePath = synchronizer.getDefaultRemotePath()
-      defaultMappings = synchronizer.getAutoMappings()
+      synchronizer.getAutoMappings()?.let {
+        when (it) {
+          is com.jetbrains.python.Result.Success -> defaultMappings = it.result
+          is com.jetbrains.python.Result.Failure -> {
+            remotePathField.textField.text = it.error
+            remotePathField.setReadOnly(true)
+            return
+          }
+        }
+      }
       assert(defaultRemotePath == null || defaultMappings == null) { "Can't have both: default mappings and default value" }
       assert(!(defaultRemotePath?.isEmpty() ?: false)) { "Mappings are empty" }
 
