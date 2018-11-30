@@ -1634,6 +1634,25 @@ public class StringUtil extends StringUtilRt {
     return sb.toString();
   }
 
+  public static String formatOrdinal(int i) {
+    int mod = i % 100;
+    if (mod == 11 || mod == 12 || mod == 13) {
+      return i + "th";
+    }
+
+    mod = mod % 10;
+    if (mod == 1) {
+      return i + "st";
+    }
+    else if (mod == 2) {
+      return i + "nd";
+    }
+    else if (mod == 3) {
+      return i + "rd";
+    }
+    return i + "th";
+  }
+
   /**
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
    * Returns {@code null} if failed to match appropriate heuristic.
