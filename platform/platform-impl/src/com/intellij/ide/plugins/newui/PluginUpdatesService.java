@@ -47,7 +47,7 @@ public class PluginUpdatesService {
   }
 
   @Nullable
-  public static Runnable connectConfigurableTab(@NotNull Consumer<Integer> callback) {
+  public static Runnable connectConfigurable(@NotNull Consumer<Integer> callback) {
     assert SwingUtilities.isEventDispatchThread();
 
     Runnable disposer = myCreate ? () -> dispose() : null;
@@ -82,7 +82,7 @@ public class PluginUpdatesService {
       PluginDownloader downloader = I.next();
       if (downloader.getDescriptor() == descriptor) {
         I.remove();
-        doCountCallback();
+        runCallbacks(getCount());
         return;
       }
     }
@@ -90,8 +90,9 @@ public class PluginUpdatesService {
 
   public static void recalculateUpdates() {
     assert SwingUtilities.isEventDispatchThread();
-
     assert !myPreparing;
+
+    runCallbacks(-1);
     calculateUpdates();
   }
 
@@ -118,11 +119,6 @@ public class PluginUpdatesService {
     }
   }
 
-  @Nullable
-  private static Integer getCount() {
-    return myCache == null ? null : new Integer(myCache.size());
-  }
-
   private static void calculateUpdates() {
     assert SwingUtilities.isEventDispatchThread();
 
@@ -142,7 +138,7 @@ public class PluginUpdatesService {
         myPrepared = true;
         myCache = updates;
 
-        doCountCallback();
+        runCallbacks(getCount());
 
         if (myPanelCallbacks != null) {
           for (Consumer<Collection<PluginDownloader>> callback : myPanelCallbacks) {
@@ -154,8 +150,12 @@ public class PluginUpdatesService {
     });
   }
 
-  private static void doCountCallback() {
-    Integer countValue = getCount();
+  @Nullable
+  private static Integer getCount() {
+    return myCache == null ? null : new Integer(myCache.size());
+  }
+
+  private static void runCallbacks(@Nullable Integer countValue) {
     if (myTreeCallback != null) {
       myTreeCallback.accept(countValue);
     }

@@ -37,7 +37,7 @@ public class PluginManagerConfigurableTreeRenderer implements ConfigurableTreeRe
     if (myTree == null) {
       PluginUpdatesService.connectTreeRenderer(tree, countValue -> {
         String oldCountValue = myCountValue;
-        myCountValue = countValue == null || countValue == 0 ? null : countValue.toString();
+        myCountValue = countValue == null || countValue <= 0 ? null : countValue.toString();
         if (myTree != null && !StringUtil.equals(oldCountValue, myCountValue)) {
           myTree.repaint();
         }

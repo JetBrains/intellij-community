@@ -70,7 +70,9 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     myCenterPanel = createCenterPanel(update);
     header.add(myCenterPanel);
 
-    createTagPanel();
+    if (!update) {
+      createTagPanel();
+    }
     createMetricsPanel();
     createErrorPanel();
     createProgressPanel(!update);

@@ -465,7 +465,7 @@ public class PluginManagerConfigurableNew
     myTabHeaderComponent.addTab(myUpdatesTabName = new CountTabName(myTabHeaderComponent, "Updates"));
 
     myPluginUpdatesServiceCallback =
-      PluginUpdatesService.connectConfigurableTab(countValue -> myUpdatesTabName.setCount(countValue == null ? 0 : countValue));
+      PluginUpdatesService.connectConfigurable(countValue -> myUpdatesTabName.setCount(countValue == null ? 0 : countValue));
 
     createSearchPanels();
 
