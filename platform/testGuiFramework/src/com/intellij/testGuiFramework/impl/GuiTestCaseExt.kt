@@ -19,6 +19,7 @@ import org.hamcrest.Matcher
 import org.junit.Assert.assertTrue
 import org.junit.rules.ErrorCollector
 import java.awt.IllegalComponentStateException
+import javax.swing.JTree
 
 fun <T> ErrorCollector.checkThat(value: T, matcher: Matcher<T>, reason: () -> String) {
   checkThat(reason(), value, matcher)
@@ -106,7 +107,7 @@ fun GuiTestCase.waitAMoment() {
 fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality) {
   ideFrame {
     logInfo("Check that $name -> ${expectedItem.joinToString(" -> ")} exists in a tree element")
-    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate, timeout = Timeouts.seconds03) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
   }
 }
 
@@ -324,4 +325,47 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
       }
     }
   }
+}
+
+fun GuiTestCase.createJdk(jdkPath: String, jdkName: String = ""): String{
+  val dialogName = "Project Structure for New Projects"
+  logTestStep("Create a JDK on the path `$jdkPath`")
+  lateinit  var installedJdkName: String
+  welcomeFrame {
+    actionLink("Configure").click()
+    popupMenu("Project Defaults").clickSearchedItem()
+    popupMenu("Project Structure").clickSearchedItem()
+    logUIStep("Open `$dialogName` dialog")
+    dialog(dialogName) {
+      jList("SDKs").clickItem("SDKs")
+      val sdkTree: ExtendedJTreePathFixture = jTree()
+
+      fun JTree.getListOfInstalledSdks(): List<String> {
+        val root = model.root
+        return (0 until model.getChildCount(root))
+          .map { model.getChild(root, it).toString() }.toList()
+      }
+
+      val preInstalledSdks = sdkTree.tree.getListOfInstalledSdks()
+      installedJdkName = if(jdkName.isEmpty() || preInstalledSdks.contains(jdkName).not()){
+        actionButton("Add New SDK").click()
+        popupMenu("JDK").clickSearchedItem()
+        logUIStep("Open `Select Home Directory for JDK` dialog")
+        dialog("Select Home Directory for JDK") {
+          actionButton("Refresh").click()
+          logUIStep("Type the path `$jdkPath`")
+          typeText(jdkPath)
+          logUIStep("Close `Select Home Directory for JDK` dialog with OK")
+          button("OK").click()
+        }
+
+        val postInstalledSdks = sdkTree.tree.getListOfInstalledSdks()
+        postInstalledSdks.first { preInstalledSdks.contains(it).not() }
+      }
+      else jdkName
+      logUIStep("Close `Default Project Structure` dialog with OK")
+      button("OK").click()
+    } // dialog Project Structure
+  } // ideFrame
+  return installedJdkName
 }
