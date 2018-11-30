@@ -195,7 +195,7 @@ public class InternalPage extends BasePage implements IInternalPage {
     if (pos < size) {
       copyChildren(pos, pos + 1);
     }
-    set(pos, key, (IPage)child);
+    set(pos, key, (BasePage)child);
     incrementSize();
     flush(novelty);
   }
@@ -223,7 +223,7 @@ public class InternalPage extends BasePage implements IInternalPage {
     decrementSize(1);
   }
 
-  private void set(int pos, byte[] key, IPage child) {
+  private void set(int pos, byte[] key, BasePage child) {
     final int bytesPerKey = tree.getKeySize();
 
     if (key.length != bytesPerKey) {

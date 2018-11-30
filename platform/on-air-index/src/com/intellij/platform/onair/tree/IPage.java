@@ -16,13 +16,7 @@ public interface IPage {
 
   boolean isTransient();
 
-  // TODO: cleanup?
-
-  long getMutableAddress();
-
-  BaseTransientPage getTransientCopy(@NotNull Novelty.Accessor novelty,
-                                     @NotNull TransientBTreePrototype tree,
-                                     long epoch);
+  BaseTransientPage getTransientCopy(@NotNull Novelty.Accessor novelty, @NotNull TransientBTreePrototype tree, long epoch);
 
   // crud
 

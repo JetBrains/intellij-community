@@ -45,14 +45,6 @@ public abstract class BasePage implements IPage {
   }
 
   @Override
-  public long getMutableAddress() {
-    if (!address.isNovelty()) {
-      throw new IllegalStateException("address must be novelty");
-    }
-    return address.getLowBytes();
-  }
-
-  @Override
   @NotNull
   public byte[] getMinKey() {
     if (size <= 0) {
@@ -61,8 +53,6 @@ public abstract class BasePage implements IPage {
 
     return Arrays.copyOf(backingArray, tree.getKeySize()); // TODO: optimize
   }
-
-  protected abstract BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty);
 
   @Nullable
   public abstract BasePage put(@NotNull Novelty.Accessor novelty,
@@ -73,7 +63,16 @@ public abstract class BasePage implements IPage {
 
   public abstract boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value);
 
+  protected long getMutableAddress() {
+    if (!address.isNovelty()) {
+      throw new IllegalStateException("address must be novelty");
+    }
+    return address.getLowBytes();
+  }
+
   protected abstract BasePage getMutableCopy(@NotNull Novelty.Accessor novelty);
+
+  protected abstract BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty);
 
   protected abstract Address save(@NotNull final Novelty.Accessor novelty,
                                   @NotNull final Storage storage,

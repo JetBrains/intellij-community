@@ -40,13 +40,6 @@ public abstract class BaseTransientPage implements IPage {
   }
 
   @Override
-  public long getMutableAddress() {
-    throw new UnsupportedOperationException();
-  }
-
-  protected abstract IPage mergeWithChildren(@NotNull Novelty.Accessor novelty);
-
-  @Override
   @NotNull
   public byte[] getMinKey() {
     if (size <= 0) {
@@ -65,6 +58,8 @@ public abstract class BaseTransientPage implements IPage {
                                         boolean[] result);
 
   public abstract boolean delete(@NotNull Novelty.Accessor novelty, long epoch, @NotNull byte[] key, @Nullable byte[] value);
+
+  protected abstract IPage mergeWithChildren(@NotNull Novelty.Accessor novelty);
 
   protected void incrementSize() {
     if (size >= tree.base) {
