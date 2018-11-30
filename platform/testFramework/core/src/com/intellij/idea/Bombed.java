@@ -5,13 +5,11 @@ package com.intellij.idea;
 
 import org.intellij.lang.annotations.JdkConstants;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
+@Inherited
 public @interface Bombed {
   int year() default 2018;
   @JdkConstants.CalendarMonth int month();
