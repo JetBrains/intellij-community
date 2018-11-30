@@ -22,11 +22,11 @@ public interface IPage {
 
   byte[] getMinKey();
 
-  byte[] get(Novelty.Accessor novelty, byte[] key);
+  byte[] get(@NotNull Novelty.Accessor novelty, byte[] key);
 
-  boolean forEach(Novelty.Accessor novelty, KeyValueConsumer consumer);
+  boolean forEach(@NotNull Novelty.Accessor novelty, KeyValueConsumer consumer);
 
-  boolean forEach(Novelty.Accessor novelty, byte[] key, KeyValueConsumer consumer);
+  boolean forEach(@NotNull Novelty.Accessor novelty, byte[] key, KeyValueConsumer consumer);
 
   // tree-specific methods
 
