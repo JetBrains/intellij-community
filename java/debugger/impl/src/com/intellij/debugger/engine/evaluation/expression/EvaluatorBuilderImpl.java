@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +157,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (unboxedLType != null) {
         if (rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(rType)) {
           if (!rType.equals(unboxedLType)) {
-            rEvaluator = new TypeCastEvaluator(rEvaluator, unboxedLType.getCanonicalText(), true);
+            rEvaluator = createTypeCastEvaluator(rEvaluator, unboxedLType);
           }
           rEvaluator = new BoxingEvaluator(rEvaluator);
         }
@@ -171,7 +172,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           final PsiType _rType = unboxedRType != null? unboxedRType : rType;
           if (_rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(_rType)) {
             if (!lType.equals(_rType)) {
-              rEvaluator = new TypeCastEvaluator(rEvaluator, lType.getCanonicalText(), true);
+              rEvaluator = createTypeCastEvaluator(rEvaluator, lType);
             }
           }
         }
@@ -482,40 +483,40 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         // handle numeric promotion
         if (PsiType.DOUBLE.equals(_lType)) {
           if (TypeConversionUtil.areTypesConvertible(_rType, PsiType.DOUBLE)) {
-            rResult = new TypeCastEvaluator(rResult, PsiType.DOUBLE.getCanonicalText(), true);
+            rResult = createTypeCastEvaluator(rResult, PsiType.DOUBLE);
           }
         }
         else if (PsiType.DOUBLE.equals(_rType)) {
           if (TypeConversionUtil.areTypesConvertible(_lType, PsiType.DOUBLE)) {
-            lResult = new TypeCastEvaluator(lResult, PsiType.DOUBLE.getCanonicalText(), true);
+            lResult = createTypeCastEvaluator(lResult, PsiType.DOUBLE);
           }
         }
         else if (PsiType.FLOAT.equals(_lType)) {
           if (TypeConversionUtil.areTypesConvertible(_rType, PsiType.FLOAT)) {
-            rResult = new TypeCastEvaluator(rResult, PsiType.FLOAT.getCanonicalText(), true);
+            rResult = createTypeCastEvaluator(rResult, PsiType.FLOAT);
           }
         }
         else if (PsiType.FLOAT.equals(_rType)) {
           if (TypeConversionUtil.areTypesConvertible(_lType, PsiType.FLOAT)) {
-            lResult = new TypeCastEvaluator(lResult, PsiType.FLOAT.getCanonicalText(), true);
+            lResult = createTypeCastEvaluator(lResult, PsiType.FLOAT);
           }
         }
         else if (PsiType.LONG.equals(_lType)) {
           if (TypeConversionUtil.areTypesConvertible(_rType, PsiType.LONG)) {
-            rResult = new TypeCastEvaluator(rResult, PsiType.LONG.getCanonicalText(), true);
+            rResult = createTypeCastEvaluator(rResult, PsiType.LONG);
           }
         }
         else if (PsiType.LONG.equals(_rType)) {
           if (TypeConversionUtil.areTypesConvertible(_lType, PsiType.LONG)) {
-            lResult = new TypeCastEvaluator(lResult, PsiType.LONG.getCanonicalText(), true);
+            lResult = createTypeCastEvaluator(lResult, PsiType.LONG);
           }
         }
         else {
           if (!PsiType.INT.equals(_lType) && TypeConversionUtil.areTypesConvertible(_lType, PsiType.INT)) {
-            lResult = new TypeCastEvaluator(lResult, PsiType.INT.getCanonicalText(), true);
+            lResult = createTypeCastEvaluator(lResult, PsiType.INT);
           }
           if (!PsiType.INT.equals(_rType) && TypeConversionUtil.areTypesConvertible(_rType, PsiType.INT)) {
-            rResult = new TypeCastEvaluator(rResult, PsiType.INT.getCanonicalText(), true);
+            rResult = createTypeCastEvaluator(rResult, PsiType.INT);
           }
         }
       }
@@ -1162,7 +1163,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (_unboxedIndexType instanceof PsiPrimitiveType) {
         final PsiType promotionType = calcUnaryNumericPromotionType((PsiPrimitiveType)_unboxedIndexType);
         if (promotionType != null) {
-          operandEvaluator = new TypeCastEvaluator(operandEvaluator, promotionType.getCanonicalText(), true);
+          operandEvaluator = createTypeCastEvaluator(operandEvaluator, promotionType);
         }
       }
       return operandEvaluator;
@@ -1202,21 +1203,27 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       final boolean performCastToWrapperClass = shouldPerformBoxingConversion && !castingToPrimitive;
 
       if (!(PsiUtil.resolveClassInClassTypeOnly(castType) instanceof PsiTypeParameter)) {
-        String castTypeName = castType.getCanonicalText();
         if (performCastToWrapperClass) {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(castType);
-          if (unboxedType != null) {
-            castTypeName = unboxedType.getCanonicalText();
-          }
+          castType = ObjectUtils.notNull(PsiPrimitiveType.getUnboxedType(castType), castType);
         }
 
-        myResult = new TypeCastEvaluator(operandEvaluator, castTypeName, castingToPrimitive);
+        myResult = createTypeCastEvaluator(operandEvaluator, castType);
       }
 
       if (performCastToWrapperClass) {
         myResult = new BoxingEvaluator(myResult);
       }
     }
+
+    private static TypeCastEvaluator createTypeCastEvaluator(Evaluator operandEvaluator, PsiType castType) {
+      if (castType instanceof PsiPrimitiveType) {
+        return new TypeCastEvaluator(operandEvaluator, castType.getCanonicalText());
+      }
+      else {
+        return new TypeCastEvaluator(operandEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(castType)));
+      }
+    }
+
 
     @Override
     public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {

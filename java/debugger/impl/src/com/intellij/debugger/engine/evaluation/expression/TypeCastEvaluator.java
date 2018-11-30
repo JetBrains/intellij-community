@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class TypeCastEvaluator
@@ -26,25 +12,33 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class TypeCastEvaluator implements Evaluator {
   private final Evaluator myOperandEvaluator;
   private final String myCastType;
-  private final boolean myIsPrimitive;
+  private final TypeEvaluator myTypeCastEvaluator;
 
-  public TypeCastEvaluator(Evaluator operandEvaluator, String castType, boolean isPrimitive) {
+  public TypeCastEvaluator(Evaluator operandEvaluator, @NotNull TypeEvaluator typeCastEvaluator) {
     myOperandEvaluator = operandEvaluator;
-    myCastType = castType;
-    myIsPrimitive = isPrimitive;
+    myCastType = null;
+    myTypeCastEvaluator = typeCastEvaluator;
+  }
+
+  public TypeCastEvaluator(Evaluator operandEvaluator, @NotNull String primitiveType) {
+    myOperandEvaluator = operandEvaluator;
+    myCastType = primitiveType;
+    myTypeCastEvaluator = null;
   }
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {
-      if (myIsPrimitive) {
+      if (myCastType != null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.null", myCastType));
       }
       return null;
@@ -75,9 +69,15 @@ public class TypeCastEvaluator implements Evaluator {
       }
     }
     else if (value instanceof ObjectReference) {
-      Type type = value.type();
-      if (!DebuggerUtils.instanceOf(type, myCastType)) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myCastType));
+      ReferenceType type = ((ObjectReference)value).referenceType();
+      if (myTypeCastEvaluator == null) {
+        throw EvaluateExceptionUtil.createEvaluateException(
+          DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myCastType));
+      }
+      ReferenceType castType = (ReferenceType)myTypeCastEvaluator.evaluate(context);
+      if (!DebuggerUtilsImpl.instanceOf(type, castType)) {
+        throw EvaluateExceptionUtil.createEvaluateException(
+          DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), castType.name()));
       }
     }
 
