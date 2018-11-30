@@ -494,6 +494,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           break;
         default:
       }
+      if (!isShowing()) {
+        return;
+      }
       revalidate();
       if (getState() == State.COLLAPSED) {
         //we should repaint parent, to clear 1px on top when menu is collapsed
