@@ -294,7 +294,7 @@ public class TestAll implements Test {
         return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
       }
 
-      if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass)) {
+      if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
         boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);

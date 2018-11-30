@@ -165,10 +165,9 @@ public class TestCaseLoader {
         return true;
       }
     }
-    catch (NoSuchMethodException ignored) {
-    }
+    catch (NoSuchMethodException ignored) { }
 
-    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass);
+    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false);
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
