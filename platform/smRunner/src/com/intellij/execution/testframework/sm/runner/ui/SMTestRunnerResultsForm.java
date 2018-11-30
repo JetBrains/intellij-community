@@ -387,7 +387,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myFinishedTestCount++;
     }
     else if (test.isSuite()) {
-      myTotalTestCount++;
+      myStartedTestCount++;
+      updateTotalCount();
     }
     updateIconProgress(false);
 
@@ -716,14 +717,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       .add(myCurrentCustomProgressCategory != null ? myCurrentCustomProgressCategory : TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
 
     myStartedTestCount++;
+    updateTotalCount();
 
+    updateStatusLabel(false);
+  }
+
+  private void updateTotalCount() {
     // fix total count if it is corrupted
     // but if test count wasn't set at all let's process such case separately
     if (myStartedTestCount > myTotalTestCount && myTotalTestCount != 0) {
       myTotalTestCount = myStartedTestCount;
     }
-
-    updateStatusLabel(false);
   }
 
   private void updateProgressOnTestDone() {
