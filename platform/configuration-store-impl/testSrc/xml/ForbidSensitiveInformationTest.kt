@@ -34,35 +34,35 @@ internal class ForbidSensitiveInformationTest {
     assertThatThrownBy {
       val xmlWriter = JbXmlOutputter()
       xmlWriter.output(element, StringWriter())
-    }.hasMessage("Attribute \"password\" probably contains sensitive information")
+    }.hasMessage("Attribute bean.@password probably contains sensitive information")
   }
 
   @Test
   fun `do not store password as element`() {
-    @Tag("bean")
+    @Tag("component")
     class Bean {
       var password: String? = null
 
       @Attribute
-      var foo: String? = null
+      var name: String? = null
     }
 
     val bean = Bean()
-    bean.foo = "module"
+    bean.name = "someComponent"
     bean.password = "ab"
     // it is not part of XML bindings to ensure that even if you will use JDOM directly, you cannot output sensitive data
     // so, testSerializer must not throw error
     val element = assertSerializer(bean, """
-        <bean foo="module">
+        <component name="someComponent">
           <option name="password" value="ab" />
-        </bean>
+        </component>
       """.trimIndent())
 
     assertThatThrownBy {
       val xmlWriter = JbXmlOutputter(
         storageFilePathForDebugPurposes = "${FileUtilRt.toSystemIndependentName(SystemProperties.getUserHome())}/foo/bar.xml")
       xmlWriter.output(element, StringWriter())
-    }.hasMessage("Element \"password\" probably contains sensitive information (file: ~/foo/bar.xml)")
+    }.hasMessage("""Element component@someComponent.option.@name=password probably contains sensitive information (file: ~/foo/bar.xml)""")
   }
 
   @Test

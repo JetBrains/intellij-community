@@ -7,6 +7,7 @@ import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.application.PathMacroFilter
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
@@ -421,7 +422,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       }
 
       if (isForbidSensitiveData && BaseXmlOutputter.isNameIndicatesSensitiveInformation(attribute.name)) {
-        logSensitiveInformationError(attribute.name, "Attribute")
+        logSensitiveInformationError("@${attribute.name}", "Attribute", attribute.parent)
       }
 
       out.write(escapeAttributeEntities(value))
@@ -509,18 +510,46 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
     @Suppress("SpellCheckingInspection")
     if (isNameIndicatesSensitiveInformation(name!!)) {
-      logSensitiveInformationError(name, "Element")
+      logSensitiveInformationError(name, "Element", element.parentElement)
     }
 
     // checks only option tag
     name = element.getAttributeValue(Constants.NAME)
     if (name != null && BaseXmlOutputter.isNameIndicatesSensitiveInformation(name) && element.getAttribute("value") != null) {
-      logSensitiveInformationError(name, "Element")
+      logSensitiveInformationError("@name=$name", "Element", element /* here not parentElement because it is attribute */)
     }
   }
 
-  private fun logSensitiveInformationError(name: String, elementKind: String) {
-    var message = "$elementKind \"$name\" probably contains sensitive information"
+  private fun logSensitiveInformationError(name: String, elementKind: String, parentElement: Element?) {
+    val parentPath: String?
+    if (parentElement == null) {
+      parentPath = null
+    }
+    else {
+      val ids = ArrayList<String>()
+      var parent = parentElement
+      while (parent != null) {
+        var parentId = parent.name
+        if (parentId == FileStorageCoreUtil.COMPONENT) {
+          val componentName = parent.getAttributeValue(FileStorageCoreUtil.NAME)
+          if (componentName != null) {
+            parentId += "@$componentName"
+          }
+        }
+        ids.add(parentId)
+        parent = parent.parentElement
+      }
+
+      if (ids.isEmpty()) {
+        parentPath = null
+      }
+      else {
+        ids.reverse()
+        parentPath = ids.joinToString(".")
+      }
+    }
+
+    var message = "$elementKind ${if (parentPath == null) "" else "$parentPath."}$name probably contains sensitive information"
     if (storageFilePathForDebugPurposes != null) {
       message += " (file: ${storageFilePathForDebugPurposes.replace(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "~")})"
     }
