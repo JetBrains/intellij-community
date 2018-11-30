@@ -249,7 +249,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return null;
   }
 
-  protected boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
+  private boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
     if (referenceOrReferencedElement == null || !referenceOrReferencedElement.isValid()) return false;
 
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
@@ -358,7 +358,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (ref == null) return null;
 
     final Language language = ref.getElement().getLanguage();
-    TargetElementEvaluator evaluator = targetElementEvaluator.forLanguage(language);
+    TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     if (evaluator != null) {
       final PsiElement element = evaluator.getElementByReference(ref, flags);
       if (element != null) return element;
@@ -415,7 +415,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Override
   public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
-    TargetElementEvaluator evaluator = targetElementEvaluator.forLanguage(element.getLanguage());
+    TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(element.getLanguage());
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
 
@@ -435,16 +435,16 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return PsiSearchHelper.getInstance(element.getProject()).getUseScope(file != null ? file : element);
   }
 
-  protected static final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
+  private static final LanguageExtension<TargetElementEvaluator> TARGET_ELEMENT_EVALUATOR =
     new LanguageExtension<>("com.intellij.targetElementEvaluator");
   @Nullable
   private static TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
-    TargetElementEvaluator result = targetElementEvaluator.forLanguage(language);
+    TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx ? (TargetElementEvaluatorEx)result : null;
   }
   @Nullable
   private static TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
-    TargetElementEvaluator result = targetElementEvaluator.forLanguage(language);
+    TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx2 ? (TargetElementEvaluatorEx2)result : null;
   }
 }
