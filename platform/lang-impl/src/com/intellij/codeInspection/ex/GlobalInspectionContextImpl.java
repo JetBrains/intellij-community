@@ -19,7 +19,6 @@ import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.InspectionTreeState;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
@@ -83,7 +82,7 @@ import java.util.function.Predicate;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final int MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES = SystemProperties.getIntProperty("max.open.global.inspection.xml.files", 50);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
+  private static final Logger LOG = Logger.getInstance(GlobalInspectionContextImpl.class);
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean CREATE_VIEW_FORCE;
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
@@ -97,7 +96,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
-  private InspectionTreeState myTreeState;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
@@ -108,10 +106,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   @NotNull
   private ContentManager getContentManager() {
     return myContentManager.getValue();
-  }
-
-  public void setTreeState(InspectionTreeState treeState) {
-    myTreeState = treeState;
   }
 
   public void addView(@NotNull InspectionResultsView view,
@@ -133,9 +127,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     myView = view;
     if (!isOffline) {
       myView.setUpdating(true);
-    }
-    if (myTreeState != null) {
-      myView.getTree().setTreeState(myTreeState);
     }
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
     myContent.setHelpId(InspectionResultsView.HELP_ID);
@@ -387,7 +378,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     LOG.info("Code inspection finished. Took " + elapsed + "ms");
     if (getProject().isDisposed()) return;
 
-    InspectionResultsView newView = myView == null ? new InspectionResultsView(this, createContentProvider()) : null;
+    InspectionResultsView newView = myView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
     if (!(myView == null ? newView : myView).hasProblems()) {
       NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
                                                                       scope.getFileCount(),
@@ -770,7 +761,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       if (getCurrentScope() == null) return;
       InspectionResultsView view = getView();
       if (view == null) {
-        view = new InspectionResultsView(this, createContentProvider());
+        view = new InspectionResultsView(this, new InspectionRVContentProviderImpl());
         addView(view);
       }
     }, x -> getCurrentScope() == null);
@@ -913,7 +904,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public void refreshViews() {
     if (myView != null) {
-      myView.getTree().queueUpdate();
+      myView.getTree().getInspectionTreeModel().reload();
     }
   }
 
@@ -1092,15 +1083,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return myViewClosed;
   }
 
-  private InspectionRVContentProvider createContentProvider() {
-    return new InspectionRVContentProviderImpl(getProject());
-  }
-
   private void addProblemsToView(List<Tools> tools) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !CREATE_VIEW_FORCE) {
       return;
     }
-    if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(tools, this, createContentProvider())).booleanValue()) {
+    if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(tools, this, new InspectionRVContentProviderImpl())).booleanValue()) {
       return;
     }
     initializeViewIfNeed().doWhenDone(() -> myView.addTools(tools));

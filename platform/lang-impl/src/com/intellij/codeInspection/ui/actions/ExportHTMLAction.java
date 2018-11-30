@@ -31,7 +31,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -120,7 +119,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       if (!outputDir.exists() && !outputDir.mkdirs()) {
         throw new IOException("Cannot create \'" + outputDir + "\'");
       }
-      final InspectionTreeNode root = myView.getTree().getRoot();
+      final InspectionTreeModel model = myView.getTree().getInspectionTreeModel();
       final Exception[] ex = new Exception[1];
 
       final Set<String> visitedTools = new THashSet<>();
@@ -128,7 +127,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       Format format = JDOMUtil.createFormat("\n");
       XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
 
-      TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
+      model.traverse(model.getRoot(), node -> {
         if (node instanceof InspectionNode) {
           InspectionNode toolNode = (InspectionNode)node;
           if (toolNode.isExcluded()) return true;

@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -35,15 +36,17 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   public ProblemDescriptionNode(RefEntity element,
                                 @NotNull CommonProblemDescriptor descriptor,
-                                @NotNull InspectionToolPresentation presentation) {
-    this(element, descriptor, presentation, null);
+                                @NotNull InspectionToolPresentation presentation,
+                                @NotNull InspectionTreeModel model) {
+    this(element, descriptor, presentation, null, model);
   }
 
   protected ProblemDescriptionNode(@Nullable RefEntity element,
                                    CommonProblemDescriptor descriptor,
                                    @NotNull InspectionToolPresentation presentation,
-                                   @Nullable IntSupplier lineNumberCounter) {
-    super(descriptor, presentation);
+                                   @Nullable IntSupplier lineNumberCounter,
+                                   @NotNull InspectionTreeModel model) {
+    super(presentation, model);
     myElement = element;
     myDescriptor = descriptor;
     myLevel = ObjectUtils.notNull(calculatePreciseLevel(element, descriptor, presentation), () -> {
@@ -111,7 +114,6 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return myElement;
   }
 
-  @Override
   @Nullable
   public CommonProblemDescriptor getDescriptor() {
     return myDescriptor;
@@ -179,5 +181,18 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   public String getTailText() {
     final String text = super.getTailText();
     return text == null ? "" : text;
+  }
+
+  @NotNull
+  @Override
+  public Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
+    RefEntity refElement = getElement();
+    CommonProblemDescriptor descriptor = getDescriptor();
+    PsiElement element = descriptor instanceof ProblemDescriptor
+                         ? ((ProblemDescriptor)descriptor).getPsiElement()
+                         : refElement instanceof RefElement
+                           ? ((RefElement)refElement).getPsiElement()
+                           : null;
+    return Pair.create(element, descriptor);
   }
 }

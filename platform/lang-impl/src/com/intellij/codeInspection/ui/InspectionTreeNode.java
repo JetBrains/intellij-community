@@ -5,27 +5,23 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.WeakInterner;
-import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Enumeration;
+import java.util.*;
 
 /**
  * @author max
  */
-public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
+public abstract class InspectionTreeNode implements TreeNode {
+  static final InspectionTreeNode[] EMPTY_ARRAY = new InspectionTreeNode[0];
   private static final WeakInterner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
     @Override
     public int computeHashCode(LevelAndCount[] object) {
@@ -55,10 +51,11 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
     }
   };
-  protected volatile InspectionTreeUpdater myUpdater;
+  @NotNull
+  private final InspectionTreeModel myModel;
 
-  protected InspectionTreeNode(Object userObject) {
-    super(userObject);
+  protected InspectionTreeNode(@NotNull InspectionTreeModel model) {
+    myModel = model;
   }
 
   protected boolean doesNeedInternProblemLevels() {
@@ -82,7 +79,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     InspectionTreeNode current = this;
     while (current != null) {
       current.myProblemLevels.drop();
-      current = (InspectionTreeNode)current.getParent();
+      current = current.getParent();
     }
   }
 
@@ -91,9 +88,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
-    Enumeration enumeration = children();
-    while (enumeration.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+    for (InspectionTreeNode child : getChildren()) {
       for (LevelAndCount levelAndCount : child.getProblemLevels()) {
         if (!counter.adjustValue(levelAndCount.getLevel(), levelAndCount.getCount())) {
           counter.put(levelAndCount.getLevel(), levelAndCount.getCount());
@@ -102,29 +97,19 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   }
 
-  public int getProblemCount(boolean allowSuppressed) {
-    int sum = 0;
-    Enumeration enumeration = children();
-    while (enumeration.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      sum += child.getProblemCount(allowSuppressed);
-    }
-    return sum;
-  }
-
   public boolean isValid() {
     return true;
   }
 
   public boolean isExcluded() {
-    Enumeration enumeration = children();
-    while (enumeration.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+    List<? extends InspectionTreeNode> children = getChildren();
+    for (InspectionTreeNode child : children) {
       if (!child.isExcluded()) {
         return false;
       }
     }
-    return getChildCount() != 0;
+
+    return !children.isEmpty() ;
   }
 
   public boolean appearsBold() {
@@ -137,85 +122,27 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   public void excludeElement() {
-    Enumeration enumeration = children();
-    while (enumeration.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+    for (InspectionTreeNode child : getChildren()) {
       child.excludeElement();
     }
     dropProblemCountCaches();
   }
 
   public void amnestyElement() {
-    Enumeration enumeration = children();
-    while (enumeration.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+    for (InspectionTreeNode child : getChildren()) {
       child.amnestyElement();
     }
     dropProblemCountCaches();
   }
 
-  public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
-    return ReadAction.compute(() -> {
-      if (!allowDuplication) {
-        int index = getIndex(child);
-        if (index != -1) {
-          return (InspectionTreeNode)getChildAt(index);
-        }
-      }
-      int index = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
-      if (!allowDuplication && index >= 0) {
-        return (InspectionTreeNode)getChildAt(index);
-      }
-      insert(child, Math.abs(index + 1));
-      return child;
-    });
-  }
-
-  @Override
-  public void add(MutableTreeNode newChild) {
-    super.add(newChild);
-    if (myUpdater != null) {
-      ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      dropProblemCountCaches();
-      myUpdater.updateWithPreviewPanel();
-    }
-  }
-
-  @Override
-  public void insert(MutableTreeNode newChild, int childIndex) {
-    super.insert(newChild, childIndex);
-    if (myUpdater != null) {
-      ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      dropProblemCountCaches();
-      myUpdater.updateWithPreviewPanel();
-    }
-  }
-
-  @Override
   public void remove(int childIndex) {
-    super.remove(childIndex);
+    myModel.removeChild(this, childIndex);
     dropProblemCountCaches();
   }
 
-  protected void nodeAddedToTree() {
-  }
-
-  private void propagateUpdater(InspectionTreeUpdater updater) {
-    if (myUpdater != null) return;
-    myUpdater = updater;
-    Enumeration enumeration = children();
-    while (enumeration.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.propagateUpdater(updater);
-      child.nodeAddedToTree();
-    }
-  }
-
   public RefEntity getContainingFileLocalEntity() {
-    final Enumeration children = children();
     RefEntity current = null;
-    while (children.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
+    for (InspectionTreeNode child : getChildren()) {
       final RefEntity entity = child.getContainingFileLocalEntity();
       if (entity == null || current != null) {
         return null;
@@ -226,12 +153,53 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   @Override
-  public synchronized TreeNode getParent() {
-    return super.getParent();
+  public boolean isLeaf() {
+    return getChildren().isEmpty();
+  }
+
+  public abstract String getPresentableText();
+
+  @NotNull
+  public List<? extends InspectionTreeNode> getChildren() {
+    return ObjectUtils.notNull(myModel.getChildren(this), Collections.emptyList());
   }
 
   @Override
-  public synchronized void setParent(MutableTreeNode newParent) {
-    super.setParent(newParent);
+  public InspectionTreeNode getParent() {
+    return myModel.getParent(this);
+  }
+
+  @Override
+  public int getChildCount() {
+    return getChildren().size();
+  }
+
+  @Override
+  public InspectionTreeNode getChildAt(int idx) {
+    return getChildren().get(idx);
+  }
+
+  public void removeAllChildren() {
+    myModel.removeChildren(this);
+  }
+
+  @Override
+  public int getIndex(TreeNode node) {
+    return myModel.getIndexOfChild(this, node);
+  }
+
+  @Override
+  public boolean getAllowsChildren() {
+    return true;
+  }
+
+  @Override
+  public Enumeration children() {
+    return Collections.enumeration(getChildren());
+  }
+
+  @Override
+  public String toString() {
+    return getPresentableText();
   }
 }

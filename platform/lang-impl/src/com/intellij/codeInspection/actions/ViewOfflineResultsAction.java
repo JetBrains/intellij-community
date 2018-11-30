@@ -199,7 +199,7 @@ public class ViewOfflineResultsAction extends AnAction {
     context.setCurrentScope(scope);
     context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     final InspectionResultsView view = new InspectionResultsView(context,
-                                                                 new OfflineInspectionRVContentProvider(resMap, project));
+                                                                 new OfflineInspectionRVContentProvider(resMap));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
     context.addView(view, title, true);
     view.update();

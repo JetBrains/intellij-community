@@ -55,7 +55,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
                                     boolean hasFocus) {
     InspectionTreeNode node = (InspectionTreeNode)value;
 
-    append(node.toString(),
+    append(node.getPresentableText(),
            patchMainTextAttrs(node, node.appearsBold()
                                     ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
                                     : getMainForegroundAttributes(node)));
