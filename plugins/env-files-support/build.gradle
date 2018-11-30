@@ -5,7 +5,18 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.3.0"
+    id "org.jetbrains.intellij" version "0.3.11"
+}
+
+sourceSets {
+    main {
+        java.srcDirs 'src/main/java', 'src/main/gen'
+        resources.srcDirs 'src/main/resources'
+    }
+    test {
+        java.srcDirs 'src/test/java'
+        //resources.srcDirs 'src/test/resources'
+    }
 }
 
 apply plugin: 'idea'
@@ -13,15 +24,15 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 
 intellij {
-    version 'IU-182.4129.33' //IntelliJ IDEA 2016.3 dependency; for a full list of IntelliJ IDEA releases please see https://www.jetbrains.com/intellij-repository/releases
+    version 'IU-182.4129.33'
     plugins = [
             'com.jetbrains.php:182.3208.33',
-            'com.intellij.modules.ruby:2018.2.20180810',
             'JavaScriptLanguage',
             'yaml',
             'org.jetbrains.plugins.go:182.4129.55.890',
             'Docker:182.3684.90',
             'pythonid:2018.2.182.4129.33',
+            'org.jetbrains.plugins.ruby:2018.2.20180716',
     ]
     pluginName '.env files support'
 }
