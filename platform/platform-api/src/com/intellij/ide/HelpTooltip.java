@@ -61,10 +61,10 @@ import java.util.Map;
  * </p>
  *
  * <h2>Restrictions and field formats</h2>
- * <p>If you’re creating a tooltip with a shortcut then title is mandatory otherwise title, description, link are optional.
+ * <p>If you're creating a tooltip with a shortcut then title is mandatory otherwise title, description, link are optional.
  * You can optionally set the tooltip relative location using {@link HelpTooltip#setLocation(Alignment)}.
- * The <code>Alignment</code> enum defines fixed relative locations according to the design document (see the link below).
- * More types of relative location will be added as needed but there won’t be a way to choose the location on pixel basis.</p>
+ * The {@code Alignment} enum defines fixed relative locations according to the design document (see the link below).
+ * More types of relative location will be added as needed but there won't be a way to choose the location on pixel basis.</p>
  *
  * <p>No HTML tagging is allowed in title or shortcut, they are supposed to be simple text strings.</p>
  * <p>Description is can be html formatted. You can use all possible html tagging in description just without enclosing
@@ -75,7 +75,7 @@ import java.util.Map;
  * <h2>Timeouts</h2>
  *
  * <p>Single line tooltips autoclose in 10 seconds, multiline in 30 seconds. You can optionally disable autoclosing by
- * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to <code>true</code>. By default tooltips don’t close after a timeout on help buttons
+ * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to {@code true}. By default tooltips don't close after a timeout on help buttons
  * (those having a round icon with question mark). Before setting this option to true you should contact designers first.</p>
  *
  * <p>System wide tooltip timeouts are set through the registry:
@@ -86,18 +86,18 @@ import java.util.Map;
  *
  * <h2>Avoiding multiple popups</h2>
  * <p>Some actions may open a popup menu. Current design is that the action's popup menu should take over the help tooltip.
- * This is partly implemented in <code>AbstractPopup</code> class to track such cases. But this doesn’t always work.
- * If help tooltip shows up over the component’s popup menu you should make sure you set the master popup for the help tooltip.
+ * This is partly implemented in {@code AbstractPopup} class to track such cases. But this doesn't always work.
+ * If help tooltip shows up over the component's popup menu you should make sure you set the master popup for the help tooltip.
  * This will prevent help tooltip from showing when the popup menu is opened. The best way to do it is to take source component
- * from an <code>InputEvent</code> and pass the source component along with the popup menu reference to
+ * from an {@code InputEvent} and pass the source component along with the popup menu reference to
  * {@link HelpTooltip#setMasterPopup(Component, JBPopup)} static method.
  *
- * <p>If you’re handling <code>DumbAware.actionPerformed(AnActionEvent e)</code>, it has <code>InputEvent</code>in <code>AnActionEvent</code> which you can use to get the source.</p>
+ * <p>If you're handling {@code DumbAware.actionPerformed(AnActionEvent e)}, it has {@code InputEvent}in {@code AnActionEvent} which you can use to get the source.</p>
  *
  * <h2>ContextHelpLabel</h2>
- * <p>ContextHelpLabel is a convenient <code>JLabel</code> which contains a help icon and has a HelpTooltip installed on it.
+ * <p>ContextHelpLabel is a convenient {@code JLabel} which contains a help icon and has a HelpTooltip installed on it.
  * You can create it using one of its static methods and pass title/description/link. This label can also be used in forms.
- * The UI designer will offer to create <code>private void createUIComponents()</code> method where you can create the label with a static method.</p>
+ * The UI designer will offer to create {@code private void createUIComponents()} method where you can create the label with a static method.</p>
  */
 
 public class HelpTooltip {
@@ -161,7 +161,7 @@ public class HelpTooltip {
    * the text is automatically stripped to the word boundary and dots are added to the end.
    *
    * @param title text for title.
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setTitle(String title) {
     this.title = title;
@@ -172,7 +172,7 @@ public class HelpTooltip {
    * Sets text for the shortcut placeholder.
    *
    * @param shortcut text for shortcut.
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setShortcut(String shortcut) {
     this.shortcut = shortcut;
@@ -183,7 +183,7 @@ public class HelpTooltip {
    * Sets description text.
    *
    * @param description text for description.
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setDescription(String description) {
     this.description = description;
@@ -195,10 +195,10 @@ public class HelpTooltip {
    *
    * @param linkText text to show in the link.
    * @param linkAction action to execute when link is clicked.
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setLink(String linkText, Runnable linkAction) {
-    this.link = LinkLabel.create(linkText, () -> {
+    link = LinkLabel.create(linkText, () -> {
       hidePopup(true);
       linkAction.run();
     });
@@ -208,8 +208,8 @@ public class HelpTooltip {
   /**
    * Toggles whether to hide tooltip automatically on timeout. For default behaviour just don't call this method.
    *
-   * @param neverHide <code>true</code> don't hide, <code>false</code> otherwise.
-   * @return <code>this</code>
+   * @param neverHide {@code true} don't hide, {@code false} otherwise.
+   * @return {@code this}
    */
   public HelpTooltip setNeverHideOnTimeout(boolean neverHide) {
     this.neverHide = neverHide;
@@ -220,7 +220,7 @@ public class HelpTooltip {
    * Sets location of the tooltip relatively to the owner component.
    *
    * @param alignment is relative location
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setLocation(Alignment alignment) {
     this.alignment = alignment;
@@ -321,10 +321,10 @@ public class HelpTooltip {
 
   /**
    * Hides and disposes the tooltip possibly installed on the mentioned component. Disposing means
-   * unregistering all <code>HelpTooltip</code> specific listeners installed on the component.
+   * unregistering all {@code HelpTooltip} specific listeners installed on the component.
    * If there is no tooltip installed on the component nothing happens.
    *
-   * @param owner a possible <code>HelpTooltip</code> owner.
+   * @param owner a possible {@code HelpTooltip} owner.
    */
   public static void dispose(@NotNull Component owner) {
     if (owner instanceof JComponent) {
@@ -345,7 +345,7 @@ public class HelpTooltip {
    * Listeners are not removed.
    * If there is no tooltip installed on the component nothing happens.
    *
-   * @param owner a possible <code>HelpTooltip</code> owner.
+   * @param owner a possible {@code HelpTooltip} owner.
    */
   public static void hide(@NotNull Component owner) {
     if (owner instanceof JComponent) {
@@ -357,7 +357,7 @@ public class HelpTooltip {
   }
 
   /**
-   * Sets master popup for the current <code>HelpTooltip</code>. Master popup takes over the help tooltip,
+   * Sets master popup for the current {@code HelpTooltip}. Master popup takes over the help tooltip,
    * so when the master popup is about to be shown help tooltip hides.
    *
    * @param owner possible owner
@@ -454,7 +454,7 @@ public class HelpTooltip {
       titleWidth += StringUtil.isNotEmpty(shortcut) ? HGAP.get() + UIUtilities.stringWidth(this, fm, shortcut) : 0;
 
       boolean limitWidth = StringUtil.isNotEmpty(description) || link != null;
-      isMultiline = limitWidth && (titleWidth > MAX_WIDTH.get());
+      isMultiline = limitWidth && titleWidth > MAX_WIDTH.get();
       setPreferredSize(isMultiline ? new Dimension(MAX_WIDTH.get(), tfm.getHeight() * 2) : new Dimension(titleWidth, fm.getHeight()));
     }
 
