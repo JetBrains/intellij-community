@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -258,6 +259,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     Dimension referenceSize = null;
 
+    Container container = myToolWindow.getComponent();
+    boolean wasFocused = UIUtil.isFocusAncestor(container);
+
     if (myStructureView != null) {
       if (myStructureView instanceof StructureView.Scrollable) {
         referenceSize = ((StructureView.Scrollable)myStructureView).getCurrentSize();
@@ -358,6 +362,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       Runnable selection = myPendingSelection;
       myPendingSelection = null;
       selection.run();
+    }
+
+    if (wasFocused) {
+      FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+      Component component = policy == null ? null : policy.getDefaultComponent(container);
+      if (component != null) IdeFocusManager.getInstance(myProject).requestFocusInProject(component, myProject);
     }
   }
 
