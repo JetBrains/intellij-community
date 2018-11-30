@@ -20,7 +20,9 @@ import org.jdom.output.Format
 import java.io.IOException
 import java.io.StringWriter
 import java.io.Writer
+import java.util.*
 import javax.xml.transform.Result
+import kotlin.collections.HashSet
 
 private val DEFAULT_FORMAT = JDOMUtil.createFormat("\n")
 
@@ -50,6 +52,8 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     fun escapeElementEntities(str: String?): String {
       return JDOMUtil.escapeText(str!!, false, false)
     }
+
+    private val reportedSensitiveProblems = Collections.synchronizedSet(HashSet<String>())
   }
 
   // For normal output
@@ -508,7 +512,6 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   private fun checkIsElementContainsSensitiveInformation(element: Element) {
     var name: String? = element.name
 
-    @Suppress("SpellCheckingInspection")
     if (isNameIndicatesSensitiveInformation(name!!)) {
       logSensitiveInformationError(name, "Element", element.parentElement)
     }
@@ -553,7 +556,9 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     if (storageFilePathForDebugPurposes != null) {
       message += " (file: ${storageFilePathForDebugPurposes.replace(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "~")})"
     }
-    Logger.getInstance(JbXmlOutputter::class.java).error(message)
+    if (reportedSensitiveProblems.add(message)) {
+      Logger.getInstance(JbXmlOutputter::class.java).error(message)
+    }
   }
 }
 
