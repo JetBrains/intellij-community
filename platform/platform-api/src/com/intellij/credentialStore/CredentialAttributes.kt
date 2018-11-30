@@ -11,14 +11,14 @@ import java.nio.charset.CodingErrorAction
 
 const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
 
-fun generateServiceName(subsystem: String, key: String): String = "$SERVICE_NAME_PREFIX $subsystem — $key"
+fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX $subsystem — $key"
 
 /**
  * requestor is deprecated. Never use it in new code.
  */
 data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false)
 
-fun CredentialAttributes.toPasswordStoreable(): CredentialAttributes = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
+fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
 
 // user cannot be empty, but password can be
 class Credentials(user: String?, val password: OneTimeString? = null) {
