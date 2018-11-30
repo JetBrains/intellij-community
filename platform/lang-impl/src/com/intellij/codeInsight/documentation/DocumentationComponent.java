@@ -812,7 +812,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     showHint();
 
     myText = text;
-    myDecoratedText = text;
 
     myEditorPane.setCaretPosition(caretPosition);
     myEditorPane.scrollRectToVisible(viewRect);
