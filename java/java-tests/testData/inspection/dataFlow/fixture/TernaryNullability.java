@@ -13,4 +13,8 @@ final class MyClass {
     cons(<warning descr="Argument 'f1 ? f2 ? a : b : ((Object)c)' might be null but passed to non-annotated parameter">f1 ? f2 ? a : b : ((Object)c)</warning>);
     cons(f1 ? <warning descr="Argument 'f2 ? a : b' might be null but passed to non-annotated parameter">f2 ? a : b</warning> : f2 ? <warning descr="Argument 'c' might be null but passed to non-annotated parameter">c</warning> : new Object());
   }
+  
+  @NotNull String testReturn(boolean b) {
+    return b ? "hello" : <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+  }
 }

@@ -863,14 +863,14 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
     for (NullabilityProblem<PsiExpression> problem : visitor.problems().map(NullabilityProblemKind.nullableReturn::asMyProblem).nonNull()) {
       final PsiExpression anchor = problem.getAnchor();
-      PsiExpression expr = PsiUtil.skipParenthesizedExprDown(anchor);
+      PsiExpression expr = problem.getDereferencedExpression();
 
       if (nullability == Nullability.NOT_NULL) {
         String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
         final String text = isNullLiteralExpression(expr) || visitor.getConstantExpressions().get(expr) == ConstantResult.NULL
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
-        reporter.registerProblem(anchor, text);
+        reporter.registerProblem(expr, text);
       }
       else if (AnnotationUtil.isAnnotatingApplicable(anchor)) {
         final String defaultNullable = manager.getDefaultNullable();
@@ -882,7 +882,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
           ? LocalQuickFix.EMPTY_ARRAY
           : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls()))};
-        reporter.registerProblem(anchor, text, fixes);
+        reporter.registerProblem(expr, text, fixes);
       }
     }
   }
