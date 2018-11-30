@@ -65,8 +65,11 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
       }
 
       final PsiExpression[] initializers = expression.getInitializers();
-      int initL = initializers.length;
+      if (initializers[0] instanceof PsiMethodCallExpression) {
+        return;
+      }
 
+      int initL = initializers.length;
       List<String> enumValues = Stream.of(initClass.getFields())
         .filter(ev -> ev instanceof PsiEnumConstant)
         .map(ev -> (PsiEnumConstant) ev)
