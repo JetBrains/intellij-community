@@ -37,7 +37,6 @@ import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ConvertModuleLibraryToRepositoryLibraryAction;
@@ -86,8 +85,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -366,19 +365,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
 
   private JComponent createTableWithButtons() {
-    final boolean isAnalyzeShown = false;
-
     final ClasspathPanelAction removeAction = new ClasspathPanelAction(this) {
       @Override
       public void run() {
         removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
-      }
-    };
-
-    final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, IconUtil.getAnalyzeIcon()) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        AnalyzeDependenciesDialog.show(getRootModel().getModule());
       }
     };
 
@@ -466,9 +456,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       .setMoveDownActionUpdater(moveUpDownUpdater)
       .setMoveDownActionName("Move Down (disabled if items are shown in sorted order)")
       .addExtraAction(myEditButton);
-    if (isAnalyzeShown) {
-      decorator.addExtraAction(analyzeButton);
-    }
 
     final JPanel panel = decorator.createPanel();
     myRemoveButton = ToolbarDecorator.findRemoveButton(panel);
