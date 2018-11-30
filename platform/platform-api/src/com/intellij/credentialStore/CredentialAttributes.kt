@@ -2,23 +2,19 @@
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.util.ArrayUtil
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Contract
-import java.nio.ByteBuffer
-import java.nio.CharBuffer
-import java.nio.charset.CodingErrorAction
 
 const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
 
 fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX $subsystem — $key"
 
 /**
- * requestor is deprecated. Never use it in new code.
+ * Consider using [generateServiceName] to generate [serviceName].
+ *
+ * [requestor] is deprecated (never use it in a new code).
  */
 data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false)
-
-fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
 
 // user cannot be empty, but password can be
 class Credentials(user: String?, val password: OneTimeString? = null) {
@@ -28,7 +24,7 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
 
   constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
 
-  val userName: String? = user.nullize()
+  val userName = user.nullize()
 
   fun getPasswordAsString() = password?.toString()
 
@@ -44,7 +40,7 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
 
 @Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
 /**
- * DEPRECATED. Never use it in a new code.
+ * @deprecated Never use it in a new code.
  */
 @Deprecated("Never use it in a new code.")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
@@ -71,29 +67,4 @@ fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes:
     }
   }
   return credentials
-}
-
-@Suppress("FunctionName")
-@JvmOverloads
-fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset, clearable: Boolean = false): OneTimeString {
-  if (length == 0) {
-    return OneTimeString(ArrayUtil.EMPTY_CHAR_ARRAY)
-  }
-
-  // jdk decodes to heap array, but since this code is very critical, we cannot rely on it, so, we don't use Charsets.UTF_8.decode()
-  val charsetDecoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE)
-  val charArray = CharArray((value.size * charsetDecoder.maxCharsPerByte().toDouble()).toInt())
-  charsetDecoder.reset()
-  val charBuffer = CharBuffer.wrap(charArray)
-  var cr = charsetDecoder.decode(ByteBuffer.wrap(value, offset, length), charBuffer, true)
-  if (!cr.isUnderflow) {
-    cr.throwException()
-  }
-  cr = charsetDecoder.flush(charBuffer)
-  if (!cr.isUnderflow) {
-    cr.throwException()
-  }
-
-  value.fill(0, offset, offset + length)
-  return OneTimeString(charArray, 0, charBuffer.position(), clearable = clearable)
 }

@@ -231,3 +231,5 @@ fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
   })
   return BasePasswordSafe(settings, store)
 }
+
+private fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
