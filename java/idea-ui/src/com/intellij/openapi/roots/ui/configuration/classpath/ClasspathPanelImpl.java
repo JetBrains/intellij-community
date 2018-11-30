@@ -811,9 +811,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             message += AnalysisScopeBundle.message("dependencies.in.imports.message");
           }
           message += " Would you like to remove the dependency?";
-          if (Messages.showOkCancelDialog(myProject,
-                                          message,
-                                          CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.OK) {
+          if (Messages.showOkCancelDialog(myProject, message, CommonBundle.getWarningTitle(), CommonBundle.message("button.remove"), Messages.CANCEL_BUTTON,
+                                          Messages.getWarningIcon()) == Messages.OK) {
             removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
           }
           return false;
