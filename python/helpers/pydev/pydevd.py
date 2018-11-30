@@ -1028,11 +1028,11 @@ class PyDB(object):
 
         thread_id = get_current_thread_id(thread)
         stop_reason = thread.stop_reason
+        suspend_type = thread.additional_info.trace_suspend_type
 
         if send_suspend_message:
             # Send the suspend message
             message = thread.additional_info.pydev_message
-            suspend_type = thread.additional_info.trace_suspend_type
             thread.additional_info.trace_suspend_type = 'trace'  # Reset to trace mode for next call.
             frame_to_lineno = {}
             if is_unhandled_exception:
