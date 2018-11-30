@@ -52,7 +52,7 @@ internal class GithubPullRequestDetailsPanel(private val stateService: GithubPul
   var details: GithubPullRequestDetailedWithHtml?
     by Delegates.observable<GithubPullRequestDetailedWithHtml?>(null) { _, _, newValue ->
       descriptionPanel.description = newValue?.bodyHtml
-      metaPanel.direction = newValue?.let { it.base to it.head }
+      metaPanel.direction = newValue?.let { it.head to it.base }
       metaPanel.reviewers = newValue?.requestedReviewers
       metaPanel.assignees = newValue?.assignees
       metaPanel.labels = newValue?.labels
