@@ -117,7 +117,7 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
       return String.valueOf((char)(keyCode ^ 0x01000000));
     }
 
-    return "Unknown keyCode";
+    return "Unknown keyCode: 0x" + Integer.toString(keyCode, 16);
   }
 
   private static final List<Pair<Integer, String>> ourModifiers = new ArrayList<>(6);
@@ -295,5 +295,7 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
     ourKeyCodes.put(VK_FIND, "Find");
     ourKeyCodes.put(VK_PROPS, "Props");
     ourKeyCodes.put(VK_STOP, "Stop");
+
+    ourKeyCodes.put(VK_UNDEFINED, "Undefined");
   }
 }
