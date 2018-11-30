@@ -7,6 +7,9 @@ import org.jetbrains.annotations.Contract
 
 const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
 
+/**
+ * [See documentation](https://github.com/JetBrains/intellij-community/blob/master/platform/credential-store/readme.md#service-name)
+ */
 fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX $subsystem — $key"
 
 /**
