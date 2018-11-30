@@ -1,0 +1,5 @@
+recursive-include stdlib_list/lists *.txt
+include README.rst
+include LICENSE
+include versioneer.py
+include stdlib_list/_version.py
