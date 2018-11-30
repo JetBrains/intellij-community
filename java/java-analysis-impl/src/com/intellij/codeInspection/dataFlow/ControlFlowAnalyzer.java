@@ -58,7 +58,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private FList<Trap> myTrapStack = FList.emptyList();
   private final Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> myCustomNullabilityProblems = new HashMap<>();
   private final Map<String, ExceptionTransfer> myExceptionCache;
-  private InlinedBlockContext myInlinedBlockContext;
+  private ExpressionBlockContext myExpressionBlockContext;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions, boolean inlining) {
     myInlining = inlining;
@@ -393,8 +393,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
     PsiElement exitedElement = statement.findExitedElement();
     if (exitedElement instanceof PsiSwitchExpression &&
-        myInlinedBlockContext != null && myInlinedBlockContext.myCodeBlock == ((PsiSwitchExpression)exitedElement).getBody()) {
-      myInlinedBlockContext.generateReturn(statement.getExpression(), this);
+        myExpressionBlockContext != null && myExpressionBlockContext.myCodeBlock == ((PsiSwitchExpression)exitedElement).getBody()) {
+      myExpressionBlockContext.generateReturn(statement.getExpression(), this);
     } else {
       jumpOut(exitedElement);
     }
@@ -808,9 +808,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiExpression returnValue = statement.getReturnValue();
 
-    if (myInlinedBlockContext != null) {
+    if (myExpressionBlockContext != null) {
       // We treat return inside switch expression (which is disallowed syntax) as break-with-value
-      myInlinedBlockContext.generateReturn(returnValue, this);
+      myExpressionBlockContext.generateReturn(returnValue, this);
     } else {
 
       if (returnValue != null) {
@@ -846,9 +846,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
     PsiStatement body = statement.getBody();
     PsiCodeBlock switchBody = switchBlock.getBody();
-    boolean expressionSwitch = myInlinedBlockContext != null && myInlinedBlockContext.myCodeBlock == switchBody;
+    boolean expressionSwitch = myExpressionBlockContext != null && myExpressionBlockContext.myCodeBlock == switchBody;
     if (expressionSwitch && body instanceof PsiExpressionStatement) {
-      myInlinedBlockContext.generateReturn(((PsiExpressionStatement)body).getExpression(), this);
+      myExpressionBlockContext.generateReturn(((PsiExpressionStatement)body).getExpression(), this);
     }
     if (body != null) {
       body.accept(this);
@@ -874,9 +874,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     } else {
       startElement(expression);
       DfaVariableValue resultVariable = createTempVariable(expression.getType());
-      enterInlinedBlock(body, Nullability.UNKNOWN, resultVariable);
+      enterExpressionBlock(body, Nullability.UNKNOWN, resultVariable);
       processSwitch(expression);
-      exitInlinedBlock();
+      exitExpressionBlock();
       addInstruction(new PushInstruction(resultVariable, expression));
       finishElement(expression);
     }
@@ -2030,22 +2030,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @param target a variable to store the block result (returned via {@code return} statement)
    */
   void inlineBlock(@NotNull PsiCodeBlock block, @NotNull Nullability resultNullability, @NotNull DfaVariableValue target) {
-    enterInlinedBlock(block, resultNullability, target);
+    enterExpressionBlock(block, resultNullability, target);
     block.accept(this);
-    exitInlinedBlock();
+    exitExpressionBlock();
   }
 
-  private void enterInlinedBlock(@NotNull PsiCodeBlock block, @NotNull Nullability resultNullability, @NotNull DfaVariableValue target) {
+  private void enterExpressionBlock(@NotNull PsiCodeBlock block, @NotNull Nullability resultNullability, @NotNull DfaVariableValue target) {
     // Transfer value is pushed to avoid emptying stack beyond this point
     pushTrap(new Trap.InsideInlinedBlock(block));
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
-    myInlinedBlockContext = new InlinedBlockContext(myInlinedBlockContext, block, resultNullability == Nullability.NOT_NULL, target);
+    myExpressionBlockContext =
+      new ExpressionBlockContext(myExpressionBlockContext, block, resultNullability == Nullability.NOT_NULL, target);
     startElement(block);
   }
 
-  private void exitInlinedBlock() {
-    finishElement(myInlinedBlockContext.myCodeBlock);
-    myInlinedBlockContext = myInlinedBlockContext.myPreviousBlock;
+  private void exitExpressionBlock() {
+    finishElement(myExpressionBlockContext.myCodeBlock);
+    myExpressionBlockContext = myExpressionBlockContext.myPreviousBlock;
     popTrap(Trap.InsideInlinedBlock.class);
     // Pop transfer value
     addInstruction(new PopInstruction());
@@ -2124,16 +2125,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  static class InlinedBlockContext {
-    final InlinedBlockContext myPreviousBlock;
+  static class ExpressionBlockContext {
+    final @Nullable ExpressionBlockContext myPreviousBlock;
     final @NotNull PsiCodeBlock myCodeBlock;
     final boolean myForceNonNullBlockResult;
     final @NotNull DfaVariableValue myTarget;
 
-    InlinedBlockContext(InlinedBlockContext previousBlock,
-                        @NotNull PsiCodeBlock codeBlock,
-                        boolean forceNonNullBlockResult,
-                        @NotNull DfaVariableValue target) {
+    ExpressionBlockContext(@Nullable ExpressionBlockContext previousBlock,
+                           @NotNull PsiCodeBlock codeBlock,
+                           boolean forceNonNullBlockResult,
+                           @NotNull DfaVariableValue target) {
       myPreviousBlock = previousBlock;
       myCodeBlock = codeBlock;
       myForceNonNullBlockResult = forceNonNullBlockResult;
