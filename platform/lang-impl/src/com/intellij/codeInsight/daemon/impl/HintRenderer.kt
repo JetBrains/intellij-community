@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
@@ -20,6 +21,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
+import kotlin.math.roundToInt
 
 /**
  * @author egor
@@ -49,8 +51,9 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       val gap = if (r.height < fontMetrics.lineHeight + 2) 1 else 2
       val backgroundColor = attributes.backgroundColor
       if (backgroundColor != null) {
+        val alpha = if (isInsufficientContrast(editor, inlay, attributes)) 1.0f else BACKGROUND_ALPHA
         val config = GraphicsUtil.setupAAPainting(g)
-        GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA)
+        GraphicsUtil.paintWithAlpha(g, alpha)
         g.setColor(backgroundColor)
         g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8)
         config.restore()
@@ -100,6 +103,35 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         EffectType.BOLD_DOTTED_LINE -> EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
       }
     }
+  }
+
+  private fun isInsufficientContrast(
+      editor: EditorImpl,
+      inlay: Inlay<*>,
+      attributes: TextAttributes
+  ): Boolean {
+    val iterationState = IterationState(editor, inlay.offset, inlay.offset + 1, null, false, false, false, false)
+    val backgroundUnderHint = iterationState.mergedAttributes.backgroundColor
+    if (backgroundUnderHint != null && attributes.foregroundColor != null) {
+      val backgroundBlended = srcOverBlend(attributes.backgroundColor, backgroundUnderHint, BACKGROUND_ALPHA)
+
+      val backgroundBlendedGrayed = backgroundBlended.toGray()
+      val textGrayed = attributes.foregroundColor.toGray()
+      val delta = Math.abs(backgroundBlendedGrayed - textGrayed)
+      return delta < 10
+    }
+    return false
+  }
+
+  private fun Color.toGray(): Double {
+    return (0.30 * red) + (0.59 * green) + (0.11 * blue)
+  }
+
+  private fun srcOverBlend(foreground: Color, background: Color, foregroundAlpha: Float): Color {
+    val r = foreground.red * foregroundAlpha + background.red * (1.0f - foregroundAlpha)
+    val g = foreground.green * foregroundAlpha + background.green * (1.0f - foregroundAlpha)
+    val b = foreground.blue * foregroundAlpha + background.blue * (1.0f - foregroundAlpha)
+    return Color(r.roundToInt(), g.roundToInt(), b.roundToInt())
   }
 
   private fun calcWidthAdjustment(editor: Editor, fontMetrics: FontMetrics) : Int {
