@@ -79,5 +79,21 @@ no instance(s) of type variable(s) exist so that Integer conforms to String">() 
         };
       }
     };
+
+    String s3 = switch (0) {
+      default: {
+        break switch (1) {
+          case 2: {
+            System.out.println();
+            int inside_switch = switch (8) {
+              default:
+                break 1;
+            };
+          }
+          default:
+            break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+        };
+      }
+    };
   }
 }

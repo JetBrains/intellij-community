@@ -366,6 +366,9 @@ public final class PsiUtil extends PsiUtilCore {
         else if (statement instanceof PsiBlockStatement) {
            collectSwitchResultExpressions(result, (PsiBlockStatement)statement);
         }
+        else if (statement instanceof PsiBreakStatement) {
+          ContainerUtil.addIfNotNull(result, ((PsiBreakStatement)statement).getExpression());
+        }
       }
       return result;
     }
