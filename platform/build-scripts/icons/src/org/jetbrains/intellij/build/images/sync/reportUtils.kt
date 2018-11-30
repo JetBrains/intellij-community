@@ -45,7 +45,7 @@ internal fun report(context: Context, skipped: Int): String {
 internal fun findCommitsToSync(context: Context) {
   // TODO: refactor it
   fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
-  if ((context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) && context.devSyncRequired()) {
+  if ((context.doSyncDevRepo) && context.devSyncRequired()) {
     context.iconsCommitsToSync = findCommitsByRepo(context, UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.byDesigners) {
       context.devIcons[it] ?: {
         val change = context.devRepoRoot.resolve(it)
@@ -53,7 +53,7 @@ internal fun findCommitsToSync(context: Context) {
       }()
     }
   }
-  if ((context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) && context.iconsSyncRequired()) {
+  if ((context.doSyncIconsRepo) && context.iconsSyncRequired()) {
     context.devCommitsToSync = findCommitsByRepo(context, UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.byDev) {
       context.icons[it] ?: guessGitObject(context.iconsRepo, context.iconsRepoDir.resolve(it))
     }
@@ -80,7 +80,7 @@ private fun withTmpBranch(repos: Collection<File>, action: (String) -> Review?):
 }
 
 private fun createReviewForDev(context: Context, user: String, email: String): Review? {
-  if (!context.doSyncDevIconsAndCreateReview || context.iconsCommitsToSync.isEmpty()) return null
+  if (context.iconsCommitsToSync.isEmpty()) return null
   val repos = context.iconsChanges().map {
     changesToReposMap(context.devRepoRoot.resolve(it))
   }.distinct()
@@ -126,7 +126,7 @@ private fun postVerificationResultToReview(review: Review) {
 }
 
 private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
-  if (!context.doSyncIconsAndCreateReview || context.devCommitsToSync.isEmpty()) return emptyList()
+  if (context.devCommitsToSync.isEmpty()) return emptyList()
   val repos = listOf(context.iconsRepo)
   return context.devCommitsToSync.values.flatten()
     .groupBy(CommitInfo::committerEmail)

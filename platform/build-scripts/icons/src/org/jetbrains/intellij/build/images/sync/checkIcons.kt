@@ -34,12 +34,8 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   context.devIcons = readDevRepo(context, devRepoVcsRoots)
   callWithTimer("Searching for changed icons..") {
     when {
-      (context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) && context.iconsCommitHashesToSync.isNotEmpty() -> {
-        searchForChangedIconsByDesigners(context)
-      }
-      (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) && context.devIconsCommitHashesToSync.isNotEmpty() -> {
-        searchForChangedIconsByDev(context, devRepoVcsRoots)
-      }
+      context.iconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDesigners(context)
+      context.devIconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDev(context, devRepoVcsRoots)
       else -> searchForAllChangedIcons(context, devRepoVcsRoots)
     }
   }

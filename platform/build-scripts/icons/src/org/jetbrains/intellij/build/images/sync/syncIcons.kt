@@ -4,14 +4,14 @@ package org.jetbrains.intellij.build.images.sync
 import java.io.File
 
 internal fun syncIconsRepo(context: Context) {
-  if (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) {
+  if (context.doSyncIconsRepo) {
     log("Syncing ${context.iconsRepoName}:")
     syncIconsRepo(context, context.byDev)
   }
 }
 
 internal fun syncDevRepo(context: Context) {
-  if (context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) {
+  if (context.doSyncDevRepo) {
     log("Syncing ${context.devRepoName}:")
     syncAdded(context.byDesigners.added, context.icons, context.devRepoDir) { changesToReposMap(it) }
     syncModified(context.byDesigners.modified, context.devIcons, context.icons)
