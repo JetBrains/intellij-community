@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.enhancedSwitch;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -33,33 +30,41 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
       public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
         super.visitSwitchLabeledRuleStatement(statement);
 
-        PsiStatement bodyStatement = unwrapSingleStatementCodeBlock(statement.getBody());
-        if (bodyStatement instanceof PsiBreakStatement) {
-          if (((PsiBreakStatement)bodyStatement).getValueExpression() != null) {
-            registerProblem(statement);
+        PsiStatement body = statement.getBody();
+        if (body instanceof PsiBlockStatement) {
+          PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
+          PsiStatement bodyStatement = unwrapSingleStatementCodeBlock(codeBlock);
+
+          if (bodyStatement instanceof PsiBreakStatement) {
+            PsiBreakStatement breakStatement = (PsiBreakStatement)bodyStatement;
+            if (breakStatement.getValueExpression() != null) {
+              PsiKeyword breakKeyword = ObjectUtils.tryCast(breakStatement.getFirstChild(), PsiKeyword.class);
+              registerProblem(breakKeyword);
+            }
           }
-        }
-        else if (bodyStatement instanceof PsiThrowStatement || bodyStatement instanceof PsiExpressionStatement) {
-          registerProblem(statement);
+          else if (bodyStatement instanceof PsiThrowStatement || bodyStatement instanceof PsiExpressionStatement) {
+            registerProblem(codeBlock.getLBrace());
+            if (isOnTheFly) registerProblem(codeBlock.getRBrace());
+          }
         }
       }
 
-      public void registerProblem(PsiSwitchLabeledRuleStatement statement) {
-        holder.registerProblem(ObjectUtils.notNull(ObjectUtils.tryCast(statement.getFirstChild(), PsiKeyword.class), statement),
-                               message("inspection.labeled.switch.rule.redundant.code.block.message"),
-                               new UnwrapCodeBlockFix());
+      private void registerProblem(@Nullable PsiElement element) {
+        if (element != null) {
+          holder.registerProblem(element,
+                                 message("inspection.labeled.switch.rule.redundant.code.block.message"),
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                 new UnwrapCodeBlockFix());
+        }
       }
     };
   }
 
   @Nullable
-  private static PsiStatement unwrapSingleStatementCodeBlock(@Nullable PsiStatement statement) {
-    if (statement instanceof PsiBlockStatement) {
-      PsiCodeBlock block = ((PsiBlockStatement)statement).getCodeBlock();
-      PsiStatement firstStatement = PsiTreeUtil.getNextSiblingOfType(block.getLBrace(), PsiStatement.class);
-      if (firstStatement != null && PsiTreeUtil.getNextSiblingOfType(firstStatement, PsiStatement.class) == null) {
-        return firstStatement;
-      }
+  private static PsiStatement unwrapSingleStatementCodeBlock(PsiCodeBlock block) {
+    PsiStatement firstStatement = PsiTreeUtil.getNextSiblingOfType(block.getLBrace(), PsiStatement.class);
+    if (firstStatement != null && PsiTreeUtil.getNextSiblingOfType(firstStatement, PsiStatement.class) == null) {
+      return firstStatement;
     }
     return null;
   }
@@ -74,14 +79,9 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
-      if (element instanceof PsiKeyword) {
-        element = element.getParent();
-      }
-      if (element instanceof PsiSwitchLabeledRuleStatement) {
-        PsiStatement body = ((PsiSwitchLabeledRuleStatement)element).getBody();
-
-        PsiStatement bodyStatement = unwrapSingleStatementCodeBlock(body);
+      PsiBlockStatement body = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiBlockStatement.class);
+      if (body != null && body.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+        PsiStatement bodyStatement = unwrapSingleStatementCodeBlock(body.getCodeBlock());
         if (bodyStatement instanceof PsiBreakStatement) {
           unwrapBreakValue(body, (PsiBreakStatement)bodyStatement);
         }
@@ -95,14 +95,12 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
       PsiExpression valueExpression = breakStatement.getValueExpression();
       if (valueExpression != null) {
         CommentTracker tracker = new CommentTracker();
-        tracker.markUnchanged(valueExpression);
-        tracker.replaceAndRestoreComments(body, valueExpression.getText() + ';');
+        tracker.replaceAndRestoreComments(body, tracker.text(valueExpression) + ';');
       }
     }
 
     private static void unwrap(PsiStatement body, PsiStatement bodyStatement) {
       CommentTracker tracker = new CommentTracker();
-      tracker.markUnchanged(bodyStatement);
       tracker.replaceAndRestoreComments(body, bodyStatement);
     }
   }

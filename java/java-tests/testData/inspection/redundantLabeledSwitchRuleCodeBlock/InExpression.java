@@ -2,10 +2,10 @@ class C {
     String foo(int n) {
         return switch (n) {
             case 1 -> Integer.toString(n);
-            <warning descr="Labeled rule's code block is redundant">case</warning> 2 -> { break Integer.toString(n); }
+            case 2 -> { <warning descr="Labeled rule's code block is redundant">break</warning> Integer.toString(n); }
             case 3 -> throw new RuntimeException();
-            <warning descr="Labeled rule's code block is redundant">case</warning> 4 -> { throw new RuntimeException(); }
-            <warning descr="Labeled rule's code block is redundant">case</warning> 5 -> { break "a";}
+            case 4 -> <warning descr="Labeled rule's code block is redundant">{</warning> throw new RuntimeException(); <warning descr="Labeled rule's code block is redundant">}</warning>
+            case 5 -> { <warning descr="Labeled rule's code block is redundant">break</warning> "a";}
             default -> "b";
         };
     }
