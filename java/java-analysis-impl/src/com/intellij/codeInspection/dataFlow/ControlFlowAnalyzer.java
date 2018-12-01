@@ -883,29 +883,38 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void processSwitch(@NotNull PsiSwitchBlock switchBlock) {
-    PsiExpression caseExpression = switchBlock.getExpression();
+    PsiExpression selector = PsiUtil.skipParenthesizedExprDown(switchBlock.getExpression());
     Set<PsiEnumConstant> enumValues = null;
     DfaVariableValue expressionValue = null;
-    if (caseExpression != null) {
-      PsiType targetType = caseExpression.getType();
+    boolean syntheticVar = true;
+    if (selector != null) {
+      PsiType targetType = selector.getType();
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(targetType);
       if (unboxedType != null) {
         targetType = unboxedType;
+      } else {
+        DfaValue selectorValue = myFactory.createValue(selector);
+        if (selectorValue instanceof DfaVariableValue && !((DfaVariableValue)selectorValue).isFlushableByCalls()) {
+          expressionValue = (DfaVariableValue)selectorValue;
+          syntheticVar = false;
+        }
       }
-      expressionValue = getFactory().getVarFactory().createVariableValue(new DfaVariableSource() {
-        @Override
-        public boolean isStable() {
-          return true;
-        }
+      if (syntheticVar) {
+        expressionValue = getFactory().getVarFactory().createVariableValue(new DfaVariableSource() {
+          @Override
+          public boolean isStable() {
+            return true;
+          }
 
-        @Override
-        public String toString() {
-          return "switch$var";
-        }
-      }, targetType);
-      addInstruction(new PushInstruction(expressionValue, null, true));
-      caseExpression.accept(this);
-      generateBoxingUnboxingInstructionFor(caseExpression, targetType);
+          @Override
+          public String toString() {
+            return "switch$var";
+          }
+        }, targetType);
+        addInstruction(new PushInstruction(expressionValue, null, true));
+      }
+      selector.accept(this);
+      generateBoxingUnboxingInstructionFor(selector, targetType);
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(targetType);
       if (psiClass != null) {
         if (psiClass.isEnum()) {
@@ -917,7 +926,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           }
         }
       }
-      addInstruction(new AssignInstruction(null, null));
+      if (syntheticVar) {
+        addInstruction(new AssignInstruction(null, null));
+      }
       addInstruction(new PopInstruction());
     }
 
@@ -973,7 +984,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       body.accept(this);
     }
 
-    if (expressionValue != null) {
+    if (syntheticVar && expressionValue != null) {
       addInstruction(new FlushVariableInstruction(expressionValue));
     }
   }
