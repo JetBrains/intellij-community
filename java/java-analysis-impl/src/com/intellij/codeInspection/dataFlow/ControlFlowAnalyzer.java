@@ -1425,7 +1425,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (TypeUtils.isJavaLangString(expression.getType()) || isAcceptableContextForMathOperation(expression)) return op;
       return null;
     }
-    if (JavaTokenType.MINUS == op && !isAcceptableContextForMathOperation(expression)) return null;
+    if ((JavaTokenType.MINUS == op || JavaTokenType.ASTERISK == op) && !isAcceptableContextForMathOperation(expression)) return null;
     return op;
   }
 
