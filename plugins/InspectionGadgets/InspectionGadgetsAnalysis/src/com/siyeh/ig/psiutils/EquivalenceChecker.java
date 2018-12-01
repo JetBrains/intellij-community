@@ -45,6 +45,8 @@ public class EquivalenceChecker {
   private static final EquivalenceChecker ourCanonicalPsiEquivalence = new EquivalenceChecker();
   private static final Comparator<PsiMember> MEMBER_COMPARATOR =
     comparing(PsiMember::getName, nullsFirst(naturalOrder())).thenComparing(PsiMember::getText);
+  private static final Comparator<PsiExpression> EXPRESSION_COMPARATOR =
+    comparing(ParenthesesUtils::stripParentheses, nullsFirst(comparing(PsiExpression::getText)));
 
   protected EquivalenceChecker() {}
 
@@ -887,11 +889,6 @@ public class EquivalenceChecker {
     return codeBlocksMatch(classInitializer1.getBody(), classInitializer2.getBody());
   }
 
-  private Match methodsMatch(PsiMethod method1, PsiMethod method2) {
-    if (!methodSignaturesMatch(method1, method2)) return EXACT_MISMATCH;
-    return codeBlocksMatch(method1.getBody(), method2.getBody());
-  }
-
   private boolean methodSignaturesMatch(PsiMethod method1, PsiMethod method2) {
     if (!method1.getName().equals(method2.getName()) || !typesAreEquivalent(method1.getReturnType(), method2.getReturnType())) {
       return false;
@@ -1054,8 +1051,8 @@ public class EquivalenceChecker {
       return EXACT_MISMATCH;
     }
     if (inAnyOrder) {
-      Arrays.sort(expressions1, comparing(expression -> ParenthesesUtils.stripParentheses(expression).getText()));
-      Arrays.sort(expressions2, comparing(expression -> ParenthesesUtils.stripParentheses(expression).getText()));
+      Arrays.sort(expressions1, EXPRESSION_COMPARATOR);
+      Arrays.sort(expressions2, EXPRESSION_COMPARATOR);
     }
 
     Match incompleteMatch = null;
