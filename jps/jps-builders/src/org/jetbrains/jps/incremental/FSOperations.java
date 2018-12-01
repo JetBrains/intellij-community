@@ -355,6 +355,14 @@ public class FSOperations {
       try {
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
       }
+      catch (AccessDeniedException e) {
+        if (!Files.isWritable(to) && toFile.setWritable(true)) {
+          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat once the file seems to be writable again
+        }
+        else {
+          throw e;
+        }
+      }
       catch (NoSuchFileException e) {
         final File parent = toFile.getParentFile();
         if (parent != null && parent.mkdirs()) {
