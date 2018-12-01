@@ -8,7 +8,7 @@ import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 
-class EmptyArgumentsMapping(method: PsiMethod) : ArgumentMapping {
+class NullArgumentMapping(method: PsiMethod) : ArgumentMapping {
 
   override val arguments: Arguments
 

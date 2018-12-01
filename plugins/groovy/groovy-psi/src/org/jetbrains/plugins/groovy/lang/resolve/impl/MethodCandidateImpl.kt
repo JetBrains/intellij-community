@@ -38,7 +38,7 @@ class MethodCandidateImpl(
           VarargArgumentMapping(method, erasureSubstitutor, arguments, context)
         }
       }
-      arguments.isEmpty() -> EmptyArgumentsMapping(method)
+      arguments.isEmpty() -> NullArgumentMapping(method)
       else -> PositionalArgumentMapping(method, erasureSubstitutor, arguments, context)
     }
   }
