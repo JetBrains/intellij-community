@@ -1,12 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
+import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.applicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
@@ -38,7 +36,16 @@ class MethodCandidateImpl(
           VarargArgumentMapping(method, erasureSubstitutor, arguments, context)
         }
       }
-      arguments.isEmpty() -> NullArgumentMapping(method)
+      arguments.isEmpty() -> {
+        val parameters = method.parameterList.parameters
+        val parameter = parameters.singleOrNull()
+        if (parameter != null && !parameter.isOptional && parameter.type is PsiClassType) {
+          NullArgumentMapping(parameter)
+        }
+        else {
+          PositionalArgumentMapping(method, erasureSubstitutor, arguments, context)
+        }
+      }
       else -> PositionalArgumentMapping(method, erasureSubstitutor, arguments, context)
     }
   }
