@@ -7,11 +7,9 @@ class BeforeDefault {
   String test(X x) {
     return switch (x) {
       case A -> "foo";
-        case B -> {
-        }
+        case B -> null;
         case C, D -> "bar";
-        case E -> {
-        }
+        case E -> null;
         case F -> "baz";
       default -> throw new AssertionError();
     };

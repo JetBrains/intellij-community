@@ -16,10 +16,16 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
@@ -28,9 +34,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -219,14 +227,11 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         CommentTracker commentTracker = new CommentTracker();
         newStatementText.append("switch(").append(commentTracker.text(switchExpression)).append("){");
         for (String missingName : myNames) {
-          if (isRuleBasedFormat) {
-            newStatementText.append("case ").append(missingName).append("-> {}");
-          } else {
-            newStatementText.append("case ").append(missingName).append(": break;");
-          }
+          newStatementText.append(String.join("", generateStatements(missingName, switchBlock, isRuleBasedFormat)));
         }
         newStatementText.append('}');
         commentTracker.replaceAndRestoreComments(switchBlock, newStatementText.toString());
+        createTemplate(switchBlock);
         return;
       }
       List<PsiEnumConstant> allEnumConstants = StreamEx.of(enumClass.getAllFields()).select(PsiEnumConstant.class).toList();
@@ -238,7 +243,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       while (bodyElement != null) {
         List<PsiEnumConstant> constants = findEnumConstants(bodyElement);
         while (nextEnumConstant != null && constants.contains(nextEnumConstant)) {
-          addSwitchLabelStatementBefore(missingEnumElements.get(0), bodyElement, isRuleBasedFormat);
+          addSwitchLabelStatementBefore(missingEnumElements.get(0), bodyElement, switchBlock, isRuleBasedFormat);
           missingEnumElements.remove(0);
           if (missingEnumElements.isEmpty()) {
             break;
@@ -247,7 +252,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         }
         if (isDefaultSwitchLabelStatement(bodyElement)) {
           for (PsiEnumConstant missingEnumElement : missingEnumElements) {
-            addSwitchLabelStatementBefore(missingEnumElement, bodyElement, isRuleBasedFormat);
+            addSwitchLabelStatementBefore(missingEnumElement, bodyElement, switchBlock, isRuleBasedFormat);
           }
           missingEnumElements.clear();
           break;
@@ -257,9 +262,51 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       if (!missingEnumElements.isEmpty()) {
         final PsiElement lastChild = body.getLastChild();
         for (PsiEnumConstant missingEnumElement : missingEnumElements) {
-          addSwitchLabelStatementBefore(missingEnumElement, lastChild, isRuleBasedFormat);
+          addSwitchLabelStatementBefore(missingEnumElement, lastChild, switchBlock, isRuleBasedFormat);
         }
       }
+      createTemplate(switchBlock);
+    }
+
+    private void createTemplate(@NotNull PsiSwitchBlock block) {
+      if (!(block instanceof PsiSwitchExpression)) return;
+      PsiFile file = block.getContainingFile();
+      Project project = block.getProject();
+      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor == null) return;
+      Document document = editor.getDocument();
+      PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+      if (topLevelFile == null || document != topLevelFile.getViewProvider().getDocument()) return;
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+      TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(block);
+      List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
+      List<PsiExpression> elementsToReplace = getElementsToReplace(labels);
+      for (PsiExpression expression : elementsToReplace) {
+        builder.replaceElement(expression, new ConstantNode(expression.getText()));
+      }
+      builder.run(editor, true);
+    }
+
+    @NotNull
+    private List<PsiExpression> getElementsToReplace(@NotNull List<PsiSwitchLabelStatementBase> labels) {
+      List<PsiExpression> elementsToReplace = new ArrayList<>();
+      for (PsiSwitchLabelStatementBase label : labels) {
+        List<PsiEnumConstant> constants = findEnumConstants(label);
+        if (constants.size() == 1 && myNames.contains(constants.get(0).getName())) {
+          if (label instanceof PsiSwitchLabeledRuleStatement) {
+            PsiStatement body = ((PsiSwitchLabeledRuleStatement)label).getBody();
+            if (body instanceof PsiExpressionStatement) {
+              ContainerUtil.addIfNotNull(elementsToReplace, ((PsiExpressionStatement)body).getExpression());
+            }
+          } else {
+            PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(label);
+            if(next instanceof PsiBreakStatement) {
+              ContainerUtil.addIfNotNull(elementsToReplace, ((PsiBreakStatement)next).getValueExpression());
+            }
+          }
+        }
+      }
+      return elementsToReplace;
     }
 
     @Override
@@ -270,8 +317,28 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       PsiSwitchBlock currentSwitch = PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(offset), PsiSwitchBlock.class);
       return currentSwitch == startSwitch;
     }
+    
+    private static List<String> generateStatements(String name, PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
+      if (switchBlock instanceof PsiSwitchExpression) {
+        String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
+        if (isRuleBasedFormat) {
+          return Collections.singletonList("case "+name+" -> " + value + ";");
+        } else {
+          return Arrays.asList("case "+name+":", "break " + value + ";");
+        }
+      } else {
+        if (isRuleBasedFormat) {
+          return Collections.singletonList("case "+name+" -> {}");
+        } else {
+          return Arrays.asList("case "+name+":", "break;");
+        }
+      }
+    }
 
-    private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement, PsiElement anchor, boolean isRuleBasedFormat) {
+    private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement,
+                                                      PsiElement anchor,
+                                                      PsiSwitchBlock switchBlock,
+                                                      boolean isRuleBasedFormat) {
       if (anchor instanceof PsiSwitchLabelStatement) {
         PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(anchor);
         while (sibling instanceof PsiSwitchLabelStatement) {
@@ -279,17 +346,12 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
           sibling = PsiTreeUtil.skipWhitespacesBackward(anchor);
         }
       }
+      PsiElement correctedAnchor = anchor;
       final PsiElement parent = anchor.getParent();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
-      if (isRuleBasedFormat) {
-        final PsiStatement caseStatement = factory.createStatementFromText("case " + missingEnumElement.getName() + "-> {}", anchor);
-        parent.addBefore(caseStatement, anchor);
-      } else {
-        final PsiStatement caseStatement = factory.createStatementFromText("case " + missingEnumElement.getName() + ":", anchor);
-        parent.addBefore(caseStatement, anchor);
-        final PsiStatement breakStatement = factory.createStatementFromText("break;", anchor);
-        parent.addBefore(breakStatement, anchor);
-      }
+      generateStatements(missingEnumElement.getName(), switchBlock, isRuleBasedFormat).stream()
+        .map(text -> factory.createStatementFromText(text, parent))
+        .forEach(statement -> parent.addBefore(statement, correctedAnchor));
     }
 
     private static PsiEnumConstant getNextEnumConstant(Map<PsiEnumConstant, PsiEnumConstant> nextEnumConstants,
