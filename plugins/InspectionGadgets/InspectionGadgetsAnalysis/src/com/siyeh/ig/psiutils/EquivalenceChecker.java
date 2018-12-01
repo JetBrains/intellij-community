@@ -1001,6 +1001,9 @@ public class EquivalenceChecker {
     final PsiExpression left2 = binaryExpression2.getLOperand();
     final PsiExpression right1 = binaryExpression1.getROperand();
     final PsiExpression right2 = binaryExpression2.getROperand();
+    if (right1 == null || right2 == null) {
+      return Match.exact(right1 == right2);
+    }
     if (!tokenType1.equals(tokenType2)) {
       // process matches like "a < b" and "b > a"
       final DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(tokenType1);
