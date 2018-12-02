@@ -158,7 +158,7 @@ public class SwitchExpressionsJava12 {
     int i = switch(x) {
       case 1, 2:
         try {
-          if (x % 2 == 1) throw new IllegalArgumentException();
+          if (x == 1) throw new IllegalArgumentException();
         }
         catch (IllegalArgumentException ex) {
           break 100;
