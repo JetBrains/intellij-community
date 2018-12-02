@@ -105,12 +105,12 @@ public class GitUtil {
    */
   @Nullable
   public static VirtualFile findGitDir(@NotNull VirtualFile rootDir) {
-    VirtualFile dotGit = rootDir.findChild(DOT_GIT);
+    VirtualFile dotGit = VfsUtil.refreshAndFindChild(rootDir, DOT_GIT);
     if (dotGit == null) {
       return null;
     }
     if (dotGit.isDirectory()) {
-      boolean headExists = dotGit.findChild(HEAD_FILE) != null;
+      boolean headExists = VfsUtil.refreshAndFindChild(dotGit, HEAD_FILE) != null;
       return headExists ? dotGit : null;
     }
 
