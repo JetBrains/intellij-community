@@ -83,8 +83,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                                  ?.filter { it.isNotBlank() }
                                  ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf<String>()
 
-    devRepoDir = ignoreCaseInDirName(System.getProperty(devRepoArg)) ?: error(devRepoArg)
-    iconsRepoDir = ignoreCaseInDirName(System.getProperty(iconsRepoArg)) ?: error(iconsRepoArg)
+    devRepoDir = System.getProperty(devRepoArg)?.let(::ignoreCaseInDirName) ?: error(devRepoArg)
+    iconsRepoDir = System.getProperty(iconsRepoArg)?.let(::ignoreCaseInDirName) ?: error(iconsRepoArg)
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
     skipDirsPattern = System.getProperty(patternArg)
