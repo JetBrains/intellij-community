@@ -1386,7 +1386,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(left, type);
     right.accept(this);
     generateBoxingUnboxingInstructionFor(right, type);
-    checkZeroDivisor();
+    Object divisorValue = ExpressionUtils.computeConstantExpression(right);
+    if (!(divisorValue instanceof Number) || (((Number)divisorValue).longValue() == 0)) {
+      checkZeroDivisor();
+    }
     addInstruction(new BinopInstruction(expression.getOperationTokenType(), expression.isPhysical() ? expression : null, type));
   }
 
