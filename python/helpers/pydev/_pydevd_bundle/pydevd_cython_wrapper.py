@@ -47,8 +47,6 @@ global_cache_frame_skips = mod.global_cache_frame_skips
 
 _set_additional_thread_info_lock = mod._set_additional_thread_info_lock
 
-_thread_ident_to_additional_info = mod._thread_ident_to_additional_info
-
 fix_top_level_trace_and_get_trace_func = mod.fix_top_level_trace_and_get_trace_func
 
 version = getattr(mod, 'version', 0)
