@@ -1989,29 +1989,30 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     if (results.isEmpty() && switchBlock instanceof PsiSwitchExpression) {
-      if (values.isEmpty()) {
-        String message = JavaErrorMessages.message("switch.expr.empty");
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(switchBlock).descriptionAndTooltip(message).create());
-      }
-      else if (!hasDefaultCase) {
+      Set<String> missingConstants = new HashSet<>();
+      boolean exhaustive = hasDefaultCase;
+      if (!exhaustive) {
         if (selectorType instanceof PsiClassType) {
           PsiClass type = ((PsiClassType)selectorType).resolve();
           if (type != null && type.isEnum()) {
-            Set<Object> constants = new HashSet<>();
             for (PsiField field : type.getFields()) {
-              if (field instanceof PsiEnumConstant) {
-                constants.add(field.getName());
+              if (field instanceof PsiEnumConstant && !values.containsKey(field.getName())) {
+                missingConstants.add(field.getName());
               }
             }
-            constants.removeAll(values.keySet());
-            hasDefaultCase = constants.isEmpty();
+            exhaustive = missingConstants.isEmpty();
           }
         }
-        if (!hasDefaultCase) {
-          PsiElement range = ObjectUtils.notNull(selectorExpression, switchBlock);
-          String message = JavaErrorMessages.message("switch.expr.incomplete");
-          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create());
+      }
+      if (!exhaustive) {
+        PsiElement range = ObjectUtils.notNull(selectorExpression, switchBlock);
+        String message = JavaErrorMessages.message(values.isEmpty() ? "switch.expr.empty" : "switch.expr.incomplete");
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
+        if (!missingConstants.isEmpty()) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddMissingEnumBranchesFix(switchBlock, missingConstants));
         }
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddSwitchDefaultFix(switchBlock));
+        results.add(info);
       }
     }
 
