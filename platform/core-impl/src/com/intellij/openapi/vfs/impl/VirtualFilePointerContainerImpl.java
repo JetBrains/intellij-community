@@ -405,8 +405,8 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
       if (!jars.contains(pointer)) toAddJars.add(pointer);
       if (!list.contains(pointer)) toAddList.add(pointer);
     });
-    (recursively ? myJarRecursiveDirectories : myJarDirectories).addAll(toAddJars);
-    myList.addAll(toAddList); // hack. jar directories need to be contained in class roots too (for externalization compatibility) but be ignored in getFiles()
+    (recursively ? myJarRecursiveDirectories : myJarDirectories).addAllAbsent(toAddJars);
+    myList.addAllAbsent(toAddList); // hack. jar directories need to be contained in class roots too (for externalization compatibility) but be ignored in getFiles()
     dropCaches();
   }
 
