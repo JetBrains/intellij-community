@@ -862,6 +862,7 @@ def test_case_20(case_setup):
 @pytest.mark.skipif(not TEST_FLASK, reason='No flask available')
 def test_case_flask(case_setup_flask):
     with case_setup_flask.test_file(EXPECTED_RETURNCODE='any') as writer:
+        writer.write_multi_threads_single_notification(True)
         writer.write_add_breakpoint_jinja2(5, None, 'hello.html')
         writer.write_add_breakpoint_jinja2(8, None, 'hello.html')
         writer.write_make_initial_run()
@@ -870,14 +871,23 @@ def test_case_flask(case_setup_flask):
         time.sleep(2)  # Give flask some time to get to startup before requesting the page
         t.start()
 
-        hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=5)
-        writer.write_get_frame(hit.thread_id, hit.frame_id)
+        dct = writer.wait_for_json_message(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION)
+        assert dct['stop_reason'] == REASON_STOP_ON_BREAKPOINT
+        writer.write_get_thread_stack(dct['thread_id'])
+        msg = writer.wait_for_get_thread_stack_message()
+        assert msg.thread.frame[0]['line'] == '5'
+        writer.write_get_frame(dct['thread_id'], msg.thread.frame[0]['id'])
         writer.wait_for_vars(['<var name="content" type="str"'])
+        writer.write_run_thread(dct['thread_id'])
 
-        writer.write_run_thread(hit.thread_id)
-
-        hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=8)
-        writer.write_run_thread(hit.thread_id)
+        dct = writer.wait_for_json_message(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION)
+        assert dct['stop_reason'] == REASON_STOP_ON_BREAKPOINT
+        writer.write_get_thread_stack(dct['thread_id'])
+        msg = writer.wait_for_get_thread_stack_message()
+        assert msg.thread.frame[0]['line'] == '8'
+        writer.write_get_frame(dct['thread_id'], msg.thread.frame[0]['id'])
+        writer.wait_for_vars(['<var name="content" type="str"'])
+        writer.write_run_thread(dct['thread_id'])
 
         for _ in xrange(10):
             if hasattr(t, 'contents'):
