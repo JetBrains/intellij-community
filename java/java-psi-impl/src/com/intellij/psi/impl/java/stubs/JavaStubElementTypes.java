@@ -151,5 +151,6 @@ public interface JavaStubElementTypes {
     }
   };
 
+  @Deprecated
   IStubFileElementType JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }

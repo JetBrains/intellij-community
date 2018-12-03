@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
@@ -49,7 +50,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   @NotNull
   @Override
   public IStubFileElementType getType() {
-    return JavaStubElementTypes.JAVA_FILE;
+    return JavaParserDefinition.JAVA_FILE;
   }
 
   @NotNull
