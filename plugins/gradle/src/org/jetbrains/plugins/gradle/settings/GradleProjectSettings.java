@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.settings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
@@ -15,11 +16,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
+ * {@link GradleProjectSettings} holds settings for the linked gradle project.
+ * These settings might have IDE project level defaults - {@link DefaultGradleProjectSettings}.
+ * Consider to use effective settings with {@link GradleSettingsService}.
+ *
+ * @see GradleSettingsService
+ * @see DefaultGradleProjectSettings
+ *
  * @author Denis Zhdanov
  */
 public class GradleProjectSettings extends ExternalProjectSettings {
@@ -36,7 +45,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @NotNull
   private ThreeState delegatedBuild = ThreeState.UNSURE;
   @Nullable
-  private GradleSystemRunningSettings.PreferredTestRunner testRunner;
+  private TestRunner testRunner;
 
   @Nullable
   public String getGradleHome() {
@@ -123,17 +132,10 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     storeProjectFilesExternally = value;
   }
 
-  @Transient
-  @NotNull
-  public ThreeState getEffectiveDelegatedBuild() {
-    if (delegatedBuild == ThreeState.UNSURE) {
-      return ThreeState.fromBoolean(GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabledByDefault());
-    }
-    return delegatedBuild;
-  }
-
   /**
-   * @return {@link ThreeState#UNSURE} means using application level configuration, see {@link GradleSystemRunningSettings#isDelegatedBuildEnabledByDefault()}
+   * Build/run mode for the gradle project.
+   * Consider to use effective settings using {@link GradleSettingsService#isDelegatedBuildEnabled(Module)}
+   * @return build/run mode, {@link ThreeState#UNSURE} means using IDE project level configuration, see {@link DefaultGradleProjectSettings#isDelegatedBuild()}
    */
   @OptionTag(value = "delegatedBuild", converter = ThreeStateConverter.class)
   @NotNull
@@ -142,33 +144,26 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   /**
-   * @param state {@link ThreeState#UNSURE} means using application level configuration, see {@link GradleSystemRunningSettings#isDelegatedBuildEnabledByDefault()}
+   * @param state {@link ThreeState#UNSURE} means using IDE project level configuration, see {@link DefaultGradleProjectSettings#isDelegatedBuild()}
    */
   public void setDelegatedBuild(@NotNull ThreeState state) {
     this.delegatedBuild = state;
   }
 
-  @Transient
-  @NotNull
-  public GradleSystemRunningSettings.PreferredTestRunner getEffectiveTestRunner() {
-    if (testRunner == null) {
-      return GradleSystemRunningSettings.getInstance().getDefaultTestRunner();
-    }
-    return testRunner;
-  }
-
   /**
-   * @return test runner option, "null" means using application level configuration, see {@link GradleSystemRunningSettings#getDefaultTestRunner()}
+   * Test runner option.
+   * Consider to use effective settings using {@link GradleSettingsService#getTestRunner(Module)}
+   * @return test runner option, "null" means using IDE project level configuration, see {@link DefaultGradleProjectSettings#getTestRunner()}
    */
   @Nullable
-  public GradleSystemRunningSettings.PreferredTestRunner getTestRunner() {
+  public TestRunner getTestRunner() {
     return testRunner;
   }
 
   /**
-   * @param testRunner null means using application level configuration, see {@link GradleSystemRunningSettings#getDefaultTestRunner()}
+   * @param testRunner null means using IDE project level configuration, see {@link DefaultGradleProjectSettings#getTestRunner()}
    */
-  public void setTestRunner(@Nullable GradleSystemRunningSettings.PreferredTestRunner testRunner) {
+  public void setTestRunner(@Nullable TestRunner testRunner) {
     this.testRunner = testRunner;
   }
 

@@ -30,13 +30,14 @@ import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
+import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.endsWithChar;
-import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.*;
+import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
 /**
  * @author Vladislav.Soroka
@@ -51,13 +52,13 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    GradleSystemRunningSettings.PreferredTestRunner testRunner = getTestRunner(self.getSourceElement());
-    return testRunner == CHOOSE_PER_TEST || testRunner == GRADLE_TEST_RUNNER;
+    TestRunner testRunner = getTestRunner(self.getSourceElement());
+    return testRunner == CHOOSE_PER_TEST || testRunner == GRADLE;
   }
 
   @Override
   public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
-    return getTestRunner(self.getSourceElement()) == GRADLE_TEST_RUNNER;
+    return getTestRunner(self.getSourceElement()) == GRADLE;
   }
 
   @Override
@@ -67,8 +68,8 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
 
     if (sourceElement.isNull()) return false;
-    GradleSystemRunningSettings.PreferredTestRunner testRunner = getTestRunner(sourceElement.get());
-    if (testRunner == PLATFORM_TEST_RUNNER) return false;
+    TestRunner testRunner = getTestRunner(sourceElement.get());
+    if (testRunner == PLATFORM) return false;
     if (configuration instanceof GradleRunConfiguration) {
       final GradleRunConfiguration gradleRunConfiguration = (GradleRunConfiguration)configuration;
       gradleRunConfiguration.setScriptDebugEnabled(false);
@@ -82,13 +83,12 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   @Override
   public boolean isConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    if (GradleSystemRunningSettings.getInstance().getDefaultTestRunner() == PLATFORM_TEST_RUNNER) return false;
     if (configuration == null) return false;
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
 
     String projectPath = configuration.getSettings().getExternalProjectPath();
-    GradleSystemRunningSettings.PreferredTestRunner testRunner = getTestRunner(context.getProject(), projectPath);
-    if (testRunner == PLATFORM_TEST_RUNNER) return false;
+    TestRunner testRunner = getTestRunner(context.getProject(), projectPath);
+    if (testRunner == PLATFORM) return false;
     return doIsConfigurationFromContext(configuration, context);
   }
 
@@ -150,19 +150,19 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     return ContainerUtil.map(tasks, task -> taskPrefix + task);
   }
 
-  private static GradleSystemRunningSettings.PreferredTestRunner getTestRunner(@NotNull Project project, @NotNull String projectPath) {
-    return GradleSystemRunningSettings.getInstance().getTestRunner(project, projectPath);
+  private static TestRunner getTestRunner(@NotNull Project project, @NotNull String projectPath) {
+    return GradleSettingsService.getInstance(project).getTestRunner(projectPath);
   }
 
-  private static GradleSystemRunningSettings.PreferredTestRunner getTestRunner(@NotNull PsiElement sourceElement) {
+  private static TestRunner getTestRunner(@NotNull PsiElement sourceElement) {
     PsiFile containingFile = sourceElement.getContainingFile();
     if (containingFile != null) {
       VirtualFile file = containingFile.getVirtualFile();
       Module module = file == null ? null : ProjectFileIndex.SERVICE.getInstance(sourceElement.getProject()).getModuleForFile(file);
       if (module != null) {
-        return GradleSystemRunningSettings.getInstance().getTestRunner(module);
+        return GradleSettingsService.getTestRunner(module);
       }
     }
-    return GradleSystemRunningSettings.getInstance().getDefaultTestRunner();
+    return PLATFORM;
   }
 }

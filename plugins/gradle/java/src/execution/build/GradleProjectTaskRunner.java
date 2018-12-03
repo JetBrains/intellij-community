@@ -47,9 +47,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -179,7 +179,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   public boolean canRun(@NotNull ProjectTask projectTask) {
     if (projectTask instanceof ModuleBuildTask) {
       Module module = ((ModuleBuildTask)projectTask).getModule();
-      if (!GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabled(module)) return false;
+      if (!GradleSettingsService.isDelegatedBuildEnabled(module)) return false;
       return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
     if (projectTask instanceof ProjectModelBuildTask) {
@@ -196,12 +196,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       if (runProfile instanceof ModuleBasedConfiguration) {
         RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
         if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule()) ||
-            !GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabled(module.getModule())) {
+            !GradleSettingsService.isDelegatedBuildEnabled(module.getModule())) {
           return false;
         }
-      }
-      else if (!GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabledByDefault()) {
-        return false;
       }
       for (GradleExecutionEnvironmentProvider environmentProvider : GradleExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
         if (environmentProvider.isApplicable(((ExecuteRunConfigurationTask)projectTask))) {

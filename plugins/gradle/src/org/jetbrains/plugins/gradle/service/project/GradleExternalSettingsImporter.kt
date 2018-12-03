@@ -16,8 +16,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ObjectUtils.consumeIfCast
 import com.intellij.util.ThreeState
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
+import org.jetbrains.plugins.gradle.settings.TestRunner.*
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
@@ -104,9 +104,9 @@ class ActionDelegateConfigImporter: ConfigurationHandler {
 
   companion object {
     private val TEST_RUNNER_MAP = mapOf(
-      "PLATFORM" to GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER,
-      "GRADLE" to GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER,
-      "CHOOSE_PER_TEST" to GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST
+      "PLATFORM" to PLATFORM,
+      "GRADLE" to GRADLE,
+      "CHOOSE_PER_TEST" to CHOOSE_PER_TEST
     )
   }
 }

@@ -45,8 +45,9 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
+import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -381,11 +382,10 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         "}")
     );
 
-    GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
-
+    GradleSettingsService settingsService = GradleSettingsService.getInstance(myProject);
     String projectPath = getCurrentExternalProjectSettings().getExternalProjectPath();
-    assertTrue(settings.isDelegatedBuildEnabled(myProject, projectPath));
-    assertEquals(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST, settings.getTestRunner(myProject, projectPath));
+    assertTrue(settingsService.isDelegatedBuildEnabled(projectPath));
+    assertEquals(TestRunner.CHOOSE_PER_TEST, settingsService.getTestRunner(projectPath));
   }
 
   @Test

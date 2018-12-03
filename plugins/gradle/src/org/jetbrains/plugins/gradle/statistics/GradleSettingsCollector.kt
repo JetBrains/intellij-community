@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getEnumUsage
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService
 
 class GradleSettingsCollector : ProjectUsagesCollector() {
   override fun getGroupId() = "statistics.build.gradle.state"
@@ -24,8 +25,10 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(getBooleanUsage("offlineWork", gradleSettings.isOfflineWork))
     usages.add(getBooleanUsage("showSelectiveImportDialogOnInitialImport", gradleSettings.showSelectiveImportDialogOnInitialImport()))
 
+    val settingsService = GradleSettingsService.getInstance(project)
     // project settings
     for (setting in gradleSettings.linkedProjectsSettings) {
+      val projectPath = setting.externalProjectPath
       usages.add(getYesNoUsage("isCompositeBuilds", setting.compositeBuild != null))
       usages.add(getEnumUsage("distributionType", setting.distributionType))
       usages.add(getEnumUsage("storeProjectFilesExternally", setting.storeProjectFilesExternally))
@@ -33,8 +36,8 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
       usages.add(getBooleanUsage("createModulePerSourceSet", setting.isResolveModulePerSourceSet))
       usages.add(UsageDescriptor("gradleJvm." + ConvertUsagesUtil.escapeDescriptorName(setting.gradleJvm ?: "empty"), 1))
       usages.add(UsageDescriptor("gradleVersion." + setting.resolveGradleVersion().version, 1))
-      usages.add(getBooleanUsage("delegateBuildRun", setting.effectiveDelegatedBuild.toBoolean()))
-      usages.add(getEnumUsage("preferredTestRunner", setting.effectiveTestRunner))
+      usages.add(getBooleanUsage("delegateBuildRun", settingsService.isDelegatedBuildEnabled(projectPath)))
+      usages.add(getEnumUsage("preferredTestRunner", settingsService.getTestRunner(projectPath)))
     }
     return usages
   }

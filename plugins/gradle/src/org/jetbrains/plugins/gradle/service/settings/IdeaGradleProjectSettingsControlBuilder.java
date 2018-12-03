@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +22,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,9 +44,10 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.settings.DefaultGradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
+import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -145,6 +149,16 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Nullable
   private JPanel myGradleJdkPanel;
+
+  /**
+   * The target {@link Project} reference of the UI control.
+   * It can be the current project of the settings UI configurable (see {@org.jetbrains.plugins.gradle.service.settings.GradleConfigurable}),
+   * or the target project from the wizard context.
+   */
+  @NotNull
+  private final Ref<Project> myProjectRef = Ref.create();
+  @NotNull
+  private final Disposable myProjectRefDisposable = () -> myProjectRef.set(null);
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
@@ -561,6 +575,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
                     GradleProjectSettings settings,
                     boolean isDefaultModuleCreation,
                     @Nullable WizardContext wizardContext) {
+    updateProjectRef(project, wizardContext);
+
     String gradleHome = settings.getGradleHome();
     if (myGradleHomePathField != null) {
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
@@ -764,20 +780,20 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       BuildRunItem[] states = StreamEx.of(ThreeState.values()).map(BuildRunItem::new).toArray(BuildRunItem[]::new);
       myDelegateBuildCombobox = new ComboBox<>(states);
       myDelegateBuildCombobox.setRenderer(new MyItemCellRenderer<>());
-      myDelegateBuildCombobox.setSelectedItem(BuildRunItem.from(myInitialSettings.getDelegatedBuild()));
+      myDelegateBuildCombobox.setSelectedItem(new BuildRunItem(myInitialSettings.getDelegatedBuild()));
 
       myDelegateBuildLabel = new JBLabel(GradleBundle.message("gradle.settings.text.delegate.buildRun"));
       myDelegatePanel.add(myDelegateBuildLabel, getLabelConstraints(labelLevel));
       myDelegatePanel.add(myDelegateBuildCombobox);
     }
     if (!dropTestRunnerCombobox) {
-      TestRunnerItem[] testRunners = StreamEx.of(GradleSystemRunningSettings.PreferredTestRunner.values())
-        .append((GradleSystemRunningSettings.PreferredTestRunner)null)
+      TestRunnerItem[] testRunners = StreamEx.of(TestRunner.values())
+        .append((TestRunner)null)
         .map(TestRunnerItem::new)
         .toArray(TestRunnerItem[]::new);
       myTestRunnerCombobox = new ComboBox<>(testRunners);
       myTestRunnerCombobox.setRenderer(new MyItemCellRenderer<>());
-      myTestRunnerCombobox.setSelectedItem(TestRunnerItem.from(myInitialSettings.getTestRunner()));
+      myTestRunnerCombobox.setSelectedItem(new TestRunnerItem(myInitialSettings.getTestRunner()));
 
       myTestRunnerLabel = new JBLabel(GradleBundle.message("gradle.settings.text.delegate.testRunner"));
       myDelegatePanel.add(myTestRunnerLabel, getLabelConstraints(labelLevel));
@@ -802,10 +818,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return;
     }
     if (myDelegateBuildCombobox != null) {
-      myDelegateBuildCombobox.setSelectedItem(BuildRunItem.from(myInitialSettings.getDelegatedBuild()));
+      myDelegateBuildCombobox.setSelectedItem(new BuildRunItem(myInitialSettings.getDelegatedBuild()));
     }
     if (myTestRunnerCombobox != null) {
-      myTestRunnerCombobox.setSelectedItem(TestRunnerItem.from(myInitialSettings.getTestRunner()));
+      myTestRunnerCombobox.setSelectedItem(new TestRunnerItem(myInitialSettings.getTestRunner()));
     }
   }
 
@@ -834,6 +850,17 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (messageType != null) {
       new DelayedBalloonInfo(messageType, myGradleHomeSettingType, BALLOON_DELAY_MILLIS).run();
     }
+  }
+
+  private void updateProjectRef(@Nullable Project project, @Nullable WizardContext wizardContext) {
+    if (wizardContext != null && wizardContext.getProject() != null) {
+      project = wizardContext.getProject();
+    }
+    if (project != null && project != myProjectRef.get()
+        && Disposer.findRegisteredObject(project, myProjectRefDisposable) == null) {
+      Disposer.register(project, myProjectRefDisposable);
+    }
+    myProjectRef.set(project);
   }
 
   private class DelayedBalloonInfo implements Runnable {
@@ -922,7 +949,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
   }
 
-  private static class BuildRunItem extends MyItem<ThreeState> {
+  private class BuildRunItem extends MyItem<ThreeState> {
 
     private BuildRunItem(@Nullable ThreeState value) {
       super(value);
@@ -936,28 +963,27 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     @Override
     protected String getComment() {
       if (value != ThreeState.UNSURE) return null;
-      return getText(ThreeState.fromBoolean(GradleSystemRunningSettings.getInstance().isDelegatedBuildEnabledByDefault()));
-    }
-
-    private static BuildRunItem from(ThreeState value) {
-      return new BuildRunItem(value);
+      ThreeState defaultDelegationOption =
+        myProjectRef.isNull() ? null :
+        ThreeState.fromBoolean(DefaultGradleProjectSettings.getInstance(myProjectRef.get()).isDelegatedBuild());
+      return getText(defaultDelegationOption);
     }
 
     @NotNull
-    private static String getText(@Nullable ThreeState state) {
+    private String getText(@Nullable ThreeState state) {
       if (state == ThreeState.NO) {
         return ApplicationNamesInfo.getInstance().getFullProductName();
       }
       if (state == ThreeState.YES) {
         return "Gradle";
       }
-      return GradleBundle.message("gradle.settings.text.use.application.default");
+      return GradleBundle.message("gradle.settings.text.use.default");
     }
   }
 
-  private static class TestRunnerItem extends MyItem<GradleSystemRunningSettings.PreferredTestRunner> {
+  private class TestRunnerItem extends MyItem<TestRunner> {
 
-    private TestRunnerItem(@Nullable GradleSystemRunningSettings.PreferredTestRunner value) {
+    private TestRunnerItem(@Nullable TestRunner value) {
       super(value);
     }
 
@@ -968,25 +994,24 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @Override
     protected String getComment() {
-      return value != null ? null : getText(GradleSystemRunningSettings.getInstance().getDefaultTestRunner());
-    }
-
-    private static TestRunnerItem from(GradleSystemRunningSettings.PreferredTestRunner value) {
-      return new TestRunnerItem(value);
+      if (value != null && !myProjectRef.isNull()) return null;
+      TestRunner defaultRunner =
+        myProjectRef.isNull() ? null : DefaultGradleProjectSettings.getInstance(myProjectRef.get()).getTestRunner();
+      return getText(defaultRunner);
     }
 
     @NotNull
-    private static String getText(@Nullable GradleSystemRunningSettings.PreferredTestRunner runner) {
-      if (runner == GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER) {
+    private String getText(@Nullable TestRunner runner) {
+      if (runner == TestRunner.PLATFORM) {
         return ApplicationNamesInfo.getInstance().getFullProductName();
       }
-      if (runner == GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER) {
+      if (runner == TestRunner.GRADLE) {
         return "Gradle";
       }
-      if (runner == GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST) {
+      if (runner == TestRunner.CHOOSE_PER_TEST) {
         return GradleBundle.message("gradle.preferred_test_runner.CHOOSE_PER_TEST");
       }
-      return GradleBundle.message("gradle.settings.text.use.application.default");
+      return GradleBundle.message("gradle.settings.text.use.default");
     }
   }
 }
