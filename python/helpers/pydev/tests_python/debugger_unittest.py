@@ -95,6 +95,7 @@ REASON_CAUGHT_EXCEPTION = CMD_STEP_CAUGHT_EXCEPTION
 REASON_UNCAUGHT_EXCEPTION = CMD_ADD_EXCEPTION_BREAK
 REASON_STOP_ON_BREAKPOINT = CMD_SET_BREAK
 REASON_THREAD_SUSPEND = CMD_THREAD_SUSPEND
+REASON_STEP_INTO = CMD_STEP_INTO
 REASON_STEP_INTO_MY_CODE = CMD_STEP_INTO_MY_CODE
 REASON_STEP_OVER = CMD_STEP_OVER
 
@@ -200,17 +201,19 @@ class ReaderThread(threading.Thread):
         else:
             frame = sys._getframe().f_back.f_back
             frame_info = ''
-            i = 3
             while frame:
+                if frame.f_code.co_filename.endswith('debugger_unittest.py'):
+                    frame = frame.f_back
+                    continue
                 stack_msg = ' --  File "%s", line %s, in %s\n' % (frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)
                 if 'run' == frame.f_code.co_name:
                     frame_info = stack_msg  # Ok, found the writer thread 'run' method (show only that).
                     break
                 frame_info += stack_msg
                 frame = frame.f_back
-                i -= 1
-                if i == 0:
-                    break
+                # Just print the first which is not debugger_unittest.py
+                break
+
             frame = None
             sys.stdout.write('Message returned in get_next_message(): %s --  ctx: %s, asked at:\n%s\n' % (unquote_plus(unquote_plus(msg)), context_message, frame_info))
         return msg
@@ -385,7 +388,7 @@ class DebuggerRunner(object):
                         expected_returncode = writer.EXPECTED_RETURNCODE
                         if not isinstance(expected_returncode, (list, tuple)):
                             expected_returncode = (expected_returncode,)
-                            
+
                         if process.returncode not in expected_returncode:
                             self.fail_with_message('Expected process.returncode to be %s. Found: %s' % (
                                 writer.EXPECTED_RETURNCODE, process.returncode), stdout, stderr, writer)
@@ -646,10 +649,20 @@ class AbstractWriterThread(threading.Thread):
                 msg = unquote_plus(unquote_plus(msg.split('"')[1]))
                 return msg, ctx
 
-    def get_current_stack_hit(self, thread_id):
+    def get_current_stack_hit(self, thread_id, **kwargs):
         self.write_get_thread_stack(thread_id)
         msg = self.wait_for_message(CMD_GET_THREAD_STACK)
-        return self._get_stack_as_hit(msg)
+        return self._get_stack_as_hit(msg, **kwargs)
+
+    def wait_for_single_notification_as_hit(self, reason=REASON_STOP_ON_BREAKPOINT, **kwargs):
+        dct = self.wait_for_json_message(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION)
+        assert dct['stop_reason'] == reason
+
+        line = kwargs.pop('line', None)
+        file = kwargs.pop('file', None)
+        assert not kwargs, 'Unexpected kwargs: %s' % (kwargs,)
+
+        return self.get_current_stack_hit(dct['thread_id'], line=line, file=file)
 
     def wait_for_breakpoint_hit(self, reason=REASON_STOP_ON_BREAKPOINT, timeout=None, **kwargs):
         '''

@@ -107,6 +107,7 @@ from _pydev_bundle import _pydev_completer
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -1079,7 +1080,6 @@ class InternalGetThreadStack(InternalThreadCommand):
 
     @overrides(InternalThreadCommand.can_be_executed_by)
     def can_be_executed_by(self, _thread_id):
-        from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
         timed_out = time.time() >= self._timeout
 
         py_db = self._py_db()
