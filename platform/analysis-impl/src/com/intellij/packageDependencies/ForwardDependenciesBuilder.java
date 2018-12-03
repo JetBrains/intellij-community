@@ -27,7 +27,9 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,9 +39,18 @@ import java.util.Set;
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
   private final Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<>();
   private int myTransitive = 0;
+  private @Nullable GlobalSearchScope myTargetScope;
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);
+  }
+
+  /**
+   * Creates builder which reports dependencies on files from {@code targetScope} only.
+   */
+  public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable GlobalSearchScope targetScope) {
+    super(project, scope);
+    myTargetScope = targetScope;
   }
 
   public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final int transitive) {
@@ -129,10 +140,9 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
                 if (viewProvider == dependencyFile.getViewProvider()) return;
                 if (dependencyFile.isPhysical()) {
                   final VirtualFile virtualFile = dependencyFile.getVirtualFile();
-                  if (virtualFile != null &&
-                      (fileIndex.isInContent(virtualFile) ||
-                       fileIndex.isInLibraryClasses(virtualFile) ||
-                       fileIndex.isInLibrarySource(virtualFile))) {
+                  if (virtualFile != null
+                      && (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))
+                      && (myTargetScope == null || myTargetScope.contains(virtualFile))) {
                     final PsiElement navigationElement = dependencyFile.getNavigationElement();
                     found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);
                   }
