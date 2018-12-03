@@ -32,7 +32,8 @@ import java.util.*
   KotlinXmlSerializerTest::class,
   XmlSerializerConversionTest::class,
   XmlSerializerListTest::class,
-  XmlSerializerSetTest::class
+  XmlSerializerSetTest::class,
+  ForbidSensitiveInformationTest::class
 )
 class XmlSerializerTestSuite
 
@@ -627,26 +628,29 @@ internal class XmlSerializerTest {
     testSerializer("<BeanWithDefaultAttributeName foo=\"foo\" />", BeanWithDefaultAttributeName())
   }
 
-  private class Bean2 {
-    @Attribute
-    var ab: String? = null
+  @Test
+  fun ordered() {
+    @Tag("bean")
+    class Bean {
+      @Attribute
+      var ab: String? = null
 
-    @Attribute
-    var module: String? = null
+      @Attribute
+      var module: String? = null
 
-    @Suppress("unused")
-    @Attribute
-    var ac: String? = null
-  }
+      @Suppress("unused")
+      @Attribute
+      var ac: String? = null
+    }
 
-  @Test fun ordered() {
-    val bean = Bean2()
+    val bean = Bean()
     bean.module = "module"
     bean.ab = "ab"
-    testSerializer("<Bean2 ab=\"ab\" module=\"module\" />", bean, SkipDefaultsSerializationFilter())
+    testSerializer("<bean ab=\"ab\" module=\"module\" />", bean, SkipDefaultsSerializationFilter())
   }
 
-  @Test fun cdataAfterNewLine() {
+  @Test
+  fun cdataAfterNewLine() {
     @Tag("bean")
     data class Bean(@Tag val description: String? = null)
 
@@ -687,7 +691,7 @@ internal class XmlSerializerTest {
 //  }
 }
 
-internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter?, description: String = "Serialization failure"): Element {
+internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter? = null, description: String = "Serialization failure"): Element {
   val element = bean.serialize(filter, createElementIfEmpty = true)!!
   assertThat(element).`as`(description).isEqualTo(expected)
   return element

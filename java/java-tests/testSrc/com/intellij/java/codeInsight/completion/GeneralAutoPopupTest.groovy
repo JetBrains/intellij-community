@@ -2,10 +2,12 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
+import groovy.transform.CompileStatic
 
 /**
  * For tests checking platform behavior not related to Java language (but they may still use Java for code samples)
  */
+@CompileStatic
 class GeneralAutoPopupTest extends CompletionAutoPopupTestCase {
   void "test no autopopup in the middle of word when the only variant is already in the editor"() {
     myFixture.configureByText 'a.java', 'class Foo { private boolean ignoredProperty; public boolean isIgnoredP<caret>operty() {}}'
@@ -17,6 +19,19 @@ class GeneralAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.configureByText 'a.html', '<a href="<caret>">'
     myFixture.type('a')
     type '"'
+    assert !lookup
+  }
+
+  void "test no lookup after typing and quickly moving caret to another place"() {
+    myFixture.configureByText 'a.java', 'class Foo { <caret> }'
+    edt {
+      myFixture.type('F')
+      myFixture.editor.caretModel.moveToOffset(myFixture.caretOffset + 1)
+    }
+
+    myTester.joinAutopopup()
+    myTester.joinCompletion()
+
     assert !lookup
   }
 }

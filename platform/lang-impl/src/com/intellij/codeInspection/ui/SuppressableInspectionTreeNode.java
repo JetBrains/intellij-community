@@ -4,11 +4,10 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -17,7 +16,6 @@ import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreeNode;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -31,9 +29,18 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   private volatile Boolean myValid;
   private volatile NodeState myPreviousState;
 
-  SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
-    super(userObject);
+  SuppressableInspectionTreeNode(@NotNull InspectionToolPresentation presentation, @NotNull InspectionTreeModel model) {
+    super(model);
     myPresentation = presentation;
+  }
+
+  void nodeAdded() {
+    dropProblemCountCaches();
+    ReadAction.run(() -> {
+      myPresentableName = calculatePresentableName();
+      myValid = calculateIsValid();
+      myAvailableSuppressActions = calculateAvailableSuppressActions();
+    });
   }
 
   @Override
@@ -47,7 +54,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   public boolean canSuppress() {
-    return isLeaf();
+    return getChildren().isEmpty();
   }
 
   public abstract boolean isAlreadySuppressedFromView();
@@ -62,11 +69,6 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       return false;
     }
     return true;
-  }
-
-  @Override
-  public int getProblemCount(boolean allowSuppressed) {
-    return !isExcluded() && isValid() && !isQuickFixAppliedFromView() && (allowSuppressed || !isAlreadySuppressedFromView()) ? 1 : 0;
   }
 
   @NotNull
@@ -86,9 +88,6 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   @Nullable
   public abstract RefEntity getElement();
 
-  @Nullable
-  public abstract CommonProblemDescriptor getDescriptor();
-
   @Override
   public final synchronized boolean isValid() {
     Boolean valid = myValid;
@@ -100,7 +99,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   @Override
-  public final synchronized String toString() {
+  public final synchronized String getPresentableText() {
     String name = myPresentableName;
     if (name == null) {
       name = calculatePresentableName();
@@ -121,13 +120,6 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     return !isValid() ? "No longer valid" : null;
   }
 
-  @Override
-  protected void nodeAddedToTree() {
-    myPresentableName = calculatePresentableName();
-    myValid = calculateIsValid();
-    myAvailableSuppressActions = calculateAvailableSuppressActions();
-  }
-
   @NotNull
   private Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
     return getElement() == null
@@ -136,16 +128,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   @NotNull
-  public final Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
-    RefEntity refElement = getElement();
-    CommonProblemDescriptor descriptor = getDescriptor();
-    PsiElement element = descriptor instanceof ProblemDescriptor
-                         ? ((ProblemDescriptor)descriptor).getPsiElement()
-                         : refElement instanceof RefElement
-                           ? ((RefElement)refElement).getPsiElement()
-                           : null;
-    return Pair.create(element, descriptor);
-  }
+  public abstract Pair<PsiElement, CommonProblemDescriptor> getSuppressContent();
 
   @NotNull
   private Set<SuppressIntentionAction> calculateAvailableSuppressActions(@NotNull Project project) {
@@ -168,14 +151,19 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   protected abstract boolean calculateIsValid();
 
   protected void dropCache() {
+    ReadAction.run(() -> doDropCache());
+  }
+
+  private void doDropCache() {
     myProblemLevels.drop();
     if (isQuickFixAppliedFromView() || isAlreadySuppressedFromView()) return;
+    // calculate all data on background thread
     myValid = calculateIsValid();
     myPresentableName = calculatePresentableName();
-    for (int i = 0; i < getChildCount(); i++) {
-      TreeNode child = getChildAt(i);
+
+    for (InspectionTreeNode child : getChildren()) {
       if (child instanceof SuppressableInspectionTreeNode) {
-        ((SuppressableInspectionTreeNode)child).dropCache();
+        ((SuppressableInspectionTreeNode)child).doDropCache();
       }
     }
   }

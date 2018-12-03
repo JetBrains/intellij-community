@@ -36,10 +36,7 @@ import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
@@ -221,16 +218,36 @@ public class BuildOperations {
       Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path f, BasicFileAttributes attrs) throws IOException {
-          Files.delete(f);
+          try {
+            Files.delete(f);
+          }
+          catch (AccessDeniedException e) {
+            handleAccessDenied(f, e);
+          }
           deletedPaths.add(FileUtil.toSystemIndependentName(f.toString()));
           return FileVisitResult.CONTINUE;
         }
 
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-          Files.delete(dir);
+          try {
+            Files.delete(dir);
+          }
+          catch (AccessDeniedException e) {
+            handleAccessDenied(dir, e);
+          }
           return FileVisitResult.CONTINUE;
         }
+
+        private void handleAccessDenied(Path f, AccessDeniedException e) throws IOException {
+          if (f.toFile().setWritable(true)) {
+            Files.delete(f); // repeat once the file is writable
+          }
+          else {
+            throw e;
+          }
+        }
+
       });
       return true;
     }

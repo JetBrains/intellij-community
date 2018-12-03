@@ -336,7 +336,7 @@ public class MethodCallUtils {
    * @param call a call to test
    * @return true if call is resolved to the var-arg method and var-arg form is actually used
    */
-  public static boolean isVarArgCall(PsiCallExpression call) {
+  public static boolean isVarArgCall(PsiCall call) {
     JavaResolveResult result = call.resolveMethodGenerics();
     PsiMethod method = tryCast(result.getElement(), PsiMethod.class);
     if(method == null || !method.isVarArgs()) return false;
@@ -460,7 +460,11 @@ public class MethodCallUtils {
   public static PsiParameter getParameterForArgument(@NotNull PsiExpression argument) {
     PsiExpressionList argList = tryCast(argument.getParent(), PsiExpressionList.class);
     if (argList == null) return null;
-    PsiCallExpression call = tryCast(argList.getParent(), PsiCallExpression.class);
+    PsiElement parent = argList.getParent();
+    if (parent instanceof PsiAnonymousClass) {
+      parent = parent.getParent();
+    }
+    PsiCall call = tryCast(parent, PsiCall.class);
     if (call == null) return null;
     PsiExpression[] args = argList.getExpressions();
     int index = ArrayUtil.indexOf(args, argument);

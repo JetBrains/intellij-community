@@ -73,6 +73,9 @@ public abstract class ModuleTestCase extends IdeaTestCase {
         CompoundRuntimeException.throwIfNotEmpty(errors);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myModulesToDispose.clear();
       super.tearDown();

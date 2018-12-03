@@ -136,6 +136,9 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       }
       return PyUnionType.union(leftType, rightType);
     }
+
+    if (PyNames.CONTAINS.equals(getReferencedName())) return PyBuiltinCache.getInstance(this).getBoolType();
+
     final List<PyCallExpression.PyArgumentsMapping> results =
       PyCallExpressionHelper.mapArguments(this, PyResolveContext.noImplicits().withTypeEvalContext(context));
     if (!results.isEmpty()) {

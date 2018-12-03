@@ -2,12 +2,12 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -74,7 +74,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
 
       private void updateCache(VirtualFileEvent event) {
-        if (FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
+        if (ArchiveFileType.INSTANCE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
           String filePath = event.getFile().getPath();
           if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
             myCachedVersionStringToJdkVersion.clear();
@@ -489,14 +489,7 @@ public class JavaSdkImpl extends JavaSdk {
 
     VirtualFile apiDocs = findDocs(jdkHome, "docs/api");
     if (apiDocs != null) {
-      if (apiDocs.findChild("java.base") != null) {
-        Stream.of(apiDocs.getChildren())
-          .filter(f -> f.isDirectory() && f.findChild("module-summary.html") != null)
-          .forEach(root -> sdkModificator.addRoot(root, docRootType));
-      }
-      else {
-        sdkModificator.addRoot(apiDocs, docRootType);
-      }
+      sdkModificator.addRoot(apiDocs, docRootType);
     }
     else if (SystemInfo.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");

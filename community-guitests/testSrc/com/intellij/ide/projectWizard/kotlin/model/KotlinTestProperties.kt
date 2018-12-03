@@ -81,10 +81,4 @@ object KotlinTestProperties {
   val kotlin_plugin_version_full: String
     get() = "v${getPropertyValue("kotlin.plugin.version.full")}"
 
-  /**
-   * @return path where the Java is installed
-   */
-  val jdk_path: String
-    get() = getPropertyValue("JAVA_HOME")
-
 }

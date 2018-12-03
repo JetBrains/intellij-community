@@ -51,7 +51,7 @@ class InspectionTest {
           System.out.println("It's b");break;
         case C:
           System.out.println("It's c");break;
-        <warning descr="Switch label 'case A:' is unreachable">case A:</warning>
+        case <warning descr="Switch label 'A' is unreachable">A</warning>:
           System.out.println("It's a again");break;
       }
     }

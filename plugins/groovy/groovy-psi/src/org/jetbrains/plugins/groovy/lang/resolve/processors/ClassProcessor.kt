@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 internal open class ClassProcessor(
   private val name: String,
   private val place: PsiElement,
-  private val typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY,
+  private val typeArguments: Array<out PsiType>? = null,
   annotationResolve: Boolean = false
 ) : FindFirstProcessor<ClassResolveResult>() {
 
@@ -29,12 +29,6 @@ internal open class ClassProcessor(
     val elementName = state[importedNameKey] ?: element.name
     if (elementName != name) return null
 
-    val substitutor = state.get(PsiSubstitutor.KEY) ?: PsiSubstitutor.EMPTY
-    return ClassResolveResult(
-      element = clazz,
-      place = place,
-      resolveContext = state.get(ClassHint.RESOLVE_CONTEXT),
-      substitutor = substitutor.putAll(clazz, typeArguments)
-    )
+    return ClassResolveResult(clazz, place, state, typeArguments)
   }
 }

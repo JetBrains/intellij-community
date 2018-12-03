@@ -41,7 +41,7 @@ public class JsonBuilderContributor extends BuilderMethodsContributor {
 
     // (Closure)
     method = createMethod(name, clazz, place);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
     if (!processor.process(method)) return false;
 
     // (Map)
@@ -52,19 +52,19 @@ public class JsonBuilderContributor extends BuilderMethodsContributor {
     // (Map, Closure)
     method = createMethod(name, clazz, place);
     method.addParameter("map", JAVA_UTIL_MAP);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
     if (!processor.process(method)) return false;
 
     // (Iterable, Closure)
     method = createMethod(name, clazz, place);
     method.addParameter("value", TypesUtil.createIterableType(place, null));
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
     if (!processor.process(method)) return false;
 
     // (Object[], Closure)
     method = createMethod(name, clazz, place);
     method.addParameter("value", TypesUtil.getJavaLangObject(place).createArrayType());
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
     return processor.process(method);
   }
 

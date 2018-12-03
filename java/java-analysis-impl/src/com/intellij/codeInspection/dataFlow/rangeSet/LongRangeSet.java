@@ -190,6 +190,9 @@ public abstract class LongRangeSet {
     if (token.equals(JavaTokenType.GTGTGT)) {
       return unsignedShiftRight(right, isLong);
     }
+    if (token.equals(JavaTokenType.ASTERISK)) {
+      return mul(right, isLong);
+    }
     return null;
   }
 
@@ -266,6 +269,8 @@ public abstract class LongRangeSet {
     }
     return all().subtract(result);
   }
+  
+  abstract public LongRangeSet mul(LongRangeSet multiplier, boolean isLong);
 
   /**
    * Returns a range which represents all the possible values after applying {@code x / y} operation for
@@ -763,6 +768,11 @@ public abstract class LongRangeSet {
       return this;
     }
 
+    @Override
+    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
+      return this;
+    }
+
     @NotNull
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
@@ -880,6 +890,20 @@ public abstract class LongRangeSet {
         return point(isLong ? res : (int)res);
       }
       return other.plus(this, isLong);
+    }
+
+    @Override
+    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
+      if (multiplier.isEmpty()) return multiplier;
+      if (myValue == 0) return this;
+      if (myValue == 1) return multiplier;
+      if (myValue == -1) return multiplier.negate(isLong);
+      if (multiplier instanceof Point) {
+        long val = ((Point)multiplier).myValue;
+        long res = myValue * val;
+        return point(isLong ? res : (int)res);
+      }
+      return isLong ? Range.LONG_RANGE : Range.INT_RANGE;
     }
 
     @NotNull
@@ -1134,6 +1158,13 @@ public abstract class LongRangeSet {
       return result;
     }
 
+    @Override
+    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
+      if (multiplier.isEmpty()) return multiplier;
+      if (multiplier instanceof Point) return multiplier.mul(this, isLong);
+      return isLong ? LONG_RANGE : INT_RANGE;
+    }
+
     @NotNull
     private static LongRangeSet plus(long from1, long to1, long from2, long to2, boolean isLong) {
       long len1 = to1 - from1; // may overflow
@@ -1355,6 +1386,13 @@ public abstract class LongRangeSet {
         result = result.unite(range(myRanges[i], myRanges[i + 1]).plus(other, isLong));
       }
       return result;
+    }
+
+    @Override
+    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
+      if (multiplier.isEmpty()) return multiplier;
+      if (multiplier instanceof Point) return multiplier.mul(this, isLong);
+      return isLong ? Range.LONG_RANGE : Range.INT_RANGE;
     }
 
     @NotNull

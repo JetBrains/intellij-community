@@ -227,12 +227,15 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         // try vm attach first
         VirtualMachine vm = null;
         try {
-          vm = VirtualMachine.attach(String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler)myProcessHandler).getProcess())));
-          InputStream inputStream = ((HotSpotVirtualMachine)vm).remoteDataDump();
-          String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
-          List<ThreadState> threads = ThreadDumpParser.parse(text);
-          DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
-          return;
+          String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler)myProcessHandler).getProcess()));
+          if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
+            vm = VirtualMachine.attach(pid);
+            InputStream inputStream = ((HotSpotVirtualMachine)vm).remoteDataDump();
+            String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
+            List<ThreadState> threads = ThreadDumpParser.parse(text);
+            DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
+            return;
+          }
         }
         catch (AttachNotSupportedException e) {
           LOG.debug(e);
@@ -276,7 +279,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         public void startNotified(@NotNull ProcessEvent event) {
           // 1 second delay to allow jvm to start correctly
           JobScheduler.getScheduler()
-            .schedule(() -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
+            .schedule(() -> myEnabled.set(!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated() &&
+                                          JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
                       1, TimeUnit.SECONDS);
         }
 

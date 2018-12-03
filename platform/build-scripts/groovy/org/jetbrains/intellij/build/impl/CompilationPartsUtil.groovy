@@ -167,6 +167,26 @@ class CompilationPartsUtil {
     // TODO: Remove hardcoded constant
     String uploadPrefix = "intellij-compile/v1/$branch".toString()
 
+    messages.block("Compute archives checksums") {
+      runUnderStatisticsTimer(messages, 'compile-parts:checksum:time') {
+        contexts.each { PackAndUploadContext ctx ->
+          executor.submit {
+            String hash = computeHash(new File(ctx.archive))
+            hashes.put(ctx.name, hash)
+          }
+        }
+        executor.waitForAllComplete(messages)
+      }
+    }
+
+    // Prepare metadata for writing into file
+    CompilationPartsMetadata m = new CompilationPartsMetadata()
+    m.serverUrl = serverUrl
+    m.branch = branch
+    m.prefix = uploadPrefix
+    m.files = new TreeMap<String, String>(hashes)
+    String metadataJson = new Gson().toJson(m)
+
     messages.block("Uploading archives") {
       AtomicInteger uploadedCount = new AtomicInteger()
       AtomicLong uploadedBytes = new AtomicLong()
@@ -176,18 +196,37 @@ class CompilationPartsUtil {
       runUnderStatisticsTimer(messages, 'compile-parts:upload:time') {
         CompilationPartsUploader uploader = new CompilationPartsUploader(serverUrl, messages)
 
+        Set<String> alreadyUploaded = new HashSet<>()
+        boolean fallbackToHeads
+        def files = uploader.getFoundAndMissingFiles(metadataJson)
+        if (files != null) {
+          messages.info("Successfully fetched info about already uploaded files")
+          alreadyUploaded.addAll(files.found)
+          fallbackToHeads = false
+        }
+        else {
+          messages.warning("Failed to fetch info about already uploaded files, will fallback to HEAD requests")
+          fallbackToHeads = true
+        }
+
         // Upload with higher threads count
         executor.setMaximumPoolSize(executorThreadsCount * 2)
         executor.prestartAllCoreThreads()
 
         contexts.each { PackAndUploadContext ctx ->
+          if (alreadyUploaded.contains(ctx.name)) {
+            reusedCount.getAndIncrement()
+            reusedBytes.getAndAdd(new File(ctx.archive).size())
+            return
+          }
+
           executor.submit {
             def archiveFile = new File(ctx.archive)
 
-            String hash = computeHash(archiveFile)
+            String hash = hashes.get(ctx.name)
             def path = "$uploadPrefix/${ctx.name}/${hash}.jar".toString()
 
-            if (uploader.upload(path, archiveFile)) {
+            if (uploader.upload(path, archiveFile, fallbackToHeads)) {
               uploadedCount.getAndIncrement()
               uploadedBytes.getAndAdd(archiveFile.size())
             }
@@ -195,8 +234,6 @@ class CompilationPartsUtil {
               reusedCount.getAndIncrement()
               reusedBytes.getAndAdd(archiveFile.size())
             }
-
-            hashes.put(ctx.name, hash)
           }
         }
 
@@ -219,16 +256,9 @@ class CompilationPartsUtil {
     executor.reportErrors(messages)
 
 
-    // Prepare and publish metadata file
-
+    // Save and publish metadata file
     def metadataFile = new File("$zipsLocation/metadata.json")
-    CompilationPartsMetadata m = new CompilationPartsMetadata()
-    m.serverUrl = serverUrl
-    m.branch = branch
-    m.prefix = uploadPrefix
-    m.files = new TreeMap<String, String>(hashes)
-
-    FileUtil.writeToFile(metadataFile, new Gson().toJson(m))
+    FileUtil.writeToFile(metadataFile, metadataJson)
 
     messages.artifactBuilt(metadataFile.absolutePath)
   }
@@ -365,6 +395,10 @@ class CompilationPartsUtil {
                statusCode == HttpStatus.SC_SEE_OTHER)
             && locationHeader != null) {
             urlWithPrefix = locationHeader.getValue()
+            messages.info("Redirected to mirror: " + urlWithPrefix)
+          }
+          else {
+            messages.info("Will use origin server: " + urlWithPrefix)
           }
           StreamUtil.closeStream(response)
         }
@@ -451,7 +485,6 @@ class CompilationPartsUtil {
     executor.close()
 
     executor.reportErrors(messages)
-
   }
 
   private static void unpack(BuildMessages messages, FetchAndUnpackContext ctx) {
@@ -615,7 +648,7 @@ class CompilationPartsUtil {
           futures.last().get()
         }
         else {
-          Thread.sleep(TimeUnit.SECONDS.toMillis(futures.size() < 500 ? 1 : 3))
+          Thread.sleep(TimeUnit.SECONDS.toMillis(1))
         }
       }
     }

@@ -7,7 +7,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
-import java.util.HashMap
 
 /**
  * @author traff
@@ -81,7 +80,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    var myUserSpecifiedEnvs: Map<String, String> = hashMapOf("PROJECT_DIR" to "\$PROJECT_DIR$")
+    var myUserSpecifiedEnvs: Map<String, String> = hashMapOf()
     var myPassParentEnvs = true
   }
 

@@ -41,19 +41,6 @@ public class InspectionTreeHtmlWriter {
     serializeTreeToHtml();
   }
 
-  private void traverseInspectionTree(final InspectionTreeNode node,
-                                             final Consumer<? super InspectionTreeNode> preAction,
-                                             final Consumer<? super InspectionTreeNode> postAction) {
-    if (node.isExcluded()) {
-      return;
-    }
-    preAction.accept(node);
-    for (int i = 0; i < node.getChildCount(); i++) {
-      traverseInspectionTree((InspectionTreeNode)node.getChildAt(i), preAction, postAction);
-    }
-    postAction.accept(node);
-  }
-
   private void serializeTreeToHtml() {
     appendHeader();
     appendTree((builder) -> {
@@ -68,7 +55,8 @@ public class InspectionTreeHtmlWriter {
           builder.append(escapeNonBreakingSymbols(text));
         }
       };
-      traverseInspectionTree(myTree.getRoot(),
+      InspectionTreeModel model = myTree.getInspectionTreeModel();
+      traverseInspectionTree(model.getRoot(),
                              (n) -> {
                                final int nodeId = System.identityHashCode(n);
                                builder
@@ -102,6 +90,19 @@ public class InspectionTreeHtmlWriter {
 
     HTMLExportUtil.writeFile(myOutputDir, "index.html", myBuilder, myTree.getContext().getProject());
     InspectionTreeHtmlExportResources.copyInspectionReportResources(myOutputDir);
+  }
+
+  private static void traverseInspectionTree(InspectionTreeNode node,
+                                             Consumer<? super InspectionTreeNode> preAction,
+                                             Consumer<? super InspectionTreeNode> postAction) {
+    if (node.isExcluded()) {
+      return;
+    }
+    preAction.accept(node);
+    for (InspectionTreeNode child : node.getChildren()) {
+      traverseInspectionTree(child, preAction, postAction);
+    }
+    postAction.accept(node);
   }
 
   private String convertNodeToHtml(InspectionTreeNode node) {
@@ -139,7 +140,7 @@ public class InspectionTreeHtmlWriter {
       return sb.toString();
     }
     else if (node instanceof RefElementNode) {
-      final String type = myManager.getType((RefEntity)node.getUserObject());
+      final String type = myManager.getType(((RefElementNode)node).getElement());
       return type + "&nbsp;<b>" + node.toString() + "</b>";
     }
     else if (node instanceof InspectionNode) {

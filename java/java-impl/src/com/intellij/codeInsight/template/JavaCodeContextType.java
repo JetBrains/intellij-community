@@ -129,11 +129,12 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       if (((PsiJavaCodeReferenceElement)parent).isQualified()) {
         return false;
       }
-      if (parent.getParent() instanceof PsiMethodCallExpression || parent.getParent() instanceof PsiReferenceList) {
+      PsiElement grandpa = parent.getParent();
+      if (grandpa instanceof PsiMethodCallExpression || grandpa instanceof PsiReferenceList) {
         return false;
       }
 
-      if (psiElement().withParents(PsiTypeElement.class, PsiMember.class).accepts(parent)) {
+      if (grandpa instanceof PsiTypeElement && (grandpa.getParent() instanceof PsiMember || grandpa.getParent() instanceof PsiReferenceParameterList)) {
         return false;
       }
 
@@ -169,7 +170,9 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      return JavaKeywordCompletion.isSuitableForClass(element) || JavaKeywordCompletion.isInsideParameterList(element);
+      return JavaKeywordCompletion.isSuitableForClass(element) ||
+             JavaKeywordCompletion.isInsideParameterList(element) ||
+             PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;
     }
   }
 

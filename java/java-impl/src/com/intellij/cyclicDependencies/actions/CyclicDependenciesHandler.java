@@ -20,26 +20,34 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class CyclicDependenciesHandler {
+  @NotNull
   private final Project myProject;
   private final AnalysisScope myScope;
 
-  public CyclicDependenciesHandler(Project project, AnalysisScope scope) {
+  public CyclicDependenciesHandler(@NotNull Project project, AnalysisScope scope) {
     myProject = project;
     myScope = scope;
   }
 
   public void analyze() {
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject, myScope);
-    final Runnable process = () -> builder.analyze();
+    final Runnable process = () -> {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      ProgressIndicatorUtils.dropResolveCacheRegularly(indicator, myProject);
+      builder.analyze();
+    };
     final Runnable successRunnable = () -> SwingUtilities.invokeLater(() -> {
       CyclicDependenciesPanel panel = new CyclicDependenciesPanel(myProject, builder);
       Content content = ContentFactory.SERVICE.getInstance().createContent(panel, AnalysisScopeBundle.message(

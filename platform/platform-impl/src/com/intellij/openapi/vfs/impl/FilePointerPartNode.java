@@ -65,13 +65,18 @@ class FilePointerPartNode {
     return part + (children.length == 0 ? "" : " -> "+children.length);
   }
 
-  // tries to match the VirtualFile path hierarchy with the trie structure of FilePointerPartNodes
-  // returns the node (in outNode[0]) and length of matched characters in that node, or -1 if there is no match
-  // recursive nodes (i.e. the nodes containing VFP with recursive==true) will be added to outDirs
+  /**
+   * Tries to match the given path ({@code (parent != null ? parent.getPath() : "") + (separator ? "/" : "") + childName.substring(childStart)})
+   * with the trie structure of FilePointerPartNodes returns the node (in outNode[0]) and length of matched characters in that node,
+   * or -1 if there is no match.
+   * <p>Recursive nodes (i.e. the nodes containing VFP with recursive==true) will be added to outDirs.
+   * @param parentName is equal to {@code parent != null ? parent.getName() : null}
+   *
+   */
   private int position(@Nullable VirtualFile parent,
                        @Nullable CharSequence parentName,
                        boolean separator,
-                       @NotNull CharSequence childName, int childStart, int childEnd,
+                       @NotNull CharSequence childName, int childStart,
                        @NotNull FilePointerPartNode[] outNode,
                        @Nullable List<? super FilePointerPartNode> outDirs) {
     int partStart;
@@ -83,7 +88,7 @@ class FilePointerPartNode {
       VirtualFile gParent = parent.getParent();
       CharSequence gParentName = gParent == null ? null : gParent.getNameSequence();
       boolean gSeparator = gParentName != null && !StringUtil.equals(gParentName, "/");
-      partStart = position(gParent, gParentName, gSeparator, parentName, 0, parentName.length(), outNode, outDirs);
+      partStart = position(gParent, gParentName, gSeparator, parentName, 0, outNode, outDirs);
       if (partStart == -1) return -1;
     }
 
@@ -103,7 +108,7 @@ class FilePointerPartNode {
     int index = indexOfFirstDifferentChar(childName, childStart, found.part, partStart);
 
     found.addRecursiveDirectoryPtr(outDirs);
-    if (index == childEnd) {
+    if (index == childName.length()) {
       return partStart + index - childStart;
     }
 
@@ -111,7 +116,7 @@ class FilePointerPartNode {
       // go to children
       for (FilePointerPartNode child : found.children) {
         // do not accidentally modify outDirs
-        int childPos = child.position(null, null, childSeparator, childName, index, childEnd, outNode, null);
+        int childPos = child.position(null, null, childSeparator, childName, index, outNode, null);
         if (childPos != -1) {
           addRecursiveDirectoryPtr(outDirs);
 
@@ -129,14 +134,18 @@ class FilePointerPartNode {
     }
   }
 
-  // appends to "out" all nodes under this node whose path (beginning from this node) starts in prefix.subSequence(start), then parent.getPath(), then childName
+  /**
+   * Appends to {@code out} all nodes under this node whose path (beginning from this node) starts with the given path
+   * ({@code (parent != null ? parent.getPath() : "") + (separator ? "/" : "") + childName}) and all nodes under this node with recursive directory pointers whose
+   * path is ancestor of the given path.
+   */
   void addRelevantPointersFrom(@Nullable VirtualFile parent,
                                boolean separator,
                                @NotNull CharSequence childName,
                                @NotNull List<? super FilePointerPartNode> out) {
     CharSequence parentName = parent == null ? null : parent.getNameSequence();
     FilePointerPartNode[] outNode = new FilePointerPartNode[1];
-    int position = position(parent, parentName, separator, childName, 0, childName.length(), outNode, out);
+    int position = position(parent, parentName, separator, childName, 0, outNode, out);
     if (position != -1) {
       FilePointerPartNode node = outNode[0];
       addAllPointersUnder(node, out);

@@ -22,6 +22,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * @author Alexander Lobas
@@ -147,7 +148,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
     needRestart = true;
 
-    installPlugin(pluginsToInstall, getAllPlugins(), this, prepareToInstall(descriptor, install));
+    installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, install));
   }
 
   private static void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
@@ -263,13 +264,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
       if (success) {
         appendOrUpdateDescriptor(descriptor);
+        appendDependsAfterInstall();
       }
     }
     else if (success) {
       if (myDownloaded != null && myDownloaded.ui != null) {
-        PluginId pluginId = descriptor.getPluginId();
-        CellPluginComponent component =
-          ContainerUtil.find(myDownloaded.ui.plugins, _component -> pluginId.equals(_component.myPlugin.getPluginId()));
+        CellPluginComponent component = myDownloaded.ui.findComponent(descriptor);
         if (component != null) {
           ((ListPluginComponent)component).changeUpdateToRestart();
         }
@@ -277,6 +277,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (myUpdates != null) {
         myUpdates.titleWithCount();
       }
+      PluginUpdatesService.finishUpdate(descriptor);
     }
 
     info.indicator.cancel();
@@ -337,6 +338,27 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myUpdates = group;
   }
 
+  private void appendDependsAfterInstall() {
+    for (IdeaPluginDescriptor descriptor : InstalledPluginsState.getInstance().getInstalledPlugins()) {
+      if (myDownloaded.ui.findComponent(descriptor) != null) {
+        continue;
+      }
+
+      appendOrUpdateDescriptor(descriptor);
+
+      String id = descriptor.getPluginId().getIdString();
+
+      for (Entry<IdeaPluginDescriptor, List<GridCellPluginComponent>> entry : myGridMap.entrySet()) {
+        if (id.equals(entry.getKey().getPluginId().getIdString())) {
+          for (GridCellPluginComponent component : entry.getValue()) {
+            component.hideProgress(true);
+          }
+          break;
+        }
+      }
+    }
+  }
+
   @Override
   public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
     super.appendOrUpdateDescriptor(descriptor);
@@ -371,7 +393,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {
-    return isEnabled(plugin.getPluginId());
+    Boolean enabled = getEnabledMap().get(plugin.getPluginId());
+    return enabled == null || enabled;
   }
 
   @NotNull
@@ -380,7 +403,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
-    enableRows(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin.getPluginId()));
+    enableRows(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin));
     updateAfterEnableDisable();
   }
 

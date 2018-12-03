@@ -140,6 +140,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
         WriteAction.runAndWait(() -> findOrCreateDir("").delete(this));
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

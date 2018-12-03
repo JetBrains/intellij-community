@@ -58,7 +58,7 @@ internal fun <T> callSafely(call: () -> T): T? = try {
   call()
 }
 catch (e: Exception) {
-  e.printStackTrace()
+  log(e.message ?: e::class.java.simpleName)
   null
 }
 

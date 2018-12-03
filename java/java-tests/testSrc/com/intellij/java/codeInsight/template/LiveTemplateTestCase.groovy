@@ -10,10 +10,12 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 abstract class LiveTemplateTestCase extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() {

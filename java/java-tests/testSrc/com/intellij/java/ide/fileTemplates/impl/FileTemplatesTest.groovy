@@ -80,7 +80,7 @@ class FileTemplatesTest extends IdeaTestCase {
         properties.load(propFile, FileTemplate.ourEncoding)
         properties.put(FileTemplateManager.PROJECT_NAME_VARIABLE, getProject().getName())
 
-        System.out.println(resultFile.getName())
+        LOG.debug(resultFile.getName())
         doTestTemplate(inputText, properties, outputText)
       }
     }
@@ -225,5 +225,11 @@ class FileTemplatesTest extends IdeaTestCase {
     catch (IOException ignored) {
       return false
     }
+  }
+
+  void 'test StringUtils special variable works and has removeAndHump method'() {
+    FileTemplate template = addTestTemplate("my_class", 'prefix ${StringUtils.removeAndHump("foo_barBar")} suffix')
+    def evaluated = template.getText([:])
+    assert evaluated == 'prefix FooBarBar suffix'
   }
 }

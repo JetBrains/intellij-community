@@ -145,7 +145,26 @@ public class DTree {
     return myName;
   }
 
+  private void prepare() {
+    final DiffElement<?> src = getSource();
+    final DiffElement<?> trg = getTarget();
+    if (src instanceof ComparableDiffElement) {
+      ((ComparableDiffElement)src).prepare(trg);
+    }
+    if (trg instanceof ComparableDiffElement) {
+      ((ComparableDiffElement)trg).prepare(src);
+    }
+    for (DTree tree : getChildren()) {
+      tree.prepare();
+    }
+  }
+
   public void update(DirDiffSettings settings) {
+    prepare();
+    updateChildren(settings);
+  }
+
+  private void updateChildren(DirDiffSettings settings) {
     for (DTree tree : getChildren()) {
       final DiffElement<?> src = tree.getSource();
       final DiffElement<?> trg = tree.getTarget();
@@ -180,7 +199,7 @@ public class DTree {
         }
         tree.setType(equals ? DiffType.EQUAL : DiffType.CHANGED);
       }
-      tree.update(settings);
+      tree.updateChildren(settings);
     }
   }
 

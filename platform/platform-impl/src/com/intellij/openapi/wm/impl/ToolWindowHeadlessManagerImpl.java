@@ -633,7 +633,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @NotNull
     @Override
-    public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean trackFocus, boolean implicitFocus) {
+    public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean implicitFocus) {
       removeContent(content, dispose);
       return ActionCallback.DONE;
     }

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     if (sort) {
       Collections.sort(elements, (Comparator<T>)(o1, o2) -> getItemText(o1).compareToIgnoreCase(getItemText(o2)));
     }
-    setElements(elements, elements.size() > 0 ? elements.subList(0, 1) : Collections.emptyList());
+    setElements(elements, ContainerUtil.getFirstItems(elements, 1));
     myChooser.getComponent().registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

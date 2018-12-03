@@ -29,14 +29,18 @@ public class CustomRegionStructureUtil {
         rootElement instanceof StubBasedPsiElement && ((StubBasedPsiElement)rootElement).getStub() != null) {
       return originalElements;
     }
-    Set<TextRange> childrenRanges = ContainerUtil.map2SetNotNull(originalElements, element -> {
+    List<StructureViewTreeElement> physicalElements = ContainerUtil.filter(originalElements, element -> {
+      Object value = element.getValue();
+      return !(value instanceof StubBasedPsiElement) || ((StubBasedPsiElement)value).getStub() == null;
+    });
+    Set<TextRange> childrenRanges = ContainerUtil.map2SetNotNull(physicalElements, element -> {
       Object value = element.getValue();
       return value instanceof PsiElement ? getTextRange((PsiElement)value) : null;
     });
     Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement, childrenRanges);
     if (customRegions.size() > 0) {
       List<StructureViewTreeElement> result = new ArrayList<>(customRegions);
-      for (StructureViewTreeElement element : originalElements) {
+      for (StructureViewTreeElement element : physicalElements) {
         ProgressManager.checkCanceled();
         boolean isInCustomRegion = false;
         for (CustomRegionTreeElement customRegion : customRegions) {

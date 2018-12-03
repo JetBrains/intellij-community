@@ -3,9 +3,12 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 abstract class NormalCompletionTestCase extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {

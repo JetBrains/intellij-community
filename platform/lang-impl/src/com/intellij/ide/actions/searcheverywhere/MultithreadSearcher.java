@@ -12,10 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Phaser;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -75,27 +72,41 @@ class MultithreadSearcher implements SESearcher {
                                   boolean useNonProjectItems,
                                   Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
     LOG.debug("Search started for pattern [", pattern, "]");
-    Phaser phaser = new Phaser();
     FullSearchResultsAccumulator accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor);
-    ProgressIndicator indicator = new ProgressIndicatorBase() {
-      @Override
-      protected void onRunningChange() {
-        if (isCanceled()) {
-          accumulator.stop();
-          phaser.forceTermination();
-        }
-      }
-    };
-    indicator.start();
 
-    Runnable finisherTask = createFinisherTask(phaser, accumulator, indicator);
-    for (SearchEverywhereContributor<?> contributor : contributorsAndLimits.keySet()) {
-      SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributor);
-      phaser.register();
-      Runnable task = createSearchTask(pattern, useNonProjectItems, accumulator, indicator, contributor, filter, () -> phaser.arrive());
-      ApplicationManager.getApplication().executeOnPooledThread(task);
+    Collection<SearchEverywhereContributor<?>> contributors = contributorsAndLimits.keySet();
+    if (pattern.isEmpty()) {
+      contributors = ContainerUtil.filter(contributors, contributor -> contributor.isEmptyPatternSupported());
     }
-    ApplicationManager.getApplication().executeOnPooledThread(finisherTask);
+
+    ProgressIndicator indicator;
+    if (!contributors.isEmpty()) {
+      CountDownLatch latch = new CountDownLatch(contributors.size());
+      ProgressIndicatorWithCancelListener indicatorWithCancelListener = new ProgressIndicatorWithCancelListener();
+
+      for (SearchEverywhereContributor<?> contributor : contributors) {
+        SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributor);
+        Runnable task = createSearchTask(pattern, useNonProjectItems, accumulator, indicatorWithCancelListener, contributor, filter, () -> latch.countDown());
+        ApplicationManager.getApplication().executeOnPooledThread(task);
+      }
+
+      Runnable finisherTask = createFinisherTask(latch, accumulator, indicatorWithCancelListener);
+      Future<?> finisherFeature = ApplicationManager.getApplication().executeOnPooledThread(finisherTask);
+      indicatorWithCancelListener.setCancelCallback(() -> {
+        accumulator.stop();
+        finisherFeature.cancel(true);
+      });
+      indicator = indicatorWithCancelListener;
+    }
+    else {
+      indicator = new ProgressIndicatorBase();
+    }
+
+    indicator.start();
+    if (contributors.isEmpty()) {
+      indicator.stop();
+      accumulator.searchFinished();
+    }
 
     return indicator;
   }
@@ -133,15 +144,18 @@ class MultithreadSearcher implements SESearcher {
     return ConcurrencyUtil.underThreadNameRunnable("SE-SearchTask", task);
   }
 
-  private static Runnable createFinisherTask(Phaser phaser, FullSearchResultsAccumulator accumulator, ProgressIndicator indicator) {
-    phaser.register();
-
+  private static Runnable createFinisherTask(CountDownLatch latch, FullSearchResultsAccumulator accumulator, ProgressIndicator indicator) {
     return ConcurrencyUtil.underThreadNameRunnable("SE-FinisherTask", () -> {
-      phaser.arriveAndAwaitAdvance();
-      if (!indicator.isCanceled()) {
-        accumulator.searchFinished();
+      try {
+        latch.await();
+        if (!indicator.isCanceled()) {
+          accumulator.searchFinished();
+        }
+        indicator.stop();
       }
-      indicator.stop();
+      catch (InterruptedException e) {
+        LOG.debug("Finisher interrupted before search process is finished");
+      }
     });
   }
 
@@ -416,6 +430,22 @@ class MultithreadSearcher implements SESearcher {
       }
 
       return sections.get(contributor).size() >= sectionsLimits.get(contributor);
+    }
+  }
+
+  private static class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
+
+    private volatile Runnable cancelCallback = () -> {};
+
+    private void setCancelCallback(Runnable cancelCallback) {
+      this.cancelCallback = cancelCallback;
+    }
+
+    @Override
+    protected void onRunningChange() {
+      if (isCanceled()) {
+        cancelCallback.run();
+      }
     }
   }
 }

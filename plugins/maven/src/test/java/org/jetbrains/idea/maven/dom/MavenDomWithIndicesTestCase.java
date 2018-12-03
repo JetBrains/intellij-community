@@ -39,6 +39,9 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
         myIndicesFixture = null;
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

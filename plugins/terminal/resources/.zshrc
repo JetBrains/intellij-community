@@ -68,9 +68,9 @@ function configureCommandHistory {
   local commandHistoryFile="$__INTELLIJ_COMMAND_HISTFILE__"
   if [ -n "$commandHistoryFile" ]
   then
-    if ! [ -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
+    if [ ! -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
     then
-      cp "$HISTFILE" "$commandHistoryFile"
+      command cp "$HISTFILE" "$commandHistoryFile"
     fi
     export HISTFILE="$commandHistoryFile"
   fi

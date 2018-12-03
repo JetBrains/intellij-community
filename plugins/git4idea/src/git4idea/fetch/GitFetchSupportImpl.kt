@@ -90,7 +90,7 @@ internal class GitFetchSupportImpl(git: Git,
 
   private fun fetchInParallel(remotes: Map<GitRepository, GitRemote>): Map<GitRepository, Future<RepoResult>> {
     val tasks = mutableMapOf<GitRepository, Future<RepoResult>>()
-    val maxThreads = getMaxThreads(remotes.size)
+    val maxThreads = Math.min(getMaxThreads(remotes.size), 10)
     LOG.debug("Fetching $remotes using $maxThreads threads")
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
     val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()

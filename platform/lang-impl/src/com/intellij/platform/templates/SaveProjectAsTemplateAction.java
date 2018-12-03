@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ContentIterator;
@@ -60,7 +61,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class SaveProjectAsTemplateAction extends AnAction {
+public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
   private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
@@ -190,6 +191,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
     else if (PlatformUtils.isPhpStorm()) {
       return FileTemplateBase.getQualifiedName("PHP File Header", "php");
+    } else if (PlatformUtils.isWebStorm()) {
+      return FileTemplateBase.getQualifiedName("JavaScript File", "js");
     } else {
       throw new IllegalStateException("Provide file header template for your IDE");
     }

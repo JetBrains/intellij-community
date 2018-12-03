@@ -21,11 +21,9 @@ import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UDeclaration;
 import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UMethod;
 
@@ -58,7 +56,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendClassExtendsImplements(StringBuffer buf, RefClass refClass) {
     if (refClass.getBaseClasses().size() > 0) {
-      HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extends.implements"));
+      HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extends.implements"));
       myComposer.startList(buf);
       for (RefClass refBase : refClass.getBaseClasses()) {
         myComposer.appendListItem(buf, refBase);
@@ -71,10 +69,10 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   public void appendDerivedClasses(StringBuffer buf, RefClass refClass) {
     if (refClass.getSubClasses().size() > 0) {
       if (refClass.isInterface()) {
-        HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended.implemented"));
+        HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended.implemented"));
       }
       else {
-        HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended"));
+        HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended"));
       }
 
       myComposer.startList(buf);
@@ -88,7 +86,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendLibraryMethods(StringBuffer buf, RefClass refClass) {
     if (refClass.getLibraryMethods().size() > 0) {
-      HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.library.methods"));
+      HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.library.methods"));
 
       myComposer.startList(buf);
       for (RefMethod refMethod : refClass.getLibraryMethods()) {
@@ -141,7 +139,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   public void appendShortName(final RefEntity refElement, final StringBuffer buf) {
     if (refElement instanceof RefJavaElement) {
       String modifier = ((RefJavaElement)refElement).getAccessModifier();
-      if (modifier != null && modifier != PsiModifier.PACKAGE_LOCAL) {
+      if (modifier != PsiModifier.PACKAGE_LOCAL) {
         buf.append(modifier);
         buf.append(HTMLComposerImpl.NBSP);
       }
@@ -330,8 +328,10 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     buf.append(HTMLComposerImpl.A_CLOSING);
 
     if (refElement instanceof RefMethod) {
-      UMethod psiMethod = (UMethod)((RefMethod)refElement).getUastElement();
-      appendMethodParameters(buf, psiMethod, false);
+      PsiMethod psiMethod = (PsiMethod)((RefMethod)refElement).getUastElement().getJavaPsi();
+      if (psiMethod != null) {
+        appendMethodParameters(buf, psiMethod, false);
+      }
     }
 
     buf.append(HTMLComposerImpl.CODE_CLOSING);

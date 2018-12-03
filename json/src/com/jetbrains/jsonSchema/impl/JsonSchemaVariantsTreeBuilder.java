@@ -15,6 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
 
 /**
  * @author Irina.Chernushina on 4/20/2017.
@@ -42,36 +43,34 @@ import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 public class JsonSchemaVariantsTreeBuilder {
 
   public static JsonSchemaTreeNode buildTree(@NotNull final JsonSchemaObject schema,
-                                      @Nullable final List<Step> position,
-                                      final boolean skipLastExpand,
-                                      final boolean literalResolve,
-                                      final boolean acceptAdditional) {
+                                             @NotNull final JsonPointerPosition position,
+                                             final boolean skipLastExpand,
+                                             final boolean acceptAdditional) {
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, schema);
     JsonSchemaService service = JsonSchemaService.Impl.get(schema.getJsonObject().getProject());
     expandChildSchema(root, schema, service);
     // set root's position since this children are just variants of root
     for (JsonSchemaTreeNode treeNode : root.getChildren()) {
-      treeNode.setSteps(ContainerUtil.notNullize(position));
+      treeNode.setPosition(position);
     }
 
     final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>(root.getChildren());
 
     while (!queue.isEmpty()) {
       final JsonSchemaTreeNode node = queue.removeFirst();
-      if (node.isAny() || node.isNothing() || node.getSteps().isEmpty() || node.getSchema() == null) continue;
-      final Step step = node.getSteps().get(0);
-      if (!typeMatches(step.isFromObject(), node.getSchema())) {
+      if (node.isAny() || node.isNothing() || node.getPosition().isEmpty() || node.getSchema() == null) continue;
+      final JsonPointerPosition step = node.getPosition();
+      if (!typeMatches(step.isObject(0), node.getSchema())) {
         node.nothingChild();
         continue;
       }
-      if (literalResolve) step.myLiteralResolve = true;
-      final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), acceptAdditional);
+      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, node.getSchema(), acceptAdditional);
       if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
       else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
       else {
         // process step results
         assert pair.getSecond() != null;
-        if (node.getSteps().size() > 1 || !skipLastExpand) expandChildSchema(node, pair.getSecond(), service);
+        if (node.getPosition().size() > 1 || !skipLastExpand) expandChildSchema(node, pair.getSecond(), service);
         else node.setChild(pair.getSecond());
       }
 
@@ -114,18 +113,16 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  public static List<Step> buildSteps(@NotNull String nameInSchema) {
-    final List<String> chain = split(normalizeSlashes(JsonSchemaService.normalizeId(nameInSchema)));
-    List<Step> steps = ContainerUtil.newArrayListWithCapacity(chain.size());
-    for (String s: chain) {
-      try {
-        steps.add(Step.createArrayElementStep(Integer.parseInt(s)));
-      }
-      catch (NumberFormatException e) {
-        steps.add(Step.createPropertyStep(unescapeJsonPointerPart(s)));
-      }
+  @NotNull
+  public static Pair<ThreeState, JsonSchemaObject> doSingleStep(JsonPointerPosition step, @NotNull JsonSchemaObject parent, boolean acceptAdditionalPropertiesSchemas) {
+    final String name = step.getFirstName();
+    if (name != null) {
+      return propertyStep(name, parent, acceptAdditionalPropertiesSchemas);
+    } else {
+      final int index = step.getFirstIndex();
+      assert index >= 0;
+      return arrayOrNumericPropertyElementStep(index, parent, acceptAdditionalPropertiesSchemas);
     }
-    return steps;
   }
 
   static abstract class Operation {
@@ -395,160 +392,105 @@ public class JsonSchemaVariantsTreeBuilder {
            || schema.getIf() != null;
   }
 
-  public static class Step {
-    @Nullable private final String myName;
-    private final int myIdx;
-    private boolean myLiteralResolve;
 
-    private Step(@Nullable String name, int idx) {
-      myName = name;
-      myIdx = idx;
+  @NotNull
+  private static Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull String name, @NotNull JsonSchemaObject parent,
+                                                                 boolean acceptAdditionalPropertiesSchemas) {
+    if (JsonSchemaObject.DEFINITIONS.equals(name) &&
+        parent.getDefinitionsMap() != null && !isInMainSchema(parent)) {
+      // definitions pointer here is fictive so lets find any
+      final Map<String, JsonSchemaObject> definitionsMap = parent.getDefinitionsMap();
+      final JsonObject anyDefinitions = definitionsMap.values().stream()
+        .filter(def -> {
+          final JsonProperty parentObj = ObjectUtils.tryCast(def.getJsonObject().getParent(), JsonProperty.class);
+          return parentObj != null && parentObj.isValid() && parentObj.getValue() instanceof JsonObject;
+        })
+        .map(def -> (JsonObject)((JsonProperty) def.getJsonObject().getParent()).getValue())
+        .findFirst().orElse(null);
+      if (anyDefinitions == null) return Pair.create(ThreeState.NO, null);
+      final JsonSchemaObject object = new JsonSchemaObject(anyDefinitions);
+      object.setProperties(definitionsMap);
+      return Pair.create(ThreeState.UNSURE, object);
     }
-
-    public static Step createPropertyStep(@NotNull final String name) {
-      return new Step(name, -1);
+    final JsonSchemaObject child = parent.getProperties().get(name);
+    if (child != null) {
+      return Pair.create(ThreeState.UNSURE, child);
     }
-
-    public static Step createArrayElementStep(final int idx) {
-      assert idx >= 0;
-      return new Step(null, idx);
+    final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(name);
+    if (schema != null) {
+      return Pair.create(ThreeState.UNSURE, schema);
     }
-
-    public boolean isFromObject() {
-      return myName != null;
-    }
-
-    public boolean isFromArray() {
-      return myName == null;
-    }
-
-    @Nullable
-    public String getName() {
-      return myName;
-    }
-
-    public int getIdx() {
-      return myIdx;
-    }
-
-    @NotNull
-    public Pair<ThreeState, JsonSchemaObject> step(@NotNull JsonSchemaObject parent, boolean acceptAdditionalPropertiesSchemas) {
-      if (myName != null) {
-        return propertyStep(parent, acceptAdditionalPropertiesSchemas);
-      } else {
-        assert myIdx >= 0;
-        return arrayOrNumericPropertyElementStep(parent, acceptAdditionalPropertiesSchemas);
+    if (acceptAdditionalPropertiesSchemas) {
+      if (parent.getAdditionalPropertiesSchema() != null) {
+        return Pair.create(ThreeState.UNSURE, parent.getAdditionalPropertiesSchema());
       }
-    }
 
-    @Override
-    public String toString() {
-      String format = "?%s";
-      if (myName != null) format = "{%s}";
-      if (myIdx >= 0) format = "[%s]";
-      return String.format(format, myName != null ? myName : (myIdx >= 0 ? String.valueOf(myIdx) : "null"));
-    }
+      // resolve inside V7 if-then-else conditionals
+      if (parent.getIf() != null) {
+        JsonSchemaObject childObject;
 
-    @NotNull
-    private Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull JsonSchemaObject parent,
-                                                            boolean acceptAdditionalPropertiesSchemas) {
-      assert myName != null;
-      if (JsonSchemaObject.DEFINITIONS.equals(myName) &&
-          parent.getDefinitionsMap() != null && (!isInMainSchema(parent) || myLiteralResolve)) {
-        // definitions pointer here is fictive so lets find any
-        final Map<String, JsonSchemaObject> definitionsMap = parent.getDefinitionsMap();
-        final JsonObject anyDefinitions = definitionsMap.values().stream()
-          .filter(def -> {
-            final JsonProperty parentObj = ObjectUtils.tryCast(def.getJsonObject().getParent(), JsonProperty.class);
-            return parentObj != null && parentObj.isValid() && parentObj.getValue() instanceof JsonObject;
-          })
-          .map(def -> (JsonObject)((JsonProperty) def.getJsonObject().getParent()).getValue())
-          .findFirst().orElse(null);
-        if (anyDefinitions == null) return Pair.create(ThreeState.NO, null);
-        final JsonSchemaObject object = new JsonSchemaObject(anyDefinitions);
-        object.setProperties(definitionsMap);
-        return Pair.create(ThreeState.UNSURE, object);
-      }
-      final JsonSchemaObject child = parent.getProperties().get(myName);
-      if (child != null) {
-        return Pair.create(ThreeState.UNSURE, child);
-      }
-      final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(myName);
-      if (schema != null) {
-        return Pair.create(ThreeState.UNSURE, schema);
-      }
-      if (acceptAdditionalPropertiesSchemas) {
-        if (parent.getAdditionalPropertiesSchema() != null) {
-          return Pair.create(ThreeState.UNSURE, parent.getAdditionalPropertiesSchema());
-        }
+        // NOTE: do not resolve inside 'if' itself - it is just a condition, but not an actual validation!
+        // only 'then' and 'else' branches provide actual validation sources, but not the 'if' branch
 
-        // resolve inside V7 if-then-else conditionals
-        if (parent.getIf() != null) {
-          JsonSchemaObject childObject;
-
-          // NOTE: do not resolve inside 'if' itself - it is just a condition, but not an actual validation!
-          // only 'then' and 'else' branches provide actual validation sources, but not the 'if' branch
-
-          if (parent.getThen() != null) {
-            childObject = parent.getThen().getProperties().get(myName);
-            if (childObject != null) {
-              return Pair.create(ThreeState.UNSURE, childObject);
-            }
+        if (parent.getThen() != null) {
+          childObject = parent.getThen().getProperties().get(name);
+          if (childObject != null) {
+            return Pair.create(ThreeState.UNSURE, childObject);
           }
-          if (parent.getElse() != null) {
-            childObject = parent.getElse().getProperties().get(myName);
-            if (childObject != null) {
-              return Pair.create(ThreeState.UNSURE, childObject);
-            }
+        }
+        if (parent.getElse() != null) {
+          childObject = parent.getElse().getProperties().get(name);
+          if (childObject != null) {
+            return Pair.create(ThreeState.UNSURE, childObject);
           }
         }
       }
-      if (Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
-        return Pair.create(ThreeState.NO, null);
-      }
-      // by default, additional properties are allowed
-      return Pair.create(ThreeState.YES, null);
     }
-
-    private static boolean isInMainSchema(@NotNull JsonSchemaObject parent) {
-      final VirtualFile schemaFile = parent.getSchemaFile();
-      final JsonSchemaService service = JsonSchemaService.Impl.get(parent.getJsonObject().getProject());
-      if (!service.isApplicableToFile(schemaFile) || !service.isSchemaFile(schemaFile)) return false;
-
-      final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
-      if (rootSchema == null) return false;
-
-      return JsonSchemaVersion.isSchemaSchemaId(rootSchema.getId());
+    if (Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
+      return Pair.create(ThreeState.NO, null);
     }
+    // by default, additional properties are allowed
+    return Pair.create(ThreeState.YES, null);
+  }
 
-    @NotNull
-    private Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(@NotNull JsonSchemaObject parent,
-                                                                                 boolean acceptAdditionalPropertiesSchemas) {
-      if (parent.getItemsSchema() != null) {
-        return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
-      }
-      if (parent.getItemsSchemaList() != null) {
-        final List<JsonSchemaObject> list = parent.getItemsSchemaList();
-        if (myIdx >= 0 && myIdx < list.size()) {
-          return Pair.create(ThreeState.UNSURE, list.get(myIdx));
-        }
-      }
-      final String keyAsString = String.valueOf(myIdx);
-      if (parent.getProperties().containsKey(keyAsString)) {
-        return Pair.create(ThreeState.UNSURE, parent.getProperties().get(keyAsString));
-      }
-      final JsonSchemaObject matchingPatternPropertySchema = parent.getMatchingPatternPropertySchema(keyAsString);
-      if (matchingPatternPropertySchema != null) {
-        return Pair.create(ThreeState.UNSURE, matchingPatternPropertySchema);
-      }
-      if (parent.getAdditionalItemsSchema() != null && acceptAdditionalPropertiesSchemas) {
-        return Pair.create(ThreeState.UNSURE, parent.getAdditionalItemsSchema());
-      }
-      if (Boolean.FALSE.equals(parent.getAdditionalItemsAllowed())) {
-        return Pair.create(ThreeState.NO, null);
-      }
-      return Pair.create(ThreeState.YES, null);
+  private static boolean isInMainSchema(@NotNull JsonSchemaObject parent) {
+    final VirtualFile schemaFile = parent.getSchemaFile();
+    final JsonSchemaService service = JsonSchemaService.Impl.get(parent.getJsonObject().getProject());
+    if (!service.isApplicableToFile(schemaFile) || !service.isSchemaFile(schemaFile)) return false;
+
+    final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
+    if (rootSchema == null) return false;
+
+    return JsonSchemaVersion.isSchemaSchemaId(rootSchema.getId());
+  }
+
+  @NotNull
+  private static Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(int idx, @NotNull JsonSchemaObject parent,
+                                                                                      boolean acceptAdditionalPropertiesSchemas) {
+    if (parent.getItemsSchema() != null) {
+      return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
     }
+    if (parent.getItemsSchemaList() != null) {
+      final List<JsonSchemaObject> list = parent.getItemsSchemaList();
+      if (idx >= 0 && idx < list.size()) {
+        return Pair.create(ThreeState.UNSURE, list.get(idx));
+      }
+    }
+    final String keyAsString = String.valueOf(idx);
+    if (parent.getProperties().containsKey(keyAsString)) {
+      return Pair.create(ThreeState.UNSURE, parent.getProperties().get(keyAsString));
+    }
+    final JsonSchemaObject matchingPatternPropertySchema = parent.getMatchingPatternPropertySchema(keyAsString);
+    if (matchingPatternPropertySchema != null) {
+      return Pair.create(ThreeState.UNSURE, matchingPatternPropertySchema);
+    }
+    if (parent.getAdditionalItemsSchema() != null && acceptAdditionalPropertiesSchemas) {
+      return Pair.create(ThreeState.UNSURE, parent.getAdditionalItemsSchema());
+    }
+    if (Boolean.FALSE.equals(parent.getAdditionalItemsAllowed())) {
+      return Pair.create(ThreeState.NO, null);
+    }
+    return Pair.create(ThreeState.YES, null);
   }
 
   public static class SchemaUrlSplitter {

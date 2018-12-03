@@ -12,10 +12,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.openapi.vcs.ex.LineStatusTracker
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState
-import com.intellij.openapi.vcs.ex.Range
+import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
@@ -93,7 +90,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   }
 
   protected fun PartialLocalLineStatusTracker.assertAffectedChangeLists(vararg expectedNames: String) {
-    assertSameElements(this.affectedChangeListsIds.asListIdsToNames(), *expectedNames)
+    assertSameElements(this.getAffectedChangeListsIds().asListIdsToNames(), *expectedNames)
   }
 
   protected fun LineStatusTracker<*>.assertTextContentIs(expected: String) {
@@ -105,7 +102,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   }
 
   protected fun Range.assertChangeList(listName: String) {
-    val localRange = this as PartialLocalLineStatusTracker.LocalRange
+    val localRange = this as LocalRange
     assertEquals(listName, localRange.changelistId.asListIdToName())
   }
 

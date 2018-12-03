@@ -58,6 +58,7 @@ import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
@@ -128,6 +129,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
   private final AnActionListener messageBusPublisher;
+  private int myAnonymousGroupIdCounter = 0;
 
   ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
@@ -144,6 +146,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     try {
       Class<?> aClass = Class.forName(className, true, stub.getLoader());
       obj = ReflectionUtil.newInstance(aClass);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(new PluginException(e, stub.getPluginId()));
@@ -178,7 +183,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Nullable
   private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
-    final String resBundleName = plugin != null && !"com.intellij".equals(plugin.getPluginId().getIdString())
+    final String resBundleName = plugin != null && !PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId().getIdString())
                                          ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
@@ -683,9 +688,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         return null;
       }
 
-      if (id != null) {
-        registerOrReplaceActionInner(element, id, group, pluginId);
+      if (id == null) {
+        id = "<anonymous-group-" + (myAnonymousGroupIdCounter++) + ">";
       }
+
+      registerOrReplaceActionInner(element, id, group, pluginId);
       Presentation presentation = group.getTemplatePresentation();
 
       // text
@@ -709,7 +716,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
-      if (id != null && customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
+      if (customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
         myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
       }
 
@@ -1047,6 +1054,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public void unregisterAction(@NotNull String actionId) {
+    unregisterAction(actionId, true);
+  }
+
+  private void unregisterAction(@NotNull String actionId, boolean removeFromGroups) {
     synchronized (myLock) {
       if (!myId2Action.containsKey(actionId)) {
         if (LOG.isDebugEnabled()) {
@@ -1062,6 +1073,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         if (pluginActions != null) {
           pluginActions.remove(actionId);
         }
+      }
+      if (removeFromGroups) {
+        for (String groupId : myId2GroupId.get(actionId)) {
+          DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+          group.remove(oldValue, actionId);
+        }
+      }
+      if (oldValue instanceof ActionGroup) {
+        myId2GroupId.values().remove(actionId);
       }
     }
   }
@@ -1140,6 +1160,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     });
   }
 
+  @Override
+  public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
+    replaceAction(actionId, newAction, pluginId);
+  }
+
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
     if (oldAction != null) {
@@ -1151,13 +1178,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
       }
       for (String groupId : myId2GroupId.get(actionId)) {
-        DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+        DefaultActionGroup group = (DefaultActionGroup) getActionOrStub(groupId);
+        if (group == null) {
+          throw new IllegalStateException("Trying to replace action which has been added to a non-existing group " + groupId);
+        }
         group.replaceAction(oldAction, newAction);
       }
-      unregisterAction(actionId);
-      if (isGroup) {
-        myId2GroupId.values().remove(actionId);
-      }
+      unregisterAction(actionId, false);
     }
     registerAction(actionId, newAction, pluginId);
     return oldAction;
@@ -1199,7 +1226,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    ActionsCollector.getInstance().record(myLastPreformedActionId, action.getClass(), event.isFromContextMenu(), event.getPlace());
+    ActionsCollector.getInstance().record(myLastPreformedActionId, action.getClass(), event);
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }

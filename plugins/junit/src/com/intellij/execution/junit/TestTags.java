@@ -6,6 +6,7 @@ package com.intellij.execution.junit;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
@@ -36,6 +38,13 @@ class TestTags extends TestObject {
       configurationModule.checkForWarning();
     }
     parseAsJavaExpression(tags);
+  }
+
+  @Nullable
+  @Override
+  public SourceScope getSourceScope() {
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    return data.getScope().getSourceScope(getConfiguration());
   }
 
   /**

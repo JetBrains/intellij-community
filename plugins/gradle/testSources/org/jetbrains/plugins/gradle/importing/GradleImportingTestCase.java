@@ -114,6 +114,9 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       Messages.setTestDialog(TestDialog.DEFAULT);
       deleteBuildSystemDirectory();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

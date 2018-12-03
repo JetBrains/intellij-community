@@ -23,18 +23,16 @@ private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?:
  * @return map of file paths (relative to [dirToList]) to [GitObject]
  */
 internal fun listGitObjects(
-  repo: File, dirToList: String?,
+  repo: File, dirToList: File?,
   fileFilter: (File) -> Boolean = { true }
 ): Map<String, GitObject> = listGitTree(repo, dirToList, fileFilter)
   .collect(Collectors.toMap({ it.first }, { it.second }))
 
 private fun listGitTree(
-  repo: File, dirToList: String?,
+  repo: File, dirToList: File?,
   fileFilter: (File) -> Boolean
 ): Stream<Pair<String, GitObject>> {
-  val relativeDirToList = dirToList?.let {
-    File(it).relativeTo(repo).path
-  } ?: ""
+  val relativeDirToList = dirToList?.relativeTo(repo)?.path ?: ""
   log("Inspecting $repo")
   if (!isUnderTeamCity()) try {
     execute(repo, GIT, "pull", "--rebase")
@@ -89,42 +87,50 @@ internal data class GitObject(val path: String, val hash: String, val repo: File
 }
 
 /**
- * @param path path in repo
+ * @param dir path in repo
  * @return root of repo
  */
-internal fun findGitRepoRoot(path: String, silent: Boolean = false): File {
-  val dir = File(path)
+internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File {
   return if (dir.isDirectory && dir.listFiles().find { file ->
       file.isDirectory && file.name == ".git"
     } != null) {
-    if (!silent) log("Git repo found in $path")
+    if (!silent) log("Git repo found in $dir")
     dir
   }
-  else if (dir.parent != null) {
-    if (!silent) log("No git repo found in $path")
-    findGitRepoRoot(dir.parent, silent)
+  else if (dir.parentFile != null) {
+    if (!silent) log("No git repo found in $dir")
+    findGitRepoRoot(dir.parentFile, silent)
   }
   else {
-    error("No git repo found in $path")
+    error("No git repo found in $dir")
   }
 }
 
-internal fun addChangesToGit(files: List<String>, repo: File) {
+internal fun unStageFiles(files: List<String>, repo: File) {
   // OS has argument length limit
-  splitAndTry(1000, files, repo)
+  splitAndTry(1000, files, repo) {
+    execute(repo, GIT, "reset", "HEAD", *it.toTypedArray())
+  }
 }
 
-private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
-  log("Executing git add for ${repo.absolutePath} in batches with $factor elements each")
+internal fun stageFiles(files: List<String>, repo: File) {
+  // OS has argument length limit
+  splitAndTry(1000, files, repo) {
+    execute(repo, GIT, "add", "--ignore-errors", *it.toTypedArray())
+  }
+}
+
+private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (files: List<String>) -> Unit) {
   files.split(factor).forEach {
     try {
-      execute(repo, GIT, "add", *it.toTypedArray())
+      block(it)
     }
     catch (e: Exception) {
+      if (e.message?.contains("did not match any files") == true) return
       val finerFactor: Int = factor / 2
       if (finerFactor < 1) throw e
       log("Git add command failed with ${e.message}")
-      splitAndTry(finerFactor, files, repo)
+      splitAndTry(finerFactor, files, repo, block)
     }
   }
 }
@@ -150,21 +156,36 @@ private fun push(repo: File, spec: String) =
     execute(repo, GIT, "push", "origin", spec, withTimer = true)
   }
 
-internal fun getOriginUrl(repo: File) = execute(repo, GIT, "ls-remote", "--get-url", "origin")
-  .removeSuffix(System.lineSeparator())
-  .trim()
+@Volatile
+private var origins = emptyMap<File, String>()
+private val originsGuard = Any()
+
+internal fun getOriginUrl(repo: File): String {
+  if (!origins.containsKey(repo)) {
+    synchronized(originsGuard) {
+      if (!origins.containsKey(repo)) {
+        origins += repo to execute(repo, GIT, "ls-remote", "--get-url", "origin")
+          .removeSuffix(System.lineSeparator())
+          .trim()
+      }
+    }
+  }
+  return origins[repo]!!
+}
 
 @Volatile
 private var latestChangeCommits = emptyMap<String, CommitInfo>()
 private val latestChangeCommitsGuard = Any()
 
-internal fun latestChangeCommit(path: String, repo: File? = null): CommitInfo? {
-  val foundRepo = repo ?: findGitRepoRoot(path, silent = true)
-  val file = (if (repo == null) File(path) else File(repo, path)).canonicalPath
+/**
+ * @param path path relative to [repo]
+ */
+internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
+  val file = repo.resolve(path).canonicalPath
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {
-        val commitInfo = commitInfo(foundRepo, "--", path)
+        val commitInfo = commitInfo(repo, "--", path)
         if (commitInfo != null) {
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits += file to commitInfo
@@ -253,7 +274,7 @@ private fun head(repo: File): String {
   return heads[repo]!!
 }
 
-private fun commitInfo(repo: File, vararg args: String): CommitInfo? {
+internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {
   val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args)
     .splitNotBlank("/")
   // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
@@ -281,7 +302,23 @@ internal data class CommitInfo(
   val repo: File
 )
 
-internal fun initGit(repo: File, user: String, email: String) {
+internal fun <T> withUser(repo: File, user: String, email: String, block: () -> T): T {
+  val (originalUser, originalEmail) = callSafely {
+    execute(repo, GIT, "config", "user.name").removeSuffix(System.lineSeparator()) to
+      execute(repo, GIT, "config", "user.email").removeSuffix(System.lineSeparator())
+  } ?: "" to ""
+  return try {
+    configureUser(repo, user, email)
+    block()
+  }
+  finally {
+    callSafely {
+      configureUser(repo, originalUser, originalEmail)
+    }
+  }
+}
+
+private fun configureUser(repo: File, user: String, email: String) {
   execute(repo, GIT, "config", "user.name", user)
   execute(repo, GIT, "config", "user.email", email)
 }
@@ -289,9 +326,30 @@ internal fun initGit(repo: File, user: String, email: String) {
 internal fun gitStatus(repo: File) =
   execute(repo, GIT, "status", "--short", "--untracked-files=no", "--ignored=no")
     .lineSequence()
-    .map { it.trim() }
-    .filter { it.isNotEmpty() }
+    .map(String::trim)
+    .filter(String::isNotEmpty)
     .map { if (it.contains("->")) it.split("->").last() else it }
     .map { if (it.contains(" ")) it.split(" ").last() else it }
-    .map { it.trim() }
+    .map(String::trim)
     .toList()
+
+internal fun gitStage(repo: File) = execute(repo, GIT, "diff", "--cached", "--name-status")
+
+internal enum class ChangeType { MODIFIED, ADDED, DELETED }
+
+internal fun changesFromCommit(repo: File, hash: String) =
+  execute(repo, GIT, "show", "--pretty=format:none", "--name-status", "--no-renames", hash)
+    .lineSequence().map { it.trim() }
+    .filter { it.isNotEmpty() && it != "none" }
+    .map { it.splitWithTab() }
+    .onEach { if (it.size != 2) error(it.joinToString(" ")) }
+    .map {
+      val (type, path) = it
+      when (type) {
+        "A" -> ChangeType.ADDED
+        "D" -> ChangeType.DELETED
+        "M" -> ChangeType.MODIFIED
+        "T" -> ChangeType.MODIFIED
+        else -> return@map null
+      } to path
+    }.filterNotNull().groupBy({ it.first }, { it.second })

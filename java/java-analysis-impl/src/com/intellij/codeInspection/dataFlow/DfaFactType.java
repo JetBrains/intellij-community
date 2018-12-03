@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -168,7 +169,8 @@ public abstract class DfaFactType<T> extends Key<T> {
     LongRangeSet calcFromVariable(@NotNull DfaVariableValue var) {
       DfaVariableSource source = var.getSource();
       if(source instanceof SpecialField) {
-        LongRangeSet fromSpecialField = ((SpecialField)source).getRange();
+        DfaValue defaultValue = ((SpecialField)source).getDefaultValue(var.getFactory());
+        LongRangeSet fromSpecialField = LongRangeSet.fromDfaValue(defaultValue);
         if (fromSpecialField != null) {
           return fromSpecialField;
         }
@@ -251,6 +253,20 @@ public abstract class DfaFactType<T> extends Key<T> {
       return fact ? "local object" : "";
     }
   };
+  
+  public static final DfaFactType<SpecialFieldValue> SPECIAL_FIELD_VALUE = new DfaFactType<SpecialFieldValue>("Special field value") {
+    @NotNull
+    @Override
+    public String getName(SpecialFieldValue fact) {
+      return fact == null ? super.getName(null) : StringUtil.wordsToBeginFromUpperCase(fact.getField().getMethodName());
+    }
+
+    @NotNull
+    @Override
+    public String getPresentationText(@NotNull SpecialFieldValue fact, @Nullable PsiType type) {
+      return String.valueOf(fact.getValue());
+    }
+  };
 
   @NotNull
   private final String myName;
@@ -263,7 +279,7 @@ public abstract class DfaFactType<T> extends Key<T> {
   }
 
   @NotNull
-  public String getName() {
+  public String getName(T fact) {
     return myName;
   }
 

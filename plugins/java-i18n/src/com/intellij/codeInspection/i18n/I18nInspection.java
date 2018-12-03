@@ -815,10 +815,10 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
   }
 
   private static boolean isReturnedFromNonNlsMethod(final PsiLiteralExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    PsiElement parent = expression.getParent();
     PsiMethod method;
-    if (parent instanceof PsiNameValuePair) {
-      method = AnnotationUtil.getAnnotationMethod((PsiNameValuePair)parent);
+    PsiNameValuePair nameValuePair = PsiTreeUtil.getParentOfType(expression, PsiNameValuePair.class);
+    if (nameValuePair != null) {
+      method = AnnotationUtil.getAnnotationMethod(nameValuePair);
     }
     else {
       final PsiElement returnStmt = PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class, PsiMethodCallExpression.class);

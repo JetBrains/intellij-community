@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.list;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -225,7 +224,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
                     @NotNull ProjectTaskContext context,
                     @Nullable ProjectTaskNotification callback,
                     @NotNull Collection<? extends ProjectTask> tasks) {
-
+      sendSuccessNotify(callback);
     }
 
     @Override

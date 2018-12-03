@@ -16,54 +16,10 @@ import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
-import org.junit.After
 import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
 import org.junit.rules.ErrorCollector
-import org.junit.rules.TestName
 import java.awt.IllegalComponentStateException
-
-open class GuiTestCaseExt : GuiTestCase() {
-
-  @Rule
-  @JvmField
-  val testMethod = TestName()
-
-  @Rule
-  @JvmField
-  val screenshotsDuringTest = ScreenshotsDuringTest(1000) // = 1 sec
-
-  @Rule
-  @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
-
-  val projectFolder: String by lazy {
-    projectsFolder.newFolder(testMethod.methodName).canonicalPath
-  }
-
-//  @Rule
-//  @JvmField
-//  val collector = object : ErrorCollector() {
-//    override fun addError(error: Throwable?) {
-//      val screenshotName = testName + "." + testMethod.methodName
-//      takeScreenshotOnFailure(error, screenshotName)
-//      super.addError(error)
-//    }
-//  }
-
-  @Before
-  open fun setUp() {
-    logStartTest(testMethod.methodName)
-  }
-
-  @After
-  fun tearDown() {
-    logEndTest(testMethod.methodName)
-  }
-
-  open fun isIdeFrameRun(): Boolean = true
-}
+import javax.swing.JTree
 
 fun <T> ErrorCollector.checkThat(value: T, matcher: Matcher<T>, reason: () -> String) {
   checkThat(reason(), value, matcher)
@@ -129,7 +85,7 @@ fun GuiTestCase.waitAMoment() {
     }
   }
 
-  val maxAttemptsWaitForBackgroundTasks = 3
+  val maxAttemptsWaitForBackgroundTasks = 5
   var currentAttempt = maxAttemptsWaitForBackgroundTasks
   while (isWaitIndicatorPresent() && currentAttempt >= 0){
     waitBackgroundTaskOneAttempt()
@@ -369,4 +325,46 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
       }
     }
   }
+}
+
+fun GuiTestCase.createJdk(jdkPath: String, jdkName: String = ""): String{
+  val dialogName = "Project Structure for New Projects"
+  logTestStep("Create a JDK on the path `$jdkPath`")
+  lateinit  var installedJdkName: String
+  welcomeFrame {
+    actionLink("Configure").click()
+    popupMenu("Structure for New Projects").clickSearchedItem()
+    logUIStep("Open `$dialogName` dialog")
+    dialog(dialogName) {
+      jList("SDKs").clickItem("SDKs")
+      val sdkTree: ExtendedJTreePathFixture = jTree()
+
+      fun JTree.getListOfInstalledSdks(): List<String> {
+        val root = model.root
+        return (0 until model.getChildCount(root))
+          .map { model.getChild(root, it).toString() }.toList()
+      }
+
+      val preInstalledSdks = sdkTree.tree.getListOfInstalledSdks()
+      installedJdkName = if(jdkName.isEmpty() || preInstalledSdks.contains(jdkName).not()){
+        actionButton("Add New SDK").click()
+        popupMenu("JDK").clickSearchedItem()
+        logUIStep("Open `Select Home Directory for JDK` dialog")
+        dialog("Select Home Directory for JDK") {
+          actionButton("Refresh").click()
+          logUIStep("Type the path `$jdkPath`")
+          typeText(jdkPath)
+          logUIStep("Close `Select Home Directory for JDK` dialog with OK")
+          button("OK").click()
+        }
+
+        val postInstalledSdks = sdkTree.tree.getListOfInstalledSdks()
+        postInstalledSdks.first { preInstalledSdks.contains(it).not() }
+      }
+      else jdkName
+      logUIStep("Close `Default Project Structure` dialog with OK")
+      button("OK").click()
+    } // dialog Project Structure
+  } // ideFrame
+  return installedJdkName
 }

@@ -97,6 +97,10 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
         if (!(statement instanceof PsiSwitchLabelStatement)) {
           continue;
         }
+        //enhanced switch statements forbid fallthrough implicitly
+        if (statement instanceof PsiSwitchLabeledRuleStatement) {
+          return;
+        }
         final PsiElement previousSibling = PsiTreeUtil.skipWhitespacesBackward(statement);
         if (previousSibling instanceof PsiComment) {
           final PsiComment comment = (PsiComment)previousSibling;

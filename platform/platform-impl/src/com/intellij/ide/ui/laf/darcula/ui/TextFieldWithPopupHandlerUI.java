@@ -69,7 +69,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a search icon in one of the four states or {@code null} to hide it
    */
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return AllIcons.Actions.Search;
+    return clickable ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
   }
 
   /**
@@ -117,7 +117,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return (component != null) && !isEmpty(component.getText());
   }
 
-  protected void updateIconsLayout(Rectangle bounds) {
+  private void updateIconsLayout(Rectangle bounds) {
     JTextComponent c = getComponent();
     Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null || UIUtil.getParentOfType(JSpinner.class, c) != null ?
                     JBUI.emptyInsets() : getDefaultMargins();
@@ -603,11 +603,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
-    public int getPreferredSpace() {
-      return getSearchIconPreferredSpace();
-    }
-
-    @Override
     public boolean isIconBeforeText() {
       return true;
     }
@@ -646,11 +641,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public int getIconGap() {
       return getClearIconGap();
-    }
-
-    @Override
-    public int getPreferredSpace() {
-      return getClearIconPreferredSpace();
     }
 
     @Override

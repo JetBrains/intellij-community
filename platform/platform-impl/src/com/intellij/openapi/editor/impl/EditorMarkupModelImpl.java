@@ -119,7 +119,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return 0;
     }
     if (offset > document.getTextLength()) {
-      return document.getLineCount();
+      return myEditor.getVisibleLineCount();
     }
     return myEditor.offsetToVisualLine(offset);
   }
@@ -179,7 +179,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     final int visualLine = getVisualLineByEvent(e);
     myLastVisualLine = visualLine;
     Rectangle area = myEditor.getScrollingModel().getVisibleArea();
-    int visualY = myEditor.getLineHeight() * visualLine;
+    int visualY = myEditor.visualLineToY(visualLine);
     boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
     if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
@@ -227,11 +227,21 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int getVisualLineByEvent(@NotNull MouseEvent e) {
-    return fitLineToEditor(myEditor.offsetToVisualLine(yPositionToOffset(e.getY() + myWheelAccumulator, true)));
+    int y = e.getY();
+    if (e.getSource() == myEditor.getVerticalScrollBar() && y == myEditor.getVerticalScrollBar().getHeight() - 1) {
+      y++;
+    }
+    return fitLineToEditor(myEditor.offsetToVisualLine(yPositionToOffset(y + myWheelAccumulator, true)));
   }
 
   private int fitLineToEditor(int visualLine) {
-    return Math.max(0, Math.min(myEditor.getVisibleLineCount() - 1, visualLine));
+    int lineCount = myEditor.getVisibleLineCount();
+    int shift = 0;
+    if (visualLine >= lineCount - 1) {
+      CharSequence sequence = myEditor.getDocument().getCharsSequence();
+      shift = sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
+    }
+    return Math.max(0, Math.min(lineCount - shift, visualLine));
   }
 
   private int getOffset(int visualLine, boolean startLine) {
@@ -1047,16 +1057,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
     Document document = myEditor.getDocument();
     int startLineNumber = end == -1 ? 0 : offsetToLine(start, document);
+    int editorStartY = myEditor.visualLineToY(startLineNumber);
     int startY;
-    int lineCount;
     int editorTargetHeight = Math.max(0, myEditorTargetHeight);
     if (myEditorSourceHeight < editorTargetHeight) {
-      lineCount = 0;
-      startY = myEditorScrollbarTop + startLineNumber * myEditor.getLineHeight();
+      startY = myEditorScrollbarTop + editorStartY;
     }
     else {
-      lineCount = myEditorSourceHeight / myEditor.getLineHeight();
-      startY = myEditorScrollbarTop + (int)((float)startLineNumber / lineCount * editorTargetHeight);
+      startY = myEditorScrollbarTop + (int)((float)editorStartY / myEditorSourceHeight * editorTargetHeight);
     }
 
     int endY;
@@ -1064,14 +1072,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (end == -1 || start == -1) {
       endY = Math.min(myEditorSourceHeight, editorTargetHeight);
     }
-    else if (start == end || offsetToLine(start, document) == endLineNumber) {
+    else if (startLineNumber == endLineNumber) {
       endY = startY; // both offsets are on the same line, no need to recalc Y position
     }
     else if (myEditorSourceHeight < editorTargetHeight) {
-      endY = myEditorScrollbarTop + endLineNumber * myEditor.getLineHeight();
+      endY = myEditorScrollbarTop + myEditor.visualLineToY(endLineNumber);
     }
     else {
-      endY = myEditorScrollbarTop + (int)((float)endLineNumber / lineCount * editorTargetHeight);
+      int editorEndY = myEditor.visualLineToY(endLineNumber);
+      endY = myEditorScrollbarTop + (int)((float)editorEndY / myEditorSourceHeight * editorTargetHeight);
     }
     if (endY < startY) endY = startY;
     return new ProperTextRange(startY, endY);
@@ -1082,15 +1091,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       recalcEditorDimensions();
     }
     final int safeY = Math.max(0, y - myEditorScrollbarTop);
-    VisualPosition visual;
+    int editorY;
     if (myEditorSourceHeight < myEditorTargetHeight) {
-      visual = myEditor.xyToVisualPosition(new Point(0, safeY));
+      editorY = safeY;
     }
     else {
       float fraction = Math.max(0, Math.min(1, safeY / (float)myEditorTargetHeight));
-      final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
-      visual = new VisualPosition((int)(fraction * lineCount), 0);
+      editorY = (int)(fraction * myEditorSourceHeight);
     }
+    VisualPosition visual = myEditor.xyToVisualPosition(new Point(0, editorY));
     int line = myEditor.visualToLogicalPosition(visual).line;
     Document document = myEditor.getDocument();
     if (line < 0) return 0;
@@ -1168,7 +1177,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
                         - myEditor.getVerticalScrollBar().getWidth();
             width -= JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) * 2 + contentInsets;
-            return new Dimension(width - BalloonImpl.POINTER_LENGTH.get(), myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
+            return new Dimension(width - BalloonImpl.POINTER_LENGTH.get(),
+                                 Math.min(2 * myPreviewLines * myEditor.getLineHeight(),
+                                          myEditor.visualLineToY(myEndVisualLine) - myEditor.visualLineToY(myStartVisualLine)));
           }
 
           @Override
@@ -1184,13 +1195,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             if (myCacheLevel2 == null || myCacheStartLine > myStartVisualLine || myCacheEndLine < myEndVisualLine) {
               myCacheStartLine = fitLineToEditor(myVisualLine - myCachePreviewLines);
               myCacheEndLine = fitLineToEditor(myCacheStartLine + 2 * myCachePreviewLines + 1);
+              int cacheStartY = myEditor.visualLineToY(myCacheStartLine);
               if (myCacheLevel2 == null) {
-                myCacheLevel2 = UIUtil.createImage(g, size.width, myEditor.getLineHeight() * (2 * myCachePreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+                myCacheLevel2 = UIUtil.createImage(g, size.width,
+                                                   myEditor.visualLineToY(myCacheEndLine) - cacheStartY + myEditor.getLineHeight(),
+                                                   BufferedImage.TYPE_INT_RGB);
               }
               Graphics2D cg = myCacheLevel2.createGraphics();
               final AffineTransform t = cg.getTransform();
               EditorUIUtil.setupAntialiasing(cg);
-              int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
+              int lineShift = - cacheStartY;
 
               int shift = JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) + contentInsets;
               AffineTransform gutterAT = AffineTransform.getTranslateInstance(-shift, lineShift);
@@ -1225,8 +1239,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               GraphicsUtil.setupAAPainting(g2d);
               g2d.setColor(myEditor.getBackgroundColor());
               g2d.fillRect(0, 0, getWidth(), getHeight());
-              AffineTransform translateInstance =
-                AffineTransform.getTranslateInstance(gutterWidth, myEditor.getLineHeight() * (myCacheStartLine - myStartVisualLine));
+              int topDisplayedY = Math.max(myEditor.visualLineToY(myStartVisualLine),
+                                           myEditor.visualLineToY(myVisualLine) - myPreviewLines * myEditor.getLineHeight());
+              int cacheStartY = myEditor.visualLineToY(myCacheStartLine);
+              AffineTransform translateInstance = AffineTransform.getTranslateInstance(gutterWidth, cacheStartY - topDisplayedY);
               translateInstance.preConcatenate(transform);
               g2d.setTransform(translateInstance);
               UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
@@ -1248,7 +1264,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
                 logicalPosition = myEditor.xyToLogicalPosition(placeToShow);//wraps&foldings workaround
                 placeToShow.x += R * 3 / 2;
-                placeToShow.y -= myCacheStartLine * myEditor.getLineHeight() - 1;
+                placeToShow.y -= cacheStartY - 1;
 
                 Font font = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
                 g2d.setFont(font.deriveFont(font.getSize() *.8F));

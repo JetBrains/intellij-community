@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiSwitchBlock extends PsiElement {
   /**
-   * Returns the expression on which the switch is performed, or {@code null} if the statement is incomplete.
+   * Returns the selector expression on which the switch is performed, or {@code null} if the statement is incomplete.
    */
   @Nullable PsiExpression getExpression();
 

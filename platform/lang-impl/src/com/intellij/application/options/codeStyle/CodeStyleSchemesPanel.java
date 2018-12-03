@@ -34,13 +34,13 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   
   private final CodeStyleSchemesModel myModel;
   
-  private boolean myIsReset = false;
+  private boolean myIsReset;
 
   public CodeStyleSchemesPanel(CodeStyleSchemesModel model, int vGap) {
     super(vGap);
     myModel = model;
   }
-  public CodeStyleSchemesPanel(CodeStyleSchemesModel model, @NotNull JComponent linkComponent) {
+  CodeStyleSchemesPanel(CodeStyleSchemesModel model, @NotNull JComponent linkComponent) {
     super(DEFAULT_VGAP, linkComponent);
     myModel = model;
   }
@@ -74,6 +74,7 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     }
   }
 
+  @NotNull
   @Override
   protected AbstractSchemeActions<CodeStyleScheme> createSchemeActions() {
     return

@@ -60,6 +60,9 @@ class PropertyAccessorFactory {
     if (mayHaveAccessor()) {
       switch (getValueType()) {
         case BOOLEAN:
+          if ("USE_TAB_CHARACTER".equals(myField.getName())) {
+            return new TabCharPropertyAccessor(codeStyleObject, myField);
+          }
           return new BooleanAccessor(codeStyleObject, myField);
         case INT:
           return new IntegerAccessor(codeStyleObject, myField);
@@ -83,5 +86,29 @@ class PropertyAccessorFactory {
   private boolean mayHaveAccessor() {
     return myField.getType().getCanonicalName() != null &&
            myField.getAnnotation(Deprecated.class) == null;
+  }
+
+  private static class TabCharPropertyAccessor extends BooleanAccessor {
+
+    TabCharPropertyAccessor(@NotNull Object object, @NotNull Field field) {
+      super(object, field);
+    }
+
+    @Nullable
+    @Override
+    protected Boolean parseString(@NotNull String str) {
+      return "tab".equalsIgnoreCase(str);
+    }
+
+    @NotNull
+    @Override
+    protected String asString(@NotNull Boolean value) {
+      return value ? "tab" : "space";
+    }
+
+    @Override
+    public String getPropertyName() {
+      return "indent_style";
+    }
   }
 }

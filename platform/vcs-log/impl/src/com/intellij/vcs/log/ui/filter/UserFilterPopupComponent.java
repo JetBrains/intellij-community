@@ -25,7 +25,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

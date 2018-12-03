@@ -102,11 +102,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     final StringBuilder committedRevisions = new StringBuilder();
     for (CommitInfo result : results) {
-      if (result != CommitInfo.EMPTY && result.getRevision() > 0) {
+      if (result != CommitInfo.EMPTY && result.getRevisionNumber() > 0) {
         if (committedRevisions.length() > 0) {
           committedRevisions.append(", ");
         }
-        committedRevisions.append(result.getRevision());
+        committedRevisions.append(result.getRevisionNumber());
       }
     }
     if (committedRevisions.length() > 0) {

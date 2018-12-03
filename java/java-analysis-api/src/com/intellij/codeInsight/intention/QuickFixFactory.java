@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -460,4 +461,8 @@ public abstract class QuickFixFactory {
   public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     throw new AbstractMethodError();
   }
+
+  public abstract IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases);
+
+  public abstract IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock);
 }

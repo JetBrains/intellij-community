@@ -47,9 +47,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -177,9 +177,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
-    if (!GradleSystemRunningSettings.getInstance().isUseGradleAwareMake()) return false;
     if (projectTask instanceof ModuleBuildTask) {
-      return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, ((ModuleBuildTask)projectTask).getModule());
+      Module module = ((ModuleBuildTask)projectTask).getModule();
+      if (!GradleSettingsService.isDelegatedBuildEnabled(module)) return false;
+      return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
     if (projectTask instanceof ProjectModelBuildTask) {
       ProjectModelBuildTask buildTask = (ProjectModelBuildTask)projectTask;
@@ -194,7 +195,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
       if (runProfile instanceof ModuleBasedConfiguration) {
         RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
-        if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule())) {
+        if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule()) ||
+            !GradleSettingsService.isDelegatedBuildEnabled(module.getModule())) {
           return false;
         }
       }

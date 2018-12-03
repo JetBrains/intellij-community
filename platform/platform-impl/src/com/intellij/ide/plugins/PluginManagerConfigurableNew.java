@@ -24,7 +24,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -120,9 +119,15 @@ public class PluginManagerConfigurableNew
   private SearchResultPanel myUpdatesSearchPanel;
   private SearchResultPanel myCurrentSearchPanel;
 
-  private final MyPluginModel myPluginsModel = new MyPluginModel();
+  private final MyPluginModel myPluginsModel = new MyPluginModel() {
+    @Override
+    public List<IdeaPluginDescriptor> getAllRepoPlugins() {
+      return getPluginRepositories();
+    }
+  };
 
   private Runnable myShutdownCallback;
+  private Runnable myPluginUpdatesServiceCallback;
 
   private List<IdeaPluginDescriptor> myAllRepositoriesList;
   private Map<String, IdeaPluginDescriptor> myAllRepositoriesMap;
@@ -459,6 +464,9 @@ public class PluginManagerConfigurableNew
     myTabHeaderComponent.addTab("Installed");
     myTabHeaderComponent.addTab(myUpdatesTabName = new CountTabName(myTabHeaderComponent, "Updates"));
 
+    myPluginUpdatesServiceCallback =
+      PluginUpdatesService.connectConfigurable(countValue -> myUpdatesTabName.setCount(countValue == null ? 0 : countValue));
+
     createSearchPanels();
 
     int selectionTab = getStoredSelectionTab();
@@ -643,6 +651,11 @@ public class PluginManagerConfigurableNew
     Disposer.dispose(mySearchUpdateAlarm);
     myTrendingSearchPanel.dispose();
 
+    if (myPluginUpdatesServiceCallback != null) {
+      myPluginUpdatesServiceCallback.run();
+      myPluginUpdatesServiceCallback = null;
+    }
+
     if (myTrendingPanel != null) {
       myTrendingPanel.dispose();
     }
@@ -658,30 +671,31 @@ public class PluginManagerConfigurableNew
 
   @Override
   public void apply() throws ConfigurationException {
-    Map<PluginId, Set<PluginId>> dependencies = new HashMap<>(myPluginsModel.getDependentToRequiredListMap());
+    Map<PluginId, Boolean> enabledMap = myPluginsModel.getEnabledMap();
+    List<String> dependencies = new ArrayList<>();
 
-    for (Iterator<Entry<PluginId, Set<PluginId>>> I = dependencies.entrySet().iterator(); I.hasNext(); ) {
-      Entry<PluginId, Set<PluginId>> entry = I.next();
-      boolean hasNonModuleDeps = false;
+    for (Entry<PluginId, Set<PluginId>> entry : myPluginsModel.getDependentToRequiredListMap().entrySet()) {
+      PluginId id = entry.getKey();
 
-      for (PluginId pluginId : entry.getValue()) {
-        if (!PluginManagerCore.isModuleDependency(pluginId)) {
-          hasNonModuleDeps = true;
+      if (enabledMap.get(id) == null) {
+        continue;
+      }
+
+      for (PluginId dependId : entry.getValue()) {
+        if (!PluginManagerCore.isModuleDependency(dependId)) {
+          IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
+          if (!(descriptor instanceof IdeaPluginDescriptorImpl) || !((IdeaPluginDescriptorImpl)descriptor).isDeleted()) {
+            dependencies.add("\"" + (descriptor == null ? id.getIdString() : descriptor.getName()) + "\"");
+          }
           break;
         }
-      }
-      if (!hasNonModuleDeps) {
-        I.remove();
       }
     }
 
     if (!dependencies.isEmpty()) {
       throw new ConfigurationException("<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
                                        (dependencies.size() == 1 ? " " : "s ") +
-                                       StringUtil.join(dependencies.keySet(), pluginId -> {
-                                         IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
-                                         return "\"" + (descriptor == null ? pluginId.getIdString() : descriptor.getName()) + "\"";
-                                       }, ", ") +
+                                       StringUtil.join(dependencies, ", ") +
                                        " won't be able to load.</body></html>");
     }
 
@@ -692,7 +706,7 @@ public class PluginManagerConfigurableNew
     }
 
     List<String> disableIds = new ArrayList<>();
-    for (Entry<PluginId, Boolean> entry : myPluginsModel.getEnabledMap().entrySet()) {
+    for (Entry<PluginId, Boolean> entry : enabledMap.entrySet()) {
       Boolean enabled = entry.getValue();
       if (enabled != null && !enabled) {
         disableIds.add(entry.getKey().getIdString());
@@ -723,11 +737,10 @@ public class PluginManagerConfigurableNew
 
     for (int i = 0; i < rowCount; i++) {
       IdeaPluginDescriptor descriptor = myPluginsModel.getObjectAt(i);
-      PluginId pluginId = descriptor.getPluginId();
-      boolean enabledInTable = myPluginsModel.isEnabled(pluginId);
+      boolean enabledInTable = myPluginsModel.isEnabled(descriptor);
 
       if (descriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !disabledPlugins.contains(pluginId.getIdString())) {
+        if (enabledInTable && !disabledPlugins.contains(descriptor.getPluginId().getIdString())) {
           continue; // was disabled automatically on startup
         }
         return true;
@@ -776,7 +789,7 @@ public class PluginManagerConfigurableNew
           if (allDescriptors != null) {
             addGroup(groups, "Repository: " + host, "repository:\"" + host + "\"", descriptors -> {
               int allSize = allDescriptors.size();
-              descriptors.addAll(allDescriptors.subList(0, Math.min(ITEMS_PER_GROUP, allSize)));
+              descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
               PluginsGroup.sortByName(descriptors);
               return allSize > ITEMS_PER_GROUP;
             });
@@ -880,16 +893,14 @@ public class PluginManagerConfigurableNew
                                             descriptor -> new ListPluginComponent(myPluginsModel, descriptor, true));
     registerCopyProvider(myUpdatesPanel);
 
-    Runnable runnable = () -> {
-      Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
+    myUpdatesRunnable = () -> {
+      myUpdatesPanel.clear();
+      myUpdatesPanel.startLoading();
 
-      ApplicationManager.getApplication().invokeLater(() -> {
+      PluginUpdatesService.calculateUpdates(updates -> {
         myUpdatesPanel.stopLoading();
 
-        if (ContainerUtil.isEmpty(updates)) {
-          myUpdatesTabName.setCount(0);
-        }
-        else {
+        if (!ContainerUtil.isEmpty(updates)) {
           PluginsGroup group = new PluginsGroup("Available Updates") {
             @Override
             public void titleWithCount() {
@@ -903,7 +914,6 @@ public class PluginManagerConfigurableNew
               title = myTitlePrefix + " (" + count + ")";
               updateTitle();
               rightAction.setVisible(count > 0);
-              myUpdatesTabName.setCount(count);
             }
           };
 
@@ -930,19 +940,13 @@ public class PluginManagerConfigurableNew
 
         myUpdatesPanel.doLayout();
         myUpdatesPanel.initialSelection();
-      }, ModalityState.any());
-    };
-
-    myUpdatesRunnable = () -> {
-      myUpdatesPanel.clear();
-      myUpdatesPanel.startLoading();
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      });
     };
 
     myUpdatesPanel.getEmptyText().setText("No updates available.")
       .appendSecondaryText("Check new updates", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myUpdatesRunnable.run());
 
-    ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    myUpdatesRunnable.run();
     return createScrollPane(myUpdatesPanel, false);
   }
 
@@ -1269,6 +1273,8 @@ public class PluginManagerConfigurableNew
       myCustomRepositoriesMap = null;
     }
 
+    PluginUpdatesService.recalculateUpdates();
+
     if (myTrendingPanel == null && myUpdatesPanel == null) {
       return;
     }
@@ -1459,10 +1465,8 @@ public class PluginManagerConfigurableNew
   @NotNull
   private static Url createSearchSuggestUrl(@NotNull String query) {
     ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
-    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/searchSuggest?term=" +
-                               URLUtil.encodeURIComponent(query) +
-                               "&productCode=" +
-                               URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
+    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/searchSuggest?term=" + URLUtil.encodeURIComponent(query) +
+                               "&productCode=" + URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
   }
 
   private static boolean forceHttps() {

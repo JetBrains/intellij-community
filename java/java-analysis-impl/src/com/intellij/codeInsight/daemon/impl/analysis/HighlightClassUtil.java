@@ -251,9 +251,7 @@ public class HighlightClassUtil {
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
       range(aClass, range.getStartOffset(), range.getEndOffset()).
       descriptionAndTooltip(message).create();
-    PsiModifierList psiModifierList = aClass.getModifierList();
-    QuickFixAction.registerQuickFixAction(errorResult,
-                                          QUICK_FIX_FACTORY.createModifierListFix(psiModifierList, PsiModifier.PUBLIC, false, false));
+    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.PUBLIC, false, false));
     PsiClass[] classes = file.getClasses();
     if (classes.length > 1) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMoveClassToSeparateFileFix(aClass));

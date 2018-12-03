@@ -366,7 +366,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
-      final String pluginId = StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
+      final String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
       for (ExtensionPoints points : plugin.getExtensionPoints()) {
         for (ExtensionPoint point : points.getExtensionPoints()) {
           registerExtensionPoint(registrar, point, epPrefix, pluginId);

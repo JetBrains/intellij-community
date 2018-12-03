@@ -11,7 +11,9 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.vcs.log.ui.frame.ProgressStripe
 import java.awt.BorderLayout
 import javax.swing.border.Border
 import kotlin.properties.Delegates
@@ -20,6 +22,7 @@ internal class GithubPullRequestChangesComponent(project: Project) : GithubDataL
 
   private val changesBrowser = PullRequestChangesBrowserWithError(project)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  private val backgroundLoadingPanel = ProgressStripe(loadingPanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
   val diffAction = changesBrowser.diffAction
 
@@ -42,17 +45,22 @@ internal class GithubPullRequestChangesComponent(project: Project) : GithubDataL
   override fun handleError(error: Throwable) {
     changesBrowser.emptyText
       .clear()
-      .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      .appendText("Can't load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
   }
 
   override fun setBusy(busy: Boolean) {
     if (busy) {
-      changesBrowser.emptyText.clear()
-      loadingPanel.startLoading()
+      if(changesBrowser.changes.isNullOrEmpty()) {
+        changesBrowser.emptyText.clear()
+        loadingPanel.startLoading()
+      } else {
+        backgroundLoadingPanel.startLoading()
+      }
     }
     else {
       loadingPanel.stopLoading()
+      backgroundLoadingPanel.stopLoading()
     }
   }
 

@@ -60,13 +60,20 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    Disposer.dispose(disposable);
-    Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
-    int nListeners = myVirtualFilePointerManager.numberOfListeners();
-    myVirtualFilePointerManager = null;
-    assertEquals(numberOfListenersBefore, nListeners);
-    assertEquals(pointersBefore, pointersAfter);
-    super.tearDown();
+    try {
+      Disposer.dispose(disposable);
+      Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
+      int nListeners = myVirtualFilePointerManager.numberOfListeners();
+      myVirtualFilePointerManager = null;
+      assertEquals(numberOfListenersBefore, nListeners);
+      assertEquals(pointersBefore, pointersAfter);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static class LoggingListener implements VirtualFilePointerListener {
@@ -134,36 +141,6 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
     String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
     assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
-  }
-  
-  public void testUrlsHavingOnlyStartingSlashInCommon() {
-    VirtualFilePointer p1 = myVirtualFilePointerManager.create("file:///a/p1", disposable, null);
-    VirtualFilePointer p2 = myVirtualFilePointerManager.create("file:///b/p2", disposable, null);
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile a = createLightFile(root, "a");
-    LightVirtualFile b = createLightFile(root, "b");
-    assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
-    assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
-  }
-  
-  public void testUrlsHavingOnlyStartingSlashInCommonAndInvalidUrlBetweenThem() {
-    VirtualFilePointer p1 = myVirtualFilePointerManager.create("file:///a/p1", disposable, null);
-    myVirtualFilePointerManager.create("file://invalid/path", disposable, null);
-    VirtualFilePointer p2 = myVirtualFilePointerManager.create("file:///b/p2", disposable, null);
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile a = createLightFile(root, "a");
-    LightVirtualFile b = createLightFile(root, "b");
-    assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
-    assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
-  }
-
-  private static LightVirtualFile createLightFile(LightVirtualFile parent, String name) {
-    return new LightVirtualFile(name) {
-      @Override
-      public VirtualFile getParent() {
-        return parent;
-      }
-    };
   }
   
   public void testPathNormalization() throws IOException {

@@ -10,7 +10,7 @@ import org.editorconfig.language.assertIterableEquals
 
 class EditorConfigCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/completion/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/completion/"
 
   init {
     // calling this from setUp() turns out to be too late

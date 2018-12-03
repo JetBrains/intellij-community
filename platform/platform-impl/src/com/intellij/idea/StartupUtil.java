@@ -370,6 +370,9 @@ public class StartupUtil {
     if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
       System.setProperty("winp.folder.preferred", ideTempDir.getPath());
     }
+    if (System.getProperty("pty4j.tmpdir") == null) {
+      System.setProperty("pty4j.tmpdir", ideTempDir.getPath());
+    }
   }
 
   private static void startLogging(final Logger log) {

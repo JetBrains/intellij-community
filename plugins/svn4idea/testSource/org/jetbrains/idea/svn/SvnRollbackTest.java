@@ -576,8 +576,7 @@ public class SvnRollbackTest extends SvnTestCase {
   private void assertRollbackLocallyDeleted(final List<FilePath> locally, final List<FilePath> allowed) throws VcsException {
     final List<VcsException> exceptions = new ArrayList<>();
     vcs.createRollbackEnvironment().rollbackMissingFileDeletion(locally, exceptions, RollbackProgressListener.EMPTY);
-    //noinspection unchecked
-    throwIfNotEmpty((List)exceptions);
+    throwIfNotEmpty(exceptions);
     refreshChanges();
 
     final List<LocallyDeletedChange> deletedFiles = changeListManager.getDeletedFiles();

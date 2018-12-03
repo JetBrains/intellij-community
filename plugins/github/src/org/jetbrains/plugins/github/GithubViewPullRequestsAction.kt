@@ -12,8 +12,10 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsToolWindowManager
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUrlUtil
@@ -33,24 +35,28 @@ class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull 
     }
 
     val requestExecutor = service<GithubApiRequestExecutorManager>().getExecutor(account, project) ?: return
+    val accountInformationProvider = service<GithubAccountInformationProvider>()
 
     val toolWindowManager = project.service<GithubPullRequestsToolWindowManager>()
     if (toolWindowManager.showPullRequestsTabIfExists(repository, remote, remoteUrl, account)) return
 
     object : Task.Backgroundable(project, "Loading GitHub Repository Information", true, PerformInBackgroundOption.DEAF) {
+      lateinit var accountDetails: GithubAuthenticatedUser
       lateinit var repoDetails: GithubRepoDetailed
 
       override fun run(indicator: ProgressIndicator) {
-        val details = requestExecutor.execute(indicator, GithubApiRequests.Repos.get(account.server, fullPath.user, fullPath.repository))
+        indicator.text = "Loading account information"
+        accountDetails = accountInformationProvider.getInformation(requestExecutor, indicator, account)
+
+        indicator.text = "Loading repository information"
+        repoDetails = requestExecutor.execute(indicator, GithubApiRequests.Repos.get(account.server, fullPath.user, fullPath.repository))
                       ?: throw IllegalArgumentException(
                         "Repository $fullPath does not exist at ${account.server} or you don't have access.")
-
-        repoDetails = details
         indicator.checkCanceled()
       }
 
       override fun onSuccess() {
-        toolWindowManager.createPullRequestsTab(requestExecutor, repository, remote, remoteUrl, repoDetails, account)
+        toolWindowManager.createPullRequestsTab(requestExecutor, repository, remote, remoteUrl, accountDetails, repoDetails, account)
         toolWindowManager.showPullRequestsTabIfExists(repository, remote, remoteUrl, account)
       }
 

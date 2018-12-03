@@ -15,3 +15,10 @@ fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): Pair<A, B> {
 }
 
 inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V>(E::class.java)
+
+fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
+  return (this as java.util.Collection<E>).toArray(empty)
+}
+
+fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)

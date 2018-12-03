@@ -301,8 +301,7 @@ public class DfaPsiUtil {
         final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, null) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
-            if (!(instruction instanceof MethodCallInstruction) ||
-                ((MethodCallInstruction)instruction).getMethodType() != MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
+            if (!(instruction instanceof MethodCallInstruction)) {
               return false;
             }
 
@@ -358,9 +357,9 @@ public class DfaPsiUtil {
         final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
         Set<PsiField> notNullFields = ContainerUtil.newHashSet();
         if (rc == RunnerResult.OK) {
-          for (PsiField field : map.keySet()) {
-            if (map.get(field)) {
-              notNullFields.add(field);
+          for (Map.Entry<PsiField, Boolean> entry : map.entrySet()) {
+            if (entry.getValue()) {
+              notNullFields.add(entry.getKey());
             }
           }
         }

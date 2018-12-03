@@ -141,10 +141,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
     if (classes.isEmpty()) return;
 
-    List<PsiClass> tenClassesMost = Arrays.asList(classes.toArray(PsiClass.EMPTY_ARRAY));
-    if (tenClassesMost.size() > 10) {
-      tenClassesMost = tenClassesMost.subList(0, 10);
-    }
+    List<PsiClass> tenClassesMost = ContainerUtil.getFirstItems(Arrays.asList(classes.toArray(PsiClass.EMPTY_ARRAY)), 10);
 
     String classList;
     if (isOnTheFly) {

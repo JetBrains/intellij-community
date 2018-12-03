@@ -84,7 +84,7 @@ public class ImageInfoReader {
       }
     }
     catch (Throwable e) {
-      LOG.warn(inputName, e);
+      LOG.debug(inputName, e);
     }
     return null;
   }

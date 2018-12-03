@@ -81,6 +81,7 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.lang.ant.config.impl.AntToolwindowRegistrar</implementation-class>
+      <headless-implementation-class/>
     </component>
   </project-components>
 

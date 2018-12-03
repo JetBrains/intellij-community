@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -56,7 +57,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
   }
 
   override fun resolveAsync(project: Project, library: Library, mavenId: String?): Promise<Library> {
-    val mavenLibDescriptor = extractDescriptor(mavenId, library, false) ?: return Promise.resolve(library)
+    val mavenLibDescriptor = extractDescriptor(mavenId, library, false) ?: return resolvedPromise(library)
 
     return JarRepositoryManager.loadDependenciesAsync(project,
                                                       mavenLibDescriptor,
@@ -64,7 +65,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
                                                       null,
                                                       null)
       .thenAsync { roots ->
-        val resolvedRoots = Promise.resolve(roots)
+        val resolvedRoots = resolvedPromise(roots)
         if (roots?.isEmpty() == false) {
           resolvedRoots
         }

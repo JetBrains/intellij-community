@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
@@ -23,7 +24,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
 
   private static final Predicate<ScopeToolState> BUNDLED = state -> {
     final IdeaPluginDescriptor descriptor = getIdeaPluginDescriptor(state);
-    return descriptor != null && descriptor.isBundled();
+    return descriptor != null && descriptor.isBundled() && PluginManagerMain.isDevelopedByJetBrains(descriptor);
   };
 
   private static final Predicate<ScopeToolState> LISTED = state -> {

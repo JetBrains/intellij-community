@@ -31,6 +31,18 @@ public class GithubRepoDetailed extends GithubRepoWithPermissions {
   private Integer networkCount;
   private Integer subscribersCount;
 
+  public boolean getAllowSquashMerge() {
+    return allowSquashMerge != null ? allowSquashMerge : false;
+  }
+
+  public boolean getAllowMergeCommit() {
+    return allowMergeCommit != null ? allowMergeCommit : false;
+  }
+
+  public boolean getAllowRebaseMerge() {
+    return allowRebaseMerge != null ? allowRebaseMerge : false;
+  }
+
   @Nullable
   public GithubRepo getParent() {
     return parent;

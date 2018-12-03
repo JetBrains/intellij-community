@@ -151,6 +151,7 @@ public class InstanceOfUtils {
       }
       else if (tokenType == JavaTokenType.OROR) {
         for (PsiExpression operand : expression.getOperands()) {
+          operand = PsiUtil.deparenthesizeExpression(operand);
           if (operand instanceof PsiPrefixExpression && ((PsiPrefixExpression)operand).getOperationTokenType() == JavaTokenType.EXCL) {
             negate = true;
           }

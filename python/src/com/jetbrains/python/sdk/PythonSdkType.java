@@ -708,12 +708,18 @@ public final class PythonSdkType extends SdkType {
     final VirtualFile resolved = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
     if (pythonSdk != null) {
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-      if (libDir != null && VfsUtilCore.isAncestor(libDir, resolved, false)) {
-        return isNotSitePackages(resolved, libDir);
+      if (libDir != null) {
+        final VirtualFile resolvedLibDir = ObjectUtils.notNull(libDir.getCanonicalFile(), libDir);
+        if (VfsUtilCore.isAncestor(resolvedLibDir, resolved, false)) {
+          return isNotSitePackages(resolved, resolvedLibDir);
+        }
       }
       final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-      if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, resolved, false)) {
-        return isNotSitePackages(resolved, venvLibDir);
+      if (venvLibDir != null) {
+        final VirtualFile resolvedVenvLibDir = ObjectUtils.notNull(venvLibDir.getCanonicalFile(), venvLibDir);
+        if (VfsUtilCore.isAncestor(resolvedVenvLibDir, resolved, false)) {
+          return isNotSitePackages(resolved, resolvedVenvLibDir);
+        }
       }
       final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&

@@ -1210,30 +1210,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
-    final GroovyResolveResult resolveResult = invocation.advancedResolve();
-    if (resolveResult.getElement() == null) {
-      final GroovyResolveResult[] results = invocation.multiResolve(false);
-      final GrArgumentList argList = invocation.getArgumentList();
-      if (results.length > 0) {
-        String message = GroovyBundle.message("ambiguous.constructor.call");
-        myHolder.createWarningAnnotation(argList, message);
-      }
-      else {
-        final PsiClass clazz = invocation.getDelegatedClass();
-        if (clazz != null) {
-          //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getInvokedExpression(), true);
-          if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.apply.default.constructor", clazz.getName());
-            myHolder.createWarningAnnotation(argList, message);
-          }
-        }
-      }
-    }
-  }
-
-  @Override
   public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
     checkFlowInterruptStatement(breakStatement, myHolder);
   }

@@ -74,7 +74,11 @@ private fun GrReferenceExpression.handleSpecialCases(): Collection<GroovyResolve
 }
 
 fun GrReferenceExpressionImpl.resolveKinds(): Set<GroovyResolveKind> {
-  return if (isQualified) {
+  return resolveKinds(isQualified)
+}
+
+fun resolveKinds(qualified: Boolean): Set<GroovyResolveKind> {
+  return if (qualified) {
     EnumSet.of(FIELD, PROPERTY, VARIABLE)
   }
   else {

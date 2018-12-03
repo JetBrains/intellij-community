@@ -71,6 +71,16 @@ class ReadMostlyRWLock {
     Reader(@NotNull Thread readerThread) {
       thread = readerThread;
     }
+
+    @Override
+    public String toString() {
+      return "Reader{" +
+             "thread=" + thread +
+             ", readRequested=" + readRequested +
+             ", blocked=" + blocked +
+             ", impatientReads=" + impatientReads +
+             '}';
+    }
   }
 
   private final ThreadLocal<Reader> R = ThreadLocal.withInitial(() -> {
@@ -87,6 +97,12 @@ class ReadMostlyRWLock {
   boolean isReadLockedByThisThread() {
     checkReadThreadAccess();
     Reader status = R.get();
+    return status.readRequested;
+  }
+
+  boolean checkReadLockedByThisThreadAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
+    checkReadThreadAccess();
+    Reader status = R.get();
     throwIfImpatient(status);
     return status.readRequested;
   }
@@ -94,10 +110,11 @@ class ReadMostlyRWLock {
   void readLock() {
     checkReadThreadAccess();
     Reader status = R.get();
+    throwIfImpatient(status);
 
     for (int iter = 0; ; iter++) {
       if (tryReadLock(status, true)) {
-        return;
+        break;
       }
 
       ProgressManager.checkCanceled();
@@ -121,7 +138,7 @@ class ReadMostlyRWLock {
     }
   }
 
-  private void throwIfImpatient(Reader status) {
+  private void throwIfImpatient(Reader status) throws ApplicationUtil.CannotRunReadActionException {
     // when client explicitly runs in non-cancelable block do not throw from within nested read actions
     if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection() && CoreProgressManager.ENABLED) {
       throw ApplicationUtil.CannotRunReadActionException.create();
@@ -167,6 +184,7 @@ class ReadMostlyRWLock {
   }
 
   private boolean tryReadLock(Reader status, boolean checkPrivileges) {
+    throwIfImpatient(status);
     if (!writeRequested) {
       if (checkPrivileges && currentSuspension != null && !privilegedReaders.containsKey(Thread.currentThread())) {
         return false;
@@ -181,6 +199,7 @@ class ReadMostlyRWLock {
   }
 
   private static final int SPIN_TO_WAIT_FOR_LOCK = 100;
+
   void writeLock() {
     checkWriteThreadAccess();
     assert !writeRequested;
@@ -292,21 +311,6 @@ class ReadMostlyRWLock {
     }
   }
 
-  boolean tryWriteLock() {
-    checkWriteThreadAccess();
-    assert !writeRequested;
-    assert !writeAcquired;
-
-    writeRequested = true;
-    if (areAllReadersIdle()) {
-      writeAcquired = true;
-      return true;
-    }
-
-    writeRequested = false;
-    return false;
-  }
-
   private boolean areAllReadersIdle() {
     for (Reader reader : readers) {
       if (reader.readRequested) {
@@ -322,4 +326,16 @@ class ReadMostlyRWLock {
   }
 
   static class SuspensionId {}
+
+  @Override
+  public String toString() {
+    return "ReadMostlyRWLock{" +
+           "writeThread=" + writeThread +
+           ", writeRequested=" + writeRequested +
+           ", writeAcquired=" + writeAcquired +
+           ", readers=" + readers +
+           ", privilegedReaders=" + privilegedReaders +
+           ", currentSuspension=" + currentSuspension +
+           '}';
+  }
 }

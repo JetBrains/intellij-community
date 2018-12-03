@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.JavaExecutionUtil;
@@ -27,26 +13,22 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaFxApplicationClassBrowser extends ClassBrowser {
-
+public class JavaFxApplicationClassBrowser extends ClassBrowser<JTextField> {
+  private final String myApplicationClass;
   private final Artifact myArtifact;
 
-  public JavaFxApplicationClassBrowser(Project project, Artifact artifact) {
-    this(project, artifact, "Choose Application Class");
-  }
-
-  public JavaFxApplicationClassBrowser(final Project project,
-                                       final Artifact artifact,
-                                       final String title) {
+  public JavaFxApplicationClassBrowser(Project project, String title, String applicationClass, Artifact artifact) {
     super(project, title);
     myArtifact = artifact;
+    myApplicationClass = applicationClass;
   }
 
   @Override
-  protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
+  protected ClassFilter.ClassFilterWithScope getFilter() {
     return new ClassFilter.ClassFilterWithScope() {
       @Override
       public GlobalSearchScope getScope() {
@@ -55,24 +37,28 @@ public class JavaFxApplicationClassBrowser extends ClassBrowser {
 
       @Override
       public boolean isAccepted(PsiClass aClass) {
-        return InheritanceUtil.isInheritor(aClass, getApplicationClass());
+        return InheritanceUtil.isInheritor(aClass, myApplicationClass);
       }
     };
   }
 
-  protected String getApplicationClass() {
-    return "javafx.application.Application";
-  }
-
   @Override
   protected PsiClass findClass(String className) {
-    final Set<Module> modules = ReadAction.compute(() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(myArtifact), getProject()));
+    Set<Module> modules = ReadAction.compute(() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(myArtifact), getProject()));
     for (Module module : modules) {
-      final PsiClass aClass = JavaExecutionUtil.findMainClass(getProject(), className, GlobalSearchScope.moduleScope(module));
+      PsiClass aClass = JavaExecutionUtil.findMainClass(getProject(), className, GlobalSearchScope.moduleScope(module));
       if (aClass != null) {
         return aClass;
       }
     }
     return null;
+  }
+
+  public static JavaFxApplicationClassBrowser appClassBrowser(Project project, Artifact artifact) {
+    return new JavaFxApplicationClassBrowser(project, "javafx.application.Application", "Choose Application Class", artifact);
+  }
+
+  public static JavaFxApplicationClassBrowser preloaderClassBrowser(Project project, Artifact artifact) {
+    return new JavaFxApplicationClassBrowser(project, "javafx.application.Preloader", "Choose Preloader Class", artifact);
   }
 }

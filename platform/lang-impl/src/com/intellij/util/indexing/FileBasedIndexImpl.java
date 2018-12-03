@@ -6,6 +6,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -732,7 +733,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       if (isUpToDateCheckEnabled()) {
         try {
           if (!RebuildStatus.isOk(indexId)) {
-            throw new ProcessCanceledException();
+            throw new ServiceNotReadyException();
           }
           forceUpdate(project, filter, restrictedFile);
           indexUnsavedDocuments(indexId, project, filter, restrictedFile);
@@ -1492,9 +1493,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   @NotNull
   private Predicate<VirtualFile> filesToBeIndexedForProjectCondition(Project project) {
     return virtualFile -> {
-        if (virtualFile instanceof DeletedVirtualFileStub) {
+        if (virtualFile instanceof DeletedVirtualFileStub ||
+            !virtualFile.isValid()
+           ) {
           return true;
         }
+
         for (IndexableFileSet set : myIndexableSets) {
           final Project proj = myIndexableSetToProjectMap.get(set);
           if (proj != null && !proj.equals(project)) {

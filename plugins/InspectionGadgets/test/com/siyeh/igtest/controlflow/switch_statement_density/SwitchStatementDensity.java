@@ -46,4 +46,32 @@ public class SwitchStatementDensity
         switch(bar) {}
 
     }
+
+    public int switchExpression(int e) {
+        return <warning descr="'switch' has too low of a branch density (11%)">switch</warning> (e) {
+            case 1:
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                System.out.println(e);
+                break 1;
+            default:
+                break 0;
+
+        };
+    }
 }

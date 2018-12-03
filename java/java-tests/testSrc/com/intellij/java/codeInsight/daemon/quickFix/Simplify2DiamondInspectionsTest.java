@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,15 @@ public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedT
 
   @Override
   protected void tearDown() throws Exception {
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignment;
-    super.tearDown();
+    try {
+      getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignment;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private CommonCodeStyleSettings getSettings() {

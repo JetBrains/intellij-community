@@ -138,8 +138,12 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected abstract String getTestsTempDir();
 
   protected void setUpFixtures() throws Exception {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName(), useDirectoryBasedStorageFormat()).getFixture();
     myTestFixture.setUp();
+  }
+
+  protected boolean useDirectoryBasedStorageFormat() {
+    return false;
   }
 
   protected void setUpInWriteAction() throws Exception {
@@ -161,6 +165,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
         //printDirectoryContent(myDir);
         myTestDir.deleteOnExit();
       }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

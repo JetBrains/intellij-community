@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,6 +130,7 @@ public class DfaValueFactory {
   }
 
   @Nullable
+  @Contract("null -> null")
   public DfaValue createValue(PsiExpression psiExpression) {
     return myExpressionFactory.getExpressionDfaValue(psiExpression);
   }

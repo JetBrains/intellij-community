@@ -268,7 +268,7 @@ public class EditorPainter implements TextDrawingCallback {
     return marginWidths;
   }
 
-  private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, FoldRegion foldRegion) {
+  private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, @NotNull FoldRegion foldRegion) {
     TextAttributes innerAttributes = getInnerHighlighterAttributes(foldRegion);
     if (innerAttributes != null) {
       foldRegion.putUserData(INNER_HIGHLIGHTING, innerAttributes);
@@ -375,7 +375,7 @@ public class EditorPainter implements TextDrawingCallback {
       if (customRenderer != null) {
         int highlighterStart = highlighter.getStartOffset();
         int highlighterEnd = highlighter.getEndOffset();
-        if (highlighterStart < endOffset && highlighterEnd > startOffset &&
+        if (highlighterStart <= endOffset && highlighterEnd >= startOffset &&
             clipDetector.rangeCanBeVisible(highlighterStart, highlighterEnd)) {
           customRenderer.paint(myEditor, highlighter, g);
         }
@@ -1214,7 +1214,7 @@ public class EditorPainter implements TextDrawingCallback {
     TextAttributes selectionAttributes = isSelected(foldRegion) ? myEditor.getSelectionModel().getTextAttributes() : null;
     TextAttributes defaultAttributes = getDefaultAttributes();
     if (myEditor.isInFocusMode(foldRegion)) {
-      return ObjectUtils.notNull(myEditor.getUserData(EditorImpl.FOCUS_MODE_ATTRIBUTES), getDefaultAttributes());
+      return ObjectUtils.notNull(myEditor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES), getDefaultAttributes());
     }
     TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
     return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);

@@ -330,7 +330,7 @@ public class EditorWindow {
     dispose();
   }
 
-  private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
+  int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
     final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
     if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open

@@ -352,7 +352,8 @@ def var_to_struct(val, name, do_trim=True, evaluate_full_value=True):
 
 def var_to_str(val, do_trim=True, evaluate_full_value=True):
     struct = var_to_struct(val, '', do_trim, evaluate_full_value)
-    return struct.value
+    value = struct.value
+    return value if value is not None else ''
 
 
 # from pydevd_vars.py

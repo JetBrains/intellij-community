@@ -25,8 +25,8 @@ class TypeConstraint(private val leftType: PsiType, private val rightType: PsiTy
     if (argType is GrMapType && session.skipClosureBlock)
       argType =  TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, context)
 
-    val t = session.siteSubstitutor.substitute(session.substituteWithInferenceVariables(leftType))
-    val s = session.siteSubstitutor.substitute(session.substituteWithInferenceVariables(argType))
+    val t = session.contextSubstitutor.substitute(session.substituteWithInferenceVariables(leftType))
+    val s = session.contextSubstitutor.substitute(session.substituteWithInferenceVariables(argType))
 
     constraints.add(TypeCompatibilityConstraint(t, s))
     return true

@@ -41,7 +41,6 @@ import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -614,7 +613,7 @@ public class SearchDialog extends DialogWrapper {
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
-      removeUnusedVariableConstraints(myConfiguration);
+      myConfiguration.removeUnusedVariables();
       ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
 
       startSearching();
@@ -624,14 +623,7 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  private void removeUnusedVariableConstraints(Configuration configuration) {
-    final List<String> variableNames = getVariablesFromListeners();
-    variableNames.add(Configuration.CONTEXT_VAR_NAME);
-    configuration.getMatchOptions().retainVariableConstraints(variableNames);
-  }
-
   public Configuration getConfiguration() {
-    removeUnusedVariableConstraints(myConfiguration);
     setValuesToConfig(myConfiguration);
     return myConfiguration;
   }

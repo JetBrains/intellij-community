@@ -173,7 +173,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(FUSUsageContext.getOSNameContextData(), SystemInfo.getOsNameAndVersion(), getShellName(command[0])));
+      TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(
+        FUSUsageContext.getOSNameContextData(),
+        SystemInfo.getOsNameAndVersion(),
+        TerminalUsageTriggerCollector.Companion.getShellNameForStat(command[0]))
+      );
       String workingDir = getWorkingDirectory(directory);
       long startNano = System.nanoTime();
       PtyProcess process = PtyProcess.exec(command, envs, workingDir);

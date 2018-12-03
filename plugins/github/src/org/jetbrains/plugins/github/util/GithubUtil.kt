@@ -21,6 +21,8 @@ import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.properties.ObservableProperty
+import kotlin.reflect.KProperty
 
 /**
  * Various utility methods for the GutHub plugin.
@@ -98,6 +100,14 @@ object GithubUtil {
     }
 
     return Couple.of(subject, description)
+  }
+
+  object Delegates {
+    inline fun <T> equalVetoingObservable(initialValue: T, crossinline onChange: (newValue: T) -> Unit) =
+      object : ObservableProperty<T>(initialValue) {
+        override fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T) = oldValue != newValue
+        override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = onChange(newValue)
+      }
   }
 
   //region Deprecated

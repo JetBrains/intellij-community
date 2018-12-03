@@ -82,7 +82,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
   }
 
   private void init() {
-    myInspectionsTable = InspectionsConfigTreeTable.create(new MyInspectionsTableSettings(myProject, myRoot), this);
+    myInspectionsTable = InspectionsConfigTreeTable.create(new MyInspectionsTableSettings(myRoot, myProject), this);
     myInspectionsTable.setRootVisible(false);
     myInspectionsTable.setTreeCellRenderer(new MyInspectionsTreeRenderer());
     myInspectionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -170,7 +170,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
   }
 
   private class MyInspectionsTableSettings extends InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings {
-    MyInspectionsTableSettings(@NotNull Project project, @NotNull InspectionConfigTreeNode root) {
+    MyInspectionsTableSettings(@NotNull InspectionConfigTreeNode root, @NotNull Project project) {
       super(root, project);
     }
 

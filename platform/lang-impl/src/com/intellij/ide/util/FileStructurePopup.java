@@ -38,10 +38,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -679,6 +676,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     for (int i = 0, count = treeModel.getChildCount(parent); i < count; i++) {
       Object child = treeModel.getChild(parent, i);
       Object value = StructureViewComponent.unwrapValue(child);
+      if (value instanceof StubBasedPsiElement && ((StubBasedPsiElement)value).getStub() != null) continue;
       TextRange r = value instanceof PsiElement ? ((PsiElement)value).getTextRange() : null;
       if (r == null) continue;
       int distance = TextRangeUtil.getDistance(range, r);

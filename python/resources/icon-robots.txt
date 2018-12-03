@@ -1,2 +1,4 @@
 # Only has artwork and tips stuff
-skip: *
+skip: lafs
+skip: PyCharmCore*
+skip: pycharm_core*

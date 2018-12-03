@@ -70,15 +70,9 @@ public class StatementParser {
       if (statement != null) continue;
 
       IElementType tokenType = builder.getTokenType();
-      if (tokenType == JavaTokenType.RBRACE) {
-        if (braceMode == BraceMode.TILL_FIRST) {
-          return;
-        }
-        else if (braceMode == BraceMode.TILL_LAST) {
-          if (builder.lookAhead(1) == null) {
-            return;
-          }
-        }
+      if (tokenType == JavaTokenType.RBRACE &&
+          (braceMode == BraceMode.TILL_FIRST || braceMode == BraceMode.TILL_LAST && builder.lookAhead(1) == null)) {
+        break;
       }
 
       PsiBuilder.Marker error = builder.mark();
@@ -467,10 +461,12 @@ public class StatementParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseBreakStatement(PsiBuilder builder) {
+  private PsiBuilder.Marker parseBreakStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
-    expect(builder, JavaTokenType.IDENTIFIER);
+    if (builder.getTokenType() != JavaTokenType.SEMICOLON) {
+      myParser.getExpressionParser().parse(builder);
+    }
     semicolon(builder);
     done(statement, JavaElementType.BREAK_STATEMENT);
     return statement;

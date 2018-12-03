@@ -68,7 +68,11 @@ public class PresentationTest extends PlatformTestCase {
       UISettingsState uiSettings = UISettings.getInstance().getState();
       uiSettings.setDisableMnemonics(defaults.getDisableMnemonics());
       uiSettings.setDisableMnemonicsInControls(defaults.getDisableMnemonicsInControls());
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }

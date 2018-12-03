@@ -21,6 +21,9 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
     try {
       Disposer.dispose(myContent);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myContent = null;
       super.tearDown();

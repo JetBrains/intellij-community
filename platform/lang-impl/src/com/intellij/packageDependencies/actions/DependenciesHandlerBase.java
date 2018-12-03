@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -42,11 +43,12 @@ import java.util.Set;
  * @author nik
  */
 public abstract class DependenciesHandlerBase {
+  @NotNull
   protected final Project myProject;
   private final List<? extends AnalysisScope> myScopes;
   private final Set<PsiFile> myExcluded;
 
-  public DependenciesHandlerBase(final Project project, final List<? extends AnalysisScope> scopes, Set<PsiFile> excluded) {
+  public DependenciesHandlerBase(@NotNull Project project, final List<? extends AnalysisScope> scopes, Set<PsiFile> excluded) {
     myScopes = scopes;
     myExcluded = excluded;
     myProject = project;
@@ -61,7 +63,7 @@ public abstract class DependenciesHandlerBase {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setIndeterminate(false);
-          perform(builders);
+          perform(builders, indicator);
         }
 
         @Override
@@ -74,7 +76,7 @@ public abstract class DependenciesHandlerBase {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(false);
-          perform(builders);
+          perform(builders, indicator);
         }
 
         @Override
@@ -100,7 +102,8 @@ public abstract class DependenciesHandlerBase {
 
   protected abstract DependenciesBuilder createDependenciesBuilder(AnalysisScope scope);
 
-  private void perform(List<DependenciesBuilder> builders) {
+  private void perform(List<DependenciesBuilder> builders, @NotNull ProgressIndicator indicator) {
+    ProgressIndicatorUtils.dropResolveCacheRegularly(indicator, myProject);
     try {
       PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
       for (AnalysisScope scope : myScopes) {

@@ -26,12 +26,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isComponentShowing
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.repeatUntil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.tryWithPause
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
@@ -240,7 +243,9 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
     }
 
     fun rightClick() {
-      invokeContextMenu()
+      repeatUntil({ isComponentShowing(JBPopupMenu::class.java) }, {
+        invokeContextMenu()
+      })
     }
 
     fun invokeContextMenu() {

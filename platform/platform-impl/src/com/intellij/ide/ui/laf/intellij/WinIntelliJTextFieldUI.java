@@ -17,9 +17,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -122,39 +120,8 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   @Override
-  protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    Icon icon = UIManager.getIcon(clickable ? "TextField.darcula.searchWithHistory.icon" : "TextField.darcula.search.icon");
-    if (icon != null && clickable) {
-      return new Icon() {
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-          icon.paintIcon(c, g, x, y + JBUI.scale(1));
-        }
-
-        @Override
-        public int getIconWidth() {
-          return icon.getIconWidth() + JBUI.scale(4);
-        }
-
-        @Override
-        public int getIconHeight() {
-          return icon.getIconHeight();
-        }
-      };
-    }
-    return icon != null ? icon : IconLoader.findLafIcon("search", DarculaTextFieldUI.class);
-  }
-
-  @Override
   protected int getSearchIconGap() {
     return 0;
-  }
-
-  @Override
-  protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    if (!clickable) return null;
-    Icon icon = UIManager.getIcon("TextField.darcula.clear.icon");
-    return icon != null ? icon : IconLoader.findLafIcon("clear", DarculaTextFieldUI.class);
   }
 
   @Override

@@ -1081,19 +1081,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                     }
                   }
                 }
-                else if (firstVararg == null) { // more than one vararg params and the first one is null
-                  // this is a workaround for a bug in jdi, see IDEA-157321
-                  int argCount = myArgs.size();
-                  List<Type> paramTypes = myMethod.argumentTypes();
-                  int paramCount = paramTypes.size();
-                  ArrayType lastParamType = (ArrayType)paramTypes.get(paramTypes.size() - 1);
-
-                  int count = argCount - paramCount + 1;
-                  ArrayReference argArray = lastParamType.newInstance(count);
-                  argArray.setValues(0, myArgs, paramCount - 1, count);
-                  myArgs.set(paramCount - 1, argArray);
-                  myArgs.subList(paramCount, argCount).clear();
-                }
               }
             }
 

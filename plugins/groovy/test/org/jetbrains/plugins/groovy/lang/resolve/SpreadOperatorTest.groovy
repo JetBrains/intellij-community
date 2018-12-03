@@ -33,7 +33,7 @@ class SpreadOperatorTest implements BaseTest {
 
   @Test
   void 'spread property'() {
-    def expression = (GrReferenceExpression)configureByExpression("[[['a']]]*.bytes")
+    def expression = lastExpression("[[['a']]]*.bytes", GrReferenceExpression)
     def results = expression.multiResolve(false)
     assert results.size() == 1
     assert results[0].spreadState != null
@@ -42,7 +42,7 @@ class SpreadOperatorTest implements BaseTest {
 
   @Test
   void 'implicit spread property'() {
-    def expression = (GrReferenceExpression)configureByExpression("[[['a']]].bytes")
+    def expression = lastExpression("[[['a']]].bytes", GrReferenceExpression)
     def results = expression.multiResolve(false)
     assert results.size() == 1
     assert results[0].spreadState != null
@@ -51,7 +51,7 @@ class SpreadOperatorTest implements BaseTest {
 
   @Test
   void 'spread method'() {
-    def expression = (GrMethodCall)configureByExpression("[[['a']]]*.getBytes()")
+    def expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall)
     def results = expression.multiResolve(false)
     assert results.size() == 0
     assertType(null, expression.type)
@@ -59,7 +59,7 @@ class SpreadOperatorTest implements BaseTest {
 
   @Test
   void 'implicit spread method'() {
-    def expression = (GrMethodCall)configureByExpression("[[['a']]].getBytes()")
+    def expression = lastExpression("[[['a']]].getBytes()", GrMethodCall)
     def results = expression.multiResolve(false)
     assert results.size() == 0
     assertType(null, expression.type)

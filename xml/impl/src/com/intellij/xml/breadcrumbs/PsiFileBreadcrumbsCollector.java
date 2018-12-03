@@ -42,7 +42,10 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   }
 
   @Override
-  public void watchForChanges(@NotNull VirtualFile file, @NotNull Disposable disposable, @NotNull Runnable changesHandler) {
+  public void watchForChanges(@NotNull VirtualFile file,
+                              @NotNull Editor editor,
+                              @NotNull Disposable disposable,
+                              @NotNull Runnable changesHandler) {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     psiManager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
@@ -85,7 +88,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   public void updateCrumbs(@NotNull VirtualFile virtualFile,
                            @NotNull Editor editor,
                            ProgressIndicator progressIndicator,
-                           @NotNull Consumer<Iterable<Crumb>> consumer) {
+                           @NotNull Consumer<Iterable<? extends Crumb>> consumer) {
     int offset = editor.getCaretModel().getOffset();
     PsiAvailabilityService.getInstance(myProject).performWhenPsiAvailable(editor.getDocument(), () -> {
       consumer.consume(collectBreadcrumbs(virtualFile, editor, offset));

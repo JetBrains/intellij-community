@@ -36,6 +36,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     try {
       CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = myStoredSettingValue;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

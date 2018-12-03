@@ -5,7 +5,6 @@ import com.intellij.psi.stubs.EmptyStubElementType;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -168,5 +167,5 @@ public interface GroovyElementTypes {
   //types
   IElementType CLASS_TYPE_ELEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLASS_TYPE_ELEMENT;
 
-  IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);
+  IStubFileElementType GROOVY_FILE = GroovyParserDefinition.GROOVY_FILE;
 }

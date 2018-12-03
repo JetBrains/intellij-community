@@ -1811,12 +1811,13 @@ public class UIUtil {
     }
   }
 
+  @SuppressWarnings("UnregisteredNamedColor")
   public static void drawSearchMatch(final Graphics2D g,
                                      final float startX,
                                      final float endX,
                                      final int height) {
-    Color c1 = JBColor.namedColor("SearchMatch.startBackground", new Color(0xffeaa2));
-    Color c2 = JBColor.namedColor("SearchMatch.endBackground", new Color(0xffd042));
+    Color c1 = JBColor.namedColor("SearchMatch.startBackground", JBColor.namedColor("SearchMatch.startColor", 0xffeaa2));
+    Color c2 = JBColor.namedColor("SearchMatch.endBackground", JBColor.namedColor("SearchMatch.endColor", 0xffd042));
     drawSearchMatch(g, startX, endX, height, c1, c2);
   }
 

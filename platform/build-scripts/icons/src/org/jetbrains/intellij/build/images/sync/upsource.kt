@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.streams.toList
 
 private val UPSOURCE = System.getProperty("upsource.url")
+internal val UPSOURCE_ICONS_PROJECT_ID = System.getProperty("intellij.icons.upsource.project.id")
+internal val UPSOURCE_DEV_PROJECT_ID = System.getProperty("intellij.icons.upsource.dev.project.id")
 
 private fun upsourceGet(method: String, args: String): String {
   val params = if (args.isEmpty()) "" else "?params=${URLEncoder.encode(args, Charsets.UTF_8.name())}"
@@ -28,13 +30,16 @@ private fun HttpRequestBase.upsourceAuthAndLog(method: String, args: String) {
   basicAuth(System.getProperty("upsource.user.name"), System.getProperty("upsource.user.password"))
 }
 
-internal class Review(val id: String, val url: String)
+internal sealed class Review(val id: String, val projectId: String?, val url: String)
+internal class UpsourceReview(id: String, projectId: String?, url: String) : Review(id, projectId, url)
+internal class PlainOldReview(branch: String, projectId: String?) : Review(branch, projectId, branch)
+private class Revision(val revisionId: String, val branchHeadLabel: String)
 
 @Suppress("ReplaceSingleLineLet")
 internal fun createReview(projectId: String, branch: String, commits: Collection<String>): Review {
   val max = 20
   val timeout = 30L
-  var revisions = emptyList<String>()
+  var revisions = emptyList<Revision>()
   loop@ for (i in 1..max) {
     revisions = getBranchRevisions(projectId, branch, commits)
     when {
@@ -49,27 +54,38 @@ internal fun createReview(projectId: String, branch: String, commits: Collection
   val reviewId = upsourcePost("createReview", """{
       "projectId" : "$projectId",
       "revisions" : [
-        ${revisions.joinToString { "\"$it\"" }}
+        ${revisions.joinToString { "\"${it.revisionId}\"" }}
     ]}""")
     .let { extract(it, Regex(""""reviewId":\{([^}]+)""")) }
     .let { extract(it, Regex(""""reviewId":"([^,"]+)"""")) }
+  // Revisions may be originated from many repositories
+  // but Upsource cannot track more than one branch so any will suffice
+  val branchHeadLabel = revisions.first().branchHeadLabel
   upsourcePost("startBranchTracking", """{
-    "branch" : "$branch",
+    "branch" : "$branchHeadLabel",
     "reviewId" : {
       "projectId" : "$projectId",
       "reviewId" : "$reviewId"
     }
   }""")
-  return Review(reviewId, "$UPSOURCE/$projectId/review/$reviewId")
+  val review = UpsourceReview(reviewId, projectId, "$UPSOURCE/$projectId/review/$reviewId")
+  postComment(projectId, review, "Please review changes and run cherry-pick into master (don't forget to delete tmp branch $branch)")
+  return review
 }
 
 private fun getBranchRevisions(projectId: String, branch: String, commits: Collection<String>) = commits.parallelStream().map {
-  extractOrNull(upsourceGet("getRevisionsListFiltered", """{
+  val response = upsourceGet("getRevisionsListFiltered", """{
       "query" : "branch: $branch $it",
       "projectId" : "$projectId",
       "limit" : 1
-    }"""), Regex(""""revisionId":"([^,"]+)""""))
-}.filter(Objects::nonNull).map { it as String }.toList()
+    }""")
+  val revisionId = extractOrNull(response, Regex(""""revisionId":"([^,"]+)""""))
+  if (revisionId != null) {
+    val branchHeadLabel = extractOrNull(response, Regex(""""branchHeadLabel":\["([^,"]+)"]""")) ?: branch
+    Revision(revisionId, branchHeadLabel)
+  }
+  else null
+}.filter(Objects::nonNull).map { it as Revision }.toList()
 
 internal fun addReviewer(projectId: String, review: Review, email: String) {
   try {
@@ -97,11 +113,11 @@ private fun userId(email: String, projectId: String): String {
 }
 
 private fun extract(json: String, regex: Regex) = extractOrNull(json, regex) ?: error(json)
-
-private fun extractOrNull(json: String, regex: Regex) = json
+private fun extractOrNull(json: String, regex: Regex) = extractAll(json, regex).lastOrNull()
+private fun extractAll(json: String, regex: Regex) = json
   .replace(" ", "")
   .replace(System.lineSeparator(), "").let { str ->
-    regex.findAll(str).map { it.groupValues.last() }.lastOrNull()
+    regex.findAll(str).map { it.groupValues.last() }.toList()
   }
 
 internal fun postComment(projectId: String, review: Review, comment: String) {
@@ -113,5 +129,24 @@ internal fun postComment(projectId: String, review: Review, comment: String) {
       },
       "text" : "$comment",
       "anchor" : {}
+  }""")
+}
+
+// TODO: take commit message from revisions
+internal fun getOpenIconsReviewTitles(projectId: String) = upsourceGet("getReviews", """{
+    "projectId" : "$projectId",
+    "limit": ${Int.MAX_VALUE},
+    "query" : "state: open and created-by: {Icons Sync Robot}"
+  }""").run {
+  extractAll(this, Regex(""""title":"([^"]+)""""))
+}
+
+internal fun closeReview(projectId: String, review: Review) {
+  upsourcePost("closeReview", """{
+      "isFlagged" : true,
+      "reviewId": {
+      	"projectId" : "$projectId",
+      	"reviewId": "${review.id}"
+      }
   }""")
 }

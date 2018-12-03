@@ -276,30 +276,16 @@ public class RefJavaManagerImpl extends RefJavaManager {
     }
     if (uElement instanceof UMethod) {
       UMethod method = (UMethod)uElement;
-      UDeclaration containingUDecl = UDeclarationKt.getContainingDeclaration(method);
-      PsiElement containingDeclaration = containingUDecl == null ? null : containingUDecl.getSourcePsi();
-      if (containingDeclaration instanceof LightElement) {
-        containingDeclaration = containingDeclaration.getNavigationElement();
-      }
-      final RefElement parentRef;
-      //TODO strange
-      if (containingDeclaration == null || containingDeclaration instanceof LightElement) {
-        parentRef = myRefManager.getReference(psi.getContainingFile(), true);
-      }
-      else {
-        parentRef = myRefManager.getReference(containingDeclaration, true);
-      }
+      final RefElement parentRef = findParentRef(psi, method);
       if (parentRef != null) {
         return new RefMethodImpl(parentRef, method, psi, myRefManager);
       }
     }
     else if (uElement instanceof UField) {
       final UField field = (UField)uElement;
-      UDeclaration containingUDecl = UDeclarationKt.getContainingDeclaration(field);
-      PsiElement containingDeclaration = containingUDecl == null ? null : containingUDecl.getSourcePsi();
-      final RefElement ref = myRefManager.getReference(containingDeclaration, true);
-      if (ref instanceof RefClass) {
-        return new RefFieldImpl((RefClass)ref, field, psi, myRefManager);
+      final RefElement parentRef = findParentRef(psi, field);
+      if (parentRef != null) {
+        return new RefFieldImpl(parentRef, field, psi, myRefManager);
       }
     }
     return null;
@@ -422,7 +408,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public void onEntityInitialized(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
-    if (myRefManager.isOfflineView() || !myRefManager.isDeclarationsFound()) return;
+    if (myRefManager.isOfflineView()) return;
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
@@ -622,6 +608,22 @@ public class RefJavaManagerImpl extends RefJavaManager {
         }
       }
     }
+  }
 
+  private RefElement findParentRef(@NotNull PsiElement psiElement, @NotNull UElement uElement) {
+    UDeclaration containingUDecl = UDeclarationKt.getContainingDeclaration(uElement);
+    PsiElement containingDeclaration = containingUDecl == null ? null : containingUDecl.getSourcePsi();
+    if (containingDeclaration instanceof LightElement) {
+      containingDeclaration = containingDeclaration.getNavigationElement();
+    }
+    final RefElement parentRef;
+    //TODO strange
+    if (containingDeclaration == null || containingDeclaration instanceof LightElement) {
+      parentRef = myRefManager.getReference(psiElement.getContainingFile(), true);
+    }
+    else {
+      parentRef = myRefManager.getReference(containingDeclaration, true);
+    }
+    return parentRef;
   }
 }

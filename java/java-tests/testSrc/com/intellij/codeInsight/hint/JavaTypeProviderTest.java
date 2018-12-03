@@ -80,6 +80,19 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "</table>");
   }
 
+  public void testSpecialField() {
+    doTest("void x(int[] data) {\n" +
+           "  if (data.length == 1) {\n" +
+           "    System.out.println(java.util.Arrays.toString(<selection>data</selection>));\n" +
+           "  }\n" +
+           "}", "int[]",
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int[]</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Length:</td><td>1</td></tr>" +
+           "</table>");
+  }
+
   private static void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,
                              @Language("HTML") String expectedHint,
                              @Language("HTML") String expectedAdvancedHint) {

@@ -25,8 +25,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +41,11 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @NotNull
   public String getText() {
     PsiElement startElement = getStartElement();
-    return QuickFixBundle.message("safe.delete.text", startElement == null ? "" : HighlightMessageUtil.getSymbolName(startElement, PsiSubstitutor.EMPTY));
+    String text = startElement == null
+               ? ""
+               : HighlightMessageUtil.getSymbolName(startElement, PsiSubstitutor.EMPTY,
+                                                    PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.USE_INTERNAL_CANONICAL_TEXT);
+    return QuickFixBundle.message("safe.delete.text", ObjectUtils.notNull(text, ""));
   }
 
   @Override

@@ -46,6 +46,9 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     try {
       EditorSettingsExternalizable.getInstance().setVirtualSpace(myStoredVirtualSpaceSetting);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

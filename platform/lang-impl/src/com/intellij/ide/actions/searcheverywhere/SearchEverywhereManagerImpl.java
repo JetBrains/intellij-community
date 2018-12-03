@@ -5,6 +5,7 @@ import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -225,23 +226,25 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
         return;
       }
 
-      Dimension minSize = mySearchEverywhereUI.getMinimumSize();
-      JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
-      myBalloon.setMinimumSize(minSize);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Dimension minSize = mySearchEverywhereUI.getMinimumSize();
+        JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
+        myBalloon.setMinimumSize(minSize);
 
-      if (viewType == SearchEverywhereUI.ViewType.SHORT) {
-        myBalloonFullSize = myBalloon.getSize();
-        JBInsets.removeFrom(myBalloonFullSize, myBalloon.getContent().getInsets());
-        myBalloon.pack(false, true);
-      } else {
-        if (myBalloonFullSize == null) {
-          myBalloonFullSize = mySearchEverywhereUI.getPreferredSize();
-          JBInsets.addTo(myBalloonFullSize, myBalloon.getContent().getInsets());
+        if (viewType == SearchEverywhereUI.ViewType.SHORT) {
+          myBalloonFullSize = myBalloon.getSize();
+          JBInsets.removeFrom(myBalloonFullSize, myBalloon.getContent().getInsets());
+          myBalloon.pack(false, true);
+        } else {
+          if (myBalloonFullSize == null) {
+            myBalloonFullSize = mySearchEverywhereUI.getPreferredSize();
+            JBInsets.addTo(myBalloonFullSize, myBalloon.getContent().getInsets());
+          }
+          myBalloonFullSize.height = Integer.max(myBalloonFullSize.height, minSize.height);
+          myBalloonFullSize.width = Integer.max(myBalloonFullSize.width, minSize.width);
+          myBalloon.setSize(myBalloonFullSize);
         }
-        myBalloonFullSize.height = Integer.max(myBalloonFullSize.height, minSize.height);
-        myBalloonFullSize.width = Integer.max(myBalloonFullSize.width, minSize.width);
-        myBalloon.setSize(myBalloonFullSize);
-      }
+      });
     });
 
     DumbAwareAction.create(__ -> showHistoryItem(true))

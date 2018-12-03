@@ -39,12 +39,6 @@ public interface RemoteCredentials {
   @NotNull
   AuthType getAuthType();
 
-  @Deprecated
-  boolean isUseKeyPair();
-
-  @Deprecated
-  boolean isUseAuthAgent();
-
   String getPrivateKeyFile();
 
   boolean isStorePassword();

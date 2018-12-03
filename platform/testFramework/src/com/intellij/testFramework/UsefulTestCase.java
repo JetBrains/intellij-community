@@ -5,9 +5,12 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -20,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.DocumentCommitProcessor;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -30,6 +35,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
@@ -52,6 +59,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -98,6 +106,35 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  /**
+   * Pass here the exception you want to be thrown first
+   * E.g.<pre>
+   * {@code
+   *   void tearDown() {
+   *     try {
+   *       doTearDowns();
+   *     }
+   *     catch(Exception e) {
+   *       addSuppressedException(e);
+   *     }
+   *     finally {
+   *       super.tearDown();
+   *     }
+   *   }
+   * }
+   * </pre>
+   *
+   */
+  protected void addSuppressedException(@NotNull Throwable e) {
+    List<Throwable> list = mySuppressedExceptions;
+    if (list == null) {
+      mySuppressedExceptions = list = new SmartList<>();
+    }
+    list.add(e);
+  }
+  private List<Throwable> mySuppressedExceptions;
+
+
   public UsefulTestCase() {
   }
 
@@ -137,38 +174,34 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      // don't use method references here to make stack trace reading easier
-      //noinspection Convert2MethodRef
-      new RunAll(
-        () -> disposeRootDisposable(),
-        () -> cleanupSwingDataStructures(),
-        () -> cleanupDeleteOnExitHookList(),
-        () -> Disposer.setDebugMode(true),
-        () -> {
-          if (shouldContainTempFiles()) {
-            FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-            if (hasTmpFilesToKeep()) {
-              File[] files = new File(myTempDir).listFiles();
-              if (files != null) {
-                for (File file : files) {
-                  if (!shouldKeepTmpFile(file)) {
-                    FileUtil.delete(file);
-                  }
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
+    new RunAll(
+      () -> disposeRootDisposable(),
+      () -> cleanupSwingDataStructures(),
+      () -> cleanupDeleteOnExitHookList(),
+      () -> Disposer.setDebugMode(true),
+      () -> {
+        if (shouldContainTempFiles()) {
+          FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
+          if (hasTmpFilesToKeep()) {
+            File[] files = new File(myTempDir).listFiles();
+            if (files != null) {
+              for (File file : files) {
+                if (!shouldKeepTmpFile(file)) {
+                  FileUtil.delete(file);
                 }
               }
             }
-            else {
-              FileUtil.delete(new File(myTempDir));
-            }
           }
-        },
-        () -> UIUtil.removeLeakingAppleListeners()
-      ).run();
-    }
-    finally {
-      super.tearDown();
-    }
+          else {
+            FileUtil.delete(new File(myTempDir));
+          }
+        }
+      },
+      () -> UIUtil.removeLeakingAppleListeners(),
+      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
+    ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
 
   protected final void disposeRootDisposable() {
@@ -749,9 +782,13 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSameLines(@NotNull String expected, @NotNull String actual) {
+    assertSameLines(null, expected, actual);
+  }
+
+  public static void assertSameLines(@Nullable String message, @NotNull String expected, @NotNull String actual) {
     String expectedText = StringUtil.convertLineSeparators(expected.trim());
     String actualText = StringUtil.convertLineSeparators(actual.trim());
-    Assert.assertEquals(expectedText, actualText);
+    Assert.assertEquals(message, expectedText, actualText);
   }
 
   public static void assertExists(@NotNull File file){
@@ -1046,6 +1083,21 @@ public abstract class UsefulTestCase extends TestCase {
   @Nullable
   public static VirtualFile refreshAndFindFile(@NotNull final File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+  }
+
+  public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Application application = ApplicationManager.getApplication();
+      if (application != null && !application.isDisposed()) {
+        FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+        if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
+
+        DocumentCommitThread commitThread = (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
+        if (commitThread != null) {
+          commitThread.waitForAllCommits(timeout, timeUnit);
+        }
+      }
+    });
   }
 
   protected class TestDisposable implements Disposable {

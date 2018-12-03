@@ -107,15 +107,15 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (newParams.size() == 1) {
         final ParameterInfoImpl p = newParams.iterator().next();
         return QuickFixBundle
-          .message("add.parameter.from.usage.text", p.getTypeText(), (ArrayUtil.find(myNewParametersInfo, p) + 1), targetMethodName);
+          .message("add.parameter.from.usage.text", p.getTypeText(), StringUtil.formatOrdinal(ArrayUtil.find(myNewParametersInfo, p) + 1), targetMethodName);
       }
       if (removedParams.size() == 1) {
         final ParameterInfoImpl p = removedParams.iterator().next();
-        return QuickFixBundle.message("remove.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName);
+        return QuickFixBundle.message("remove.parameter.from.usage.text", StringUtil.formatOrdinal(p.getOldIndex() + 1), targetMethodName);
       }
       if (changedParams.size() == 1) {
         final ParameterInfoImpl p = changedParams.iterator().next();
-        return QuickFixBundle.message("change.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName,
+        return QuickFixBundle.message("change.parameter.from.usage.text", StringUtil.formatOrdinal(p.getOldIndex() + 1), targetMethodName,
                                       myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText(),
                                       p.getTypeText());
       }

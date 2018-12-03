@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Comparator;
 import java.util.List;
 
@@ -58,6 +61,29 @@ public class ObjectUtils {
     public String toString() {
       return myName;
     }
+  }
+
+  /**
+   * Creates an instance of class {@code ofInterface} with its {@link Object#toString()} method returning {@code name}.
+   * No other guarantees about return value behaviour.
+   * {@code ofInterface} must represent an interface class.
+   * Useful for stubs in generic code, e.g. for storing in {@code List<T>} to represent empty special value.
+   */
+  @NotNull
+  public static <T> T sentinel(@NotNull final String name, @NotNull Class<T> ofInterface) {
+    if (!ofInterface.isInterface()) {
+      throw new IllegalArgumentException("Expected interface but got: " + ofInterface);
+    }
+    //noinspection unchecked
+    return (T)Proxy.newProxyInstance(ObjectUtils.class.getClassLoader(), new Class[]{ofInterface}, new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) {
+        if ("toString".equals(method.getName()) && args.length == 0) {
+          return name;
+        }
+        throw new AbstractMethodError();
+      }
+    });
   }
 
   @NotNull

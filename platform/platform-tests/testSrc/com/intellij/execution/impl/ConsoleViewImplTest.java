@@ -61,6 +61,9 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     try {
       Disposer.dispose(myConsole);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

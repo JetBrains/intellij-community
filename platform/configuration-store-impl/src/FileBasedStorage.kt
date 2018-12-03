@@ -102,7 +102,12 @@ open class FileBasedStorage(file: Path,
       else if (!isUseVfs) {
         val file = storage.file
         LOG.debugOrInfoIfTestMode { "Save $file" }
-        dataWriter.writeTo(file, lineSeparator.separatorString)
+        try {
+          dataWriter.writeTo(file, lineSeparator.separatorString)
+        }
+        catch (e: Throwable) {
+          throw RuntimeException("Cannot write ${file}", e)
+        }
       }
       else {
         storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
@@ -201,7 +206,7 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  override fun toString(): String = file.systemIndependentPath
+  override fun toString() = file.systemIndependentPath
 }
 
 internal fun writeFile(file: Path?,

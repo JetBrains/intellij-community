@@ -50,6 +50,8 @@ public interface CreateFromTemplateHandler {
 
   void prepareProperties(@NotNull Map<String, Object> props);
 
+  default void prepareProperties(@NotNull Map<String, Object> props, String fileName, @NotNull FileTemplate template) {}
+
   @NotNull
   default String commandName(@NotNull FileTemplate template) {
     return IdeBundle.message("command.create.file.from.template");

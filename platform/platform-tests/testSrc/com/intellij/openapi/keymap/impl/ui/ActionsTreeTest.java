@@ -172,6 +172,9 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
       ((KeymapManagerImpl)KeymapManager.getInstance()).unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

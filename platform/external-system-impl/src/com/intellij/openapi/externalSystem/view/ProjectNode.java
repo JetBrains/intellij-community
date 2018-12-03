@@ -103,6 +103,13 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
     return desc.toString();
   }
 
+  @Nullable
+  public String getIdeGrouping() {
+    ProjectData data = getData();
+    if (data == null) return null;
+    return data.getIdeGrouping();
+  }
+
   @Override
   @Nullable
   @NonNls

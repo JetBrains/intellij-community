@@ -121,9 +121,11 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     try {
       myTestFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myTestFixture = null;
-
       super.tearDown();
     }
   }

@@ -62,6 +62,11 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
     return myLinkedExternalProjectPath;
   }
 
+  @Nullable
+  public String getIdeGrouping() {
+    return getLinkedExternalProjectPath();
+  }
+
   @Override
   public int hashCode() {
     int result = super.hashCode();

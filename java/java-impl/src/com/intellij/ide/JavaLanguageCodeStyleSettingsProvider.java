@@ -326,11 +326,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   }
 
-  @Nullable
-  @Override
-  public CodeStyleBean createBean() {
-    return new JavaCodeStyleBean();
-  }
 
   private static final String GENERAL_CODE_SAMPLE =
     "public class Foo {\n" +

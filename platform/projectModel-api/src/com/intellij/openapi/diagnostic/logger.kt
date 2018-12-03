@@ -6,9 +6,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaGetter
 
-inline fun <reified T : Any> logger(): Logger = Logger.getInstance(T::class.java)
+inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)
 
-fun logger(category: String): Logger = Logger.getInstance(category)
+fun logger(category: String) = Logger.getInstance(category)
 
 /**
  * Get logger instance to be used in Kotlin package methods. Usage:
@@ -18,7 +18,7 @@ fun logger(category: String): Logger = Logger.getInstance(category)
 
  * Notice explicit type declaration which can't be skipped in this case.
  */
-fun logger(field: KProperty<Logger>): Logger = Logger.getInstance(field.javaGetter!!.declaringClass)
+fun logger(field: KProperty<Logger>) = Logger.getInstance(field.javaGetter!!.declaringClass)
 
 inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
   if (isDebugEnabled) {
@@ -40,7 +40,7 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
     return runnable()
   }
   catch (e: ProcessCanceledException) {
-    return null
+    throw e
   }
   catch (e: Throwable) {
     error(e)

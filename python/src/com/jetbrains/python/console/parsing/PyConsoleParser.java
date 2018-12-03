@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.console.parsing;
 
-import com.intellij.lang.ASTNode;
+import com.google.common.collect.ImmutableSet;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
@@ -23,49 +23,36 @@ import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
  */
-public class PyConsoleParser extends PyParser{
-  private StatementParsing.FUTURE myFutureFlag;
+public class PyConsoleParser extends PyParser {
+
+  private static final ImmutableSet<IElementType> IPYTHON_START_SYMBOLS = new ImmutableSet.Builder<IElementType>().add(
+    PyConsoleTokenTypes.PLING,
+    PyConsoleTokenTypes.QUESTION_MARK,
+    PyTokenTypes.COMMA,
+    PyTokenTypes.DIV,
+    PyTokenTypes.PERC,
+    PyTokenTypes.SEMICOLON
+    ).build();
+
   private final PythonConsoleData myPythonConsoleData;
-  private boolean myIPythonStartSymbol;
 
   public PyConsoleParser(PythonConsoleData pythonConsoleData, LanguageLevel languageLevel) {
     myPythonConsoleData = pythonConsoleData;
     myLanguageLevel = languageLevel;
   }
 
-  @NotNull
-  @Override
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
-    final PsiBuilder.Marker rootMarker = builder.mark();
-
-    myIPythonStartSymbol = myPythonConsoleData.isIPythonEnabled() && startsWithIPythonSpecialSymbol(builder);
-
-    ParsingContext context = createParsingContext(builder, myLanguageLevel, myFutureFlag);
-
-    StatementParsing stmt_parser = context.getStatementParser();
-    builder.setTokenTypeRemapper(stmt_parser); // must be done before touching the caching lexer with eof() call.
-
-    while (!builder.eof()) {
-      stmt_parser.parseStatement();
-    }
-    rootMarker.done(root);
-    return builder.getTreeBuilt();
-  }
-
   public static boolean startsWithIPythonSpecialSymbol(PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
-    return builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK || tokenType == PyTokenTypes.PERC || tokenType == PyTokenTypes.COMMA || tokenType == PyTokenTypes.SEMICOLON ||
-      "/".equals(builder.getTokenText());
+    return IPYTHON_START_SYMBOLS.contains(tokenType);
   }
-
 
   @Override
   protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
-    return new PyConsoleParsingContext(builder, languageLevel, futureFlag, myPythonConsoleData, myIPythonStartSymbol);
+    boolean iPythonStartSymbol = myPythonConsoleData.isIPythonEnabled() && startsWithIPythonSpecialSymbol(builder);
+    return new PyConsoleParsingContext(builder, languageLevel, futureFlag, myPythonConsoleData, iPythonStartSymbol);
   }
 }

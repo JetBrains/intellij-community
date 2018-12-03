@@ -3,6 +3,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
+import com.intellij.codeInsight.intention.impl.SplitDeclarationAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -79,6 +80,24 @@ class EnsureCodeBlockImpl {
     }
     if (parent instanceof PsiReturnStatement && condition != null) {
       return replace(expression, parent, (oldParent, copy) -> splitReturn((PsiReturnStatement)oldParent, condition, operand));
+    }
+    if (parent instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)parent).getBody();
+      boolean addBreak = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock() instanceof PsiSwitchExpression;
+      if (body instanceof PsiExpressionStatement && addBreak) {
+        PsiExpression resultExpression = ((PsiExpressionStatement)body).getExpression();
+        return replace(expression, body, (old, copy) -> {
+          PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{break a;}", resultExpression));
+          PsiExpression copyExpression = ((PsiBreakStatement)block.getCodeBlock().getStatements()[0]).getExpression();
+          return Objects.requireNonNull(copyExpression).replace(((PsiExpressionStatement)copy).getExpression());
+        });
+      }
+      else if (body instanceof PsiThrowStatement || body != null && !addBreak) {
+        return replace(expression, body, (old, copy) -> {
+          PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{}", body));
+          return block.getCodeBlock().add(copy);
+        });
+      }
     }
     return expression;
   }
@@ -189,7 +208,20 @@ class EnsureCodeBlockImpl {
     return newParent;
   }
   private static PsiElement replaceTernaryWithIf(PsiStatement statement, PsiConditionalExpression ternary) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
+    Project project = statement.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(ternary.getParent());
+    if (parent instanceof PsiLocalVariable) {
+      PsiLocalVariable variable = (PsiLocalVariable)parent;
+      variable.normalizeDeclaration();
+      PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
+      PsiAssignmentExpression assignment =
+        SplitDeclarationAction.invokeOnDeclarationStatement(declaration, PsiManager.getInstance(project), project);
+      if (assignment != null) {
+        ternary = (PsiConditionalExpression)Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()));
+        statement = (PsiStatement)assignment.getParent();
+      }
+    }
     PsiIfStatement ifStatement =
       (PsiIfStatement)factory.createStatementFromText("if(" + ternary.getCondition().getText() + ") {} else {}", statement);
     Object mark = new Object();

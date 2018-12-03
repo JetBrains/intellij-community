@@ -491,11 +491,40 @@ public class LongRangeSetTest {
     assertEquals(intDomain, range(Integer.MIN_VALUE, 2).plus(range(-2, Integer.MAX_VALUE), false));
     assertEquals(all(), range(Long.MIN_VALUE, 2).plus(range(-2, Long.MAX_VALUE), true));
   }
+  
+  @Test
+  public void testMul() {
+    checkMul(empty(), empty(), true, "{}");
+    checkMul(empty(), point(0), true, "{}");
+    checkMul(empty(), range(0, 10), true, "{}");
+    checkMul(empty(), range(0, 10).unite(range(15, 20)), true, "{}");
+
+    checkMul(point(5), point(10), false, "{50}");
+    checkMul(point(2_000_000_000), point(2), false, "{-294967296}");
+    checkMul(point(2_000_000_000), point(2), true, "{4000000000}");
+    checkMul(point(Integer.MIN_VALUE), point(Integer.MIN_VALUE), false, "{0}");
+    checkMul(point(Integer.MIN_VALUE), point(Integer.MIN_VALUE), true, "{4611686018427387904}");
+    checkMul(point(1), point(10), false, "{10}");
+    checkMul(point(0), point(10), false, "{0}");
+    checkMul(point(-1), point(10), false, "{-10}");
+
+    checkMul(point(1), range(10, 20).unite(range(30, 40)), false, "{10..20, 30..40}");
+    checkMul(point(0), range(10, 20).unite(range(30, 40)), false, "{0}");
+    checkMul(point(-1), range(10, 20).unite(range(30, 40)), false, "{-40..-30, -20..-10}");
+    checkMul(point(-1), range(Integer.MIN_VALUE, Integer.MIN_VALUE+30), false, "{Integer.MIN_VALUE, 2147483618..Integer.MAX_VALUE}");
+    checkMul(point(-1), range(Integer.MIN_VALUE, Integer.MIN_VALUE+30), true, "{2147483618..2147483648}");
+  }
 
   void checkAdd(LongRangeSet addend1, LongRangeSet addend2, boolean isLong, String expected) {
     LongRangeSet result = addend1.plus(addend2, isLong);
     assertEquals(result, addend2.plus(addend1, isLong)); // commutative
     checkBinOp(addend1, addend2, result, x -> true, isLong ? Long::sum : (a, b) -> (int)(a + b), expected, "+");
+  }
+
+  void checkMul(LongRangeSet multiplier1, LongRangeSet multiplier2, boolean isLong, String expected) {
+    LongRangeSet result = multiplier1.mul(multiplier2, isLong);
+    assertEquals(result, multiplier2.mul(multiplier1, isLong)); // commutative
+    checkBinOp(multiplier1, multiplier2, result, x -> true, isLong ? (a, b) -> a * b : (a, b) -> (int)(a * b), expected, "*");
   }
 
   void checkMod(LongRangeSet dividendRange, LongRangeSet divisorRange, String expected) {

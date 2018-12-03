@@ -77,6 +77,15 @@ public class CommonDataflow {
         if (!DfaNullability.isNotNull(newMap) && memState.isNotNull(value)) {
           newMap = newMap.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
         }
+        if (value instanceof DfaVariableValue) {
+          SpecialField field = SpecialField.fromQualifierType(value.getType());
+          if (field != null) {
+            DfaConstValue constValue = memState.getConstantValue(field.createValue(value.getFactory(), value));
+            if (constValue != null) {
+              newMap = newMap.with(DfaFactType.SPECIAL_FIELD_VALUE, field.withValue(constValue.getValue(), constValue.getType()));
+            }
+          }
+        }
         myFacts.put(expression, existing == null ? newMap : existing.unite(newMap));
 
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());

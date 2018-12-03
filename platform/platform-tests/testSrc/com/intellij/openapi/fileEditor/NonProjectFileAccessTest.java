@@ -66,9 +66,12 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
         }
       });
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
-      ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed
+      ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed;
     }
   }
 

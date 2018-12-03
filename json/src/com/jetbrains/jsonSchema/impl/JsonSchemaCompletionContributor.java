@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,8 +69,12 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     PsiElement positionParent = position.getParent();
     if (positionParent != null) {
       PsiElement parent = positionParent.getParent();
-      if (parent instanceof JsonProperty && "$ref".equals(((JsonProperty)parent).getName()) && service.isSchemaFile(file)) {
-        return;
+      if (parent instanceof JsonProperty) {
+        final String propName = ((JsonProperty)parent).getName();
+        if ("$schema".equals(propName) && parent.getParent() instanceof JsonObject && parent.getParent().getParent() instanceof JsonFile
+            || "$ref".equals(propName) && service.isSchemaFile(file)) {
+          return;
+        }
       }
     }
 
@@ -143,16 +148,16 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myResultConsumer = resultConsumer;
       myVariants = new HashSet<>();
       myWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema);
-      myWrapInQuotes = myWalker != null && myWalker.isNameQuoted() && !(position.getParent() instanceof JsonStringLiteral);
+      myWrapInQuotes = myWalker != null && myWalker.requiresNameQuotes() && !(position.getParent() instanceof JsonStringLiteral);
       myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
     }
 
     public void work() {
       if (myWalker == null) return;
-      final PsiElement checkable = myWalker.goUpToCheckable(myPosition);
+      final PsiElement checkable = myWalker.findElementToCheck(myPosition);
       if (checkable == null) return;
       final ThreeState isName = myWalker.isName(checkable);
-      final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(checkable, isName == ThreeState.NO);
+      final JsonPointerPosition position = myWalker.findPosition(checkable, isName == ThreeState.NO);
       if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
 
       final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();
@@ -160,7 +165,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       // too long here, refactor further
       schemas.forEach(schema -> {
         if (isName != ThreeState.NO) {
-          final boolean insertComma = myWalker.hasPropertiesBehindAndNoComma(myPosition);
+          final boolean insertComma = myWalker.hasMissingCommaAfter(myPosition);
           final boolean hasValue = myWalker.isPropertyWithValue(checkable);
 
           final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(myOriginalPosition, myPosition);
@@ -250,7 +255,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (JsonSchemaVersion.isSchemaSchemaId(myRootSchema.getId()) && type == JsonSchemaType._string) {
         JsonPropertyAdapter propertyAdapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
         if (propertyAdapter == null || !"required".equals(propertyAdapter.getName())) return;
-        PsiElement checkable = myWalker.goUpToCheckable(myPosition);
+        PsiElement checkable = myWalker.findElementToCheck(myPosition);
         if (!(checkable instanceof JsonStringLiteral) && !(checkable instanceof JsonReferenceExpression)) return;
         JsonObject propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable);
         if (propertiesObject == null) return;
@@ -275,11 +280,11 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       } else if (JsonSchemaType._array.equals(type)) {
         String value = myWalker.getDefaultArrayValue();
         addValueVariant(value, null,
-                        myWalker.defaultArrayValueDescription(), createArrayOrObjectLiteralInsertHandler(myWalker.invokeEnterBeforeObjectAndArray(), value.length()));
+                        "[...]", createArrayOrObjectLiteralInsertHandler(myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length()));
       } else if (JsonSchemaType._object.equals(type)) {
         String value = myWalker.getDefaultObjectValue();
         addValueVariant(value, null,
-                        myWalker.defaultObjectValueDescription(), createArrayOrObjectLiteralInsertHandler(myWalker.invokeEnterBeforeObjectAndArray(), value.length()));
+                        "{...}", createArrayOrObjectLiteralInsertHandler(myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length()));
       }
     }
 
@@ -292,7 +297,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private void addStringVariant(String defaultValueString) {
       if (!StringUtil.isEmpty(defaultValueString)) {
         String normalizedValue = defaultValueString;
-        boolean shouldQuote = myWalker.quotesForStringLiterals();
+        boolean shouldQuote = myWalker.requiresValueQuotes();
         boolean isQuoted = StringUtil.isQuotedString(normalizedValue);
         if (shouldQuote && !isQuoted) {
           normalizedValue = StringUtil.wrapWithDoubleQuote(normalizedValue);
@@ -481,7 +486,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                                            false, true,
                                                            insertColon ? 2 : 1);
                 hadEnter = false;
-                boolean invokeEnter = myWalker.invokeEnterBeforeObjectAndArray();
+                boolean invokeEnter = myWalker.hasWhitespaceDelimitedCodeBlocks();
                 if (insertColon && invokeEnter) {
                   invokeEnterHandler(editor);
                   hadEnter = true;
@@ -523,7 +528,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                                            false, true,
                                                            insertColon ? 2 : 1);
                 hadEnter = false;
-                if (insertColon && myWalker.invokeEnterBeforeObjectAndArray()) {
+                if (insertColon && myWalker.hasWhitespaceDelimitedCodeBlocks()) {
                   invokeEnterHandler(editor);
                   hadEnter = true;
                 }
@@ -621,7 +626,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                             String comma,
                                             JsonLikePsiWalker walker,
                                             boolean insertColon) {
-    if (!walker.quotesForStringLiterals() && defaultValue != null) {
+    if (!walker.requiresValueQuotes() && defaultValue != null) {
       defaultValue = StringUtil.unquoteString(defaultValue);
     }
     final boolean isNumber = type != null && (JsonSchemaType._integer.equals(type) || JsonSchemaType._number.equals(type)) ||
@@ -629,7 +634,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                        !StringUtil.isQuotedString(defaultValue) || values != null && ContainerUtil.and(values, v -> !(v instanceof String)));
     boolean hasValues = !ContainerUtil.isEmpty(values);
     boolean hasDefaultValue = !StringUtil.isEmpty(defaultValue);
-    boolean hasQuotes = isNumber || !walker.quotesForStringLiterals();
+    boolean hasQuotes = isNumber || !walker.requiresValueQuotes();
     final String colonWs = insertColon ? ": " : " ";
     String stringToInsert = colonWs + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
     EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
@@ -643,7 +648,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       editor.getCaretModel().moveToOffset(newOffset);
     }
 
-    if (!walker.invokeEnterBeforeObjectAndArray() && !stringToInsert.equals(colonWs + comma)) {
+    if (!walker.hasWhitespaceDelimitedCodeBlocks() && !stringToInsert.equals(colonWs + comma)) {
       formatInsertedString(context, stringToInsert.length());
     }
 

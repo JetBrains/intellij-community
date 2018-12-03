@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -34,6 +35,9 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Utils {
+
+  public static final String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
+
   public static String configValueForKey(List<? extends OutPair> outPairs, String key) {
     for (OutPair outPair : outPairs) {
       if (outPair.getKey().equals(key)) {
@@ -46,6 +50,14 @@ public class Utils {
 
   public static boolean isEnabled(CodeStyleSettings currentSettings) {
     return currentSettings != null && currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
+  }
+
+  public static boolean isFullSettingsSupport() {
+    return Registry.is(FULL_SETTINGS_SUPPORT_REG_KEY);
+  }
+
+  public static void setFullSettingsSupportEnabled(boolean enabled) {
+    Registry.get(FULL_SETTINGS_SUPPORT_REG_KEY).setValue(enabled);
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {

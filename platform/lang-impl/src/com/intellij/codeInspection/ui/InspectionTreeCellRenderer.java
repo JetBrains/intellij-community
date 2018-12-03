@@ -29,7 +29,6 @@ import javax.swing.*;
  * @author Dmitry Batkovich
  */
 class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
-  private final InspectionResultsView myView;
   private final InspectionTreeTailRenderer myTailRenderer;
 
   InspectionTreeCellRenderer(InspectionResultsView view) {
@@ -44,7 +43,6 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
         append(text);
       }
     };
-    myView = view;
   }
 
   @Override
@@ -57,7 +55,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
                                     boolean hasFocus) {
     InspectionTreeNode node = (InspectionTreeNode)value;
 
-    append(node.toString(),
+    append(node.getPresentableText(),
            patchMainTextAttrs(node, node.appearsBold()
                                     ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
                                     : getMainForegroundAttributes(node)));
@@ -65,7 +63,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
     setIcon(node.getIcon(expanded));
   }
 
-  private SimpleTextAttributes patchMainTextAttrs(InspectionTreeNode node, SimpleTextAttributes attributes) {
+  private static SimpleTextAttributes patchMainTextAttrs(InspectionTreeNode node, SimpleTextAttributes attributes) {
     if (node.isExcluded()) {
       return attributes.derive(attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, null, null, null);
     }

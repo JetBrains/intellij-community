@@ -109,6 +109,22 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       public boolean hasUnderlineSelection() {
         return UIUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
       }
+
+      @Nullable
+      @Override
+      public TabInfo getToSelectOnRemoveOf(TabInfo info) {
+        int index = getIndexOf(info);
+        if (index != -1) {
+          VirtualFile file = myWindow.getFileAt(index);
+          if (file != null) {
+            int indexToSelect = myWindow.calcIndexToSelect(file, index);
+            if (indexToSelect >= 0 && indexToSelect < getTabs().size()) {
+              return getTabAt(indexToSelect);
+            }
+          }
+        }
+        return super.getToSelectOnRemoveOf(info);
+      }
     };
     myTabs.setBorder(new MyShadowBorder(myTabs));
     myTabs.setTransferHandler(new MyTransferHandler());
@@ -572,8 +588,11 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
-      final TabInfo previousSelection = info.getPreviousSelection();
+      TabInfo previousSelection = info.getPreviousSelection();
       final Image img = JBTabsImpl.getComponentImage(info);
+      if (previousSelection == null) {
+        previousSelection = myTabs.getToSelectOnRemoveOf(info);
+      }
       info.setHidden(true);
       if (previousSelection != null) {
         myTabs.select(previousSelection, true);

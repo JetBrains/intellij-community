@@ -43,6 +43,7 @@
                     interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
     <extensionPoint name="configSlurperSupport" interface="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperSupport"/>
 
+    <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="callExpressionTypeCalculator"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
     <!--suppress DeprecatedClassUsageInspection -->
@@ -51,6 +52,7 @@
     <extensionPoint name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator"/>
     </extensionPoint>
+    <extensionPoint name="callTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.typing.GrCallTypeCalculator"/>
 
     <extensionPoint name="classDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyClassDescriptor"/>
     <extensionPoint name="methodDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyMethodDescriptorExtension"/>
@@ -149,14 +151,11 @@
 
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedReferenceFilterByFile"/>
 
-    <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.PredefinedReturnType"/>
-    <callExpressionTypeCalculator
-        implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrWithTraitTypeCalculator"/>
-    <callExpressionTypeCalculator
-        implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator"
-        order="last"/>
-    <callExpressionTypeCalculator
-        implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDGMTypeCalculator"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.PredefinedReturnType"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.WithTraitsTypeCalculator"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.DgmCallTypeCalculator"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.ClosureMethodsCallTypeCalculator"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.ObjectClassTypeCalculator"/>
 
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureOwnerDelegateTypeCalculator"/>
@@ -173,6 +172,8 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.ReferenceExpressionTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculator" order="last"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultBuiltinTypeClassTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression" order="last"
@@ -181,6 +182,8 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultConditionalTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodReferenceTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultRangeTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
@@ -190,7 +193,6 @@
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.GroovyNamedVariantArgumentProvider"/>
 
-    <applicabilityProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.ConstructorMapApplicabilityProvider"/>
     <applicabilityProvider implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyConstructorApplicabilityProvider"/>
 
     <!-- GroovyDSL extensions -->
@@ -419,6 +421,8 @@
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="Groovy"
                                        implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyWhiteSpaceFormattingStrategy"/>
+
+    <focusModeProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GrFocusModeProvider" />
     <postFormatProcessor implementation="org.jetbrains.plugins.groovy.formatter.GroovyBracePostFormatProcessor"/>
 
     <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyEnterHandler"
@@ -426,6 +430,7 @@
     <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GStringTypedActionHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GStringBackspaceHandlerDelegate"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyTripleQuoteBackspaceHandlerDelegate"/>
+    <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyStringBackslashHandler"/>
 
     <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyTypedHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyBackspaceHandler"/>
@@ -1668,6 +1673,7 @@
     <outOfSourcesChecker implementation="org.jetbrains.plugins.groovy.projectRoots.GroovyOutOfSourcesChecker"/>
 
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerGradleConfigurationHandler"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -1777,7 +1783,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
+    <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup" text="Grails/Griffon">
       <action id="Mvc.Upgrade"
               class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction"
               text="Change SDK version" description="Change Grails/Griffon SDK version">
@@ -1804,9 +1810,6 @@
   </application-components>
 
   <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
-    </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
     </component>

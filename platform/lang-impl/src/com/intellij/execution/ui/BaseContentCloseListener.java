@@ -49,18 +49,13 @@ public abstract class BaseContentCloseListener extends ContentManagerAdapter imp
     if (myContent == null) return;
 
     final Content content = myContent;
-    try {
-      disposeContent(content);
+    myContent = null;
+    final ContentManager contentManager = content.getManager();
+    if (contentManager != null) {
+      contentManager.removeContentManagerListener(this);
     }
-    finally {
-      final ContentManager contentManager = content.getManager();
-      if (contentManager != null) {
-        contentManager.removeContentManagerListener(this);
-      }
-      ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
-      content.release(); // don't invoke myContent.release() because myContent can becomes null
-      myContent = null;
-    }
+    ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
+    disposeContent(content);
   }
 
   protected abstract void disposeContent(@NotNull Content content);

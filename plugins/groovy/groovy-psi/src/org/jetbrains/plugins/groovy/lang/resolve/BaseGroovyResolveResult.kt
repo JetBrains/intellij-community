@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
+import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker
@@ -24,13 +25,13 @@ open class BaseGroovyResolveResult<out T : PsiElement>(
     spreadState = state[SpreadState.SPREAD_STATE]
   )
 
-  private val accessible by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val accessible by lazyPub {
     element !is PsiMember || PsiUtil.isAccessible(place, element)
   }
 
   override fun isAccessible(): Boolean = accessible
 
-  private val staticsOk by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val staticsOk by lazyPub {
     resolveContext is GrImportStatement ||
     element !is PsiModifierListOwner ||
     GrStaticChecker.isStaticsOK(element, place, resolveContext, false)

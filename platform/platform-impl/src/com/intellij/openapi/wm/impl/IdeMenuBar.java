@@ -295,8 +295,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     return false;
   }
 
+  @Nullable
   private Component findActualComponent(MouseEvent mouseEvent) {
     Component component = mouseEvent.getComponent();
+    if (component == null) {
+      return null;
+    }
     Component deepestComponent;
     if (getState() != State.EXPANDED &&
         !getState().isInProgress() &&
@@ -490,6 +494,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           break;
         default:
       }
+      if (!isShowing()) {
+        return;
+      }
       revalidate();
       if (getState() == State.COLLAPSED) {
         //we should repaint parent, to clear 1px on top when menu is collapsed
@@ -532,12 +539,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
             // re-target border clicks as a menu item ones
             item.dispatchEvent(MouseEventAdapter.convert(e, item, 1, 1));
             e.consume();
-            return;
           }
         }
       }
-
-      super.mouseClicked(e);
     }
   }
 
@@ -598,6 +602,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         });
       }
     }
+  }
+
+  public void onToggleFullScreen(boolean isFullScreen) {
+    if (myGlobalMenuLinux == null)
+      return;
+
+     myGlobalMenuLinux.toggle(!isFullScreen);
   }
 
   private static class MyExitFullScreenButton extends JButton {

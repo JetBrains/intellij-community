@@ -2,6 +2,9 @@
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.TObjectHashingStrategy;
@@ -11,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class JDOMInterner {
+  private static final Condition<Object> IS_ELEMENT = Conditions.instanceOf(Element.class);
   private final StringInterner myStrings = new StringInterner();
   private final OpenTHashSet<Element> myElements = new OpenTHashSet<Element>(new TObjectHashingStrategy<Element>() {
     @Override
@@ -117,6 +121,9 @@ public class JDOMInterner {
   @NotNull
   public synchronized Element internElement(@NotNull final Element element) {
     if (element instanceof ImmutableElement) return element;
+    if (ContainerUtil.exists(element.getContent(), IS_ELEMENT)) {
+      return new ImmutableElement(element, this);
+    }
     Element interned = myElements.get(element);
     if (interned == null) {
       interned = new ImmutableElement(element, this);

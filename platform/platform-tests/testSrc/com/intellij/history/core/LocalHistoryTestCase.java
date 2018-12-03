@@ -37,6 +37,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -53,7 +54,7 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   protected static byte[] b(String s) {
-    return s.getBytes();
+    return s.getBytes(StandardCharsets.UTF_8);
   }
 
   protected static Content c(String data) {

@@ -319,7 +319,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   }
 
   public void selectElement(final Object selector, final VirtualFile file, final boolean requestFocus) {
-    myBuilder.select(selector, file, requestFocus);
+    myBuilder.selectAsync(selector, file, requestFocus);
   }
 
   @Override

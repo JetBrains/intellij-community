@@ -2,8 +2,8 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
@@ -37,6 +37,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -59,10 +60,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +75,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Bas Leijdekkers
@@ -162,12 +162,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
     final Document document = profile.createDocument(getProject(), myFileType, myDialect, text);
-    document.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull final DocumentEvent event) {
-        initiateValidation();
-      }
-    });
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -175,6 +169,8 @@ public class StructuralSearchDialog extends DialogWrapper {
         final EditorEx editor = super.createEditor();
         editor.setHorizontalScrollbarVisible(true);
         editor.setVerticalScrollbarVisible(true);
+        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+        assert profile != null;
         TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
         SubstitutionShortInfoHandler.install(editor, variableName -> {
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
@@ -191,6 +187,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         TextCompletionUtil.installCompletionHint(editor);
         editor.putUserData(STRUCTURAL_SEARCH, StructuralSearchDialog.this);
         editor.setEmbeddedIntoDialogWrapper(true);
+        ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return editor;
       }
 
@@ -201,6 +198,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     };
     textField.setPreferredSize(new Dimension(850, 150));
     textField.setMinimumSize(new Dimension(200, 50));
+    textField.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull final DocumentEvent event) {
+        initiateValidation();
+      }
+    });
     return textField;
   }
 
@@ -497,9 +500,12 @@ public class StructuralSearchDialog extends DialogWrapper {
           myFileType = item.getFileType();
           myDialect = item.getDialect();
           myContext = item.getContext();
-          mySearchCriteriaEdit.setFileType(myFileType);
-          myReplaceCriteriaEdit.setFileType(myFileType);
           final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+          assert profile != null;
+          final Document searchDocument = profile.createDocument(getProject(), myFileType, myDialect, mySearchCriteriaEdit.getText());
+          mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
+          final Document replaceDocument = profile.createDocument(getProject(), myFileType, myDialect, myReplaceCriteriaEdit.getText());
+          myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           myFilterPanel.setProfile(profile);
           initiateValidation();
         }
@@ -603,18 +609,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     return panel;
   }
 
-  private List<String> computeConfigurationVariableNames() {
-    final List<String> result = new ArrayList<>(TemplateImplUtil.parseVariables(myConfiguration.getMatchOptions().getSearchPattern()).keySet());
-    if (myReplace) {
-      for (String var : TemplateImplUtil.parseVariables(myConfiguration.getReplaceOptions().getReplacement()).keySet()) {
-        if (!result.contains(var)) {
-          result.add(var + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
-        }
-      }
-    }
-    return result;
-  }
-
   Project getProject() {
     return mySearchContext.getProject();
   }
@@ -646,6 +640,20 @@ public class StructuralSearchDialog extends DialogWrapper {
         setSize(otherSize.width, getSize().height);
       }
     }
+
+    startTemplate();
+  }
+
+  private void startTemplate() {
+    if (!Registry.is("ssr.template.from.selection.builder")) {
+      return;
+    }
+    Document document = mySearchCriteriaEdit.getDocument();
+    PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+    assert psiFile != null;
+    TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
+    WriteCommandAction
+      .runWriteCommandAction(getProject(), () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
 
   @Override
@@ -661,7 +669,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     if (!result) return;
 
     myAlarm.cancelAllRequests();
-    removeUnusedVariableConstraints();
+    myConfiguration.removeUnusedVariables();
     final SearchScope scope = myScopePanel.getScope();
     if (scope == null) return;
     super.doOKAction();
@@ -685,14 +693,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private void removeUnusedVariableConstraints() {
-    final List<String> variableNames = computeConfigurationVariableNames();
-    variableNames.add(Configuration.CONTEXT_VAR_NAME);
-    myConfiguration.getMatchOptions().retainVariableConstraints(variableNames);
-  }
-
   public Configuration getConfiguration() {
-    removeUnusedVariableConstraints();
     saveConfiguration();
     return myConfiguration;
   }
@@ -966,7 +967,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private static Icon getShowHistoryIcon() {
-    return ObjectUtils.coalesce(UIManager.getIcon("TextField.darcula.searchWithHistory.icon"), LafIconLookup.getIcon("searchWithHistory"));
+    return AllIcons.Actions.SearchWithHistory;
   }
 
   private class SwitchAction extends AnAction implements DumbAware {

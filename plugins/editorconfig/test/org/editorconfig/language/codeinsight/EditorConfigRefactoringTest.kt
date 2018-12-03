@@ -8,7 +8,7 @@ import org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandl
 
 class EditorConfigRefactoringTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/refactoring/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/refactoring/"
 
   fun testRenameDeclarations() = doInplaceTest("my_rule")
   fun testRenameReferenceAndDeclarations() = doInplaceTest("my_symbols")

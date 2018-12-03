@@ -77,8 +77,17 @@ public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase
   public void testStreams() {
     doTest("import java.util.stream.Stream;\n" +
            "class Test {\n" +
-           "    {\n" +
+           "    static {\n" +
            "        Stream.of(1.0, 2.0, 3.0).toArray(/*Array of type 'java.lang.Double[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);\n" +
+           "    }\n" +
+           "}");
+  }
+  
+  public void testStreamsParens() {
+    doTest("import java.util.stream.Stream;\n" +
+           "class Test {\n" +
+           "    static {\n" +
+           "        Stream.of(1.0, 2.0, 3.0).toArray(((/*Array of type 'java.lang.Double[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/)));\n" +
            "    }\n" +
            "}");
   }
@@ -86,7 +95,7 @@ public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase
   public void testStreamsIntersection() {
     doTest("import java.util.stream.Stream;\n" +
            "class Test {\n" +
-           "    {\n" +
+           "    static {\n" +
            "        Stream.of(1, 2.0, 3.0).toArray(/*Array of type 'java.lang.Number[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);\n" +
            "    }\n" +
            "}");

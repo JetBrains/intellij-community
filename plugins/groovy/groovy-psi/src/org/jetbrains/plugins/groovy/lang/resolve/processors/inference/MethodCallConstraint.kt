@@ -15,21 +15,23 @@ class MethodCallConstraint(
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     val candidate = result.candidate ?: return true
-    val typeParameters = candidate.method.typeParameters
-    val nestedSession = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, context, emptyList(), session.skipClosureBlock)
-    session.nestedSessions[result] = nestedSession
-    nestedSession.propagateVariables(session)
-    nestedSession.addConstraint(ArgumentsConstraint(candidate, context))
-    nestedSession.repeatInferencePhases()
-    val returnType = session.siteSubstitutor.substitute(PsiUtil.getSmartReturnType(candidate.method))
-    val substitutedLeft = session.siteSubstitutor.substitute(session.substituteWithInferenceVariables(leftType))
-    if (returnType != null && PsiType.VOID != returnType && leftType != null) {
-      nestedSession.addConstraint(TypeConstraint(substitutedLeft, returnType, context))
-      nestedSession.repeatInferencePhases()
-    }
-    session.propagateVariables(nestedSession)
-    for (pair in nestedSession.myIncorporationPhase.captures) {
-      session.myIncorporationPhase.addCapture(pair.first, pair.second)
+    val method = candidate.method
+    val contextSubstitutor = result.contextSubstitutor
+    session.startNestedSession(method.typeParameters, contextSubstitutor, context, result) { nested ->
+      nested.initArgumentConstraints(candidate.argumentMapping, session.inferenceSubstitution)
+      nested.repeatInferencePhases()
+
+      if (leftType != null) {
+        val left = session.substituteWithInferenceVariables(session.contextSubstitutor.substitute(leftType))
+        if (left != null) {
+          val rt = PsiUtil.getSmartReturnType(method)
+          val right = session.substituteWithInferenceVariables(contextSubstitutor.substitute(rt))
+          if (right != null && right != PsiType.VOID) {
+            nested.addConstraint(TypeConstraint(left, right, context))
+            nested.repeatInferencePhases()
+          }
+        }
+      }
     }
     return true
   }

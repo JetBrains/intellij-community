@@ -397,7 +397,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitBreakStatement(PsiBreakStatement statement) {
     startElement(statement);
-    PsiStatement exitedStatement = statement.findExitedStatement();
+    generateExpressionInstructions(statement.getValueExpression());
+
+    PsiElement exitedStatement = statement.findExitedElement();
     if (exitedStatement != null) {
       callFinallyBlocksOnExit(exitedStatement);
 
@@ -419,7 +421,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void callFinallyBlocksOnExit(PsiStatement exitedStatement) {
+  private void callFinallyBlocksOnExit(PsiElement exitedStatement) {
     for (final ListIterator<FinallyBlockSubroutine> it = myFinallyBlocks.listIterator(myFinallyBlocks.size()); it.hasPrevious(); ) {
       final FinallyBlockSubroutine finallyBlockSubroutine = it.previous();
       PsiElement finallyBlock = finallyBlockSubroutine.getElement();
@@ -503,13 +505,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void processVariable(@NotNull PsiVariable element) {
     final PsiExpression initializer = element.getInitializer();
-    if (initializer != null) {
-      myStartStatementStack.pushStatement(initializer, false);
-      myEndStatementStack.pushStatement(initializer, false);
-      initializer.accept(this);
-      myStartStatementStack.popStatement();
-      myEndStatementStack.popStatement();
-    }
+    generateExpressionInstructions(initializer);
+
     if (element instanceof PsiLocalVariable && initializer != null ||
         element instanceof PsiField) {
       if (element instanceof PsiLocalVariable && !myPolicy.isLocalVariableAccepted((PsiLocalVariable)element)) return;
@@ -839,12 +836,34 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
     PsiExpression caseValue = statement.getCaseValue();
 
-    if (caseValue != null) {
-      myStartStatementStack.pushStatement(caseValue, false);
-      myEndStatementStack.pushStatement(caseValue, false);
-      caseValue.accept(this);
-      myStartStatementStack.popStatement();
-      myEndStatementStack.popStatement();
+    generateExpressionInstructions(caseValue);
+
+    finishElement(statement);
+  }
+
+  @Override
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    startElement(statement);
+    PsiExpressionList caseValues = statement.getCaseValues();
+
+    if (caseValues != null) {
+      for (PsiExpression caseValue : caseValues.getExpressions()) {
+        ProgressManager.checkCanceled();
+        generateExpressionInstructions(caseValue);
+      }
+    }
+
+    PsiStatement body = statement.getBody();
+    if (body != null) {
+      body.accept(this);
+    }
+
+    PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
+    if (switchBlock != null) {
+      Instruction instruction =
+        new GoToInstruction(0, BranchingInstruction.Role.END, PsiTreeUtil.isAncestor(switchBlock, myCodeFragment, true));
+      myCurrentFlow.addInstruction(instruction);
+      addElementOffsetLater(switchBlock, false);
     }
 
     finishElement(statement);
@@ -852,6 +871,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
+    generateSwitchBlockInstructions(statement);
+  }
+
+  @Override
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    generateSwitchBlockInstructions(expression);
+  }
+
+  public void generateSwitchBlockInstructions(PsiSwitchBlock statement) {
     startElement(statement);
 
     PsiExpression expr = statement.getExpression();
@@ -862,12 +890,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiCodeBlock body = statement.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
-      PsiSwitchLabelStatement defaultLabel = null;
+      PsiSwitchLabelStatementBase defaultLabel = null;
       for (PsiStatement aStatement : statements) {
         ProgressManager.checkCanceled();
-        if (aStatement instanceof PsiSwitchLabelStatement) {
-          if (((PsiSwitchLabelStatement)aStatement).isDefaultCase()) {
-            defaultLabel = (PsiSwitchLabelStatement)aStatement;
+        if (aStatement instanceof PsiSwitchLabelStatementBase) {
+          if (((PsiSwitchLabelStatementBase)aStatement).isDefaultCase()) {
+            defaultLabel = (PsiSwitchLabelStatementBase)aStatement;
           }
           Instruction instruction = new ConditionalGoToInstruction(0, expr);
           myCurrentFlow.addInstruction(instruction);
@@ -1281,6 +1309,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression[] expressions = list.getExpressions();
     for (final PsiExpression expression : expressions) {
       ProgressManager.checkCanceled();
+      generateExpressionInstructions(expression);
+    }
+  }
+
+  private void generateExpressionInstructions(@Nullable PsiExpression expression) {
+    if (expression != null) {
+      // handle short circuit
       myStartStatementStack.pushStatement(expression, false);
       myEndStatementStack.pushStatement(expression, false);
 

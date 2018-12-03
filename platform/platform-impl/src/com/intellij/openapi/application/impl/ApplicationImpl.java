@@ -939,7 +939,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void runReadAction(@NotNull final Runnable action) {
-    if (isReadAccessAllowed()) {
+    if (checkReadAccessAllowedAndNoPendingWrites()) {
       action.run();
     }
     else {
@@ -955,7 +955,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
-    if (isReadAccessAllowed()) {
+    if (checkReadAccessAllowedAndNoPendingWrites()) {
       return computation.compute();
     }
     startRead();
@@ -969,7 +969,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    if (isReadAccessAllowed()) {
+    if (checkReadAccessAllowedAndNoPendingWrites()) {
       return computation.compute();
     }
     startRead();
@@ -1106,10 +1106,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isReadAccessAllowed() {
-    if (isDispatchThread()) {
-      return myWriteActionThread == null; // no reading from EDT during background write action
-    }
-    return myLock.isReadLockedByThisThread() || myWriteActionThread == Thread.currentThread();
+    return isDispatchThread() || myLock.isReadLockedByThisThread();
+  }
+
+  private boolean checkReadAccessAllowedAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
+    return isDispatchThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
   }
 
   @Override
@@ -1159,7 +1160,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    if (isReadAccessAllowed()) {
+    if (checkReadAccessAllowedAndNoPendingWrites()) {
       action.run();
     }
     else {
@@ -1192,7 +1193,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public AccessToken acquireReadActionLock() {
     // if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    return isReadAccessAllowed() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
+    return checkReadAccessAllowedAndNoPendingWrites() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
   }
 
   private volatile boolean myWriteActionPending;
@@ -1221,7 +1222,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
 
-      if (!myLock.isWriteLocked() && !myLock.tryWriteLock()) {
+      if (!myLock.isWriteLocked()) {
         Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
                                     JobScheduler.getScheduler()
                                       .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),

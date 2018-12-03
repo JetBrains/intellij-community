@@ -29,7 +29,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -1114,11 +1113,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private void updateActionsImpl(boolean transparentOnly, boolean forced) {
-    List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(myVisibleActions.size());
     DataContext dataContext = getDataContext();
-
-    Utils.expandActionGroup(LaterInvocator.isInModalContext(), myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
-                            myPlace, myActionManager, transparentOnly, false, false, true);
+    List<AnAction> newVisibleActions =
+      new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory, dataContext, myPlace,
+                        false, true, transparentOnly)
+        .expandActionGroupWithTimeout(myActionGroup, false);
 
     if (forced || !newVisibleActions.equals(myVisibleActions)) {
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();

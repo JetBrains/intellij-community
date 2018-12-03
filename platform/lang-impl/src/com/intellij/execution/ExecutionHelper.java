@@ -214,6 +214,8 @@ public class ExecutionHelper {
 
   public static Collection<RunContentDescriptor> findRunningConsole(@NotNull Project project,
                                                                     @NotNull NotNullFunction<? super RunContentDescriptor, Boolean> descriptorMatcher) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
     final RunContentDescriptor selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {

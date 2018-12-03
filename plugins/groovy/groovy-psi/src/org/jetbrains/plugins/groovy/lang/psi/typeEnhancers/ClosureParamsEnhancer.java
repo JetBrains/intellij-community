@@ -11,14 +11,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +29,7 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
   @Nullable
   @Override
-  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
+  protected PsiType getClosureParameterType(@NotNull GrClosableBlock closure, int index) {
     if (!GroovyConfigUtils.getInstance().isVersionAtLeast(closure, GroovyConfigUtils.GROOVY2_3)) return null;
 
     final GrParameter[] parameters = closure.getAllParameters();
@@ -70,11 +70,11 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
     PsiParameter param = null;
     if (variant instanceof GroovyMethodResult) {
-      MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+      GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
-        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new ExpressionArgument(closure));
-        if (pair != null) {
-          param = pair.first;
+        ArgumentMapping mapping = candidate.getArgumentMapping();
+        if (mapping != null) {
+          param = mapping.targetParameter(new ExpressionArgument(closure));
         }
       }
     } else {
@@ -108,10 +108,10 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
     PsiSubstitutor substitutor = null;
     if (variant instanceof GroovyMethodResult) {
-      MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+      GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
         substitutor =
-          new GroovyInferenceSessionBuilder((GrReferenceExpression)call.getInvokedExpression(), candidate)
+          new GroovyInferenceSessionBuilder(call, candidate, ((GroovyMethodResult)variant).getContextSubstitutor())
             .skipClosureIn(call)
             .resolveMode(false)
             .build().inferSubst();

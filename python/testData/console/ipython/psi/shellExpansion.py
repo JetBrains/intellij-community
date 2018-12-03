@@ -1,0 +1,1 @@
+!mv $file {file.upper()}

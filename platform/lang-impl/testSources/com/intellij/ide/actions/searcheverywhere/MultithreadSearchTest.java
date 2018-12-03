@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -23,7 +22,6 @@ import java.util.function.Function;
 /**
  * @author mikhail.sokolov
  */
-@Bombed(month = Calendar.DECEMBER, day = 1, user = "mikhail.sokolov", description = "leaking thread SE-FinisherTask")
 public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private static final String MORE_ITEM = "...MORE";
@@ -36,7 +34,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
-      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
+      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "tst", false, ignrd -> null);
       try {
         collector.awaitFinish(1000);
       }
@@ -63,7 +61,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     SESearcher searcher = new SingleThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
-      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
+      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "tst", false, ignrd -> null);
       try {
         collector.awaitFinish(1000);
       }

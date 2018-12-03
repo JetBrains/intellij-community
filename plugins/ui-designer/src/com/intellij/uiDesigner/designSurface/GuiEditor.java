@@ -355,10 +355,12 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
                                         new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK)),
                                         myGlassLayer);
 
-    UIUtil.invokeLaterIfNeeded(() -> {
-      DesignerToolWindowManager.getInstance(myProject).bind(this);
-      PaletteToolWindowManager.getInstance(myProject).bind(this);
-    });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        DesignerToolWindowManager.getInstance(myProject).bind(this);
+        PaletteToolWindowManager.getInstance(myProject).bind(this);
+      });
+    }
   }
 
   @Override
@@ -390,8 +392,11 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     myDocument.removeDocumentListener(myDocumentListener);
     PsiManager.getInstance(getProject()).removePsiTreeChangeListener(myPsiTreeChangeListener);
 
-    DesignerToolWindowManager.getInstance(myProject).dispose(this);
-    PaletteToolWindowManager.getInstance(myProject).dispose(this);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      DesignerToolWindowManager.getInstance(myProject).dispose(this);
+      PaletteToolWindowManager.getInstance(myProject).dispose(this);
+    }
+
     myPsiTreeChangeListener.dispose();
 
     Disposer.dispose(myContentSplitter);

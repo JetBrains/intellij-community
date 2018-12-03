@@ -111,6 +111,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
 
   private UnnamedConfigurable myConfigurable;
 
+  @Nullable
+  public UnnamedConfigurable getRawConfigurable() {
+    return myConfigurable;
+  }
+
   public UnnamedConfigurable getConfigurable() {
     if (myConfigurable == null) {
       myConfigurable = createConfigurable(myEp, false);

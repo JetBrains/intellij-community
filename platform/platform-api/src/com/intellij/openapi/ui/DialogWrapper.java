@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
@@ -521,6 +522,11 @@ public abstract class DialogWrapper {
     helpButton.setText("");
     helpButton.setMargin(insets);
     setHelpTooltip(helpButton);
+    helpButton.addPropertyChangeListener("ancestor", evt -> {
+      if (evt.getNewValue() == null) {
+        HelpTooltip.dispose((JComponent)evt.getSource());
+      }
+    });
     return helpButton;
   }
 

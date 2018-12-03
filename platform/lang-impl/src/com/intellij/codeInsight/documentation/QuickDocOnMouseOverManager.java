@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -155,7 +155,7 @@ public class QuickDocOnMouseOverManager {
     }
 
     Editor editor = e.getEditor();
-    if (editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null) {
+    if (EditorMouseHoverPopupControl.arePopupsDisabled(editor)) {
       return;
     }
 

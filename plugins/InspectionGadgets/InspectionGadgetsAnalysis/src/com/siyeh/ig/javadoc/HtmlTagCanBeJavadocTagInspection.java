@@ -149,14 +149,23 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
     }
 
     private static boolean hasMatchingCloseTag(PsiElement element, int offset) {
+      int balance = 0;
       while (element != null) {
         @NonNls final String text = element.getText();
         final int endIndex = StringUtil.indexOfIgnoreCase(text, "</code>", offset);
-        if (containsHtmlTag(text, offset, endIndex >= 0 ? endIndex : text.length())) {
+        final int end = endIndex >= 0 ? endIndex : text.length();
+        if (text.equals("{")) {
+          balance++;
+        }
+        else if (text.equals("}")) {
+          balance--;
+          if (balance < 0) return false;
+        }
+        if (containsHtmlTag(text, offset, end)) {
           return false;
         }
         if (endIndex >= 0) {
-          return true;
+          return balance == 0;
         }
         offset = 0;
         element = element.getNextSibling();
@@ -170,7 +179,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
 
   private static final Pattern START_TAG_PATTERN = Pattern.compile("<([a-zA-Z])+([^>])*>");
 
-  private static boolean containsHtmlTag(String text, int startIndex, int endIndex) {
+  static boolean containsHtmlTag(String text, int startIndex, int endIndex) {
     final Matcher matcher = START_TAG_PATTERN.matcher(text);
     if (matcher.find(startIndex)) {
       return matcher.start() < endIndex;

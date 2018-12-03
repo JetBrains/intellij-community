@@ -44,6 +44,13 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
 
   void testClosureWithDefaultParameters() { doTest() }
 
+  void 'test method with default parameters and varargs'() {
+    testHighlighting '''\
+def go(String a, String b = 'b', String c, int ... i) {}
+go('a', 'c', 1, 2, 3)
+'''
+  }
+
   void testClosureApplicability() { doTest() }
 
   void testSingleParameterMethodApplicability() { doTest() }
@@ -359,7 +366,7 @@ def foo(Function<String, String> function) {
 foo<warning descr="'foo' in '_' cannot be applied to '(Function<java.lang.Double,java.lang.Double>)'">({println  it.byteValue()} as Function<Double, Double>)</warning>
 foo({println  it.substring(1)} as Function)
 foo({println  it.substring(1)} as Function<String, String>)
-foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure)'">({println <warning descr="Method call is ambiguous">it</warning>})</warning>
+foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure)'">({println it})</warning>
 
 ''')
   }

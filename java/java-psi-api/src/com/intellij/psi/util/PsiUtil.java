@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
@@ -347,6 +348,42 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
+  public static List<PsiExpression> getSwitchResultExpressions(PsiSwitchExpression switchExpression) {
+    PsiCodeBlock body = switchExpression.getBody();
+    if (body != null) {
+      List<PsiExpression> result = new ArrayList<>();
+      PsiStatement[] statements = body.getStatements();
+      for (PsiStatement statement : statements) {
+        if (statement instanceof PsiSwitchLabeledRuleStatement) {
+          PsiStatement ruleBody = ((PsiSwitchLabeledRuleStatement)statement).getBody();
+          if (ruleBody instanceof PsiExpressionStatement) {
+            result.add(((PsiExpressionStatement)ruleBody).getExpression());
+          }
+          else if (ruleBody instanceof PsiBlockStatement) {
+            collectSwitchResultExpressions(result, (PsiBlockStatement)ruleBody);
+          }
+        }
+        else if (statement instanceof PsiBlockStatement) {
+           collectSwitchResultExpressions(result, (PsiBlockStatement)statement);
+        }
+        else if (statement instanceof PsiBreakStatement) {
+          ContainerUtil.addIfNotNull(result, ((PsiBreakStatement)statement).getExpression());
+        }
+      }
+      return result;
+    }
+    return Collections.emptyList();
+  }
+
+  private static void collectSwitchResultExpressions(List<PsiExpression> result, PsiBlockStatement ruleBody) {
+    PsiCodeBlock codeBlock = ruleBody.getCodeBlock();
+    ArrayList<PsiBreakStatement> breaks = new ArrayList<>();
+    addStatements(breaks, codeBlock, PsiBreakStatement.class, element -> element instanceof PsiSwitchBlock);
+    for (PsiBreakStatement aBreak : breaks) {
+      ContainerUtil.addIfNotNull(result, aBreak.getExpression());
+    }
+  }
+
   @MagicConstant(intValues = {ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PRIVATE})
   public @interface AccessLevel {}
 
@@ -396,7 +433,8 @@ public final class PsiUtil extends PsiUtilCore {
     }
 
     if (element instanceof PsiExpressionStatement) {
-      return isStatement(((PsiExpressionStatement)element).getExpression());
+      return parent instanceof PsiSwitchLabeledRuleStatement && ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock() instanceof PsiSwitchExpression ||
+             isStatement(((PsiExpressionStatement)element).getExpression());
     }
 
     if (element instanceof PsiDeclarationStatement) {
@@ -698,6 +736,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Nullable
+  @Contract("null -> null")
   public static PsiExpression deparenthesizeExpression(PsiExpression expression) {
     while (true) {
       if (expression instanceof PsiParenthesizedExpression) {
@@ -971,7 +1010,6 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
     PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiEnumConstantInitializer.class, PsiMethod.class, PsiField.class);
     if (parent instanceof PsiMethod && !((PsiMethod)parent).isConstructor()) return null;
-    if (parent instanceof PsiField && parent.hasModifierProperty(PsiModifier.STATIC)) return null;
     return parent;
   }
 
@@ -1298,19 +1336,20 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiReturnStatement[] findReturnStatements(@Nullable PsiCodeBlock body) {
     ArrayList<PsiReturnStatement> vector = new ArrayList<>();
     if (body != null) {
-      addReturnStatements(vector, body);
+      addStatements(vector, body, PsiReturnStatement.class, statement -> false);
     }
     return vector.toArray(PsiReturnStatement.EMPTY_ARRAY);
   }
 
-  private static void addReturnStatements(List<? super PsiReturnStatement> vector, PsiElement element) {
-    if (element instanceof PsiReturnStatement) {
-      vector.add((PsiReturnStatement)element);
+  private static <T extends PsiElement> void addStatements(List<? super T> vector, PsiElement element, Class<? extends T> clazz, Predicate<? super PsiElement> stopAt) {
+    if (PsiTreeUtil.instanceOf(element, clazz)) {
+      //noinspection unchecked
+      vector.add((T)element);
     }
-    else if (!(element instanceof PsiClass) && !(element instanceof PsiLambdaExpression)) {
+    else if (!(element instanceof PsiClass) && !(element instanceof PsiLambdaExpression) && !stopAt.test(element)) {
       PsiElement[] children = element.getChildren();
       for (PsiElement child : children) {
-        addReturnStatements(vector, child);
+        addStatements(vector, child, clazz, stopAt);
       }
     }
   }

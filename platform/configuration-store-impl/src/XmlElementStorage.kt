@@ -52,7 +52,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         isLoadLocalData = !provider.read(fileSpec, roamingType) { inputStream ->
           inputStream?.let {
             element = loadElement(inputStream)
-            providerDataStateChanged(createDataWriterForElement(element!!), DataStateChanged.LOADED)
+            providerDataStateChanged(createDataWriterForElement(element!!, toString()), DataStateChanged.LOADED)
           }
         }
       }
@@ -140,7 +140,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         val rootAttributes = LinkedHashMap<String, String>()
         storage.beforeElementSaved(elements, rootAttributes)
         val macroManager = if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
-        writer = XmlDataWriter(storage.rootElementName, elements, rootAttributes, macroManager)
+        writer = XmlDataWriter(storage.rootElementName, elements, rootAttributes, macroManager, storage.toString())
       }
 
       // during beforeElementSaved() elements can be modified and so, even if our save() never returns empty list, at this point, elements can be an empty list
@@ -208,9 +208,10 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 }
 
 internal class XmlDataWriter(private val rootElementName: String?,
-                            private val elements: List<Element>,
-                            private val rootAttributes: Map<String, String>,
-                            private val macroManager: PathMacroManager?) : StringDataWriter() {
+                             private val elements: List<Element>,
+                             private val rootAttributes: Map<String, String>,
+                             private val macroManager: PathMacroManager?,
+                             private val storageFilePathForDebugPurposes: String) : StringDataWriter() {
   override fun hasData(filter: DataWriterFilter): Boolean {
     return elements.any { filter.hasData(it) }
   }
@@ -247,7 +248,7 @@ internal class XmlDataWriter(private val rootElementName: String?,
       writer.append('>')
     }
 
-    val xmlOutputter = JbXmlOutputter(lineSeparatorWithIndent, filter?.toElementFilter(), replacePathMap, macroFilter)
+    val xmlOutputter = JbXmlOutputter(lineSeparatorWithIndent, filter?.toElementFilter(), replacePathMap, macroFilter, storageFilePathForDebugPurposes = storageFilePathForDebugPurposes)
     for (element in elements) {
       if (hasRootElement) {
         writer.append(lineSeparatorWithIndent)
@@ -412,12 +413,14 @@ internal fun DataWriter.toBufferExposingByteArray(lineSeparator: LineSeparator =
 }
 
 // use ONLY for non-ordinal usages (default project, deprecated directoryBased storage)
-internal fun createDataWriterForElement(element: Element): DataWriter {
+internal fun createDataWriterForElement(element: Element, storageFilePathForDebugPurposes: String): DataWriter {
   return object: DataWriter {
     override fun hasData(filter: DataWriterFilter) = filter.hasData(element)
 
     override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
-      output.bufferedWriter().use { JbXmlOutputter(lineSeparator, filter?.toElementFilter(), null, null).output(element, it) }
+      output.bufferedWriter().use {
+        JbXmlOutputter(lineSeparator, elementFilter = filter?.toElementFilter(), storageFilePathForDebugPurposes = storageFilePathForDebugPurposes).output(element, it)
+      }
     }
   }
 }

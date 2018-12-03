@@ -824,8 +824,21 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+  public void visitBreakStatement(PsiBreakStatement statement) {
+    if (myType1 == JavaTokenType.BREAK_KEYWORD && ElementType.EXPRESSION_BIT_SET.contains(myType2)) {
+      createSpaceProperty(true, false, 0);
+    }
+  }
 
+  @Override
+  public void visitContinueStatement(PsiContinueStatement statement) {
+    if (myType1 == JavaTokenType.CONTINUE_KEYWORD && myType2 == JavaTokenType.IDENTIFIER) {
+      createSpaceProperty(true, false, 0);
+    }
+  }
+
+  @Override
+  public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
     if (myRole1 == ChildRole.LPARENTH) {
       createParenthSpace(mySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP, mySettings.SPACE_WITHIN_PARENTHESES);
     }

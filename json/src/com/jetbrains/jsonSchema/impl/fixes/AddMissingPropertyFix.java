@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
 import org.jetbrains.annotations.Nls;
@@ -34,10 +34,10 @@ import java.util.List;
 
 public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
   private final JsonValidationError.MissingMultiplePropsIssueData myData;
-  private final JsonLikePsiWalker.QuickFixAdapter myQuickFixAdapter;
+  private final JsonLikeSyntaxAdapter myQuickFixAdapter;
 
   public AddMissingPropertyFix(JsonValidationError.MissingMultiplePropsIssueData data,
-                               JsonLikePsiWalker.QuickFixAdapter quickFixAdapter) {
+                               JsonLikeSyntaxAdapter quickFixAdapter) {
     myData = data;
     myQuickFixAdapter = quickFixAdapter;
   }

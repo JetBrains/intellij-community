@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
@@ -94,7 +95,7 @@ public class FontPreferences {
   public static String getDefaultFontName() {
     if (SystemInfo.isWindows) return WINDOWS_DEFAULT_FONT_FAMILY;
     if (SystemInfo.isMacOSSnowLeopard) return MAC_OS_DEFAULT_FONT_FAMILY;
-    if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless()) {
+    if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && !ApplicationManager.getApplication().isCommandLine()) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
         if (LINUX_DEFAULT_FONT_FAMILY.equals(font.getName())) {
           return font.getFontName();

@@ -16,7 +16,7 @@ class KotlinXmlSerializerTest {
   @Test fun internalVar() {
     @Tag("bean")
     class Foo {
-      internal var PLACES_MAP = ""
+      var PLACES_MAP = ""
     }
 
     val data = Foo()

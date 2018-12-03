@@ -186,6 +186,9 @@ public abstract class PyTestCase extends UsefulTestCase {
       myFixture = null;
       FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
       clearFields(this);

@@ -40,6 +40,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -52,6 +53,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.BooleanValueHolder;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -66,8 +68,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -143,10 +145,6 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   public boolean hasMultipleDataToSelect() {
-    Object root = myTree.getModel().getRoot();
-    if (root instanceof CheckedTreeNode && ((CheckedTreeNode)root).getChildCount() == 1) {
-      return false;
-    }
     return myModulesCount > 1;
   }
 
@@ -463,6 +461,8 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private class DataNodeCheckedTreeNode extends CheckedTreeNode {
+    private static final int MAX_DEPENDENCIES_TO_DESCRIBE = 5;
+
     private final DataNode myDataNode;
     @Nullable
     private final Icon icon;
@@ -608,23 +608,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
 
       if (!deps.isEmpty() && !selectedModules.isEmpty()) {
-        final String listOfSelectedModules = StringUtil.join(selectedModules, node -> node.getData().getId(), ", ");
-
-        final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
-
-        final String message;
-        if (!checked) {
-          message = String.format(
-            "<html>The following module%s <br><b>%s</b><br>%s enabled and depend%s on selected modules. <br>Would you like to disable %s too?</html>",
-            deps.size() == 1 ? "" : "s", listOfDependencies, deps.size() == 1 ? "is" : "are", deps.size() == 1 ? "s" : "",
-            deps.size() == 1 ? "it" : "them");
-        }
-        else {
-          message = String.format(
-            "<html>The following module%s on which <b>%s</b> depend%s %s disabled:<br><b>%s</b><br>Would you like to enable %s?</html>",
-            deps.size() == 1 ? "" : "s", listOfSelectedModules, selectedModules.size() == 1 ? "s" : "", deps.size() == 1 ? "is" : "are",
-            listOfDependencies, deps.size() == 1 ? "it" : "them");
-        }
+        final String message = checked ? getEnableMessage(selectedModules, deps) : getDisableMessage(deps);
         if (Messages.showOkCancelDialog(message, checked ? "Enable Dependant Modules" : "Disable Modules with Dependency on this",
                                         Messages.getQuestionIcon()) == Messages.OK) {
           List<DataNodeCheckedTreeNode> nodes =
@@ -639,6 +623,32 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
           }
         }
       }
+    }
+
+    private String getEnableMessage(List<DataNode<Identifiable>> selectedModules, Set<DataNode<Identifiable>> deps) {
+      if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
+        return String.format("%d disabled modules depend on selected modules. Would you like to enable them too?", deps.size());
+      }
+
+      final String listOfSelectedModules = StringUtil.join(selectedModules, node -> node.getData().getId(), ", ");
+
+      final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
+      return String.format(
+        "<html>The following module%s on which <b>%s</b> depend%s %s disabled:<br><b>%s</b><br>Would you like to enable %s?</html>",
+        deps.size() == 1 ? "" : "s", listOfSelectedModules, selectedModules.size() == 1 ? "s" : "", deps.size() == 1 ? "is" : "are",
+        listOfDependencies, deps.size() == 1 ? "it" : "them");
+    }
+
+    private String getDisableMessage(Set<DataNode<Identifiable>> deps) {
+      if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
+        return String.format("%d enabled modules depend on selected modules. Would you like to disable them too?", deps.size());
+      }
+
+      final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
+      return String.format(
+        "<html>The following module%s <br><b>%s</b><br>%s enabled and depend%s on selected modules. <br>Would you like to disable %s too?</html>",
+        deps.size() == 1 ? "" : "s", listOfDependencies, deps.size() == 1 ? "is" : "are", deps.size() == 1 ? "s" : "",
+        deps.size() == 1 ? "it" : "them");
     }
   }
 
@@ -809,5 +819,15 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     public boolean displayTextInToolbar() {
       return true;
     }
+  }
+
+  @Override
+  public boolean showAndGet() {
+    final BooleanValueHolder result = new BooleanValueHolder(false);
+    DumbService.getInstance(myProject).suspendIndexingAndRun(
+      "Select External Data",
+      () -> result.setValue(super.showAndGet())
+    );
+    return result.getValue();
   }
 }

@@ -120,6 +120,10 @@ public class ControlFlowUtils {
     else if (statement instanceof PsiSwitchStatement) {
       return switchStatementMayCompleteNormally((PsiSwitchStatement)statement);
     }
+    else if (statement instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)statement).getBody();
+      return body != null && statementMayCompleteNormally(body);
+    }
     else if (statement instanceof PsiTemplateStatement || statement instanceof PsiClassLevelDeclarationStatement) {
       return true;
     }
@@ -930,6 +934,9 @@ public class ControlFlowUtils {
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
         PsiElement ternaryParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
         return ternaryParent instanceof PsiReturnStatement ||
+               (ternaryParent instanceof PsiLocalVariable && 
+                (!((PsiLocalVariable)ternaryParent).getTypeElement().isInferredType() || 
+                 PsiTypesUtil.isDenotableType(((PsiLocalVariable)ternaryParent).getType(), ternaryParent))) ||
                (ternaryParent instanceof PsiAssignmentExpression && ternaryParent.getParent() instanceof PsiExpressionStatement &&
                 PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)ternaryParent).getRExpression()) == parent);
       }

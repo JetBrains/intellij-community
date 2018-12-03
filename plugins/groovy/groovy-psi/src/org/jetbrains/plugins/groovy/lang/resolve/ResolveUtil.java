@@ -59,10 +59,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 import java.util.*;
 
@@ -890,12 +891,18 @@ public class ResolveUtil {
 
     for (GroovyResolveResult variant : variants) {
       if (variant instanceof GroovyMethodResult && ((GroovyMethodResult)variant).getCandidate() != null) {
-        MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
+        GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
         if (candidate != null) {
-          Pair<PsiParameter, PsiType> pair = candidate.completionMapArguments().get(new ExpressionArgument(arg));
-          ContainerUtil.addIfNotNull(expectedParams, pair);
+          ArgumentMapping mapping = candidate.getArgumentMapping();
+          if (mapping != null) {
+            ExpressionArgument argument = new ExpressionArgument(arg);
+            PsiParameter targetParameter = mapping.targetParameter(argument);
+            PsiType expectedType = mapping.expectedType(argument);
+            ContainerUtil.addIfNotNull(expectedParams, Pair.create(targetParameter, expectedType));
+          }
         }
-      } else {
+      }
+      else {
         final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
           variant, place, true, true, namedArguments, expressionArguments, closureArguments
         );

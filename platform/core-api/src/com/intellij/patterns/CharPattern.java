@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.util.ProcessingContext;
@@ -22,45 +8,49 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class CharPattern extends ObjectPattern<Character, CharPattern> {
+
+  private final CharPattern myJavaIdentifierPartPattern = with(new PatternCondition<Character>("javaIdentifierPart") {
+    @Override
+    public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      return Character.isJavaIdentifierPart(character.charValue());
+    }
+  });
+  private final CharPattern myJavaIdentifierStartPattern = with(new PatternCondition<Character>("javaIdentifierStart") {
+    @Override
+    public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      return Character.isJavaIdentifierStart(character.charValue());
+    }
+  });
+  private final CharPattern myWhitespacePattern = with(new PatternCondition<Character>("whitespace") {
+    @Override
+    public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      return Character.isWhitespace(character.charValue());
+    }
+  });
+  private final CharPattern myLetterOrDigitPattern = with(new PatternCondition<Character>("letterOrDigit") {
+    @Override
+    public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      return Character.isLetterOrDigit(character.charValue());
+    }
+  });
+
   protected CharPattern() {
     super(Character.class);
-
   }
 
   public CharPattern javaIdentifierPart() {
-    return with(new PatternCondition<Character>("javaIdentifierPart") {
-      @Override
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
-        return Character.isJavaIdentifierPart(character.charValue());
-      }
-    });
+    return myJavaIdentifierPartPattern;
   }
 
   public CharPattern javaIdentifierStart() {
-    return with(new PatternCondition<Character>("javaIdentifierStart") {
-      @Override
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
-        return Character.isJavaIdentifierStart(character.charValue());
-      }
-    });
+    return myJavaIdentifierStartPattern;
   }
 
   public CharPattern whitespace() {
-    return with(new PatternCondition<Character>("whitespace") {
-      @Override
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
-        return Character.isWhitespace(character.charValue());
-      }
-    });
+    return myWhitespacePattern;
   }
 
   public CharPattern letterOrDigit() {
-    return with(new PatternCondition<Character>("letterOrDigit") {
-      @Override
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
-        return Character.isLetterOrDigit(character.charValue());
-      }
-    });
+    return myLetterOrDigitPattern;
   }
-
 }

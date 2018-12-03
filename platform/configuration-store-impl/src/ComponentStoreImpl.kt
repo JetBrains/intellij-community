@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -16,6 +17,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
@@ -102,7 +104,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw e
     }
     catch (e: Exception) {
-      LOG.error("Cannot init $componentName component state", e)
+      LOG.error(PluginManagerCore.createPluginException("Cannot init $componentName component state", e, component.javaClass))
       return
     }
   }
@@ -375,14 +377,10 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        try {
-          component.loadState(state)
-        }
-        finally {
-          val stateAfterLoad = stateGetter.close()
-          (stateAfterLoad ?: state).let {
-            FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, it, project)
-          }
+        component.loadState(state)
+        val stateAfterLoad = stateGetter.archiveState()
+        LOG.runAndLogException {
+          FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, stateAfterLoad ?: state, project)
         }
         return true
       }

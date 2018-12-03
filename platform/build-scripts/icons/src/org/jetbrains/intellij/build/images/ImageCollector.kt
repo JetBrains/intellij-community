@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.images
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -12,8 +13,10 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.function.Consumer
 import java.util.regex.Pattern
@@ -58,6 +61,8 @@ class ImageFlags(val skipped: Boolean,
   constructor() : this(false, false, null)
 }
 
+internal class ImageSyncFlags(val skipSync: Boolean, val forceSync: Boolean)
+
 data class DeprecationData(val comment: String?, val replacement: String?, val replacementContextClazz: String?, val replacementReference: String?)
 
 internal class ImageCollector(private val projectHome: Path, private val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false, private val className: String? = null) {
@@ -69,7 +74,18 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   fun collect(module: JpsModule, includePhantom: Boolean = false): List<ImagePaths> {
     for (sourceRoot in module.sourceRoots) {
       if (sourceRoot.rootType == JavaResourceRootType.RESOURCE) {
-        processRoot(sourceRoot)
+        val rootDir = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
+        if (rootDir.fileName.toString() != "compatibilityResources") {
+          processRoot(sourceRoot, rootDir)
+        }
+        else if (SystemProperties.getBooleanProperty("remove.extra.icon.robots.files", false)) {
+          // under flag because not required for regular usage (to avoid FS call)
+          try {
+            Files.delete(rootDir.resolve("icon-robots.txt"))
+          }
+          catch (ignored: NoSuchFileException) {
+          }
+        }
       }
     }
 
@@ -86,17 +102,21 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     }
   }
 
-  private fun processRoot(sourceRoot: JpsModuleSourceRoot) {
-    val root = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
-    if (!root.toFile().exists()) return
+  private fun processRoot(sourceRoot: JpsModuleSourceRoot, rootDir: Path) {
+    val attributes = try {
+      Files.readAttributes(rootDir, BasicFileAttributes::class.java)
+    }
+    catch (ignored: NoSuchFileException) {
+      return
+    }
 
-    val answer = downToRoot(root, root, null, IconRobotsData(), 0)
+    val answer = downToRoot(rootDir, rootDir, attributes.isDirectory, null, IconRobotsData(), 0)
     val iconsRoot = (if (answer == null || Files.isDirectory(answer)) answer else answer.parent) ?: return
 
-    val rootRobotData = upToProjectHome(root)
-    if (rootRobotData.isSkipped(root)) return
+    val rootRobotData = upToProjectHome(rootDir)
+    if (rootRobotData.isSkipped(rootDir)) return
 
-    val robotData = rootRobotData.fork(iconsRoot, root)
+    val robotData = rootRobotData.fork(iconsRoot, rootDir)
 
     processDirectory(iconsRoot, sourceRoot, robotData, emptyList(), 0)
     processPhantomIcons(iconsRoot, sourceRoot, robotData, emptyList())
@@ -126,22 +146,24 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   }
 
   private fun processImageFile(file: Path, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
-    val id = ImageType.getBasicName(file, prefix)
-
     val flags = robotData.getImageFlags(file)
-    if (flags.skipped) return
+    if (flags.skipped) {
+      return
+    }
 
+    val id = ImageType.getBasicName(file, prefix)
     val iconPaths = icons.computeIfAbsent(id) { ImagePaths(id, sourceRoot, false) }
     iconPaths.addImage(file, flags)
   }
 
   private fun processPhantomIcons(root: Path, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
     for (icon in robotData.getOwnDeprecatedIcons()) {
-      val iconFile = root.resolve(icon.first.removePrefix("/").removePrefix(File.separator))
       val id = ImageType.getBasicName(icon.first, prefix)
+      if (icons.containsKey(id)) {
+        continue
+      }
 
-      if (icons.containsKey(id)) continue
-
+      val iconFile = root.resolve(icon.first.removePrefix("/").removePrefix(File.separator))
       val paths = ImagePaths(id, sourceRoot, true)
       paths.addImage(iconFile, icon.second)
 
@@ -154,7 +176,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   }
 
   private fun upToProjectHome(dir: Path): IconRobotsData {
-    if (FileUtil.pathsEqual(dir.toString(), projectHome.toString())) {
+    if (dir == projectHome) {
       return IconRobotsData()
     }
 
@@ -162,22 +184,25 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     return upToProjectHome(parent).fork(parent, projectHome)
   }
 
-  private fun downToRoot(root: Path, file: Path, common: Path?, robotData: IconRobotsData, level: Int): Path? {
+  private fun downToRoot(root: Path, file: Path, isFileDir: Boolean, common: Path?, robotData: IconRobotsData, level: Int): Path? {
     if (robotData.isSkipped(file)) {
       return common
     }
 
     when {
-      file.toFile().isDirectory() -> {
-        if (level == 1 && file.fileName.toString() == "META-INF") {
-          return common
+      isFileDir -> {
+        if (level == 1) {
+          val name = file.fileName.toString()
+          if (name == "META-INF" || name == "intentionDescriptions" || name == "fileTemplates") {
+            return common
+          }
         }
 
         val childRobotData = robotData.fork(file, root)
         var childCommon = common
-        Files.list(file).use { stream ->
-          stream.forEachOrdered {
-            childCommon = downToRoot(root, it, childCommon, childRobotData, level + 1)
+        Files.newDirectoryStream(file).use { stream ->
+          stream.forEach {
+            childCommon = downToRoot(root, it, Files.isDirectory(it), childCommon, childRobotData, level + 1)
           }
         }
         return childCommon
@@ -188,7 +213,9 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
           return file
         }
         else {
-          return FileUtil.findAncestor(common.toFile(), file.toFile())?.toPath()
+          //todo[nik] remove explicit type when KT-25589 is fixed
+          val ancestor: File? = FileUtil.findAncestor(common.toFile(), file.toFile())
+          return ancestor?.toPath()
         }
       }
       else -> return common
@@ -198,10 +225,12 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   private data class DeprecatedEntry(val matcher: Pattern, val data: DeprecationData)
   private data class OwnDeprecatedIcon(val relativeFile: String, val data: DeprecationData)
 
-  private inner class IconRobotsData(private val parent: IconRobotsData? = null) {
+  internal inner class IconRobotsData(private val parent: IconRobotsData? = null) {
     private val skip: MutableList<Pattern> = ArrayList()
     private val used: MutableList<Pattern> = ArrayList()
     private val deprecated: MutableList<DeprecatedEntry> = ArrayList()
+    private val skipSync: MutableList<Pattern> = ArrayList()
+    private val forceSync: MutableList<Pattern> = ArrayList()
 
     private val ownDeprecatedIcons: MutableList<OwnDeprecatedIcon> = ArrayList()
 
@@ -213,6 +242,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
       val parentFlags = parent?.getImageFlags(file) ?: return flags
       return mergeImageFlags(flags, parentFlags, file.toString())
     }
+
+    fun getImageSyncFlags(file: Path) = ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
 
     fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> {
       return ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(false, false, it.data)) }
@@ -229,7 +260,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
 
     fun fork(dir: Path, root: Path): IconRobotsData {
       val robots = dir.resolve(ROBOTS_FILE_NAME)
-      if (!robots.toFile().exists()) {
+      if (!Files.exists(robots)) {
         return this
       }
 
@@ -254,8 +285,10 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
                 answer.ownDeprecatedIcons.add(OwnDeprecatedIcon(pattern, deprecatedData))
               }
             },
-            RobotFileHandler("name:") { _ -> }, // ignore directive for IconsClassGenerator
-            RobotFileHandler("#") { _ -> } // comment
+            RobotFileHandler("name:") { }, // ignore directive for IconsClassGenerator
+            RobotFileHandler("#") { }, // comment
+            RobotFileHandler("forceSync:") { value -> answer.forceSync.add(compilePattern(dir, root, value)) },
+            RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) }
       )
       return answer
     }

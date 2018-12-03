@@ -45,7 +45,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myText != null ? StringUtil.isNotEmpty(myText) : isAvailable(createActionEvent((EditorEx)editor));
+    return myText != null ? StringUtil.isNotEmpty(myText) : isAvailable(((EditorEx)editor).getDataContext());
   }
 
   @NotNull
@@ -55,13 +55,13 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   }
 
   @NotNull
-  static AnActionEvent createActionEvent(EditorEx editor) {
-    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, editor.getDataContext());
+  static AnActionEvent createActionEvent(@NotNull DataContext dataContext) {
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
   }
 
-  boolean isAvailable(@NotNull AnActionEvent event) {
+  boolean isAvailable(@NotNull DataContext dataContext) {
     if (myText == null) {
-      event.getPresentation().setEnabledAndVisible(true); // we may share the event for several actions
+      AnActionEvent event = createActionEvent(dataContext);
       myAction.update(event);
       if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
         String text = event.getPresentation().getText();

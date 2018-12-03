@@ -247,6 +247,18 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
+  public void testEnsureCodeBlockAroundBreakStatementJava12Preview() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testEnsureCodeBlockForThrowsJava12Preview() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testDeclareTernary() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testLambdaAndChain() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }

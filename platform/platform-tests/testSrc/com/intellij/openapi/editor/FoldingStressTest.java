@@ -83,7 +83,7 @@ public class FoldingStressTest extends LightPlatformTestCase {
   }
 
   public void testRestoreManyFoldRegionsPerformance() {
-    System.out.println("In stress test: " + ApplicationInfoImpl.isInStressTest());
+    LOG.debug("In stress test: " + ApplicationInfoImpl.isInStressTest());
     int N = 100_000;
     DocumentImpl doc = new DocumentImpl(StringUtil.repeat("x", N));
     Editor editor = EditorFactory.getInstance().createEditor(doc);
@@ -94,7 +94,7 @@ public class FoldingStressTest extends LightPlatformTestCase {
       for (int i = 0; i < N; i++) {
         addAndCollapseFoldRegion(model, i, i+1, "/*...*/");
       }
-      System.out.println((System.nanoTime() - t) / 1000000); // temporary code to investigate test blinking
+      LOG.debug(""+(System.nanoTime() - t) / 1000000); // temporary code to investigate test blinking
     }))
       .setup(()-> model.runBatchFoldingOperation(model::clearFoldRegions))
       .assertTiming();

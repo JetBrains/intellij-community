@@ -7,7 +7,9 @@ import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKey
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,7 +36,7 @@ public class OsVersionUsageCollector extends ApplicationUsagesCollector {
       descriptor = new UsageDescriptor("Linux/" + version, 1);
     }
     else {
-      descriptor = new UsageDescriptor(UsageDescriptorKeyValidator.ensureProperKey(SystemInfo.OS_NAME + "." + SystemInfo.OS_VERSION), 1);
+      descriptor = new UsageDescriptor(UsageDescriptorKeyValidator.ensureProperKey(SystemInfo.OS_NAME + "." + parseVersion(SystemInfo.OS_VERSION)), 1);
     }
 
     return Collections.singleton(descriptor);
@@ -56,17 +58,38 @@ public class OsVersionUsageCollector extends ApplicationUsagesCollector {
     catch (IOException ignored) {
     }
 
-    if (releaseId == null) releaseId = "unknown";
-
-    if (releaseVersion == null) {
-      releaseVersion = SystemInfo.OS_VERSION;
-      Version version = Version.parseVersion(releaseVersion);
-      if (version != null) {
-        releaseVersion = version.toCompactString();
-      }
-    }
-    return releaseId + " " + releaseVersion;
+    return parseName(releaseId) + " " + parseVersion(releaseVersion != null ? releaseVersion : SystemInfo.OS_VERSION);
   }
+
+  @NotNull
+  public static String parseVersion(@Nullable String releaseVersion) {
+    if (releaseVersion == null) return "undefined";
+
+    final Version version = Version.parseVersion(releaseVersion.trim());
+    return version != null ? version.toCompactString() : "unknown-format";
+  }
+
+  @NotNull
+  private static String parseName(@Nullable String releaseId) {
+    if (releaseId == null) return "unknown";
+
+    String release = StringUtil.trimStart(StringUtil.toLowerCase(releaseId).trim(), "org.");
+    int separator = release.indexOf(".");
+    if (separator > 0) {
+      release = release.substring(0, separator);
+    }
+
+    if (ourReleases.contains(release)) {
+      return release;
+    }
+    return "custom";
+  }
+
+  private static final Set<String> ourReleases = ContainerUtil.newHashSet(
+    "alpine","amzn","antergos","arch","centos","debian","deepin","elementary","fedora",
+    "galliumos","gentoo","kali","linuxmint","manjaro","neon","nixos","ol","opensuse","opensuse-leap",
+    "opensuse-tumbleweed","freedesktop","parrot","raspbian","rhel","sabayon","solus","ubuntu","zorin"
+  );
 
   @NotNull
   @Override

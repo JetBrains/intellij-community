@@ -255,7 +255,7 @@ class FindInProjectTask {
     final boolean hasTrigrams = hasTrigrams(myStringToFindInIndices);
 
     class EnumContentIterator implements ContentIterator {
-      private final Set<VirtualFile> myFiles = new LinkedHashSet<>();
+      private final Set<VirtualFile> myFiles = new CompactVirtualFileSet();
 
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
@@ -385,7 +385,7 @@ class FindInProjectTask {
       return Collections.emptySet();
     }
 
-    final Set<VirtualFile> resultFiles = new LinkedHashSet<>();
+    final Set<VirtualFile> resultFiles = new CompactVirtualFileSet();
     for(VirtualFile file:myFilesToScanInitially) {
       if (myFileMask.value(file)) {
         resultFiles.add(file);

@@ -68,7 +68,7 @@ public interface JavaElementType {
   IElementType EXTENDS_BOUND_LIST = JavaStubElementTypes.EXTENDS_BOUND_LIST;
   IElementType THROWS_LIST = JavaStubElementTypes.THROWS_LIST;
   IElementType LAMBDA_EXPRESSION = JavaStubElementTypes.LAMBDA_EXPRESSION;
-  IElementType METHOD_REF_EXPRESSION = JavaStubElementTypes.METHOD_REFERENCE;
+  IElementType METHOD_REF_EXPRESSION = JavaStubElementTypes.METHOD_REF_EXPRESSION;
   IElementType MODULE = JavaStubElementTypes.MODULE;
   IElementType REQUIRES_STATEMENT = JavaStubElementTypes.REQUIRES_STATEMENT;
   IElementType EXPORTS_STATEMENT = JavaStubElementTypes.EXPORTS_STATEMENT;

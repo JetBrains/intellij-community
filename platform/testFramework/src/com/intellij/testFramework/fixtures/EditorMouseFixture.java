@@ -101,18 +101,37 @@ public class EditorMouseFixture {
     return doubleClickAt(visualLine, visualColumn).pressAt(3, getPoint(visualLine, visualColumn)).release(3);
   }
 
+  public EditorMouseFixture moveTo(int visualLine, int visualColumn) {
+    Point p = getPoint(visualLine, visualColumn);
+    return moveToXY(p.x, p.y);
+  }
+  
   public EditorMouseFixture dragTo(int visualLine, int visualColumn) {
     Point p = getPoint(visualLine, visualColumn);
     return dragToXY(p.x, p.y);
   }
-  
+
   public EditorMouseFixture dragToLineNumbers(int visualLine) {
     assert myEditor.getSettings().isLineNumbersShown();
     return dragToXY(myEditor.getGutterComponentEx(), 0, myEditor.visualLineToY(visualLine));
   }
 
+  public EditorMouseFixture moveToXY(int x, int y) {
+    Component component = myEditor.getContentComponent();
+    component.dispatchEvent(new MouseEvent(component,
+                                           myLastId = MouseEvent.MOUSE_MOVED,
+                                           System.currentTimeMillis(),
+                                           getModifiers(),
+                                           myX = x,
+                                           myY = y,
+                                           0,
+                                           false,
+                                           0));
+    return this;
+  }
+
   public EditorMouseFixture dragToXY(int x, int y) {
-    Assert.assertFalse("Cannot test mouse dragging: editor visible size is not set. Use EditorTestUtil.setEditorVisibleSize(width, height)", 
+    Assert.assertFalse("Cannot test mouse dragging: editor visible size is not set. Use EditorTestUtil.setEditorVisibleSize(width, height)",
                        myEditor.getScrollingModel().getVisibleArea().isEmpty());
     JComponent component = myEditor.getContentComponent();
     return dragToXY(component, x, y);

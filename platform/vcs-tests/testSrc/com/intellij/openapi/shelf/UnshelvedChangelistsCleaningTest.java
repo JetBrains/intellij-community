@@ -86,7 +86,7 @@ public class UnshelvedChangelistsCleaningTest extends PlatformTestCase {
     assert (beforeXmlInfo.exists());
     Element element = JDOMUtil.load(beforeXmlInfo);
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
-    shelveChangesManager.readExternal(element);
+    shelveChangesManager.loadState(element);
     shelfDir.refresh(false, true);
 
     assertFalse(shelveChangesManager.getRecycledShelvedChangeLists().isEmpty());

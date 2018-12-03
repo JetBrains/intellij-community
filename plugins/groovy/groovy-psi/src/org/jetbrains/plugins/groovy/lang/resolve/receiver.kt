@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processClassDeclarations
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GroovyMapPropertyImpl
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.STATIC_CONTEXT
 
 fun PsiType?.processReceiverType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
@@ -56,7 +57,7 @@ private fun PsiClassType.processClassType(processor: PsiScopeProcessor, state: R
     return false
   }
 
-  return processClassDeclarations(clazz, processor, newState, null, place)
+  return processClassDeclarations(clazz, processor, newState.put(ClassHint.THIS_TYPE, this), null, place)
 }
 
 private fun PsiClassType.processMapType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {

@@ -57,6 +57,9 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     try {
       getEditorFactory().releaseEditor(editor);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -109,9 +112,9 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     assertStatus(a, null, false);
   }
 
-  public void testShowSelectionHistoryActionIsDisabledForEmptySelection() {
+  public void testShowSelectionHistoryActionIsEnabledForEmptySelection() {
     ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
-    assertStatus(a, f, false);
+    assertStatus(a, f, true);
   }
 
   private void assertStatus(AnAction a, VirtualFile f, boolean isEnabled) {

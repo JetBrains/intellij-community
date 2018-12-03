@@ -37,7 +37,6 @@ import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ConvertModuleLibraryToRepositoryLibraryAction;
@@ -86,8 +85,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -134,7 +133,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer(getStructureConfigurableContext()));
     myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
 
-    JComboBox scopeEditor = new ComboBox(new EnumComboBoxModel<>(DependencyScope.class));
+    JComboBox scopeEditor = new ComboBox<>(new EnumComboBoxModel<>(DependencyScope.class));
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
     myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<DependencyScope>(DependencyScope.values()) {
         @Override
@@ -366,19 +365,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
 
   private JComponent createTableWithButtons() {
-    final boolean isAnalyzeShown = false;
-
     final ClasspathPanelAction removeAction = new ClasspathPanelAction(this) {
       @Override
       public void run() {
         removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
-      }
-    };
-
-    final AnActionButton analyzeButton = new AnActionButton(ProjectBundle.message("classpath.panel.analyze"), null, IconUtil.getAnalyzeIcon()) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        AnalyzeDependenciesDialog.show(getRootModel().getModule());
       }
     };
 
@@ -388,16 +378,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     //downButton.setShortcut(CustomShortcutSet.fromString("alt DOWN"));
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
-    AnActionButtonUpdater moveUpDownUpdater = new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        for (RowSorter.SortKey key : myEntryTable.getRowSorter().getSortKeys()) {
-          if (key.getSortOrder() != SortOrder.UNSORTED) {
-            return false;
-          }
+    AnActionButtonUpdater moveUpDownUpdater = e -> {
+      for (RowSorter.SortKey key : myEntryTable.getRowSorter().getSortKeys()) {
+        if (key.getSortOrder() != SortOrder.UNSORTED) {
+          return false;
         }
-        return true;
       }
+      return true;
     };
     decorator.setAddAction(new AnActionButtonRunnable() {
       @Override
@@ -443,17 +430,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           removeAction.actionPerformed(null);
         }
       })
-      .setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          final int[] selectedRows = myEntryTable.getSelectedRows();
-          for (final int selectedRow : selectedRows) {
-            if (!getItemAt(selectedRow).isRemovable()) {
-              return false;
-            }
+      .setRemoveActionUpdater(e -> {
+        final int[] selectedRows = myEntryTable.getSelectedRows();
+        for (final int selectedRow : selectedRows) {
+          if (!getItemAt(selectedRow).isRemovable()) {
+            return false;
           }
-          return selectedRows.length > 0;
         }
+        return selectedRows.length > 0;
       })
       .setMoveUpAction(new AnActionButtonRunnable() {
         @Override
@@ -472,9 +456,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       .setMoveDownActionUpdater(moveUpDownUpdater)
       .setMoveDownActionName("Move Down (disabled if items are shown in sorted order)")
       .addExtraAction(myEditButton);
-    if (isAnalyzeShown) {
-      decorator.addExtraAction(analyzeButton);
-    }
 
     final JPanel panel = decorator.createPanel();
     myRemoveButton = ToolbarDecorator.findRemoveButton(panel);
@@ -546,9 +527,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
     finally {
       enableModelUpdate();
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(myEntryTable, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myEntryTable, true));
     }
   }
 

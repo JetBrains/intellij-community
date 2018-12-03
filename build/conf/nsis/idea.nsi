@@ -715,23 +715,21 @@ Function uninstallOldVersion
   !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
   ${LogText} ""
   ${LogText} "Uninstall old installation: $3"
+
+  ;do copy for unistall.exe
+  CopyFiles "$3\bin\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+
   ${If} $9 == "1"
-    ExecWait '"$3\bin\Uninstall.exe" /S'
+    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$3\bin'
   ${else}
-    ExecWait '"$3\bin\Uninstall.exe" _?=$3\bin'
+    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$3\bin'
   ${EndIf}
   IfFileExists $3\bin\${PRODUCT_EXE_FILE} 0 uninstall
   goto complete
 uninstall:
   ;previous installation has been removed
   ;customer has decided to keep properties?
-  Delete "$3\bin\Uninstall.exe"
-  IfFileExists $3\bin\idea.properties complete delete_install_dir
-delete_install_dir:
-  StrCpy $0 "$3\bin"
-  Call deleteDirIfEmpty
-  StrCpy $0 $3
-  Call deleteDirIfEmpty
+  Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
 complete:
 FunctionEnd
 
@@ -758,7 +756,7 @@ FunctionEnd
 
 Function uninstallOldVersionDialog
   StrCpy $control_fields 2
-  StrCpy $max_fields 13
+  StrCpy $max_fields 7
   StrCpy $0 "HKLM"
   StrCpy $4 0
   ReserveFile "UninstallOldVersions.ini"
@@ -1345,8 +1343,7 @@ Function checkAvailableRequiredDiskSpace
   SectionGetSize ${CopyIdeaFiles} $requiredDiskSpace
   ${LogText} "Space required: $requiredDiskSpace KB"
   Push $INSTDIR
-  Call GetParent
-  Pop $9
+  StrCpy $9 $INSTDIR 3
   Call FreeDiskSpace
   ${LogText} "Space available: $1 KB"
 
@@ -1374,29 +1371,6 @@ Function FreeDiskSpace
   ${Else}
     ${LogText} "An error occurred during calculation disk space $0"
   ${EndIf}
-FunctionEnd
-
-
-Function GetParent
-  Exch $R0
-  Push $R1
-  Push $R2
-  Push $R3
-  StrCpy $R1 0
-  StrLen $R2 $R0
-loop:
-  IntOp $R1 $R1 + 1
-  IntCmp $R1 $R2 get 0 get
-  StrCpy $R3 $R0 1 -$R1
-  StrCmp $R3 "\" get
-  Goto loop
-
-get:
-  StrCpy $R0 $R0 -$R1
-  Pop $R3
-  Pop $R2
-  Pop $R1
-  Exch $R0
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -1450,8 +1424,7 @@ Function un.onInit
   IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" get_reg_key 0
-  goto end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
 get_reg_key:
   SetRegView 32
@@ -1472,11 +1445,13 @@ copy_uninstall:
   ;do copy for unistall.exe
   CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   IfSilent uninstall_silent_mode uninstall_gui_mode
+
 uninstall_silent_mode:
   ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$INSTDIR'
   Goto delete_uninstaller_itself
 uninstall_gui_mode:
   ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+
 delete_uninstaller_itself:
   Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   IfFileExists "$INSTDIR\bin\*.*" 0 delete_install_dir
@@ -1782,6 +1757,8 @@ skip_delete_settings:
     Call un.deleteDirIfEmpty
 no_jre32:
   !include "unidea_win.nsh"
+  StrCpy $0 "$INSTDIR\bin"
+  Call un.deleteDirIfEmpty
   StrCpy $0 "$INSTDIR"
   Call un.deleteDirIfEmpty
 

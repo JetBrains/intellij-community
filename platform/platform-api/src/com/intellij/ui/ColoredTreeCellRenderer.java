@@ -176,4 +176,61 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
 
   protected class AccessibleColoredTreeCellRenderer extends AccessibleSimpleColoredComponent {
   }
+
+  // The following method are overridden for performance reasons.
+  // See the Implementation Note for more information.
+  // javax.swing.tree.DefaultTreeCellRenderer
+  // javax.swing.DefaultListCellRenderer
+
+  @Override
+  public void validate() {
+  }
+
+  @Override
+  public void invalidate() {
+  }
+
+  @Override
+  public void revalidate() {
+  }
+
+  @Override
+  public void repaint(long tm, int x, int y, int width, int height) {
+  }
+
+  @Override
+  protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, byte oldValue, byte newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, char oldValue, char newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, short oldValue, short newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, int oldValue, int newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, long oldValue, long newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, float oldValue, float newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, double oldValue, double newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+  }
 }

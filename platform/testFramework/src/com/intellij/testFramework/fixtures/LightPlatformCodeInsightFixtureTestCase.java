@@ -31,10 +31,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
 
-    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-    TempDirTestFixture tempDirFixture = policy != null
-        ? policy.createTempDirTestFixture()
-        : new LightTempDirTestFixtureImpl(true);
+    TempDirTestFixture tempDirFixture = createTempDirTestFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture);
 
     myFixture.setTestDataPath(getTestDataPath());
@@ -43,10 +40,20 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     myModule = myFixture.getModule();
   }
 
+  protected TempDirTestFixture createTempDirTestFixture() {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    return policy != null
+        ? policy.createTempDirTestFixture()
+        : new LightTempDirTestFixtureImpl(true);
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myFixture = null;

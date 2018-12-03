@@ -34,7 +34,10 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  */
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
 
-  private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41));
+  @SuppressWarnings("UnregisteredNamedColor")
+  private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.nonEditableBackground",
+                                                         JBColor.namedColor("ComboBox.darcula.nonEditableBackground",
+                                                                            new JBColor(0xfcfcfc, 0x3c3f41)));
 
   public DarculaComboBoxUI() {}
 

@@ -34,8 +34,9 @@ class DockedModeGuiTest : GuiTestCase() {
   }
 
   @After
-  fun tearDown() {
+  override fun tearDown() {
     ideFrame { setProjectViewMode(ToolWindowModes.DOCKED_MODE, true) }
+    super.tearDown()
   }
 
   private fun IdeFrameFixture.setProjectViewMode(toolWindowMode: ToolWindowModes, flag: Boolean) {

@@ -31,7 +31,7 @@ import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
-import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.getPropertyList;
+import static org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnChangeProviderContext");

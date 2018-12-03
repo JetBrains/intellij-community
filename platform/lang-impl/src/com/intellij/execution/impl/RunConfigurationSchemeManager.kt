@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.attribute
@@ -65,12 +66,15 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
       settings.readExternal(element, isShared)
     }
     catch (e: InvalidDataException) {
-      RunManagerImpl.LOG.error(e)
+      LOG.error(e)
     }
 
     var elementAfterStateLoaded: Element? = element
     try {
       elementAfterStateLoaded = writeScheme(settings)
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
     }
     catch (e: Throwable) {
       LOG.error("Cannot compute digest for RC using state after load", e)

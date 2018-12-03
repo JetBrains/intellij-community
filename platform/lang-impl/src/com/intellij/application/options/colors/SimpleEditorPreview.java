@@ -29,7 +29,6 @@ import com.intellij.ui.EditorCustomization;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,7 +110,7 @@ public class SimpleEditorPreview implements PreviewPanel {
       type = selectItem(myEditor.getHighlighter().createIterator(offset), highlighter);
     }
 
-    setCursor(type == null ? Cursor.TEXT_CURSOR : Cursor.HAND_CURSOR);
+    setCursor(type != null);
 
     if (select && type != null) {
       myDispatcher.getMulticaster().selectionInPreviewChanged(type);
@@ -309,10 +308,8 @@ public class SimpleEditorPreview implements PreviewPanel {
     stopBlinking();
   }
 
-  private void setCursor(@JdkConstants.CursorType int type) {
-    final Cursor cursor = type == Cursor.TEXT_CURSOR ? UIUtil.getTextCursor(myEditor.getBackgroundColor())
-                                                     : Cursor.getPredefinedCursor(type);
-    myEditor.getContentComponent().setCursor(cursor);
+  private void setCursor(boolean hand) {
+    myEditor.setCustomCursor(SimpleEditorPreview.class, hand ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
   }
 
   void setupRainbow(@NotNull EditorColorsScheme colorsScheme, @NotNull RainbowColorSettingsPage page) {

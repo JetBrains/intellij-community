@@ -12,8 +12,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -245,5 +248,26 @@ public class ProgressIndicatorUtils {
       throw new IllegalStateException("Mustn't be called from EDT");
     }
     application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
+  }
+
+  public static void dropResolveCacheRegularly(@NotNull ProgressIndicator indicator, @NotNull final Project project) {
+    indicator = ProgressWrapper.unwrap(indicator);
+    if (indicator instanceof ProgressIndicatorEx) {
+      ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
+        volatile long lastCleared = System.currentTimeMillis();
+
+        @Override
+        public void setFraction(double fraction) {
+          super.setFraction(fraction);
+          long current = System.currentTimeMillis();
+          if (current - lastCleared >= 500) {
+            lastCleared = current;
+            // fraction is changed when each file is processed =>
+            // resolve caches used when searching in that file are likely to be not needed anymore
+            PsiManager.getInstance(project).dropResolveCaches();
+          }
+        }
+      });
+    }
   }
 }

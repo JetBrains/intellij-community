@@ -754,8 +754,8 @@
                      implementationClass="com.siyeh.ig.controlflow.SwitchStatementWithTooManyBranchesInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="SwitchStatementWithoutDefaultBranch" shortName="SwitchStatementsWithoutDefault"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="switch.statements.without.default.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.SwitchStatementsWithoutDefaultInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.controlflow.SwitchStatementsWithoutDefaultInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="RedundantIfStatement" shortName="TrivialIf" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="trivial.if.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.controlflow.TrivialIfInspection" cleanupTool="true"/>
@@ -1511,7 +1511,7 @@
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.logging.NonStaticFinalLoggerInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PlaceholderCountMatchesArgumentCount" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="placeholder.count.matches.argument.count.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.logging.PlaceholderCountMatchesArgumentCountInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicMethodWithoutLogging" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="public.method.without.logging.display.name" groupBundle="messages.InspectionsBundle"

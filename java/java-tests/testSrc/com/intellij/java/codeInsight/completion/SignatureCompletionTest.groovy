@@ -23,10 +23,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class SignatureCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override

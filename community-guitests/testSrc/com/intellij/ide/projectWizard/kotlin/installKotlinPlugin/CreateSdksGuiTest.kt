@@ -13,33 +13,7 @@ import org.junit.Ignore
 import org.junit.Test
 
 class CreateSdksGuiTest : KotlinGuiTestCase() {
-  val dialogName = "Project Structure for New Projects"
-  @Test
-  @Ignore
-  fun createJdk(){
-    logTestStep("Create a JDK on the path `${KotlinTestProperties.jdk_path}`")
-    welcomeFrame {
-      actionLink("Configure").click()
-      // starting from 191
-      popupMenu("Structure for New Projects").clickSearchedItem()
-      logUIStep("Open `$dialogName` dialog")
-      dialog(dialogName) {
-        jList("SDKs").clickItem("SDKs")
-        actionButton("Add New SDK").click()
-        popupMenu("JDK").clickSearchedItem()
-        logUIStep("Open `Select Home Directory for JDK` dialog")
-        dialog("Select Home Directory for JDK") {
-          actionButton("Refresh").click()
-          logUIStep("Type the path `${KotlinTestProperties.jdk_path}`")
-          typeText(KotlinTestProperties.jdk_path)
-          logUIStep("Close `Select Home Directory for JDK` dialog with OK")
-          button("OK").click()
-        }
-        logUIStep("Close `Default Project Structure` dialog with OK")
-        button("OK").click()
-      }
-    }
-  }
+  private val dialogName = "Project Structure for New Projects"
 
   @Test
   fun createKotlinSdk(){

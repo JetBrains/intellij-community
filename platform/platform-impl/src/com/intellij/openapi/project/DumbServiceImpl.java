@@ -122,7 +122,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ApplicationManager.getApplication().assertIsDispatchThread();
     myUpdatesQueue.clear();
     myQueuedEquivalences.clear();
-    myRunWhenSmartQueue.clear();
+    synchronized (myRunWhenSmartQueue) {
+      myRunWhenSmartQueue.clear();
+    }
     for (DumbModeTask task : new ArrayList<>(myProgresses.keySet())) {
       cancelTask(task);
       Disposer.dispose(task);
@@ -326,6 +328,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void queueUpdateFinished() {
     if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
+      // There is no task to suspend with the current suspender. If the execution reverts to the dumb mode, a new suspender will be
+      // created.
+      // The current suspender, however, might have already got suspended between the point of the last check cancelled call and
+      // this point. If it has happened it will be cleaned up when the suspender is closed on the background process thread.
+      myCurrentSuspender = null;
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
         () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, this::updateFinished));
     }
@@ -448,7 +455,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (myState.get() != State.SCHEDULED_TASKS) {
       return;
     }
-
     while (isDumb()) {
       showModalProgress();
     }
@@ -469,9 +475,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void assertWeAreWaitingToFinish() {
-    if (myState.get() != State.WAITING_FOR_FINISH) {
+    final State state = myState.get();
+    if (state != State.WAITING_FOR_FINISH) {
       Attachment[] attachments = myDumbEnterTrace != null ? new Attachment[]{new Attachment("indexingStart", myDumbEnterTrace)} : Attachment.EMPTY_ARRAY;
-      throw new RuntimeExceptionWithAttachments(myState.get().toString(), attachments);
+      throw new RuntimeExceptionWithAttachments(state.toString(), attachments);
     }
   }
 
@@ -495,42 +502,49 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
-    ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
-    myCurrentSuspender = suspender;
-    suspendIfRequested(suspender);
+    // Only one thread can execute this method at the same time at this point.
 
-    final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
-    final Thread self = Thread.currentThread();
-    try {
-      shutdownTracker.registerStopperThread(self);
+    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused")) {
+      myCurrentSuspender = suspender;
+      suspendIfRequested(suspender);
 
-      ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
+      final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
+      final Thread self = Thread.currentThread();
+      try {
+        shutdownTracker.registerStopperThread(self);
 
-      DumbModeTask task = null;
-      while (true) {
-        Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task, visibleIndicator);
-        if (pair == null) break;
+        ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
 
-        task = pair.first;
-        ProgressIndicatorEx taskIndicator = pair.second;
-        taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
-          @Override
-          protected void delegateProgressChange(@NotNull IndicatorAction action) {
-            super.delegateProgressChange(action);
-            action.execute((ProgressIndicatorEx)visibleIndicator);
+        DumbModeTask task = null;
+        while (true) {
+          Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task, visibleIndicator);
+          if (pair == null) break;
+
+          task = pair.first;
+          ProgressIndicatorEx taskIndicator = pair.second;
+          taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
+            @Override
+            protected void delegateProgressChange(@NotNull IndicatorAction action) {
+              super.delegateProgressChange(action);
+              action.execute((ProgressIndicatorEx)visibleIndicator);
+            }
+          });
+          try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks")) {
+            runSingleTask(task, taskIndicator);
           }
-        });
-        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks")) {
-          runSingleTask(task, taskIndicator);
         }
       }
-    }
-    catch (Throwable unexpected) {
-      LOG.error(unexpected);
-    }
-    finally {
-      shutdownTracker.unregisterStopperThread(self);
-      myCurrentSuspender = null;
+      catch (Throwable unexpected) {
+        LOG.error(unexpected);
+      }
+      finally {
+        shutdownTracker.unregisterStopperThread(self);
+        // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
+        // got suspended after the the last dumb task finished (or even after the last check cancelled call). This case is handled by
+        // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
+        // previously installed.
+        myCurrentSuspender = null;
+      }
     }
   }
 
