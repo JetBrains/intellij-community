@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
@@ -476,11 +474,7 @@ public class TreeModelBuilder {
 
   @NotNull
   public static StaticFilePath staticFrom(@NotNull FilePath fp) {
-    final String path = fp.getPath();
-    if (fp.isNonLocal() && (! FileUtil.isAbsolute(path) || VcsUtil.isPathRemote(path))) {
-      return new StaticFilePath(fp.isDirectory(), fp.getIOFile().getPath().replace('\\', '/'), fp.getVirtualFile());
-    }
-    return new StaticFilePath(fp.isDirectory(), new File(fp.getIOFile().getPath().replace('\\', '/')).getAbsolutePath(), fp.getVirtualFile());
+    return new StaticFilePath(fp.isDirectory(), fp.getPath(), fp.getVirtualFile());
   }
 
   @NotNull
@@ -508,7 +502,7 @@ public class TreeModelBuilder {
 
   @NotNull
   private static ChangesBrowserNode createPathNode(@NotNull StaticFilePath path) {
-    FilePath filePath = VcsUtil.getFilePath(path.getPath(), true);
+    FilePath filePath = VcsUtil.getFilePath(path.getPath(), path.isDirectory());
     return ChangesBrowserNode.createFilePath(filePath);
   }
 
