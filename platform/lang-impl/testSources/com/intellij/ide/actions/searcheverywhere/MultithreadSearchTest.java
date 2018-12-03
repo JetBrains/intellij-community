@@ -23,7 +23,6 @@ import java.util.function.Function;
 /**
  * @author mikhail.sokolov
  */
-@Bombed(month = Calendar.DECEMBER, day = 1, user = "mikhail.sokolov", description = "leaking thread SE-FinisherTask")
 public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private static final String MORE_ITEM = "...MORE";
