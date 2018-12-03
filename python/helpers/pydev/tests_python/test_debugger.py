@@ -1821,6 +1821,7 @@ def test_case_suspension_policy(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.skipif(IS_JYTHON, reason='Flaky on Jython (needs investigation).')
 def test_case_get_thread_stack(case_setup):
     with case_setup.test_file('_debugger_case_get_thread_stack.py') as writer:
 
