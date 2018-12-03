@@ -190,6 +190,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
     else if (PlatformUtils.isPhpStorm()) {
       return FileTemplateBase.getQualifiedName("PHP File Header", "php");
+    } else if (PlatformUtils.isWebStorm()) {
+      return FileTemplateBase.getQualifiedName("JavaScript File", "js");
     } else {
       throw new IllegalStateException("Provide file header template for your IDE");
     }
