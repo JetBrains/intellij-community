@@ -227,12 +227,15 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         // try vm attach first
         VirtualMachine vm = null;
         try {
-          vm = VirtualMachine.attach(String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler)myProcessHandler).getProcess())));
-          InputStream inputStream = ((HotSpotVirtualMachine)vm).remoteDataDump();
-          String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
-          List<ThreadState> threads = ThreadDumpParser.parse(text);
-          DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
-          return;
+          String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler)myProcessHandler).getProcess()));
+          if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
+            vm = VirtualMachine.attach(pid);
+            InputStream inputStream = ((HotSpotVirtualMachine)vm).remoteDataDump();
+            String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
+            List<ThreadState> threads = ThreadDumpParser.parse(text);
+            DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
+            return;
+          }
         }
         catch (AttachNotSupportedException e) {
           LOG.debug(e);
