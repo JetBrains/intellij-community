@@ -5,7 +5,10 @@ public class Main {
 
     final String numericString =
       switch (str) {
-        case "foo" -> "FOO";
+        case "foo" -> {
+          System.out.println("here");
+          break "FOO";
+        }
         case "bar" -> "BAR";
         case "baz" -> "bAz";
         default -> "default";
@@ -18,6 +21,7 @@ public class Main {
         case "bar":
           break "BAR";
         case "baz":
+          System.out.println("here");
           break "bAz";
         default:
           break "default";

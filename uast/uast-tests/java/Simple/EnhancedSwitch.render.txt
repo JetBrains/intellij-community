@@ -3,7 +3,8 @@ public class Main {
         var str: var = "abc"
         final var numericString: java.lang.String = switch (str)
             "foo" -> {
-                "FOO"
+                System.out.println("here")
+                break
             }
 
             "bar" -> {
@@ -29,6 +30,7 @@ public class Main {
             }
 
             "baz" -> {
+                System.out.println("here")
                 break
             }
 

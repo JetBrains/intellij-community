@@ -13,7 +13,14 @@ UFile (package = )
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "foo")
                                     UExpressionList (switch_entry)
-                                        ULiteralExpression (value = "FOO")
+                                        UQualifiedReferenceExpression
+                                            UQualifiedReferenceExpression
+                                                USimpleNameReferenceExpression (identifier = System)
+                                                USimpleNameReferenceExpression (identifier = out)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                                UIdentifier (Identifier (println))
+                                                ULiteralExpression (value = "here")
+                                        UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "bar")
                                     UExpressionList (switch_entry)
@@ -42,6 +49,13 @@ UFile (package = )
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "baz")
                                     UExpressionList (switch_entry)
+                                        UQualifiedReferenceExpression
+                                            UQualifiedReferenceExpression
+                                                USimpleNameReferenceExpression (identifier = System)
+                                                USimpleNameReferenceExpression (identifier = out)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                                UIdentifier (Identifier (println))
+                                                ULiteralExpression (value = "here")
                                         UBreakExpression (label = null)
                                 USwitchClauseExpressionWithBody
                                     UDefaultCaseExpression

@@ -66,17 +66,26 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
 
 private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
   when (uParent) {
-    is JavaUCodeBlockExpression -> {
+    is UBreakExpression -> return uParent.uastParent ?: uParent
+    is UBlockExpression -> {
       val codeBlockParent = uParent.uastParent
-      if (codeBlockParent is JavaUSwitchEntryList) {
-        if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatementBase }) {
-          return codeBlockParent
+      when (codeBlockParent) {
+
+        is JavaUBlockExpression -> {
+          val sourcePsi = codeBlockParent.sourcePsi
+          if (sourcePsi is PsiBlockStatement && sourcePsi.parent is PsiSwitchLabeledRuleStatement)
+            (codeBlockParent.uastParent as? JavaUSwitchEntry)?.let { return it.body }
         }
-        val psiElement = psi ?: return uParent
-        return codeBlockParent.findUSwitchEntryForBodyStatementMember(psiElement)?.body ?: return codeBlockParent
-      }
-      if (codeBlockParent is JavaUSwitchExpression) {
-        return unwrapSwitch(codeBlockParent)
+
+        is JavaUSwitchEntryList -> {
+          if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatementBase }) {
+            return codeBlockParent
+          }
+          val psiElement = psi ?: return uParent
+          return codeBlockParent.findUSwitchEntryForBodyStatementMember(psiElement)?.body ?: return codeBlockParent
+        }
+
+        is JavaUSwitchExpression -> return unwrapSwitch(codeBlockParent)
       }
       return uParent
     }

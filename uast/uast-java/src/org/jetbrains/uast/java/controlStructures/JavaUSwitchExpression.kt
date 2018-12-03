@@ -51,7 +51,14 @@ class JavaUSwitchEntryList(override val psi: PsiSwitchBlock, override val uastPa
     val result = mutableListOf<JavaUSwitchEntry>()
     for (statement in statements) {
       if (statement is PsiSwitchLabeledRuleStatement) {
-        result += JavaUSwitchEntry(listOf(statement), listOfNotNull(statement.body), this)
+        val body = statement.body
+        result += when (body) {
+          is PsiBlockStatement ->
+            JavaUSwitchEntry(listOf(statement), body.codeBlock.statements.toList(), this)
+          else ->
+            JavaUSwitchEntry(listOf(statement), listOfNotNull(body), this)
+        }
+
       }
       if (statement is PsiSwitchLabelStatement) {
         if (currentBody.isEmpty()) {
