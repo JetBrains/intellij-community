@@ -135,7 +135,7 @@ class PyDBFrame:
 
     # IFDEF CYTHON
     # def trace_exception(self, frame, str event, arg):
-    #     cdef bint flag;
+    #     cdef bint should_stop;
     # ELSE
     def trace_exception(self, frame, event, arg):
         # ENDIF
@@ -429,7 +429,7 @@ class PyDBFrame:
         # ENDIF
 
         main_debugger, filename, info, thread, frame_skips_cache, frame_cache_key = self._args
-        # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename, event, info.pydev_step_cmd)
+        # print('frame trace_dispatch %s %s %s %s %s' % (frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename, event, info.pydev_step_cmd))
         try:
             info.is_tracing = True
             line = frame.f_lineno
@@ -463,10 +463,10 @@ class PyDBFrame:
                     # No need to reset frame.f_trace to keep the same trace function.
                     return self.trace_dispatch
 
-            need_trace_return = False
+            need_signature_trace_return = False
             if main_debugger.signature_factory is not None:
                 if is_call:
-                    need_trace_return = send_signature_call_trace(main_debugger, frame, filename)
+                    need_signature_trace_return = send_signature_call_trace(main_debugger, frame, filename)
                 elif is_return:
                     send_signature_return_trace(main_debugger, frame, filename, arg)
 
@@ -509,7 +509,7 @@ class PyDBFrame:
                             can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame)
 
                         # CMD_STEP_OVER = 108
-                        if can_skip and is_return and main_debugger.show_return_values and info.pydev_step_cmd == 108 and frame.f_back is info.pydev_step_stop:
+                        if can_skip and main_debugger.show_return_values and info.pydev_step_cmd == 108 and frame.f_back is info.pydev_step_stop:
                             # trace function for showing return values after step over
                             can_skip = False
 
@@ -523,7 +523,7 @@ class PyDBFrame:
                             frame.f_trace = self.trace_exception
                             return self.trace_exception
                         else:
-                            if need_trace_return:
+                            if need_signature_trace_return:
                                 frame.f_trace = self.trace_return
                                 return self.trace_return
                             else:
@@ -569,7 +569,7 @@ class PyDBFrame:
                             frame.f_trace = self.trace_exception
                             return self.trace_exception
                         else:
-                            if need_trace_return:
+                            if need_signature_trace_return:
                                 frame.f_trace = self.trace_return
                                 return self.trace_return
                             else:

@@ -73,6 +73,7 @@ CMD_SHOW_CONSOLE = 142
 CMD_GET_ARRAY = 143
 CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
+CMD_SHOW_RETURN_VALUES = 146
 
 CMD_GET_THREAD_STACK = 152
 CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose errors on ci.
@@ -812,6 +813,9 @@ class AbstractWriterThread(threading.Thread):
 
     def get_main_filename(self):
         return self.TEST_FILE
+
+    def write_show_return_vars(self, show=1):
+        self.write("%s\t%s\tCMD_SHOW_RETURN_VALUES\t%s" % (CMD_SHOW_RETURN_VALUES, self.next_seq(), show))
 
     def write_add_breakpoint(self, line, func, filename=None, hit_condition=None, is_logpoint=False, suspend_policy=None, condition=None):
         '''
