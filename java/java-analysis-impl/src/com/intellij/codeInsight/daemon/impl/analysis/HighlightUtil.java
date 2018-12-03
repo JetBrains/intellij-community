@@ -784,7 +784,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkValueBreakExpression(@NotNull PsiBreakStatement statement, @Nullable PsiExpression expression) {
     PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
-    boolean plainRef = PsiImplUtil.isPlainReference(expression);
+    boolean plainRef = PsiImplUtil.isUnqualifiedReference(expression);
 
     if (enclosing instanceof PsiSwitchExpression) {
       if (expression == null) {

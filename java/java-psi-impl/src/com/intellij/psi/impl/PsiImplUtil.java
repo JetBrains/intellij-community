@@ -654,7 +654,7 @@ public class PsiImplUtil {
   }
 
   @Contract("null -> false")
-  public static boolean isPlainReference(@Nullable PsiExpression expression) {
+  public static boolean isUnqualifiedReference(@Nullable PsiExpression expression) {
     return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).getQualifierExpression() == null;
   }
 

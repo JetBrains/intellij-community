@@ -20,7 +20,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   @Override
   public PsiReferenceExpression getLabelExpression() {
     PsiExpression expression = getExpression();
-    boolean isLabel = PsiImplUtil.isPlainReference(expression) && !(PsiImplUtil.findEnclosingSwitchOrLoop(this) instanceof PsiSwitchExpression);
+    boolean isLabel = PsiImplUtil.isUnqualifiedReference(expression) && !(PsiImplUtil.findEnclosingSwitchOrLoop(this) instanceof PsiSwitchExpression);
     return isLabel ? (PsiReferenceExpression)expression : null;
   }
 
@@ -41,7 +41,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(this);
     PsiExpression expression = getExpression();
 
-    if (enclosing instanceof PsiSwitchExpression || !PsiImplUtil.isPlainReference(expression)) {
+    if (enclosing instanceof PsiSwitchExpression || !PsiImplUtil.isUnqualifiedReference(expression)) {
       return enclosing;
     }
 

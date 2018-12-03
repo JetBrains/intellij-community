@@ -531,7 +531,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement parent = expression.getParent();
     PsiType type = expression.getType();
 
-    if (!myHolder.hasErrorResults() && parent instanceof PsiBreakStatement && !PsiImplUtil.isPlainReference(expression)) {
+    if (!myHolder.hasErrorResults() && parent instanceof PsiBreakStatement && !PsiImplUtil.isUnqualifiedReference(expression)) {
       myHolder.add(checkFeature(expression, Feature.SWITCH_EXPRESSION));
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMustBeBoolean(expression, type));
