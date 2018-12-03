@@ -40,13 +40,7 @@ public class PythonMockSdk {
   private PythonMockSdk() {
   }
 
-  public static Sdk findOrCreate(final String version, @NotNull final VirtualFile... additionalRoots) {
-    final List<Sdk> sdkList = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
-    for (Sdk sdk : sdkList) {
-      if (sdk.getName().equals(MOCK_SDK_NAME + " " + version)) {
-        return sdk;
-      }
-    }
+  public static Sdk create(final String version, @NotNull final VirtualFile... additionalRoots) {
     final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
 
     String sdkHome = new File(mock_path, "bin/python" + version).getPath();
