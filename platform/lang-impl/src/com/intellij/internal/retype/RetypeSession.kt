@@ -243,11 +243,10 @@ class RetypeSession(
   }
 
   private fun inFocus(): Boolean =
-    editor.contentComponent == IdeFocusManager.findInstance().focusOwner && ApplicationManager.getApplication().isActive
+    editor.contentComponent == IdeFocusManager.findInstance().focusOwner && ApplicationManager.getApplication().isActive || ApplicationManager.getApplication().isUnitTestMode
 
   private fun runLoop() {
-    while (true) {
-      if (pos == endPos || stopTimer) break
+    while (pos != endPos && !stopTimer) {
       Thread.sleep(delayMillis.toLong())
       typeNext()
     }
@@ -265,6 +264,7 @@ class RetypeSession(
     }
     lastTimerTick = timerTick
     ApplicationManager.getApplication().invokeLater {
+      if (stopTimer) return@invokeLater
       typeNextInEDT(timerTick, expectedTimerTick)
     }
   }
