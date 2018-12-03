@@ -192,7 +192,6 @@
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.GroovyNamedVariantArgumentProvider"/>
 
-    <applicabilityProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.ConstructorMapApplicabilityProvider"/>
     <applicabilityProvider implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyConstructorApplicabilityProvider"/>
 
     <!-- GroovyDSL extensions -->

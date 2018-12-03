@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBu
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -55,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Appli
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
 import java.util.List;
@@ -62,12 +62,16 @@ import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
+import static org.jetbrains.plugins.groovy.codeInspection.type.ImplKt.processConstructor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
 
+  private final HighlightSink myHighlightSink = (highlightElement, highlightType, message, fixes) ->
+    registerError(highlightElement, message, fixes, highlightType);
+  
   private boolean checkCallApplicability(@Nullable PsiType type,
                                          boolean checkUnknownArgs,
                                          @NotNull CallInfo<? extends GroovyPsiElement> info) {
@@ -708,13 +712,17 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     super.visitNewExpression(newExpression);
-    if (newExpression.getArrayCount() > 0) return;
+    if (hasErrorElements(newExpression) || hasErrorElements(newExpression.getArgumentList())) return;
 
-    GrCodeReferenceElement refElement = newExpression.getReferenceElement();
-    if (refElement == null) return;
+    final GroovyCallReference reference = newExpression.getConstructorReference();
+    if (reference == null) return;
 
-    GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
-    processConstructorCall(info);
+    final GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
+    if (processConstructor(reference, newExpression.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+
+    checkNamedArgumentsType(info);
   }
 
   @Override

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
 import com.intellij.util.lazyPub
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
 import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.applicable
@@ -40,7 +41,7 @@ class MethodCandidateImpl(
       arguments.isEmpty() -> {
         val parameters = method.parameterList.parameters
         val parameter = parameters.singleOrNull()
-        if (parameter != null && !parameter.isOptional && parameter.type is PsiClassType) {
+        if (parameter != null && !parameter.isOptional && parameter.type is PsiClassType && !isCompileStatic(context)) {
           NullArgumentMapping(parameter)
         }
         else {
