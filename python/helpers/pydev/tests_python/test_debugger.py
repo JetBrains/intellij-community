@@ -2308,7 +2308,12 @@ def test_return_value(case_setup):
         hit = writer.wait_for_breakpoint_hit(REASON_STEP_OVER)
         writer.write_get_frame(hit.thread_id, hit.frame_id)
 
-        writer.wait_for_vars('<var name="method1" type="int" qualifier="%s" value="int: 1" isRetVal="True"' % (builtin_qualifier,))
+        writer.wait_for_vars([
+            [
+                '<var name="method1" type="int" qualifier="%s" value="int: 1" isRetVal="True"' % (builtin_qualifier,),
+                '<var name="method1" type="int"  value="int%253A 1" isRetVal="True"',
+            ],
+        ])
         writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
 
