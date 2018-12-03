@@ -136,6 +136,10 @@ set PYTHONPATH=x:\PyDev.Debugger
 C:\bin\Miniconda\envs\py36_64\python build_tools\build.py
 
 
+cd /D X:\ptvsd_workspace\ptvsd\src\ptvsd\_vendored\pydevd
+set PYTHONPATH=X:\ptvsd_workspace\ptvsd\src\ptvsd\_vendored\pydevd
+C:\bin\Miniconda\envs\py36_64\python build_tools\build.py
+
 3. Generate new version
 ======================
 
