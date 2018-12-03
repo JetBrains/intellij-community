@@ -26,8 +26,16 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
       if (cls != null && name != null && parseStdDataclassParameters(cls, context)?.init == true) {
         cls
-          .findClassAttribute(name, false, context)
+          .findClassAttribute(name, false, context) // `true` is not used here because ancestor should be a dataclass
           ?.let { return Ref.create(getTypeForParameter(cls, it, PyDataclassParameters.Type.STD, context)) }
+
+        for (ancestor in cls.getAncestorClasses(context)) {
+          if (parseStdDataclassParameters(ancestor, context) != null) {
+            ancestor
+              .findClassAttribute(name, false, context)
+              ?.let { return Ref.create(getTypeForParameter(ancestor, it, PyDataclassParameters.Type.STD, context)) }
+          }
+        }
       }
     }
 
