@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.editor.impl.FontInfo
-import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
@@ -60,7 +59,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       val gap = if (r.height < fontMetrics.lineHeight + 2) 1 else 2
       val backgroundColor = attributes.backgroundColor
       if (backgroundColor != null) {
-        val alpha = if (isInsufficientContrast(editor, inlay, attributes)) 1.0f else BACKGROUND_ALPHA
+        val alpha = if (isInsufficientContrast(attributes, textAttributes)) 1.0f else BACKGROUND_ALPHA
         val config = GraphicsUtil.setupAAPainting(g)
         GraphicsUtil.paintWithAlpha(g, alpha)
         g.setColor(backgroundColor)
@@ -115,12 +114,10 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
   }
 
   private fun isInsufficientContrast(
-      editor: EditorImpl,
-      inlay: Inlay<*>,
-      attributes: TextAttributes
+      attributes: TextAttributes,
+      surroundingAttributes: TextAttributes
   ): Boolean {
-    val iterationState = IterationState(editor, inlay.offset, inlay.offset + 1, null, false, false, false, false)
-    val backgroundUnderHint = iterationState.mergedAttributes.backgroundColor
+    val backgroundUnderHint = surroundingAttributes.backgroundColor
     if (backgroundUnderHint != null && attributes.foregroundColor != null) {
       val backgroundBlended = srcOverBlend(attributes.backgroundColor, backgroundUnderHint, BACKGROUND_ALPHA)
 
