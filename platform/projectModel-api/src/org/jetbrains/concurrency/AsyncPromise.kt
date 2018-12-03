@@ -10,7 +10,8 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-open class AsyncPromise<T> private constructor(private val f: CompletableFuture<T>, private val hasErrorHandler: AtomicBoolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
+open class AsyncPromise<T> private constructor(private val f: CompletableFuture<T>,
+                                               private val hasErrorHandler: AtomicBoolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
   constructor() : this(CompletableFuture(), AtomicBoolean())
 
   override fun isDone() = f.isDone
