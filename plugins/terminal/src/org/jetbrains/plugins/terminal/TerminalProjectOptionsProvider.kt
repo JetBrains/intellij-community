@@ -56,7 +56,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
   private fun getDefaultWorkingDirectory(): String? {
     val roots = ProjectRootManager.getInstance(project).contentRoots
     @Suppress("DEPRECATION")
-    val dir = if (roots.size == 1) roots[0] else project.baseDir
+    val dir = if (roots.size == 1 && roots[0] != null && roots[0].isDirectory) roots[0] else project.baseDir
     return dir?.canonicalPath
   }
 
