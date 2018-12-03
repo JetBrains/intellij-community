@@ -6,9 +6,12 @@ import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getEnumUsage
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.gradle.settings.GradleSettings
+import com.intellij.openapi.projectRoots.SdkType
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class GradleSettingsCollector : ProjectUsagesCollector() {
   override fun getGroupId() = "statistics.build.gradle.state"
@@ -34,12 +37,21 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
       usages.add(getEnumUsage("storeProjectFilesExternally", setting.storeProjectFilesExternally))
       usages.add(getBooleanUsage("disableWrapperSourceDistributionNotification", setting.isDisableWrapperSourceDistributionNotification))
       usages.add(getBooleanUsage("createModulePerSourceSet", setting.isResolveModulePerSourceSet))
-      usages.add(UsageDescriptor("gradleJvm." + ConvertUsagesUtil.escapeDescriptorName(setting.gradleJvm ?: "empty"), 1))
+      usages.add(UsageDescriptor("gradleJvm." + ConvertUsagesUtil.escapeDescriptorName(getGradleJvmName(setting, project) ?: "empty"), 1))
       usages.add(UsageDescriptor("gradleVersion." + setting.resolveGradleVersion().version, 1))
       usages.add(getBooleanUsage("delegateBuildRun", settingsService.isDelegatedBuildEnabled(projectPath)))
       usages.add(getEnumUsage("preferredTestRunner", settingsService.getTestRunner(projectPath)))
     }
     return usages
+  }
+
+  private fun getGradleJvmName(setting: GradleProjectSettings, project: Project): String? {
+    val jdk = ExternalSystemJdkUtil.getJdk(project, setting.gradleJvm)
+    val sdkType = jdk?.sdkType
+    return if (sdkType is SdkType) {
+      sdkType.suggestSdkName(null, jdk.homePath)
+    }
+    else setting.gradleJvm
   }
 
   private fun getYesNoUsage(key: String, value: Boolean): UsageDescriptor {
