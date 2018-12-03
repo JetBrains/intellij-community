@@ -65,7 +65,8 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
    if (event != null) {
      final InputEvent inputEvent = event.getInputEvent();
      if (inputEvent instanceof KeyEvent) {
-        return getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)inputEvent), null));
+       final KeyStroke keystroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)inputEvent);
+       return keystroke != null ? getShortcutText(new KeyboardShortcut(keystroke, null)) : "Unknown";
       }
     }
     return null;
