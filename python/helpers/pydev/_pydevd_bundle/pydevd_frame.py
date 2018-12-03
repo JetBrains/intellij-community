@@ -577,7 +577,7 @@ class PyDBFrame:
                                 return None
 
             # We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
-            # print('NOT skipped', frame.f_lineno, frame.f_code.co_name, event)
+            # print('NOT skipped: %s %s %s %s' % (frame.f_lineno, frame.f_code.co_name, event, frame.__class__.__name__))
 
             try:
                 flag = False
