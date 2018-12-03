@@ -186,7 +186,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDefault()) return null;
 
-    final Set<String> dirUrls = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     final Set<String> recursiveDirs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     final Set<String> recursiveDirUrls = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     final Set<String> files = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
@@ -194,7 +193,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     final String projectFilePath = myProject.getProjectFilePath();
     final File projectDirFile = projectFilePath == null ? null : new File(projectFilePath).getParentFile();
     if (projectDirFile != null && projectDirFile.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      dirUrls.add(VfsUtilCore.pathToUrl(projectDirFile.getAbsolutePath()));
+      String absolutePath = projectDirFile.getAbsolutePath();
+      recursiveDirs.add(absolutePath);
+      recursiveDirUrls.add(VfsUtilCore.pathToUrl(absolutePath));
     }
     else {
       files.add(projectFilePath);
@@ -221,7 +222,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myRootPointersDisposable, getRootsValidityChangedListener());
 
     ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveDirUrls, true);
-    ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(dirUrls, false);
     files.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
 
     Disposer.dispose(oldDisposable); // dispose after the re-creating container to keep virtual file pointers from disposing and re-creating back
