@@ -21,7 +21,7 @@ def process_command_line(argv):
 
         elif argv[i] == '--host':
             del argv[i]
-            setup['host'] = int(argv[i])
+            setup['host'] = argv[i]
             del argv[i]
 
 
