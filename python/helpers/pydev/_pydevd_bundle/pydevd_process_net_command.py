@@ -110,7 +110,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     timeout = .5  # Default timeout is .5 seconds
 
                 # If it's already suspended, get it right away.
-                internal_get_thread_stack = InternalGetThreadStack(seq, thread_id, py_db, timeout=timeout)
+                internal_get_thread_stack = InternalGetThreadStack(seq, thread_id, py_db, set_additional_thread_info, timeout=timeout)
                 if internal_get_thread_stack.can_be_executed_by(get_current_thread_id(threading.current_thread())):
                     internal_get_thread_stack.do_it(py_db)
                 else:
