@@ -62,6 +62,96 @@ class _WriterThreadCaseModuleWithEntryPoint(_WriterThreadCaseMSwitch):
         return debugger_unittest._get_debugger_test_file('_debugger_case_module_entry_point.py')
 
 
+class AbstractWriterThreadCaseFlask(debugger_unittest.AbstractWriterThread):
+
+    FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
+    FLASK_FOLDER = None
+
+    TEST_FILE = 'flask'
+    IS_MODULE = True
+
+    def write_add_breakpoint_jinja2(self, line, func, template):
+        '''
+            @param line: starts at 1
+        '''
+        assert self.FLASK_FOLDER is not None
+        breakpoint_id = self.next_breakpoint_id()
+        template_file = debugger_unittest._get_debugger_test_file(os.path.join(self.FLASK_FOLDER, 'templates', template))
+        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'jinja2-line', template_file, line, func))
+        self.log.append('write_add_breakpoint_jinja: %s line: %s func: %s' % (breakpoint_id, line, func))
+        return breakpoint_id
+
+    @overrides(debugger_unittest.AbstractWriterThread.get_environ)
+    def get_environ(self):
+        import platform
+
+        env = os.environ.copy()
+        env['FLASK_APP'] = 'app.py'
+        env['FLASK_ENV'] = 'development'
+        env['FLASK_DEBUG'] = '0'
+        if platform.system() != 'Windows':
+            locale = 'en_US.utf8' if platform.system() == 'Linux' else 'en_US.UTF-8'
+            env.update({
+                'LC_ALL': locale,
+                'LANG': locale,
+            })
+        return env
+
+    def get_cwd(self):
+        return debugger_unittest._get_debugger_test_file(self.FLASK_FOLDER)
+
+    def get_command_line_args(self):
+        assert self.FLASK_FOLDER is not None
+        free_port = get_free_port()
+        self.flask_port = free_port
+        return [
+            'flask',
+            'run',
+             '--no-debugger',
+             '--no-reload',
+             '--with-threads',
+            '--port',
+            str(free_port),
+        ]
+
+    def _ignore_stderr_line(self, line):
+        if debugger_unittest.AbstractWriterThread._ignore_stderr_line(self, line):
+            return True
+
+        if 'Running on http:' in line:
+            return True
+
+        if 'GET / HTTP/' in line:
+            return True
+
+        return False
+
+    def create_request_thread(self):
+        outer = self
+
+        class T(threading.Thread):
+
+            def run(self):
+                try:
+                    from urllib.request import urlopen
+                except ImportError:
+                    from urllib import urlopen
+                for _ in range(10):
+                    try:
+                        stream = urlopen('http://127.0.0.1:%s' % (outer.flask_port,))
+                        contents = stream.read()
+                        if IS_PY3K:
+                            contents = contents.decode('utf-8')
+                        self.contents = contents
+                        break
+                    except IOError:
+                        continue
+
+        t = T()
+        t.daemon = True
+        return t
+
+
 class AbstractWriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
 
     FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
@@ -315,6 +405,29 @@ def case_setup_django():
                 raise AssertionError('Can only check django 1.7 and 2.1 right now. Found: %s' % (version,))
 
             WriterThread.DJANGO_FOLDER = django_folder
+            for key, value in kwargs.items():
+                assert hasattr(WriterThread, key)
+                setattr(WriterThread, key, value)
+
+            with runner.check_case(WriterThread) as writer:
+                yield writer
+
+    return CaseSetup()
+
+
+@pytest.fixture
+def case_setup_flask():
+
+    runner = DebuggerRunnerSimple()
+
+    class WriterThread(AbstractWriterThreadCaseFlask):
+        pass
+
+    class CaseSetup(object):
+
+        @contextmanager
+        def test_file(self, **kwargs):
+            WriterThread.FLASK_FOLDER = 'flask1'
             for key, value in kwargs.items():
                 assert hasattr(WriterThread, key)
                 setattr(WriterThread, key, value)
