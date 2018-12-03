@@ -41,13 +41,25 @@ public class SwitchUtils {
    * @return a negative number if a default case was encountered.
    */
   public static int calculateBranchCount(@NotNull PsiSwitchStatement statement) {
-    final PsiCodeBlock body = statement.getBody();
+    // preserved for plugin compatibility
+    return calculateBranchCount((PsiSwitchBlock)statement);
+  }
+
+  /**
+   * Calculates the number of branches in the specified switch block.
+   * When a default case is present the count will be returned as a negative number,
+   * e.g. if a switch block contains 4 labeled cases and a default case, it will return -5
+   * @param block  the switch block to count the cases of.
+   * @return a negative number if a default case was encountered.
+   */
+  public static int calculateBranchCount(@NotNull PsiSwitchBlock block) {
+    final PsiCodeBlock body = block.getBody();
     if (body == null) {
       return 0;
     }
     int branches = 0;
     boolean defaultFound = false;
-    for (final PsiSwitchLabelStatement child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatement.class)) {
+    for (final PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
       if (child.isDefaultCase()) {
         defaultFound = true;
       }
