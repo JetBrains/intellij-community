@@ -36,13 +36,10 @@ import java.util.Set;
 
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
   private final Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<>();
+  private int myTransitive = 0;
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);
-  }
-
-  public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final AnalysisScope scopeOfInterest) {
-    super(project, scope, scopeOfInterest);
   }
 
   public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final int transitive) {
@@ -86,8 +83,6 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
 
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
-
-    if (getScopeOfInterest() != null && !getScopeOfInterest().contains(file)) return;
 
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -170,4 +165,13 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     return myDirectDependencies;
   }
 
+  @Override
+  public boolean isTransitive() {
+    return myTransitive > 0;
+  }
+
+  @Override
+  public int getTransitiveBorder() {
+    return myTransitive;
+  }
 }
