@@ -732,6 +732,19 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   @Override
+  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
+    super.visitConstructorInvocation(invocation);
+    if (hasErrorElements(invocation) || hasErrorElements(invocation.getArgumentList())) return;
+
+    final GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
+    final GroovyCallReference reference = invocation.getConstructorReference();
+    if (processConstructor(reference, invocation.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+    checkNamedArgumentsType(info);
+  }
+  
+  @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
 
@@ -846,14 +859,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         parameter
       );
     }
-  }
-
-  @Override
-  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
-    super.visitConstructorInvocation(invocation);
-    GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
-    processConstructorCall(info);
-    checkNamedArgumentsType(info);
   }
 
   @Override

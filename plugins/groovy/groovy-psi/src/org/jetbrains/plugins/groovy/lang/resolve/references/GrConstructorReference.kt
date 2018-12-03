@@ -21,6 +21,8 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
   // TODO consider introducing GroovyConstructorCallReference and putting it there
   protected abstract fun resolveClass(): ClassResolveResult?
 
+  protected open val supportsMapInvocation: Boolean get() = true
+
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     val classCandidate = resolveClass() ?: return emptyList()
     val constructedClass = classCandidate.element as? PsiClass ?: return emptyList()
@@ -37,7 +39,7 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
     val enclosingClassArgument = enclosingClassArgument(element, constructedClass)?.let(::listOf) ?: emptyList()
     val realArguments = enclosingClassArgument + userArguments
     val (realApplicable, realResults) = tryArguments(allConstructors, state, realArguments)
-    if (realApplicable) {
+    if (realApplicable || !supportsMapInvocation) {
       return realResults
     }
 
