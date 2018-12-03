@@ -249,21 +249,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   @NotNull
   protected DefaultActionGroup createGroupByActionGroup() {
     ActionManager actionManager = ActionManager.getInstance();
-    actionManager.getAction("TodoViewGroupByFlattenPackage").registerCustomShortcutSet(
-        new CustomShortcutSet(
-            KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
-        myTree);
-
-    actionManager.getAction("TodoViewGroupByShowModules").registerCustomShortcutSet(
-        new CustomShortcutSet(
-            KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
-        myTree);
-
-    actionManager.getAction("TodoViewGroupByShowPackages").registerCustomShortcutSet(
-        new CustomShortcutSet(
-            KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
-        myTree);
-
     return (DefaultActionGroup) actionManager.getAction("TodoViewGroupByGroup");
   }
 
