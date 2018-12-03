@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,10 +93,11 @@ public class VcsShelveChangesSaver {
     }
   }
 
-  protected void doRollBack(@NotNull Collection<VirtualFile> rootsToSave) {
-    final RollbackWorker worker = new RollbackWorker(myProject, myStashMessage, true);
-    for (VirtualFile root : rootsToSave) {
-      worker.doRollback(myChangeManager.getChangesIn(root), true);
-    }
+  protected void doRollBack(@NotNull Collection<VirtualFile> roots4Rollback) {
+    Set<VirtualFile> rootsSet = new HashSet<>(roots4Rollback);
+    List<Change> changes4Rollback = ContainerUtil
+      .filter(myChangeManager.getAllChanges(), change -> rootsSet.contains(myVcsManager.getVcsRootFor(change.getVirtualFile())));
+
+    new RollbackWorker(myProject, myStashMessage, true).doRollback(changes4Rollback, true);
   }
 }
