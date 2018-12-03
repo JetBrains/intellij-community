@@ -116,7 +116,7 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     BitSet ids = fileIds;
     if (ids != null) {
-      for (int id = ids.nextSetBit(0); id < ids.size(); id = ids.nextSetBit(id)) {
+      for (int id = ids.nextSetBit(0); id < ids.size(); id = ids.nextSetBit(id + 1)) {
         if (id < 0) break;
         VirtualFile file = virtualFileManager.findFileById(id);
         if (file != null && !processor.process(file)) return false;
