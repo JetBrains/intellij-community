@@ -26,14 +26,14 @@ public class DefaultPreservingExecutor {
   private final Collection<VirtualFile> myRootsToSave;
   private final String myOperationTitle;
   private final Runnable myOperation;
-  private final VcsChangesSaver mySaver;
+  private final VcsShelveChangesSaver mySaver;
 
   public DefaultPreservingExecutor(@NotNull Project project,
                                    @NotNull Collection<VirtualFile> rootsToSave,
                                    @NotNull String operationTitle,
                                    @NotNull ProgressIndicator indicator,
                                    @NotNull Runnable operation) {
-    mySaver = new VcsChangesSaver(project, indicator, operationTitle);
+    mySaver = new VcsShelveChangesSaver(project, indicator, operationTitle);
     myProject = project;
     myRootsToSave = rootsToSave;
     myOperationTitle = operationTitle;

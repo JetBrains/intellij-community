@@ -18,7 +18,7 @@ package git4idea.stash;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.VcsChangesSaver;
+import com.intellij.openapi.vcs.changes.VcsShelveChangesSaver;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
@@ -28,13 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class GitShelveChangesSaver extends GitChangesSaver {
-  private final VcsChangesSaver myVcsChangesSaver;
+  private final VcsShelveChangesSaver myVcsShelveChangesSaver;
   private final ShelvedChangesViewManager myShelveViewManager;
 
   public GitShelveChangesSaver(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator indicator, String stashMessage) {
     super(project, git, indicator, stashMessage);
     myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
-    myVcsChangesSaver = new VcsChangesSaver(project, indicator, stashMessage) {
+    myVcsShelveChangesSaver = new VcsShelveChangesSaver(project, indicator, stashMessage) {
       @Override
       protected void doRollBack(@NotNull Collection<VirtualFile> rootsToSave) {
         for (VirtualFile root : rootsToSave) {
@@ -46,17 +46,17 @@ public class GitShelveChangesSaver extends GitChangesSaver {
 
   @Override
   protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
-    myVcsChangesSaver.save(rootsToSave);
+    myVcsShelveChangesSaver.save(rootsToSave);
   }
 
   @Override
   public void load() {
-    myVcsChangesSaver.load();
+    myVcsShelveChangesSaver.load();
   }
 
   @Override
   public boolean wereChangesSaved() {
-    return myVcsChangesSaver.getShelvedLists() != null && !myVcsChangesSaver.getShelvedLists().isEmpty();
+    return myVcsShelveChangesSaver.getShelvedLists() != null && !myVcsShelveChangesSaver.getShelvedLists().isEmpty();
   }
 
   @Override
@@ -72,15 +72,15 @@ public class GitShelveChangesSaver extends GitChangesSaver {
 
   @Override
   public void showSavedChanges() {
-    if (myVcsChangesSaver.getShelvedLists() == null) {
+    if (myVcsShelveChangesSaver.getShelvedLists() == null) {
       return;
     }
     myShelveViewManager
-      .activateView(myVcsChangesSaver.getShelvedLists().get(myVcsChangesSaver.getShelvedLists().keySet().iterator().next()));
+      .activateView(myVcsShelveChangesSaver.getShelvedLists().get(myVcsShelveChangesSaver.getShelvedLists().keySet().iterator().next()));
   }
 
   @Override
   public String toString() {
-    return "ShelveChangesSaver. Lists: " + myVcsChangesSaver.getShelvedLists();
+    return "ShelveChangesSaver. Lists: " + myVcsShelveChangesSaver.getShelvedLists();
   }
 }

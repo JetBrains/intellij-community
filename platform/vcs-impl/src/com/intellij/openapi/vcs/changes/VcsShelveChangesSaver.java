@@ -19,8 +19,8 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.createSystemShelvedChangeListName;
 
-public class VcsChangesSaver  {
-  private static final Logger LOG = Logger.getInstance(VcsChangesSaver.class);
+public class VcsShelveChangesSaver {
+  private static final Logger LOG = Logger.getInstance(VcsShelveChangesSaver.class);
   private final Project myProject;
   private final String myStashMessage;
   private final ShelveChangesManager myShelveManager;
@@ -29,9 +29,9 @@ public class VcsChangesSaver  {
   private final ProgressIndicator myProgressIndicator;
   private Map<String, ShelvedChangeList> myShelvedLists;
 
-  public VcsChangesSaver(@NotNull Project project,
-                         @NotNull ProgressIndicator indicator,
-                         @NotNull String stashMessage) {
+  public VcsShelveChangesSaver(@NotNull Project project,
+                               @NotNull ProgressIndicator indicator,
+                               @NotNull String stashMessage) {
     myProject = project;
     myShelveManager = ShelveChangesManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
