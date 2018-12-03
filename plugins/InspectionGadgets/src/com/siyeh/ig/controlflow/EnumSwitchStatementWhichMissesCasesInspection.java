@@ -364,7 +364,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
     }
 
     private static boolean isDefaultSwitchLabelStatement(PsiElement element) {
-      return element instanceof PsiSwitchLabelStatement && ((PsiSwitchLabelStatement)element).isDefaultCase();
+      return element instanceof PsiSwitchLabelStatementBase && ((PsiSwitchLabelStatementBase)element).isDefaultCase();
     }
   }
 

@@ -13,6 +13,7 @@ class BeforeDefault {
         case C, D -> System.out.println("foo");
         case E -> {
         }
+        default -> System.out.println("bar");
     }
   }
 }

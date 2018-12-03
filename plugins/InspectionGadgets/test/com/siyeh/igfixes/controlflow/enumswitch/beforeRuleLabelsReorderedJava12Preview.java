@@ -9,6 +9,7 @@ class BeforeDefault {
       case A -> System.out.println("foo");
       case F -> System.out.println("foo");
       case C, D -> System.out.println("foo");
+      default -> System.out.println("bar");
     }
   }
 }
