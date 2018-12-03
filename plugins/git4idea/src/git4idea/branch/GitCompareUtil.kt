@@ -30,8 +30,8 @@ private fun IndexDataGetter.selectSourceCommit(targetCommit: Int, sourceCandidat
   val targetMessage = getFullMessage(targetCommit) ?: return null
   for (sourceCandidate in sourceCandidates) {
     val sourceHash = logStorage.getCommitId(sourceCandidate)?.hash ?: continue
-    if (targetMessage.contains("\n(cherry picked from commit ${sourceHash.asString()})") ||
-        targetMessage.contains("\n(cherry picked from commit ${sourceHash.toShortString()})")) {
+    if (targetMessage.contains("cherry picked from commit ${sourceHash.asString()}") ||
+        targetMessage.contains("cherry picked from commit ${sourceHash.toShortString()}")) {
       return sourceCandidate
     }
   }
