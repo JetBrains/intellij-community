@@ -162,7 +162,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
           @Override
           public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
-            LOG.warn("Compilation failed. Trace expression: " + traceExpression);
+            LOG.warn("[" + getTestName(false) + "] Compilation failed. Trace expression: " + traceExpression);
             complete(chain, null, message, FailureReason.COMPILATION);
           }
         });
