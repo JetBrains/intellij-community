@@ -23,14 +23,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.references.GrConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrNewExpressionReference;
 
 /**
  * @author ilyas
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private final GroovyReference myConstructorReference = new GrConstructorReference(this);
+  private final GroovyReference myConstructorReference = new GrNewExpressionReference(this);
 
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);

@@ -7,30 +7,27 @@ import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil.enclosingClass
 import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
-import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
-import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import org.jetbrains.plugins.groovy.lang.resolve.impl.DefaultMethodComparatorContext
 import org.jetbrains.plugins.groovy.lang.resolve.impl.chooseOverloads
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getAllConstructors
-import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
-class GrConstructorReference(element: GrNewExpression) : GroovyCachingReference<GrNewExpression>(element) {
+abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachingReference<T>(element), GroovyCallReference {
+
+  // TODO consider introducing GroovyConstructorCallReference and putting it there
+  protected abstract fun resolveClass(): ClassResolveResult?
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
-    val ref = element.referenceElement ?: return emptyList()
-    val classCandidate = ref.advancedResolve() as? ClassResolveResult ?: return emptyList()
+    val classCandidate = resolveClass() ?: return emptyList()
     val constructedClass = classCandidate.element as? PsiClass ?: return emptyList()
     val substitutor = classCandidate.contextSubstitutor
 
     val allConstructors = getAllConstructors(constructedClass, element)
-    val userArguments = element.getArguments()
+    val userArguments = arguments
     if (incomplete || userArguments == null) {
       return allConstructors.map(::ElementResolveResult)
     }
