@@ -25,6 +25,7 @@ public class PluginUpdatesService {
   private static boolean myCreate = true;
   private static Consumer<Integer> myTreeCallback;
   private static Consumer<Integer> myTabCallback;
+  private static Consumer<Collection<PluginDownloader>> myInstalledCallback;
   private static List<Consumer<Collection<PluginDownloader>>> myPanelCallbacks;
   private static Collection<PluginDownloader> myCache;
   private static boolean myPrepared;
@@ -54,7 +55,21 @@ public class PluginUpdatesService {
     myCreate = false;
     myTabCallback = callback;
     handleCount(callback);
+
     return disposer;
+  }
+
+  public static void connectInstalled(@NotNull Consumer<Collection<PluginDownloader>> callback) {
+    assert SwingUtilities.isEventDispatchThread();
+
+    myInstalledCallback = callback;
+
+    if (myPrepared) {
+      callback.accept(myCache);
+    }
+    else {
+      calculateUpdates();
+    }
   }
 
   public static void calculateUpdates(@NotNull Consumer<Collection<PluginDownloader>> callback) {
@@ -89,10 +104,14 @@ public class PluginUpdatesService {
   }
 
   public static void recalculateUpdates() {
+    // XXX
     assert SwingUtilities.isEventDispatchThread();
     assert !myPreparing;
 
     runCallbacks(-1);
+    if (myInstalledCallback != null) {
+      myInstalledCallback.accept(null);
+    }
     calculateUpdates();
   }
 
@@ -102,6 +121,7 @@ public class PluginUpdatesService {
     myCreate = true;
     myTreeCallback = null;
     myTabCallback = null;
+    myInstalledCallback = null;
     myPanelCallbacks = null;
     myCache = null;
     myPrepared = false;
@@ -139,6 +159,10 @@ public class PluginUpdatesService {
         myCache = updates;
 
         runCallbacks(getCount());
+
+        if (myInstalledCallback != null) {
+          myInstalledCallback.accept(myCache);
+        }
 
         if (myPanelCallbacks != null) {
           for (Consumer<Collection<PluginDownloader>> callback : myPanelCallbacks) {

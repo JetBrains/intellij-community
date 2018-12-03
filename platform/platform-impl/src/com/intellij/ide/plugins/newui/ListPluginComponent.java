@@ -40,6 +40,8 @@ public class ListPluginComponent extends CellPluginComponent {
   private final BaselinePanel myBaselinePanel = new BaselinePanel();
   private ProgressIndicatorEx myIndicator;
 
+  private IdeaPluginDescriptor myUpdateDescriptor;
+
   public ListPluginComponent(@NotNull MyPluginModel pluginModel, @NotNull IdeaPluginDescriptor plugin, boolean pluginForUpdate) {
     super(plugin);
     myPluginModel = pluginModel;
@@ -219,6 +221,42 @@ public class ListPluginComponent extends CellPluginComponent {
         myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myLastUpdated));
       }
     }
+  }
+
+  public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
+    if (myUpdateDescriptor == null && descriptor == null) {
+      return;
+    }
+
+    myUpdateDescriptor = descriptor;
+
+    if (descriptor == null) {
+      if (myVersion != null) {
+        myVersion.setText("v" + myPlugin.getVersion());
+      }
+      if (myUpdateButton != null) {
+        myUpdateButton.setVisible(false);
+      }
+    }
+    else {
+      if (myVersion == null) {
+        myVersion = new JLabel();
+        myVersion.setOpaque(false);
+        myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myVersion));
+      }
+      myVersion.setText("Version " + myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
+
+      if (myUpdateButton == null) {
+        myUpdateButton = new UpdateButton();
+        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myUpdateDescriptor, false));
+        myBaselinePanel.addButtonComponent(myUpdateButton);
+      }
+      else {
+        myUpdateButton.setVisible(true);
+      }
+    }
+
+    myBaselinePanel.doLayout();
   }
 
   public void updateErrors() {

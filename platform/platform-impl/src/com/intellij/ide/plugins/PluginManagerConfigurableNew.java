@@ -883,6 +883,29 @@ public class PluginManagerConfigurableNew
     myPluginsModel.addEnabledGroup(bundled);
 
     myInstalledPanel = panel;
+
+    PluginUpdatesService.connectInstalled(updates -> {
+      if (ContainerUtil.isEmpty(updates)) {
+        for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+          for (CellPluginComponent plugin : group.plugins) {
+            ((ListPluginComponent)plugin).setUpdateDescriptor(null);
+          }
+        }
+      }
+      else {
+        for (PluginDownloader downloader : updates) {
+          IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+          for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+            CellPluginComponent component = group.findComponent(descriptor);
+            if (component != null) {
+              ((ListPluginComponent)component).setUpdateDescriptor(descriptor);
+              break;
+            }
+          }
+        }
+      }
+    });
+
     return createScrollPane(panel, true);
   }
 
