@@ -253,6 +253,7 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
     cdef ThreadInfo thread_info
     cdef int STATE_SUSPEND = 2
     cdef int CMD_STEP_INTO = 107
+    cdef int CMD_STEP_OVER = 108
     cdef int CMD_STEP_INTO_MY_CODE = 144
     try:
         thread_info = _thread_local_info.thread_info
@@ -289,18 +290,19 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
                 or not hasattr(main_debugger, "signature_factory"):
             # Debugger isn't fully initialized here yet
             return _PyEval_EvalFrameDefault(frame_obj, exc)
+        frame = <object> frame_obj
         
         if thread_info.thread_trace_func is None:
-            frame = <object> frame_obj
             trace_func, apply_to_global = fix_top_level_trace_and_get_trace_func(main_debugger, frame)
             if apply_to_global:
                 thread_info.thread_trace_func = trace_func
                 
         if additional_info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE) or \
-                main_debugger.break_on_caught_exceptions or main_debugger.has_plugin_exception_breaks or \
-                main_debugger.signature_factory:
+                main_debugger.break_on_caught_exceptions or \
+                main_debugger.has_plugin_exception_breaks or \
+                main_debugger.signature_factory or \
+                additional_info.pydev_step_cmd == CMD_STEP_OVER and main_debugger.show_return_values and frame.f_back is additional_info.pydev_step_stop:
             
-            frame = <object> frame_obj
             if thread_info.thread_trace_func is not None:
                 frame.f_trace = thread_info.thread_trace_func
             else:
@@ -312,7 +314,6 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
                 if main_debugger.has_plugin_line_breaks:
                     can_not_skip = main_debugger.plugin.can_not_skip(main_debugger, None, <object> frame_obj)
                     if can_not_skip:
-                        frame = <object> frame_obj
                         if thread_info.thread_trace_func is not None:
                             frame.f_trace = thread_info.thread_trace_func
                         else:
@@ -323,7 +324,6 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
                     # this means we weren't able to actually add the code
                     # where needed, so, fallback to tracing.
                     if func_code_info.new_code is None:
-                        frame = <object> frame_obj
                         if thread_info.thread_trace_func is not None:
                             frame.f_trace = thread_info.thread_trace_func
                         else:
