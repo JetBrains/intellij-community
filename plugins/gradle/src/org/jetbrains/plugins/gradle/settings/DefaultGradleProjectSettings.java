@@ -73,7 +73,7 @@ public class DefaultGradleProjectSettings implements PersistentStateComponent<De
   @SuppressWarnings("deprecation")
   private void migrateOldSettings() {
     GradleSystemRunningSettings oldAppSettings = GradleSystemRunningSettings.getInstance();
-    myDelegatedBuild = oldAppSettings.isDelegatedBuildEnabledByDefault();
+    myDelegatedBuild = oldAppSettings.isUseGradleAwareMake();
     GradleSystemRunningSettings.PreferredTestRunner oldTestRunner = oldAppSettings.getDefaultTestRunner();
     if (oldTestRunner == GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER) {
       myTestRunner = TestRunner.PLATFORM;

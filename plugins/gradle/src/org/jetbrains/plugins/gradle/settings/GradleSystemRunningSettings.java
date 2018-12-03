@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.module.Module;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.ApiStatus;
@@ -50,8 +51,11 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
     return myPreferredTestRunner;
   }
 
-  @OptionTag("useGradleAwareMake")
-  public boolean isDelegatedBuildEnabledByDefault() {
+  /**
+   * @deprecated use {@link GradleSettingsService#isDelegatedBuildEnabled(Module)} )
+   */
+  @Deprecated
+  public boolean isUseGradleAwareMake() {
     return myDelegatedBuildEnabledByDefault;
   }
 
