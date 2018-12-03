@@ -722,7 +722,7 @@ cdef class PyDBFrame:
                                 return None
 
             # We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
-            # print('NOT skipped', frame.f_lineno, frame.f_code.co_name, event)
+            # print('NOT skipped: %s %s %s %s' % (frame.f_lineno, frame.f_code.co_name, event, frame.__class__.__name__))
 
             try:
                 flag = False
@@ -1133,7 +1133,11 @@ def fix_top_level_trace_and_get_trace_func(py_db, frame):
     return thread_tracer, True
 
 
-def trace_dispatch(py_db, frame, event, arg):
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+def trace_dispatch(py_db, frame, str event, arg):
+# ELSE
+# def trace_dispatch(py_db, frame, event, arg):
+# ENDIF
     thread_trace_func, apply_to_settrace = fix_top_level_trace_and_get_trace_func(py_db, frame)
     if thread_trace_func is None:
         if event != 'call': frame.f_trace = NO_FTRACE
