@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -22,13 +21,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrEnumConstructorReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.MODIFIER_LIST;
 
 public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
-  private final GroovyReference myReference = new GrEnumConstructorReference(this);
+  private final GroovyCallReference myReference = new GrEnumConstructorReference(this);
 
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
@@ -204,5 +204,11 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @Override
   public Object computeConstantValue() {
     return this;
+  }
+
+  @NotNull
+  @Override
+  public GroovyCallReference getConstructorReference() {
+    return myReference;
   }
 }

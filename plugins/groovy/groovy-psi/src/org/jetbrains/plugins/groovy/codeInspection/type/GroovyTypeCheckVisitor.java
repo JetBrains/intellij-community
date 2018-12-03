@@ -668,14 +668,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   @Override
-  public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
-    super.visitEnumConstant(enumConstant);
-    GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
-    processConstructorCall(info);
-    checkNamedArgumentsType(info);
-  }
-
-  @Override
   public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
     super.visitReturnStatement(returnStatement);
     final GrExpression value = returnStatement.getReturnValue();
@@ -719,6 +711,20 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     final GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
     if (processConstructor(reference, newExpression.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+
+    checkNamedArgumentsType(info);
+  }
+
+  @Override
+  public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
+    super.visitEnumConstant(enumConstant);
+    if (hasErrorElements(enumConstant) || hasErrorElements(enumConstant.getArgumentList())) return;
+
+    final GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
+    final GroovyCallReference reference = enumConstant.getConstructorReference();
+    if (processConstructor(reference, enumConstant.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
       return;
     }
 
