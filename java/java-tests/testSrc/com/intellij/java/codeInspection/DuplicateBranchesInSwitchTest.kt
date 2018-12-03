@@ -28,6 +28,8 @@ class DuplicateBranchesInSwitchTest : LightCodeInsightFixtureTestCase() {
   fun testNoLastBreak() = doTest()
   fun testFallThroughToBreak() = doTest()
   fun testThreeDuplicates() = doTest()
+  fun testThreeDuplicatesDefault() = doTest()
+  fun testDuplicateAfterDefault() = doTest()
   fun testTwoCaseLabels() = doTest()
   fun testComplexBranches() = doTest()
   fun testBreakWithLabel() = doTest()

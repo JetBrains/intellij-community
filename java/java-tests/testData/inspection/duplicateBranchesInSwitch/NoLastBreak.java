@@ -2,7 +2,7 @@ class C {
   void foo(int n) {
     switch (n) {
       case 1:
-        <weak_warning descr="Duplicate branch in 'switch' statement">bar("A");</weak_warning>
+        bar("A");
         break;
       case 2:
         bar("B");
