@@ -34,7 +34,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
-      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
+      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "tst", false, ignrd -> null);
       try {
         collector.awaitFinish(1000);
       }
@@ -60,7 +60,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     SESearcher searcher = new SingleThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
-      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
+      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "tst", false, ignrd -> null);
       try {
         collector.awaitFinish(1000);
       }

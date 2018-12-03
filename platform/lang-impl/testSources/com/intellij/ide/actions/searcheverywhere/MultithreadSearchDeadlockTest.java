@@ -45,7 +45,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {
       if (!collector.awaitFinish(4000)) {
@@ -70,7 +70,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {
       Application application = ApplicationManager.getApplication();
@@ -101,7 +101,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {
       if (!collector.awaitFinish(4000)) {

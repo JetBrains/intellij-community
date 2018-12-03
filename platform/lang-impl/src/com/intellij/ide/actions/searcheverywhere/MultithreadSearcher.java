@@ -103,6 +103,11 @@ class MultithreadSearcher implements SESearcher {
     }
 
     indicator.start();
+    if (contributors.isEmpty()) {
+      indicator.stop();
+      accumulator.searchFinished();
+    }
+
     return indicator;
   }
 
