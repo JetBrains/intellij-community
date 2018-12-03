@@ -7,7 +7,7 @@ cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk
 def jdkRepo = 'https://cache-redirector.jetbrains.com'
 
 def checkoutDir = intellijProjectDir()
-def jdkDir = persistentCache != buildDir ? "$persistentCache/jdk" : "$checkoutDir/build/jdk"
+def jdkDir = "$checkoutDir/build/jdk"
 
 project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "") ?: "$jdkDir/1.8"}"
 
@@ -16,7 +16,7 @@ task downloadJdk18 {
   def platform = currentPlatformName()
 
   def artifactName = "jbsdk8${jdkBuild}_${platform}_${arch}.tar.gz"
-  def outputFile = "$persistentCache/jbsdk/${artifactName}"
+  def outputFile = "$project.buildDir/jbsdk/${artifactName}"
 
   inputs.property('build', jdkBuild)
   outputs.file(outputFile)
