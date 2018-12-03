@@ -946,7 +946,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       answer.add(correctKeywords ? changeIfNotIdentifier(suggestion) : suggestion);
     }
 
-    ContainerUtil.addIfNotNull(answer, getWordByPreposition(name, prefix, suffix, upperCaseStyle));
+    String wordByPreposition = getWordByPreposition(name, prefix, suffix, upperCaseStyle);
+    if (wordByPreposition != null && (!correctKeywords || isIdentifier(wordByPreposition))) {
+      answer.add(wordByPreposition);
+    }
     return answer;
   }
 
