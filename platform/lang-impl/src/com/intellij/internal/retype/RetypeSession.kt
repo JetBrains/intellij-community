@@ -211,6 +211,7 @@ class RetypeSession(
 
   fun stop(startNext: Boolean) {
     stopTimer = true
+    timerThread.join()
     for (retypeFileAssistant in RetypeFileAssistant.EP_NAME.extensions) {
       retypeFileAssistant.retypeDone(editor)
     }
@@ -248,6 +249,7 @@ class RetypeSession(
   private fun runLoop() {
     while (pos != endPos && !stopTimer) {
       Thread.sleep(delayMillis.toLong())
+      if (stopTimer) break
       typeNext()
     }
   }
@@ -344,10 +346,15 @@ class RetypeSession(
         }
       }
 
-      IdeEventQueue.getInstance().postEvent(
-        KeyEvent(editor.component, KeyEvent.KEY_PRESSED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
-      IdeEventQueue.getInstance().postEvent(
-        KeyEvent(editor.component, KeyEvent.KEY_TYPED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        editor.type(c.toString())
+      }
+      else {
+        IdeEventQueue.getInstance().postEvent(
+          KeyEvent(editor.component, KeyEvent.KEY_PRESSED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
+        IdeEventQueue.getInstance().postEvent(
+          KeyEvent(editor.component, KeyEvent.KEY_TYPED, timerTick, 0, KeyEvent.VK_UNDEFINED, c))
+      }
       typedRightBefore = true
     }
     checkStop()
