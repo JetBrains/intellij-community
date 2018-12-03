@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -565,6 +566,10 @@ class RetypeSession(
       if (stopInterfereFileChanger) {
         file.delete()
         cancel()
+      }
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        VirtualFileManager.getInstance().syncRefresh()
       }
     }
   }
