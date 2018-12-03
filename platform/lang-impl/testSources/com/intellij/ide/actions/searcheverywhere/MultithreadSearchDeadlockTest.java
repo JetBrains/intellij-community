@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -46,7 +45,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {
       if (!collector.awaitFinish(4000)) {
@@ -73,7 +72,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {
       Application application = ApplicationManager.getApplication();
@@ -105,7 +104,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {
       if (!collector.awaitFinish(4000)) {
