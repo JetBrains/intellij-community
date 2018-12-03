@@ -37,10 +37,17 @@ except:
     xrange = range
 
 TEST_DJANGO = False
+TEST_FLASK = False
 
 try:
     import django
     TEST_DJANGO = True
+except:
+    pass
+
+try:
+    import flask
+    TEST_FLASK = True
 except:
     pass
 
@@ -849,6 +856,39 @@ def test_case_20(case_setup):
         # We already check if it prints 'TEST SUCEEDED' by default, so, nothing
         # else should be needed in this test as it tests what's needed just by
         # running the module.
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(not TEST_FLASK, reason='No flask available')
+def test_case_flask(case_setup_flask):
+    with case_setup_flask.test_file(EXPECTED_RETURNCODE='any') as writer:
+        writer.write_add_breakpoint_jinja2(5, None, 'hello.html')
+        writer.write_add_breakpoint_jinja2(8, None, 'hello.html')
+        writer.write_make_initial_run()
+
+        t = writer.create_request_thread()
+        time.sleep(2)  # Give flask some time to get to startup before requesting the page
+        t.start()
+
+        hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=5)
+        writer.write_get_frame(hit.thread_id, hit.frame_id)
+        writer.wait_for_vars(['<var name="content" type="str"'])
+
+        writer.write_run_thread(hit.thread_id)
+
+        hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=8)
+        writer.write_run_thread(hit.thread_id)
+
+        for _ in xrange(10):
+            if hasattr(t, 'contents'):
+                break
+            time.sleep(.3)
+        else:
+            raise AssertionError('Flask did not return contents properly!')
+
+        assert '<title>Hello</title>' in t.contents
+        assert 'Flask-Jinja-Test' in t.contents
+
         writer.finished_ok = True
 
 
