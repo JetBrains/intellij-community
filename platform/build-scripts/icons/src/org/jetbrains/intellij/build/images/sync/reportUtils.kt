@@ -117,7 +117,9 @@ private fun verifyDevIcons(context: Context, repos: Collection<File>) {
       log("Staging ${status.joinToString("," + System.lineSeparator()) {
         repo.resolve(it).toString()
       }}")
-      stageFiles(status, repo)
+      status.forEach {
+        stageFiles(listOf(it), repo)
+      }
       log("Staged: " + gitStage(repo))
     }
   }
