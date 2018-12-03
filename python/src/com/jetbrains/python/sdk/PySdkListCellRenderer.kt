@@ -37,7 +37,8 @@ import javax.swing.JList
 /**
  * @author vlan
  */
-open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificator>?) : ColoredListCellRenderer<Any>() {
+open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifiers: Map<Sdk, SdkModificator>?,
+                                                           private val nullSdk: String = "<No interpreter>") : ColoredListCellRenderer<Any>() {
   override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean,
                                             hasFocus: Boolean): Component =
     when (value) {
@@ -54,7 +55,7 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
         icon = customizeIcon(value)
       }
       is String -> append(value)
-      null -> append("<No interpreter>")
+      null -> append(nullSdk)
     }
   }
 
