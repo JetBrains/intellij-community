@@ -1720,6 +1720,9 @@ public class InferenceSession {
     for (int i = 0; i < paramsLength; i++) {
       PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, false);
       PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, siteSubstitutor1, varargs));
+      if (PsiUtil.isRawSubstitutor(m2, siteSubstitutor1)) {
+        tType = TypeConversionUtil.erasure(tType);
+      }
       if (sType instanceof PsiClassType &&
           tType instanceof PsiClassType &&
           LambdaUtil.isFunctionalType(sType) && LambdaUtil.isFunctionalType(tType) && !relates(sType, tType)) {
