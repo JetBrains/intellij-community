@@ -184,6 +184,11 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                 break;
               }
             }
+
+            if (method instanceof PsiMethod && ((PsiMethod)method).findDeepestSuperMethods().length > 0 && 
+                MethodDuplicatesMatchProvider.isEssentialStaticContextAbsent(match, (PsiMethod)method)) {
+              iterator.remove();
+            }
           }
           if (!matchList.isEmpty()) {
             List<Match> matches = duplicates.get(method);
