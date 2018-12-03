@@ -18,7 +18,7 @@ package org.jetbrains.uast.values
 import org.jetbrains.uast.*
 
 // Something that never can be reached / created
-internal class UNothingValue private constructor(
+internal open class UNothingValue private constructor(
   val containingLoopOrSwitch: UExpression?,
   val kind: JumpKind
 ) : UValueBase() {
@@ -36,6 +36,7 @@ internal class UNothingValue private constructor(
   override val reachable = false
 
   override fun merge(other: UValue) = when (other) {
+    is UBreakResult -> super.merge(other)
     is UNothingValue -> {
       val mergedLoopOrSwitch =
         if (containingLoopOrSwitch == other.containingLoopOrSwitch) containingLoopOrSwitch
@@ -77,3 +78,5 @@ internal class UNothingValue private constructor(
     }
   }
 }
+
+internal class UBreakResult(val value: UValue, jump: UBreakWithValueExpression) : UNothingValue(jump)

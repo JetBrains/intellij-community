@@ -13,7 +13,7 @@ UFile (package = ) [public final enum DeadSwitchEntries {...]
                         USimpleNameReferenceExpression (identifier = THIRD) [THIRD] = THIRD (enum entry)
                 UDeclarationsExpression [var result: int] = Undetermined
                     ULocalVariable (name = result) [var result: int]
-                USwitchExpression [switch (key) ...] = 13
+                USwitchExpression [switch (key) ...] = Undetermined
                     USimpleNameReferenceExpression (identifier = key) [key] = (var key = THIRD (enum entry))
                     UExpressionList (switch) [    FIRST -> {...    ] = Undetermined
                         USwitchClauseExpressionWithBody [FIRST -> {...] = Undetermined

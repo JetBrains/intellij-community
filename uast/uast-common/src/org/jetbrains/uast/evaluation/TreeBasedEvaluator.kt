@@ -113,7 +113,15 @@ class TreeBasedEvaluator(
 
     override fun visitBreakExpression(node: UBreakExpression, data: UEvaluationState): UEvaluationInfo {
       storeState(node, data)
-      return UNothingValue(node) to data storeResultFor node
+      if (node is UBreakWithValueExpression) {
+        val uEvaluationInfo = node.valueExpression?.accept(chain, data)
+        if (uEvaluationInfo != null)
+          return UBreakResult(uEvaluationInfo.value, node) to data storeResultFor node
+        else
+          return UUndeterminedValue to data storeResultFor node
+      }
+      else
+        return UNothingValue(node) to data storeResultFor node
     }
 
     override fun visitContinueExpression(node: UContinueExpression, data: UEvaluationState): UEvaluationInfo {
@@ -505,7 +513,6 @@ class TreeBasedEvaluator(
 
       var resultInfo: UEvaluationInfo? = null
       var clauseInfo = subjectInfo
-      var lastConditionValue: UEvaluationInfo? = null
       var fallThroughCondition: UValue = UBooleanConstant.False
 
       fun List<UExpression>.evaluateAndFold(): UValue =
@@ -521,14 +528,15 @@ class TreeBasedEvaluator(
         if (caseCondition != UBooleanConstant.False) {
           for (bodyExpression in switchClauseWithBody.body.expressions) {
             clauseInfo = bodyExpression.accept(chain, clauseInfo.state)
-            if (clauseInfo.value !is UNothingValue)
-              lastConditionValue = clauseInfo
             if (!clauseInfo.reachable) break
           }
           val clauseValue = clauseInfo.value
           if (clauseValue is UNothingValue && clauseValue.containingLoopOrSwitch == node) {
             // break from switch
-            resultInfo = resultInfo merge lastConditionValue merge clauseInfo
+            resultInfo = resultInfo merge when (clauseValue) {
+              is UBreakResult -> clauseValue.value to clauseInfo.state
+              else -> clauseInfo
+            }
             if (caseCondition == UBooleanConstant.True) break@clausesLoop
             clauseInfo = subjectInfo
             fallThroughCondition = UBooleanConstant.False

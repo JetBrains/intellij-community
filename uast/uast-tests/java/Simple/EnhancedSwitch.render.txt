@@ -4,46 +4,38 @@ public class Main {
         final var numericString: java.lang.String = switch (str)
             "foo" -> {
                 System.out.println("here")
-                "FOO"
-                break
+                break "FOO"
             }
 
             "bar" -> {
-                "BAR"
-                break
+                break "BAR"
             }
 
             "baz" -> {
-                "bAz"
-                break
+                break "bAz"
             }
 
             else -> {
-                "default"
-                break
+                break "default"
             }
 
 
         final var numericString2: java.lang.String = switch (str)
             "foo" -> {
-                "FOO"
-                break
+                break "FOO"
             }
 
             "bar" -> {
-                "BAR"
-                break
+                break "BAR"
             }
 
             "baz" -> {
                 System.out.println("here")
-                "bAz"
-                break
+                break "bAz"
             }
 
             else -> {
-                "default"
-                break
+                break "default"
             }
 
 

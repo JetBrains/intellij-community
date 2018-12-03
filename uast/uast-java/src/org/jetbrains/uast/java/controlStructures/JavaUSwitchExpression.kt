@@ -141,15 +141,13 @@ class JavaUSwitchEntry(
       init {
         val expressions = ArrayList<UExpression>(this@JavaUSwitchEntry.statements.size)
         for (statement in this@JavaUSwitchEntry.statements) {
-          if (statement is PsiBreakStatement) {
-            statement.valueExpression?.let {
-              expressions.add(JavaConverter.convertOrEmpty(it, this))
-            }
-          }
           expressions.add(JavaConverter.convertOrEmpty(statement, this))
         }
-        if (addDummyBreak)
-          expressions.add(DummyUBreakExpression(expressions.lastOrNull()?.sourcePsi ?: psi, this))
+        if (addDummyBreak) {
+          val lastValueExpressionPsi = expressions.lastOrNull()?.sourcePsi as? PsiExpression
+          if (lastValueExpressionPsi != null)
+            expressions[expressions.size - 1] = DummyUBreakExpression(lastValueExpressionPsi, this)
+        }
 
         this.expressions = expressions
       }
@@ -165,7 +163,8 @@ class JavaUSwitchEntry(
 
 }
 
-private class DummyUBreakExpression(private val referencePsi: PsiElement?, override val uastParent: UElement?) : UBreakExpression {
+internal class DummyUBreakExpression(val valueExpressionPsi: PsiExpression,
+                                     override val uastParent: UElement?) : UBreakWithValueExpression {
   override val javaPsi: PsiElement? = null
   override val sourcePsi: PsiElement? = null
   override val psi: PsiElement?
@@ -175,19 +174,21 @@ private class DummyUBreakExpression(private val referencePsi: PsiElement?, overr
   override val annotations: List<UAnnotation>
     get() = emptyList()
 
+  override val valueExpression: UExpression? by lazy { JavaConverter.convertExpression(valueExpressionPsi, this) }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as DummyUBreakExpression
 
-    if (referencePsi != null && referencePsi != other.referencePsi) return false
+    if (valueExpression != null && valueExpression != other.valueExpression) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return referencePsi?.hashCode() ?: 0
+    return valueExpression?.hashCode() ?: 0
   }
 
 }

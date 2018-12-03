@@ -283,7 +283,9 @@ internal object JavaConverter {
         is PsiDoWhileStatement -> expr<UDoWhileExpression>(build(::JavaUDoWhileExpression))
         is PsiForStatement -> expr<UForExpression>(build(::JavaUForExpression))
         is PsiForeachStatement -> expr<UForEachExpression>(build(::JavaUForEachExpression))
-        is PsiBreakStatement -> expr<UBreakExpression>(build(::JavaUBreakExpression))
+        is PsiBreakStatement -> expr<UBreakExpression> {
+          el.valueExpression?.let { JavaUBreakWithValueExpression(el, it, givenParent) } ?: JavaUBreakExpression(el, givenParent)
+        }
         is PsiContinueStatement -> expr<UContinueExpression>(build(::JavaUContinueExpression))
         is PsiReturnStatement -> expr<UReturnExpression>(build(::JavaUReturnExpression))
         is PsiAssertStatement -> expr<UCallExpression>(build(::JavaUAssertExpression))

@@ -20,23 +20,23 @@ UFile (package = ) [public class Main {...]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("here")] = external println("here")("here")
                                                 UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                                                 ULiteralExpression (value = "here") ["here"] = "here"
-                                        ULiteralExpression (value = "FOO") ["FOO"] = "FOO"
-                                        UBreakExpression (label = null) [break] = Nothing(break)
+                                        UBreakWithValueExpression (label = null, hasValue = true) [break "FOO"] = Nothing(break)
+                                            ULiteralExpression (value = "FOO") ["FOO"] = "FOO"
                                 USwitchClauseExpressionWithBody ["bar" -> {...] = Undetermined
                                     ULiteralExpression (value = "bar") ["bar"] = "bar"
                                     UExpressionList (switch_entry) [{...] = Undetermined
-                                        ULiteralExpression (value = "BAR") ["BAR"] = "BAR"
-                                        UBreakExpression (label = null) [break] = Nothing(break)
+                                        UBreakWithValueExpression (label = null, hasValue = true) [break "BAR"] = Nothing(break)
+                                            ULiteralExpression (value = "BAR") ["BAR"] = "BAR"
                                 USwitchClauseExpressionWithBody ["baz" -> {...] = Undetermined
                                     ULiteralExpression (value = "baz") ["baz"] = "baz"
                                     UExpressionList (switch_entry) [{...] = Undetermined
-                                        ULiteralExpression (value = "bAz") ["bAz"] = "bAz"
-                                        UBreakExpression (label = null) [break] = Nothing(break)
+                                        UBreakWithValueExpression (label = null, hasValue = true) [break "bAz"] = Nothing(break)
+                                            ULiteralExpression (value = "bAz") ["bAz"] = "bAz"
                                 USwitchClauseExpressionWithBody [else -> {...] = Undetermined
                                     UDefaultCaseExpression [else] = Undetermined
                                     UExpressionList (switch_entry) [{...] = Undetermined
-                                        ULiteralExpression (value = "default") ["default"] = "default"
-                                        UBreakExpression (label = null) [break] = Nothing(break)
+                                        UBreakWithValueExpression (label = null, hasValue = true) [break "default"] = Nothing(break)
+                                            ULiteralExpression (value = "default") ["default"] = "default"
                 UDeclarationsExpression [final var numericString2: java.lang.String = switch (str) ...] = Undetermined
                     ULocalVariable (name = numericString2) [final var numericString2: java.lang.String = switch (str) ...]
                         USwitchExpression [switch (str) ...] = "bAz"
@@ -45,13 +45,13 @@ UFile (package = ) [public class Main {...]
                                 USwitchClauseExpressionWithBody ["foo" -> {...] = Undetermined
                                     ULiteralExpression (value = "foo") ["foo"] = "foo"
                                     UExpressionList (switch_entry) [{...] = Undetermined
-                                        ULiteralExpression (value = "FOO") ["FOO"] = "FOO"
-                                        UBreakExpression (label = null) [break] = Nothing(break)
+                                        UBreakWithValueExpression (label = null, hasValue = true) [break "FOO"] = Nothing(break)
+                                            ULiteralExpression (value = "FOO") ["FOO"] = "FOO"
                                 USwitchClauseExpressionWithBody ["bar" -> {...] = Undetermined
                                     ULiteralExpression (value = "bar") ["bar"] = "bar"
                                     UExpressionList (switch_entry) [{...] = Undetermined
-                                        ULiteralExpression (value = "BAR") ["BAR"] = "BAR"
-                                        UBreakExpression (label = null) [break] = Nothing(break)
+                                        UBreakWithValueExpression (label = null, hasValue = true) [break "BAR"] = Nothing(break)
+                                            ULiteralExpression (value = "BAR") ["BAR"] = "BAR"
                                 USwitchClauseExpressionWithBody ["baz" -> {...] = Undetermined
                                     ULiteralExpression (value = "baz") ["baz"] = "baz"
                                     UExpressionList (switch_entry) [{...] = Undetermined
@@ -62,13 +62,13 @@ UFile (package = ) [public class Main {...]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("here")] = external println("here")("here")
                                                 UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                                                 ULiteralExpression (value = "here") ["here"] = "here"
-                                        ULiteralExpression (value = "bAz") ["bAz"] = "bAz"
-                                        UBreakExpression (label = null) [break] = Nothing(break)
+                                        UBreakWithValueExpression (label = null, hasValue = true) [break "bAz"] = Nothing(break)
+                                            ULiteralExpression (value = "bAz") ["bAz"] = "bAz"
                                 USwitchClauseExpressionWithBody [else -> {...] = Undetermined
                                     UDefaultCaseExpression [else] = Undetermined
                                     UExpressionList (switch_entry) [{...] = Undetermined
-                                        ULiteralExpression (value = "default") ["default"] = "default"
-                                        UBreakExpression (label = null) [break] = Nothing(break)
+                                        UBreakWithValueExpression (label = null, hasValue = true) [break "default"] = Nothing(break)
+                                            ULiteralExpression (value = "default") ["default"] = "default"
                 UReturnExpression [return numericString + numericString2] = Nothing
                     UBinaryExpression (operator = +) [numericString + numericString2] = "bAzbAz" (depending on: (var numericString = "bAz"), (var numericString2 = "bAz"))
                         USimpleNameReferenceExpression (identifier = numericString) [numericString] = (var numericString = "bAz")
