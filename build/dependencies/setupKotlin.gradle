@@ -13,5 +13,5 @@ dependencies {
 
 task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
   from zipTree(configurations.kotlinPlugin.singleFile)
-  into "${project.buildDir}/kotlin"
+  into "$persistentCache/kotlin"
 }

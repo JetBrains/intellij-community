@@ -37,6 +37,14 @@ catch (UnknownHostException e) {
   project.ext.inJetBrainsNetwork = false
 }
 
+project.ext.persistentCache = System.getProperty('agent.persistent.cache')?.with {
+  def agentPersistentCache = new File(it)
+  new File(agentPersistentCache, 'idea-build-deps').with {
+    mkdirs()
+    it
+  }
+} ?: project.buildDir
+
 apply from: 'setupJdk.gradle'
 apply from: 'setupJbre.gradle'
 apply from: 'setupKotlin.gradle'

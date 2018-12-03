@@ -69,6 +69,9 @@ class GradleRunner {
     List<String> command = new ArrayList()
     command.add("${projectDir.absolutePath}/$gradleScript".toString())
     command.add("-Djava.io.tmpdir=${System.getProperty('java.io.tmpdir')}".toString())
+    System.getProperty('agent.persistent.cache')?.with {
+      command.add("-Dagent.persistent.cache=$it".toString())
+    }
     command.addAll(tasks)
     command.add('--stacktrace')
     if (System.getProperty("intellij.build.use.gradle.daemon", "false").toBoolean()) {
