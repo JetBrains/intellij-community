@@ -629,9 +629,6 @@ class _NewThreadStartupWithTrace:
                 # This is not a threading.Thread but a Dummy thread (so, get it as a dummy thread using
                 # currentThread).
                 t = threading.currentThread()
-                
-            if t.ident is None:
-                t._set_ident()
 
             if not getattr(t, 'is_pydev_daemon_thread', False):
                 thread_id = get_current_thread_id(t)

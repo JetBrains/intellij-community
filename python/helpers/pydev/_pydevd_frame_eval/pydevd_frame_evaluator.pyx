@@ -8,7 +8,7 @@ from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_file, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_trace_dispatch import fix_top_level_trace_and_get_trace_func
 
-from _pydevd_bundle.pydevd_additional_thread_info import _set_additional_thread_info_lock, _thread_ident_to_additional_info
+from _pydevd_bundle.pydevd_additional_thread_info import _set_additional_thread_info_lock
 from _pydevd_bundle.pydevd_cython cimport PyDBAdditionalThreadInfo
 
 get_file_type = DONT_TRACE.get
@@ -55,9 +55,9 @@ cdef class ThreadInfo:
                     with _set_additional_thread_info_lock:
                         # If it's not there, set it within a lock to avoid any racing
                         # conditions.
-                        additional_info = _thread_ident_to_additional_info.get(thread_ident)
+                        additional_info = getattr(thread, 'additional_info', None)
                         if additional_info is None:
-                            additional_info = _thread_ident_to_additional_info[thread_ident] = PyDBAdditionalThreadInfo()
+                            additional_info = PyDBAdditionalThreadInfo()
                         t.additional_info = additional_info
                 self.additional_info = additional_info
                 self.fully_initialized = True

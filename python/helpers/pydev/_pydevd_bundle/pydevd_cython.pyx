@@ -45,10 +45,10 @@ if not hasattr(sys, '_current_frames'):
 
                 ret[thread.getId()] = frame
             return ret
-        
-    elif IS_IRONPYTHON: 
+
+    elif IS_IRONPYTHON:
         _tid_to_last_frame = {}
-        
+
         # IronPython doesn't have it. Let's use our workaround...
         def _current_frames():
             return _tid_to_last_frame
@@ -127,7 +127,6 @@ cdef class PyDBAdditionalThreadInfo:
 from _pydev_imps._pydev_saved_modules import threading
 _set_additional_thread_info_lock = threading.Lock()
 
-_thread_ident_to_additional_info = {}
 
 def set_additional_thread_info(thread):
     try:
@@ -138,13 +137,9 @@ def set_additional_thread_info(thread):
         with _set_additional_thread_info_lock:
             # If it's not there, set it within a lock to avoid any racing
             # conditions.
-            thread_ident = thread.ident
-            if thread_ident is None:
-                sys.stderr.write('thread.ident *must* be set at this point (set_additional_thread_info).')
-                raise AssertionError('thread.ident *must* be set at this point (set_additional_thread_info).')
-            additional_info = _thread_ident_to_additional_info.get(thread_ident)
+            additional_info = getattr(thread, 'additional_info', None)
             if additional_info is None:
-                additional_info = _thread_ident_to_additional_info[thread_ident] = PyDBAdditionalThreadInfo()
+                additional_info = PyDBAdditionalThreadInfo()
             thread.additional_info = additional_info
 
     return additional_info
@@ -755,19 +750,19 @@ cdef class PyDBFrame:
                     # ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
                     # lets do the conditional stuff here
                     if stop or exist_result:
+                        eval_result = False
                         if breakpoint.has_condition:
                             eval_result = handle_breakpoint_condition(main_debugger, info, breakpoint, new_frame)
-                            if not eval_result:
-                                # No need to reset frame.f_trace to keep the same trace function.
-                                return self.trace_dispatch
 
                         if breakpoint.expression is not None:
                             handle_breakpoint_expression(breakpoint, info, new_frame)
                             if breakpoint.is_logpoint and info.pydev_message is not None and len(info.pydev_message) > 0:
                                 cmd = main_debugger.cmd_factory.make_io_message(info.pydev_message + os.linesep, '1')
                                 main_debugger.writer.add_command(cmd)
-                                # No need to reset frame.f_trace to keep the same trace function.
-                                return self.trace_dispatch
+
+                        if breakpoint.has_condition and not eval_result:
+                            # No need to reset frame.f_trace to keep the same trace function.
+                            return self.trace_dispatch
 
                     if is_call and frame.f_code.co_name in ('<module>', '<lambda>'):
                         # If we find a call for a module, it means that the module is being imported/executed for the
@@ -1184,14 +1179,12 @@ cdef class TopLevelThreadTracerOnlyUnhandledExceptions:
 
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 cdef class TopLevelThreadTracerNoBackFrame:
-#
     cdef public object _frame_trace_dispatch;
     cdef public tuple _args;
     cdef public object _try_except_info;
     cdef public object _last_exc_arg;
     cdef public set _raise_lines;
     cdef public int _last_raise_line;
-#
     def __init__(self, frame_trace_dispatch, tuple args):
         self._frame_trace_dispatch = frame_trace_dispatch
         self._args = args

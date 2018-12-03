@@ -290,9 +290,8 @@ def clear_cached_thread_id(thread):
             pass
 
 
-# Besides the cache in the thread, we create a cache from the thread ident -> thread id so that
-# if we have a Thread and later a DummyThread for the same ident we can obtain the same id.
-_thread_ident_to_thread_id = {}
+# Don't let threads be collected (so that id(thread) is guaranteed to be unique).
+_thread_id_to_thread_found = {}
 
 
 def _get_or_compute_thread_id_with_lock(thread, is_current_thread):
@@ -302,26 +301,13 @@ def _get_or_compute_thread_id_with_lock(thread, is_current_thread):
         if tid is not None:
             return tid
 
-        try:
-            thread_ident = thread.ident
-            if thread_ident is None:
-                raise AttributeError()
-        except AttributeError:
-            if not is_current_thread:
-                # When getting from another thread (i.e.: not current), the thread.ident *must* be
-                # there (when it's made visible in the threading module the ident is already set).
-                raise AssertionError('Did not expect thread.ident to be None when gotten from another thread.')
+        _thread_id_to_thread_found[id(thread)] = thread
 
-            # If we're too early in the thread bootstrap process,
-            # the thread ident could be still unset in the Thread.
-            thread_ident = thread_get_ident()
-        try:
-            tid = _thread_ident_to_thread_id[thread_ident]
-        except KeyError:
-            pid = get_pid()
-            tid = 'pid_%s_id_%s' % (pid, id(thread))
+        # Note: don't use thread.ident because a new thread may have the
+        # same id from an old thread.
+        pid = get_pid()
+        tid = 'pid_%s_id_%s' % (pid, id(thread))
 
-        _thread_ident_to_thread_id[thread_ident] = tid
         thread.__pydevd_id__ = tid
 
     return tid

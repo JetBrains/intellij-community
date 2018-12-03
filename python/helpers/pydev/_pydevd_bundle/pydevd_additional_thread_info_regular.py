@@ -39,10 +39,10 @@ if not hasattr(sys, '_current_frames'):
 
                 ret[thread.getId()] = frame
             return ret
-        
-    elif IS_IRONPYTHON: 
+
+    elif IS_IRONPYTHON:
         _tid_to_last_frame = {}
-        
+
         # IronPython doesn't have it. Let's use our workaround...
         def _current_frames():
             return _tid_to_last_frame
@@ -121,7 +121,6 @@ class PyDBAdditionalThreadInfo(object):
 from _pydev_imps._pydev_saved_modules import threading
 _set_additional_thread_info_lock = threading.Lock()
 
-_thread_ident_to_additional_info = {}
 
 def set_additional_thread_info(thread):
     try:
@@ -132,13 +131,9 @@ def set_additional_thread_info(thread):
         with _set_additional_thread_info_lock:
             # If it's not there, set it within a lock to avoid any racing
             # conditions.
-            thread_ident = thread.ident
-            if thread_ident is None:
-                sys.stderr.write('thread.ident *must* be set at this point (set_additional_thread_info).')
-                raise AssertionError('thread.ident *must* be set at this point (set_additional_thread_info).')
-            additional_info = _thread_ident_to_additional_info.get(thread_ident)
+            additional_info = getattr(thread, 'additional_info', None)
             if additional_info is None:
-                additional_info = _thread_ident_to_additional_info[thread_ident] = PyDBAdditionalThreadInfo()
+                additional_info = PyDBAdditionalThreadInfo()
             thread.additional_info = additional_info
 
     return additional_info
