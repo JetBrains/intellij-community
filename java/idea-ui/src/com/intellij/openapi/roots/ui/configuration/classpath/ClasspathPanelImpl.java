@@ -15,14 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.CommonBundle;
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.scopes.LibraryScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -49,18 +44,11 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.packageDependencies.DependencyVisitorFactory;
-import com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetHandler;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
@@ -285,7 +273,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     actionGroup.add(navigateAction);
     actionGroup.add(new InlineModuleDependencyAction(this));
     actionGroup.add(new MyFindUsagesAction());
-    actionGroup.add(new AnalyzeDependencyAction());
+    actionGroup.add(new AnalyzeModuleDependencyAction(this));
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL);
@@ -768,68 +756,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       Point location = rect.getLocation();
       location.y += rect.height;
       return new RelativePoint(myEntryTable, location);
-    }
-  }
-  
-  private class AnalyzeDependencyAction extends AnAction {
-    private AnalyzeDependencyAction() {
-      super("Analyze This Dependency");
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      final OrderEntry selectedEntry = getSelectedEntry();
-      GlobalSearchScope targetScope;
-      if (selectedEntry instanceof ModuleOrderEntry) {
-        final Module module = ((ModuleOrderEntry)selectedEntry).getModule();
-        LOG.assertTrue(module != null);
-        targetScope = GlobalSearchScope.moduleScope(module);
-      }
-      else {
-        Library library = ((LibraryOrderEntry)selectedEntry).getLibrary();
-        LOG.assertTrue(library != null);
-        targetScope = new LibraryScope(getProject(), library);
-      }
-      new AnalyzeDependenciesOnSpecifiedTargetHandler(getProject(), new AnalysisScope(myState.getRootModel().getModule()),
-                                                      targetScope) {
-        @Override
-        protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
-          for (DependenciesBuilder builder : builders) {
-            for (Set<PsiFile> files : builder.getDependencies().values()) {
-              if (!files.isEmpty()) {
-                Messages.showInfoMessage(myProject,
-                                         "Dependencies were successfully collected in \"" +
-                                         ToolWindowId.DEPENDENCIES + "\" toolwindow",
-                                         FindBundle.message("find.pointcut.applications.not.found.title"));
-                return true;
-              }
-            }
-          }
-          String message = "No code dependencies were found.";
-          if (DependencyVisitorFactory.VisitorOptions.fromSettings(myProject).skipImports()) {
-            message += " ";
-            message += AnalysisScopeBundle.message("dependencies.in.imports.message");
-          }
-          message += " Would you like to remove the dependency?";
-          if (Messages.showOkCancelDialog(myProject, message, CommonBundle.getWarningTitle(), CommonBundle.message("button.remove"), Messages.CANCEL_BUTTON,
-                                          Messages.getWarningIcon()) == Messages.OK) {
-            removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
-          }
-          return false;
-        }
-
-        @Override
-        protected boolean canStartInBackground() {
-          return false;
-        }
-      }.analyze();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      final OrderEntry entry = getSelectedEntry();
-      e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
-                                   || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
     }
   }
 }
