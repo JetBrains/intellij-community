@@ -815,10 +815,6 @@
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI &amp;Inspector">
           <abbreviation value="uii"/>
         </action>
-        <action id="ShowHeatMap" internal="true" description="Paints tool bar buttons and menus based on statistics" text="Show HeatMap"
-                class="com.intellij.internal.heatmap.actions.ShowHeatMapAction">
-          <abbreviation value="shm"/>
-        </action>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="HidpiInfo" internal="true" class="com.intellij.internal.HidpiInfo" text="Show &amp;HiDPI Info"/>
         <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig" text="&amp;GrayFilter"/>
