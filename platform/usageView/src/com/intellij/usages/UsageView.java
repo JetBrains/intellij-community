@@ -58,12 +58,12 @@ public interface UsageView extends Disposable {
    * @param runnable
    */
   @Deprecated
-  default void setReRunActivity(@NotNull Runnable runnable) {};
+  default void setReRunActivity(@NotNull Runnable runnable) {}
 
   /**
    * @param rerunAction this action is used to provide non-standard search restart. Disabled action makes toolbar button disabled too.
    */
-  default void setRerunAction(@NotNull Action rerunAction) {};
+  default void setRerunAction(@NotNull Action rerunAction) {}
 
   void setAdditionalComponent(@Nullable JComponent component);
 
@@ -106,4 +106,15 @@ public interface UsageView extends Disposable {
    * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
    */
   void removeUsagesBulk(@NotNull Collection<Usage> usages);
+
+  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener){}
+
+  interface ExcludeListener {
+    /**
+     *
+     * @param usages unmodifiable set or nodes that were excluded or included
+     * @param excluded if <code>true</code> usages were excluded otherwise they were included
+     */
+    void fireExcluded(@NotNull Set<? extends Usage> usages, boolean excluded);
+  }
 }

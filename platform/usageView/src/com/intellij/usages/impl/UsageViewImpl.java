@@ -156,7 +156,8 @@ public class UsageViewImpl implements UsageViewEx {
   private Usage myOriginUsage;
   @Nullable private Action myRerunAction;
   private boolean myDisposeSmartPointersOnClose = true;
-  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("usage view update requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -326,10 +327,19 @@ public class UsageViewImpl implements UsageViewEx {
       }
 
       private void setExcludeNodes(@NotNull Set<? extends Node> nodes, boolean excluded) {
+        Set<Usage> affectedUsages = new LinkedHashSet<>();
         for (Node node : nodes) {
+          Object userObject = node.getUserObject();
+          if (userObject instanceof Usage) {
+            affectedUsages.add((Usage)userObject);
+          }
           node.setExcluded(excluded, edtNodeChangedQueue);
         }
         updateImmediatelyNodesUpToRoot(nodes);
+
+        for (ExcludeListener listener : myExcludeListeners) {
+          listener.fireExcluded(affectedUsages, excluded);
+        }
       }
 
       @Override
@@ -1251,6 +1261,12 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public int getUsagesCount() {
     return myUsageNodes.size();
+  }
+
+  @Override
+  public void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener) {
+    myExcludeListeners.add(listener);
+    Disposer.register(disposable, () -> myExcludeListeners.remove(listener));
   }
 
   void setContent(@NotNull Content content) {
