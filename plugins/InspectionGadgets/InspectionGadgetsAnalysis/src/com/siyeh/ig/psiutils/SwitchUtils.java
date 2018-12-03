@@ -271,6 +271,35 @@ public class SwitchUtils {
     return visitor.isUsed();
   }
 
+  /**
+   * @param element a switch label element
+   * @return list of enum constants which are targets of the specified label; empty list if the supplied element is not a switch label,
+   * or it is not an enum switch.
+   */
+  @NotNull
+  public static List<PsiEnumConstant> findEnumConstants(PsiElement element) {
+    if (!(element instanceof PsiSwitchLabelStatementBase)) {
+      return Collections.emptyList();
+    }
+    final PsiSwitchLabelStatementBase switchLabelStatement = (PsiSwitchLabelStatementBase)element;
+    final PsiExpressionList list = switchLabelStatement.getCaseValues();
+    if (list == null) {
+      return Collections.emptyList();
+    }
+    List<PsiEnumConstant> constants = new ArrayList<>();
+    for (PsiExpression value : list.getExpressions()) {
+      if (value instanceof PsiReferenceExpression) {
+        final PsiElement target = ((PsiReferenceExpression)value).resolve();
+        if (target instanceof PsiEnumConstant) {
+          constants.add((PsiEnumConstant)target);
+          continue;
+        }
+      }
+      return Collections.emptyList();
+    }
+    return constants;
+  }
+
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final String m_labelName;

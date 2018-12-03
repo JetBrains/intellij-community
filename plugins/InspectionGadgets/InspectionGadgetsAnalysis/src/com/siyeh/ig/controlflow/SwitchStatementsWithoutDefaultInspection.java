@@ -17,16 +17,19 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.Set;
 
 public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
 
@@ -72,19 +75,27 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
       if (count <= 0) {
         return;
       }
-      if (m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement, count)) {
+      if (m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement)) {
         return;
       }
       registerStatementError(statement);
     }
 
-    private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement, int branchCount) {
+    private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement) {
       final PsiExpression expression = statement.getExpression();
       if (expression == null) {
         return true; // don't warn on incomplete code
       }
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-      return aClass != null && aClass.isEnum() && ControlFlowUtils.hasChildrenOfTypeCount(aClass, branchCount, PsiEnumConstant.class);
+      if (aClass == null || !aClass.isEnum()) return false;
+      List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
+      Set<PsiEnumConstant> constants = StreamEx.of(labels).flatCollection(SwitchUtils::findEnumConstants).toSet();
+      for (PsiField field : aClass.getFields()) {
+        if (field instanceof PsiEnumConstant && !constants.remove(field)) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 }
