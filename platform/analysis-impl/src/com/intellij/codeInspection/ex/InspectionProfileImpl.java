@@ -861,4 +861,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       enableTool(entry.getShortName(), project);
     }
   }
+
+  public void disableAllTools(Project project) {
+    for (InspectionToolWrapper entry : getInspectionTools(null)) {
+      setToolEnabled(entry.getShortName(), false, project);
+    }
+  }
 }
