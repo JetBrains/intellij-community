@@ -74,7 +74,7 @@ public class VcsShelveChangesSaver {
       myShelvedLists = null;  // no restore here since during shelving changes are not rolled back...
       throw exceptions.get(0);
     } else {
-     doRollBack(rootsToSave);
+     doRollback(rootsToSave);
     }
     myProgressIndicator.setText(oldProgressTitle);
   }
@@ -93,7 +93,7 @@ public class VcsShelveChangesSaver {
     }
   }
 
-  protected void doRollBack(@NotNull Collection<VirtualFile> roots4Rollback) {
+  protected void doRollback(@NotNull Collection<VirtualFile> roots4Rollback) {
     Set<VirtualFile> rootsSet = new HashSet<>(roots4Rollback);
     List<Change> changes4Rollback = ContainerUtil
       .filter(myChangeManager.getAllChanges(), change -> rootsSet.contains(myVcsManager.getVcsRootFor(change.getVirtualFile())));
