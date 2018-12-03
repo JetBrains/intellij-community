@@ -605,19 +605,19 @@ class PyDBFrame:
                     # ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
                     # lets do the conditional stuff here
                     if stop or exist_result:
+                        eval_result = False
                         if breakpoint.has_condition:
                             eval_result = handle_breakpoint_condition(main_debugger, info, breakpoint, new_frame)
-                            if not eval_result:
-                                # No need to reset frame.f_trace to keep the same trace function.
-                                return self.trace_dispatch
 
                         if breakpoint.expression is not None:
                             handle_breakpoint_expression(breakpoint, info, new_frame)
                             if breakpoint.is_logpoint and info.pydev_message is not None and len(info.pydev_message) > 0:
                                 cmd = main_debugger.cmd_factory.make_io_message(info.pydev_message + os.linesep, '1')
                                 main_debugger.writer.add_command(cmd)
-                                # No need to reset frame.f_trace to keep the same trace function.
-                                return self.trace_dispatch
+
+                        if breakpoint.has_condition and not eval_result:
+                            # No need to reset frame.f_trace to keep the same trace function.
+                            return self.trace_dispatch
 
                     if is_call and frame.f_code.co_name in ('<module>', '<lambda>'):
                         # If we find a call for a module, it means that the module is being imported/executed for the
