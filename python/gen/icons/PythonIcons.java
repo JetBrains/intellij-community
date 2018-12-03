@@ -62,7 +62,7 @@ public final class PythonIcons {
     public static final Icon PythonTests = load("/icons/com/jetbrains/python/pythonTests.svg"); // 16x16
     public static final Icon RemoteInterpreter = load("/icons/com/jetbrains/python/RemoteInterpreter.svg"); // 16x16
     public static final Icon Ssh = load("/icons/com/jetbrains/python/ssh.svg"); // 16x16
-    public static final Icon TemplateRoot = load("/icons/com/jetbrains/python/templateRoot.png"); // 16x16
+    public static final Icon TemplateRoot = load("/icons/com/jetbrains/python/templateRoot.svg"); // 16x16
     public static final Icon Vagrant = load("/icons/com/jetbrains/python/vagrant.svg"); // 16x16
     public static final Icon Virtualenv = load("/icons/com/jetbrains/python/virtualenv.svg"); // 16x16
 
