@@ -16,6 +16,7 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.util.Comparing;
@@ -83,17 +84,18 @@ public abstract class BaseRepository extends TaskRepository {
 
   @Tag("password")
   public String getEncodedPassword() {
-    if (StringUtil.isNotEmpty(getPassword())) {
-      CredentialAttributes attributes = getAttributes();
-      PasswordSafe.getInstance().set(attributes, new Credentials(getUsername(), getPassword()));
-    }
     return null;
   }
 
   @SuppressWarnings("unused")
   public void setEncodedPassword(String password) {
     try {
-      setPassword(PasswordUtil.decodePassword(password));
+      String decoded = PasswordUtil.decodePassword(password);
+      if (StringUtil.isNotEmpty(decoded)) {
+        CredentialAttributes attributes = getAttributes();
+        PasswordSafe.getInstance().set(attributes, new Credentials(getUsername(), getPassword()));
+      }
+      setPassword(decoded);
     }
     catch (NumberFormatException e) {
       // do nothing
@@ -113,7 +115,8 @@ public abstract class BaseRepository extends TaskRepository {
 
   @NotNull
   protected CredentialAttributes getAttributes() {
-    return new CredentialAttributes(getRepositoryType().getName() + " " + getUrl(), getUsername());
+    String serviceName = CredentialAttributesKt.generateServiceName("Tasks", getRepositoryType().getName() + " " + getUrl());
+    return new CredentialAttributes(serviceName, getUsername());
   }
 
   @NotNull
