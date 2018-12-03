@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -297,10 +298,12 @@ public class GitVFSListener extends VcsVFSListener {
     return false;
   }
 
+  @NotNull
   @Override
-  protected Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
-    // For git asking about vcs delete does not make much sense. The result is practically identical.
-    return deletedFiles;
+  protected VcsDeleteType needConfirmDeletion(@NotNull final VirtualFile file) {
+    return ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles().contains(file)
+           ? VcsDeleteType.IGNORE
+           : VcsDeleteType.CONFIRM;
   }
 
   private void performBackgroundOperation(@NotNull Collection<FilePath> files,

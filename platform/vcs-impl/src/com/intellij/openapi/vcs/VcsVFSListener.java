@@ -214,7 +214,7 @@ public abstract class VcsVFSListener implements Disposable {
     filesToDelete.removeIf(myVcsFileListenerContextHelper::isDeletionIgnored);
     deletedFiles.removeIf(myVcsFileListenerContextHelper::isDeletionIgnored);
 
-    if (deletedFiles.isEmpty() &&filesToDelete.isEmpty()) return;
+    if (deletedFiles.isEmpty() && filesToDelete.isEmpty()) return;
 
     if (myRemoveOption.getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       if (myRemoveOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY || deletedFiles.isEmpty()) {
