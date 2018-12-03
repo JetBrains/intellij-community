@@ -59,11 +59,20 @@ public class SwitchStatementDensityInspection extends BaseInspection {
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
+      checkSwitchBlock(statement);
+    }
+
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      checkSwitchBlock(expression);
+    }
+
+    private void checkSwitchBlock(PsiSwitchBlock block) {
+      final PsiCodeBlock body = block.getBody();
       if (body == null) {
         return;
       }
-      final int branchCount = Math.abs(SwitchUtils.calculateBranchCount(statement));
+      final int branchCount = Math.abs(SwitchUtils.calculateBranchCount(block));
       if (branchCount == 0) {
         return;
       }
@@ -72,7 +81,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
       if (intDensity > m_limit) {
         return;
       }
-      registerStatementError(statement, Integer.valueOf(intDensity));
+      registerError(block.getFirstChild(), Integer.valueOf(intDensity));
     }
 
     private double calculateDensity(@NotNull PsiCodeBlock body, int branchCount) {
@@ -88,7 +97,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
     @Override
     public void visitStatement(@NotNull PsiStatement statement) {
       super.visitStatement(statement);
-      if (statement instanceof PsiSwitchLabelStatement || statement instanceof PsiBreakStatement) {
+      if (statement instanceof PsiSwitchLabelStatementBase || statement instanceof PsiBreakStatement) {
         return;
       }
       statementCount++;
