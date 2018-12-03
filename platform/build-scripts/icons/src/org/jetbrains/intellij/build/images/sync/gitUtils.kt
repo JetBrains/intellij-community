@@ -333,6 +333,8 @@ internal fun gitStatus(repo: File) =
     .map(String::trim)
     .toList()
 
+internal fun gitStage(repo: File) = execute(repo, GIT, "diff", "--cached", "--name-status")
+
 internal enum class ChangeType { MODIFIED, ADDED, DELETED }
 
 internal fun changesFromCommit(repo: File, hash: String) =

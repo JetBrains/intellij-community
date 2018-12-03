@@ -114,8 +114,11 @@ private fun verifyDevIcons(context: Context, repos: Collection<File>) {
   repos.forEach { repo ->
     val status = gitStatus(repo)
     if (status.isNotEmpty()) {
-      log("Staging ${status.joinToString(System.lineSeparator())}")
+      log("Staging ${status.joinToString("," + System.lineSeparator()) {
+        repo.resolve(it).toString()
+      }}")
       stageFiles(status, repo)
+      log("Staged: " + gitStage(repo))
     }
   }
 }
