@@ -841,6 +841,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     PopupPositionManager.positionPopupInBestPosition(myHint, myManager.getEditor(), dataContext,
                                                      PopupPositionManager.Position.RIGHT, PopupPositionManager.Position.LEFT);
 
+    Window window = myHint.getPopupWindow();
+    if (window != null) window.setFocusableWindowState(true);
+
     if (myHint.getDimensionServiceKey() == null) {
       registerSizeTracker();
     }
