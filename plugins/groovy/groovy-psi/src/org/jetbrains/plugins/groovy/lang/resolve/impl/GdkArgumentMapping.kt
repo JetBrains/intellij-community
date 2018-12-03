@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -28,5 +29,5 @@ class GdkArgumentMapping(
       return (sequenceOf(Pair(receiverParameter.type, receiverArgument)) + original.expectedTypes).asIterable()
     }
 
-  override val applicability: Applicability get() = original.applicability
+  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability = original.applicability(substitutor, erase)
 }

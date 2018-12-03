@@ -26,14 +26,15 @@ class MethodCandidateImpl(
           // call foo(X[]) as is, i.e. with argument of type X[] (or subtype)
           val parameters = method.parameterList.parameters
           if (arguments.size != parameters.size) return false
-          val lastArgApplicability = argumentApplicability(arguments.last(), parameters.last(), erasureSubstitutor, context)
+          val parameterType = parameterType(parameters.last().type, erasureSubstitutor, true)
+          val lastArgApplicability = argumentApplicability(parameterType, arguments.last(), context)
           return lastArgApplicability == applicable
         })
         if (invokedAsIs) {
-          PositionalArgumentMapping(method, erasureSubstitutor, arguments, context)
+          PositionalArgumentMapping(method, arguments, context)
         }
         else {
-          VarargArgumentMapping(method, erasureSubstitutor, arguments, context)
+          VarargArgumentMapping(method, arguments, context)
         }
       }
       arguments.isEmpty() -> {
@@ -43,10 +44,10 @@ class MethodCandidateImpl(
           NullArgumentMapping(parameter)
         }
         else {
-          PositionalArgumentMapping(method, erasureSubstitutor, arguments, context)
+          PositionalArgumentMapping(method, arguments, context)
         }
       }
-      else -> PositionalArgumentMapping(method, erasureSubstitutor, arguments, context)
+      else -> PositionalArgumentMapping(method, arguments, context)
     }
   }
 }

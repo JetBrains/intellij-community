@@ -12,34 +12,25 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 
-fun mapApplicability(map: Map<Argument, PsiParameter>, erasureSubstitutor: PsiSubstitutor, context: PsiElement): Applicability {
+fun mapApplicability(map: Map<Argument, PsiParameter>, substitutor: PsiSubstitutor, erase: Boolean, context: PsiElement): Applicability {
   for ((argument, parameter) in map) {
-    val argumentAssignability = argumentApplicability(argument, parameter, erasureSubstitutor, context)
-    if (argumentAssignability != Applicability.applicable) {
-      return argumentAssignability
+    val parameterType = parameterType(parameter.type, substitutor, erase)
+    val applicability = argumentApplicability(parameterType, argument, context)
+    if (applicability != Applicability.applicable) {
+      return applicability
     }
   }
   return Applicability.applicable
 }
 
-fun argumentApplicability(argument: Argument,
-                          parameter: PsiParameter,
-                          erasureSubstitutor: PsiSubstitutor,
-                          context: PsiElement): Applicability {
-  return argumentApplicability(argument, context) {
-    TypeConversionUtil.erasure(parameter.type, erasureSubstitutor)
-  }
-}
-
-fun argumentApplicability(argument: Argument, context: PsiElement, parameterTypeComputable: () -> PsiType?): Applicability {
-  val argumentType = argument.runtimeType
-  if (argumentType == null) {
-    // argument passed but we cannot infer its type
+fun argumentApplicability(parameterType: PsiType?, argument: Argument, context: PsiElement): Applicability {
+  if (parameterType == null) {
     return Applicability.canBeApplicable
   }
 
-  val parameterType = parameterTypeComputable()
-  if (parameterType == null) {
+  val argumentType = argument.runtimeType
+  if (argumentType == null) {
+    // argument passed but we cannot infer its type
     return Applicability.canBeApplicable
   }
 
@@ -49,4 +40,13 @@ fun argumentApplicability(argument: Argument, context: PsiElement, parameterType
   }
 
   return Applicability.applicable
+}
+
+fun parameterType(type: PsiType, substitutor: PsiSubstitutor, erase: Boolean): PsiType? {
+  return if (erase) {
+    TypeConversionUtil.erasure(type, substitutor)
+  }
+  else {
+    substitutor.substitute(type)
+  }
 }

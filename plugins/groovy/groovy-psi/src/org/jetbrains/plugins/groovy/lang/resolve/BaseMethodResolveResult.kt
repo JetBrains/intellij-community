@@ -31,7 +31,7 @@ open class BaseMethodResolveResult(
 
   private val myApplicability by lazyPub {
     arguments?.let { checkProviders(arguments.map(::ErasedArgument), method) }
-    ?: myCandidate.argumentMapping?.applicability
+    ?: myCandidate.argumentMapping?.applicability(contextSubstitutor, true)
     ?: Applicability.canBeApplicable
   }
 

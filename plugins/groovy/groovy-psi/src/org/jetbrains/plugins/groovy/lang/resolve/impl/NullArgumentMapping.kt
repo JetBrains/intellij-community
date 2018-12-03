@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 
@@ -17,7 +18,7 @@ class NullArgumentMapping(parameter: PsiParameter) : ArgumentMapping {
 
   // call `def foo(String a) {}` with `foo()` is actually `foo(null)`
   // Also see https://issues.apache.org/jira/browse/GROOVY-8248
-  override val applicability: Applicability get() = Applicability.applicable
+  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability = Applicability.applicable
 
   private companion object {
     private val singleNullArgument = JustTypeArgument(PsiType.NULL)

@@ -10,9 +10,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 
 class PositionalArgumentMapping(
   method: PsiMethod,
-  erasureSubstitutor: PsiSubstitutor,
   override val arguments: Arguments,
-  context: PsiElement
+  private val context: PsiElement
 ) : ArgumentMapping {
 
   private val parameterToArgument: Map<PsiParameter, Argument?>? by lazy {
@@ -35,10 +34,9 @@ class PositionalArgumentMapping(
               ?.asIterable()
             ?: emptyList()
 
-  override val applicability: Applicability by lazy {
-    argumentToParameter?.let {
-      mapApplicability(it, erasureSubstitutor, context)
-    } ?: Applicability.inapplicable
+  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability {
+    val map = argumentToParameter ?: return Applicability.inapplicable
+    return mapApplicability(map, substitutor, erase, context)
   }
 }
 

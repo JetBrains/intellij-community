@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
-import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.containers.ComparatorUtil.min
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
@@ -15,19 +14,13 @@ private typealias MapWithVarargs = Pair<Map<Argument, PsiParameter>, Set<Argumen
 
 class VarargArgumentMapping(
   method: PsiMethod,
-  erasureSubstitutor: PsiSubstitutor,
   override val arguments: Arguments,
-  context: PsiElement
+  private val context: PsiElement
 ) : ArgumentMapping {
-
 
   private val varargParameter: PsiParameter = method.parameterList.parameters.last()
 
   private val varargType: PsiType = (varargParameter.type as PsiArrayType).componentType
-
-  private val varargTypeErased: PsiType by lazyPub {
-    TypeConversionUtil.erasure(varargType, erasureSubstitutor)
-  }
 
   private val mapping: MapWithVarargs? by lazyPub(fun(): MapWithVarargs? {
     val parameters = method.parameterList.parameters
@@ -70,27 +63,25 @@ class VarargArgumentMapping(
       return (positionalSequence + varargsSequence).asIterable()
     }
 
-  override val applicability: Applicability by lazyPub(fun(): Applicability {
+  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability {
     val (positional, varargs) = mapping ?: return Applicability.inapplicable
 
-    val mapApplicability = mapApplicability(positional, erasureSubstitutor, context)
+    val mapApplicability = mapApplicability(positional, substitutor, erase, context)
     if (mapApplicability === Applicability.inapplicable) {
       return Applicability.inapplicable
     }
 
-    val varargApplicability = varargApplicability(varargs, context)
+    val varargApplicability = varargApplicability(parameterType(varargType, substitutor, erase), varargs, context)
     if (varargApplicability === Applicability.inapplicable) {
       return Applicability.inapplicable
     }
 
     return min(mapApplicability, varargApplicability)
-  })
+  }
 
-  private fun varargApplicability(varargs: Collection<Argument>, context: PsiElement): Applicability {
+  private fun varargApplicability(parameterType: PsiType?, varargs: Collection<Argument>, context: PsiElement): Applicability {
     for (vararg in varargs) {
-      val argumentAssignability = argumentApplicability(vararg, context) {
-        varargTypeErased
-      }
+      val argumentAssignability = argumentApplicability(parameterType, vararg, context)
       if (argumentAssignability != Applicability.applicable) {
         return argumentAssignability
       }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.api
 
 import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 
 interface ArgumentMapping {
@@ -14,5 +15,5 @@ interface ArgumentMapping {
 
   val expectedTypes: Iterable<Pair<PsiType, Argument>>
 
-  val applicability: Applicability
+  fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability
 }
