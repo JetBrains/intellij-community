@@ -8,7 +8,7 @@ class SwitchExpressions {
       default -> "whatever";
     });
 
-    System.out.println(<error descr="'switch' expression does not have any case clauses">switch (new Random().nextInt()) { }</error>);
+    System.out.println(switch (<error descr="'switch' expression does not have any case clauses">new Random().nextInt()</error>) { });
 
     System.out.println(switch (new Random().nextInt()) {
       case 0 -> throw new IllegalStateException("no args");
