@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.List;
 
@@ -172,41 +173,12 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
   @Nullable
   private static String createTestFilter(@Nullable Location location, @NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    return createTestFilter(location,
-                            TestClassGradleConfigurationProducer.getRuntimeQualifiedName(aClass),
-                            psiMethod.getName(),
-                            isParameterized(aClass));
+    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(location, aClass, psiMethod, true);
+    return filter.isEmpty() ? null : filter;
   }
 
-  @Nullable
+  @NotNull
   public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
-    return createTestFilter(null, aClass, method, false);
-  }
-
-  @Nullable
-  private static String createTestFilter(@Nullable Location location,
-                                         @Nullable String aClass,
-                                         @Nullable String method,
-                                         boolean isParameterized) {
-    if (aClass == null) return null;
-    String testFilterPattern = aClass + (method == null ? "" : '.' + method);
-    if (method != null) {
-      if (location instanceof PsiMemberParameterizedLocation) {
-        String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-        if (StringUtil.isNotEmpty(paramSetName)) {
-          paramSetName = StringUtil.trimStart(StringUtil.trimEnd(paramSetName, ']'), "[");
-          testFilterPattern += "[*" + paramSetName + "*]";
-        }
-      }
-      else if (isParameterized) {
-        testFilterPattern += "[*]";
-      }
-    }
-    return String.format("--tests \"%s\" ", testFilterPattern.replace('\"', '*'));
-  }
-
-  private static boolean isParameterized(PsiClass clazz) {
-    PsiAnnotation annotation = JUnitUtil.getRunWithAnnotation(clazz);
-    return annotation != null && JUnitUtil.isParameterized(annotation);
+    return GradleExecutionSettingsUtil.createTestFilterFromMethod(aClass, method, /*hasSuffix=*/true);
   }
 }
