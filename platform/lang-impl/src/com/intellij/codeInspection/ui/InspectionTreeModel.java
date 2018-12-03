@@ -191,11 +191,8 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
       node = supplier.get();
       InspectionTreeNode finalNode = node;
       int idx = ReadAction.compute(() -> Arrays.binarySearch(children.myChildren, finalNode, InspectionResultsViewComparator.INSTANCE));
-      if (idx >= 0) {
-        InspectionTreeNode finalN = node;
-        LOG.error(ReadAction.compute(() -> "idx = " + idx + " node = " + finalN + " parent = " + parent + " children " + Arrays.toString(children.myChildren)));
-      }
-      int insertionPoint = -idx - 1;
+      // it's allowed to have idx >= 0 for example for problem descriptor nodes.
+      int insertionPoint = idx >= 0 ? idx : -idx - 1;
       children.myChildren = ArrayUtil.insert(children.myChildren, insertionPoint, node);
       myParents.put(node, parent);
       children.myUserObject2Node.put(userObject, node);
