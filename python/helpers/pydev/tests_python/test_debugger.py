@@ -859,8 +859,6 @@ def test_case_20(case_setup):
         writer.finished_ok = True
 
 
-
-
 @pytest.mark.skipif(not TEST_FLASK, reason='No flask available')
 def test_case_flask(case_setup_flask):
     with case_setup_flask.test_file(EXPECTED_RETURNCODE='any') as writer:
@@ -2295,6 +2293,23 @@ def test_case_single_notification_on_step(case_setup):
 
         writer.write_run_thread(hit.thread_id)
 
+        writer.finished_ok = True
+
+
+def test_return_value(case_setup):
+    with case_setup.test_file('_debugger_case_return_value.py') as writer:
+        writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), '')
+        writer.write_show_return_vars()
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit()
+        writer.write_step_over(hit.thread_id)
+
+        hit = writer.wait_for_breakpoint_hit(REASON_STEP_OVER)
+        writer.write_get_frame(hit.thread_id, hit.frame_id)
+
+        writer.wait_for_vars('<var name="method1" type="int" qualifier="%s" value="int: 1" isRetVal="True"' % (builtin_qualifier,))
+        writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
 
 
