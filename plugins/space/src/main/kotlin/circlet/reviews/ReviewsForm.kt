@@ -49,7 +49,7 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
         project.clientOrNull?.let { client ->
             val reviews = client.codeReview.listReviews(
                 BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null,
-                null, null, null, null, ReviewSorting.CreatedAtDesc
+                null, null, null, null, ReviewSorting.CreatedAtDesc, null
             ).data.map(CodeReviewWithCount::toReview)
 
             reload(reviews)
