@@ -59,9 +59,8 @@ public abstract class NotNullVerifyingInstrumenterTest {
 
     @Override
     public Statement apply(Statement base, Description description) {
-      Class<?> testClass = description.getTestClass();
-      TestDirectory annotation = testClass.getAnnotation(TestDirectory.class);
-      if (annotation == null) throw new IllegalArgumentException(testClass + " misses @TestDirectory annotation");
+      TestDirectory annotation = description.getAnnotation(TestDirectory.class);
+      if (annotation == null) throw new IllegalArgumentException("Class " + description.getTestClass() + " misses @TestDirectory annotation");
       File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value() + "/NotNull.java");
       if (!source.isFile()) throw new IllegalArgumentException("Cannot find annotation file at " + source);
       classes = IoTestUtil.createTestDir("test-notNullInstrumenter-" + annotation.value());
