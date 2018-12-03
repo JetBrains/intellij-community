@@ -859,6 +859,8 @@ def test_case_20(case_setup):
         writer.finished_ok = True
 
 
+
+
 @pytest.mark.skipif(not TEST_FLASK, reason='No flask available')
 def test_case_flask(case_setup_flask):
     with case_setup_flask.test_file(EXPECTED_RETURNCODE='any') as writer:
@@ -871,23 +873,15 @@ def test_case_flask(case_setup_flask):
         time.sleep(2)  # Give flask some time to get to startup before requesting the page
         t.start()
 
-        dct = writer.wait_for_json_message(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION)
-        assert dct['stop_reason'] == REASON_STOP_ON_BREAKPOINT
-        writer.write_get_thread_stack(dct['thread_id'])
-        msg = writer.wait_for_get_thread_stack_message()
-        assert msg.thread.frame[0]['line'] == '5'
-        writer.write_get_frame(dct['thread_id'], msg.thread.frame[0]['id'])
+        hit = writer.wait_for_single_notification_as_hit(line=5)
+        writer.write_get_frame(hit.thread_id, hit.frame_id)
         writer.wait_for_vars(['<var name="content" type="str"'])
-        writer.write_run_thread(dct['thread_id'])
+        writer.write_run_thread(hit.thread_id)
 
-        dct = writer.wait_for_json_message(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION)
-        assert dct['stop_reason'] == REASON_STOP_ON_BREAKPOINT
-        writer.write_get_thread_stack(dct['thread_id'])
-        msg = writer.wait_for_get_thread_stack_message()
-        assert msg.thread.frame[0]['line'] == '8'
-        writer.write_get_frame(dct['thread_id'], msg.thread.frame[0]['id'])
+        hit = writer.wait_for_single_notification_as_hit(line=8)
+        writer.write_get_frame(hit.thread_id, hit.frame_id)
         writer.wait_for_vars(['<var name="content" type="str"'])
-        writer.write_run_thread(dct['thread_id'])
+        writer.write_run_thread(hit.thread_id)
 
         for _ in xrange(10):
             if hasattr(t, 'contents'):
@@ -2280,6 +2274,29 @@ def test_trace_dispatch_correct(case_setup):
         writer.finished_ok = True
 
 
+def test_case_single_notification_on_step(case_setup):
+    from tests_python.debugger_unittest import REASON_STEP_INTO
+    with case_setup.test_file('_debugger_case_import_main.py') as writer:
+        writer.write_multi_threads_single_notification(True)
+        writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), '')
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_single_notification_as_hit()
+
+        writer.write_step_in(hit.thread_id)
+        hit = writer.wait_for_single_notification_as_hit(reason=REASON_STEP_INTO)
+
+        writer.write_step_in(hit.thread_id)
+        hit = writer.wait_for_single_notification_as_hit(reason=REASON_STEP_INTO)
+
+        writer.write_step_in(hit.thread_id)
+        hit = writer.wait_for_single_notification_as_hit(reason=REASON_STEP_INTO)
+
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
+
+
 @pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
 @pytest.mark.parametrize('check_single_notification', [True, False])
 def test_run_pause_all_threads_single_notification(case_setup, check_single_notification):
@@ -2319,10 +2336,10 @@ def test_run_pause_all_threads_single_notification(case_setup, check_single_noti
         writer.write_step_over(thread_id1)
 
         if check_single_notification:
-            dct = writer.wait_for_json_message(CMD_THREAD_RESUME_SINGLE_NOTIFICATION)
+            dct = writer.wait_for_json_message(CMD_THREAD_RESUME_SINGLE_NOTIFICATION)  # Note: prefer wait_for_single_notification_as_hit
             assert dct['thread_id'] == thread_id1
 
-            dct = writer.wait_for_json_message(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION)
+            dct = writer.wait_for_json_message(CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION)  # Note: prefer wait_for_single_notification_as_hit
             assert dct['thread_id'] == thread_id1
             assert dct['stop_reason'] == REASON_STEP_OVER
 
