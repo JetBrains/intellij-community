@@ -32,8 +32,10 @@ class SingleThreadSearcher implements SESearcher {
   }
 
   @Override
-  public ProgressIndicator search(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, String pattern, boolean useNonProjectItems,
-                                  Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
+  public ProgressIndicator search(@NotNull Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+                                  @NotNull String pattern,
+                                  boolean useNonProjectItems,
+                                  @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
     ProgressIndicator indicator = new ProgressIndicatorBase();
     Runnable task = new SearchTask(contributorsAndLimits, pattern, useNonProjectItems, filterSupplier, indicator, myNotificationExecutor,
                                    myNotificationListener, myEqualityProvider);
@@ -43,9 +45,12 @@ class SingleThreadSearcher implements SESearcher {
   }
 
   @Override
-  public ProgressIndicator findMoreItems(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, String pattern,
-                                         boolean useNonProjectItems, SearchEverywhereContributor<?> contributorToExpand, int newLimit,
-                                         Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
+  public ProgressIndicator findMoreItems(@NotNull Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+                                         @NotNull String pattern,
+                                         boolean useNonProjectItems,
+                                         @NotNull SearchEverywhereContributor<?> contributorToExpand,
+                                         int newLimit,
+                                         @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
     ProgressIndicator indicator = new ProgressIndicatorBase();
     Runnable task = createShowMoreTask(contributorToExpand, newLimit, pattern, useNonProjectItems, alreadyFound, filterSupplier, indicator);
     ApplicationManager.getApplication().executeOnPooledThread(ConcurrencyUtil.underThreadNameRunnable("SE-SingleThread-SearchTask", task));
