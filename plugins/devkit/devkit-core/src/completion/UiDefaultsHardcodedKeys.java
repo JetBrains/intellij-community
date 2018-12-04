@@ -1428,9 +1428,6 @@ public final class UiDefaultsHardcodedKeys {
     "WelcomeScreen.headerBackground",
     "WelcomeScreen.headerForeground",
     "WelcomeScreen.separatorColor",
-    "tooltips.actions.keymap.text.color",
-    "tooltips.actions.settings.icon.background.color",
-    "tooltips.description.title.text.color"
   );
 
   public static final Set<String> ALL_KEYS = ContainerUtil.unmodifiableOrEmptySet(ContainerUtil.union(UI_DEFAULTS_KEYS, NAMED_COLORS));

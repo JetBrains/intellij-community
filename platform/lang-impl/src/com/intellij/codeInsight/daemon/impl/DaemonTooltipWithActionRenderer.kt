@@ -270,15 +270,6 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
       override fun paintComponent(g: Graphics?) {
-        val state = popState
-        if (state == ActionButtonComponent.POPPED && UIUtil.isUnderDarcula()) {
-          val look = buttonLook
-          look.paintBackground(g!!, this, getSettingsIconHoverBackgroundColor())
-          look.paintIcon(g, this, icon)
-          look.paintBorder(g, this)
-          return
-        }
-
         paintButtonLook(g)
       }
     }
