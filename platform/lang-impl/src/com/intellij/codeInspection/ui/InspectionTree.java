@@ -157,10 +157,10 @@ public class InspectionTree extends Tree {
 
   @Nullable
   public InspectionToolWrapper getSelectedToolWrapper(boolean allowDummy) {
+    InspectionProfileImpl profile = myView.getCurrentProfile();
+    String singleToolName = profile.getSingleTool();
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) {
-      InspectionProfileImpl profile = myView.getCurrentProfile();
-      String singleToolName = profile.getSingleTool();
       if (singleToolName != null) {
         InspectionToolWrapper tool = profile.getInspectionTool(singleToolName, myView.getProject());
         LOG.assertTrue(tool != null);
@@ -194,6 +194,13 @@ public class InspectionTree extends Tree {
         break;
       }
     }
+
+    if (resultWrapper == null && singleToolName != null) {
+      InspectionToolWrapper tool = profile.getInspectionTool(singleToolName, myView.getProject());
+      LOG.assertTrue(tool != null);
+      return tool;
+    }
+
     return resultWrapper;
   }
 
