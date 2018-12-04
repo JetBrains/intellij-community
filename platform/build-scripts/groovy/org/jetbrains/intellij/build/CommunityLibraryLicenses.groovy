@@ -192,7 +192,7 @@ class CommunityLibraryLicenses {
                        url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
     new LibraryLicense(name: "HttpComponents HttpClient Fluent API", libraryName: "fluent-hc", version: "4.5.2",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
-    new LibraryLicense(name: "ImageIO", libraryName: "imageio-tiff", version: "3.2.1", license: "BSD",
+    new LibraryLicense(name: "ImageIO", libraryName: "imageio-tiff", version: "3.4.1", license: "BSD",
                        url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
     new LibraryLicense(name: "imgscalr", libraryName: "imgscalr", version: "4.2", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr"),
