@@ -101,9 +101,9 @@ import java.util.Map;
  */
 
 public class HelpTooltip {
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("HelpTooltip.backgroundColor", 0xf7f7f7);
-  private static final Color FONT_COLOR = JBColor.namedColor("HelpTooltip.textColor", 0x1a1a1a);
-  private static final Color SHORTCUT_COLOR = JBColor.namedColor("HelpTooltip.shortcutTextColor", 0x787878);
+  private static final Color BACKGROUND_COLOR = JBColor.namedColor("HelpTooltip.background", 0xf7f7f7);
+  private static final Color FONT_COLOR = JBColor.namedColor("HelpTooltip.foreground", 0x1a1a1a);
+  private static final Color SHORTCUT_COLOR = JBColor.namedColor("HelpTooltip.shortcutForeground", 0x787878);
   private static final Color BORDER_COLOR = JBColor.namedColor("HelpTooltip.borderColor", 0xadadad);
 
   private static final String DOTS = "...";

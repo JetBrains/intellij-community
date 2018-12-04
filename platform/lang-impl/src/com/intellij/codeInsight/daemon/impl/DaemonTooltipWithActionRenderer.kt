@@ -358,7 +358,7 @@ fun createActionLabel(text: String, action: Runnable, background: Color): Hyperl
 }
 
 private fun getKeymapColor(): Color {
-  return JBColor.namedColor("ToolTip.Actions.grayForeground", JBColor(0x99a4ad, 0x919191))
+  return JBColor.namedColor("ToolTip.Actions.infoForeground", JBColor(0x99a4ad, 0x919191))
 }
 
 private fun getSettingsIconHoverBackgroundColor(): Color {

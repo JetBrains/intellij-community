@@ -1549,7 +1549,7 @@ public class JBUI {
     public static class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
-        return JBColor.namedColor("Separator.foreground", new JBColor(0xcdcdcd, 0x515151));
+        return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
       }
 
       @NotNull
@@ -1726,7 +1726,7 @@ public class JBUI {
       }
 
       public static Color separatorTextColor() {
-        return JBColor.namedColor("Popup.Separator.foreground", Color.gray);
+        return JBColor.namedColor("Popup.separatorForeground", Color.gray);
       }
     }
 
@@ -1774,11 +1774,11 @@ public class JBUI {
       }
 
       public static Color selectedTabColor() {
-        return JBColor.namedColor("SearchEverywhere.Tab.active.background", 0xdedede);
+        return JBColor.namedColor("SearchEverywhere.Tab.selectedBackground", 0xdedede);
       }
 
       public static Color selectedTabTextColor() {
-        return JBColor.namedColor("SearchEverywhere.Tab.active.foreground", 0x000000);
+        return JBColor.namedColor("SearchEverywhere.Tab.selectedForeground", 0x000000);
       }
 
       public static Color searchFieldBackground() {
@@ -1802,11 +1802,11 @@ public class JBUI {
       }
 
       public static Color listTitleLabelForeground() {
-        return JBColor.namedColor("SearchEverywhere.List.Separator.foreground", UIUtil.getLabelDisabledForeground());
+        return JBColor.namedColor("SearchEverywhere.List.separatorForeground", UIUtil.getLabelDisabledForeground());
       }
 
       public static Color searchFieldGrayForeground()  {
-        return JBColor.namedColor("SearchEverywhere.SearchField.grayForeground", JBColor.GRAY);
+        return JBColor.namedColor("SearchEverywhere.SearchField.infoForeground", JBColor.GRAY);
       }
 
       public static Color advertiserForeground()  {

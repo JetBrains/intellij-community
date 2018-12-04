@@ -404,7 +404,7 @@ public class UIUtil {
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._223, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
-  public static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
+  public static final Color TRANSPARENT_COLOR = Gray.TRANSPARENT;
 
   public static final int DEFAULT_HGAP = 10;
   public static final int DEFAULT_VGAP = 4;
@@ -413,11 +413,11 @@ public class UIUtil {
   public static final Insets PANEL_REGULAR_INSETS = new Insets(8, 12, 8, 12);
   public static final Insets PANEL_SMALL_INSETS = new Insets(5, 8, 5, 8);
 
-
+  @Deprecated
   public static final Border DEBUG_MARKER_BORDER = new Border() {
     @Override
     public Insets getBorderInsets(Component c) {
-      return new Insets(0, 0, 0, 0);
+      return JBUI.emptyInsets();
     }
 
     @Override
@@ -1108,7 +1108,7 @@ public class UIUtil {
   }
 
   public static Color getContextHelpForeground() {
-    return JBColor.namedColor("Label.grayForeground", Gray.x78);
+    return JBColor.namedColor("Label.infoForeground", Gray.x78);
   }
 
   @NotNull
@@ -1162,7 +1162,7 @@ public class UIUtil {
   }
 
   public static Color getInactiveTextColor() {
-    return JBColor.namedColor("Component.grayForeground", JBColor.GRAY);
+    return JBColor.namedColor("Component.infoForeground", JBColor.GRAY);
   }
 
   public static Color getSlightlyDarkerColor(Color c) {

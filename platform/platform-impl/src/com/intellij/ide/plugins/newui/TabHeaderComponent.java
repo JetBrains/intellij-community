@@ -208,13 +208,13 @@ public class TabHeaderComponent extends JComponent {
   @NotNull
   private Color getSelectedForeground() {
     if (mySelectedForeground == null) {
-      mySelectedForeground = JBColor.namedColor("Plugins.Tab.active.foreground", getForeground());
+      mySelectedForeground = JBColor.namedColor("Plugins.Tab.selectedForeground", getForeground());
     }
     return mySelectedForeground;
   }
 
   private static final Color SELECTED_BG_COLOR =
-    JBColor.namedColor("Plugins.Tab.active.background", JBUI.CurrentTheme.ToolWindow.tabSelectedBackground());
+    JBColor.namedColor("Plugins.Tab.selectedBackground", JBUI.CurrentTheme.ToolWindow.tabSelectedBackground());
 
   private static final Color HOVER_BG_COLOR =
     JBColor.namedColor("Plugins.Tab.hoverBackground", JBUI.CurrentTheme.ToolWindow.tabHoveredBackground());
