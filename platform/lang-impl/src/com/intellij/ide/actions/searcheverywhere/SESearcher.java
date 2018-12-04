@@ -10,12 +10,12 @@ import java.util.Map;
 import java.util.function.Function;
 
 interface SESearcher {
-  ProgressIndicator search(@NotNull Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+  ProgressIndicator search(@NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                            @NotNull String pattern,
                            boolean useNonProjectItems,
                            @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
 
-  ProgressIndicator findMoreItems(@NotNull Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+  ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
                                   @NotNull String pattern,
                                   boolean useNonProjectItems,
                                   @NotNull SearchEverywhereContributor<?> contributorToExpand,

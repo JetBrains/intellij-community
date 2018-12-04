@@ -57,14 +57,14 @@ class MultiThreadSearcher implements SESearcher {
    * @return {@link ProgressIndicator} that could be used to track and/or cancel searching process
    */
   @Override
-  public ProgressIndicator search(@NotNull Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+  public ProgressIndicator search(@NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                                   @NotNull String pattern,
                                   boolean useNonProjectItems,
                                   @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier) {
     LOG.debug("Search started for pattern [", pattern, "]");
     FullSearchResultsAccumulator accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor);
 
-    Collection<SearchEverywhereContributor<?>> contributors = contributorsAndLimits.keySet();
+    Collection<? extends SearchEverywhereContributor<?>> contributors = contributorsAndLimits.keySet();
     if (pattern.isEmpty()) {
       contributors = ContainerUtil.filter(contributors, contributor -> contributor.isEmptyPatternSupported());
     }
@@ -112,7 +112,7 @@ class MultiThreadSearcher implements SESearcher {
    * @return {@link ProgressIndicator} that could be used to track and/or cancel searching process
    */
   @Override
-  public ProgressIndicator findMoreItems(@NotNull Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+  public ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
                                          @NotNull String pattern,
                                          boolean useNonProjectItems,
                                          @NotNull SearchEverywhereContributor<?> contributorToExpand,
@@ -264,7 +264,7 @@ class MultiThreadSearcher implements SESearcher {
     private final int myNewLimit;
     private volatile boolean hasMore;
 
-    ShowMoreResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, SEResultsEqualityProvider equalityProvider,
+    ShowMoreResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, SEResultsEqualityProvider equalityProvider,
                                SearchEverywhereContributor<?> contributor, int newLimit, Listener listener, Executor notificationExecutor) {
       super(new ConcurrentHashMap<>(alreadyFound), equalityProvider, listener, notificationExecutor);
       myExpandedContributor = contributor;
@@ -316,14 +316,14 @@ class MultiThreadSearcher implements SESearcher {
 
   private static class FullSearchResultsAccumulator extends ResultsAccumulator {
 
-    private final Map<SearchEverywhereContributor<?>, Integer> sectionsLimits;
-    private final Map<SearchEverywhereContributor<?>, Condition> conditionsMap;
+    private final Map<? extends SearchEverywhereContributor<?>, Integer> sectionsLimits;
+    private final Map<? extends SearchEverywhereContributor<?>, Condition> conditionsMap;
     private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreMap = new ConcurrentHashMap<>();
     private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ContainerUtil.newConcurrentSet();
     private final Lock lock = new ReentrantLock();
     private volatile boolean mySearchFinished = false;
 
-    FullSearchResultsAccumulator(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+    FullSearchResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                                  SEResultsEqualityProvider equalityProvider, Listener listener, Executor notificationExecutor) {
       super(contributorsAndLimits.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> new ArrayList<>(entry.getValue()))),
             equalityProvider, listener, notificationExecutor);
