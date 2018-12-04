@@ -148,7 +148,7 @@ public abstract class ProjectFileNodeUpdater {
    * Usually, it is needed to find an added file in a tree right after adding.
    */
   public void updateImmediately() {
-    invoker.runOrInvokeLater(this::onInvokerThread);
+    invoker.runOrInvokeLater(() -> onInvokerThread(true));
   }
 
   /**
@@ -180,11 +180,11 @@ public abstract class ProjectFileNodeUpdater {
     }
     if (start) {
       LOG.debug("start collecting files to update @ ", invoker);
-      invoker.invokeLater(this::onInvokerThread, getUpdatingDelay());
+      invoker.invokeLater(() -> onInvokerThread(false), getUpdatingDelay());
     }
   }
 
-  private void onInvokerThread() {
+  private void onInvokerThread(boolean now) {
     Set<VirtualFile> files;
     long startedAt;
     boolean fromRoot;
@@ -201,7 +201,7 @@ public abstract class ProjectFileNodeUpdater {
         root = false;
         reference.set(null);
       }
-      else if (size == files.size()) {
+      else if (now || size == files.size()) {
         reference.set(null);
       }
       else {
@@ -210,7 +210,7 @@ public abstract class ProjectFileNodeUpdater {
     }
     if (restart) {
       LOG.debug("continue collecting files to update @ ", invoker);
-      invoker.invokeLater(this::onInvokerThread, getUpdatingDelay());
+      invoker.invokeLater(() -> onInvokerThread(false), getUpdatingDelay());
     }
     else {
       LOG.debug("spent ", System.currentTimeMillis() - startedAt, "ms to collect ", size, " files to update @ ", invoker);

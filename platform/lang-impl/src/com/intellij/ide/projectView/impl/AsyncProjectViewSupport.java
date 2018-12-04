@@ -51,7 +51,7 @@ class AsyncProjectViewSupport {
                           @NotNull JTree tree,
                           @NotNull AbstractTreeStructure structure,
                           @NotNull Comparator<NodeDescriptor> comparator) {
-    myStructureTreeModel = new StructureTreeModel(structure, comparator);
+    myStructureTreeModel = new StructureTreeModel<>(structure, comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
@@ -165,8 +165,8 @@ class AsyncProjectViewSupport {
     SmartList<TreePath> pathsToSelect = new SmartList<>();
     TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file, pathsToSelect);
     if (visitor != null) {
-      //noinspection CodeBlock2Expr
       expand(tree, promise -> {
+        myNodeUpdater.updateImmediately();
         myAsyncTreeModel
           .accept(visitor)
           .onProcessed(path -> {
