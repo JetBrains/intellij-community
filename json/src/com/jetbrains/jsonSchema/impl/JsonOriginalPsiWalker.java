@@ -51,6 +51,11 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public boolean isPropertyWithValue(@NotNull PsiElement element) {
+    if (element instanceof JsonStringLiteral || element instanceof JsonReferenceExpression) {
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof JsonProperty) || ((JsonProperty)parent).getNameElement() != element) return false;
+      element = parent;
+    }
     return element instanceof JsonProperty && ((JsonProperty)element).getValue() != null;
   }
 

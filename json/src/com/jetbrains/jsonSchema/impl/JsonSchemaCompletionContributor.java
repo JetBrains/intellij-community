@@ -380,7 +380,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
             createDefaultPropertyInsertHandler(true, insertComma));
         }
         else {
-          builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
+          builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
         }
       } else if (!hasValue) {
         builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
