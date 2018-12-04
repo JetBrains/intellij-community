@@ -20,7 +20,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   private final static SwitchConversion[] ourInspections = new SwitchConversion[]{
     EnhancedSwitchMigrationInspection::inspectReturningSwitch,
-    EnhancedSwitchMigrationInspection::inspectVariableAssiginigSwitch,
+    EnhancedSwitchMigrationInspection::inspectVariableAssigningSwitch,
     EnhancedSwitchMigrationInspection::inspectReplacementWithStatement
   };
 
@@ -395,10 +395,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
    * }
    */
   @Nullable
-  public static SwitchReplacer inspectVariableAssiginigSwitch(@NotNull PsiStatement statement,
-                                                      @NotNull PsiExpression expressionBeingSwitched,
-                                                      @NotNull List<? extends OldSwitchStatementBranch> branches,
-                                                      boolean isExhaustive) {
+  public static SwitchReplacer inspectVariableAssigningSwitch(@NotNull PsiStatement statement,
+                                                              @NotNull PsiExpression expressionBeingSwitched,
+                                                              @NotNull List<? extends OldSwitchStatementBranch> branches,
+                                                              boolean isExhaustive) {
     PsiDeclarationStatement declaration =
       tryCast(PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class), PsiDeclarationStatement.class);
     PsiLocalVariable variable = getVariable(declaration);
