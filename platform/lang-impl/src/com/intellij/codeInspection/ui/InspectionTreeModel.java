@@ -160,7 +160,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
 
   @NotNull
   public InspectionNode createInspectionNode(@NotNull InspectionToolWrapper toolWrapper, InspectionProfileImpl profile, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(toolWrapper, () -> new InspectionNode(toolWrapper, profile, this), parent);
+    return getOrAdd(toolWrapper.getShortName(), () -> new InspectionNode(toolWrapper, profile, this), parent);
   }
 
   public void createProblemDescriptorNode(RefEntity element,
