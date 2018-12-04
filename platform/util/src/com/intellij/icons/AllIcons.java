@@ -1603,8 +1603,7 @@ public class AllIcons {
     public static final Icon HectorOff = IconLoader.getIcon("/ide/hectorOff.svg"); // 16x16
     public static final Icon HectorOn = IconLoader.getIcon("/ide/hectorOn.svg"); // 16x16
     public static final Icon HectorSyntax = IconLoader.getIcon("/ide/hectorSyntax.svg"); // 16x16
-    public static final Icon IncomingChangesOff = IconLoader.getIcon("/ide/incomingChangesOff.png"); // 16x16
-    public static final Icon IncomingChangesOn = IconLoader.getIcon("/ide/incomingChangesOn.png"); // 16x16
+    public static final Icon IncomingChangesOn = IconLoader.getIcon("/ide/incomingChangesOn.svg"); // 16x16
     public static final Icon Link = IconLoader.getIcon("/ide/link.svg"); // 12x12
     public static final Icon LocalScope = IconLoader.getIcon("/ide/localScope.svg"); // 16x16
     public static final Icon LookupAlphanumeric = IconLoader.getIcon("/ide/lookupAlphanumeric.svg"); // 12x12
@@ -1653,7 +1652,7 @@ public class AllIcons {
 
     }
     public static final Icon Notifications = IconLoader.getIcon("/ide/notifications.png"); // 16x16
-    public static final Icon OutgoingChangesOn = IconLoader.getIcon("/ide/outgoingChangesOn.png"); // 16x16
+    public static final Icon OutgoingChangesOn = IconLoader.getIcon("/ide/outgoingChangesOn.svg"); // 16x16
     public static final Icon Pipette = IconLoader.getIcon("/ide/pipette.svg"); // 16x16
     public static final Icon Pipette_rollover = IconLoader.getIcon("/ide/pipette_rollover.svg"); // 16x16
     public static final Icon Rating = IconLoader.getIcon("/ide/rating.svg"); // 11x11
