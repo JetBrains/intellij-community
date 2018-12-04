@@ -58,7 +58,7 @@ public class DebugReflectionUtil {
   private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
 
   @NotNull
-  private static Field[] getAllFields(@NotNull Class aClass) {
+  public static Field[] getAllFields(@NotNull Class aClass) {
     Field[] cached = allFields.get(aClass);
     if (cached == null) {
       try {
@@ -110,7 +110,7 @@ public class DebugReflectionUtil {
     return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
   }
 
-  private static boolean isInitialized(@NotNull Class root) {
+  public static boolean isInitialized(@NotNull Class root) {
     if (Unsafe_shouldBeInitialized == null) return false;
     boolean isInitialized = false;
     try {
