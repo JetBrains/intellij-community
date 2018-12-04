@@ -360,14 +360,11 @@ public final class PsiUtil extends PsiUtilCore {
             result.add(((PsiExpressionStatement)ruleBody).getExpression());
           }
           else if (ruleBody instanceof PsiBlockStatement) {
-            collectSwitchResultExpressions(result, (PsiBlockStatement)ruleBody);
+            collectSwitchResultExpressions(result, ruleBody);
           }
         }
-        else if (statement instanceof PsiBlockStatement) {
-           collectSwitchResultExpressions(result, (PsiBlockStatement)statement);
-        }
-        else if (statement instanceof PsiBreakStatement) {
-          ContainerUtil.addIfNotNull(result, ((PsiBreakStatement)statement).getExpression());
+        else {
+           collectSwitchResultExpressions(result, statement);
         }
       }
       return result;
@@ -375,10 +372,9 @@ public final class PsiUtil extends PsiUtilCore {
     return Collections.emptyList();
   }
 
-  private static void collectSwitchResultExpressions(List<PsiExpression> result, PsiBlockStatement ruleBody) {
-    PsiCodeBlock codeBlock = ruleBody.getCodeBlock();
+  private static void collectSwitchResultExpressions(List<PsiExpression> result, PsiElement container) {
     ArrayList<PsiBreakStatement> breaks = new ArrayList<>();
-    addStatements(breaks, codeBlock, PsiBreakStatement.class, element -> element instanceof PsiSwitchBlock);
+    addStatements(breaks, container, PsiBreakStatement.class, element -> element instanceof PsiSwitchBlock);
     for (PsiBreakStatement aBreak : breaks) {
       ContainerUtil.addIfNotNull(result, aBreak.getExpression());
     }

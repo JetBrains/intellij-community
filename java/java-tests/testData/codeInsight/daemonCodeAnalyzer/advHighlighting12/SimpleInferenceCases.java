@@ -90,6 +90,14 @@ no instance(s) of type variable(s) exist so that Integer conforms to String">() 
                 break 1;
             };
           }
+          case 1: 
+            if (i > 3) break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">3</error>;
+          case 0:
+            try {
+              break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">42</error>;
+            } finally {
+              //do nothing
+            }
           default:
             break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
         };
