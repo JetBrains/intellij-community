@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
@@ -45,15 +46,20 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
 
   internal fun closeCurrentStore(isSave: Boolean, isEvenMemoryOnly: Boolean) {
     val store = currentProviderIfComputed ?: return
-    if (isEvenMemoryOnly || store !is InMemoryCredentialStore) {
-      _currentProvider.drop()
-      if (isSave && store is KeePassCredentialStore) {
-        try {
-          store.save(createMasterKeyEncryptionSpec())
-        }
-        catch (e: Exception) {
-          LOG.warn(e)
-        }
+    if (!isEvenMemoryOnly && store is InMemoryCredentialStore) {
+      return
+    }
+
+    _currentProvider.drop()
+    if (isSave && store is KeePassCredentialStore) {
+      try {
+        store.save(createMasterKeyEncryptionSpec())
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
       }
     }
   }
@@ -189,6 +195,9 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
       LOG.warn(e)
       showError("KeePass master password is ${if (e.isFileMissed) "missing" else "incorrect"}")
     }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
     catch (e: Throwable) {
       LOG.error(e)
       showError("Failed opening KeePass database")
@@ -203,6 +212,9 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
       else {
         return store
       }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
     }
     catch (e: Throwable) {
       LOG.error(e)
