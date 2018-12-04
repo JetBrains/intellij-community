@@ -3,6 +3,7 @@ package com.intellij.application.options;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSource;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Experimental
-public interface CodeStyleSettingsModifier {
+public interface CodeStyleSettingsModifier extends CodeStyleSource {
   DependencyList UNMODIFIED = new DependencyList();
 
   @NotNull

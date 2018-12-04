@@ -20,6 +20,7 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * Utility class for miscellaneous code style settings retrieving methods.
  */
+@SuppressWarnings("unused") // Contains API methods which may be used externally
 public class CodeStyle {
 
   private CodeStyle() {
@@ -72,7 +73,7 @@ public class CodeStyle {
       CodeStyleSettings cachedSettings = CachedValuesManager.getCachedValue(
         file,
         () -> {
-          CodeStyleSettings modifiedSettings = currSettings.clone();
+          TransientCodeStyleSettings modifiedSettings = TransientCodeStyleSettings.createFrom(file, currSettings);
           DependencyList dependencies = CodeStyleSettingsModifierEP.modifySettings(modifiedSettings, file);
           if (!dependencies.isEmpty()) {
             dependencies.add(currSettings.getModificationTracker());

@@ -1490,4 +1490,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public SimpleModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
+
+  public boolean areTransient() {
+    return false;
+  }
 }

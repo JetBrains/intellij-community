@@ -61,7 +61,7 @@ public class EditorConfigNavigationActionsFactory extends DefaultParserCallback 
   }
 
   @NotNull
-  private List<VirtualFile> getEditorConfigFiles() {
+  public List<VirtualFile> getEditorConfigFiles() {
     List<VirtualFile> files = ContainerUtil.newArrayList();
     for (String path : myEditorConfigFilePaths) {
       VirtualFile file = VfsUtil.findFile(Paths.get(path), true);
