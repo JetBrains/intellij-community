@@ -717,6 +717,7 @@ public final class UiDefaultsHardcodedKeys {
     "SearchEverywhere.foreground",
     "SearchEverywhere.shortcutForeground",
     "Separator.background",
+    "Separator.foreground",
     "Separator.highlight",
     "Separator.separatorColor",
     "Separator.shadow",
