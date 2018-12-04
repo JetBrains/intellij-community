@@ -5,6 +5,8 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
@@ -19,7 +21,9 @@ import org.jetbrains.jps.model.java.JavaResourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -80,6 +84,38 @@ public class JavaProjectRootsUtil {
 
   public static GlobalSearchScope getScopeWithoutGeneratedSources(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {
     return new NonGeneratedSourceScope(baseScope, project);
+  }
+
+  public static List<OrderEntry> findExportedDependenciesReachableViaThisDependencyOnly(@NotNull Module module,
+                                                                                        @NotNull Module dependency,
+                                                                                        @NotNull RootModelProvider rootModelProvider) {
+    Condition<OrderEntry> withoutThisDependency = entry -> !(entry instanceof ModuleOrderEntry && entry.getOwnerModule().equals(module) &&
+                                                            dependency.equals(((ModuleOrderEntry)entry).getModule()));
+    Set<Module> reachableModules = new HashSet<>();
+    Set<Library> reachableLibraries = new HashSet<>();
+    rootModelProvider.getRootModel(module).orderEntries().satisfying(withoutThisDependency).using(rootModelProvider).recursively().exportedOnly().forEach(entry -> {
+      if (entry instanceof ModuleSourceOrderEntry) {
+        reachableModules.add(entry.getOwnerModule());
+      }
+      else if (entry instanceof ModuleOrderEntry) {
+        ContainerUtil.addIfNotNull(reachableModules, ((ModuleOrderEntry)entry).getModule());
+      }
+      else if (entry instanceof LibraryOrderEntry) {
+        ContainerUtil.addIfNotNull(reachableLibraries, ((LibraryOrderEntry)entry).getLibrary());
+      }
+      return true;
+    });
+
+    List<OrderEntry> result = new ArrayList<>();
+    rootModelProvider.getRootModel(dependency).orderEntries().using(rootModelProvider).exportedOnly().withoutSdk()
+      .withoutModuleSourceEntries().forEach(entry -> {
+      if (entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null && !reachableModules.contains(((ModuleOrderEntry)entry).getModule())
+          || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null && !reachableLibraries.contains(((LibraryOrderEntry)entry).getLibrary())) {
+        result.add(entry);
+      }
+      return true;
+    });
+    return result;
   }
 
   private static class NonGeneratedSourceScope extends DelegatingGlobalSearchScope {
