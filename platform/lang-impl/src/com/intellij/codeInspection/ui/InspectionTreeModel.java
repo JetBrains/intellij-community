@@ -52,8 +52,6 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
     private final BidirectionalMap<Object, InspectionTreeNode> myUserObject2Node = new BidirectionalMap<>();
   }
 
-  public InspectionTreeModel() {}
-
   @Override
   public List<? extends InspectionTreeNode> getChildren(Object parent) {
     Children nodes = myChildren.get(((InspectionTreeNode)parent));
