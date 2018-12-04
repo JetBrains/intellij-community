@@ -518,7 +518,7 @@ public class UIUtil {
         try {
           GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
           if (ge instanceof SunGraphicsEnvironment) {
-            Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+            Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleEnabled");
             jreHiDPI.set(m != null && (Boolean)m.invoke(ge));
             jreHiDPI_earlierVersion = false;
           }
