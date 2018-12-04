@@ -186,6 +186,7 @@ public class GradleTestsExecutionConsoleManager
           externalProjectInfo.getExternalProjectStructure(), projectPath, taskToExecute);
         return taskDataNode != null &&
                (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
+                 || taskDataNode.getData().isTest()
                  || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));
       }) != null;
     }

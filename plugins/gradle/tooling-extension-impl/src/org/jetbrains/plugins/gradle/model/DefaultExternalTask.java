@@ -37,6 +37,7 @@ public class DefaultExternalTask implements ExternalTask {
   private String myGroup;
   @Nullable
   private String myType;
+  private boolean myIsTest;
 
   public DefaultExternalTask() {
   }
@@ -47,6 +48,7 @@ public class DefaultExternalTask implements ExternalTask {
     myDescription = externalTask.getDescription();
     myGroup = externalTask.getGroup();
     myType = externalTask.getType();
+    myIsTest = externalTask.isTest();
   }
 
   @NotNull
@@ -97,5 +99,14 @@ public class DefaultExternalTask implements ExternalTask {
 
   public void setType(@Nullable String type) {
     myType = type;
+  }
+
+  @Override
+  public boolean isTest() {
+    return myIsTest;
+  }
+
+  public void setTest(boolean test) {
+    myIsTest = test;
   }
 }
