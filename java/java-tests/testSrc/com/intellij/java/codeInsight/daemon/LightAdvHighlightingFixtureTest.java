@@ -2,16 +2,27 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTestCase {
   @NotNull
@@ -148,9 +159,9 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
 
   public void testTypeAnnotations() {
     myFixture.addClass("import java.lang.annotation.ElementType;\n" +
-                     "import java.lang.annotation.Target;\n" +
-                     "@Target({ElementType.TYPE_USE})\n" +
-                     "@interface Nullable {}\n");
+                       "import java.lang.annotation.Target;\n" +
+                       "@Target({ElementType.TYPE_USE})\n" +
+                       "@interface Nullable {}\n");
     myFixture.addClass("class Middle<R> extends Base<@Nullable R, String>{}");
     myFixture.addClass("class Child<R> extends Middle<R>{}");
     PsiClass baseClass = myFixture.addClass("class Base<R, C> {}");
@@ -158,9 +169,24 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
                                            "  Child<String> field;\n" +
                                            "}");
     PsiField fooField = fooClass.findFieldByName("field", false);
-    PsiType substituted = TypeConversionUtil.getSuperClassSubstitutor(baseClass, (PsiClassType)fooField.getType())
-                                            .substitute(baseClass.getTypeParameters()[0]);
+    PsiType substituted =
+      TypeConversionUtil.getSuperClassSubstitutor(baseClass, (PsiClassType)fooField.getType()).substitute(baseClass.getTypeParameters()[0]);
     assertEquals(1, substituted.getAnnotations().length);
+  }
+
+  public void testCodeFragmentMayAccessDefaultPackage() {
+    myFixture.addClass("public class MainClass { }");
+
+    Project project = getProject();
+    PsiElement context = JavaPsiFacade.getInstance(project).findPackage("");
+    JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment("MainClass", context, true, true);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
+    Editor editor = EditorFactory.getInstance().createViewer(document, project);
+    Disposer.register(myFixture.getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(editor));
+
+    List<HighlightInfo> highlights = CodeInsightTestFixtureImpl.instantiateAndRun(fragment, editor, ArrayUtil.EMPTY_INT_ARRAY, false);
+    List<HighlightInfo> problems = ContainerUtil.filter(highlights, h -> HighlightSeverity.WARNING.compareTo(h.getSeverity()) <= 0);
+    assertThat(problems).isEmpty();
   }
 
   private void doTest() {
