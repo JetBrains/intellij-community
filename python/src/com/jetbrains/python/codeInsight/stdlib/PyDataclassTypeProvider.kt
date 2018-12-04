@@ -5,6 +5,8 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.isNullOrEmpty
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
@@ -12,6 +14,8 @@ import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
+import one.util.streamex.StreamEx
+import java.util.*
 
 class PyDataclassTypeProvider : PyTypeProviderBase() {
 
@@ -94,7 +98,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
 
       val ellipsis = elementGenerator.createEllipsis()
-      dataclassParameters.mapTo(parameters, { PyCallableParameterImpl.nonPsi(it.name, it.getType(context), it.defaultValue ?: ellipsis) })
+      dataclassParameters.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it.name, it.getType(context), it.defaultValue ?: ellipsis) }
 
       return PyCallableTypeImpl(parameters, dataclassType.getReturnType(context))
     }
@@ -103,20 +107,41 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
   }
 
   private fun getDataclassTypeForClass(cls: PyClass, context: TypeEvalContext): PyCallableType? {
-    val dataclassParameters = parseDataclassParameters(cls, context)
-    if (dataclassParameters == null || !dataclassParameters.init) {
-      return null
+    val clsType = (context.getType(cls) as? PyClassLikeType) ?: return null
+
+    val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
+    val ellipsis = PyElementGenerator.getInstance(cls.project).createEllipsis()
+
+    val collected = LinkedList<PyCallableParameter>()
+    val seen = mutableSetOf<String?>()
+    var seenInit = false
+
+    for (currentType in StreamEx.of(clsType).append(cls.getAncestorTypes(context))) {
+      if (currentType == null) break
+      if (!currentType.resolveMember(PyNames.INIT, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty()) break
+      if (!currentType.resolveMember(PyNames.NEW, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty()) break
+      if (currentType !is PyClassType) break
+
+      val current = currentType.pyClass
+      if (PyKnownDecoratorUtil.hasUnknownDecorator(current, context)) break
+
+      val parameters = parseDataclassParameters(current, context) ?: continue
+      seenInit = seenInit || parameters.init
+
+      if (seenInit) {
+        current
+          .classAttributes
+          .asReversed()
+          .filterNot { it.name in seen || PyTypingTypeProvider.isClassVar(it, context) }
+          .mapNotNull { fieldToParameter(cls, it, parameters.type, ellipsis, context) }
+          .forEach {
+            seen += it.name
+            collected.addFirst(it)
+          }
+      }
     }
 
-    val ellipsis = PyElementGenerator.getInstance(cls.project).createEllipsis()
-    val parameters = cls
-      .classAttributes
-      .asSequence()
-      .filterNot { PyTypingTypeProvider.isClassVar(it, context) }
-      .mapNotNull { fieldToParameter(cls, it, dataclassParameters.type, ellipsis, context) }
-      .toList()
-
-    return PyCallableTypeImpl(parameters, context.getType(cls)?.let { if (it is PyInstantiableType<*>) it.toInstance() else it })
+    return if (seenInit) PyCallableTypeImpl(collected, clsType.toInstance()) else null
   }
 
   private fun fieldToParameter(cls: PyClass,
