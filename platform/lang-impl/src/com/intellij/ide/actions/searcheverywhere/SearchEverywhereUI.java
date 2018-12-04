@@ -273,6 +273,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
       return getSearchPattern();
     }
+    if (PlatformDataKeys.PROJECT.is(dataId))
+      return myProject;
 
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> elements = indicesStream.mapToObj(i -> {
