@@ -10,7 +10,7 @@ open class ElementResolveResult<out T : PsiElement>(private val element: T) : Gr
 
   final override fun getElement(): T = element
 
-  override fun isValidResult(): Boolean = element.isValid && isStaticsOK && isAccessible && isApplicable
+  final override fun isValidResult(): Boolean = element.isValid && isStaticsOK && isAccessible && isApplicable
 
   override fun isStaticsOK(): Boolean = true
 
