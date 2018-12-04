@@ -32,7 +32,7 @@ class SingleThreadSearcher implements SESearcher {
   }
 
   @Override
-  public ProgressIndicator search(@NotNull Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+  public ProgressIndicator search(@NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                                   @NotNull String pattern,
                                   boolean useNonProjectItems,
                                   @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier) {
@@ -45,7 +45,7 @@ class SingleThreadSearcher implements SESearcher {
   }
 
   @Override
-  public ProgressIndicator findMoreItems(@NotNull Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+  public ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
                                          @NotNull String pattern,
                                          boolean useNonProjectItems,
                                          @NotNull SearchEverywhereContributor<?> contributorToExpand,
@@ -63,7 +63,7 @@ class SingleThreadSearcher implements SESearcher {
                                                  int newLimit,
                                                  String pattern,
                                                  boolean useNonProjectItems,
-                                                 Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+                                                 Map<? extends SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
                                                  Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier,
                                                  ProgressIndicator indicator) {
     List<ElementInfo> alreadyFoundList = alreadyFound.values()
@@ -141,7 +141,7 @@ class SingleThreadSearcher implements SESearcher {
   }
 
   private static class SearchTask implements Runnable {
-    private final Map<SearchEverywhereContributor<?>, Integer> myContributorsAndLimits;
+    private final Map<? extends SearchEverywhereContributor<?>, Integer> myContributorsAndLimits;
     private final String myPattern;
     private final boolean myUseNonProjectItems;
     private final Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> myFilterSupplier;
@@ -151,7 +151,7 @@ class SingleThreadSearcher implements SESearcher {
     private final Executor notificationExecutor;
     private final Listener notificationListener;
 
-    SearchTask(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+    SearchTask(Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                String pattern,
                boolean useNonProjectItems,
                Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier,
