@@ -32,6 +32,9 @@ iml_module(
         "//tools/idea/.idea/libraries:xml-apis-ext",
         "//tools/idea/.idea/libraries:commons-compress",
         "//tools/idea/.idea/libraries:Java_Compatibility",
+        "//tools/analytics-library/tracker:analytics-tracker[module]",
+        "//tools/idea/.idea/libraries:studio-analytics-proto",
+        "//tools/idea/.idea/libraries:protobuf",
     ],
 )
 

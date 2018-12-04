@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.android.tools.analytics.Counter;
 import com.intellij.index.PrebuiltIndexProviderBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -37,6 +38,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.counters.IndexCounters;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
@@ -427,11 +429,15 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   private static class MyIndex extends VfsAwareMapReduceIndex<Integer, SerializedStubTree, FileContent> {
     private StubIndexImpl myStubIndex;
+    // Android Studio: Code instrumented to log indexing/index performance.
+    private final Counter myWriteLockCounter;
     private final StubVersionMap myStubVersionMap = new StubVersionMap();
 
     MyIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension, @NotNull IndexStorage<Integer, SerializedStubTree> storage)
       throws StorageException, IOException {
       super(extension, storage);
+      // Android Studio: Code instrumented to log indexing/index performance.
+      myWriteLockCounter = IndexCounters.getIndexCounters(INDEX_ID.getName()).getWriteLockCounter();
       checkNameStorage();
     }
 
@@ -504,7 +510,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       final Map<StubIndexKey, Map<Object, StubIdList>> newStubIndicesValueMap = stubUpdatingData.getNewStubIndicesValueMap();
 
       try {
-        getWriteLock().lock();
+        // Android Studio: Code instrumented to log indexing/index performance.
+        if (!getWriteLock().tryLock()) {
+          // Do not count cases when the lock is acquired without waiting.
+          myWriteLockCounter.timeRunnable(() -> getWriteLock().lock());
+        }
 
         super.updateWithMap(inputId, updateData);
 

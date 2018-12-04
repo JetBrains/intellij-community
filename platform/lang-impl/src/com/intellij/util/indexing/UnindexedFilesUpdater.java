@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.indexing.counters.IndexCounters;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -116,15 +117,15 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     CacheUpdateRunner.processFiles(indicator, files, myProject, content -> myIndex.indexFileContent(myProject, content));
     int durationMs = (int)(System.currentTimeMillis() - startTimeMs);
     ApplicationManager.getApplication().executeOnPooledThread(
-      () -> UsageTracker.log(
-        AndroidStudioEvent.newBuilder()
-                          .setKind(AndroidStudioEvent.EventKind.INTELLIJ_INDEXING_STATS)
-                          .setIntellijIndexingStats(
-                            IntellijIndexingStats.newBuilder()
-                                                 .setDurationMs(durationMs)
-                                                 .setFileCount(fileCount)
-                          )
-      )
+      () -> {
+        IntellijIndexingStats.Builder indexingStats = IndexCounters.addAllIndexCountersAndReset(
+          IntellijIndexingStats.newBuilder().setDurationMs(durationMs).setFileCount(fileCount));
+        UsageTracker.log(
+          AndroidStudioEvent.newBuilder()
+            .setKind(AndroidStudioEvent.EventKind.INTELLIJ_INDEXING_STATS)
+            .setIntellijIndexingStats(indexingStats)
+        );
+      }
     );
   }
 
