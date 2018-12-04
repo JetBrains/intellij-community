@@ -97,6 +97,7 @@ class KotlincOutputParser : BuildOutputParser {
     return colonIndex1 == 0
            || (colonIndex1 >= 0 && substring(0, colonIndex1).startsWithSeverityPrefix()) // Next Kotlin message
            || StringUtil.startsWith(this, "Note: ") // Next javac info message candidate
+           || StringUtil.startsWith(this, "> Task :") // Next gradle message candidate
            || StringUtil.containsIgnoreCase(this, "FAILURE")
            || StringUtil.containsIgnoreCase(this, "FAILED")
   }
