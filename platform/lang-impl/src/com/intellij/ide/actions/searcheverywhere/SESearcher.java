@@ -10,13 +10,17 @@ import java.util.Map;
 import java.util.function.Function;
 
 interface SESearcher {
-  ProgressIndicator search(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, String pattern,
+  ProgressIndicator search(@NotNull Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+                           @NotNull String pattern,
                            boolean useNonProjectItems,
-                           Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier);
+                           @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier);
 
-  ProgressIndicator findMoreItems(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, String pattern,
-                                  boolean useNonProjectItems, SearchEverywhereContributor<?> contributorToExpand, int newLimit,
-                                  Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier);
+  ProgressIndicator findMoreItems(@NotNull Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+                                  @NotNull String pattern,
+                                  boolean useNonProjectItems,
+                                  @NotNull SearchEverywhereContributor<?> contributorToExpand,
+                                  int newLimit,
+                                  @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier);
 
   /**
    * Search process listener interface

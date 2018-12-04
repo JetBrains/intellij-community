@@ -112,9 +112,12 @@ class MultiThreadSearcher implements SESearcher {
    * @return {@link ProgressIndicator} that could be used to track and/or cancel searching process
    */
   @Override
-  public ProgressIndicator findMoreItems(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, String pattern,
-                                         boolean useNonProjectItems, SearchEverywhereContributor<?> contributorToExpand, int newLimit,
-                                         Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
+  public ProgressIndicator findMoreItems(@NotNull Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+                                         @NotNull String pattern,
+                                         boolean useNonProjectItems,
+                                         @NotNull SearchEverywhereContributor<?> contributorToExpand,
+                                         int newLimit,
+                                         @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
     ResultsAccumulator accumulator = new ShowMoreResultsAccumulator(alreadyFound, myEqualityProvider, contributorToExpand, newLimit, myListener, myNotificationExecutor);
     SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributorToExpand);
     ProgressIndicator indicator = new ProgressIndicatorBase();
