@@ -216,14 +216,16 @@ public class BuildOperations {
 
   private static boolean deleteRecursively(final File file, final Collection<String> deletedPaths) {
     try {
-      Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+      Files.walkFileTree(file.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path f, BasicFileAttributes attrs) throws IOException {
           try {
             Files.delete(f);
           }
           catch (AccessDeniedException e) {
-            handleAccessDenied(f, e);
+            if (!f.toFile().delete()) { // fallback
+              throw e;
+            }
           }
           deletedPaths.add(FileUtil.toSystemIndependentName(f.toString()));
           return FileVisitResult.CONTINUE;
@@ -235,18 +237,11 @@ public class BuildOperations {
             Files.delete(dir);
           }
           catch (AccessDeniedException e) {
-            handleAccessDenied(dir, e);
+            if (!dir.toFile().delete()) { // fallback
+              throw e;
+            }
           }
           return FileVisitResult.CONTINUE;
-        }
-
-        private void handleAccessDenied(Path f, AccessDeniedException e) throws IOException {
-          if (f.toFile().setWritable(true)) {
-            Files.delete(f); // repeat once the file is writable
-          }
-          else {
-            throw e;
-          }
         }
 
       });
