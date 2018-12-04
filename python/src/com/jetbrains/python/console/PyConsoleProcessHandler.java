@@ -18,7 +18,6 @@ package com.jetbrains.python.console;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +52,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
 
   @Override
   public void coloredTextAvailable(@NotNull final String text, @NotNull final Key attributes) {
-    String string = PyConsoleUtil.processPrompts(myConsoleView, StringUtil.convertLineSeparators(text));
+    String string = PyConsoleUtil.processPrompts(myConsoleView, text);
 
     myConsoleView.print(string, attributes);
 
