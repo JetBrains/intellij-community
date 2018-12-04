@@ -6,10 +6,12 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.editor.actions.CtrlYActionChooser
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
@@ -65,6 +67,10 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     schemeManager.loadSchemes()
 
     ourKeymapManagerInitialized = true
+
+    if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
+      CtrlYActionChooser.askAboutShortcut();
+    }
   }
 
   private fun fireActiveKeymapChanged(newScheme: Keymap?) {
