@@ -10,8 +10,9 @@ import com.intellij.util.containers.StringInterner;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.util.JDOMUtil.getAttributes;
 
 public class JDOMInterner {
   private static final Condition<Object> IS_ELEMENT = Conditions.instanceOf(Element.class);
@@ -72,12 +73,6 @@ public class JDOMInterner {
       result = result * 31 + computeAttributeHashCode(attribute.getName(), attribute.getValue());
     }
     return result;
-  }
-
-  @NotNull
-  private static List<Attribute> getAttributes(@NotNull Element e) {
-    // avoid AttributeList creation if no attributes
-    return e.hasAttributes() ? e.getAttributes() : Collections.<Attribute>emptyList();
   }
 
   private static boolean attributesEqual(Element o1, Element o2) {
