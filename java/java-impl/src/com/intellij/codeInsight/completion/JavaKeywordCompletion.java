@@ -382,7 +382,7 @@ public class JavaKeywordCompletion {
   }
 
   private void addThisSuper() {
-    if (SUPER_OR_THIS_PATTERN.accepts(myPosition) && LabelReferenceCompletion.isValueBreakPosition(myPosition) != Boolean.FALSE) {
+    if (SUPER_OR_THIS_PATTERN.accepts(myPosition) && LabelReferenceCompletion.isBreakValueOrLabelPosition(myPosition) != Boolean.FALSE) {
       final boolean afterDot = AFTER_DOT.accepts(myPosition);
       final boolean insideQualifierClass = isInsideQualifierClass();
       final boolean insideInheritorClass = PsiUtil.isLanguageLevel8OrHigher(myPosition) && isInsideInheritorClass();
@@ -592,7 +592,7 @@ public class JavaKeywordCompletion {
   }
 
   private static boolean isExpressionPosition(PsiElement position) {
-    return EXPR_KEYWORDS.accepts(position) && LabelReferenceCompletion.isValueBreakPosition(position) != Boolean.FALSE ||
+    return EXPR_KEYWORDS.accepts(position) && LabelReferenceCompletion.isBreakValueOrLabelPosition(position) != Boolean.FALSE ||
            psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position);
   }
 

@@ -26,7 +26,13 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 class LabelReferenceCompletion extends CompletionProvider<CompletionParameters> {
   static final ElementPattern<PsiElement> LABEL_REFERENCE = psiElement().afterLeaf(PsiKeyword.BREAK, PsiKeyword.CONTINUE);
 
-  static @Nullable Boolean isValueBreakPosition(@NotNull PsiElement position) {
+  /**
+   * Returns:<br/>
+   * {@link Boolean#TRUE} - when the position is inside a value break statement of a switch expression;<br/>
+   * {@link Boolean#FALSE} - when the position is inside a label break statement;<br/>
+   * {@code null} - when a the position is not in a break statement.
+   */
+  static @Nullable Boolean isBreakValueOrLabelPosition(@NotNull PsiElement position) {
     PsiElement parent = position.getParent();
     if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifierExpression() == null) {
       PsiElement grand = parent.getParent();
@@ -55,7 +61,7 @@ class LabelReferenceCompletion extends CompletionProvider<CompletionParameters> 
     if (ref instanceof PsiLabelReference) {
       result.addAllElements(processLabelReference((PsiLabelReference)ref));
     }
-    else if (isValueBreakPosition(position) == Boolean.FALSE) {
+    else if (isBreakValueOrLabelPosition(position) == Boolean.FALSE) {
       result.addAllElements(processLabelVariants(PsiImplUtil.findAllEnclosingLabels(position)));
     }
   }

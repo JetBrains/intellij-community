@@ -138,7 +138,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         JavaKeywordCompletion.START_SWITCH.accepts(position) ||
         JavaKeywordCompletion.isInstanceofPlace(position) ||
         JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position) ||
-        LabelReferenceCompletion.isValueBreakPosition(position) == Boolean.FALSE) {
+        LabelReferenceCompletion.isBreakValueOrLabelPosition(position) == Boolean.FALSE) {
       return null;
     }
 
@@ -482,7 +482,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
 
         // break <label>
-        if (LabelReferenceCompletion.isValueBreakPosition(position) == Boolean.FALSE) {
+        if (LabelReferenceCompletion.isBreakValueOrLabelPosition(position) == Boolean.FALSE) {
           items.putValues(result1, LabelReferenceCompletion.processLabelVariants(PsiImplUtil.findAllEnclosingLabels(position)));
         }
 
