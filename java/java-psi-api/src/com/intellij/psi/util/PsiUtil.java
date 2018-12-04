@@ -1296,8 +1296,22 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isFromDefaultPackage(PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
-    return containingFile instanceof PsiClassOwner && StringUtil.isEmpty(((PsiClassOwner)containingFile).getPackageName());
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PsiClassOwner) {
+      return StringUtil.isEmpty(((PsiClassOwner)containingFile).getPackageName());
+    }
+
+    if (containingFile instanceof JavaCodeFragment) {
+      PsiElement context = containingFile.getContext();
+      if (context instanceof PsiPackage) {
+        return StringUtil.isEmpty(((PsiPackage)context).getName());
+      }
+      if (context != null && context != containingFile) {
+        return isFromDefaultPackage(context);
+      }
+    }
+
+    return false;
   }
 
   static boolean checkSameExpression(PsiElement templateExpr, final PsiExpression expression) {
