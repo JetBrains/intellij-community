@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
@@ -58,9 +59,13 @@ class OrderRootsCache {
   private static final VirtualFilePointerContainer EMPTY = ObjectUtils.sentinel("Empty roots container", VirtualFilePointerContainer.class);
   private VirtualFilePointerContainer setCachedRoots(@NotNull CacheKey key, @NotNull Collection<String> urls) {
     // optimization: avoid creating heavy container for empty list, use 'EMPTY' stub for that case
-    VirtualFilePointerContainer container = urls.isEmpty() ? EMPTY : VirtualFilePointerManager.getInstance().createContainer(myRootsDisposable);
-    for (String url : urls) {
-      container.add(url);
+    VirtualFilePointerContainer container;
+    if (urls.isEmpty()) {
+      container = EMPTY;
+    }
+    else {
+      container = VirtualFilePointerManager.getInstance().createContainer(myRootsDisposable);
+      ((VirtualFilePointerContainerImpl)container).addAll(urls);
     }
     Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
     if (map == null) map = ConcurrencyUtil.cacheOrGet(myRoots, ContainerUtil.newConcurrentMap());
