@@ -32,7 +32,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   protected fun doMap(identifierOrNamedElement: PsiElement, mapBySourceCode: Boolean): String? {
     val mappings = getMappingsForElement(identifierOrNamedElement)
-    if (mappings == null) return null
+    if (mappings == null || mappings.isEmpty()) return null
     val sourceEntry = mappings[0]
     val generatedName: String?
     try {
