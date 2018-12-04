@@ -139,7 +139,7 @@ private fun searchForChangedIconsByDesigners(context: Context) {
 private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<File>) {
   fun asIcons(files: Collection<String>, repo: File) = files.asSequence()
     .filter { ImageExtension.fromName(it) != null }
-    .map { repo.resolve(it) }
+    .map(repo::resolve)
     .filter(context.devIconsFilter)
     .map { it.toRelativeString(context.devRepoRoot) }.toList()
 

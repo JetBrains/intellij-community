@@ -13,4 +13,10 @@ internal class Changes(val includeRemoved: Boolean = true) {
     it += modified
     if (includeRemoved) it += removed
   }
+
+  fun clear() {
+    added.clear()
+    modified.clear()
+    removed.clear()
+  }
 }

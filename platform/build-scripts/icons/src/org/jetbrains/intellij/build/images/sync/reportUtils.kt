@@ -45,7 +45,7 @@ internal fun report(context: Context, skipped: Int): String {
 internal fun findCommitsToSync(context: Context) {
   // TODO: refactor it
   fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
-  if ((context.doSyncDevRepo) && context.devSyncRequired()) {
+  if (context.doSyncDevRepo && context.devSyncRequired()) {
     context.iconsCommitsToSync = findCommitsByRepo(context, UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.byDesigners) {
       context.devIcons[it] ?: {
         val change = context.devRepoRoot.resolve(it)
@@ -53,7 +53,7 @@ internal fun findCommitsToSync(context: Context) {
       }()
     }
   }
-  if ((context.doSyncIconsRepo) && context.iconsSyncRequired()) {
+  if (context.doSyncIconsRepo && context.iconsSyncRequired()) {
     context.devCommitsToSync = findCommitsByRepo(context, UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.byDev) {
       context.icons[it] ?: guessGitObject(context.iconsRepo, context.iconsRepoDir.resolve(it))
     }
@@ -85,6 +85,11 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
     changesToReposMap(context.devRepoRoot.resolve(it))
   }.distinct()
   verifyDevIcons(context, repos)
+  if (repos.all { gitStage(it).isEmpty() }) {
+    log("Nothing to commit")
+    context.byDesigners.clear()
+    return null
+  }
   return withTmpBranch(repos) { branch ->
     val commitsForReview = commitAndPush(branch, user, email, context.iconsCommitsToSync.commitMessage(), repos)
     val projectId = UPSOURCE_DEV_PROJECT_ID
@@ -133,6 +138,11 @@ private fun postVerificationResultToReview(review: Review) {
 
 private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
   if (context.devCommitsToSync.isEmpty()) return emptyList()
+  if (gitStage(context.iconsRepo).isEmpty()) {
+    log("Nothing to commit")
+    context.byDev.clear()
+    return emptyList()
+  }
   val repos = listOf(context.iconsRepo)
   return context.devCommitsToSync.values.flatten()
     .groupBy(CommitInfo::committerEmail)
