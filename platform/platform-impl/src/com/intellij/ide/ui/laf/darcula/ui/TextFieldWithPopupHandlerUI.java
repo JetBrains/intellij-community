@@ -91,7 +91,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a clear icon in one of the four states or {@code null} to hide it
    */
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    return !clickable ? null : hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
+    return !clickable ? null : hovered ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close;
   }
 
   /**

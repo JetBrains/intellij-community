@@ -431,7 +431,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     abstract Icon getShowHistoryIcon();
 
     Icon getClearIcon() {
-      return AllIcons.Actions.Clear;
+      return AllIcons.Actions.Close;
     }
 
     abstract void paint(Graphics2D g);

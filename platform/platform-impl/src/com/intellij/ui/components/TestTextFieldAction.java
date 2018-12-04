@@ -129,7 +129,7 @@ public class TestTextFieldAction extends DumbAwareAction {
                 icon.setForeground(getBackground());
                 return icon;
               }
-              return hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
+              return hovered ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close;
             }
 
             @Override
