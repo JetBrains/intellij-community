@@ -193,6 +193,7 @@ public class FindUsagesManager {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, final FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     FindUsagesHandler handler = getFindUsagesHandler(psiElement, showDialog ? OperationMode.DEFAULT : OperationMode.USAGES_WITH_DEFAULT_OPTIONS);
     if (handler == null) return;
 
@@ -223,6 +224,7 @@ public class FindUsagesManager {
                        @NotNull FindUsagesOptions findUsagesOptions,
                        PsiFile scopeFile,
                        FileEditor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
     if (handler == null) return;
     startFindUsages(findUsagesOptions, handler, scopeFile, editor);
@@ -232,6 +234,7 @@ public class FindUsagesManager {
                                @NotNull FindUsagesHandler handler,
                                PsiFile scopeFile,
                                FileEditor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     boolean singleFile = scopeFile != null;
 
     clearFindingNextUsageInFile();
@@ -455,6 +458,7 @@ public class FindUsagesManager {
                                   @NotNull FileSearchScope direction,
                                   @NotNull final FindUsagesOptions findUsagesOptions,
                                   @NotNull FileEditor fileEditor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     initLastSearchElement(findUsagesOptions, primaryElements, secondaryElements);
 
     clearStatusBar();
@@ -466,20 +470,31 @@ public class FindUsagesManager {
     final UsageSearcher usageSearcher = createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, scopeFile);
     AtomicBoolean usagesWereFound = new AtomicBoolean();
 
-    Usage fUsage = findSiblingUsage(usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
+    new Task.Backgroundable(myProject, FindBundle.message("find.progress.searching.message", "editor")){
+      private Usage myUsage;
 
-    if (fUsage != null) {
-      fUsage.navigate(true);
-      fUsage.selectInEditor();
-    }
-    else if (!usagesWereFound.get()) {
-      String message = getNoUsagesFoundMessage(primaryElements[0]) + " in " + scopeFile.getName();
-      showHintOrStatusBarMessage(message, fileEditor);
-    }
-    else {
-      fileEditor.putUserData(KEY_START_USAGE_AGAIN, VALUE_START_USAGE_AGAIN);
-      showHintOrStatusBarMessage(getSearchAgainMessage(primaryElements[0], direction), fileEditor);
-    }
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        myUsage = findSiblingUsage(usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
+      }
+
+      @Override
+      public void onFinished() {
+        if (FindUsagesManager.this.myProject.isDisposed() || !fileEditor.isValid()) return;
+        if (myUsage != null) {
+          myUsage.navigate(true);
+          myUsage.selectInEditor();
+        }
+        else if (!usagesWereFound.get()) {
+          String message = getNoUsagesFoundMessage(primaryElements[0]) + " in " + scopeFile.getName();
+          showHintOrStatusBarMessage(message, fileEditor);
+        }
+        else {
+          fileEditor.putUserData(KEY_START_USAGE_AGAIN, VALUE_START_USAGE_AGAIN);
+          showHintOrStatusBarMessage(getSearchAgainMessage(primaryElements[0], direction), fileEditor);
+        }
+      }
+    }.queue();
   }
 
   @NotNull
