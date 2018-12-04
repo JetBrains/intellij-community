@@ -1370,7 +1370,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     public boolean isDefaultAuthor(@NotNull VcsUser author) {
-      Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(), virtualFile -> findGitDir(virtualFile) != null);
+      GitRepositoryManager manager = getRepositoryManager(myProject);
+      Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(),
+                                                        root -> manager.getRepositoryForRoot(root) != null);
       GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
       return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
     }
