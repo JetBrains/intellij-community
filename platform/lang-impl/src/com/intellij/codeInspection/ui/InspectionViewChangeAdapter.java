@@ -166,7 +166,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
         nodeProcessor = CompositeProcessor.combine(fileCheckProcessor, nodeProcessor);
       }
 
-      myView.getTree().getInspectionTreeModel().traverse(myView.getTree().getInspectionTreeModel().getRoot(), nodeProcessor);
+      myView.getTree().getInspectionTreeModel().traverse(myView.getTree().getInspectionTreeModel().getRoot()).processEach(nodeProcessor);
 
       if (!unPresentFiles.isEmpty()) {
         myUnPresentEditedFiles.addAll(unPresentFiles);

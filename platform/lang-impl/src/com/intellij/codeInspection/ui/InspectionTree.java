@@ -418,10 +418,7 @@ public class InspectionTree extends Tree {
     if (!getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {
       for (TreePath path : selected) {
         InspectionTreeNode node = (InspectionTreeNode)path.getLastPathComponent();
-        myModel.traverse(node, n -> {
-          n.dropProblemCountCaches();
-          return true;
-        });
+        myModel.traverse(node).forEach(InspectionTreeNode::dropProblemCountCaches);
       }
       return;
     }

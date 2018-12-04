@@ -18,7 +18,6 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -71,8 +70,8 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
     return myParents.get(node);
   }
 
-  public void traverse(InspectionTreeNode node, Processor<? super InspectionTreeNode> processor) {
-    TreeTraversal.PRE_ORDER_DFS.traversal(node, n -> getChildren(n)).processEach(processor);
+  public JBIterable<InspectionTreeNode> traverse(InspectionTreeNode node) {
+    return TreeTraversal.PRE_ORDER_DFS.traversal(node, n -> getChildren(n));
   }
 
   @NotNull
