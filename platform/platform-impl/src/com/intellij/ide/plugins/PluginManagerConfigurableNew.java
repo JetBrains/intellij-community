@@ -127,7 +127,8 @@ public class PluginManagerConfigurableNew
   };
 
   private Runnable myShutdownCallback;
-  private Runnable myPluginUpdatesServiceCallback;
+
+  private PluginUpdatesService myPluginUpdatesService;
 
   private List<IdeaPluginDescriptor> myAllRepositoriesList;
   private Map<String, IdeaPluginDescriptor> myAllRepositoriesMap;
@@ -464,8 +465,9 @@ public class PluginManagerConfigurableNew
     myTabHeaderComponent.addTab("Installed");
     myTabHeaderComponent.addTab(myUpdatesTabName = new CountTabName(myTabHeaderComponent, "Updates"));
 
-    myPluginUpdatesServiceCallback =
+    myPluginUpdatesService =
       PluginUpdatesService.connectConfigurable(countValue -> myUpdatesTabName.setCount(countValue == null ? 0 : countValue));
+    myPluginsModel.setPluginUpdatesService(myPluginUpdatesService);
 
     createSearchPanels();
 
@@ -651,10 +653,7 @@ public class PluginManagerConfigurableNew
     Disposer.dispose(mySearchUpdateAlarm);
     myTrendingSearchPanel.dispose();
 
-    if (myPluginUpdatesServiceCallback != null) {
-      myPluginUpdatesServiceCallback.run();
-      myPluginUpdatesServiceCallback = null;
-    }
+    myPluginUpdatesService.dispose();
 
     if (myTrendingPanel != null) {
       myTrendingPanel.dispose();
@@ -884,7 +883,7 @@ public class PluginManagerConfigurableNew
 
     myInstalledPanel = panel;
 
-    PluginUpdatesService.connectInstalled(updates -> {
+    myPluginUpdatesService.connectInstalled(updates -> {
       if (ContainerUtil.isEmpty(updates)) {
         for (UIPluginGroup group : myInstalledPanel.getGroups()) {
           for (CellPluginComponent plugin : group.plugins) {
@@ -920,7 +919,7 @@ public class PluginManagerConfigurableNew
       myUpdatesPanel.clear();
       myUpdatesPanel.startLoading();
 
-      PluginUpdatesService.calculateUpdates(updates -> {
+      myPluginUpdatesService.calculateUpdates(updates -> {
         myUpdatesPanel.stopLoading();
 
         if (!ContainerUtil.isEmpty(updates)) {
@@ -1296,7 +1295,7 @@ public class PluginManagerConfigurableNew
       myCustomRepositoriesMap = null;
     }
 
-    PluginUpdatesService.recalculateUpdates();
+    myPluginUpdatesService.recalculateUpdates();
 
     if (myTrendingPanel == null && myUpdatesPanel == null) {
       return;

@@ -7,16 +7,19 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.roots.ui.configuration.SidePanelCountLabel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.treeStructure.SimpleTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
+import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
  */
-public class PluginManagerConfigurableTreeRenderer implements ConfigurableTreeRenderer {
+public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapter implements ConfigurableTreeRenderer, Consumer<Integer> {
   private final SidePanelCountLabel myCountLabel = new SidePanelCountLabel() {
     @Override
     public void paint(Graphics g) {
@@ -25,6 +28,7 @@ public class PluginManagerConfigurableTreeRenderer implements ConfigurableTreeRe
     }
   };
 
+  private PluginUpdatesService myService;
   private SimpleTree myTree;
   private String myCountValue;
 
@@ -35,13 +39,8 @@ public class PluginManagerConfigurableTreeRenderer implements ConfigurableTreeRe
       return null;
     }
     if (myTree == null) {
-      PluginUpdatesService.connectTreeRenderer(tree, countValue -> {
-        String oldCountValue = myCountValue;
-        myCountValue = countValue == null || countValue <= 0 ? null : countValue.toString();
-        if (myTree != null && !StringUtil.equals(oldCountValue, myCountValue)) {
-          myTree.repaint();
-        }
-      });
+      myService = PluginUpdatesService.connectTreeRenderer(this);
+      tree.addAncestorListener(this);
       myTree = tree;
     }
     if (myCountValue != null) {
@@ -50,5 +49,19 @@ public class PluginManagerConfigurableTreeRenderer implements ConfigurableTreeRe
       return myCountLabel;
     }
     return null;
+  }
+
+  @Override
+  public void ancestorRemoved(AncestorEvent event) {
+    myService.dispose();
+  }
+
+  @Override
+  public void accept(Integer countValue) {
+    String oldCountValue = myCountValue;
+    myCountValue = countValue == null || countValue <= 0 ? null : countValue.toString();
+    if (myTree != null && !StringUtil.equals(oldCountValue, myCountValue)) {
+      myTree.repaint();
+    }
   }
 }

@@ -48,6 +48,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private StatusBarEx myStatusBar;
 
+  private PluginUpdatesService myPluginUpdatesService;
+
   public MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     myStatusBar = getStatusBar(window);
@@ -118,6 +120,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (!myInstallingInfos.isEmpty()) {
       myTopController.showProgress(true);
     }
+  }
+
+  public void setPluginUpdatesService(@NotNull PluginUpdatesService service) {
+    myPluginUpdatesService = service;
   }
 
   @NotNull
@@ -277,7 +283,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (myUpdates != null) {
         myUpdates.titleWithCount();
       }
-      PluginUpdatesService.finishUpdate(descriptor);
+      myPluginUpdatesService.finishUpdate(descriptor);
     }
 
     info.indicator.cancel();

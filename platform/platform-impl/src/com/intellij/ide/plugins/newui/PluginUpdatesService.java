@@ -6,12 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.ui.AncestorListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.AncestorEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -22,114 +20,23 @@ import java.util.function.Consumer;
  * @author Alexander Lobas
  */
 public class PluginUpdatesService {
-  private static boolean myCreate = true;
-  private static Consumer<Integer> myTreeCallback;
-  private static Consumer<Integer> myTabCallback;
-  private static Consumer<Collection<PluginDownloader>> myInstalledCallback;
-  private static List<Consumer<Collection<PluginDownloader>>> myPanelCallbacks;
+  private static final List<PluginUpdatesService> SERVICES = new ArrayList<>();
   private static Collection<PluginDownloader> myCache;
   private static boolean myPrepared;
   private static boolean myPreparing;
 
-  public static void connectTreeRenderer(@NotNull JComponent uiForDispose, @NotNull Consumer<Integer> callback) {
-    assert SwingUtilities.isEventDispatchThread();
+  private Consumer<Integer> myTreeCallback;
+  private Consumer<Integer> myTabCallback;
+  private Consumer<Collection<PluginDownloader>> myInstalledPanelCallback;
+  private Consumer<Collection<PluginDownloader>> myUpdatePanelCallback;
 
-    if (myCreate) {
-      myCreate = false;
-      uiForDispose.addAncestorListener(new AncestorListenerAdapter() {
-        @Override
-        public void ancestorRemoved(AncestorEvent event) {
-          dispose();
-        }
-      });
-    }
-    myTreeCallback = callback;
-    handleCount(callback);
-  }
+  @NotNull
+  public static PluginUpdatesService connectTreeRenderer(@NotNull Consumer<Integer> callback) {
+    checkAccess();
 
-  @Nullable
-  public static Runnable connectConfigurable(@NotNull Consumer<Integer> callback) {
-    assert SwingUtilities.isEventDispatchThread();
-
-    Runnable disposer = myCreate ? () -> dispose() : null;
-    myCreate = false;
-    myTabCallback = callback;
-    handleCount(callback);
-
-    return disposer;
-  }
-
-  public static void connectInstalled(@NotNull Consumer<Collection<PluginDownloader>> callback) {
-    assert SwingUtilities.isEventDispatchThread();
-
-    myInstalledCallback = callback;
-
-    if (myPrepared) {
-      callback.accept(myCache);
-    }
-    else {
-      calculateUpdates();
-    }
-  }
-
-  public static void calculateUpdates(@NotNull Consumer<Collection<PluginDownloader>> callback) {
-    assert SwingUtilities.isEventDispatchThread();
-
-    if (myPrepared) {
-      callback.accept(myCache);
-      return;
-    }
-    if (myPanelCallbacks == null) {
-      myPanelCallbacks = new ArrayList<>();
-    }
-    myPanelCallbacks.add(callback);
-    calculateUpdates();
-  }
-
-  public static void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
-    assert SwingUtilities.isEventDispatchThread();
-
-    if (!myPrepared || myCache == null) {
-      return;
-    }
-
-    for (Iterator<PluginDownloader> I = myCache.iterator(); I.hasNext(); ) {
-      PluginDownloader downloader = I.next();
-      if (downloader.getDescriptor() == descriptor) {
-        I.remove();
-        runCallbacks(getCount());
-        return;
-      }
-    }
-  }
-
-  public static void recalculateUpdates() {
-    // XXX
-    assert SwingUtilities.isEventDispatchThread();
-    assert !myPreparing;
-
-    runCallbacks(-1);
-    if (myInstalledCallback != null) {
-      myInstalledCallback.accept(null);
-    }
-    calculateUpdates();
-  }
-
-  private static void dispose() {
-    assert SwingUtilities.isEventDispatchThread();
-
-    myCreate = true;
-    myTreeCallback = null;
-    myTabCallback = null;
-    myInstalledCallback = null;
-    myPanelCallbacks = null;
-    myCache = null;
-    myPrepared = false;
-    myPreparing = false;
-  }
-
-  private static void handleCount(@NotNull Consumer<Integer> callback) {
-    assert SwingUtilities.isEventDispatchThread();
+    PluginUpdatesService service = new PluginUpdatesService();
+    SERVICES.add(service);
+    service.myTreeCallback = callback;
 
     if (myPrepared) {
       callback.accept(getCount());
@@ -137,11 +44,106 @@ public class PluginUpdatesService {
     else {
       calculateUpdates();
     }
+
+    return service;
+  }
+
+  @NotNull
+  public static PluginUpdatesService connectConfigurable(@NotNull Consumer<Integer> callback) {
+    checkAccess();
+
+    PluginUpdatesService service = new PluginUpdatesService();
+    SERVICES.add(service);
+    service.myTabCallback = callback;
+
+    if (myPrepared) {
+      callback.accept(getCount());
+    }
+    else {
+      calculateUpdates();
+    }
+
+    return service;
+  }
+
+  public void connectInstalled(@NotNull Consumer<Collection<PluginDownloader>> callback) {
+    checkAccess();
+    myInstalledPanelCallback = callback;
+
+    if (myPrepared) {
+      callback.accept(myCache);
+    }
+    else {
+      calculateUpdates();
+    }
+  }
+
+  public void calculateUpdates(@NotNull Consumer<Collection<PluginDownloader>> callback) {
+    checkAccess();
+    myUpdatePanelCallback = callback;
+
+    if (myPrepared) {
+      callback.accept(myCache);
+    }
+    else {
+      calculateUpdates();
+    }
+  }
+
+  public void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
+    checkAccess();
+
+    if (!myPrepared || myCache == null) {
+      return;
+    }
+
+    for (Iterator<PluginDownloader> I = myCache.iterator(); I.hasNext(); ) {
+      PluginDownloader downloader = I.next();
+
+      if (downloader.getDescriptor() == descriptor) {
+        I.remove();
+
+        Integer countValue = getCount();
+        for (PluginUpdatesService service : SERVICES) {
+          service.runCountCallbacks(countValue);
+        }
+
+        return;
+      }
+    }
+  }
+
+  public void recalculateUpdates() {
+    checkAccess();
+    assert !myPreparing;
+
+    Integer countValue = -1;
+    for (PluginUpdatesService service : SERVICES) {
+      service.runCountCallbacks(countValue);
+      if (service.myInstalledPanelCallback != null) {
+        service.myInstalledPanelCallback.accept(null);
+      }
+    }
+
+    calculateUpdates();
+  }
+
+  public void dispose() {
+    checkAccess();
+    dispose(this);
+  }
+
+  private static void dispose(@NotNull PluginUpdatesService service) {
+    SERVICES.remove(service);
+
+    if (SERVICES.isEmpty()) {
+      myCache = null;
+      myPrepared = false;
+      myPreparing = false;
+    }
   }
 
   private static void calculateUpdates() {
-    assert SwingUtilities.isEventDispatchThread();
-
     if (myPreparing) {
       return;
     }
@@ -152,26 +154,38 @@ public class PluginUpdatesService {
       Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        assert SwingUtilities.isEventDispatchThread();
+        checkAccess();
 
         myPreparing = false;
         myPrepared = true;
         myCache = updates;
 
-        runCallbacks(getCount());
-
-        if (myInstalledCallback != null) {
-          myInstalledCallback.accept(myCache);
-        }
-
-        if (myPanelCallbacks != null) {
-          for (Consumer<Collection<PluginDownloader>> callback : myPanelCallbacks) {
-            callback.accept(myCache);
-          }
-          myPanelCallbacks = null;
+        Integer countValue = getCount();
+        for (PluginUpdatesService service : SERVICES) {
+          service.runAllCallbacks(countValue);
         }
       }, ModalityState.any());
     });
+  }
+
+  private void runAllCallbacks(@Nullable Integer countValue) {
+    runCountCallbacks(countValue);
+
+    if (myInstalledPanelCallback != null) {
+      myInstalledPanelCallback.accept(myCache);
+    }
+    if (myUpdatePanelCallback != null) {
+      myUpdatePanelCallback.accept(myCache);
+    }
+  }
+
+  private void runCountCallbacks(@Nullable Integer countValue) {
+    if (myTreeCallback != null) {
+      myTreeCallback.accept(countValue);
+    }
+    if (myTabCallback != null) {
+      myTabCallback.accept(countValue);
+    }
   }
 
   @Nullable
@@ -179,12 +193,7 @@ public class PluginUpdatesService {
     return myCache == null ? null : new Integer(myCache.size());
   }
 
-  private static void runCallbacks(@Nullable Integer countValue) {
-    if (myTreeCallback != null) {
-      myTreeCallback.accept(countValue);
-    }
-    if (myTabCallback != null) {
-      myTabCallback.accept(countValue);
-    }
+  private static void checkAccess() {
+    assert SwingUtilities.isEventDispatchThread();
   }
 }
