@@ -284,11 +284,6 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     @Override
     protected void showPopup() {
     }
-
-    @Override
-    protected boolean hasIconsOutsideOfTextField() {
-      return false;
-    }
   }
 
   @Nullable

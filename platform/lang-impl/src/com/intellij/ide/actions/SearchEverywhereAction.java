@@ -992,16 +992,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     @Override
-    protected boolean isSearchControlUISupported() {
-      return true;
-    }
-
-    @Override
-    protected boolean hasIconsOutsideOfTextField() {
-      return false;
-    }
-
-    @Override
     protected void showPopup() {
     }
 
