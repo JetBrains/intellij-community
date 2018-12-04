@@ -67,6 +67,49 @@ public class FindReachableExportedDependenciesTest extends ModuleTestCase {
     assertEmpty(findReachableViaThisDependencyOnly(a, b1));
   }
 
+  public void testDoNotReportExportedOfExportedDependency() {
+    Module a = createModule("a");
+    Module b = createModule("b");
+    Module c = createModule("c");
+    Module d = createModule("d");
+    ModuleRootModificationUtil.addDependency(a, b);
+    ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(c, d, DependencyScope.COMPILE, true);
+    OrderEntry dependency = assertOneElement(findReachableViaThisDependencyOnly(a, b));
+    assertSame(c, ((ModuleOrderEntry)dependency).getModule());
+  }
+
+  public void testIgnoreDirectRuntimeDependency() {
+    Module a = createModule("a");
+    Module b = createModule("b");
+    Module c = createModule("c");
+    ModuleRootModificationUtil.addDependency(a, b);
+    ModuleRootModificationUtil.addDependency(a, c, DependencyScope.RUNTIME, false);
+    ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
+    OrderEntry dependency = assertOneElement(findReachableViaThisDependencyOnly(a, b));
+    assertSame(c, ((ModuleOrderEntry)dependency).getModule());
+  }
+
+  public void testIgnoreDirectTestDependency() {
+    Module a = createModule("a");
+    Module b = createModule("b");
+    Module c = createModule("c");
+    ModuleRootModificationUtil.addDependency(a, b);
+    ModuleRootModificationUtil.addDependency(a, c, DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
+    OrderEntry dependency = assertOneElement(findReachableViaThisDependencyOnly(a, b));
+    assertSame(c, ((ModuleOrderEntry)dependency).getModule());
+  }
+
+  public void testHonorDirectTestDependencyWhenAnalyzingTestDependency() {
+    Module a = createModule("a");
+    Module b = createModule("b");
+    Module c = createModule("c");
+    ModuleRootModificationUtil.addDependency(a, b, DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(a, c, DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
+    assertEmpty(findReachableViaThisDependencyOnly(a, b));
+  }
 
   private List<OrderEntry> findReachableViaThisDependencyOnly(Module a, Module b) {
     ModulesProvider rootModelProvider = DefaultModulesProvider.createForProject(myProject);

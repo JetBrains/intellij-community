@@ -2,9 +2,11 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -29,6 +31,8 @@ import java.util.Set;
  * @author nik
  */
 public class JavaProjectRootsUtil {
+  private static final Logger LOG = Logger.getInstance(JavaProjectRootsUtil.class);
+
   public static boolean isOutsideJavaSourceRoot(@Nullable PsiFile psiFile) {
     if (psiFile == null) return false;
     if (psiFile instanceof PsiCodeFragment) return false;
@@ -89,11 +93,26 @@ public class JavaProjectRootsUtil {
   public static List<OrderEntry> findExportedDependenciesReachableViaThisDependencyOnly(@NotNull Module module,
                                                                                         @NotNull Module dependency,
                                                                                         @NotNull RootModelProvider rootModelProvider) {
+    ModuleOrderEntry moduleOrderEntry = OrderEntryUtil.findModuleOrderEntry(rootModelProvider.getRootModel(module), dependency);
+    if (moduleOrderEntry == null) {
+      throw new IllegalArgumentException("Cannot find dependency from " + module + " to " + dependency);
+    }
+
     Condition<OrderEntry> withoutThisDependency = entry -> !(entry instanceof ModuleOrderEntry && entry.getOwnerModule().equals(module) &&
-                                                            dependency.equals(((ModuleOrderEntry)entry).getModule()));
+                                                             dependency.equals(((ModuleOrderEntry)entry).getModule()));
+    OrderEnumerator enumerator =
+      rootModelProvider.getRootModel(module).orderEntries()
+        .satisfying(withoutThisDependency)
+        .using(rootModelProvider)
+        .compileOnly()
+        .recursively().exportedOnly();
+    if (moduleOrderEntry.getScope().isForProductionCompile()) {
+      enumerator = enumerator.productionOnly();
+    }
+
     Set<Module> reachableModules = new HashSet<>();
     Set<Library> reachableLibraries = new HashSet<>();
-    rootModelProvider.getRootModel(module).orderEntries().satisfying(withoutThisDependency).using(rootModelProvider).recursively().exportedOnly().forEach(entry -> {
+    enumerator.forEach(entry -> {
       if (entry instanceof ModuleSourceOrderEntry) {
         reachableModules.add(entry.getOwnerModule());
       }
