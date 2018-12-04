@@ -766,7 +766,7 @@ FunctionEnd
 
 Function uninstallOldVersionDialog
   StrCpy $control_fields 2
-  StrCpy $max_fields 7
+  StrCpy $max_fields 13
   StrCpy $0 "HKLM"
   StrCpy $4 0
   ReserveFile "UninstallOldVersions.ini"
