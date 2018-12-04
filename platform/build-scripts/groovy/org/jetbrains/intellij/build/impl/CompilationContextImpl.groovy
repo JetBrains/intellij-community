@@ -75,7 +75,7 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     projectHome = toCanonicalPath(projectHome)
-    def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
+    def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "${jdkDir(projectHome)}/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
 
     if (!JdkVersionDetector.instance.detectJdkVersionInfo(gradleJdk).version.contains("1.8.")) {
@@ -89,6 +89,12 @@ class CompilationContextImpl implements CompilationContext {
     context.prepareForBuild()
     messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
     return context
+  }
+
+  private static String jdkDir(String projectHome) {
+    (System.getProperty('jdk.dir')?.with {
+      new File(it).exists() ? it : null
+    } ?: "$projectHome/build/jdk")
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -138,7 +144,7 @@ class CompilationContextImpl implements CompilationContext {
     pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
-    JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
+    JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "${jdkDir(projectHome)}/1.6", "JDK_16_x64"))
     JdkUtils.defineJdk(model.global, "1.8", jdkHome)
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
