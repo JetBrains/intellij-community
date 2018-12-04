@@ -93,6 +93,10 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testSuppressByNoinspectionTag() {
+    doTest();
+  }
+
   public void testReachableFromXml() {
     doTest();
   }
