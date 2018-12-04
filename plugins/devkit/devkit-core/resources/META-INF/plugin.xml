@@ -185,10 +185,6 @@
                      enabledByDefault="true" isInternal="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection"/>
 
-    <intentionAction>
-      <className>org.jetbrains.idea.devkit.codeStyle.bean.CodeStyleBeanIntention</className>
-    </intentionAction>
-
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
