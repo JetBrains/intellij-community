@@ -18,6 +18,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -245,6 +246,41 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                               "...test_sample_6(+)\n" +
                               "...test_sample_7(+)\n" +
                               "...test_sample_8(+)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
+  @Test
+  public void testTestEmptySuite() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testNameBeforeTestStarted",
+                                                                SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_test.py", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull final PyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setKeywords("asdasdasd");
+            }
+          };
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all,
+                                        final int exitCode) {
+          Assert.assertEquals("Wrong message for empty suite",
+                              PyBundle.message("runcfg.tests.empty_suite"),
+                              runner.getTestProxy().getPresentation());
+          Assert.assertEquals("Wrong empty suite tree", "Test tree:\n" +
+                                                        "[root](~)\n", runner.getFormattedTestTree());
+
+          runner.getFormattedTestTree();
         }
       });
   }
