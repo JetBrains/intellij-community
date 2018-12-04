@@ -1427,7 +1427,7 @@ public final class UiDefaultsHardcodedKeys {
     "WelcomeScreen.groupIconBorderColor",
     "WelcomeScreen.headerBackground",
     "WelcomeScreen.headerForeground",
-    "WelcomeScreen.separatorColor",
+    "WelcomeScreen.separatorColor"
   );
 
   public static final Set<String> ALL_KEYS = ContainerUtil.unmodifiableOrEmptySet(ContainerUtil.union(UI_DEFAULTS_KEYS, NAMED_COLORS));
