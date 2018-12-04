@@ -141,12 +141,14 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     final RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
     if (shouldAddDefaultActions) {
-      addDefaultActions(contentBuilder, executionResult);
+      addDefaultActions(contentBuilder, executionResult, state instanceof JavaCommandLine);
     }
     return contentBuilder.showRunContent(env.getContentToReuse());
   }
 
-  private static void addDefaultActions(@NotNull RunContentBuilder contentBuilder, @NotNull ExecutionResult executionResult) {
+  private static void addDefaultActions(@NotNull RunContentBuilder contentBuilder,
+                                        @NotNull ExecutionResult executionResult,
+                                        boolean isJavaCommandLine) {
     final ExecutionConsole executionConsole = executionResult.getExecutionConsole();
     final JComponent consoleComponent = executionConsole != null ? executionConsole.getComponent() : null;
     ProcessHandler processHandler = executionResult.getProcessHandler();
@@ -163,7 +165,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       });
     }
     contentBuilder.addAction(controlBreakAction);
-    AttachDebuggerAction.add(contentBuilder, processHandler);
+    if (isJavaCommandLine) {
+      AttachDebuggerAction.add(contentBuilder, processHandler);
+    }
     contentBuilder.addAction(new SoftExitAction(processHandler));
   }
 
