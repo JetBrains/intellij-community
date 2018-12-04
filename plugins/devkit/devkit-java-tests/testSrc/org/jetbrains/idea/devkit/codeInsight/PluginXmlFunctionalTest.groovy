@@ -45,7 +45,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp()
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
+    myTempDirFixture.setUp()
     myFixture.enableInspections(new PluginXmlDomInspection())
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myTempDirFixture.tearDown()
+    super.tearDown()
   }
 
   @Override
