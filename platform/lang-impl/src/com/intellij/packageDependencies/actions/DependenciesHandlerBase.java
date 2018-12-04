@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -103,7 +102,6 @@ public abstract class DependenciesHandlerBase {
   protected abstract DependenciesBuilder createDependenciesBuilder(AnalysisScope scope);
 
   private void perform(List<DependenciesBuilder> builders, @NotNull ProgressIndicator indicator) {
-    ProgressIndicatorUtils.dropResolveCacheRegularly(indicator, myProject);
     try {
       PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
       for (AnalysisScope scope : myScopes) {

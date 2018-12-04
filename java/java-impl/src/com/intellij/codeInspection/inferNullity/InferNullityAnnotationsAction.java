@@ -33,7 +33,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.DependencyScope;
@@ -181,8 +180,6 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final NullityInferrer inferrer = new NullityInferrer(isAnnotateLocalVariables(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
     final Runnable searchForUsages = () -> {
-      ProgressIndicator indicator = ProgressManager.getGlobalProgressIndicator();
-      ProgressIndicatorUtils.dropResolveCacheRegularly(indicator, project);
       scope.accept(new PsiElementVisitor() {
         int myFileCount;
 

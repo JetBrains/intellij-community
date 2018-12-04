@@ -20,9 +20,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesToolWindow;
 import com.intellij.ui.content.Content;
@@ -43,11 +41,6 @@ public class CyclicDependenciesHandler {
 
   public void analyze() {
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject, myScope);
-    final Runnable process = () -> {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      ProgressIndicatorUtils.dropResolveCacheRegularly(indicator, myProject);
-      builder.analyze();
-    };
     final Runnable successRunnable = () -> SwingUtilities.invokeLater(() -> {
       CyclicDependenciesPanel panel = new CyclicDependenciesPanel(myProject, builder);
       Content content = ContentFactory.SERVICE.getInstance().createContent(panel, AnalysisScopeBundle.message(
@@ -58,6 +51,6 @@ public class CyclicDependenciesHandler {
     });
     ProgressManager.getInstance()
       .runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
-                                            process, successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
+                                            () -> builder.analyze(), successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
   }
 }
