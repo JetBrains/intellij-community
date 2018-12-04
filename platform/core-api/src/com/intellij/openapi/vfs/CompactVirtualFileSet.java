@@ -32,7 +32,8 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     addAll(files);
   }
 
-  public boolean contains(@NotNull VirtualFile file) {
+  @Override
+  public boolean contains(Object file) {
     if (file instanceof VirtualFileWithId) {
       BitSet ids = fileIds;
       int id = getValidId((VirtualFileWithId)file);
