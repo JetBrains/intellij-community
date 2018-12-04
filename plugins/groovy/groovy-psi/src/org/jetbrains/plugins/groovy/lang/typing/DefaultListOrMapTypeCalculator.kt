@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
-import com.intellij.openapi.util.RecursionManager.doPreventingRecursion
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassType
@@ -9,12 +8,8 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.psi.util.PsiUtil.substituteTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
@@ -24,7 +19,7 @@ class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
       return getMapTypeFromDiamond(expression) ?: GrMapType.createFromNamedArgs(expression, expression.namedArguments)
     }
     else {
-      return getListTypeFromDiamond(expression) ?: getTupleType(expression)
+      return getListTypeFromDiamond(expression) ?: ListLiteralType(expression)
     }
   }
 
@@ -75,31 +70,5 @@ class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
 
     }
     return null
-  }
-
-  private fun getTupleType(expression: GrListOrMap): PsiType? {
-    val initializers = expression.initializers
-
-    return object : GrTupleType(expression.resolveScope, JavaPsiFacade.getInstance(expression.project)) {
-
-      override fun inferComponents(): List<PsiType?> {
-        return initializers.flatMap {
-          doGetComponentTypes(it) ?: return emptyList()
-        }
-      }
-
-      private fun doGetComponentTypes(initializer: GrExpression): Collection<PsiType>? {
-        return doPreventingRecursion(initializer, false) {
-          if (initializer is GrSpreadArgument) {
-            (initializer.argument.type as? GrTupleType)?.componentTypes
-          }
-          else {
-            TypesUtil.boxPrimitiveType(initializer.type, initializer.manager, initializer.resolveScope)?.let { listOf(it) }
-          }
-        }
-      }
-
-      override fun isValid(): Boolean = initializers.all { it.isValid }
-    }
   }
 }

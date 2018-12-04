@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -28,6 +29,14 @@ public abstract class GrLiteralClassType extends PsiClassType {
     myScope = scope;
     myFacade = facade;
     myGroovyPsiManager = GroovyPsiManager.getInstance(myFacade.getProject());
+  }
+
+  protected GrLiteralClassType(@NotNull LanguageLevel languageLevel, @NotNull PsiElement context) {
+    super(languageLevel);
+    myScope = context.getResolveScope();
+    Project project = context.getProject();
+    myFacade = JavaPsiFacade.getInstance(project);
+    myGroovyPsiManager = GroovyPsiManager.getInstance(project);
   }
 
   @NotNull
