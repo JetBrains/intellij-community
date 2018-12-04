@@ -466,6 +466,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang-databinding/intellij.android.lang-databinding.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang-databinding/intellij.android.lang-databinding.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang/intellij.android.lang.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang/intellij.android.lang.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib/intellij.android.layoutlib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.iml" filepath="$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" filepath="$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/perfd-host/intellij.android.perfdHost.iml" filepath="$PROJECT_DIR$/../adt/idea/perfd-host/intellij.android.perfdHost.iml" />
