@@ -392,6 +392,16 @@ Function ConfirmDesktopShortcut
   ${If} $R1 != ""
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Text" $R1
+  ${Else}
+    Push $R0
+    Push $R1
+    !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $secondLauncherShortcut" "Right"
+    IntOp $R1 $R0 - 10
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Right" $R1
+    IntOp $R1 $R0 - 5
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Left" $R1
+    Pop $R1
+    Pop $R0
   ${EndIf}
 
   ; if jre x86 for the build is available then add checkbox to Installation Options dialog
