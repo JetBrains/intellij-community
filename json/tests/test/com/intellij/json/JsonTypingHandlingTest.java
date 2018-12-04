@@ -102,4 +102,17 @@ public class JsonTypingHandlingTest extends JsonTestCase {
   public void testPairedSingleQuote() {
     doTypingTest('\'', "{<caret>}", "{'<caret>'}", "json");
   }
+  public void testPairedSingleQuote2() {
+    doTypingTest('\'', "{\n" +
+                       "  \"rules\": {\n" +
+                       "    \"at-rule-no-vendor-prefix\": null,\n" +
+                       "    <caret>\n" +
+                       "  }\n" +
+                       "}", "{\n" +
+                            "  \"rules\": {\n" +
+                            "    \"at-rule-no-vendor-prefix\": null,\n" +
+                            "    '<caret>'\n" +
+                            "  }\n" +
+                            "}", "json");
+  }
 }
