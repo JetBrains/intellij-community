@@ -17,7 +17,6 @@ import java.util.*
 /**
  * @author yole
  */
-@Bombed(user = "yole", day = 3, month = Calendar.DECEMBER)
 class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
 
@@ -61,6 +60,7 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
     doTestWithoutLookup()
   }
 
+  @Bombed(user = "Alex Plate", day = 17, month = Calendar.DECEMBER)
   fun testInterfereFile() {
     val filePath = "/retype/${getTestName(false)}.java"
     val file = myFixture.configureByFile(filePath)
