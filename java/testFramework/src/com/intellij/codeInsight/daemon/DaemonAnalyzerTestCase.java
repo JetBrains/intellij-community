@@ -216,8 +216,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return ContainerUtil.filter(
       checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile)),
       info -> info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
-             info.getSeverity() == HighlightSeverity.WARNING && checkWarnings ||
-             info.getSeverity() == HighlightSeverity.WEAK_WARNING && checkWeakWarnings ||
+              info.getSeverity() == HighlightSeverity.WARNING && checkWarnings ||
+              info.getSeverity() == HighlightSeverity.WEAK_WARNING && checkWeakWarnings ||
               info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0);
   }
 
@@ -321,11 +321,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   @NotNull
   public static List<HighlightInfo> filter(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
-    ArrayList<HighlightInfo> result = new ArrayList<>();
-    for (final HighlightInfo info : infos) {
-      if (info.getSeverity().compareTo(minSeverity) >= 0) result.add(info);
-    }
-    return result;
+    return ContainerUtil.filter(infos, info -> info.getSeverity().compareTo(minSeverity) >= 0);
   }
 
   protected boolean doTestLineMarkers() {
@@ -419,8 +415,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       VfsUtil.saveText(vFile, text);
       PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(vFile);
       assertNotNull(psiFile);
-      PsiClass psiClass = psiFile.getClasses()[0];
-      return psiClass;
+      return psiFile.getClasses()[0];
     });
   }
 }

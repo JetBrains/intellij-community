@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -17,7 +18,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -185,7 +185,7 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     Disposer.register(myFixture.getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(editor));
 
     List<HighlightInfo> highlights = CodeInsightTestFixtureImpl.instantiateAndRun(fragment, editor, ArrayUtil.EMPTY_INT_ARRAY, false);
-    List<HighlightInfo> problems = ContainerUtil.filter(highlights, h -> HighlightSeverity.WARNING.compareTo(h.getSeverity()) <= 0);
+    List<HighlightInfo> problems = DaemonAnalyzerTestCase.filter(highlights, HighlightSeverity.WARNING);
     assertThat(problems).isEmpty();
   }
 
