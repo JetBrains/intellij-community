@@ -60,7 +60,7 @@ class MultiThreadSearcher implements SESearcher {
   public ProgressIndicator search(@NotNull Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                                   @NotNull String pattern,
                                   boolean useNonProjectItems,
-                                  @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
+                                  @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier) {
     LOG.debug("Search started for pattern [", pattern, "]");
     FullSearchResultsAccumulator accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor);
 
@@ -117,7 +117,7 @@ class MultiThreadSearcher implements SESearcher {
                                          boolean useNonProjectItems,
                                          @NotNull SearchEverywhereContributor<?> contributorToExpand,
                                          int newLimit,
-                                         @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
+                                         @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier) {
     ResultsAccumulator accumulator = new ShowMoreResultsAccumulator(alreadyFound, myEqualityProvider, contributorToExpand, newLimit, myListener, myNotificationExecutor);
     SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributorToExpand);
     ProgressIndicator indicator = new ProgressIndicatorBase();

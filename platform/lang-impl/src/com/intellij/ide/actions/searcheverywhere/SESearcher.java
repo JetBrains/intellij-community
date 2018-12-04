@@ -13,14 +13,14 @@ interface SESearcher {
   ProgressIndicator search(@NotNull Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                            @NotNull String pattern,
                            boolean useNonProjectItems,
-                           @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier);
+                           @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
 
   ProgressIndicator findMoreItems(@NotNull Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
                                   @NotNull String pattern,
                                   boolean useNonProjectItems,
                                   @NotNull SearchEverywhereContributor<?> contributorToExpand,
                                   int newLimit,
-                                  @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier);
+                                  @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
 
   /**
    * Search process listener interface
