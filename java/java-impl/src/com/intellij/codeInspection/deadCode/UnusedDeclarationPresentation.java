@@ -426,10 +426,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
                             boolean showStructure,
                             boolean groupByStructure) {
     InspectionTreeModel model = myContext.getView().getTree().getInspectionTreeModel();
-    model.createCustomNode(myDummyWrapper.getValue(), () -> new EntryPointsNode(myDummyWrapper.getValue(), myContext, model), node);
+    EntryPointsNode epNode = model.createCustomNode(myDummyWrapper.getValue(), () -> new EntryPointsNode(myDummyWrapper.getValue(), myContext, model), node);
     InspectionToolPresentation presentation = myContext.getPresentation(myDummyWrapper.getValue());
     presentation.updateContent();
-    provider.appendToolNodeContent(myContext, myDummyWrapper.getValue(), node, showStructure, groupByStructure);
+    provider.appendToolNodeContent(myContext, myDummyWrapper.getValue(), epNode, showStructure, groupByStructure);
   }
 
   @NotNull

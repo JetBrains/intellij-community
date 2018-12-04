@@ -155,8 +155,8 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> {
     return getOrAdd(entity, () -> ReadAction.compute(supplier::get), parent);
   }
 
-  public <T extends InspectionTreeNode> void createCustomNode(@NotNull Object userObject, @NotNull Supplier<T> supplier, @NotNull InspectionTreeNode parent) {
-    getOrAdd(userObject, supplier, parent);
+  public <T extends InspectionTreeNode> T createCustomNode(@NotNull Object userObject, @NotNull Supplier<T> supplier, @NotNull InspectionTreeNode parent) {
+    return getOrAdd(userObject, supplier, parent);
   }
 
   @NotNull
