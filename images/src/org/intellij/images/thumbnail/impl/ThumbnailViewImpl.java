@@ -32,7 +32,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
   private boolean recursive = false;
   private VirtualFile root = null;
-  private final ThumbnailViewUI myThubmnailViewUi;
+  private final ThumbnailViewUI myThumbnailViewUI;
   private ThemeFilter myFilter;
   private TagFilter[] myTagFilters;
 
@@ -40,14 +40,14 @@ final class ThumbnailViewImpl implements ThumbnailView {
     this.project = project;
 
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    myThubmnailViewUi = new ThumbnailViewUI(this);
-    toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, myThubmnailViewUi, ToolWindowAnchor.BOTTOM);
+    myThumbnailViewUI = new ThumbnailViewUI(this);
+    toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, myThumbnailViewUI, ToolWindowAnchor.BOTTOM);
     toolWindow.setIcon(ImagesIcons.ThumbnailToolWindow);
     setVisible(false);
   }
 
   private ThumbnailViewUI getUI() {
-    return myThubmnailViewUi;
+    return myThumbnailViewUI;
   }
 
   @Override
