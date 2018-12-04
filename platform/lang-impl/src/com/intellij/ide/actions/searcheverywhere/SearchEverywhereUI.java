@@ -113,7 +113,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       myBufferedListener = null;
     } else {
       myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);
-      mySearcher = new MultithreadSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
+      mySearcher = new MultiThreadSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
     }
 
     myServiceContributors = serviceContributors;

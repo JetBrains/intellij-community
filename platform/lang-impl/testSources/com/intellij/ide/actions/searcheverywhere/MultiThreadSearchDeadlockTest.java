@@ -22,7 +22,7 @@ import java.util.function.Function;
 /**
  * @author mikhail.sokolov
  */
-public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private static final Collection<SEResultsEqualityProvider> ourEqualityProviders = Collections.singleton(new TrivialElementsEqualityProvider());
 
@@ -44,7 +44,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {
@@ -71,7 +71,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {
@@ -103,7 +103,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
 
     try {

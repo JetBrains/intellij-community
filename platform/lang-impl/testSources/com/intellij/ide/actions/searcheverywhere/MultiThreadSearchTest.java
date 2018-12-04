@@ -22,7 +22,7 @@ import java.util.function.Function;
 /**
  * @author mikhail.sokolov
  */
-public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private static final String MORE_ITEM = "...MORE";
   private static final Collection<SEResultsEqualityProvider> ourEqualityProviders = Collections.singleton(new TrivialElementsEqualityProvider());
@@ -31,7 +31,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     Collection<Scenario> scenarios = createMultithreadScenarios();
     SearchResultsCollector collector = new SearchResultsCollector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
       ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "tst", false, ignrd -> null);
@@ -418,7 +418,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     }
   }
 
-  private static class SearchResultsCollector implements MultithreadSearcher.Listener {
+  private static class SearchResultsCollector implements MultiThreadSearcher.Listener {
 
     private final Map<String, List<String>> myMap = new ConcurrentHashMap<>();
     private final AtomicBoolean myFinished = new AtomicBoolean(false);

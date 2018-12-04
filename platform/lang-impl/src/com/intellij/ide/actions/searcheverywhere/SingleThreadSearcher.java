@@ -14,7 +14,7 @@ import java.util.stream.Collector;
 
 /**
  * Single thread implementation of {@link SESearcher}.
- * Being used only as a temporary solution in case of problems with {@link MultithreadSearcher}.
+ * Being used only as a temporary solution in case of problems with {@link MultiThreadSearcher}.
  */
 @Deprecated
 class SingleThreadSearcher implements SESearcher {
