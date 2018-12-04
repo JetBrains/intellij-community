@@ -25,38 +25,27 @@ import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvide
 /**
  * @author msokolov
  */
-class MultithreadSearcher implements SESearcher {
+class MultiThreadSearcher implements SESearcher {
 
-  private static final Logger LOG = Logger.getInstance(MultithreadSearcher.class);
+  private static final Logger LOG = Logger.getInstance(MultiThreadSearcher.class);
 
   @NotNull private final Listener myListener;
   @NotNull private final Executor myNotificationExecutor;
   @NotNull private final SEResultsEqualityProvider myEqualityProvider;
 
   /**
-   * Creates MultithreadSearcher with search results {@link Listener} and specifies executor which going to be used to call listener methods.
+   * Creates MultiThreadSearcher with search results {@link Listener} and specifies executor which going to be used to call listener methods.
    * Use this constructor when you for example need to receive listener events only in AWT thread
    * @param listener {@link Listener} to get notifications about searching process
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
-   * @param equalityProviders collection of equailty providers that checks if found elements is already in the search results
+   * @param equalityProviders collection of equality providers that checks if found elements are already in the search results
    */
-  MultithreadSearcher(@NotNull Listener listener,
+  MultiThreadSearcher(@NotNull Listener listener,
                       @NotNull Executor notificationExecutor,
                       @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
     myEqualityProvider = SEResultsEqualityProvider.composite(equalityProviders);
-  }
-
-  /**
-   * Creates MultithreadSearcher with no guarantees about what thread gonna call {@code listener} methods.
-   * In this case listener will be called from different threads, so you have to care about thread safety
-   * @param listener {@link Listener} to get notifications about searching process
-   * @param equalityProviders collection of equailty providers that checks if found elements is already in the search results
-   */
-  @SuppressWarnings("unused")
-  MultithreadSearcher(@NotNull Listener listener, @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
-    this(listener, Runnable::run, equalityProviders);
   }
 
   /**
@@ -68,9 +57,10 @@ class MultithreadSearcher implements SESearcher {
    * @return {@link ProgressIndicator} that could be used to track and/or cancel searching process
    */
   @Override
-  public ProgressIndicator search(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, String pattern,
+  public ProgressIndicator search(@NotNull Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+                                  @NotNull String pattern,
                                   boolean useNonProjectItems,
-                                  Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
+                                  @NotNull Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
     LOG.debug("Search started for pattern [", pattern, "]");
     FullSearchResultsAccumulator accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor);
 
@@ -230,7 +220,7 @@ class MultithreadSearcher implements SESearcher {
 
   private static abstract class ResultsAccumulator {
     protected final Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> sections;
-    protected final MultithreadSearcher.Listener myListener;
+    protected final MultiThreadSearcher.Listener myListener;
     protected final Executor myNotificationExecutor;
     protected final SEResultsEqualityProvider myEqualityProvider;
 
