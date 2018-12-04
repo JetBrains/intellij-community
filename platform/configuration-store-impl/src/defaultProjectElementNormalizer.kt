@@ -34,7 +34,7 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
       fun writeProfileSettings(schemeDir: Path) {
         component.removeAttribute("name")
         if (!component.isEmpty()) {
-          val wrapper = Element("component").attribute("name", componentName)
+          val wrapper = Element("component").setAttribute("name", componentName)
           component.name = "settings"
           wrapper.addContent(component)
 
@@ -80,7 +80,7 @@ private fun convertProfiles(profileIterator: MutableIterator<Element>, component
     val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
 
     profileIterator.remove()
-    val wrapper = Element("component").attribute("name", componentName)
+    val wrapper = Element("component").setAttribute("name", componentName)
     wrapper.addContent(profile)
     val path = schemeDir.resolve("${FileUtil.sanitizeFileName(schemeName, true)}.xml")
     JDOMUtil.write(wrapper, path.outputStream(), "\n")
@@ -144,7 +144,7 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
     return
   }
 
-  var wrapper = Element("project").attribute("version", "4")
+  var wrapper = Element("project").setAttribute("version", "4")
   if (file.exists()) {
     try {
       wrapper = loadElement(file)

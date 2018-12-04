@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.attribute
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.function.Function
@@ -124,7 +123,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     val result = super.writeScheme(scheme) ?: return null
     if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
-        .attribute("name", "ProjectRunConfigurationManager")
+        .setAttribute("name", "ProjectRunConfigurationManager")
         .addContent(result)
     }
     else if (scheme.isTemplate) {

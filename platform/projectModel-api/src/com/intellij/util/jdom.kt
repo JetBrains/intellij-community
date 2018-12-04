@@ -62,6 +62,7 @@ fun Element.getOrCreate(name: String): Element {
   return element
 }
 
+@Deprecated(message = "Use setAttribute", replaceWith = ReplaceWith("setAttribute(name, value)"))
 fun Element.attribute(name: String, value: String?): Element = setAttribute(name, value)
 
 fun Element.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
