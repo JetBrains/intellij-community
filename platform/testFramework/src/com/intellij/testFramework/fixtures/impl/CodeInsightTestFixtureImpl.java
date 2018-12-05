@@ -161,6 +161,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private ResourceBundle myMessagesBundle;
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -478,7 +479,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertNotNull(psiFile);
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       assertNotNull(document);
-      ExpectedHighlightingData datum = new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile);
+      ExpectedHighlightingData datum =
+        new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, psiFile, myMessagesBundle);
       datum.init();
       return Trinity.create(psiFile, createEditor(file), datum);
     }).collect(Collectors.toList());
@@ -524,7 +526,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       public HighlightTestInfo doTest() {
         configureByFiles(filePaths);
         ExpectedHighlightingData data =
-          new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getFile());
+          new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false, getFile(),
+                                       myMessagesBundle);
         if (checkSymbolNames) data.checkSymbolNames();
         data.init();
         collectAndCheckHighlighting(data);
@@ -1417,7 +1420,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                            boolean checkWeakWarnings,
                                            boolean ignoreExtraHighlighting) {
     ExpectedHighlightingData data = new ExpectedHighlightingData(
-      myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, getHostFile());
+      myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, getHostFile(), myMessagesBundle);
     data.init();
     return collectAndCheckHighlighting(data);
   }
@@ -1471,6 +1474,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
     myVirtualFileFilter = filter;
+  }
+
+  public void setMessagesBundle(@Nullable ResourceBundle messagesBundle) {
+    myMessagesBundle = messagesBundle;
   }
 
   @Override
