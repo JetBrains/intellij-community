@@ -22,10 +22,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -90,9 +87,14 @@ public class JavaProjectRootsUtil {
     return new NonGeneratedSourceScope(baseScope, project);
   }
 
-  public static List<OrderEntry> findExportedDependenciesReachableViaThisDependencyOnly(@NotNull Module module,
-                                                                                        @NotNull Module dependency,
-                                                                                        @NotNull RootModelProvider rootModelProvider) {
+  /**
+   * Returns order entries which are exported to {@code module} from its direct {@code dependency}, and which aren't available via other dependencies.
+   * @return map from a direct or transitive dependency of {@code dependency} parameter to a corresponding direct dependency of {@code dependency} parameter.
+   */
+  @NotNull
+  public static Map<OrderEntry, OrderEntry> findExportedDependenciesReachableViaThisDependencyOnly(@NotNull Module module,
+                                                                                                   @NotNull Module dependency,
+                                                                                                   @NotNull RootModelProvider rootModelProvider) {
     ModuleOrderEntry moduleOrderEntry = OrderEntryUtil.findModuleOrderEntry(rootModelProvider.getRootModel(module), dependency);
     if (moduleOrderEntry == null) {
       throw new IllegalArgumentException("Cannot find dependency from " + module + " to " + dependency);
@@ -125,12 +127,25 @@ public class JavaProjectRootsUtil {
       return true;
     });
 
-    List<OrderEntry> result = new ArrayList<>();
-    rootModelProvider.getRootModel(dependency).orderEntries().using(rootModelProvider).exportedOnly().withoutSdk()
-      .withoutModuleSourceEntries().forEach(entry -> {
-      if (entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null && !reachableModules.contains(((ModuleOrderEntry)entry).getModule())
-          || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null && !reachableLibraries.contains(((LibraryOrderEntry)entry).getLibrary())) {
-        result.add(entry);
+    Map<OrderEntry, OrderEntry> result = new LinkedHashMap<>();
+    rootModelProvider.getRootModel(dependency).orderEntries().using(rootModelProvider).exportedOnly().withoutSdk().withoutModuleSourceEntries().forEach(direct -> {
+      if (direct instanceof ModuleOrderEntry) {
+        Module depModule = ((ModuleOrderEntry)direct).getModule();
+        if (depModule != null && !reachableModules.contains(depModule)) {
+          result.put(direct, direct);
+          rootModelProvider.getRootModel(depModule).orderEntries().using(rootModelProvider).exportedOnly().withoutSdk().recursively().forEach(transitive -> {
+            if (transitive instanceof ModuleSourceOrderEntry && !reachableModules.contains(transitive.getOwnerModule()) && !depModule.equals(transitive.getOwnerModule())
+                || transitive instanceof LibraryOrderEntry && ((LibraryOrderEntry)transitive).getLibrary() != null && !reachableLibraries.contains(((LibraryOrderEntry)transitive).getLibrary())) {
+              if (!result.containsKey(transitive)) {
+                result.put(transitive, direct);
+              }
+            }
+            return true;
+          });
+        }
+      }
+      else if (direct instanceof LibraryOrderEntry && ((LibraryOrderEntry)direct).getLibrary() != null && !reachableLibraries.contains(((LibraryOrderEntry)direct).getLibrary())) {
+        result.put(direct, direct);
       }
       return true;
     });

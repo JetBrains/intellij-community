@@ -10,12 +10,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
-import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
@@ -27,14 +25,11 @@ import com.intellij.packageDependencies.DependencyVisitorFactory;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetHandler;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.roots.JavaProjectRootsUtil.findExportedDependenciesReachableViaThisDependencyOnly;
 
@@ -52,22 +47,26 @@ class AnalyzeModuleDependencyAction extends AnAction {
     final OrderEntry selectedEntry = myPanel.getSelectedEntry();
     GlobalSearchScope mainScope = getScopeForOrderEntry(selectedEntry);
     LOG.assertTrue(mainScope != null);
-    List<GlobalSearchScope> additionalScopes;
+    Map<GlobalSearchScope, OrderEntry> additionalScopes;
     ModulesProvider modulesProvider = myPanel.getModuleConfigurationState().getModulesProvider();
     if (selectedEntry instanceof ModuleOrderEntry) {
       Module depModule = ((ModuleOrderEntry)selectedEntry).getModule();
       LOG.assertTrue(depModule != null);
-      List<OrderEntry> additionalDependencies = findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
-                                                                                                       depModule, modulesProvider);
-      additionalScopes = ContainerUtil.mapNotNull(additionalDependencies, this::getScopeForOrderEntry);
+      Map<OrderEntry, OrderEntry> additionalDependencies = findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
+                                                                                                                  depModule, modulesProvider);
+      additionalScopes = new LinkedHashMap<>();
+      for (Map.Entry<OrderEntry, OrderEntry> entry : additionalDependencies.entrySet()) {
+        additionalScopes.put(getScopeForOrderEntry(entry.getKey()), entry.getValue());
+      }
     }
     else {
-      additionalScopes = Collections.emptyList();
+      additionalScopes = Collections.emptyMap();
     }
 
-    GlobalSearchScope[] scopes = ContainerUtil.append(additionalScopes, mainScope).toArray(GlobalSearchScope.EMPTY_ARRAY);
+    List<GlobalSearchScope> scopes = new ArrayList<>(additionalScopes.keySet());
+    scopes.add(mainScope);
     new AnalyzeDependenciesOnSpecifiedTargetHandler(myPanel.getProject(), new AnalysisScope(myPanel.getModuleConfigurationState().getRootModel().getModule()),
-                                                    GlobalSearchScope.union(scopes)) {
+                                                    GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY))) {
       @Override
       protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
         Set<GlobalSearchScope> usedScopes = findUsedScopes(builders, scopes);
@@ -79,7 +78,8 @@ class AnalyzeModuleDependencyAction extends AnAction {
           return true;
         }
 
-        if (usedScopes.isEmpty()) {
+        List<OrderEntry> usedEntries = usedScopes.stream().map(additionalScopes::get).filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        if (usedEntries.isEmpty()) {
           String message = "No code dependencies were found." + generateSkipImportsWarning() + " Would you like to remove the dependency?";
           if (Messages.showOkCancelDialog(myProject, message, CommonBundle.getWarningTitle(), CommonBundle.message("button.remove"), Messages.CANCEL_BUTTON,
                                           Messages.getWarningIcon()) == Messages.OK) {
@@ -88,10 +88,6 @@ class AnalyzeModuleDependencyAction extends AnAction {
           return false;
         }
 
-        LOG.assertTrue(selectedEntry instanceof ModuleOrderEntry);
-        Module depModule = ((ModuleOrderEntry)selectedEntry).getModule();
-        LOG.assertTrue(depModule != null);
-        List<OrderEntry> usedEntries = ContainerUtil.map(usedScopes, scope -> findOrderEntryByScope(scope, modulesProvider.getRootModel(depModule)));
         String usedExportedEntriesText = "'" + usedEntries.get(0).getPresentableName() + "'";
         if (usedEntries.size() == 2) {
           usedExportedEntriesText += " and '" + usedEntries.get(1).getPresentableName() + "'";
@@ -130,7 +126,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
     return "";
   }
 
-  private static Set<GlobalSearchScope> findUsedScopes(List<? extends DependenciesBuilder> builders, GlobalSearchScope[] scopes) {
+  private static Set<GlobalSearchScope> findUsedScopes(List<? extends DependenciesBuilder> builders, List<GlobalSearchScope> scopes) {
     Set<GlobalSearchScope> usedScopes = new LinkedHashSet<>();
     for (DependenciesBuilder builder : builders) {
       for (Set<PsiFile> files : builder.getDependencies().values()) {
@@ -151,7 +147,10 @@ class AnalyzeModuleDependencyAction extends AnAction {
 
   @Contract("null -> null")
   private GlobalSearchScope getScopeForOrderEntry(OrderEntry selectedEntry) {
-    if (selectedEntry instanceof ModuleOrderEntry) {
+    if (selectedEntry instanceof ModuleSourceOrderEntry) {
+      return GlobalSearchScope.moduleScope(selectedEntry.getOwnerModule());
+    }
+    else if (selectedEntry instanceof ModuleOrderEntry) {
       Module module = ((ModuleOrderEntry)selectedEntry).getModule();
       return module != null ? GlobalSearchScope.moduleScope(module) : null;
     }
@@ -159,19 +158,6 @@ class AnalyzeModuleDependencyAction extends AnAction {
       Library library = ((LibraryOrderEntry)selectedEntry).getLibrary();
       return library != null ? new LibraryScope(myPanel.getProject(), library) : null;
     }
-    return null;
-  }
-
-  private static OrderEntry findOrderEntryByScope(@NotNull GlobalSearchScope scope, ModuleRootModel rootModel) {
-    if (scope instanceof ModuleWithDependenciesScope) {
-      Module module = ((ModuleWithDependenciesScope)scope).getModule();
-      return OrderEntryUtil.findModuleOrderEntry(rootModel, module);
-    }
-    else if (scope instanceof LibraryScope) {
-      Library library = ((LibraryScope)scope).getLibrary();
-      return OrderEntryUtil.findLibraryOrderEntry(rootModel, library);
-    }
-    LOG.error("Cannot find order entry by " + scope + " in " + rootModel);
     return null;
   }
 
