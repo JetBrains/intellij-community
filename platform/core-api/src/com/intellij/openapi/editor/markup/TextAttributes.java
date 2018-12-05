@@ -33,6 +33,8 @@ import java.util.function.BiConsumer;
  */
 public class TextAttributes implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.markup.TextAttributes");
+  private static final AttributesFlyweight DEFAULT_FLYWEIGHT = AttributesFlyweight
+    .create(null, null, Font.PLAIN, null, EffectType.BOXED, Collections.emptyMap(), null);
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
 
@@ -67,7 +69,7 @@ public class TextAttributes implements Cloneable {
   }
 
   public TextAttributes() {
-    this(null, null, null, EffectType.BOXED, Font.PLAIN);
+    this(DEFAULT_FLYWEIGHT);
   }
 
   private TextAttributes(@NotNull AttributesFlyweight attributesFlyweight) {
@@ -83,13 +85,7 @@ public class TextAttributes implements Cloneable {
   }
 
   public void copyFrom(@NotNull TextAttributes other) {
-    setAttributes(other.getForegroundColor(),
-                  other.getBackgroundColor(),
-                  other.getEffectColor(),
-                  other.getErrorStripeColor(),
-                  other.getEffectType(),
-                  other.myAttrs.getAdditionalEffects(),
-                  other.getFontType());
+    myAttrs = other.myAttrs;
   }
 
   public void setAttributes(Color foregroundColor,
@@ -124,9 +120,7 @@ public class TextAttributes implements Cloneable {
 
   @NotNull
   public static TextAttributes fromFlyweight(@NotNull AttributesFlyweight flyweight) {
-    TextAttributes f = new TextAttributes();
-    f.myAttrs = flyweight;
-    return f;
+    return new TextAttributes(flyweight);
   }
 
   public Color getForegroundColor() {
