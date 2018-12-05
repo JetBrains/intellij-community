@@ -2,7 +2,7 @@
 
 package org.zmlx.hg4idea.repo;
 
-import com.intellij.dvcs.repo.AsyncFilesManagerListener;
+import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,7 +73,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   private void setupUpdater() {
     HgRepositoryUpdater updater = new HgRepositoryUpdater(this);
     Disposer.register(this, updater);
-    myLocalIgnoredHolder.startRescan();
+    myLocalIgnoredHolder.startRescan(null);
   }
 
   @NotNull
@@ -246,12 +246,13 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myConfig = HgConfig.getInstance(getProject(), getRoot());
   }
 
+  @NotNull
   @Override
-  public HgLocalIgnoredHolder getLocalIgnoredHolder() {
+  public HgLocalIgnoredHolder getIgnoredFilesHolder() {
     return myLocalIgnoredHolder;
   }
 
-  private static class MyIgnoredHolderAsyncListener implements AsyncFilesManagerListener {
+  private static class MyIgnoredHolderAsyncListener implements VcsIgnoredHolderUpdateListener {
     @NotNull private final ChangesViewI myChangesViewI;
 
     MyIgnoredHolderAsyncListener(@NotNull Project project) {
@@ -260,7 +261,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
     @Override
     public void updateStarted() {
-      myChangesViewI.scheduleRefresh();
+      myChangesViewI.scheduleRefresh();//TODO optimize: remove additional refresh
     }
 
     @Override

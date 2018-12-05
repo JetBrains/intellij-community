@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -27,7 +28,6 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.ignore.GitRepositoryIgnoredHolder;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +114,7 @@ public class GitVFSListener extends VcsVFSListener {
           try {
             Set<VirtualFile> untrackedForRepo = myGit.untrackedFiles(myProject, root, files);
             if (Registry.is("git.process.ignored")) {
-              List<VirtualFile> ignoredForRepo = ContainerUtil.filter(files, file -> !untrackedForRepo.contains(file));
+              Collection<VirtualFile> ignoredForRepo = ContainerUtil.subtract(files, untrackedForRepo);
               getIgnoreRepoHolder(root).addFiles(ignoredForRepo);
             }
             retainedFiles.addAll(untrackedForRepo);
@@ -131,7 +131,7 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @NotNull
-  private GitRepositoryIgnoredHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
+  private VcsRepositoryIgnoredFilesHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
     return ObjectUtils.assertNotNull(GitUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
   }
 
@@ -195,6 +195,7 @@ public class GitVFSListener extends VcsVFSListener {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
         GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached");
+        getIgnoreRepoHolder(root).removeIgnoredFiles(files);
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }

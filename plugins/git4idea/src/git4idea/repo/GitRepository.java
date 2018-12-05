@@ -15,13 +15,13 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
-import git4idea.ignore.GitRepositoryIgnoredHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,5 +126,5 @@ public interface GitRepository extends Repository {
   Collection<GitSubmoduleInfo> getSubmodules();
 
   @NotNull
-  GitRepositoryIgnoredHolder getIgnoredFilesHolder();
+  VcsRepositoryIgnoredFilesHolder getIgnoredFilesHolder();
 }

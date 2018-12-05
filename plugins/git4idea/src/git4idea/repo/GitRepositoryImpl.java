@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
+import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -18,8 +19,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.commands.Git;
-import git4idea.ignore.GitRepositoryIgnoredHolder;
-import git4idea.ignore.GitRepositoryIgnoredHolderUpdateAdapter;
+import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull private final GitRepositoryFiles myRepositoryFiles;
 
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
-  @Nullable private final GitRepositoryIgnoredHolder myIgnoredRepositoryFilesHolder;
+  @Nullable private final GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
 
@@ -59,9 +59,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this, myRepositoryFiles);
       Disposer.register(this, myUntrackedFilesHolder);
-      myIgnoredRepositoryFilesHolder = new GitRepositoryIgnoredHolder(project, this, Git.getInstance());
+      myIgnoredRepositoryFilesHolder = new GitRepositoryIgnoredFilesHolder(project, this, Git.getInstance());
       Disposer.register(this, myIgnoredRepositoryFilesHolder);
-      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateAdapter(getProject()));
+      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(getProject()));
     }
     else {
       myUntrackedFilesHolder = null;
@@ -94,7 +94,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitRepositoryUpdater updater = new GitRepositoryUpdater(this, myRepositoryFiles);
     Disposer.register(this, updater);
     if (myIgnoredRepositoryFilesHolder != null) {
-      myIgnoredRepositoryFilesHolder.startRescan();
+      myIgnoredRepositoryFilesHolder.startRescan(null);
     }
   }
 
@@ -259,23 +259,23 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull
   @Override
-  public GitRepositoryIgnoredHolder getIgnoredFilesHolder() {
+  public GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
     if (myIgnoredRepositoryFilesHolder == null) throw new UnsupportedOperationException("Unsupported for light Git repository");
     return myIgnoredRepositoryFilesHolder;
   }
 
-  private static class MyRepositoryIgnoredHolderUpdateAdapter extends GitRepositoryIgnoredHolderUpdateAdapter {
+  private static class MyRepositoryIgnoredHolderUpdateListener implements VcsIgnoredHolderUpdateListener {
     @NotNull private final ChangesViewI myChangesViewI;
     @NotNull private final VcsDirtyScopeManager myDirtyScopeManager;
 
-    MyRepositoryIgnoredHolderUpdateAdapter(@NotNull Project project) {
+    MyRepositoryIgnoredHolderUpdateListener(@NotNull Project project) {
       myChangesViewI = ChangesViewManager.getInstance(project);
       myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     }
 
     @Override
     public void updateStarted(@NotNull String gitIgnorePath) {
-      myChangesViewI.scheduleRefresh();
+      myChangesViewI.scheduleRefresh(); //TODO optimize: remove additional refresh
     }
 
     @Override
@@ -296,9 +296,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
     private void markGitignoreContainingFolderAsDirty(@NotNull String gitIgnorePath) {
       VirtualFile gitIgnore = LocalFileSystem.getInstance().findFileByPath(gitIgnorePath);
-      if (gitIgnore != null && gitIgnore.getParent() != null) {
-        myDirtyScopeManager.dirDirtyRecursively(gitIgnore.getParent());
+      if (gitIgnore != null) {
+        VirtualFile gitIgnoreParent = gitIgnore.getParent();
+        if (gitIgnoreParent != null) {
+          myDirtyScopeManager.dirDirtyRecursively(gitIgnoreParent);
+        }
       }
     }
+
   }
 }

@@ -74,21 +74,25 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   @Override
-  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable VirtualFile path)
+    throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.STATUS);
     h.setSilent(true);
     h.addParameters("--ignored", "--porcelain", "-z");
+    if (path != null) {
+      h.addParameters(path.getPath());
+    }
     h.endOptions();
 
     final String output = runCommand(h).getOutputOrThrow();
-    return parseLSFilesOutput(root, output, "!! ");
+    return parseFiles(root, output, "!! ");
   }
 
   @NotNull
-  private static Set<VirtualFile> parseLSFilesOutput(@NotNull VirtualFile root, String output, @NotNull String fileStatusPrefix) {
+  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root, @Nullable String output, @NotNull String fileStatusPrefix) {
     if (StringUtil.isEmptyOrSpaces(output)) return emptySet();
 
-    final Set<VirtualFile> ignoredFiles = new HashSet<>();
+    final Set<VirtualFile> files = new HashSet<>();
     for (String relPath : output.split("\u0000")) {
       if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
 
@@ -99,11 +103,11 @@ public class GitImpl extends GitImplBase {
         LOG.info(String.format("VirtualFile for path [%s] is null", relPath));
       }
       else {
-        ignoredFiles.add(f);
+        files.add(f);
       }
     }
 
-    return ignoredFiles;
+    return files;
   }
 
   /**
@@ -149,7 +153,7 @@ public class GitImpl extends GitImplBase {
     }
 
     final String output = runCommand(h).getOutputOrThrow();
-    return parseLSFilesOutput(root, output, "");
+    return parseFiles(root, output, "");
   }
 
   @Override

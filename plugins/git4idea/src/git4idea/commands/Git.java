@@ -71,7 +71,7 @@ public interface Git {
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root) throws VcsException;
+  Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable VirtualFile path) throws VcsException;
 
   @NotNull
   Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,

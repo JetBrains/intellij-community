@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -19,7 +20,6 @@ import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.provider.HgLocalIgnoredHolder;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
@@ -105,8 +105,8 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @NotNull
-  HgLocalIgnoredHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
-    return ObjectUtils.assertNotNull(HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getLocalIgnoredHolder();
+  VcsRepositoryIgnoredFilesHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
+    return ObjectUtils.assertNotNull(HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
   }
   /**
    * The version of execute add before overriding

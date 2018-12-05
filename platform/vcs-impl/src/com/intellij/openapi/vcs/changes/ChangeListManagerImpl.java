@@ -507,7 +507,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                      Set<? super VirtualFile> refreshFiles) {
     while (iterator.hasNext()) {
       VirtualFile file = iterator.next().getVirtualFile();
-      if (file != null && isVcsIgnoredFile(file)) {
+      if (file != null && isPotentiallyIgnoredFile(file)) {
         AbstractVcs vcs = VcsUtil.getVcsFor(myProject, file);
         if (vcs != null) {
           iterator.remove();
@@ -1519,13 +1519,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void exchangeWithIgnored(FileHolderComposite composite, VirtualFileHolder vfHolder, List<? extends VirtualFile> unversionedFiles) {
-    IgnoredFilesCompositeHolder ignoredFileHolder = composite.getIgnoredFileHolder();
     for (VirtualFile file : unversionedFiles) {
-      if (ignoredFileHolder.containsFile(file)) {
+      if (isPotentiallyIgnoredFile(file)) {
         AbstractVcs vcs = VcsUtil.getVcsFor(myProject, file);
         if (vcs != null) {
           vfHolder.removeFile(file);
-          ignoredFileHolder.addFile(vcs, file);
+          composite.getIgnoredFileHolder().addFile(vcs, file);
         }
       }
     }
