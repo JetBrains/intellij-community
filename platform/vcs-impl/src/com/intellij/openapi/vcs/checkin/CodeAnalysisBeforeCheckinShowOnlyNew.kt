@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.VcsPreservingExecutor
 import com.intellij.openapi.vcs.ex.compareLines
 import com.intellij.openapi.vfs.VfsUtil
@@ -34,7 +35,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
     val location2CodeSmell = MultiMap<Pair<VirtualFile, Int>, CodeSmellInfo>()
     val file2Changes = HashMap<VirtualFile, List<Range>>()
     val changeListManager = ChangeListManager.getInstance(project)
-    val files4Update = changeListManager.allChanges.mapNotNull { it.virtualFile }
+    val files4Update = ChangesUtil.getFilesFromChanges(changeListManager.allChanges)
     newCodeSmells.forEach { codeSmellInfo ->
       val virtualFile = FileDocumentManager.getInstance().getFile(codeSmellInfo.document) ?: return@forEach
       val unchanged = file2Changes.getOrPut(virtualFile) {
@@ -59,7 +60,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
     val commonCodeSmells = HashSet<CodeSmellInfo>()
     runAnalysisAfterShelvingSync(project, progressIndicator) {
       WriteAction.runAndWait<Exception> {
-        VfsUtil.markDirtyAndRefresh(false, false, false, *files4Update.toTypedArray())
+        VfsUtil.markDirtyAndRefresh(false, false, false, *files4Update)
         PsiDocumentManagerImpl.getInstance(project).commitAllDocuments()
       }
       codeSmellDetector.findCodeSmells(selectedFiles.filter { it.exists() }).forEach { oldCodeSmell ->
