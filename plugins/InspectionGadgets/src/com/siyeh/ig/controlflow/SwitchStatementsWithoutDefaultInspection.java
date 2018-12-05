@@ -62,6 +62,8 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
+      // handling switch expression seems unnecessary here as non-exhaustive switch expression
+      // without default is a compilation error
       @Override
       public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
         super.visitSwitchStatement(statement);
