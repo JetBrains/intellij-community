@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +45,7 @@ import static com.intellij.util.containers.UtilKt.stream;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toSet;
 
-public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
+public abstract class AbstractCommonCheckinAction extends AbstractVcsAction implements UpdateInBackground {
   
   private static final Logger LOG = Logger.getInstance(AbstractCommonCheckinAction.class);
   

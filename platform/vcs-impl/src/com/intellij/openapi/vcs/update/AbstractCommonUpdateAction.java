@@ -22,6 +22,7 @@ import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -63,7 +64,7 @@ import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
+public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
   private final boolean myAlwaysVisible;
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.AbstractCommonUpdateAction");
 
