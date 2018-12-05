@@ -378,7 +378,7 @@ public class GitLogUtil {
                                                  @NotNull List<String> configParameters,
                                                  boolean lowPriorityProcess) {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
-    handler.setWithLowPriority(lowPriorityProcess);
+    if (lowPriorityProcess) handler.withLowPriority();
     handler.setWithMediator(false);
     return handler;
   }
