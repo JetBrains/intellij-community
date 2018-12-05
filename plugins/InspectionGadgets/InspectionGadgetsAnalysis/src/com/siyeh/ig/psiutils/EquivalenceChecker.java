@@ -539,7 +539,7 @@ public class EquivalenceChecker {
   protected Match expressionListStatementsMatch(@NotNull PsiExpressionListStatement statement1, @NotNull PsiExpressionListStatement statement2) {
     final PsiExpression[] expressions1 = statement1.getExpressionList().getExpressions();
     final PsiExpression[] expressions2 = statement2.getExpressionList().getExpressions();
-    return expressionsAreEquivalent(expressions1, expressions2, true);
+    return expressionsAreEquivalent(expressions1, expressions2, false);
   }
 
   public boolean expressionsAreEquivalent(@Nullable PsiExpression expression1, @Nullable PsiExpression expression2) {
@@ -611,9 +611,9 @@ public class EquivalenceChecker {
     if (expression1 instanceof PsiLambdaExpression) {
       return lambdaExpressionsMatch((PsiLambdaExpression)expression1, (PsiLambdaExpression)expression2);
     }
-    if (expression1 instanceof PsiSwitchExpression) {{
+    if (expression1 instanceof PsiSwitchExpression) {
       return switchBlocksMatch((PsiSwitchExpression)expression1, (PsiSwitchExpression)expression2);
-    }}
+    }
     return EXACT_MISMATCH;
   }
 
