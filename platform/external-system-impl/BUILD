@@ -5,7 +5,11 @@ iml_module(
     name = "intellij.platform.externalSystem.impl",
     srcs = ["src"],
     iml_files = ["intellij.platform.externalSystem.impl.iml"],
-    resources = ["resources"],
+    # do not sort: must match IML order
+    resources = [
+        "resources",
+        "compatibilityResources",
+    ],
     test_resources = ["testResources"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
