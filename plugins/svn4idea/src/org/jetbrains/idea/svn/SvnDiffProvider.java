@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -227,7 +226,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   private ItemLatestState getLastRevision(@NotNull File file) {
     Status svnStatus = getFileStatus(file, true);
 
-    if (svnStatus == null || itemExists(svnStatus) && Revision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
+    if (svnStatus == null || itemExists(svnStatus)) {
       // IDEADEV-21785 (no idea why this can happen)
       final Info info = myVcs.getInfo(file, Revision.HEAD);
       if (info == null || info.getUrl() == null) {
@@ -237,10 +236,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       return createResult(info.getCommitInfo().getRevision(), true, false);
     }
 
-    if (!itemExists(svnStatus)) {
-      return createResult(getLastExistingRevision(file, svnStatus), false, false);
-    }
-    return createResult(ObjectUtils.notNull(svnStatus.getRemoteRevision(), svnStatus.getRevision()), true, false);
+    return createResult(getLastExistingRevision(file, svnStatus), false, false);
   }
 
   @NotNull

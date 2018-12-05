@@ -34,7 +34,6 @@ public class Status {
   private boolean myIsSwitched;
   @Nullable private Lock myRemoteLock;
   @Nullable private Lock myLocalLock;
-  private Revision myRemoteRevision;
   private String myChangelistName;
   private boolean myIsConflicted;
   private Info myInfo;
@@ -42,7 +41,6 @@ public class Status {
 
   public Status() {
     setRevision(Revision.UNDEFINED);
-    myRemoteRevision = Revision.UNDEFINED;
     myInfoGetter = () -> null;
     setCommittedRevision(Revision.UNDEFINED);
   }
@@ -178,10 +176,6 @@ public class Status {
   @Nullable
   public Lock getLocalLock() {
     return myLocalLock;
-  }
-
-  public Revision getRemoteRevision() {
-    return myRemoteRevision;
   }
 
   public String getChangelistName() {
