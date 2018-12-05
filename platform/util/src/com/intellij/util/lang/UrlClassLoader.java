@@ -237,7 +237,7 @@ public class UrlClassLoader extends ClassLoader {
   @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
   @Deprecated
   public void addURL(@NotNull URL url) {
-    getClassPath().addURL(url);
+    getClassPath().addURL(internProtocol(url));
     myURLs.add(url);
   }
 

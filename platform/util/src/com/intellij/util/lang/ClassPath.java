@@ -226,7 +226,7 @@ public class ClassPath {
           List<URL> urls = new ArrayList<URL>(referencedJars.length);
           for (String referencedJar:referencedJars) {
             try {
-              urls.add(new URI(referencedJar).toURL());
+              urls.add(UrlClassLoader.internProtocol(new URI(referencedJar).toURL()));
             }
             catch (Exception e) {
               Logger.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
