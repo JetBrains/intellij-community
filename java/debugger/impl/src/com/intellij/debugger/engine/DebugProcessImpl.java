@@ -50,10 +50,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
@@ -1047,9 +1044,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                                            ClassNotLoadedException,
                                                                            IncompatibleThreadStateException,
                                                                            InvalidTypeException {
-      final int invokePolicy = getInvokePolicy(context);
-      final Exception[] exception = new Exception[1];
-      final Value[] result = new Value[1];
+      Ref<Exception> exception = Ref.create();
+      Ref<E> result = Ref.create();
       getManagerThread().startLongProcessAndFork(() -> {
         ThreadReferenceProxyImpl thread = context.getThread();
         try {
@@ -1113,7 +1109,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               });
             }
 
-            result[0] = invokeMethod(invokePolicy, myMethod, myArgs);
+            result.set(invokeMethod(getInvokePolicy(context), myMethod, myArgs));
           }
           finally {
             if (Patches.JDK_BUG_WITH_TRACE_SEND && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
@@ -1127,32 +1123,33 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
         }
         catch (Exception e) {
-          exception[0] = e;
+          exception.set(e);
         }
       });
 
-      if (exception[0] != null) {
-        if (exception[0] instanceof InvocationException) {
-          throw (InvocationException)exception[0];
+      Exception ex = exception.get();
+      if (ex != null) {
+        if (ex instanceof InvocationException) {
+          throw (InvocationException)ex;
         }
-        else if (exception[0] instanceof ClassNotLoadedException) {
-          throw (ClassNotLoadedException)exception[0];
+        else if (ex instanceof ClassNotLoadedException) {
+          throw (ClassNotLoadedException)ex;
         }
-        else if (exception[0] instanceof IncompatibleThreadStateException) {
-          throw (IncompatibleThreadStateException)exception[0];
+        else if (ex instanceof IncompatibleThreadStateException) {
+          throw (IncompatibleThreadStateException)ex;
         }
-        else if (exception[0] instanceof InvalidTypeException) {
-          throw (InvalidTypeException)exception[0];
+        else if (ex instanceof InvalidTypeException) {
+          throw (InvalidTypeException)ex;
         }
-        else if (exception[0] instanceof RuntimeException) {
-          throw (RuntimeException)exception[0];
+        else if (ex instanceof RuntimeException) {
+          throw (RuntimeException)ex;
         }
         else {
-          LOG.error("Unexpected exception", new Throwable().initCause(exception[0]));
+          LOG.error("Unexpected exception", new Throwable(ex));
         }
       }
 
-      return (E)result[0];
+      return result.get();
     }
 
     private void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
