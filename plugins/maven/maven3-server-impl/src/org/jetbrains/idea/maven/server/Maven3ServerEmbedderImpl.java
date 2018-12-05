@@ -1248,6 +1248,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         if (repositorySystem instanceof DefaultRepositorySystem) {
           ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
         }
+      } else {
+        myConsoleWrapper.warn("Maven 3.6+ logging is not wrapped.");
       }
 
       // do not use request.getRemoteRepositories() here,
