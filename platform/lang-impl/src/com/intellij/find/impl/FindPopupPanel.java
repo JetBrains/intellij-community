@@ -174,10 +174,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myDialog.doCancelAction();
     }
     if (myDialog == null || Disposer.isDisposed(myDialog.getDisposable())) {
-      myDialog = new DialogWrapper(myHelper.getProject(), true, DialogWrapper.IdeModalityType.MODELESS) {
+      myDialog = new DialogWrapper(myHelper.getProject(), null, true, DialogWrapper.IdeModalityType.MODELESS, false) {
         {
           init();
-          getContentPane().add(new JLabel(), BorderLayout.SOUTH);//remove hardcoded southSection
           getRootPane().setDefaultButton(null);
         }
 
