@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.options.newEditor;
 
-import com.intellij.ide.ui.search.ComponentHighligtingListener;
+import com.intellij.ide.ui.search.ComponentHighlightingListener;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +37,7 @@ import javax.swing.JComponent;
 /**
  * @author Sergey.Malenkov
  */
-abstract class SpotlightPainter extends AbstractPainter implements ComponentHighligtingListener {
+abstract class SpotlightPainter extends AbstractPainter implements ComponentHighlightingListener {
   private final IdentityHashMap<Configurable, String> myConfigurableOption = new IdentityHashMap<>();
   private final MergingUpdateQueue myQueue;
   private final GlassPanel myGlassPanel;
@@ -50,7 +50,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
     myTarget = target;
     IdeGlassPaneUtil.installPainter(target, this, parent);
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parent);
-    connection.subscribe(ComponentHighligtingListener.TOPIC, this);
+    connection.subscribe(ComponentHighlightingListener.TOPIC, this);
   }
 
   @Override

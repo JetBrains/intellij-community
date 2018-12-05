@@ -3,7 +3,7 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
-import com.intellij.ide.ui.search.ComponentHighligtingListener;
+import com.intellij.ide.ui.search.ComponentHighlightingListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighligtingListener {
+public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighlightingListener {
 
   private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
@@ -100,7 +100,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
     myUserActivityWatcher.addUserActivityListener(() -> somethingChanged());
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighligtingListener.TOPIC, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighlightingListener.TOPIC, this);
 
     updatePreview(true);
   }
