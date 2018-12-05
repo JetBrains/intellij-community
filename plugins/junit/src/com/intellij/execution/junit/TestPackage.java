@@ -46,14 +46,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class TestPackage extends TestObject {
@@ -137,10 +132,6 @@ public class TestPackage extends TestObject {
     Module module = getConfiguration().getConfigurationModule().getModule();
     boolean chooseSingleModule = getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
     return TestClassCollector.getRootPath(module, chooseSingleModule);
-  }
-
-  protected boolean acceptClassName(String className) {
-    return true;
   }
 
   protected boolean createTempFiles() {
@@ -284,57 +275,5 @@ public class TestPackage extends TestObject {
   @TestOnly
   public File getWorkingDirsFile() {
     return myWorkingDirsFile;
-  }
-
-  private static Predicate<Class<?>> createPredicate(ClassLoader classLoader) {
-
-    Class<?> testCaseClass = loadClass(classLoader,"junit.framework.TestCase");
-
-    @SuppressWarnings("unchecked")
-    Class<? extends Annotation> runWithAnnotationClass = (Class<? extends Annotation>)loadClass(classLoader, "org.junit.runner.RunWith");
-
-    @SuppressWarnings("unchecked")
-    Class<? extends Annotation> testAnnotationClass = (Class<? extends Annotation>)loadClass(classLoader, "org.junit.Test");
-
-    return aClass -> {
-      //annotation
-      if (runWithAnnotationClass != null && aClass.isAnnotationPresent(runWithAnnotationClass)) {
-        return true;
-      }
-      //junit 3
-      if (testCaseClass != null && testCaseClass.isAssignableFrom(aClass)) {
-        return Arrays.stream(aClass.getConstructors()).anyMatch(constructor -> {
-          Class<?>[] parameterTypes = constructor.getParameterTypes();
-          return parameterTypes.length == 0 ||
-                 parameterTypes.length == 1 && CommonClassNames.JAVA_LANG_STRING.equals(parameterTypes[0].getName());
-        });
-      }
-      else {
-        //junit 4 & suite
-        for (Method method : aClass.getMethods()) {
-          if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName())) {
-            return true;
-          }
-          if (testAnnotationClass != null && method.isAnnotationPresent(testAnnotationClass)) {
-            return hasSingleConstructor(aClass);
-          }
-        }
-      }
-      return false;
-    };
-  }
-
-  private static Class<?> loadClass(ClassLoader classLoader, String className) {
-    try {
-      return Class.forName(className, true, classLoader);
-    }
-    catch (ClassNotFoundException e) {
-      return null;
-    }
-  }
-
-  private static boolean hasSingleConstructor(Class<?> aClass) {
-    Constructor<?>[] constructors = aClass.getConstructors();
-    return constructors.length == 1 && constructors[0].getParameterTypes().length == 0;
   }
 }
