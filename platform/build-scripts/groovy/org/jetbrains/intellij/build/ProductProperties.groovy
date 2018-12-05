@@ -103,6 +103,11 @@ abstract class ProductProperties {
   boolean buildCrossPlatformDistribution = false
 
   /**
+   * @deprecated for 183-branch only
+   */
+  String crossPlatformDistributionSuffix_183only = null
+
+  /**
    * Paths to properties files the content of which should be appended to idea.properties file
    */
   List<String> additionalIDEPropertiesFilePaths = []
