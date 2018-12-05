@@ -14,7 +14,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor.CollectElements;
 import com.intellij.psi.search.PsiElementProcessor.CollectFilteredElements;
 import com.intellij.psi.search.PsiElementProcessor.FindElement;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -565,7 +564,7 @@ public class PsiTreeUtil {
   @Contract("null -> null")
   public static PsiElement getStubOrPsiParent(@Nullable PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
-      StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
+      StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
         final StubElement parentStub = stub.getParentStub();
         return parentStub != null ? parentStub.getPsi() : null;
@@ -578,10 +577,9 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null")
   public static <E extends PsiElement> E getStubOrPsiParentOfType(@Nullable PsiElement element, @NotNull Class<E> parentClass) {
     if (element instanceof StubBasedPsiElement) {
-      StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
+      StubElement<?> stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
-        @SuppressWarnings("unchecked") E e = (E)stub.getParentStubOfType(parentClass);
-        return e;
+        return stub.getParentStubOfType(parentClass);
       }
     }
     return getParentOfType(element, parentClass);
