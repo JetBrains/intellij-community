@@ -33,7 +33,7 @@ public interface ExtendableTextComponent {
       return scale(5);
     }
 
-    default int getBeforeIconOffset() {
+    default int getAfterIconOffset() {
       return 0;
     }
 

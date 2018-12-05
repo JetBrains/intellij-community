@@ -112,7 +112,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
 
     OpaquePanel panel = new OpaquePanel(new BorderLayout(), SECTION_HEADER_BACKGROUND);
-    panel.setBorder(JBUI.Borders.empty(4, 13));
+    panel.setBorder(JBUI.Borders.empty(4, 10));
 
     JLabel title = new JLabel(group.title) {
       @Override
