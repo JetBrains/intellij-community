@@ -43,9 +43,9 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<
                                  UastReferenceProviderAdapter(provider), priority)
 }
 
-abstract class UastReferenceProvider {
+abstract class UastReferenceProvider(open val supportedUElementTypes: List<Class<out UElement>> = listOf(UElement::class.java)) {
 
-  open val supportedUElementTypes: List<Class<out UElement>> = listOf(UElement::class.java)
+  constructor(cls: Class<out UElement>) : this(listOf(cls))
 
   abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>
 
@@ -63,6 +63,9 @@ fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjec
     override fun getReferencesByULiteral(uLiteral: ULiteralExpression,
                                          host: PsiLanguageInjectionHost,
                                          context: ProcessingContext): Array<PsiReference> = provider(uLiteral, host)
+
+    override fun toString(): String = "uastLiteralReferenceProvider(${provider.javaClass})"
+
   }
 
 fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
@@ -73,7 +76,18 @@ fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInject
                                                context: ProcessingContext): Array<PsiReference> = provider(uExpression, host)
   }
 
+fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  object : UastReferenceProvider(cls) {
+
+    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> =
+      provider(cls.cast(element), context[REQUESTED_PSI_ELEMENT])
+  }
+
+inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  uastReferenceProvider(T::class.java, provider)
+
 private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
+internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("UastReferenceRegistrar.cachedUElement")
 
 private fun getOrCreateCachedElement(element: PsiElement,
                                      context: ProcessingContext?,
@@ -92,7 +106,7 @@ private class UastPatternAdapter(
   override fun accepts(o: Any?, context: ProcessingContext?): Boolean = when (o) {
     is PsiElement ->
       getOrCreateCachedElement(o, context, supportedUElementTypes)
-        ?.let { predicate(it, context ?: ProcessingContext()) }
+        ?.let { predicate(it, (context ?: ProcessingContext()).apply { put(REQUESTED_PSI_ELEMENT, o) }) }
       ?: false
     else -> false
   }
@@ -123,6 +137,8 @@ private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) 
     }
     return references
   }
+
+  override fun toString(): String = "UastReferenceProviderAdapter($provider)"
 
   override fun acceptsTarget(target: PsiElement): Boolean = provider.acceptsTarget(target)
 }

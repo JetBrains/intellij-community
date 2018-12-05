@@ -10,7 +10,7 @@ abstract class UastInjectionHostReferenceProvider : UastReferenceProvider() {
 
   override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
     val uLiteral = element as? UExpression ?: return PsiReference.EMPTY_ARRAY
-    val host = uLiteral.sourceInjectionHost ?: return PsiReference.EMPTY_ARRAY
+    val host = context[REQUESTED_PSI_ELEMENT] as? PsiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY
     return getReferencesForInjectionHost(uLiteral, host, context)
   }
 
