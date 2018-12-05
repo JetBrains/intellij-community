@@ -28,4 +28,9 @@ import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
  * @author nik
  */
 public interface JpsModuleSourceRootType<P extends JpsElement> extends JpsElementType<P>, JpsElementTypeWithDefaultProperties<P> {
+
+  /**
+   * Returns true if SourceRoot represents test resources, false otherwise
+   */
+  boolean isForTests();
 }

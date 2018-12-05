@@ -31,6 +31,6 @@ public class JavaModuleSourceRootTypes {
   public static final Set<? extends JpsModuleSourceRootType<?>> TESTS = ContainerUtilRt.newHashSet(JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.TEST_RESOURCE);
 
   public static boolean isTestSourceOrResource(@Nullable JpsModuleSourceRootType<?> type) {
-    return JavaSourceRootType.TEST_SOURCE.equals(type) || JavaResourceRootType.TEST_RESOURCE.equals(type);
+    return type.isForTests();
   }
 }

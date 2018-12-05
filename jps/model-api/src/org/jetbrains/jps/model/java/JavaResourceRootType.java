@@ -24,10 +24,17 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  */
 public class JavaResourceRootType extends JpsElementTypeBase<JavaResourceRootProperties> implements
                                                                                          JpsModuleSourceRootType<JavaResourceRootProperties> {
-  public static final JavaResourceRootType RESOURCE = new JavaResourceRootType();
-  public static final JavaResourceRootType TEST_RESOURCE = new JavaResourceRootType();
+  public static final JavaResourceRootType RESOURCE = new JavaResourceRootType(false);
+  public static final JavaResourceRootType TEST_RESOURCE = new JavaResourceRootType(true);
 
-  private JavaResourceRootType() {
+  private final boolean isForTests;
+  private JavaResourceRootType(boolean isForTests) {
+    this.isForTests = isForTests;
+  }
+
+  @Override
+  public boolean isForTests() {
+    return isForTests;
   }
 
   @NotNull
