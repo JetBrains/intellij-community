@@ -21,6 +21,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   @Nullable private String myDescription;
   private String myGroup;
   private String myVersion;
+  private String myIdeGrouping;
 
   @Deprecated
   public ProjectData(@NotNull ProjectSystemId owner,
@@ -64,7 +65,11 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
 
   @Nullable
   public String getIdeGrouping() {
-    return getLinkedExternalProjectPath();
+    return myIdeGrouping;
+  }
+
+  public void setIdeGrouping(@Nullable String ideGrouping) {
+    myIdeGrouping = ideGrouping;
   }
 
   @Override

@@ -71,7 +71,7 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
   @Override
   protected List<? extends ExternalSystemNode> doBuildChildren() {
     List<ExternalSystemNode<?>> myChildNodes = ContainerUtil.newArrayList();
-    if (!myIsRoot && getExternalProjectsView().getGroupModules()) {
+    if (getExternalProjectsView().getGroupModules()) {
       List<ModuleNode> childModules = ContainerUtil.findAll(
         myAllModules,
         module -> module != this && StringUtil.equals(module.getIdeParentGrouping(), getIdeGrouping())

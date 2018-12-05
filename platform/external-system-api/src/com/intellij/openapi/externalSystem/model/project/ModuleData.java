@@ -2,7 +2,7 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.util.PathUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +11,8 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.util.text.StringUtil.*;
 
 /**
  * @author Denis Zhdanov
@@ -226,12 +228,25 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Nullable
   public String getIdeGrouping() {
-    return getLinkedExternalProjectPath();
+    if (myIdeModuleGroup != null) {
+      return join(myIdeModuleGroup, ".");
+    } else {
+      return getInternalName();
+    }
   }
 
   @Nullable
   public String getIdeParentGrouping() {
-    return PathUtil.getParentPath(getLinkedExternalProjectPath());
+    if (myIdeModuleGroup != null) {
+      return nullize(join(ArrayUtil.remove(myIdeModuleGroup, myIdeModuleGroup.length - 1), "."));
+    } else {
+      final String name = getInternalName();
+      if (name.lastIndexOf(".") > 0) {
+        return substringBeforeLast(name, ".");
+      } else {
+        return null;
+      }
+    }
   }
 
   @Override
