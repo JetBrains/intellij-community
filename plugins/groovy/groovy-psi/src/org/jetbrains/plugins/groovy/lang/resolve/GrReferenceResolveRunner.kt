@@ -173,7 +173,7 @@ internal fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
  * @receiver call site
  * @return empty collection or a collection with 1 local variable result
  */
-private fun PsiElement.resolveToLocalVariable(name: String): ElementResolveResult<GrVariable>? {
+fun PsiElement.resolveToLocalVariable(name: String): ElementResolveResult<GrVariable>? {
   return treeWalkUpAndGet(LocalVariableProcessor(name))
 }
 

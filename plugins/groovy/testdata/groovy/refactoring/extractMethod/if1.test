@@ -1,0 +1,30 @@
+protected static def getGeneratedFileNames() {
+    def foo = 0
+    while (true) {
+        println(foo)
+        <begin>if (f()) {
+            foo = ""
+        }<end>
+
+    }
+}
+
+static def f() {false}
+-----
+protected static def getGeneratedFileNames() {
+    def foo = 0
+    while (true) {
+        println(foo)
+        foo = testMethod(foo)
+
+    }
+}
+
+private static String testMethod(int foo) {
+    if (f()) {
+        foo = ""
+    }
+    return foo
+}
+
+static def f() {false}

@@ -103,6 +103,14 @@ class ExtractMethodTest extends LightGroovyTestCase {
     }
   }
 
+  void testIf1() throws Throwable { doTest() }
+
+  void testCaptured1() throws Throwable { doTest() }
+
+  void testCaptured2() throws Throwable { doTest() }
+
+  void testOuterClosureReference() throws Throwable { doTest() }
+
   void testClos_em() throws Throwable { doTest() }
 
   void testEm1() throws Throwable { doTest() }
