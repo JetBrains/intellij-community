@@ -72,7 +72,7 @@ public class SvnTreeConflictResolver {
       final Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
 
       revert(ioFile);
-      if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      if (StatusType.STATUS_ADDED.equals(status.getContentsStatus())) {
         FileUtil.delete(ioFile);
       }
       pathDirty(myRevertPath);
@@ -90,10 +90,10 @@ public class SvnTreeConflictResolver {
     final File ioFile = myPath.getIOFile();
     Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
 
-    if (status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
+    if (status == null || StatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
       revert(ioFile);
       updateFile(ioFile, Revision.HEAD);
-    } else if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+    } else if (StatusType.STATUS_ADDED.equals(status.getContentsStatus())) {
       revert(ioFile);
       updateFile(ioFile, Revision.HEAD);
       FileUtil.delete(ioFile);
@@ -114,7 +114,7 @@ public class SvnTreeConflictResolver {
     StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
 
     statusClient.doStatus(ioFile, Depth.INFINITY, false, false, false, false, status -> {
-      if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      if (status != null && StatusType.STATUS_ADDED.equals(status.getContentsStatus())) {
         result.add(status.getFile());
       }
     });

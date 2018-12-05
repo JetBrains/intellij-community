@@ -161,37 +161,37 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
         if (theirsExists) {
           // should be deleted
           assertTrue(createTestFailedComment(exFile.getPath()) + " (unversioned)",
-                     status == null || StatusType.STATUS_DELETED.equals(status.getNodeStatus()));
+                     status == null || StatusType.STATUS_DELETED.equals(status.getContentsStatus()));
         } else {
           // unversioned
           assertTrue(createTestFailedComment(exFile.getPath()) + " (unversioned)",
-                     status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus()));
+                     status == null || StatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus()));
         }
       } else if (StatusType.STATUS_DELETED.equals(file.myNodeStatus)) {
         assertTrue(createTestFailedComment(exFile.getPath()) + " (deleted status)",
-                   status != null && file.myNodeStatus.equals(status.getNodeStatus()));
+                   status != null && file.myNodeStatus.equals(status.getContentsStatus()));
       } else if (StatusType.STATUS_ADDED.equals(file.myNodeStatus)) {
         assertTrue(createTestFailedComment(exFile.getPath()) + " (file exists)", exFile.exists());
         if (theirsExists) {
           assertTrue(createTestFailedComment(exFile.getPath()) + " (added status)",
-                     status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
+                     status != null && StatusType.STATUS_REPLACED.equals(status.getContentsStatus()));
         } else {
           assertTrue(createTestFailedComment(exFile.getPath()) + " (added status)",
-                     status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus()));
+                     status != null && StatusType.STATUS_ADDED.equals(status.getContentsStatus()));
         }
       } else {
-        if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+        if (StatusType.STATUS_ADDED.equals(status.getContentsStatus())) {
           // in theirs -> deleted
           assertFalse(createTestFailedComment(file.myRelativePath) + " check deleted in theirs", theirsExists);
         } else {
           if (theirsExists) {
             assertTrue(createTestFailedComment(exFile.getPath()) + " (normal node status)",
-                       status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
+                       status != null && StatusType.STATUS_REPLACED.equals(status.getContentsStatus()));
           } else {
             assertTrue(createTestFailedComment(exFile.getPath()) + " (normal node status)",
                        status != null &&
-                       (StatusType.STATUS_NORMAL.equals(status.getNodeStatus()) ||
-                        StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())));
+                       (StatusType.STATUS_NORMAL.equals(status.getContentsStatus()) ||
+                        StatusType.STATUS_MODIFIED.equals(status.getContentsStatus())));
           }
         }
         if (file.myCopyFrom != null) {

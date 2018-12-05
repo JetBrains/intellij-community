@@ -942,7 +942,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       }.compute();
 
       final FilePath filePath = VcsUtil.getFilePath(file);
-      if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      if (StatusType.STATUS_ADDED.equals(status.getContentsStatus())) {
         deleteAnyway.add(filePath);
       } else {
         deletedFiles.add(Pair.create(filePath, vcs.getWorkingCopyFormat(file)));

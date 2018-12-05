@@ -250,7 +250,7 @@ public class SvnRecursiveStatusWalker {
     }
 
     public void processCurrentItem(@NotNull Status status) {
-      StatusType nodeStatus = status.getNodeStatus();
+      StatusType nodeStatus = status.getContentsStatus();
       FilePath path = myCurrentItem.getPath();
       VirtualFile vf = path.getVirtualFile();
 

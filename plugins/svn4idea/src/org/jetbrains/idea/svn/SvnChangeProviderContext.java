@@ -162,7 +162,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (filePath.isDirectory() && status.isLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if ((status.is(StatusType.STATUS_ADDED) || StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())) &&
+    if ((status.is(StatusType.STATUS_ADDED) || StatusType.STATUS_MODIFIED.equals(status.getContentsStatus())) &&
         status.getCopyFromURL() != null) {
       addCopiedFile(filePath, status, status.getCopyFromURL());
     }
@@ -324,7 +324,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     ConflictedSvnChange change =
       new ConflictedSvnChange(before, after, fStatus, getState(svnStatus), after == null ? before.getFile() : after.getFile());
 
-    change.setIsPhantom(StatusType.STATUS_DELETED.equals(svnStatus.getNodeStatus()) && !svnStatus.getRevision().isValid());
+    change.setIsPhantom(StatusType.STATUS_DELETED.equals(svnStatus.getContentsStatus()) && !svnStatus.getRevision().isValid());
     change.setBeforeDescription(svnStatus.getTreeConflict());
     patchWithPropertyChange(change, svnStatus, null);
 

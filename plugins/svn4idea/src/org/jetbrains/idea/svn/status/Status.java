@@ -134,7 +134,7 @@ public class Status {
   }
 
   public boolean is(@NotNull StatusType type) {
-    return type.equals(getNodeStatus()) || type.equals(getContentsStatus());
+    return type.equals(getContentsStatus());
   }
 
   public boolean is(@NotNull StatusType... types) {
@@ -191,10 +191,6 @@ public class Status {
 
   public boolean isConflicted() {
     return myIsConflicted;
-  }
-
-  public StatusType getNodeStatus() {
-    return myContentsStatus;
   }
 
   @Nullable
