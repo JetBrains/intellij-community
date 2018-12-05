@@ -39,6 +39,19 @@ class SwitchStatementWithTooFewBranches {
         break;
 
     }
+    <warning descr="'switch' statement has too few case labels (1), and should probably be replaced with an 'if' statement">switch</warning> (i) {
+      case 1 -> {}
+    }
+    switch (i) {
+      case 1,2 -> {}
+    }
+    switch (i) {
+      case 1 -> {}
+      case 2 -> {}
+    }
+    <warning descr="'switch' statement has only 'default' case">switch</warning> (i) {
+      default -> {}
+    }
     switch (i)<EOLError descr="'{' expected"></EOLError>
   }
 }

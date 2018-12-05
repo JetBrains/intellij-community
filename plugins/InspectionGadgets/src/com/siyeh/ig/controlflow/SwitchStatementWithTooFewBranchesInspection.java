@@ -20,10 +20,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiSwitchLabelStatement;
-import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -84,12 +81,20 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       if (body == null) return;
       int branches = 0;
       boolean defaultFound = false;
-      for (final PsiSwitchLabelStatement child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatement.class)) {
+      for (final PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
         if (child.isDefaultCase()) {
           defaultFound = true;
         }
-        else if (++branches >= m_limit) {
-          return;
+        else {
+          PsiExpressionList values = child.getCaseValues();
+          if (values == null) {
+            // Erroneous switch: compilation error is reported instead
+            return;
+          }
+          branches += values.getExpressionCount();
+          if (branches >= m_limit) {
+            return;
+          }
         }
       }
       if (branches == 0 && !defaultFound) {
