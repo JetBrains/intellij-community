@@ -123,7 +123,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Toolbar: <menu>
 
 	menu.elem =
-		element menu { menu.inner & menu.attrs } & nonW3C
+		element menu { menu.inner & menu.attrs }
 	menu.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.toolbar
