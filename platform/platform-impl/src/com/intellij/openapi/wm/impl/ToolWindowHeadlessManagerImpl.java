@@ -130,7 +130,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @Override
   public void unregisterToolWindow(@NotNull String id) {
     ToolWindow tw = myToolWindows.remove(id);
-    Disposer.dispose(tw.getContentManager());
+    if (tw != null) {
+      Disposer.dispose(tw.getContentManager());
+    }
   }
 
   @Override
