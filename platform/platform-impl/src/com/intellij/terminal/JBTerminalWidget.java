@@ -157,6 +157,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       myListener.onNextTabSelected();
       return true;
     }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Show Tabs", mySettingsProvider.getShowTabsKeyStrokes(), input -> {
+      myListener.showTabs();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {

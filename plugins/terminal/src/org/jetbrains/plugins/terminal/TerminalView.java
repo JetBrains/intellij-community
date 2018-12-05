@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.dnd.DnDDropHandler;
@@ -13,7 +15,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -234,6 +236,14 @@ public class TerminalView {
         if (content != null) {
           removeTab(content, true);
         }
+      }
+
+      @Override
+      public void showTabs() {
+        ShowContentAction action = new ShowContentAction(toolWindow, toolWindow.getComponent(), toolWindow.getContentManager());
+        DataContext dataContext = DataManager.getInstance().getDataContext(toolWindow.getComponent());
+        AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+        action.actionPerformed(event);
       }
     });
 

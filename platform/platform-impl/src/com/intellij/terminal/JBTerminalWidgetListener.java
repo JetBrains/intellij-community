@@ -7,4 +7,5 @@ public interface JBTerminalWidgetListener {
   void onPreviousTabSelected();
   void onNextTabSelected();
   void onSessionClosed();
+  void showTabs();
 }
