@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -86,7 +87,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
       prefix += "___";
     }
     String suffix = "." + StringUtil.getShortName(fileName);
-    return FileUtil.createTempFile(new File(getTempDirPath()), prefix, suffix, true);
+    File file = FileUtil.createTempFile(new File(getTempDirPath()), prefix, suffix, true);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.getPath());
+    return file;
   }
 
   @Override
@@ -94,6 +97,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     try {
       return WriteAction.computeAndWait(() -> {
         final String fullPath = myTempDir.getCanonicalPath() + '/' + path;
+        VfsRootAccess.allowRootAccess(getTestRootDisposable(), fullPath);
         final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath);
         return file;
       });
@@ -109,6 +113,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     final File file = new File(createTempDirectory(), name);
     return WriteAction.computeAndWait(() -> {
       FileUtil.createIfDoesntExist(file);
+      VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.getPath());
       return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     });
   }
@@ -116,7 +121,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @Override
   @NotNull
   public VirtualFile findOrCreateDir(@NotNull String name) throws IOException {
-    return VfsUtil.createDirectories(new File(createTempDirectory(), name).getPath());
+    File file = new File(createTempDirectory(), name);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.getPath());
+    return VfsUtil.createDirectories(file.getPath());
   }
 
   @Override

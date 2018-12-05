@@ -121,10 +121,6 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
-  private void allowRootAccess(final String filePath) {
-    VfsRootAccess.allowRootAccess(getTestRootDisposable(), filePath);
-  }
-
   protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {
     VirtualFile vFile = findVirtualFile(filePath);
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
@@ -503,7 +499,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   @NotNull
   protected VirtualFile findVirtualFile(@NotNull String filePath) {
     String absolutePath = getTestDataPath() + filePath;
-    allowRootAccess(absolutePath);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
     return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
   }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
@@ -234,15 +235,16 @@ abstract class ComponentStoreImpl : IComponentStore {
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
     runUndoTransparentWriteAction {
       val errors: MutableList<Throwable> = SmartList<Throwable>()
+      val newDisposable = Disposer.newDisposable()
       try {
-        VfsRootAccess.allowRootAccess(absolutePath)
+        VfsRootAccess.allowRootAccess(newDisposable, absolutePath)
         val isSomethingChanged = externalizationSession.save(errors = errors)
         if (!isSomethingChanged) {
           LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
         }
       }
       finally {
-        VfsRootAccess.disallowRootAccess(absolutePath)
+        Disposer.dispose(newDisposable)
       }
       CompoundRuntimeException.throwIfNotEmpty(errors)
     }

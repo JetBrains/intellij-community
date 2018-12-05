@@ -181,17 +181,25 @@ public class VfsRootAccess {
     Disposer.register(disposable, () -> disallowRootAccess(roots));
   }
 
+  /**
+   * @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead
+   */
+  @Deprecated
   @TestOnly
   public static void allowRootAccess(@NotNull String... roots) {
     for (String root : roots) {
-      ourAdditionalRoots.add(FileUtil.toSystemIndependentName(root));
+      ourAdditionalRoots.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root),'/'));
     }
   }
 
+  /**
+   * @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead
+   */
+  @Deprecated
   @TestOnly
   public static void disallowRootAccess(@NotNull String... roots) {
     for (String root : roots) {
-      ourAdditionalRoots.remove(FileUtil.toSystemIndependentName(root));
+      ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root),'/'));
     }
   }
 }
