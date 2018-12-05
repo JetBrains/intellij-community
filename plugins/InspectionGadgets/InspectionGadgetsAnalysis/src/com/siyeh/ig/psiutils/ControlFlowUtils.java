@@ -434,14 +434,18 @@ public class ControlFlowUtils {
       if (container == null) {
         return false;
       }
+      if (container instanceof PsiLoopStatement) {
+        return false;
+      }
       if (container instanceof PsiCodeBlock) {
+        if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
+          return true;
+        }
         if (!statementIsLastInBlock((PsiCodeBlock)container, (PsiStatement)statementToCheck)) {
           return false;
         }
       }
-      if (container instanceof PsiLoopStatement) {
-        return false;
-      }
+      
       statementToCheck = container;
     }
   }
@@ -460,6 +464,9 @@ public class ControlFlowUtils {
         return false;
       }
       if (container instanceof PsiCodeBlock) {
+        if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
+          return true;
+        }
         if (!statementIsLastInBlock((PsiCodeBlock)container, (PsiStatement)statementToCheck)) {
           return false;
         }
