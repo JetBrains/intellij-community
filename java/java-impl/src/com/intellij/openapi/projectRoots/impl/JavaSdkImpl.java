@@ -331,7 +331,9 @@ public class JavaSdkImpl extends JavaSdk {
 
     String path = home.replace(File.separatorChar, '/');
     sdkModificator.setHomePath(path);
-    sdkModificator.setVersionString(jdkName); // must be set after home path, otherwise setting home path clears the version string
+    if (JdkVersionDetector.isVersionString(jdkName)) {
+      sdkModificator.setVersionString(jdkName);  // must be set after home path, otherwise setting home path clears the version string
+    }
 
     File jdkHomeFile = new File(home);
     addClasses(jdkHomeFile, sdkModificator, isJre);
