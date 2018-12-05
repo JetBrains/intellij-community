@@ -139,12 +139,12 @@ public class UsageViewImpl implements UsageViewEx {
   private List<UsageContextPanel.Provider> myUsageContextPanelProviders;
   private UsageContextPanel.Provider myCurrentUsageContextProvider;
 
-  private JPanel myCentralPanel;
+  private JPanel myCentralPanel; // accessed in EDT only
 
   private final GroupNode myRoot;
   private final UsageViewTreeModelBuilder myModel;
   private final Object lock = new Object();
-  private Splitter myPreviewSplitter;
+  private Splitter myPreviewSplitter; // accessed in EDT only
   private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
   // true if usages tree is currently expanding or collapsing
@@ -357,6 +357,7 @@ public class UsageViewImpl implements UsageViewEx {
 
       @Override
       public void onDone(boolean isExcludeAction) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
          if (myRootPanel.hasNextOccurence()) {
            myRootPanel.goNextOccurence();
          }
@@ -544,6 +545,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private void updateUsagesContextPanels() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     disposeUsageContextPanels();
     if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
@@ -600,12 +602,14 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private void tabSelected(@NotNull final UsageContextPanel.Provider provider) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myCurrentUsageContextProvider = provider;
     updateUsagesContextPanels();
     updateOnSelectionChanged();
   }
 
   private void disposeUsageContextPanels() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCurrentUsageContextPanel != null) {
       saveSplitterProportions();
       Disposer.dispose(myCurrentUsageContextPanel);
@@ -1044,6 +1048,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public void select() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     // can be null during ctr execution
     if (myTree != null) {
       myTree.requestFocusInWindow();
@@ -1241,6 +1246,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void selectUsages(@NotNull Usage[] usages) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath[] paths = usagesToNodes(Arrays.stream(usages))
       .map(node -> new TreePath(node.getPath()))
       .toArray(TreePath[]::new);
@@ -1252,6 +1258,7 @@ public class UsageViewImpl implements UsageViewEx {
   @NotNull
   @Override
   public JComponent getPreferredFocusableComponent() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myTree != null ? myTree : getComponent();
   }
 
@@ -1406,6 +1413,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private void saveSplitterProportions() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     getUsageViewSettings().setPreviewUsagesSplitterProportion(myPreviewSplitter.getProportion());
   }
 
@@ -1492,6 +1500,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void addButtonToLowerPane(@NotNull Action action) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     int index = myButtonPanel.getComponentCount();
     if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonAction(index, action);
