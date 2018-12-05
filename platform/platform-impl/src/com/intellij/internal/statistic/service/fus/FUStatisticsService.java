@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus;
 
 import com.intellij.internal.statistic.connect.StatServiceException;
+import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
 import com.intellij.internal.statistic.service.ConfigurableStatisticsService;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsAggregator;
@@ -19,7 +20,7 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsService");
 
   private static final FUStatisticsSettingsService mySettingsService = FUStatisticsSettingsService.getInstance();
-  private static final FUStatisticsAggregator myAggregator = FUStatisticsAggregator.create();
+  private static final FUStatisticsAggregator myAggregator = FUStatisticsAggregator.create(false);
 
   @Override
   @NotNull

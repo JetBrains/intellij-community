@@ -134,7 +134,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
     }
   }
 
-  private static boolean isValidVariant(XmlAttribute attribute,
+  public static boolean isValidVariant(XmlAttribute attribute,
                                         @NotNull XmlAttributeDescriptor descriptor,
                                         final XmlAttribute[] attributes,
                                         final XmlExtension extension) {

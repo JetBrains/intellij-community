@@ -154,6 +154,8 @@
       <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
     </extensionPoint>
 
+    <extensionPoint name="toolWindowWhitelist" beanClass="com.intellij.openapi.wm.ToolWindowWhitelistEP"/>
+
     <extensionPoint name="library.toolWindow"  beanClass="com.intellij.openapi.wm.ext.LibraryDependentToolWindow">
       <with attribute="librarySearchClass" implements="com.intellij.openapi.wm.ext.LibrarySearchHelper"/>
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>

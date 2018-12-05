@@ -337,7 +337,7 @@ public class LambdaRefactoringUtil {
 
     @Nullable
   public static PsiParameterList specifyLambdaParameterTypes(PsiType functionalInterfaceType,
-                                                             PsiLambdaExpression lambdaExpression) {
+                                                             @NotNull PsiLambdaExpression lambdaExpression) {
     String typedParamList = createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false);
     if (typedParamList != null) {
       PsiParameterList paramListWithFormalTypes = JavaPsiFacade.getElementFactory(lambdaExpression.getProject())

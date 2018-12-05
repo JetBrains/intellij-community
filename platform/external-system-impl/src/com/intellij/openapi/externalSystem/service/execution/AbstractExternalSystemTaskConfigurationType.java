@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -143,7 +144,8 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     }
     if (!StringUtil.isEmptyOrSpaces(projectName)) {
       buffer.append(projectName);
-    } else {
+    }
+    else if (!StringUtil.isEmptyOrSpaces(externalProjectPath)) {
       buffer.append(externalProjectPath);
     }
 
@@ -161,6 +163,9 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     }
     if (!isTasksAbsent) buffer.append(tasksPostfix);
 
+    if (buffer.length() == 0) {
+      buffer.append(ExecutionBundle.message("run.configuration.unnamed.name.prefix"));
+    }
     return buffer.toString();
   }
 }

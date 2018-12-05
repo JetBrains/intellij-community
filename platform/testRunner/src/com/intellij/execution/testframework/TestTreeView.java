@@ -271,12 +271,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
     g.translate(0, bounds.y - 1);
     if (isSelected) {
-      if (!hasFocus && UIUtil.isUnderAquaBasedLookAndFeel()) {
-        g.setColor(UIUtil.getTreeForeground());
-      }
-      else {
-        g.setColor(UIUtil.getTreeSelectionForeground());
-      }
+      g.setColor(UIUtil.getTreeSelectionForeground(hasFocus));
     }
     else {
       g.setColor(new JBColor(0x808080, 0x808080));

@@ -11,11 +11,12 @@ import java.util.*
 private val NUMBER = Regex("\\d+")
 
 class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UserUpdateSettings) {
+  constructor(currentBuild: BuildNumber, updates: UpdatesInfo) :
+    this(currentBuild, updates, UpdateSettings.getInstance())
+
   enum class State {
     LOADED, CONNECTION_ERROR, NOTHING_LOADED
   }
-
-  private val lineage = currentBuild.baselineVersion
 
   fun checkForUpdates(): CheckForUpdateResult {
     val product = updates[currentBuild.productCode]
@@ -44,10 +45,11 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
       candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
       candidate.target?.inRange(currentBuild) ?: true
 
-  private fun compareBuilds(n1: BuildNumber, n2: BuildNumber) =
-      if (n1.baselineVersion == lineage && n2.baselineVersion != lineage) 1
-      else if (n2.baselineVersion == lineage && n1.baselineVersion != lineage) -1
-      else n1.compareTo(n2)
+  private fun compareBuilds(n1: BuildNumber, n2: BuildNumber): Int {
+    val customization = UpdateStrategyCustomization.getInstance()
+    val preferSameMajorVersion = customization.haveSameMajorVersion(currentBuild, n1).compareTo(customization.haveSameMajorVersion(currentBuild, n2))
+    return if (preferSameMajorVersion != 0) preferSameMajorVersion else n1.compareTo(n2)
+  }
 
   private fun patches(newBuild: BuildInfo, product: Product, from: BuildNumber): UpdateChain? {
     val single = newBuild.patches.find { it.isAvailable && it.fromBuild.compareTo(from) == 0 }

@@ -279,15 +279,15 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
                                                  @NotNull NewVirtualFileSystem fs,
                                                  @NotNull FileAttributes attributes) {
     assert id > 0 : id;
-    String name = file.getName();
-    if (!name.isEmpty()) {
+    CharSequence name = file.getNameSequence();
+    if (name.length() != 0) {
       if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return false; // TODO: Handle root attributes change.
     }
     else {
       if (areChildrenLoaded(id)) return false; // TODO: hack
     }
 
-    FSRecords.writeAttributesToRecord(id, parentId, attributes, name);
+    FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
 
     return true;
   }
@@ -968,13 +968,13 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     VirtualFileSystemEntry root = myRoots.get(rootUrl);
     if (root != null) return root;
 
-    String rootName;
+    CharSequence rootName;
     String rootPath;
     if (fs instanceof ArchiveFileSystem) {
       ArchiveFileSystem afs = (ArchiveFileSystem)fs;
       VirtualFile localFile = afs.findLocalByRootPath(path);
       if (localFile == null) return null;
-      rootName = localFile.getName();
+      rootName = localFile.getNameSequence();
       rootPath = afs.getRootPathByLocal(localFile); // make sure to not create FsRoot with ".." garbage in path
     }
     else {
@@ -1335,14 +1335,14 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   }
 
   private static class FsRoot extends VirtualDirectoryImpl {
-    private final String myName;
+    private final CharSequence myName;
     private final String myPathWithOneSlash;
 
     private FsRoot(int id,
                    @NotNull VfsData.Segment segment,
                    @NotNull VfsData.DirectoryData data,
                    @NotNull NewVirtualFileSystem fs,
-                   @NotNull String name,
+                   @NotNull CharSequence name,
                    @NotNull String pathBeforeSlash) {
       super(id, segment, data, null, fs);
       myName = name;

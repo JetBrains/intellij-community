@@ -219,7 +219,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   private void setupAddAction(EditorTextField field) {
     field.addSettingsProvider(editor -> {
       ExtendableTextComponent.Extension extension =
-        ExtendableTextComponent.Extension.create(AllIcons.General.Add, "Add placeholder", () -> {
+        ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, "Add placeholder", () -> {
           Set<String> placeholders = new HashSet<>();
           for (CommitPlaceholderProvider provider : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
             placeholders.addAll(Arrays.asList(provider.getPlaceholders(null)));

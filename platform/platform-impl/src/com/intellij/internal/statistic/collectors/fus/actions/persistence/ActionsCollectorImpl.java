@@ -31,6 +31,9 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   static {
     ourPrefixesBlackList.put("RemoteTool_", "Remote External Tool");
     ourPrefixesBlackList.put("Tool_", "External Tool");
+    ourPrefixesBlackList.put("Ant_", "Ant_");
+    ourPrefixesBlackList.put("Maven_", "Maven_");
+    ourPrefixesBlackList.put("ExternalSystem_", "ExternalSystem_");
     ourPrefixesBlackList.put("Macro.", "Invoke Macro");
   }
 

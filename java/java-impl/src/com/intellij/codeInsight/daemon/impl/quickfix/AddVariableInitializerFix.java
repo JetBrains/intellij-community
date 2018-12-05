@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
@@ -49,7 +50,7 @@ public class AddVariableInitializerFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myVariable.isValid() &&
-           myVariable.getManager().isInProject(myVariable) &&
+           BaseIntentionAction.canModify(myVariable) &&
            !myVariable.hasInitializer() &&
            !(myVariable instanceof PsiParameter);
   }

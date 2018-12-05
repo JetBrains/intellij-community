@@ -85,7 +85,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
           managerThread.schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() {
-              trackClass(debugSession, ref, type, activated);
+              trackClass(debugSession, debugProcess, ref, type, activated);
             }
           });
         }
@@ -121,6 +121,9 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
           protected void action() {
             final boolean activated = myIsTrackersActivated.get();
             final VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+            if (!proxy.canBeModified()) {
+              return;
+            }
             tracker.getTrackedClasses().forEach((className, type) -> {
               List<ReferenceType> classes = proxy.classesByName(className);
               if (classes.isEmpty()) {
@@ -128,7 +131,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
               }
               else {
                 for (ReferenceType ref : classes) {
-                  trackClass(debugSession, ref, type, activated);
+                  trackClass(debugSession, debugProcess, ref, type, activated);
                 }
               }
             });
@@ -146,7 +149,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
           @Override
           public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
             process.getRequestsManager().deleteRequest(this);
-            trackClass(session, referenceType, type, myIsTrackersActivated.get());
+            trackClass(session, process, referenceType, type, myIsTrackersActivated.get());
           }
         };
 
@@ -178,10 +181,14 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     new MyDoubleClickListener().installOn(table);
   }
   private void trackClass(@NotNull XDebugSession session,
+                          @NotNull DebugProcessImpl debugProcess,
                           @NotNull ReferenceType ref,
                           @NotNull TrackingType type,
                           boolean isTrackerEnabled) {
     LOG.assertTrue(DebuggerManager.getInstance(myProject).isDebuggerManagerThread());
+    if (!debugProcess.getVirtualMachineProxy().canBeModified()) {
+      return;
+    }
     if (type == TrackingType.CREATION) {
       final ConstructorInstancesTracker old = myConstructorTrackedClasses.getOrDefault(ref, null);
       if (old != null) {

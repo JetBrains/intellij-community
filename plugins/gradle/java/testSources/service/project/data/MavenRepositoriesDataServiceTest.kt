@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.testFramework.LightIdeaTestCase
+import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.After
 import org.junit.Before
@@ -46,5 +47,23 @@ class MavenRepositoriesDataServiceTest: LightIdeaTestCase() {
     val repositories = RemoteRepositoriesConfiguration.getInstance(getProject()).repositories
 
     assertContainsElements(repositories, RemoteRepositoryDescription("repoName", "repoName", "repoUrl"))
+  }
+
+  @Test
+  fun testMavenRepositoriesDataDeduplicatedByUrl() {
+    val service = MavenRepositoriesDataService()
+    val instance = RemoteRepositoriesConfiguration.getInstance(getProject())
+    instance.repositories = listOf(RemoteRepositoryDescription("repoId_original", "repoName_original", "repoUrl"))
+
+    val imported = mutableSetOf(DataNode<MavenRepositoryData>(MavenRepositoryData.KEY,
+                                                              MavenRepositoryData(GradleConstants.SYSTEM_ID, "repoName", "repoUrl"),
+                                                              null))
+
+    service.onSuccessImport(imported, null, getProject(), myModelsProvider)
+
+    val repositories = instance.repositories
+
+    UsefulTestCase.assertSize(1, repositories)
+    assertContainsElements(repositories, RemoteRepositoryDescription("repoId_original", "repoName_original", "repoUrl"))
   }
 }

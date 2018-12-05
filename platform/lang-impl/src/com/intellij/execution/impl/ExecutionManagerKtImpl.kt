@@ -128,16 +128,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
 private fun triggerUsage(environment: ExecutionEnvironment) {
   val runConfiguration = environment.runnerAndConfigurationSettings?.configuration ?: return
   val configurationFactory = runConfiguration.factory ?: return
-  val configurationType = configurationFactory.type
-  if (configurationType is UnknownConfigurationType) return
-
-  var key = configurationType.id
-  if (configurationType.configurationFactories.size > 1) {
-    key += "." + configurationFactory.id
-  }
-
-  FUSProjectUsageTrigger.getInstance(environment.project).trigger(RunConfigurationUsageTriggerCollector::class.java, key,
-                                                                  FUSUsageContext.create(environment.executor.id))
+  RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor)
 }
 
 private class ProcessExecutionListener(private val project: Project,

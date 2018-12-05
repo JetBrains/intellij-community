@@ -1168,7 +1168,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
                         - myEditor.getVerticalScrollBar().getWidth();
             width -= JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) * 2 + contentInsets;
-            return new Dimension(width - BalloonImpl.POINTER_LENGTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
+            return new Dimension(width - BalloonImpl.POINTER_LENGTH.get(), myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }
 
           @Override

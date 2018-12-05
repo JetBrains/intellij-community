@@ -75,7 +75,7 @@ public class CollectFUStatisticsAction extends GotoActionBase {
   }
 
   private static void showCollectorUsages(@NotNull Project project, @NotNull String groupId) {
-    FUStatisticsAggregator aggregator = FUStatisticsAggregator.create();
+    FUStatisticsAggregator aggregator = FUStatisticsAggregator.create(false);
     FSContent data = aggregator.getUsageCollectorsData(Collections.singleton(groupId));
     if (data == null) {
       Messages.showErrorDialog(project, "Can't collect usages", "Error");

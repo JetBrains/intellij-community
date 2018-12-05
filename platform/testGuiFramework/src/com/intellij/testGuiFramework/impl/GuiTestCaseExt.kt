@@ -5,11 +5,13 @@ import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
+import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
@@ -80,46 +82,62 @@ fun GuiTestCase.closeProject() {
 
 /**
  * Provide waiting for background tasks to finish
- * This function should be used instead of  [waitForBackgroundTasksToFinish]
+ * This function should be used instead of  [IdeFrameFixture.waitForBackgroundTasksToFinish]
  * because sometimes the latter doesn't wait enough time
+ * The function searches for async icon indicator and waits for its disappearing
+ * This occurs several times as background processes often goes one after another.
  * */
-fun GuiTestCase.waitAMoment(attempts: Int = 0) {
-  val maxAttempts = 3
-  ideFrame {
-    this.waitForBackgroundTasksToFinish()
-    val asyncIcon = indexingProcessIconNullable(Timeouts.noTimeout)
-    if(asyncIcon != null){
-      val timeoutForBackgroundTasks = Timeouts.minutes10
-      try {
-        asyncIcon.click()
-        waitForPanelToDisappear(
-          panelTitle = "Background Tasks",
-          timeoutToAppear = Timeouts.seconds01,
-          timeoutToDisappear = timeoutForBackgroundTasks
-        )
-      }
-      catch (e: IllegalStateException){
-        // asyncIcon searched earlier might disappear at all (it's ok)
-        // or new one is shown. So let's try to search it again
-        if(attempts < maxAttempts)
-          waitAMoment(attempts + 1)
-        else{
-          if(indexingProcessIconNullable(Timeouts.noTimeout) !=null)
-            throw WaitTimedOutError("Async icon is shown, but we cannot click on it after $maxAttempts attempts")
+fun GuiTestCase.waitAMoment() {
+  fun isWaitIndicatorPresent(): Boolean {
+    var result = false
+    ideFrame {
+      result = indexingProcessIconNullable(Timeouts.seconds03) != null
+    }
+    return result
+  }
+  fun waitBackgroundTaskOneAttempt() {
+    ideFrame {
+      this.waitForBackgroundTasksToFinish()
+      val asyncIcon = indexingProcessIconNullable(Timeouts.seconds03)
+      if (asyncIcon != null) {
+        val timeoutForBackgroundTasks = Timeouts.minutes10
+        try {
+          asyncIcon.click()
+          waitForPanelToDisappear(
+            panelTitle = "Background Tasks",
+            timeoutToAppear = Timeouts.seconds01,
+            timeoutToDisappear = timeoutForBackgroundTasks
+          )
         }
-      }
-      catch (e: IllegalComponentStateException){
-        // do nothing - asyncIcon disappears, background process has stopped
-      }
-      catch (e: ComponentLookupException){
-        // do nothing - panel hasn't appeared and it seems ok
-      }
-      catch (e: WaitTimedOutError) {
-        throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
+        catch (ignore: NullPointerException) {
+          // if asyncIcon disappears at once after getting the NPE from fest might occur
+          // but it's ok - nothing to wait anymore
+        }
+        catch (ignore: IllegalComponentStateException) {
+          // do nothing - asyncIcon disappears, background process has stopped
+        }
+        catch (ignore: ComponentLookupException) {
+          // do nothing - panel hasn't appeared and it seems ok
+        }
+        catch (ignore: IllegalStateException) {
+          // asyncIcon searched earlier might disappear at all (it's ok)
+        }
+        catch (e: WaitTimedOutError) {
+          throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
+        }
       }
     }
   }
-  robot().waitForIdle()
+
+  val maxAttemptsWaitForBackgroundTasks = 3
+  var currentAttempt = maxAttemptsWaitForBackgroundTasks
+  while (isWaitIndicatorPresent() && currentAttempt >= 0){
+    waitBackgroundTaskOneAttempt()
+    currentAttempt--
+  }
+  if (currentAttempt < 0) {
+    throw WaitTimedOutError("Background processes still continue after $maxAttemptsWaitForBackgroundTasks attempts to wait for their finishing")
+  }
 }
 
 /**
@@ -195,22 +213,26 @@ fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg pa
  *  I detect end of reimport by following signs:
  *  - action button "Refresh all external projects" becomes enable. But sometimes it becomes
  *  enable only for a couple of moments and becomes disable again.
- *  - the gradle tool window contains the project tree. But if reimporting fails the tree is empty.
+ *  - status in the first line in the Build tool window becomes `sync finished` or `sync failed`
  *
- *  @param waitForProject true if we expect reimporting successful
- *  @param waitForProject false if we expect reimporting failing and the tree window is expected empty
  *  @param rootPath root name expected to be shown in the tree. Checked only if [waitForProject] is true
+ *  @return status of reimport - true - successful, false - failed
  * */
-fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean){
-  GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05){
-    var result = false
+fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
+  val syncSuccessful = "sync finished"
+  val syncFailed = "sync failed"
+  var reimportStatus = ""
+
+  GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05) {
+    var isReimportButtonEnabled: Boolean = false
+    var syncState = false
     try {
       ideFrame {
         toolwindow(id = "Gradle") {
           content(tabName = "") {
             // first, check whether the action button "Refresh all external projects" is enabled
             val text = "Refresh all external projects"
-            val isReimportButtonEnabled = try {
+            isReimportButtonEnabled = try {
               val fixtureByTextAnyState = ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text)
               assertTrue("Gradle refresh button should be visible and showing", this.target().isShowing && this.target().isVisible)
               fixtureByTextAnyState.isEnabled
@@ -219,41 +241,37 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
               logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
               false
             }
-            // second, check that Gradle tool window contains a tree with the specified [rootPath]
-            val gradleWindowHasPath = if(waitForProject){
-              try {
-                jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
-              }
-              catch (e: Exception) {
-                logInfo("$currentTimeInHumanString: waitForGradleReimport.jTree: ${e::class.simpleName} - ${e.message}")
-                false
-              }
-            }
-            else true
-            // calculate result whether to continue waiting
-            result = gradleWindowHasPath && isReimportButtonEnabled
           }
         }
-        // check status in the Build tool window
-        var syncState = !waitForProject
-        if(waitForProject) {
-          toolwindow(id = "Build") {
-            content(tabName = "Sync") {
-              val tree = treeTable().target.tree
-              val treePath = ExtendedJTreePathFinder(tree).findMatchingPath(listOf(this@ideFrame.project.name + ":"))
-              val state = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
-              syncState = state.contains("sync finished")
+        // second, check status in the Build tool window
+        toolwindow(id = "Build") {
+          content(tabName = "Sync") {
+            val tree = treeTable().target.tree
+            val pathStrings = listOf(rootPath)
+            val treePath = try {
+              ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(pathStrings = pathStrings, predicate = Predicate.startWith)
+            }
+            catch (e: LocationUnavailableException) {
+              null
+            }
+            if (treePath != null) {
+              reimportStatus = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
+              syncState = reimportStatus.contains(syncSuccessful) || reimportStatus.contains(syncFailed)
+            }
+            else {
+              syncState = false
             }
           }
         }
-        // final calculating of result
-        result = result && syncState
       }
     }
     catch (ignore: Exception) {}
+    // final calculating of result
+    val result = isReimportButtonEnabled && syncState
     result
   }
 
+  return reimportStatus.contains(syncSuccessful)
 }
 
 fun GuiTestCase.gradleReimport() {

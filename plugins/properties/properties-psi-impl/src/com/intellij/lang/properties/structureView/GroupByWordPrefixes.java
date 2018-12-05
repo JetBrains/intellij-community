@@ -75,7 +75,8 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       }
       final String text = ((IProperty) value).getUnescapedKey();
       if (text == null) continue;
-      LOG.assertTrue(text.startsWith(parentPrefix) || text.startsWith(mySeparator));
+      boolean expected = text.startsWith(parentPrefix) || text.startsWith(mySeparator);
+      if (!expected) LOG.error("unexpected text: " + text + "; parentPrefix=" + parentPrefix + "; mySeparator=" + mySeparator);
       List<String> words = StringUtil.split(text, mySeparator);
       keys.add(new Key(words, element));
     }

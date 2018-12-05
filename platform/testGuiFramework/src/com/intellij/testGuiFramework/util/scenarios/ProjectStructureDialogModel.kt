@@ -2,11 +2,7 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.button
-import com.intellij.testGuiFramework.impl.jList
-import com.intellij.testGuiFramework.impl.testTreeItemExist
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.itemLibrary
@@ -69,6 +65,7 @@ fun ProjectStructureDialogModel.checkLibraryPresent(vararg library: String){
       logUIStep("Click '$menuLibraries'")
       tabs.clickItem(menuLibraries)
       testTreeItemExist(itemLibrary, *library)
+      jTree(*library).clickPath()
     }
   }
 }

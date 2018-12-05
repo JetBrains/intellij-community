@@ -230,7 +230,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
     Set<PsiClassType> result = new HashSet<>();
 
-    if (targetMethod.getManager().isInProject(targetMethod)) {
+    if (canModify(targetMethod)) {
       PsiMethod[] superMethods = targetMethod.findSuperMethods();
       for (PsiMethod superMethod : superMethods) {
         Set<PsiClassType> classTypes = filterInProjectExceptions(superMethod, unhandledExceptions);

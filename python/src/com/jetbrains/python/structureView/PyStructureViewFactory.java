@@ -37,6 +37,11 @@ public class PyStructureViewFactory implements PsiStructureViewFactory {
       public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
         return new PyStructureViewModel(psiFile, editor);
       }
+
+      @Override
+      public boolean isRootNodeShown() {
+        return false;
+      }
     };
   }
 }

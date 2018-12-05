@@ -29,6 +29,9 @@ public abstract class ProjectScopeBuilder {
   }
 
   @NotNull
+  public abstract GlobalSearchScope buildEverythingScope();
+
+  @NotNull
   public abstract GlobalSearchScope buildLibrariesScope();
 
   /**

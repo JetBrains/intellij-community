@@ -102,7 +102,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   @Override
   protected PsiElement getElement() {
     final PsiMethodCallExpression call = getMethodCall();
-    if (call == null || !call.getManager().isInProject(call)) return null;
+    if (call == null || !canModify(call)) return null;
     return call;
   }
 

@@ -305,7 +305,7 @@ idea.fatal.error.notification=disabled
           pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
             def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
-            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec())
+            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
           }
         }
         else {
@@ -383,6 +383,33 @@ idea.fatal.error.notification=disabled
       ]
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
+
+      if (buildContext.options.buildToolboxLiteGenLink) {
+        if (buildContext.buildNumber == null) {
+          buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
+        }
+        else {
+          buildContext.executeStep("Building Toolbox Lite-Gen Links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
+            //NOTE[jo]: right now we assume all installer files are created under the same path - distDir
+            String distDir = buildContext.paths.artifacts
+
+            //file paths depend on the fact it was EAP or not. We have to include the parameter
+            boolean isEAP = buildContext.applicationInfo.isEAP
+            String productCode = buildContext.productProperties.productCode
+            String tempDirectory = "${buildContext.paths.buildOutputRoot}/toolbox-lite-gen"
+
+            String[] liteGenArgs = [
+              'runToolboxLiteGen',
+              "-Pintellij.build.artifacts=$distDir",
+              "-Pintellij.build.productCode=$productCode",
+              "-Pintellij.build.isEAP=$isEAP",
+              "-Pintellij.build.output=$tempDirectory",
+            ]
+
+            buildContext.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+          }
+        }
+      }
 
       if (buildContext.productProperties.buildCrossPlatformDistribution) {
         if (paths.size() == 3) {

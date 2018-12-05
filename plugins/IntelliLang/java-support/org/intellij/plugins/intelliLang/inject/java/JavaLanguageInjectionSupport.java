@@ -580,7 +580,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final Matcher matcher = ourPresentationPattern.matcher(injection.getDisplayName());
     if (matcher.matches()) {
       presentation.append(matcher.group(1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      presentation.append(matcher.group(2), isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentation.append(matcher.group(2), isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else {
       super.setupPresentation(injection, presentation, isSelected);

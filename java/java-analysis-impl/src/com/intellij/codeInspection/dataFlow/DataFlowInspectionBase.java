@@ -5,6 +5,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor.ConstantResult;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
@@ -601,7 +602,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           final PsiElement gParent = parent.getParent();
           if (gParent instanceof PsiCallExpression) {
             final PsiMethod psiMethod = ((PsiCallExpression)gParent).resolveMethod();
-            if (psiMethod != null && psiMethod.getManager().isInProject(psiMethod) && AnnotationUtil.isAnnotatingApplicable(psiMethod)) {
+            if (psiMethod != null && BaseIntentionAction.canModify(psiMethod) && AnnotationUtil.isAnnotatingApplicable(psiMethod)) {
               final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
               if (idx < parameters.length) {
                 fixes.add(AddAnnotationPsiFix.createAddNullableFix(parameters[idx]));

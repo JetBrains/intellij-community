@@ -24,7 +24,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public class TipOfTheDayManager implements StartupActivity, DumbAware {
+public class TipOfTheDayStartupActivity implements StartupActivity, DumbAware {
   private boolean myVeryFirstProjectOpening = true;
 
   @Override
@@ -36,14 +36,19 @@ public class TipOfTheDayManager implements StartupActivity, DumbAware {
     }
 
     myVeryFirstProjectOpening = false;
+    runImpl(project, 3);
+  }
 
-    ToolWindowManager.getInstance(project).invokeLater(() -> {
-      if (project.isDisposed()) return;
-      ToolWindowManager.getInstance(project).invokeLater(() -> {
-        if (project.isDisposed()) return;
-        FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "shown.automatically");
-        TipDialog.createForProject(project).show();
-      });
-    });
+  private static void runImpl(Project project, int delayCount) {
+    if (project.isDisposed()) return;
+    // cancel "tips on start-up" right before the show
+    if (!GeneralSettings.getInstance().isShowTipsOnStartup()) return;
+    if (delayCount > 0) {
+      ToolWindowManager.getInstance(project).invokeLater(() -> runImpl(project, delayCount - 1));
+    }
+    else {
+      FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "shown.automatically");
+      TipDialog.showForProject(project);
+    }
   }
 }

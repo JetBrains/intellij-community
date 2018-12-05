@@ -369,11 +369,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     KeyboardShortcut keyboardShortcut = dialog.showAndGet(actionId, keymapSelected, quickLists);
     if (keyboardShortcut == null) return;
 
-    Keymap keymap = null;
+    SafeKeymapAccessor accessor = new SafeKeymapAccessor(parent, keymapSelected);
     if (dialog.hasConflicts()) {
       int result = showConfirmationDialog(parent);
       if (result == Messages.YES) {
-        keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
+        Keymap keymap = accessor.keymap();
         Map<String, List<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
@@ -385,21 +385,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         return;
       }
     }
-
-    // if shortcut is already registered to this action, just select it in the list
-
-    if (keymap == null) keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
-    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
-    for (Shortcut s : shortcuts) {
-      if (s.equals(keyboardShortcut)) {
-        return;
-      }
-    }
-
-    keymap.addShortcut(actionId, keyboardShortcut);
-    if (StringUtil.startsWithChar(actionId, '$')) {
-      keymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), keyboardShortcut);
-    }
+    accessor.add(actionId, keyboardShortcut);
   }
 
   private static void addMouseShortcut(@NotNull String actionId,
@@ -412,11 +398,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     MouseShortcut mouseShortcut = dialog.showAndGet(actionId, keymapSelected, quickLists);
     if (mouseShortcut == null) return;
 
-    Keymap keymap = null;
+    SafeKeymapAccessor accessor = new SafeKeymapAccessor(parent, keymapSelected);
     if (dialog.hasConflicts()) {
       int result = showConfirmationDialog(parent);
       if (result == Messages.YES) {
-        keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
+        Keymap keymap = accessor.keymap();
         String[] actionIds = keymap.getActionIds(mouseShortcut);
         for (String id : actionIds) {
           keymap.removeShortcut(id, mouseShortcut);
@@ -426,34 +412,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         return;
       }
     }
-
-    // if shortcut is already registered to this action, just select it in the list
-
-    if (keymap == null) keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
-    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
-    for (Shortcut shortcut1 : shortcuts) {
-      if (shortcut1.equals(mouseShortcut)) {
-        return;
-      }
-    }
-
-    keymap.addShortcut(actionId, mouseShortcut);
-    if (StringUtil.startsWithChar(actionId, '$')) {
-      keymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), mouseShortcut);
-    }
+    accessor.add(actionId, mouseShortcut);
   }
 
   private void repaintLists() {
     myActionsTree.getComponent().repaint();
-  }
-
-  @NotNull
-  private static Keymap createKeymapCopyIfNeededAndPossible(Component parent, Keymap keymap) {
-    if (parent instanceof KeymapPanel) {
-      KeymapPanel panel = (KeymapPanel)parent;
-      return panel.myManager.getMutableKeymap(keymap);
-    }
-    return keymap;
   }
 
   @Override
@@ -708,6 +671,53 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         myDisposed = true;
         myCheckbox = null;
       }
+    }
+  }
+
+  private static final class SafeKeymapAccessor {
+    private final Component parent;
+    private final Keymap selected;
+    private KeymapSchemeManager manager;
+    private Keymap mutable;
+
+    SafeKeymapAccessor(@NotNull Component parent, @NotNull Keymap selected) {
+      this.parent = parent;
+      this.selected = selected;
+    }
+
+    Keymap keymap() {
+      if (mutable == null) {
+        if (parent instanceof KeymapPanel) {
+          KeymapPanel panel = (KeymapPanel)parent;
+          mutable = panel.myManager.getMutableKeymap(selected);
+        }
+        else {
+          if (manager == null) {
+            manager = new KeymapSelector(selectedKeymap -> {
+            }).getManager();
+            manager.reset();
+          }
+          mutable = manager.getMutableKeymap(selected);
+        }
+      }
+      return mutable;
+    }
+
+    void add(@NotNull String actionId, @NotNull Shortcut newShortcut) {
+      Keymap keymap = keymap();
+      Shortcut[] shortcuts = keymap.getShortcuts(actionId);
+      for (Shortcut shortcut : shortcuts) {
+        if (shortcut.equals(newShortcut)) {
+          // if shortcut is already registered to this action, just select it
+          if (manager != null) manager.apply();
+          return;
+        }
+      }
+      keymap.addShortcut(actionId, newShortcut);
+      if (StringUtil.startsWithChar(actionId, '$')) {
+        keymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), newShortcut);
+      }
+      if (manager != null) manager.apply();
     }
   }
 }

@@ -340,6 +340,13 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testChainedMethodReferenceWithNoPrefix() {
+    myFixture.addClass("package bar; public class Strings {}")
+    myFixture.addClass("package foo; public class Strings { public static void goo() {} }")
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'Strings::goo'
+  }
+
   void testPreferVariableToLambda() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '

@@ -213,7 +213,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   private static boolean isPythonFile(VirtualFile child) {
-    return PythonFileType.INSTANCE.equals(FileTypeRegistry.getInstance().getFileTypeByFileName(child.getName()));
+    return PythonFileType.INSTANCE.equals(FileTypeRegistry.getInstance().getFileTypeByFileName(child.getNameSequence()));
   }
 
   private static void clearSdkPathCache(@NotNull final VirtualFile child) {

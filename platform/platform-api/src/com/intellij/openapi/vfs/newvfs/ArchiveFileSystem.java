@@ -251,6 +251,6 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    * Implementations should return {@code false} if the given file may not host this file system.
    */
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
-    return FileTypeRegistry.getInstance().getFileTypeByFileName(local.getName()) == FileTypes.ARCHIVE;
+    return FileTypeRegistry.getInstance().getFileTypeByFileName(local.getNameSequence()) == FileTypes.ARCHIVE;
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsSettingsService;
 import com.intellij.internal.statistic.service.fus.beans.CollectorGroupDescriptor;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
@@ -46,9 +47,13 @@ public class FUStatisticsPersistence {
    * Collected data are persisted in system cache. One file for one project session. The session is pair: project + IJ build number
    */
   public static String persistProjectUsages(@NotNull Project project) {
-    Set<String> groups = FUStatisticsSettingsService.getInstance().getApprovedGroups();
+    recordProjectUsages(project);
+
+    final FUStatisticsSettingsService settingsService = FUStatisticsSettingsService.getInstance();
+    if (!settingsService.isTransmissionPermitted()) return null;
+    Set<String> groups = settingsService.getApprovedGroups();
     if (groups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) return null;
-    FUStatisticsAggregator aggregator = FUStatisticsAggregator.create();
+    FUStatisticsAggregator aggregator = FUStatisticsAggregator.create(false);
     Map<CollectorGroupDescriptor, Set<UsageDescriptor>> usages = aggregator.getProjectUsages(project, groups);
     if (usages.isEmpty()) return null;
 
@@ -64,6 +69,13 @@ public class FUStatisticsPersistence {
 
     persistToFile(gsonContent, new File(directory, "/" + fileName));
     return fileName;
+  }
+
+  private static void recordProjectUsages(@NotNull Project project) {
+    final Set<String> groups = EventLogExternalSettingsService.getInstance().getApprovedGroups();
+    if (!groups.isEmpty()  || ApplicationManagerEx.getApplicationEx().isInternal()) {
+      FUStatisticsAggregator.create(true).getProjectUsages(project, groups);
+    }
   }
 
   /**

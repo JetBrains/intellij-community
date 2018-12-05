@@ -44,7 +44,7 @@ public class AntMultiFileCompletionTest extends UsefulTestCase {
   public void testPropertyCompletion2() {
     final String testName = "PropertyCompletion2";
     final String[] fileNames = new String [] { testName + ".xml", "PropertyCompletion.properties" };
-    myFixture.testCompletionTyping(fileNames, "\n", testName + "_after.xml");
+    myFixture.testCompletionTyping(fileNames, ".pro\n", testName + "_after.xml");
   }
 
   private void doTestFor(final String[] fileNames, final String ext) {

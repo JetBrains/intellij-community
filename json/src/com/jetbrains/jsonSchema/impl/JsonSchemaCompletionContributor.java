@@ -161,7 +161,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       schemas.forEach(schema -> {
         if (isName != ThreeState.NO) {
           final boolean insertComma = myWalker.hasPropertiesBehindAndNoComma(myPosition);
-          final boolean hasValue = myWalker.isPropertyWithValue(myPosition.getParent().getParent());
+          final boolean hasValue = myWalker.isPropertyWithValue(checkable);
 
           final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(myOriginalPosition, myPosition);
           final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
@@ -412,6 +412,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           }
           else {
             EditorModificationUtil.moveCaretRelatively(editor, -insertedTextSize);
+            PsiDocumentManager.getInstance(context.getProject()).commitDocument(editor.getDocument());
             invokeEnterHandler(editor);
             EditorActionUtil.moveCaretToLineEnd(editor, false, false);
           }

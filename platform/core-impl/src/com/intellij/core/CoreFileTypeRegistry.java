@@ -62,7 +62,7 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
         return fileType;
       }
     }
-    return getFileTypeByFileName(file.getName());
+    return getFileTypeByFileName(file.getNameSequence());
   }
 
   @NotNull

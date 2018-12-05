@@ -4,14 +4,15 @@ package com.intellij.testGuiFramework.util
 typealias FinderPredicate = (String, String) -> Boolean
 
 object Predicate{
-  val equality: FinderPredicate = { left: String, right: String -> left == right }
-  val notEquality: FinderPredicate = { left: String, right: String -> left != right }
-  val withVersion: FinderPredicate = { left: String, right: String ->
+  val equality: FinderPredicate = { found: String, wanted: String -> found == wanted }
+  val notEquality: FinderPredicate = { found: String, wanted: String -> found != wanted }
+  val withVersion: FinderPredicate = { found: String, wanted: String ->
     val pattern = Regex("\\s+\\(.*\\)$")
-    if (right.contains(pattern))
-      left == pattern.split(right).first().trim()
-    else left == right
+    if (found.contains(pattern)) {
+      pattern.split(found).first().trim() == wanted
+    }
+    else found == wanted
   }
-  val startWith: FinderPredicate = {left: String, right: String -> left.startsWith(right)}
+  val startWith: FinderPredicate = {found: String, wanted: String -> found.startsWith(wanted)}
 
 }

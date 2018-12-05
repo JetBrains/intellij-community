@@ -230,8 +230,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
         File buildTxtFile = FileUtil.findFirstThatExist(
           home + "/build.txt",
           home + "/Resources/build.txt",
-          home + "/community/build.txt",
-          home + "/ultimate/community/build.txt");
+          PathManager.getCommunityHomePath() + "/build.txt");
         if (buildTxtFile != null) {
           String text = FileUtil.loadFile(buildTxtFile).trim();
           return fromString(text);

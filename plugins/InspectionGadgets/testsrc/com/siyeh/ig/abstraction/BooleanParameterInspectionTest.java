@@ -44,6 +44,17 @@ public class BooleanParameterInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testVarargs() {
+    doTest("class Y {" +
+           "    public Y(boolean... b) {}" +
+           "}" +
+           "class X extends Y {" +
+           "    public /*'public' constructor 'X()' with 'boolean' parameter*/X/**/(boolean b) {" +
+           "        super(true, b);" +
+           "    }" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new BooleanParameterInspection();

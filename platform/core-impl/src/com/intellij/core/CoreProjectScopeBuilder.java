@@ -66,6 +66,12 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     return new ContentSearchScope(myProject, myFileIndexFacade);
   }
 
+  @NotNull
+  @Override
+  public GlobalSearchScope buildEverythingScope() {
+    return new EverythingGlobalScope(myProject);
+  }
+
   private class CoreLibrariesScope extends GlobalSearchScope {
     @Override
     public boolean contains(@NotNull VirtualFile file) {

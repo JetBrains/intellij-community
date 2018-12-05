@@ -257,7 +257,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
 
           VirtualFile[] children = jarDirectory.getChildren();
           for (VirtualFile file : children) {
-            if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+            if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {
               VirtualFile jarRoot = StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
               if (jarRoot != null) {
                 cachedFiles.add(jarRoot);
@@ -278,7 +278,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
           VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor() {
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
-              if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+              if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {
                 VirtualFile jarRoot = StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
                 if (jarRoot != null) {
                   cachedFiles.add(jarRoot);

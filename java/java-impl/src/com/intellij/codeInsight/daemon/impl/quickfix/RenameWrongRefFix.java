@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Template;
@@ -54,7 +55,7 @@ public class RenameWrongRefFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myRefExpr.isValid() || !myRefExpr.getManager().isInProject(myRefExpr)) return false;
+    if (!myRefExpr.isValid() || !BaseIntentionAction.canModify(myRefExpr)) return false;
     int offset = editor.getCaretModel().getOffset();
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (refName == null) return false;

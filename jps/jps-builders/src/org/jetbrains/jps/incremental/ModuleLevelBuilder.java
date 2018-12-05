@@ -121,4 +121,13 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
   }
+
+  @Override
+  public long getExpectedBuildTime() {
+    //temporary workaround until this method is overridden in Kotlin plugin
+    if (getClass().getName().equals("org.jetbrains.kotlin.jps.build.KotlinBuilder")) {
+      return 100;
+    }
+    return super.getExpectedBuildTime();
+  }
 }

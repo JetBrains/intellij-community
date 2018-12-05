@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
 
 import java.util.ArrayList;
@@ -37,6 +38,10 @@ public class OSProcessUtil {
           return WinProcessManager.kill(process, true);
         }
         else {
+          if (!process.isAlive()) {
+            logSkippedActionWithTerminatedProcess(process, "killProcessTree", null);
+            return true;
+          }
           createWinProcess(process).killRecursively();
           return true;
         }
@@ -76,6 +81,16 @@ public class OSProcessUtil {
     else if (SystemInfo.isUnix) {
       UnixProcessManager.sendSignal(pid, UnixProcessManager.SIGKILL);
     }
+  }
+
+  static void logSkippedActionWithTerminatedProcess(@NotNull Process process, @NotNull String actionName, @Nullable String commandLine) {
+    Integer pid = null;
+    try {
+      pid = getProcessID(process);
+    }
+    catch (Throwable ignored) {
+    }
+    LOG.info("Cannot " + actionName + " already terminated process (pid: " + pid + ", command: " + commandLine + ")");
   }
 
   public static int getProcessID(@NotNull Process process) {

@@ -1234,7 +1234,11 @@
         <option name="FOREGROUND" value="8DA6CE" />
       </value>
     </option>
-    <option baseAttributes="RUBY_IDENTIFIER" name="RUBY_PARAMETER_ID" />
+    <option name="RUBY_PARAMETER_ID">
+      <value>
+        <option name="FOREGROUND" value="56FAFF" />
+      </value>
+    </option>
     <option name="RUBY_REGEXP">
       <value>
         <option name="FOREGROUND" value="61CE3C" />

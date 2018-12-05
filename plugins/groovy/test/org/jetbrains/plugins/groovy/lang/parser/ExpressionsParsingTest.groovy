@@ -91,6 +91,14 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testconditional$ternaryWithoutThenElse() { doTest() }
 
+  void testconditional$ternaryNLBeforeColon() { doTest() }
+
+  void testconditional$ternaryNLBeforeElse() { doTest() }
+
+  void testconditional$ternaryNLBeforeQuestion() { doTest() }
+
+  void testconditional$ternaryNLBeforeThen() { doTest() }
+
   void testerrors$err_final() throws Throwable { doTest() }
 
   void testgstring$daniel_sun() throws Throwable { doTest() }
@@ -365,7 +373,7 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testreferences$keywords() { doTest() }
 
   void testreferences$emptyTypeArgs() { doTest() }
-  
+
   void testreferences$dots() { doTest() }
 
   void testregex$chen() throws Throwable { doTest() }

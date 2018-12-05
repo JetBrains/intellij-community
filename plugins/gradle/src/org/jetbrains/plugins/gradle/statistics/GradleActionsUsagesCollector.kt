@@ -19,7 +19,7 @@ class GradleActionsUsagesCollector : ProjectUsageTriggerCollector() {
 
       // preserve context data ordering
       val context = FUSUsageContext.create(
-        "from.${event?.place ?: "undefined.place"}",
+        event?.place ?: "undefined.place",
         "fromContextMenu.${event?.isFromContextMenu?.toString() ?: "false"}"
       )
 

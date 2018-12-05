@@ -15,6 +15,7 @@ internal open class ClassProcessor(
 ) : FindFirstProcessor<ClassResolveResult>() {
 
   init {
+    nameHint(name)
     elementClassHint(ElementClassHint.DeclarationKind.CLASS)
     if (annotationResolve) {
       hint(AnnotationHint.HINT_KEY, AnnotationHint.ANNOTATION_RESOLVE)

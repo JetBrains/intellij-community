@@ -143,7 +143,13 @@ public class TerminalView {
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState) {
-    createNewTab(null, terminalRunner, myToolWindow, tabState);
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    if (window != null && window.isAvailable()) {
+      // ensure TerminalToolWindowFactory.createToolWindowContent gets called
+      ((ToolWindowImpl)window).ensureContentInitialized();
+      createNewTab(null, terminalRunner, myToolWindow, tabState);
+      window.activate(null);
+    }
   }
 
   private Content newTab(@Nullable JBTerminalWidget terminalWidget) {
@@ -205,6 +211,28 @@ public class TerminalView {
                                                                           finalTerminalWidget.getSessionName());
 
           content.setDisplayName(generateUniqueName(name, Arrays.stream(contents).map(c -> c.getDisplayName()).collect(Collectors.toList())));
+        }
+      }
+
+      @Override
+      public void onPreviousTabSelected() {
+        if (toolWindow.getContentManager().getContentCount() > 1) {
+          toolWindow.getContentManager().selectPreviousContent();
+        }
+      }
+
+      @Override
+      public void onNextTabSelected() {
+        if (toolWindow.getContentManager().getContentCount() > 1) {
+          toolWindow.getContentManager().selectNextContent();
+        }
+      }
+
+      @Override
+      public void onSessionClosed() {
+        Content content = toolWindow.getContentManager().getSelectedContent();
+        if (content != null) {
+          removeTab(content, true);
         }
       }
     });

@@ -372,7 +372,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private ContentPanel createContentPanel(JComponent component) {
     final ContentPanel panel = new ContentPanel();
-    panel.setBackground(UIUtil.getTreeTextBackground());
+    panel.setBackground(UIUtil.getTreeBackground());
     panel.add(component, BorderLayout.CENTER);
     return panel;
   }

@@ -503,8 +503,7 @@ class ShowHeatMapAction : AnAction(), DumbAware {
       val buildTxtFile = FileUtil.findFirstThatExist(
         "$home/build.txt",
         "$home/Resources/build.txt",
-        "$home/community/build.txt",
-        "$home/ultimate/community/build.txt")
+        PathManager.getCommunityHomePath() + "/build.txt")
       if (buildTxtFile != null) {
         return FileUtil.loadFile(buildTxtFile).trim { it <= ' ' }.substringBefore('-', "")
       }

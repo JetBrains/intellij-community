@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -144,8 +145,8 @@ public class ShowRunningListAction extends AnAction {
           Icon icon = (processHandler instanceof KillableProcess && processHandler.isProcessTerminating())
                       ? AllIcons.Debugger.KillProcess
                       : executor.getIcon();
-          JLabel label =
-            new JLabel("<html><body><a href=\"\">" + descriptor.getDisplayName() + "</a></body></html>", icon, SwingConstants.LEADING);
+                    HyperlinkLabel label = new HyperlinkLabel(descriptor.getDisplayName());
+          label.setIcon(icon);
           label.setIconTextGap(JBUI.scale(2));
           label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           label.putClientProperty(KEY, Trinity.create(project, executor, descriptor));

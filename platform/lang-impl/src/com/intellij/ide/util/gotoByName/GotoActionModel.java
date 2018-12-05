@@ -61,8 +61,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -706,7 +706,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         return panel;
       }
 
-      Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getLabelDisabledForeground();
+      Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor();
 
       Object value = ((MatchedValue) matchedValue).value;
       String pattern = ((MatchedValue)matchedValue).pattern;
@@ -754,8 +754,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
         if (StringUtil.isNotEmpty(shortcutText)) {
           nameComponent.append(" " + shortcutText,
-                               new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD,
-                                                        UIUtil.isUnderDarcula() ? groupFg : ColorUtil.shift(groupFg, 1.3)));
+                   new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD, groupFg));
         }
       }
       else if (value instanceof OptionDescription) {

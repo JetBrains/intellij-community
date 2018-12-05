@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion
 
-
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
@@ -92,12 +91,17 @@ foo(par<caret>)
   }
 
   void testWithNamedParams() {
+    myFixture.addClass('''\
+package com.foo;
+public class MyCoolClass {}
+''')
     doVariantableTest('''\
 import groovy.transform.NamedParam
 import groovy.transform.NamedVariant
+import com.foo.MyCoolClass
 
 @NamedVariant
-String foo(@NamedParam int param1, @NamedParam String param2) {
+String foo(@NamedParam int param1, @NamedParam MyCoolClass param2) {
     null
 }
 

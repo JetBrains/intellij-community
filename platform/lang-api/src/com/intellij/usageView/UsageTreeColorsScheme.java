@@ -33,7 +33,7 @@ public class UsageTreeColorsScheme {
   }
 
   public EditorColorsScheme getScheme() {
-    return EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground());
+    return EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeBackground());
   }
 
 }

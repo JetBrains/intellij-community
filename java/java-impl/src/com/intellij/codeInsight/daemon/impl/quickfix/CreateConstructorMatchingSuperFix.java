@@ -60,7 +60,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
+    if (!myClass.isValid() || !canModify(myClass)) return false;
     PsiClass base = myClass.getSuperClass();
     if (base == null) return false;
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(base, myClass, PsiSubstitutor.EMPTY);

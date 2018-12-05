@@ -42,7 +42,7 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
 
   @Override
   protected PsiElement getElement() {
-    if (!myReferenceExpression.isValid() || !myReferenceExpression.getManager().isInProject(myReferenceExpression)) return null;
+    if (!myReferenceExpression.isValid() || !canModify(myReferenceExpression)) return null;
 
     PsiElement parent = myReferenceExpression.getParent();
 

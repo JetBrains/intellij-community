@@ -185,7 +185,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public Color getBackground() {
-    return isBackgroundSet() ? super.getBackground() : UIUtil.getTreeTextBackground();
+    return isBackgroundSet() ? super.getBackground() : UIUtil.getTreeBackground();
   }
 
   @Override

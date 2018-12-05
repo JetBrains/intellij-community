@@ -82,9 +82,7 @@ public class PyProtectedMemberInspection extends PyInspection {
         return StreamEx
           .of(importSource.getReference(resolveContext).multiResolve(false))
           .map(ResolveResult::getElement)
-          .nonNull()
-          .map(PsiElement::getContainingFile)
-          .nonNull()
+          .select(PyFile.class)
           .map(PsiFile::getContainingDirectory)
           .nonNull()
           .map(PsiDirectory::getVirtualFile)

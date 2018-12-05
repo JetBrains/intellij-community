@@ -97,4 +97,23 @@ public class JsonCopyPasteTest extends CodeInsightFixtureTestCase {
   public void testWithLeadingAndTrailingWhitespacesArrayBefore() {
     doTestFromTextToJson("<selection>  \t     \"a\"   \t     </selection>", "[<caret>\"q\"]", "[  \t     \"a\",   \t     \"q\"]");
   }
+
+  public void testTrailingNewline() {
+    doTestFromTextToJson("    \"react-dom\": \"^16.5.2\"\n", "{\n" +
+                             "  \"name\": \"untitled\",\n" +
+                             "  \"version\": \"1.0.0\",\n" +
+                             "  \"dependencies\": {<caret>\n" +
+                             "    \"react\": \"^16.5.2\",\n" +
+                             "    \"react-dom\": \"^16.5.2\"\n" +
+                             "  }\n" +
+                             "}", "{\n" +
+                                  "  \"name\": \"untitled\",\n" +
+                                  "  \"version\": \"1.0.0\",\n" +
+                                  "  \"dependencies\": {    \"react-dom\": \"^16.5.2\",\n" +
+                                  "\n" +
+                                  "    \"react\": \"^16.5.2\",\n" +
+                                  "    \"react-dom\": \"^16.5.2\"\n" +
+                                  "  }\n" +
+                                  "}");
+  }
 }

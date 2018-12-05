@@ -8,7 +8,7 @@
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
-    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="Run..." description="Choose and run configuration" icon="AllIcons.Toolwindows.ToolWindowRun"/>
+    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="Run..." description="Choose and run configuration" icon="AllIcons.Actions.Execute"/>
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Debug..." description="Choose and debug configuration" icon="AllIcons.Actions.StartDebugger"/>
 
     <group id="RunContextGroup" popup="false">

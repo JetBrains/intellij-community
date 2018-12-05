@@ -17,27 +17,28 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Sets;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -59,29 +60,51 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     super(ID, NAME, new PyDebuggerEditorsProvider());
   }
 
+  public PyLineBreakpointType(@NotNull final String id, @NotNull final String title, @Nullable XDebuggerEditorsProvider editorsProvider) {
+    super(id, title, editorsProvider);
+  }
+
   @Override
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull final Project project) {
     final Ref<Boolean> stoppable = Ref.create(false);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document != null) {
-      lineHasStoppablePsi(project, file, line, PythonFileType.INSTANCE, document, UNSTOPPABLE_ELEMENTS, UNSTOPPABLE_ELEMENT_TYPES, stoppable
-      );
+    if (document != null && isSuitableFileType(project, file)) {
+      lineHasStoppablePsi(project, file, line, document, getUnstoppableElements(), getUnstoppableElementTypes(), stoppable);
     }
 
     return stoppable.get();
   }
 
-  public static void lineHasStoppablePsi(@NotNull Project project,
-                                         @NotNull VirtualFile file,
-                                         int line,
-                                         PythonFileType fileType,
-                                         Document document,
-                                         Class[] unstoppablePsiElements,
-                                         Set<IElementType> unstoppableElementTypes,
-                                         Ref<? super Boolean> stoppable) {
-    if ((file.getFileType() == fileType || isPythonScratch(project, file)) && !isSkeleton(project, file)) {
-      XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
+  protected boolean isSuitableFileType(@NotNull Project project, @NotNull VirtualFile file) {
+    return file.getFileType() == getFileType() ||
+           (ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == getLanguage());
+  }
 
+  protected FileType getFileType() {
+    return PythonFileType.INSTANCE;
+  }
+
+  protected Language getLanguage() {
+    return PythonLanguage.INSTANCE;
+  }
+
+  protected Set<IElementType> getUnstoppableElementTypes() {
+    return UNSTOPPABLE_ELEMENT_TYPES;
+  }
+
+  protected Class[] getUnstoppableElements() {
+    return UNSTOPPABLE_ELEMENTS;
+  }
+
+  protected void lineHasStoppablePsi(@NotNull Project project,
+                                     @NotNull VirtualFile file,
+                                     int line,
+                                     Document document,
+                                     Class[] unstoppablePsiElements,
+                                     Set<IElementType> unstoppableElementTypes,
+                                     Ref<? super Boolean> stoppable) {
+    if (!isSkeleton(project, file)) {
+      XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
         if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) {
           return true;
         }
@@ -116,9 +139,6 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     return psiFile != null && PySdkUtil.isElementInSkeletons(psiFile);
   }
 
-  private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {
-    return ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == PythonLanguage.INSTANCE;
-  }
 
   @Override
   public String getBreakpointsDialogHelpTopic() {

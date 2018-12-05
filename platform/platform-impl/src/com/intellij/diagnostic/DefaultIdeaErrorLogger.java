@@ -9,6 +9,8 @@ import com.intellij.ide.ExceptionRegistry;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.StackTrace;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -55,12 +57,24 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
-      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
+      Throwable t = event.getThrowable();
+      PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+
+      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
       boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
-      AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed);
+      String pluginIdString = pluginId == null ? null : pluginId.getIdString();
+      String pluginIdToReport;
+      if (pluginIdString != null && !pluginIdString.equals(PluginManagerCore.CORE_PLUGIN_ID) &&
+          StatisticsUtilKt.isSafeToReport(pluginIdString)) {
+        pluginIdToReport = pluginIdString;
+      }
+      else {
+        pluginIdToReport = null;
+      }
+      AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginIdToReport);
 
       return notificationEnabled ||
              showPluginError ||
@@ -145,7 +159,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   @Nullable
-  private static MemoryKind getOOMErrorKind(Throwable t) {
+  static MemoryKind getOOMErrorKind(Throwable t) {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {

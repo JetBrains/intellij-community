@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.application.ex;
 
@@ -156,8 +154,7 @@ public class PathManagerEx {
    */
   @NotNull
   public static String getCommunityHomePath() {
-    String path = PathManager.getHomePath();
-    return isLocatedInCommunity() ? path : path + File.separator + "community";
+    return PathManager.getCommunityHomePath();
   }
 
   /**
@@ -165,7 +162,7 @@ public class PathManagerEx {
    */
   public static String getHomePath(Class<?> testClass) {
     TestDataLookupStrategy strategy = isLocatedInCommunity() ? TestDataLookupStrategy.COMMUNITY : determineLookupStrategy(testClass);
-    return strategy == TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE ? getCommunityHomePath() : PathManager.getHomePath();
+    return strategy == TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE ? PathManager.getCommunityHomePath() : PathManager.getHomePath();
   }
 
   /**
@@ -174,9 +171,10 @@ public class PathManagerEx {
    * @return file under the home directory of 'community' project
    */
   public static File findFileUnderCommunityHome(String relativePath) {
-    File file = new File(getCommunityHomePath(), toSystemDependentName(relativePath));
+    File file = new File(PathManager.getCommunityHomePath(), toSystemDependentName(relativePath));
     if (!file.exists()) {
-      throw new IllegalArgumentException("Cannot find file '" + relativePath + "' under '" + getCommunityHomePath() + "' directory");
+      throw new IllegalArgumentException("Cannot find file '" + relativePath + "' under '" +
+                                         PathManager.getCommunityHomePath() + "' directory");
     }
     return file;
   }

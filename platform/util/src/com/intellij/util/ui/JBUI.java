@@ -1715,7 +1715,7 @@ public class JBUI {
       }
 
       public static Color separatorTextColor() {
-        return JBColor.namedColor("Popup.separator.foreground", Color.gray);
+        return JBColor.namedColor("Popup.Separator.foreground", Color.gray);
       }
     }
 
@@ -1786,7 +1786,11 @@ public class JBUI {
       }
 
       public static Color listSeparatorColor() {
-        return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+        return JBColor.namedColor("SearchEverywhere.List.separatorColor", Gray.xDC);
+      }
+
+      public static Color listTitleLabelForeground() {
+        return JBColor.namedColor("SearchEverywhere.List.Separator.foreground", UIUtil.getLabelDisabledForeground());
       }
 
       public static Color searchFieldGrayForeground()  {
@@ -1797,18 +1801,32 @@ public class JBUI {
         return JBColor.namedColor("SearchEverywhere.Advertiser.foreground", JBColor.GRAY);
       }
 
+      public static Border advertiserBorder()  {
+        return new JBEmptyBorder(insets("SearchEverywhere.Advertiser.foreground", insetsLeft(8)));
+      }
+
       public static Color advertiserBackground()  {
         return JBColor.namedColor("SearchEverywhere.Advertiser.background", 0xf2f2f2);
       }
     }
 
     public static class Advertiser {
+      private static final JBInsets DEFAULT_AD_INSETS = insets(1, 5);
+
       public static Color foreground() {
         return JBColor.namedColor("Popup.Advertiser.foreground", UIUtil.getLabelForeground());
       }
 
       public static Color background() {
         return JBColor.namedColor("Popup.Advertiser.background", UIUtil.getLabelBackground());
+      }
+
+      public static Border border() {
+        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", DEFAULT_AD_INSETS));
+      }
+
+      public static Color borderColor() {
+        return JBColor.namedColor("Popup.Advertiser.borderColor", Gray._135);
       }
     }
 

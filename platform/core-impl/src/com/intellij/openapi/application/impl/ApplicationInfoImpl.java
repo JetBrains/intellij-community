@@ -488,6 +488,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  public boolean usesJetBrainsPluginRepository() {
+    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl) ||
+           (DEFAULT_PLUGINS_HOST + "/").equalsIgnoreCase(myPluginManagerUrl);//see ***ApplicationInfo.xml
+  }
+
+  @Override
   public String getPluginsListUrl() {
     return myPluginsListUrl;
   }
@@ -880,6 +886,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
+      myPluginManagerUrl = pluginsHost;
       myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
       myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
       myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
@@ -916,7 +923,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
       myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
       myStatisticsServiceKey  = null;
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-01-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);

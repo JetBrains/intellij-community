@@ -198,7 +198,8 @@ public class RecentProjectPanel extends JPanel {
 
     myList.setSelectedIndex(0);
 
-    JBScrollPane scroll = new JBScrollPane(myList);
+    JBScrollPane scroll
+      = new JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.setBorder(null);
 
     JComponent list = recentProjectActions.length == 0
@@ -360,6 +361,7 @@ public class RecentProjectPanel extends JPanel {
     private MyList(Dimension size, @NotNull AnAction[] listData) {
       super(listData);
       mySize = size;
+      setExpandableItemsEnabled(false);
       setEmptyText("  No Project Open Yet  ");
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL);

@@ -84,12 +84,12 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
                      .filter(file -> file != null)
                      .collect(Collectors.toList())
         );
-      }, progressIndicator);
 
-    for (Object element : res) {
-      if (!consumer.apply(element)) {
-        return;
-      }
-    }
+        for (Object element : res) {
+          if (!consumer.apply(element)) {
+            return;
+          }
+        }
+      }, progressIndicator);
   }
 }

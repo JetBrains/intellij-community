@@ -57,6 +57,8 @@ class BuildOptions {
   static final WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Build Frankenstein artifacts. */
   static final CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
+  /** Toolbox links generator step */
+  static final TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
 
   /**
    * Android Studio: If 'true', the UI test framework plugin and UI test code will be bundled.
@@ -150,4 +152,11 @@ class BuildOptions {
    * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
    */
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
+
+
+  /**
+   * if {@code true} the build will use JetBrains Toolbox LiteGen to generate a toolbox one-click
+   * install link for the product(s) from the current build.
+   */
+  boolean buildToolboxLiteGenLink = Boolean.getBoolean("intellij.build.toolbox.litegen")
 }

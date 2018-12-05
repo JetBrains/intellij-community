@@ -26,16 +26,15 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -84,7 +82,6 @@ class LookupUi {
     myIconPanel.add(myProcessIcon);
 
     JComponent adComponent = advertiser.getAdComponent();
-    adComponent.setBorder(new EmptyBorder(0, 1, 1, 2 + AllIcons.Ide.LookupRelevance.getIconWidth()));
     myLayeredPane.mainPanel.add(adComponent, BorderLayout.SOUTH);
 
     myScrollPane = ScrollPaneFactory.createScrollPane(lookup.getList(), true);
@@ -96,7 +93,7 @@ class LookupUi {
 
     myLayeredPane.mainPanel.add(myScrollPane, BorderLayout.CENTER);
 
-    mySortingLabel.setBorder(new LineBorder(new JBColor(Color.LIGHT_GRAY, JBColor.background())));
+    mySortingLabel.setBorder(new CustomLineBorder(new JBColor(Gray._192, JBColor.background()), JBUI.insets(1)));
     mySortingLabel.setOpaque(true);
     new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
@@ -372,8 +369,8 @@ class LookupUi {
   }
 
   private class LookupHint extends JLabel {
-    private final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(2, 2, 2, 2);
-    private final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+    private final Border INACTIVE_BORDER = JBUI.Borders.empty(2);
+    private final Border ACTIVE_BORDER = new CompoundBorder(new CustomLineBorder(JBColor.BLACK, JBUI.insets(1)), JBUI.Borders.empty(1));
     private LookupHint() {
       setOpaque(false);
       setBorder(INACTIVE_BORDER);

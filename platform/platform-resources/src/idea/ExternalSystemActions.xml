@@ -158,8 +158,9 @@
       <reference id="ExternalSystem.ShowSettings"/>
     </group>
 
-    <group id="ExternalSystemView.TaskMenu" popup="true">
-      <reference ref="RunContextGroup"/>
+    <group id="ExternalSystemView.TaskMenu" popup="true" class="com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu">
+      <separator/>
+      <action id="ExternalSystem.CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
       <separator/>
       <reference id="EditSource"/>
       <separator/>

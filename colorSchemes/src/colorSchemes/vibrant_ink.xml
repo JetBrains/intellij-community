@@ -1377,6 +1377,7 @@
     <option name="RUBY_PARAMETER_ID">
       <value>
         <option name="FONT_TYPE" value="2" />
+        <option name="FOREGROUND" value="009EDF" />
       </value>
     </option>
     <option name="RUBY_REGEXP">

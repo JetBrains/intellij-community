@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
            !PsiType.VOID.equals(myType) &&
            PsiTypesUtil.isDenotableType(myType, startElement) &&
            PsiTypesUtil.allTypeParametersResolved(startElement, myType) &&
-           startElement.getManager().isInProject(startElement);
+           BaseIntentionAction.canModify(startElement);
   }
 
   @Override

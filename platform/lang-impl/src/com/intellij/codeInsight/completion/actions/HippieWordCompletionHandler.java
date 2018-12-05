@@ -84,7 +84,11 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
 
     CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file, fromOtherFiles, false);
-    if (nextVariant == null) return;
+    if (nextVariant == null) {
+      insertStringForEachCaret(editor, oldPrefix, caretOffset - data.startOffset);
+      editor.putUserData(KEY_STATE, null);
+      return;
+    }
 
     RangeMarker start = editor.getDocument().createRangeMarker(data.startOffset, data.startOffset);
     nextVariant.fastenBelts();

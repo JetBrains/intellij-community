@@ -3,12 +3,16 @@ package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class YamlPropertyAdapter implements JsonPropertyAdapter {
 
@@ -28,11 +32,11 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
     return null; // todo: we need a separate adapter for names; but currently names schema is rarely used, let's just skip validation
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public JsonValueAdapter getValue() {
+  public Collection<JsonValueAdapter> getValues() {
     YAMLValue value = myProperty.getValue();
-    return value == null ? null : createValueAdapterByType(value);
+    return value == null ? ContainerUtil.emptyList() : Collections.singletonList(createValueAdapterByType(value));
   }
 
   @NotNull

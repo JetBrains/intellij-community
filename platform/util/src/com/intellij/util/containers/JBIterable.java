@@ -633,6 +633,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns the the first matching element.
    */
+  @Nullable
   public final E find(@NotNull Condition<? super E> condition) {
     return filter(condition).first();
   }
@@ -652,7 +653,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Synonym for map(..).filter(notNull()).
+   * Synonym for {@code map(..).filter(notNull())}.
    *
    * @see JBIterable#map(Function)
    * @see JBIterable#filter(Condition)
@@ -687,7 +688,8 @@ public abstract class JBIterable<E> implements Iterable<E> {
           @Override
           protected E nextImpl() {
             if (!original.hasNext()) return stop();
-            return (flag = !flag) ? original.next() : separator;
+            flag = !flag;
+            return flag ? original.next() : separator;
           }
         };
       }
@@ -854,8 +856,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a {@code List} containing all the elements from this iterable in
-   * proper sequence.
+   * Collects all items into an immutable {@code List} and returns it.
    */
   @NotNull
   public final List<E> toList() {
@@ -865,13 +866,24 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a {@code Set} containing all the elements from this iterable, no duplicates.
+   * Collects all items into an immutable {@code Set} and returns it.
    */
   @NotNull
   public final Set<E> toSet() {
     Iterable<E> itt = asIterable();
     if (itt == null) return Collections.singleton((E)content);
     return Collections.unmodifiableSet(ContainerUtilRt.newLinkedHashSet(itt));
+  }
+
+  /**
+   * Synonym for {@code toList().toArray(array)}.
+   * @see List#toArray(Object[])
+   */
+  @NotNull
+  public final E[] toArray(@NotNull E[] array) {
+    Iterable<E> itt = asIterable();
+    if (itt == null) return Collections.singletonList((E)content).toArray(array);
+    return ContainerUtilRt.newArrayList(itt).toArray(array);
   }
 
   /**
@@ -904,11 +916,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Copies all the elements from this iterable to {@code collection}. This is equivalent to
-   * calling {@code Iterables.addAll(collection, this)}.
-   *
-   * @param collection the collection to copy elements to
-   * @return {@code collection}, for convenience
+   * Collects all items to the specified collection and returns it.
    */
   @NotNull
   public final <C extends Collection<? super E>> C addAllTo(@NotNull C collection) {

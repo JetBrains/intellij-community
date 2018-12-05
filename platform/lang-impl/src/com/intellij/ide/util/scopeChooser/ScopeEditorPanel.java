@@ -647,7 +647,7 @@ public class ScopeEditorPanel {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
         setIcon(node.getIcon());
 
-        setForeground(selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
+        setForeground(UIUtil.getTreeForeground(selected, hasFocus));
         if (!(selected && hasFocus) && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }

@@ -44,7 +44,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     if (method == null || !method.isValid() || method.isConstructor()) return false;
     setText(getIntentionName(method));
 
-    if (!method.getManager().isInProject(method)) return false;
+    if (!canModify(method)) return false;
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;

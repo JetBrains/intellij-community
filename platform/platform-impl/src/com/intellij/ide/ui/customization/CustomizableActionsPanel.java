@@ -294,13 +294,7 @@ public class CustomizableActionsPanel {
         }
 
         setIcon(ActionsTree.getEvenIcon(icon));
-
-        if (selected) {
-          setForeground(UIUtil.getTreeSelectionForeground());
-        }
-        else {
-          setForeground(UIUtil.getTreeForeground());
-        }
+        setForeground(UIUtil.getTreeForeground(selected, hasFocus));
         setIcon(icon);
       }
     }

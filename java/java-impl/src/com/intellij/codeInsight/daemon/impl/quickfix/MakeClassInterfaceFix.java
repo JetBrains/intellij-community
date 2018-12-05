@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +59,7 @@ public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiE
                              @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
 
-    return myClass.getManager().isInProject(myClass);
+    return BaseIntentionAction.canModify(myClass);
   }
 
   @Override

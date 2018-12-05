@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -128,7 +129,12 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     if (referenceText.isEmpty() && myIndex == 0) {
       return new ResolveResult[]{new PsiElementResolveResult(containingFile)};
     }
-    final Collection<PsiFileSystemItem> contexts = getContexts();
+
+    final Collection<PsiFileSystemItem> contexts = RecursionManager.doPreventingRecursion(this, false, () -> getContexts());
+    if (contexts == null) {
+      LOG.error("Recursion occurred for " + getClass() + " on " + getElement().getText());
+      return ResolveResult.EMPTY_ARRAY;
+    }
     final Collection<ResolveResult> result = new THashSet<>();
     for (final PsiFileSystemItem context : contexts) {
       innerResolveInContext(referenceText, context, result, caseSensitive);

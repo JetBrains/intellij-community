@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesColl
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -36,7 +38,7 @@ import java.util.stream.Collectors;
     @Storage(value = "statistics.main_menu.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
-public class MainMenuCollector extends BaseUICollector implements PersistentStateComponent<MainMenuCollector.State> {
+public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
   private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
 
   private State myState = new State();
@@ -53,7 +55,8 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
 
   public void record(@NotNull AnAction action) {
     try {
-      if (isNotBundledPluginClass(action.getClass())) {
+      final PluginType type = StatisticsUtilKt.getPluginType(action.getClass());
+      if (!type.isDevelopedByJetBrains()) {
         return;
       }
 

@@ -211,7 +211,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   @NotNull
   private JLabel createHint() {
     String hint = getInitialHint();
-    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.emptyLeft(8), SwingConstants.LEFT);
+    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.CurrentTheme.BigPopup.advertiserBorder(), SwingConstants.LEFT);
     hintLabel.setForeground(JBUI.CurrentTheme.BigPopup.advertiserForeground());
     hintLabel.setBackground(JBUI.CurrentTheme.BigPopup.advertiserBackground());
     hintLabel.setOpaque(true);

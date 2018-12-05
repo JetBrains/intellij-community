@@ -2,6 +2,7 @@ package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -11,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -38,7 +38,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   public static final String tabWidthKey = "tab_width";
   public static final String indentStyleKey = "indent_style";
 
-  private static final Key<Boolean> PROJECT_ADVERTISEMENT_FLAG = Key.create("editor.config.ad.shown");
+  private static final String PROJECT_ADVERTISEMENT_FLAG = "editor.config.ad.shown";
 
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("EditorConfig", NotificationDisplayType.STICKY_BALLOON, true);
@@ -216,10 +216,10 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   @Nullable
   @Override
   public String getAdvertisementText(@NotNull PsiFile psiFile, @NotNull IndentOptions indentOptions) {
-    Project project = psiFile.getProject();
-    Boolean adFlag = project.getUserData(PROJECT_ADVERTISEMENT_FLAG);
-    if (adFlag != null && adFlag) return null;
-    project.putUserData(PROJECT_ADVERTISEMENT_FLAG, true);
+    final PropertiesComponent projectProperties = PropertiesComponent.getInstance(psiFile.getProject());
+    boolean adFlag = projectProperties.getBoolean(PROJECT_ADVERTISEMENT_FLAG);
+    if (adFlag) return null;
+    projectProperties.setValue(PROJECT_ADVERTISEMENT_FLAG, true);
     return EditorConfigBundle.message("advertisement.text");
   }
 

@@ -49,6 +49,7 @@ import java.util.List;
 public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>,
                                                                                    Disposable, ProjectComponent {
   public static final String TOOL_WINDOW_ID = "Maven";
+  public static final String TOOL_WINDOW_PLACE_ID = "Maven tool window";
 
   private MavenProjectsNavigatorState myState = new MavenProjectsNavigatorState();
 

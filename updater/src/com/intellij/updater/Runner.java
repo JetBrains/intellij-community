@@ -543,7 +543,6 @@ public class Runner {
     finally {
       try {
         cleanup(ui);
-        refreshApplicationIcon(dest);
       }
       catch (Throwable t) {
         logger().warn("cleanup failed", t);

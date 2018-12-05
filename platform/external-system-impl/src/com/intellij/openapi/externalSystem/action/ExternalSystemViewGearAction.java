@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,9 @@ public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleA
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ExternalProjectsViewImpl view = getView();
     if (view != null){
-      ExternalSystemActionsCollector.trigger(getProject(e), getSystemId(e), this, e);
+      // es system id does not available in the action context, get it from the view
+      ProjectSystemId systemId = view.getSystemId();
+      ExternalSystemActionsCollector.trigger(getProject(e), systemId, this, e);
       setSelected(view, state);
     }
   }

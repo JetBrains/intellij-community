@@ -41,7 +41,7 @@ import java.beans.PropertyChangeListener;
  * @author Sergey.Malenkov
  */
 final class ShortcutFilteringPanel extends JPanel {
-  private final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(new VerticalLayout(JBUI.scale(2)));
+  private final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(false, new VerticalLayout(JBUI.scale(2)));
   private final MouseShortcutPanel myMousePanel = new MouseShortcutPanel(true);
 
   private Shortcut myShortcut;

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
   private final String[] myNames;
-  private PsiClassType[] myTypes;
+  private volatile PsiClassType[] myTypes;
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull String[] names) {
     super(parent, type);
@@ -43,14 +43,16 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   @NotNull
   @Override
   public PsiClassType[] getReferencedTypes() {
-    if (myTypes != null) return myTypes;
-
-    if (myNames.length == 0) {
-      myTypes = PsiClassType.EMPTY_ARRAY;
-      return myTypes;
+    PsiClassType[] types = myTypes;
+    if (types == null) {
+      myTypes = types = createTypes();
     }
+    return types.clone();
+  }
 
-    PsiClassType[] types = new PsiClassType[myNames.length];
+  @NotNull
+  private PsiClassType[] createTypes() {
+    PsiClassType[] types = myNames.length == 0 ? PsiClassType.EMPTY_ARRAY : new PsiClassType[myNames.length];
 
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
     if (compiled) {
@@ -84,9 +86,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
         types = newTypes;
       }
     }
-
-    myTypes = types;
-    return types.clone();
+    return types;
   }
 
   @NotNull

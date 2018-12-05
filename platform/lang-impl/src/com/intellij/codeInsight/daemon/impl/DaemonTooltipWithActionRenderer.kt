@@ -186,7 +186,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
         graphics2D.fill(RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height / 2).toDouble(), 0.0, 0.0))
 
-        val arc = BalloonImpl.ARC.toDouble()
+        val arc = BalloonImpl.ARC.get().toDouble()
         val double = RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height - 1).toDouble(), arc, arc)
 
         graphics2D.fill(double)

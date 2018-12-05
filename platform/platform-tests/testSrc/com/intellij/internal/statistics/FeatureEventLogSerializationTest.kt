@@ -30,8 +30,18 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
+  fun testEventRecorderWithSpacesEscaping() {
+    testEventEscaping(newEvent("recorder id", "test-event-type"), "recorder_id", "test-event-type")
+  }
+
+  @Test
   fun testEventActionWithTab() {
     testEventSerialization(newEvent("recorder-id", "event\ttype"), false)
+  }
+
+  @Test
+  fun testEventActionWithTabEscaping() {
+    testEventEscaping(newEvent("recorder-id", "event\ttype"), "recorder-id", "event_type")
   }
 
   @Test
@@ -40,17 +50,122 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
-  fun testEventActionWithTagInDataKey() {
+  fun testEventActionWithQuotesEscaping() {
+    testEventEscaping(newEvent("recorder-id", "event\"type"), "recorder-id", "eventtype")
+  }
+
+  @Test
+  fun testEventActionWithTabInDataKey() {
     val event = newEvent("recorder-id", "event-type")
     event.event.addData("my key", "value")
     testEventSerialization(event, false, "my_key")
   }
 
   @Test
-  fun testEventActionWithTagInDataValue() {
+  fun testEventActionWithTabInDataKeyEscaping() {
+    val event = newEvent("recorder-id", "event-type")
+    event.event.addData("my key", "value")
+
+    val data = HashMap<String, Any>()
+    data["my_key"] = "value"
+    testEventEscaping(event, "recorder-id", "event-type", data)
+  }
+
+  @Test
+  fun testEventActionWithTabInDataValue() {
     val event = newEvent("recorder-id", "event-type")
     event.event.addData("key", "my value")
     testEventSerialization(event, false, "key")
+  }
+
+  @Test
+  fun testEventActionWithTabInDataValueEscaping() {
+    val event = newEvent("recorder-id", "event-type")
+    event.event.addData("key", "my value")
+
+    val data = HashMap<String, Any>()
+    data["key"] = "my_value"
+    testEventEscaping(event, "recorder-id", "event-type", data)
+  }
+
+  @Test
+  fun testGroupIdWithUnicode() {
+    testEventSerialization(newEvent("recorder-id\u7A97\u013C", "event-id"), false)
+    testEventSerialization(newEvent("recorder\u5F39id", "event-id"), false)
+    testEventSerialization(newEvent("recorder-id\u02BE", "event-id"), false)
+    testEventSerialization(newEvent("��recorder-id", "event-id"), false)
+  }
+
+  @Test
+  fun testGroupIdWithUnicodeEscaping() {
+    testEventEscaping(newEvent("recorder-id\u7A97\u013C", "event-id"), "recorder-id??", "event-id")
+    testEventEscaping(newEvent("recorder\u5F39id", "event-id"), "recorder?id", "event-id")
+    testEventEscaping(newEvent("recorder-id\u02BE", "event-id"), "recorder-id?", "event-id")
+    testEventEscaping(newEvent("��recorder-id", "event-id"), "??recorder-id", "event-id")
+  }
+
+  @Test
+  fun testEventActionWithUnicode() {
+    testEventSerialization(newEvent("recorder-id", "event\u7A97type"), false)
+    testEventSerialization(newEvent("recorder-id", "event\u5F39type\u02BE\u013C"), false)
+    testEventSerialization(newEvent("recorder-id", "event\u02BE"), false)
+    testEventSerialization(newEvent("recorder-id", "\uFFFD\uFFFD\uFFFDevent"), false)
+  }
+
+  @Test
+  fun testEventActionWithUnicodeEscaping() {
+    testEventEscaping(newEvent("recorder-id", "event\u7A97type"), "recorder-id", "event?type")
+    testEventEscaping(newEvent("recorder-id", "event弹typeʾļ"), "recorder-id", "event?type??")
+    testEventEscaping(newEvent("recorder-id", "eventʾ"), "recorder-id", "event?")
+    testEventEscaping(newEvent("recorder-id", "\uFFFD\uFFFD\uFFFDevent"), "recorder-id", "???event")
+    testEventEscaping(newEvent("recorder-id", "event-12"), "recorder-id", "event-12")
+    testEventEscaping(newEvent("recorder-id", "event@12"), "recorder-id", "event@12")
+  }
+
+  @Test
+  fun testEventActionWithUnicodeInDataKey() {
+    val event = newEvent("recorder-id", "event-type")
+    event.event.addData("my\uFFFDkey", "value")
+    event.event.addData("some\u013C\u02BE\u037C", "value")
+    event.event.addData("\u013C\u037Ckey", "value")
+    testEventSerialization(event, false, "my?key", "some???", "??key")
+  }
+
+  @Test
+  fun testEventActionWithUnicodeInDataKeyEscaping() {
+    val event = newEvent("recorder-id", "event-type")
+    event.event.addData("my\uFFFDkey", "value")
+    event.event.addData("some\u013C\u02BE\u037C", "value")
+    event.event.addData("\u013C\u037Ckey", "value")
+
+    val data = HashMap<String, Any>()
+    data["my?key"] = "value"
+    data["some???"] = "value"
+    data["??key"] = "value"
+    testEventEscaping(event, "recorder-id", "event-type", data)
+  }
+
+  @Test
+  fun testEventActionWithUnicodeInDataValue() {
+    val event = newEvent("recorder-id", "event-type")
+    event.event.addData("first-key", "my\uFFFDvalue")
+    event.event.addData("second-key", "some\u013C\u02BE\u037C")
+    event.event.addData("third-key", "\u013C\u037Cvalue")
+    testEventSerialization(event, false, "first-key", "second-key", "third-key")
+  }
+
+  @Test
+  fun testEventActionWithUnicodeInDataValueEscaping() {
+    val event = newEvent("recorder-id", "event-type")
+    event.event.addData("first-key", "my\uFFFDvalue")
+    event.event.addData("second-key", "some\u013C\u02BE\u037C")
+    event.event.addData("third-key", "\u013C\u037Cvalue")
+
+    val data = HashMap<String, Any>()
+    data["first-key"] = "my?value"
+    data["second-key"] = "some???"
+    data["third-key"] = "??value"
+    testEventEscaping(event, "recorder-id", "event-type", data)
   }
 
   @Test
@@ -403,6 +518,23 @@ class FeatureEventLogSerializationTest {
     assertEquals(event, deserialized)
   }
 
+  private fun testEventEscaping(event: LogEvent, expectedGroupId: String,
+                                expectedEventId: String,
+                                expectedData: Map<String, Any> = HashMap()) {
+    val json = JsonParser().parse(LogEventSerializer.toString(event)).asJsonObject
+    assertLogEventIsValid(json, false)
+
+    assertEquals(expectedGroupId, json.getAsJsonObject("group").get("id").asString)
+    assertEquals(expectedEventId, json.getAsJsonObject("event").get("id").asString)
+
+    val obj = json.getAsJsonObject("event").get("data").asJsonObject
+    for (option in expectedData.keys) {
+      assertTrue(isValid(option))
+      assertTrue(obj.get(option).isJsonPrimitive)
+      assertEquals(obj.get(option).asString, expectedData[option])
+    }
+  }
+
   private fun assertLogEventContentIsValid(json: JsonObject, isState: Boolean) {
     assertTrue(json.get("user").isJsonPrimitive)
     assertTrue(json.get("product").isJsonPrimitive)
@@ -424,19 +556,19 @@ class FeatureEventLogSerializationTest {
     assertTrue(json.get("time").isJsonPrimitive)
 
     assertTrue(json.get("session").isJsonPrimitive)
-    assertTrue(noTabsOrSpacesOrQuotes(json.get("session").asString))
+    assertTrue(isValid(json.get("session").asString))
 
     assertTrue(json.get("bucket").isJsonPrimitive)
-    assertTrue(noTabsOrSpacesOrQuotes(json.get("bucket").asString))
+    assertTrue(isValid(json.get("bucket").asString))
 
     assertTrue(json.get("build").isJsonPrimitive)
-    assertTrue(noTabsOrSpacesOrQuotes(json.get("build").asString))
+    assertTrue(isValid(json.get("build").asString))
 
     assertTrue(json.get("group").isJsonObject)
     assertTrue(json.getAsJsonObject("group").get("id").isJsonPrimitive)
     assertTrue(json.getAsJsonObject("group").get("version").isJsonPrimitive)
-    assertTrue(noTabsOrSpacesOrQuotes(json.getAsJsonObject("group").get("id").asString))
-    assertTrue(noTabsOrSpacesOrQuotes(json.getAsJsonObject("group").get("version").asString))
+    assertTrue(isValid(json.getAsJsonObject("group").get("id").asString))
+    assertTrue(isValid(json.getAsJsonObject("group").get("version").asString))
 
     assertTrue(json.get("event").isJsonObject)
     assertTrue(json.getAsJsonObject("event").get("id").isJsonPrimitive)
@@ -446,18 +578,19 @@ class FeatureEventLogSerializationTest {
     }
 
     assertTrue(json.getAsJsonObject("event").get("data").isJsonObject)
-    assertTrue(noTabsOrSpacesOrQuotes(json.getAsJsonObject("event").get("id").asString))
+    assertTrue(isValid(json.getAsJsonObject("event").get("id").asString))
 
     val obj = json.getAsJsonObject("event").get("data").asJsonObject
     for (option in dataOptions) {
-      assertTrue(noTabsOrSpacesOrQuotes(option))
+      assertTrue(isValid(option))
       assertTrue(obj.get(option).isJsonPrimitive)
-      assertTrue(noTabsOrSpacesOrQuotes(obj.get(option).asString))
+      assertTrue(isValid(obj.get(option).asString))
     }
   }
 
-  private fun noTabsOrSpacesOrQuotes(str : String) : Boolean {
-    return str.indexOf(" ") == -1 && str.indexOf("\t") == -1 && str.indexOf("\"") == -1
+  private fun isValid(str : String) : Boolean {
+    val noTabsOrSpaces = str.indexOf(" ") == -1 && str.indexOf("\t") == -1 && str.indexOf("\"") == -1
+    return noTabsOrSpaces && str.matches("[\\p{ASCII}]*".toRegex())
   }
 
   private fun requestByEvents(events: List<LogEvent>) : LogEventRecordRequest {

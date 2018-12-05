@@ -503,6 +503,21 @@ public class PathManager {
     return file.exists() ? file : new File(getHomePath(), "community" + File.separator + "lib" + File.separator + relativePath);
   }
 
+  /**
+   * @return path to 'community' project home irrespective of current project
+   */
+  @NotNull
+  public static String getCommunityHomePath() {
+    String path = getHomePath();
+    if (new File(path, "community/.idea").isDirectory()) {
+      return path + File.separator + "community";
+    }
+    if (new File(path, "ultimate/community/.idea").isDirectory()) {
+      return path + File.separator + "ultimate" + File.separator + "community";
+    }
+    return path;
+  }
+
   @Nullable
   public static String getJarPathForClass(@NotNull Class aClass) {
     String resourceRoot = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");

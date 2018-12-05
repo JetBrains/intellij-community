@@ -30,6 +30,7 @@ typedef struct _WndInfo {
   DbusmenuServer *server;
   DbusmenuMenuitem *menuroot;
   jeventcallback jhandler;
+  jrunnable onReleaseCallback;
   GList* linkedXids;
 } WndInfo;
 
@@ -211,6 +212,10 @@ static void _releaseWindow(WndInfo *wi) {
     wi->linkedXids = NULL;
   }
 
+  if (wi->onReleaseCallback != NULL) {
+    (*wi->onReleaseCallback)();
+    wi->onReleaseCallback = NULL;
+  }
   free(wi);
 }
 
@@ -340,8 +345,10 @@ static gboolean _execReleaseWindow(gpointer user_data) {
   return FALSE;
 }
 
-void releaseWindowOnMainLoop(WndInfo *wi) {
+void releaseWindowOnMainLoop(WndInfo *wi, jrunnable onReleased) {
   // _info("scheduled releaseWindowOnMainLoop");
+  if (wi != NULL)
+    wi->onReleaseCallback = onReleased;
   g_idle_add(_execReleaseWindow, wi);
 }
 

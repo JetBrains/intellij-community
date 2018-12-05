@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
@@ -61,7 +62,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   @Override
   @Nullable
   public PsiJavaDocumentedElement getContainer(final PsiElement context) {
-    if (context == null || !context.getManager().isInProject(context)) {
+    if (context == null || !BaseIntentionAction.canModify(context)) {
       return null;
     }
     final PsiFile containingFile = context.getContainingFile();

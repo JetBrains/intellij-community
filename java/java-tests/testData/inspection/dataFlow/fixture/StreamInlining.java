@@ -250,4 +250,11 @@ public class StreamInlining {
   public static void testBoxingExplicit2() {
     double s = Stream.of(1).mapToDouble(x -> x * x).sum();
   }
+  
+  void testOptionalNullity(List<Integer> groups) {
+    Optional<Integer> optional = groups.stream().findFirst();
+    if (<warning descr="Condition 'optional != null' is always 'true'">optional != null</warning> && optional.isPresent()) {
+      System.out.println("found");
+    }
+  }
 }

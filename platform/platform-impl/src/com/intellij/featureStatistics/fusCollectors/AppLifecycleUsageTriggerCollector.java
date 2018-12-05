@@ -3,8 +3,11 @@ package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsageTriggerCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AppLifecycleUsageTriggerCollector extends ApplicationUsageTriggerCollector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector");
@@ -15,16 +18,12 @@ public class AppLifecycleUsageTriggerCollector extends ApplicationUsageTriggerCo
     return "statistics.lifecycle.app";
   }
 
-  public static void onError(boolean isOOM, boolean isMappingFailed) {
+  public static void onError(boolean isOOM, boolean isMappingFailed, @Nullable String pluginId) {
     try {
-      String key = "ide.error";
-      if (isOOM) {
-        key += ".oom";
-      }
-      if (isMappingFailed) {
-        key += ".mappingFailed";
-      }
-      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, key);
+      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.error",
+                                                       FUSUsageContext.create("OOM:" + isOOM,
+                                                                              "mappingFailed:" + isMappingFailed,
+                                                                              "pluginId:" + StringUtil.notNullize(pluginId, "unknown")));
     }
     catch (Exception e) {
       LOG.warn(e);

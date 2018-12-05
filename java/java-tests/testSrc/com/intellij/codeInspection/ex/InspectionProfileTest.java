@@ -663,6 +663,39 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "  <inspection_tool class=\"ThrowableNotThrown\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
                          "</profile>");
   }
+  
+  public void testMergedRedundantStringOperationsInspections() throws Exception {
+    InspectionProfileImpl profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                                                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                         "  <inspection_tool class=\"ConstantStringIntern\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                                                         "  <inspection_tool class=\"StringConstructor\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                                         "    <option name=\"ignoreSubstringArguments\" value=\"false\" />\n" +
+                                                         "  </inspection_tool>\n" +
+                                                         "  <inspection_tool class=\"StringToString\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                                                         "  <inspection_tool class=\"SubstringZero\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                                                         "</profile>");
+    assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("StringOperationCanBeSimplified"), null));
+  }
+
+  public void testSecondMergedRedundantStringOperationsInspections() throws Exception {
+    InspectionProfileImpl bothDisabled = checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                                                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                                         "  <inspection_tool class=\"RedundantStringOperation\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                                                         "  <inspection_tool class=\"StringConstructor\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                                         "    <option name=\"ignoreSubstringArguments\" value=\"false\" />\n" +
+                                                         "  </inspection_tool>\n" +
+                                                         "</profile>");
+    assertFalse(bothDisabled.isToolEnabled(HighlightDisplayKey.find("StringOperationCanBeSimplified"), null));
+    
+    InspectionProfileImpl oneEnabled = checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                                                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                                         "  <inspection_tool class=\"RedundantStringOperation\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                                                         "  <inspection_tool class=\"StringConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                                         "    <option name=\"ignoreSubstringArguments\" value=\"false\" />\n" +
+                                                         "  </inspection_tool>\n" +
+                                                         "</profile>");
+    assertTrue(oneEnabled.isToolEnabled(HighlightDisplayKey.find("StringOperationCanBeSimplified"), null));
+  }
 
   public void testMergedCallToSuspiciousStringMethodInspections() throws Exception {
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
@@ -745,10 +778,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
   }
 
-  private static void checkMergedNoChanges(@Language("XML") String initialText) throws Exception {
+  private static InspectionProfileImpl checkMergedNoChanges(@Language("XML") String initialText) throws Exception {
     InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     readFromXml(profile, initialText);
     assertEquals(initialText, serialize(profile));
+    return profile;
   }
 
   public void testLockProfile() {

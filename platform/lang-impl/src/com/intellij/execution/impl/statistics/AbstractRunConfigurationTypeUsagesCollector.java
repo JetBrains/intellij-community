@@ -10,10 +10,14 @@ import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -40,21 +44,15 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
             continue;
           }
 
-          final ConfigurationType configurationType = configurationFactory.getType();
-          if (configurationType instanceof UnknownConfigurationType) {
-            continue;
-          }
-          final StringBuilder keyBuilder = new StringBuilder();
-          keyBuilder.append(configurationType.getId());
-          if (configurationType.getConfigurationFactories().length > 1) {
-            keyBuilder.append(".").append(configurationFactory.getId());
-          }
-          final Template template = new Template(keyBuilder.toString(), createContext(settings, runConfiguration));
-          if (templates.containsKey(template)) {
-            templates.increment(template);
-          }
-          else {
-            templates.put(template, 1);
+          final String key = toReportedId(configurationFactory);
+          if (StringUtil.isNotEmpty(key)) {
+            final Template template = new Template(key, createContext(settings, runConfiguration));
+            if (templates.containsKey(template)) {
+              templates.increment(template);
+            }
+            else {
+              templates.put(template, 1);
+            }
           }
         }
       }
@@ -63,6 +61,25 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
     final Set<UsageDescriptor> result = new HashSet<>();
     templates.forEachEntry((template, value) -> result.add(template.createUsageDescriptor(value)));
     return result;
+  }
+
+  @Nullable
+  public static String toReportedId(@NotNull ConfigurationFactory factory) {
+    final ConfigurationType configurationType = factory.getType();
+    if (configurationType instanceof UnknownConfigurationType) {
+      return null;
+    }
+
+    final PluginType type = StatisticsUtilKt.getPluginType(configurationType.getClass());
+    if (!type.isSafeToReport()) {
+      return null;
+    }
+    final StringBuilder keyBuilder = new StringBuilder();
+    keyBuilder.append(configurationType.getId());
+    if (configurationType.getConfigurationFactories().length > 1) {
+      keyBuilder.append(".").append(factory.getId());
+    }
+    return keyBuilder.toString();
   }
 
   private static FUSUsageContext createContext(@NotNull RunnerAndConfigurationSettings settings,

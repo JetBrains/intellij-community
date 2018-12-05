@@ -3,6 +3,8 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -46,16 +48,20 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
       if (project.isDisposed()) {
         return Collections.emptySet();
       }
-      ApplicationManager.getApplication().runReadAction(() -> {
-        FileTypeIndex.processFiles(fileType, file -> {
-          //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-          if (!ProjectKt.getStateStore(project).isProjectFile(file)) {
-            usedFileTypes.add(fileType);
-            return false;
-          }
-          return true;
-        }, GlobalSearchScope.projectScope(project));
-      });
+
+      final PluginType type = StatisticsUtilKt.getPluginType(fileType.getClass());
+      if (type.isSafeToReport()) {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          FileTypeIndex.processFiles(fileType, file -> {
+            //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
+            if (!ProjectKt.getStateStore(project).isProjectFile(file)) {
+              usedFileTypes.add(fileType);
+              return false;
+            }
+            return true;
+          }, GlobalSearchScope.projectScope(project));
+        });
+      }
     }
     return ContainerUtil
       .map2Set(usedFileTypes, (NotNullFunction<FileType, UsageDescriptor>)fileType -> new UsageDescriptor(fileType.getName(), 1));

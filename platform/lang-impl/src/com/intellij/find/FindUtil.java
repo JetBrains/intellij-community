@@ -81,28 +81,23 @@ public class FindUtil {
     }
   }
 
-  private static boolean isMultilineSelection(Editor editor) {
-    SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
-    if (selectionModel != null) {
-      String selectedText = selectionModel.getSelectedText();
-      if (selectedText != null && selectedText.contains("\n")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
     boolean isGlobal = true;
     String stringToFind = firstSearch ? "" : model.getStringToFind();
     final SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
     String selectedText = selectionModel != null ? selectionModel.getSelectedText() : null;
     if (!StringUtil.isEmpty(selectedText)) {
-      model.setMultiline(isMultilineSelection(editor));
       stringToFind = selectedText;
     }
     model.setReplaceState(replace);
+    boolean multiline = stringToFind.contains("\n");
+    if (replace && multiline) {
+      isGlobal = false;
+      stringToFind = "";
+      multiline = false;
+    }
     model.setStringToFind(stringToFind);
+    model.setMultiline(multiline);
     model.setGlobal(isGlobal);
     model.setPromptOnReplace(false);
   }

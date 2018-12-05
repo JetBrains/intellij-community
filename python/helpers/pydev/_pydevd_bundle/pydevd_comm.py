@@ -161,6 +161,8 @@ CMD_PROCESS_CREATED = 149
 CMD_SHOW_CYTHON_WARNING = 150
 CMD_LOAD_FULL_VALUE = 151
 
+CMD_PROCESS_CREATED_MSG_RECEIVED = 159
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -221,6 +223,8 @@ ID_TO_MEANING = {
     '150': 'CMD_SHOW_CYTHON_WARNING',
     '151': 'CMD_LOAD_FULL_VALUE',
 
+    '159': 'CMD_PROCESS_CREATED_MSG_RECEIVED',
+
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
     '901': 'CMD_ERROR',
@@ -233,6 +237,15 @@ VERSION_STRING = "@@BUILD_NUMBER@@"
 
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
+
+
+class CommunicationRole(object):
+    """The class that contains the constants of roles that `PyDB` can play in
+    the communication with the IDE.
+    """
+    CLIENT = 0
+    SERVER = 1
+
 
 #--------------------------------------------------------------------------------------------------- UTILITIES
 

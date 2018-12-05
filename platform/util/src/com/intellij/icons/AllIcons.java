@@ -754,6 +754,7 @@ public class AllIcons {
   }
 
   public final static class FileTypes {
+    public static final Icon AddAny = IconLoader.getIcon("/fileTypes/addAny.svg"); // 16x16
     public static final Icon Any_type = IconLoader.getIcon("/fileTypes/any_type.svg"); // 16x16
     public static final Icon Archive = IconLoader.getIcon("/fileTypes/archive.svg"); // 16x16
     public static final Icon AS = IconLoader.getIcon("/fileTypes/as.svg"); // 16x16
@@ -845,6 +846,8 @@ public class AllIcons {
     public static final Icon InheritedMethod = IconLoader.getIcon("/general/inheritedMethod.png"); // 11x14
     public static final Icon Inline_edit = IconLoader.getIcon("/general/inline_edit.svg"); // 16x16
     public static final Icon Inline_edit_hovered = IconLoader.getIcon("/general/inline_edit_hovered.svg"); // 16x16
+    public static final Icon InlineAdd = IconLoader.getIcon("/general/inlineAdd.svg"); // 16x16
+    public static final Icon InlineAddHover = IconLoader.getIcon("/general/inlineAddHover.svg"); // 16x16
     public static final Icon InspectionsError = IconLoader.getIcon("/general/inspectionsError.svg"); // 14x14
     public static final Icon InspectionsEye = IconLoader.getIcon("/general/inspectionsEye.svg"); // 14x14
     public static final Icon InspectionsOff = IconLoader.getIcon("/general/inspectionsOff.png"); // 16x16
@@ -909,35 +912,35 @@ public class AllIcons {
     @Deprecated
     public static final Icon ArrowDown_white = AllIcons.General.ArrowDown;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOff = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOff = AllIcons.General.Pin_tab;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOffInactive = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOffInactive = AllIcons.General.Pin_tab;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOffPressed = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOffPressed = AllIcons.General.Pin_tab;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Bullet = IconLoader.getIcon("/general/bullet.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Collapseall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Collapseall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon CollapseAll = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
+    public static final Icon CollapseAll = AllIcons.Actions.Collapseall;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Collapseall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Collapseall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon CollapseAllHover = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
+    public static final Icon CollapseAllHover = AllIcons.Actions.Collapseall;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
@@ -994,10 +997,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Settings */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Configure = IconLoader.getIcon("/general/settings.svg"); // 16x16
+    public static final Icon Configure = AllIcons.General.Settings;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Welcome.CreateNewProject */
     @SuppressWarnings("unused")
@@ -1024,30 +1027,30 @@ public class AllIcons {
     @Deprecated
     public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Settings */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon EditColors = IconLoader.getIcon("/general/settings.svg"); // 16x16
+    public static final Icon EditColors = AllIcons.General.Settings;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Edit */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon EditItemInSection = IconLoader.getIcon("/actions/edit.svg"); // 16x16
+    public static final Icon EditItemInSection = AllIcons.Actions.Edit;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ErrorsInProgress = IconLoader.getIcon("/general/errorsInProgress.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Expandall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ExpandAll = IconLoader.getIcon("/actions/expandall.svg"); // 16x16
+    public static final Icon ExpandAll = AllIcons.Actions.Expandall;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Expandall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ExpandAllHover = IconLoader.getIcon("/actions/expandall.svg"); // 16x16
+    public static final Icon ExpandAllHover = AllIcons.Actions.Expandall;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
     @SuppressWarnings("unused")
@@ -1781,7 +1784,6 @@ public class AllIcons {
     public static final Icon AbstractClass = IconLoader.getIcon("/nodes/abstractClass.svg"); // 16x16
     public static final Icon AbstractException = IconLoader.getIcon("/nodes/abstractException.svg"); // 16x16
     public static final Icon AbstractMethod = IconLoader.getIcon("/nodes/abstractMethod.svg"); // 16x16
-    public static final Icon Advice = IconLoader.getIcon("/nodes/advice.svg"); // 16x16
     public static final Icon Annotationtype = IconLoader.getIcon("/nodes/annotationtype.svg"); // 16x16
     public static final Icon AnonymousClass = IconLoader.getIcon("/nodes/anonymousClass.svg"); // 16x16
     public static final Icon Artifact = IconLoader.getIcon("/nodes/artifact.svg"); // 16x16
@@ -1849,15 +1851,15 @@ public class AllIcons {
       public static final Icon RenderKit = IconLoader.getIcon("/nodes/jsf/renderKit.svg"); // 16x16
       public static final Icon Validator = IconLoader.getIcon("/nodes/jsf/validator.svg"); // 16x16
 
-      /** @deprecated to be removed in IDEA 2020 - AllIcons.Nodes.Parameter */
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Parameter */
       @SuppressWarnings("unused")
       @Deprecated
-      public static final Icon GenericValue = IconLoader.getIcon("/nodes/parameter.svg"); // 16x16
+      public static final Icon GenericValue = AllIcons.Nodes.Parameter;
 
-      /** @deprecated to be removed in IDEA 2020 - AllIcons.Nodes.UpFolder */
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.UpFolder */
       @SuppressWarnings("unused")
       @Deprecated
-      public static final Icon NavigationCase = IconLoader.getIcon("/nodes/upFolder.svg"); // 16x16
+      public static final Icon NavigationCase = AllIcons.Nodes.UpFolder;
 
     }
     public static final Icon Jsr45 = IconLoader.getIcon("/nodes/jsr45.svg"); // 16x16
@@ -1876,6 +1878,7 @@ public class AllIcons {
     public static final Icon NewParameter = IconLoader.getIcon("/nodes/newParameter.svg"); // 16x16
     public static final Icon NodePlaceholder = IconLoader.getIcon("/nodes/nodePlaceholder.svg"); // 16x16
     public static final Icon NotFavoriteOnHover = IconLoader.getIcon("/nodes/notFavoriteOnHover.svg"); // 16x16
+    public static final Icon ObjectTypeAttribute = IconLoader.getIcon("/nodes/objectTypeAttribute.svg"); // 16x16
     public static final Icon Package = IconLoader.getIcon("/nodes/package.svg"); // 16x16
     public static final Icon Padlock = IconLoader.getIcon("/nodes/padlock.svg"); // 16x16
     public static final Icon Parameter = IconLoader.getIcon("/nodes/parameter.svg"); // 16x16
@@ -1927,6 +1930,11 @@ public class AllIcons {
     public static final Icon WebFolder = IconLoader.getIcon("/nodes/webFolder.svg"); // 16x16
     public static final Icon Weblistener = IconLoader.getIcon("/nodes/weblistener.svg"); // 16x16
     public static final Icon Write_access = IconLoader.getIcon("/nodes/write-access.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Tag */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Advice = AllIcons.Nodes.Tag;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
@@ -2219,27 +2227,23 @@ public class AllIcons {
   }
 
   public final static class RunConfigurations {
-    public static final Icon Applet = IconLoader.getIcon("/runConfigurations/applet.png"); // 16x16
-    public static final Icon Application = IconLoader.getIcon("/runConfigurations/application.png"); // 16x16
-    public static final Icon HidePassed = IconLoader.getIcon("/runConfigurations/hidePassed.png"); // 16x16
+    public static final Icon Applet = IconLoader.getIcon("/runConfigurations/applet.svg"); // 16x16
+    public static final Icon Application = IconLoader.getIcon("/runConfigurations/application.svg"); // 16x16
+    public static final Icon HidePassed = IconLoader.getIcon("/runConfigurations/hidePassed.svg"); // 16x16
     public static final Icon IgnoredTest = IconLoader.getIcon("/runConfigurations/ignoredTest.svg"); // 16x16
-    public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png"); // 16x16
-    public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.png"); // 16x16
-    public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png"); // 16x16
-    public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.png"); // 16x16
+    public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.svg"); // 16x16
+    public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.svg"); // 16x16
+    public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.svg"); // 16x16
     public static final Icon RerunFailedTests = IconLoader.getIcon("/runConfigurations/rerunFailedTests.svg"); // 16x16
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.svg"); // 16x16
-    public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); // 16x16
-    public static final Icon SelectFirstDefect = IconLoader.getIcon("/runConfigurations/selectFirstDefect.png"); // 16x16
     public static final Icon ShowIgnored = IconLoader.getIcon("/runConfigurations/showIgnored.svg"); // 16x16
     public static final Icon ShowPassed = IconLoader.getIcon("/runConfigurations/showPassed.svg"); // 16x16
     public static final Icon SortbyDuration = IconLoader.getIcon("/runConfigurations/sortbyDuration.svg"); // 16x16
-    public static final Icon SourceAtException = IconLoader.getIcon("/runConfigurations/sourceAtException.png"); // 16x16
-    public static final Icon TestCustom = IconLoader.getIcon("/runConfigurations/testCustom.png"); // 16x16
+    public static final Icon TestCustom = IconLoader.getIcon("/runConfigurations/testCustom.svg"); // 16x16
     public static final Icon TestError = IconLoader.getIcon("/runConfigurations/testError.svg"); // 16x16
     public static final Icon TestFailed = IconLoader.getIcon("/runConfigurations/testFailed.svg"); // 16x16
     public static final Icon TestIgnored = IconLoader.getIcon("/runConfigurations/testIgnored.svg"); // 16x16
-    public static final Icon TestMark = IconLoader.getIcon("/runConfigurations/testMark.png"); // 16x16
+    public static final Icon TestMark = IconLoader.getIcon("/runConfigurations/testMark.svg"); // 16x16
     public static final Icon TestNotRan = IconLoader.getIcon("/runConfigurations/testNotRan.svg"); // 16x16
     public static final Icon TestPassed = IconLoader.getIcon("/runConfigurations/testPassed.svg"); // 16x16
     public static final Icon TestPaused = IconLoader.getIcon("/runConfigurations/testPaused.svg"); // 16x16
@@ -2255,16 +2259,14 @@ public class AllIcons {
     }
     public static final Icon TestTerminated = IconLoader.getIcon("/runConfigurations/testTerminated.svg"); // 16x16
     public static final Icon TestUnknown = IconLoader.getIcon("/runConfigurations/testUnknown.svg"); // 16x16
-    public static final Icon Tomcat = IconLoader.getIcon("/runConfigurations/tomcat.png"); // 16x16
+    public static final Icon Tomcat = IconLoader.getIcon("/runConfigurations/tomcat.svg"); // 16x16
     public static final Icon ToolbarError = IconLoader.getIcon("/runConfigurations/toolbarError.svg"); // 16x16
     public static final Icon ToolbarFailed = IconLoader.getIcon("/runConfigurations/toolbarFailed.svg"); // 16x16
     public static final Icon ToolbarPassed = IconLoader.getIcon("/runConfigurations/toolbarPassed.svg"); // 16x16
     public static final Icon ToolbarSkipped = IconLoader.getIcon("/runConfigurations/toolbarSkipped.svg"); // 16x16
     public static final Icon ToolbarTerminated = IconLoader.getIcon("/runConfigurations/toolbarTerminated.svg"); // 16x16
-    public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.png"); // 16x16
-    public static final Icon TrackTests = IconLoader.getIcon("/runConfigurations/trackTests.png"); // 16x16
-    public static final Icon Web_app = IconLoader.getIcon("/runConfigurations/web_app.png"); // 16x16
-    public static final Icon WithCoverageLayer = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png"); // 16x16
+    public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.svg"); // 16x16
+    public static final Icon Web_app = IconLoader.getIcon("/runConfigurations/web_app.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.BalloonError */
     @SuppressWarnings("unused")
@@ -2286,10 +2288,30 @@ public class AllIcons {
     @Deprecated
     public static final Icon LoadingTree = IconLoader.getIcon("/runConfigurations/loadingTree.png");
 
+    /** @deprecated to be removed in IDEA 2020 - use DatabaseIcons.ConsoleRun */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png");
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_saveall */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon SaveTempConfig = AllIcons.Actions.Menu_saveall;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SelectFirstDefect = IconLoader.getIcon("/runConfigurations/selectFirstDefect.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SourceAtException = IconLoader.getIcon("/runConfigurations/sourceAtException.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_1 */
     @SuppressWarnings("unused")
@@ -2331,6 +2353,11 @@ public class AllIcons {
     @Deprecated
     public static final Icon TestInProgress8 = AllIcons.Process.Step_8;
 
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Jsf.Renderer */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TrackTests = AllIcons.Nodes.Jsf.Renderer;
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Help */
     @SuppressWarnings("unused")
     @Deprecated
@@ -2340,6 +2367,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Variables = AllIcons.Actions.ListFiles;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon WithCoverageLayer = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png");
 
   }
 

@@ -318,4 +318,9 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   public String getPresentableName() {
     return ID;
   }
+
+  @Override
+  public long getExpectedBuildTime() {
+    return 100;
+  }
 }

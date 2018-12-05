@@ -75,7 +75,7 @@ public class ExtensionsRootType extends RootType {
       private final ExtensionsRootType myRootType = getInstance();
       @Override
       public boolean value(File file) {
-        if (file.isDirectory()) return false;
+        if (file.isDirectory() || file.isHidden()) return false;
         String name = file.getName();
         String extension = FileUtilRt.getExtension(name);
         return !extension.isEmpty() &&

@@ -33,7 +33,10 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -65,9 +68,6 @@ public class AbstractPopup implements JBPopup {
   public static final String FIRST_TIME_SIZE = "FirstTimeSize";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
-
-  private static final JBInsets DEFAULT_AD_INSETS = JBUI.insets(1, 5);
-  private static final Color    AD_BORDER_COLOR = JBColor.namedColor("Popup.Advertiser.borderColor", Gray._135);
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
@@ -372,11 +372,10 @@ public class AbstractPopup implements JBPopup {
   @Override
   public void setAdText(@NotNull final String s, int alignment) {
     if (myAdComponent == null) {
-      Insets i = JBUI.insets("Popup.Advertiser.borderInsets", DEFAULT_AD_INSETS);
-      myAdComponent = HintUtil.createAdComponent(s, new JBEmptyBorder(i), alignment);
+      myAdComponent = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
       JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.setOpaque(false);
-      wrapper.setBorder(new CustomLineBorder(AD_BORDER_COLOR, JBUI.insetsTop(1)));
+      wrapper.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       wrapper.add(myAdComponent, BorderLayout.CENTER);
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);

@@ -591,6 +591,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
+  public void onToggleFullScreen(boolean isFullScreen) {
+    if (myGlobalMenuLinux == null)
+      return;
+
+     myGlobalMenuLinux.toggle(!isFullScreen);
+  }
+
   private static class MyExitFullScreenButton extends JButton {
     private MyExitFullScreenButton() {
       setFocusable(false);

@@ -55,11 +55,13 @@ public class JsonSchemaComplianceChecker {
 
   public void annotate(@NotNull final PsiElement element) {
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
-    if (firstProp != null && firstProp.getValue() != null) {
+    if (firstProp != null) {
       final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(firstProp.getDelegate(), true);
       if (position == null || position.isEmpty()) return;
       final MatchResult result = new JsonSchemaResolver(myRootSchema, false, position).detailedResolve();
-      createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(firstProp.getValue(), result, myOptions));
+      for (JsonValueAdapter value : firstProp.getValues()) {
+        createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(value, result, myOptions));
+      }
     }
     checkRoot(element, firstProp);
   }

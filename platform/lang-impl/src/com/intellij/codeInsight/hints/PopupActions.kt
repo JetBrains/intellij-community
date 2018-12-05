@@ -150,13 +150,14 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
   
   private fun undo(language: Language, info: MethodInfo) {
     val settings = ParameterNameHintsSettings.getInstance()
-    
-    val diff = settings.getBlackListDiff(language)
+    val languageForSettings = getLanguageForSettingKey(language)
+
+    val diff = settings.getBlackListDiff(languageForSettings)
     val updated = diff.added.toMutableSet().apply {
       remove(info.toPattern())
     }
     
-    settings.setBlackListDiff(language, Diff(updated, diff.removed))
+    settings.setBlackListDiff(languageForSettings, Diff(updated, diff.removed))
     refreshAllOpenEditors()
   }
 

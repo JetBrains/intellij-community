@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -163,6 +164,10 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
       if (element instanceof DataProvider) {
         return ((DataProvider)element).getData(dataId);
       }
+    }
+
+    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiElement) {
+      return QualifiedNameProviderUtil.getQualifiedName((PsiElement) element);
     }
 
     return null;

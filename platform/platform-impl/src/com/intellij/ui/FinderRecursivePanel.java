@@ -640,8 +640,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       mySelected = isSelected;
-      myForeground = UIUtil.getTreeTextForeground();
-      mySelectionForeground = cellHasFocus ? list.getSelectionForeground() : UIUtil.getTreeTextForeground();
+      myForeground = UIUtil.getTreeForeground();
+      mySelectionForeground = cellHasFocus ? list.getSelectionForeground() : UIUtil.getTreeForeground();
 
       clear();
       setFont(UIUtil.getListFont());
@@ -664,7 +664,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         // ignore
       }
 
-      Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
+      Color bg = UIUtil.getTreeBackground(isSelected, cellHasFocus);
       if (!isSelected) {
         VirtualFile file = getContainingFile(t);
         Color bgColor = file == null ? null : getFileBackgroundColor(myProject, file);

@@ -41,9 +41,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
 
   public void setToolWindow(@NotNull ToolWindow terminalToolWindow) {
     myTerminalToolWindow = terminalToolWindow;
-    if (isAvailable()) {
-      myWorkingDirectoryManager.init(terminalToolWindow);
-    }
+    myWorkingDirectoryManager.init(terminalToolWindow);
   }
 
   @Nullable
@@ -151,7 +149,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     return ServiceManager.getService(project, TerminalArrangementManager.class);
   }
 
-  private static boolean isAvailable() {
+  static boolean isAvailable() {
     return Registry.is("terminal.persistent.tabs");
   }
 }

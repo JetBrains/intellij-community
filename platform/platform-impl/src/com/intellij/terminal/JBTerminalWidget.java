@@ -148,7 +148,15 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     actions.add(new TerminalAction("New Session", mySettingsProvider.getNewSessionKeyStrokes(), input -> {
       myListener.onNewSession();
       return true;
-    }).withMnemonicKey(KeyEvent.VK_T));
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Select Previous Tab", mySettingsProvider.getPreviousTabKeyStrokes(), input -> {
+      myListener.onPreviousTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Select Next Tab", mySettingsProvider.getNextTabKeyStrokes(), input -> {
+      myListener.onNextTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
@@ -161,11 +169,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
           }
         }).withHidden(true));
     }
+    actions.add(new TerminalAction("Close Session", mySettingsProvider.getCloseSessionKeyStrokes(), input -> {
+      myListener.onSessionClosed();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     return actions;
   }
 
   @Override
   public void dispose() {
+    close();
   }
 
   @Override

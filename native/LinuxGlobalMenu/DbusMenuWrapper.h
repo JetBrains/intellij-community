@@ -40,7 +40,7 @@ void runMainLoop(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable 
 void execOnMainLoop(jrunnable run);
 
 WndInfo* registerWindow(long windowXid, jeventcallback handler); // creates menu-server and binds to xid
-void releaseWindowOnMainLoop(WndInfo* wi);
+void releaseWindowOnMainLoop(WndInfo* wi, jrunnable onReleased);
 
 void bindNewWindow(WndInfo * wi, long windowXid);
 void unbindWindow(WndInfo * wi, long windowXid);
