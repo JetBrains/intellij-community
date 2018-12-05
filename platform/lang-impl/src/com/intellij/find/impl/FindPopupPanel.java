@@ -54,6 +54,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
@@ -606,6 +607,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }, FindBundle.message("find.replace.command"), null);
     });
     myOKButton.addActionListener(myOkActionListener);
+    TouchbarDataKeys.putDialogButtonDescriptor(myOKButton, 0, true);
     boolean enterAsOK = Registry.is("ide.find.enter.as.ok", false);
 
     new DumbAwareAction() {
