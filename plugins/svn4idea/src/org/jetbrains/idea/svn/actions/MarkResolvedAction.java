@@ -112,8 +112,7 @@ public class MarkResolvedAction extends BasicAction {
         StatusClient client = vcs.getFactory(path).createStatusClient();
 
         client.doStatus(path, Depth.INFINITY, false, false, false, false, status -> {
-          if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
-              status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
+          if (status.is(StatusType.STATUS_CONFLICTED) || status.isProperty(StatusType.STATUS_CONFLICTED)) {
             result.add(status.getFile().getAbsolutePath());
           }
         });

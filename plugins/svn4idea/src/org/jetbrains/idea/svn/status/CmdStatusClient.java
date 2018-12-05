@@ -163,7 +163,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                            ? append(baseInfo.getUrl(), getRelativePath(baseFile.getPath(), pending.getPath()))
                            : append(baseInfo.getUrl(), toSystemIndependentName(pending.getPath())));
           }
-          if (StatusType.STATUS_EXTERNAL.equals(pending.getContentsStatus())) {
+          if (pending.is(StatusType.STATUS_EXTERNAL)) {
             externalsMap.put(pending.getFile(), pending.getInfo());
           }
           handler.consume(pending);

@@ -250,19 +250,18 @@ public class SvnRecursiveStatusWalker {
     }
 
     public void processCurrentItem(@NotNull Status status) {
-      StatusType nodeStatus = status.getContentsStatus();
       FilePath path = myCurrentItem.getPath();
       VirtualFile vf = path.getVirtualFile();
 
       if (vf != null) {
-        if (StatusType.STATUS_IGNORED.equals(nodeStatus)) {
+        if (status.is(StatusType.STATUS_IGNORED)) {
           myReceiver.processIgnored(vf);
         }
-        else if (StatusType.STATUS_UNVERSIONED.equals(nodeStatus) || StatusType.UNKNOWN.equals(nodeStatus)) {
+        else if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.UNKNOWN)) {
           myReceiver.processUnversioned(vf);
           processRecursively(vf, myCurrentItem.getDepth());
         }
-        else if (!StatusType.OBSTRUCTED.equals(nodeStatus) && !StatusType.STATUS_NONE.equals(nodeStatus)) {
+        else if (!status.is(StatusType.OBSTRUCTED, StatusType.STATUS_NONE)) {
           if (myCurrentItem.isIsInnerCopyRoot()) {
             myReceiver.processCopyRoot(vf, status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), status.getRepositoryRootURL());
           }

@@ -50,19 +50,16 @@ public class SvnStatusConvertor {
     else if (status.is(StatusType.STATUS_REPLACED)) {
       return SvnFileStatus.REPLACED;
     }
-    else if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
-             status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
-      if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED &&
-          status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
+    else if (status.is(StatusType.STATUS_CONFLICTED) || status.isProperty(StatusType.STATUS_CONFLICTED)) {
+      if (status.is(StatusType.STATUS_CONFLICTED) && status.isProperty(StatusType.STATUS_CONFLICTED)) {
         return FileStatus.MERGED_WITH_BOTH_CONFLICTS;
       }
-      else if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED) {
+      else if (status.is(StatusType.STATUS_CONFLICTED)) {
         return FileStatus.MERGED_WITH_CONFLICTS;
       }
       return FileStatus.MERGED_WITH_PROPERTY_CONFLICTS;
     }
-    else if (status.getContentsStatus() == StatusType.STATUS_MODIFIED ||
-             status.getPropertiesStatus() == StatusType.STATUS_MODIFIED) {
+    else if (status.is(StatusType.STATUS_MODIFIED) || status.isProperty(StatusType.STATUS_MODIFIED)) {
       return FileStatus.MODIFIED;
     }
     else if (status.isSwitched()) {

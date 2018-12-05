@@ -162,8 +162,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (filePath.isDirectory() && status.isLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if ((status.is(StatusType.STATUS_ADDED) || StatusType.STATUS_MODIFIED.equals(status.getContentsStatus())) &&
-        status.getCopyFromURL() != null) {
+    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED) && status.getCopyFromURL() != null) {
       addCopiedFile(filePath, status, status.getCopyFromURL());
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
@@ -188,7 +187,6 @@ class SvnChangeProviderContext implements StatusReceiver {
 
     FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
 
-    final StatusType statusType = status.getContentsStatus();
     if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.UNKNOWN)) {
       final VirtualFile file = filePath.getVirtualFile();
       if (file != null) {
@@ -222,7 +220,7 @@ class SvnChangeProviderContext implements StatusReceiver {
         myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
       }
     }
-    else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != StatusType.STATUS_NONE) {
+    else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && !status.is(StatusType.STATUS_NONE)) {
       VirtualFile file = filePath.getVirtualFile();
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, status), CurrentContentRevision.create(filePath),
@@ -324,7 +322,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     ConflictedSvnChange change =
       new ConflictedSvnChange(before, after, fStatus, getState(svnStatus), after == null ? before.getFile() : after.getFile());
 
-    change.setIsPhantom(StatusType.STATUS_DELETED.equals(svnStatus.getContentsStatus()) && !svnStatus.getRevision().isValid());
+    change.setIsPhantom(svnStatus.is(StatusType.STATUS_DELETED) && !svnStatus.getRevision().isValid());
     change.setBeforeDescription(svnStatus.getTreeConflict());
     patchWithPropertyChange(change, svnStatus, null);
 

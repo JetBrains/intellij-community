@@ -660,9 +660,7 @@ c:\TestProjects\sortedProjects\Subversion\local\withExt82420\mod4>dir
 and no "mod4" under
 
         */
-        final StatusType ns = status.getContentsStatus();
-        if (myBase.getName().equals(path) && !StatusType.MISSING.equals(ns) &&
-            !StatusType.STATUS_DELETED.equals(ns)) {
+        if (myBase.getName().equals(path) && !status.is(StatusType.MISSING, StatusType.STATUS_DELETED)) {
           status.setKind(true, NodeKind.DIR);
           status.setFile(myBase);
           status.setPath("");

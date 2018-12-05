@@ -102,9 +102,7 @@ public class Status {
     final Revision revision = myRevision;
     if (revision.isValid()) return revision;
 
-    final StatusType status = getContentsStatus();
-    if (StatusType.STATUS_NONE.equals(status) || StatusType.STATUS_UNVERSIONED.equals(status) ||
-        StatusType.STATUS_ADDED.equals(status)) {
+    if (is(StatusType.STATUS_NONE, StatusType.STATUS_UNVERSIONED, StatusType.STATUS_ADDED)) {
       return revision;
     }
 
