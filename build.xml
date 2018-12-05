@@ -83,17 +83,11 @@
     <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
 
-  <target name="build-aswb" depends="init">
-    <bazel action="build"
-           target="//tools/adt/idea/android-uitests:aswb_plugin"
-           config="release"/>
-  </target>
-
-  <target name="uitest" depends="build-aswb">
+  <target name="uitest">
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
-  <target name="uicoverage" depends="build-aswb">
+  <target name="uicoverage">
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant" target="coverage"/>
     <typedef uri="antlib:org.jacoco.ant" classpath="${project.home}/plugins/coverage/lib/jacocoant.jar"/>
     <jacoco:report xmlns:jacoco="antlib:org.jacoco.ant">
