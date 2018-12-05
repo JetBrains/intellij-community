@@ -66,7 +66,7 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
         InvokeIntentionAroundSwitch anyIntentionInSwitchRange = new InvokeIntentionAroundSwitch(file, new JavaIntentionPolicy() {
           @Override
           protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
-            return super.shouldSkipByFamilyName(familyName) || "Make Call Chain Into Call Sequence".equals(familyName);
+            return super.shouldSkipByFamilyName(familyName);
           }
         });
 
