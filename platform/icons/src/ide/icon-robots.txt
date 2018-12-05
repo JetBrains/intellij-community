@@ -5,3 +5,4 @@ deprecated: hectorNo.png -> /ide/hectorOff.svg; to be removed in IDEA 2020 - use
 deprecated: info_notifications.png -> /general/information.svg; to be removed in IDEA 2020 - use AllIcons.General.Information
 deprecated: noNotifications13.png; to be removed in IDEA 2020
 deprecated: warning_notifications.png -> /general/warning.svg; to be removed in IDEA 2020 - use AllIcons.General.Warning
+deprecated: incomingChangesOff.png; to be removed in IDEA 2020

@@ -1709,6 +1709,11 @@ public class AllIcons {
     @Deprecated
     public static final Icon HectorNo = AllIcons.Ide.HectorOff;
 
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon IncomingChangesOff = IconLoader.getIcon("/ide/incomingChangesOff.png");
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Information */
     @SuppressWarnings("unused")
     @Deprecated
