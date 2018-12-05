@@ -90,12 +90,7 @@ public abstract class BaseRepository extends TaskRepository {
   @SuppressWarnings("unused")
   public void setEncodedPassword(String password) {
     try {
-      String decoded = PasswordUtil.decodePassword(password);
-      if (StringUtil.isNotEmpty(decoded)) {
-        CredentialAttributes attributes = getAttributes();
-        PasswordSafe.getInstance().set(attributes, new Credentials(getUsername(), getPassword()));
-      }
-      setPassword(decoded);
+      setPassword(PasswordUtil.decodePassword(password));
     }
     catch (NumberFormatException e) {
       // do nothing
@@ -110,6 +105,10 @@ public abstract class BaseRepository extends TaskRepository {
       if (credentials != null) {
         myPassword = credentials.getPasswordAsString();
       }
+    }
+    else {
+      CredentialAttributes attributes = getAttributes();
+      PasswordSafe.getInstance().set(attributes, new Credentials(getUsername(), getPassword()));
     }
   }
 
