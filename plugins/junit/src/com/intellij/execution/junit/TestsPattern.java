@@ -23,6 +23,8 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -79,8 +81,8 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected String getFilters(boolean hasClassPatterns, String packageName) {
-    return hasClassPatterns ? getConfiguration().getPersistentData().getPatternPresentation() : "";
+  protected String getFilters(Set<String> foundClassNames, String packageName) {
+    return foundClassNames.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 
   private PsiClass getTestClass(Project project, String className) {
@@ -160,6 +162,9 @@ public class TestsPattern extends TestPackage {
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
+    JavaParametersUtil.checkAlternativeJRE(getConfiguration());
+    ProgramParametersUtil.checkWorkingDirectoryExist(getConfiguration(), getConfiguration().getProject(),
+                                                     getConfiguration().getConfigurationModule().getModule());
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     if (patterns.isEmpty()) {

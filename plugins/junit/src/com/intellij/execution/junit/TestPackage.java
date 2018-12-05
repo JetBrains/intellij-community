@@ -38,6 +38,7 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class TestPackage extends TestObject {
 
@@ -89,25 +88,35 @@ public class TestPackage extends TestObject {
 
         try {
           String packageName = getPackageName(data);
-          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && 
-              myClassNames.isEmpty() && getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
+          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && intersectWithDirectory(myClassNames)) {
             VirtualFile[] rootPaths = getRootPaths();
             LOG.assertTrue(rootPaths != null);
             JUnitStarter.printClassesList(
-              Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "", getFilters(myClassNames.isEmpty(), packageName), myTempFile);
+              ContainerUtil.map(rootPaths, root -> "\u002B" + root.getPath()), packageName, "", getFilters(myClassNames, packageName), myTempFile);
           }
           else {
-            addClassesListToJavaParameters(myClassNames, Function.ID, packageName, createTempFiles(), getJavaParameters(), getFilters(myClassNames.isEmpty(), packageName));
+            addClassesListToJavaParameters(myClassNames, Function.ID, packageName, createTempFiles(), getJavaParameters(), getFilters(myClassNames, packageName));
           }
         }
         catch (Exception ignored) {}
       }
+
+      
     };
   }
 
-  protected String getFilters(boolean empty, String packageName) {
-    return empty ? packageName.isEmpty() ? ".*" : packageName + "\\..*" 
-                 : "";
+  protected boolean intersectWithDirectory(final Set<String> classNames) {
+    return classNames.isEmpty() && inSingleModule();
+  }
+
+  protected boolean inSingleModule() {
+    return getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
+  }
+
+  protected String getFilters(Set<String> foundClassNames, String packageName) {
+    return foundClassNames.isEmpty()
+           ? packageName.isEmpty() ? ".*" : packageName + "\\..*"
+           : "";
   }
 
   protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> names) throws CantRunException {
@@ -127,7 +136,7 @@ public class TestPackage extends TestObject {
   @Nullable
   protected VirtualFile[] getRootPaths() {
     Module module = getConfiguration().getConfigurationModule().getModule();
-    boolean chooseSingleModule = getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
+    boolean chooseSingleModule = inSingleModule();
     return TestClassCollector.getRootPath(module, chooseSingleModule);
   }
 
