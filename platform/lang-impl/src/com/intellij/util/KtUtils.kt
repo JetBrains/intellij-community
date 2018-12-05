@@ -22,3 +22,5 @@ fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
 }
 
 fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
+
+fun <T : Any> lazyPreventingRecursion(initializer: () -> T): Lazy<T?> = RecursionPreventingSafePublicationLazy(initializer)
