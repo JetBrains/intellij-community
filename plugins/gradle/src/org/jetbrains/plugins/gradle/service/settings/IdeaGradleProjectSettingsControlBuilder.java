@@ -977,7 +977,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       if (state == ThreeState.YES) {
         return "Gradle";
       }
-      return GradleBundle.message("gradle.settings.text.use.default");
+      return GradleBundle.message("gradle.settings.text.default");
     }
   }
 
@@ -1011,7 +1011,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       if (runner == TestRunner.CHOOSE_PER_TEST) {
         return GradleBundle.message("gradle.preferred_test_runner.CHOOSE_PER_TEST");
       }
-      return GradleBundle.message("gradle.settings.text.use.default");
+      return GradleBundle.message("gradle.settings.text.default");
     }
   }
 }
