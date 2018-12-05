@@ -170,18 +170,13 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
 
     List<VirtualFilePointer> jarDups = ContainerUtil.map(((VirtualFilePointerContainerImpl)that).myJarDirectories, this::duplicate);
     List<VirtualFilePointer> jarRecursiveDups = ContainerUtil.map(((VirtualFilePointerContainerImpl)that).myJarRecursiveDirectories, this::duplicate);
-    myJarDirectories.addAll(jarDups);
-    myJarRecursiveDirectories.addAll(jarRecursiveDups);
+    myJarDirectories.addAllAbsent(jarDups);
+    myJarRecursiveDirectories.addAllAbsent(jarRecursiveDups);
   }
 
   public void addAll(@NotNull Collection<String> urls) {
-    Set<String> existing = ContainerUtil.map2Set(myList, p->p.getUrl());
-    List<VirtualFilePointer> toAddList = new ArrayList<>(urls.size());
-    for (String url : urls) {
-      if (!existing.contains(url)) toAddList.add(create(url));
-    }
     // optimization: faster than calling .add() one by one
-    myList.addAll(toAddList);
+    myList.addAllAbsent(ContainerUtil.map(urls, url->create(url)));
   }
 
   private void dropCaches() {
@@ -394,23 +389,9 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   /** optimization: faster than calling {@link #addJarDirectory(String, boolean)} one by one */
   public void addAllJarDirectories(@NotNull Collection<String> directoryUrls, boolean recursively) {
     if (directoryUrls.isEmpty()) return;
-    Set<String> jarUrls = ContainerUtil.map2Set(recursively ? myJarRecursiveDirectories : myJarDirectories, p->p.getUrl());
-    Set<String> listUrls = ContainerUtil.map2Set(myList, p->p.getUrl());
-    List<VirtualFilePointer> toAddJars = new ArrayList<>(directoryUrls.size());
-    List<VirtualFilePointer> toAddList = new ArrayList<>(directoryUrls.size());
-    directoryUrls.forEach(url -> {
-      VirtualFilePointer pointer = null;
-      if (!jarUrls.contains(url)) {
-        pointer = myVirtualFilePointerManager.createDirectoryPointer(url, recursively, myParent, myListener);
-        toAddJars.add(pointer);
-      }
-      if (!listUrls.contains(url)) {
-        if (pointer == null) pointer = myVirtualFilePointerManager.createDirectoryPointer(url, recursively, myParent, myListener);
-        toAddList.add(pointer);
-      }
-    });
-    (recursively ? myJarRecursiveDirectories : myJarDirectories).addAll(toAddJars);
-    myList.addAll(toAddList); // hack. jar directories need to be contained in class roots too (for externalization compatibility) but be ignored in getFiles()
+    List<VirtualFilePointer> pointers = ContainerUtil.map(directoryUrls, url -> myVirtualFilePointerManager.createDirectoryPointer(url, recursively, myParent, myListener));
+    (recursively ? myJarRecursiveDirectories : myJarDirectories).addAllAbsent(pointers);
+    myList.addAllAbsent(pointers); // hack. jar directories need to be contained in class roots too (for externalization compatibility) but be ignored in getFiles()
     dropCaches();
   }
 
