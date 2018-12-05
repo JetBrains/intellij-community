@@ -17,4 +17,8 @@ final class MyClass {
   @NotNull String testReturn(boolean b) {
     return b ? "hello" : <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
   }
+  
+  @NotNull Object testReturn2(boolean b, @Nullable Object o1, @Nullable Object o2) {
+    return b ? o1 : o2;
+  }
 }
