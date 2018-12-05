@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 
 package com.intellij.lang.properties.projectView;
 
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements ValidateableNode, DropTargetNode, ResourceBundleAwareNode {
@@ -76,14 +79,9 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
   }
 
   @Override
-  public void update(@NotNull PresentationData presentation) {
+  public void update(PresentationData presentation) {
     presentation.setIcon(AllIcons.Nodes.ResourceBundle);
     presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", myBundle.getBaseName()));
-  }
-
-  @Override
-  protected boolean shouldUpdateData() {
-    return isValid() && super.shouldUpdateData();
   }
 
   @Override
@@ -131,7 +129,7 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
   }
 
   @Override
-  public boolean canDrop(@NotNull TreeNode[] sourceNodes) {
+  public boolean canDrop(TreeNode[] sourceNodes) {
     for (TreeNode node : sourceNodes) {
       if (extractPropertiesFileFromNode(node) == null) return false;
     }
@@ -139,7 +137,7 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
   }
 
   @Override
-  public void drop(@NotNull TreeNode[] sourceNodes, @NotNull DataContext dataContext) {
+  public void drop(TreeNode[] sourceNodes, DataContext dataContext) {
     MultiMap<ResourceBundle, PropertiesFile> bundleGrouping = new MultiMap<>();
     for (TreeNode sourceNode : sourceNodes) {
       final PropertiesFile propertiesFile = extractPropertiesFileFromNode(sourceNode);
@@ -181,7 +179,13 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
   @NotNull
   @Override
   public ResourceBundle getResourceBundle() {
-    return myBundle;
+    return getValue();
+  }
+
+  @NotNull
+  @Override
+  public Collection<VirtualFile> getRoots() {
+    return getResourceBundle().getPropertiesFiles().stream().map(f -> f.getVirtualFile()).collect(Collectors.toList());
   }
 
   @Nullable
