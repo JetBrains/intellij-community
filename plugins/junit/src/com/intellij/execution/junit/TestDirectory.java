@@ -17,7 +17,6 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -37,7 +36,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.rt.execution.junit.JUnitStarter;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -112,7 +110,7 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> names) throws CantRunException {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
     if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
       PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
       PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
@@ -120,19 +118,17 @@ class TestDirectory extends TestPackage {
         PsiDirectory[] directories =
           aPackage.getDirectories(module.getModuleScope(true).intersectWith(GlobalSearchScopesCore.projectTestScope(getConfiguration().getProject())));
         if (directories.length > 1) {//need to enumerate classes in one of multiple test source roots
-          Set<PsiClass> classes = new THashSet<>();
           collectClassesRecursively(directory, Condition.TRUE, classes);
-          classes.forEach(psiClass -> names.add(JavaExecutionUtil.getRuntimeQualifiedName(psiClass)));
         }
       }
     }
     else {
-      super.searchTests(module, classFilter, names);
+      super.searchTests(module, classFilter, classes);
     }
   }
 
   @Override
-  protected boolean intersectWithDirectory(Set<String> classNames) {
+  protected boolean intersectWithDirectory(Set<PsiClass> classNames) {
     return true;
   }
 
@@ -142,10 +138,10 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<String> foundClassNames, String packageName) {
+  protected String getFilters(Set<PsiClass> foundClassNames, String packageName) {
     return foundClassNames.isEmpty()
            ? (packageName.isEmpty() ? ".*" : packageName + "\\..*")
-           : StringUtil.join(foundClassNames, "||");
+           : StringUtil.join(foundClassNames, CLASS_NAME_FUNCTION, "||");
   }
 
   @Override

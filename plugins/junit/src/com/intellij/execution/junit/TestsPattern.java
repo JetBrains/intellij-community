@@ -34,7 +34,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.rt.execution.junit.JUnitStarter;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,22 +57,20 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> classNames) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = ReadAction.compute(() -> getTestClass(project, className));
       if (psiClass != null) {
         if (ReadAction.compute(() -> JUnitUtil.isTestClass(psiClass))) {
-          classNames.add(className); //with method, comma separated
+          classes.add(psiClass); //with method, comma separated
         }
       }
       else {
-        classNames.clear();
+        classes.clear();
         if (!JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {//junit 5 process tests automatically
-          Set<PsiClass> classes = new THashSet<>();
           ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
-          classes.forEach(aClass -> ReadAction.compute(() -> classNames.add(JavaExecutionUtil.getRuntimeQualifiedName(aClass))));
         }
         return;
       }
@@ -81,7 +78,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<String> foundClassNames, String packageName) {
+  protected String getFilters(Set<PsiClass> foundClassNames, String packageName) {
     return foundClassNames.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 
