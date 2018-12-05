@@ -640,6 +640,7 @@
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="$SearchWeb"/>
       <action id="CopyUrl" class="com.intellij.ide.actions.CopyUrlAction"/>
+      <action id="PauseOutput" class="com.intellij.execution.actions.PauseOutputAction"/>
     </group>
 
     <group id="EditorTabPopupMenu">
