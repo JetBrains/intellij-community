@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.UastLiteralReferenceProvider;
+import com.intellij.psi.UastStringLiteralReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.*;
@@ -15,7 +15,7 @@ import org.jetbrains.uast.*;
 /**
  * @author cdr
  */
-class UastPropertiesReferenceProvider extends UastLiteralReferenceProvider {
+class UastPropertiesReferenceProvider extends UastStringLiteralReferenceProvider {
 
   private final boolean myDefaultSoft;
 

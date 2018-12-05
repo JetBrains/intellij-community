@@ -40,3 +40,26 @@ abstract class UastLiteralReferenceProvider : UastReferenceProvider() {
                                        context: ProcessingContext): Array<PsiReference>
 
 }
+
+abstract class UastStringLiteralReferenceProvider : UastReferenceProvider() {
+
+  override val supportedUElementTypes: List<Class<out UElement>> = listOf(UExpression::class.java)
+
+  override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+    val injectionHost = context[REQUESTED_PSI_ELEMENT] as? PsiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY
+    if (element is ULiteralExpression)
+      return getReferencesByULiteral(element, injectionHost, context) // simple string (java usually)
+    if (element is UPolyadicExpression) { // Kotlin, see KT-27283
+      return element.operands.asSequence().filterIsInstance<ULiteralExpression>().flatMap {
+        getReferencesByULiteral(it, injectionHost, context).asSequence()
+      }.toList().toTypedArray()
+    }
+
+    return PsiReference.EMPTY_ARRAY
+  }
+
+  abstract fun getReferencesByULiteral(uLiteral: ULiteralExpression,
+                                       host: PsiLanguageInjectionHost,
+                                       context: ProcessingContext): Array<PsiReference>
+
+}

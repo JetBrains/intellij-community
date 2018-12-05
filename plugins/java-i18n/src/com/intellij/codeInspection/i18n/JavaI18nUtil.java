@@ -60,7 +60,7 @@ public class JavaI18nUtil extends I18nUtil {
     return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, resourceBundleRef, null);
   }
 
-  public static boolean mustBePropertyKey(@NotNull ULiteralExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
+  public static boolean mustBePropertyKey(@NotNull UExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
     final UElement parent = expression.getUastParent();
     if (parent instanceof UVariable) {
       UAnnotation annotation = ((UVariable)parent).findAnnotation(AnnotationUtil.PROPERTY_KEY);
