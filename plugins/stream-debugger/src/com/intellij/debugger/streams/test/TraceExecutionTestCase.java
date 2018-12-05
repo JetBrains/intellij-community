@@ -106,6 +106,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   private void doTestImpl(boolean isResultNull, @NotNull String className, @NotNull ChainSelector chainSelector)
     throws ExecutionException {
+    LOG.info("Test started: " + getTestName(false));
     createLocalProcess(className);
     final XDebugSession session = getDebuggerSession().getXDebugSession();
     assertNotNull(session);
@@ -162,7 +163,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
           @Override
           public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
-            LOG.warn("[" + getTestName(false) + "] Compilation failed. Trace expression: " + traceExpression);
+            LOG.warn("[" + getTestName(false) + "] Compilation failed.");
             complete(chain, null, message, FailureReason.COMPILATION);
           }
         });
