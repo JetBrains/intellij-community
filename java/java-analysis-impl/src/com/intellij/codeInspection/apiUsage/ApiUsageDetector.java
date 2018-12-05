@@ -1,25 +1,31 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.apiUsage;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface containing all types of API usages events emitted by {@link ApiUsageVisitorBase}.
  *
- * The most common event is {@link #processReference(PsiReference, boolean)},
+ * The most common event is {@link #processReference(PsiReference)},
  * which reports a reference to a class, method, field, or any other API.
  * Implicit usages of APIs, which are not present in source code by any reference, are handled by remaining methods.
  */
 interface ApiUsageDetector {
 
   /**
-   * Reference to API is found, maybe inside import statement.
+   * Checks whether references from this PSI element to other PSI elements must be processed.
+   * <br>
+   * For example, it may be overridden to ignore references of elements residing in import statements.
    */
-  void processReference(@NotNull PsiReference reference, boolean insideImport);
+  default boolean shouldProcessReferences(@NotNull PsiElement element) {
+    return true;
+  }
+
+  /**
+   * Reference to API is found.
+   */
+  void processReference(@NotNull PsiReference reference);
 
   /**
    * Invocation of a constructor is found in {@code new} expression.
@@ -28,7 +34,7 @@ interface ApiUsageDetector {
    * When anonymous class is instantiated, the {@code instantiatedClass} is the base class.
    */
   default void processConstructorInvocation(@NotNull PsiJavaCodeReferenceElement instantiatedClass, @NotNull PsiMethod constructor) {
-    processReference(instantiatedClass, false);
+    processReference(instantiatedClass);
   }
 
   /**

@@ -52,7 +52,7 @@ public class DeprecationElementVisitor extends ApiUsageVisitorBase {
   }
 
   @Override
-  public void processReference(@NotNull PsiReference reference, boolean insideImport) {
+  public void processReference(@NotNull PsiReference reference) {
     if (reference instanceof ResolvingHint && !((ResolvingHint)reference).canResolveTo(PsiModifierListOwner.class)) {
       return;
     }

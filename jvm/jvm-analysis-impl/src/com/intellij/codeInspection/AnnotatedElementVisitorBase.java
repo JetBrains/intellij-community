@@ -6,6 +6,8 @@ import com.intellij.codeInspection.apiUsage.ApiUsageVisitorBase;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UImportStatement;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.List;
 
@@ -30,10 +32,16 @@ public abstract class AnnotatedElementVisitorBase extends ApiUsageVisitorBase {
                                               @NotNull List<PsiAnnotation> annotations);
 
   @Override
-  public void processReference(@NotNull PsiReference reference, boolean insideImport) {
-    if (myIgnoreInsideImports && insideImport) {
-      return;
-    }
+  public boolean shouldProcessReferences(@NotNull PsiElement element) {
+    return !myIgnoreInsideImports || !isInsideImportStatement(element);
+  }
+
+  private static boolean isInsideImportStatement(@NotNull PsiElement element) {
+    return UastContextKt.getUastParentOfType(element, UImportStatement.class) != null;
+  }
+
+  @Override
+  public void processReference(@NotNull PsiReference reference) {
     PsiModifierListOwner annotationsOwner = resolveModifierListOwner(reference);
     if (annotationsOwner != null) {
       List<PsiAnnotation> annotations = AnnotationUtil.findAllAnnotations(annotationsOwner, myAnnotations, false);
