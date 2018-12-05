@@ -2,18 +2,18 @@
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.util.TypeConversionUtil.getSuperClassSubstitutor
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 class GrConstructorInvocationReference(element: GrConstructorInvocation) : GrConstructorReference<GrConstructorInvocation>(element) {
 
-  override fun resolveClass(): ClassResolveResult? {
+  override fun resolveClass(): GroovyResolveResult? {
     val invocation = element
     val clazz = invocation.delegatedClass ?: return null
     val state = if (invocation.isThisCall) {
@@ -24,7 +24,7 @@ class GrConstructorInvocationReference(element: GrConstructorInvocation) : GrCon
       val substitutor = getSuperClassSubstitutor(clazz, enclosing, PsiSubstitutor.EMPTY)
       ResolveState.initial().put(PsiSubstitutor.KEY, substitutor)
     }
-    return ClassResolveResult(clazz, invocation, state, PsiType.EMPTY_ARRAY)
+    return BaseGroovyResolveResult(clazz, invocation, state)
   }
 
   override val arguments: Arguments? get() = element.getArguments()

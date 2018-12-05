@@ -18,6 +18,8 @@ open class ElementResolveResult<out T : PsiElement>(private val element: T) : Gr
 
   override fun getCurrentFileResolveContext(): PsiElement? = null
 
+  override fun getContextSubstitutor(): PsiSubstitutor = PsiSubstitutor.EMPTY
+
   override fun getSubstitutor(): PsiSubstitutor = PsiSubstitutor.EMPTY
 
   override fun isApplicable(): Boolean = true

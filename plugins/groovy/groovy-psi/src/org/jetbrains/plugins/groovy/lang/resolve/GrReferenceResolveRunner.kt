@@ -97,7 +97,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   // This expression may also be a class reference, and this is handled in [resolveUnqualifiedType].
   for (parent in strictParents()) {
     if (parent !is GrReferenceExpression) {
-      // next parent is not a reference expression 
+      // next parent is not a reference expression
       // => next parent is not a class fully qualified name
       // => this expression is not a package reference
       return null
@@ -201,13 +201,13 @@ private fun checkCurrentClass(field: GrField, place: PsiElement): Boolean {
 /**
  * @see org.codehaus.groovy.control.ResolveVisitor.transformVariableExpression
  */
-private fun PsiElement.resolveUnqualifiedType(name: String): ClassResolveResult? {
+private fun PsiElement.resolveUnqualifiedType(name: String): GroovyResolveResult? {
   val processor = ReferenceExpressionClassProcessor(name, this)
   processUnqualified(processor, ResolveState.initial())
   return processor.result
 }
 
-private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReferenceExpression): ClassResolveResult? {
+private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReferenceExpression): GroovyResolveResult? {
   val classQualifier = qualifier.staticReference.resolve() as? PsiClass ?: return null
   val processor = ReferenceExpressionClassProcessor(name, this)
   classQualifier.processDeclarations(processor, ResolveState.initial(), null, this)

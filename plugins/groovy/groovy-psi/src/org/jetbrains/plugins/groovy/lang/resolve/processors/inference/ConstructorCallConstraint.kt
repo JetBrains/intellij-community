@@ -1,19 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
-import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
 
 class ConstructorCallConstraint(private val leftType: PsiType?, private val expression: GrNewExpression) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     val reference = expression.referenceElement ?: return true
-    val result = reference.advancedResolve() as? ClassResolveResult ?: return true
-    val clazz = result.element
+    val result = reference.advancedResolve()
+    val clazz = result.element as? PsiClass ?: return true
     val contextSubstitutor = result.contextSubstitutor
 
     session.startNestedSession(clazz.typeParameters, contextSubstitutor, expression, result) { nested ->

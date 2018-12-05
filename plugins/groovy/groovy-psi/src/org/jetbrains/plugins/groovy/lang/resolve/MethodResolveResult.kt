@@ -20,8 +20,6 @@ class MethodResolveResult(
   arguments: Arguments?
 ) : BaseMethodResolveResult(method, place, state, arguments) {
 
-  override fun getContextSubstitutor(): PsiSubstitutor = super.getSubstitutor()
-
   override fun getPartialSubstitutor(): PsiSubstitutor = myPartialSubstitutor
 
   private val myPartialSubstitutor by recursionAwareLazy {

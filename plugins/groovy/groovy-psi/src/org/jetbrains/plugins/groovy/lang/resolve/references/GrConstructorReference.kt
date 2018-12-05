@@ -8,7 +8,6 @@ import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil.enclosingClass
-import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
@@ -19,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getAllConstructors
 abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachingReference<T>(element), GroovyCallReference {
 
   // TODO consider introducing GroovyConstructorCallReference and putting it there
-  protected abstract fun resolveClass(): ClassResolveResult?
+  protected abstract fun resolveClass(): GroovyResolveResult?
 
   protected open val supportsMapInvocation: Boolean get() = true
 

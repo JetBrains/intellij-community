@@ -3,19 +3,19 @@ package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 class GrEnumConstructorReference(element: GrEnumConstant) : GrConstructorReference<GrEnumConstant>(element) {
 
-  override fun resolveClass(): ClassResolveResult? {
+  override fun resolveClass(): GroovyResolveResult? {
     return element.containingClass?.let {
-      ClassResolveResult(it, element, ResolveState.initial(), PsiType.EMPTY_ARRAY)
+      BaseGroovyResolveResult(it, element, ResolveState.initial())
     }
   }
 

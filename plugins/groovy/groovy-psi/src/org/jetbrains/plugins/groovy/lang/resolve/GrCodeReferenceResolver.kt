@@ -108,7 +108,7 @@ private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveR
   else if (isQualified) {
     val clazz = resolveClassFqn()
     if (clazz != null) {
-      return listOf(ClassResolveResult(clazz, this, ResolveState.initial(), explicitTypeArguments))
+      return listOf(ClassProcessor.createResult(clazz, this, ResolveState.initial(), explicitTypeArguments))
     }
   }
 

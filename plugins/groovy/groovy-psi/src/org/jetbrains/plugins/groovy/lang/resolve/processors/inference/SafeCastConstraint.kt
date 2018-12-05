@@ -7,7 +7,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompa
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
-import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.DiamondResolveResult
 
 class SafeCastConstraint(private val leftType: PsiType, private val expression: GrSafeCastExpression) : GrConstraintFormula() {
 
@@ -17,7 +17,7 @@ class SafeCastConstraint(private val leftType: PsiType, private val expression: 
       return true
     }
     val typeElement = expression.castTypeElement as? GrClassTypeElement ?: return true
-    val result = typeElement.referenceElement.advancedResolve() as? ClassResolveResult ?: return true
+    val result = typeElement.referenceElement.advancedResolve() as? DiamondResolveResult ?: return true
     val clazz = result.element
     val contextSubstitutor = result.contextSubstitutor
     session.startNestedSession(clazz.typeParameters, contextSubstitutor, expression, result) { nested ->

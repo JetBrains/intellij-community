@@ -41,6 +41,8 @@ open class BaseGroovyResolveResult<out T : PsiElement>(
 
   override fun getCurrentFileResolveContext(): PsiElement? = resolveContext
 
+  final override fun getContextSubstitutor(): PsiSubstitutor = substitutor
+
   override fun getSubstitutor(): PsiSubstitutor = substitutor
 
   override fun getSpreadState(): SpreadState? = spreadState
