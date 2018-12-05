@@ -142,14 +142,14 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final String mainModuleFileDirectoryPath = mainModuleData.getModuleFileDirectoryPath();
     final String jdkName = getJdkName(gradleModule);
 
+    String[] moduleGroup = null;
+    if (!resolverCtx.isUseQualifiedModuleNames()) {
+      moduleGroup = getIdeModuleGroup(mainModuleData.getInternalName(), gradleModule);
+      mainModuleData.setIdeModuleGroup(moduleGroup);
+    }
+
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
-      String[] moduleGroup = null;
-      if (!resolverCtx.isUseQualifiedModuleNames()) {
-        moduleGroup = getIdeModuleGroup(mainModuleData.getInternalName(), gradleModule);
-        mainModuleData.setIdeModuleGroup(moduleGroup);
-      }
-
       for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
         final String moduleId = getModuleId(resolverCtx, gradleModule, sourceSet);
         final String moduleExternalName = gradleModule.getName() + ":" + sourceSet.getName();
