@@ -272,9 +272,6 @@ public class BuildManager implements Disposable {
           return false;
         }
 
-        Project project = null;
-        ProjectFileIndex fileIndex = null;
-
         for (VFileEvent event : events) {
           final VirtualFile eventFile = event.getFile();
           if (eventFile == null) {
@@ -284,16 +281,8 @@ public class BuildManager implements Disposable {
             return true; // should be deleted
           }
 
-          if (project == null) {
-            // lazy init
-            project = getCurrentContextProject();
-            if (project == null) {
-              return false;
-            }
-            fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-          }
-
-          if (fileIndex.isInContent(eventFile)) {
+          Project project = ProjectLocator.getInstance().guessProjectForFile(eventFile);
+          if (project != null) {
             if (ProjectUtil.isProjectOrWorkspaceFile(eventFile) || GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(eventFile, project)) {
               // changes in project files or generated stuff should not trigger auto-make
               continue;
