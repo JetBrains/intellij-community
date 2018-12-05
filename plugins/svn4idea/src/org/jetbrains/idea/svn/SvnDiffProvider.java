@@ -261,7 +261,6 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   private static boolean itemExists(@NotNull Status svnStatus) {
-    return !StatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
-           !StatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
+    return !StatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus());
   }
 }

@@ -193,10 +193,6 @@ public class Status {
     return myIsConflicted;
   }
 
-  public StatusType getRemoteNodeStatus() {
-    return null;
-  }
-
   public StatusType getNodeStatus() {
     return myContentsStatus;
   }
