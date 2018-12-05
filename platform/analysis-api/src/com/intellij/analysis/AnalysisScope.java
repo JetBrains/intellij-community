@@ -239,8 +239,7 @@ public class AnalysisScope {
       case VIRTUAL_FILES:
         myFilesSet = new CompactVirtualFileSet();
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-        for (Iterator<VirtualFile> iterator = myVFiles.iterator(); iterator.hasNext(); ) {
-          final VirtualFile vFile = iterator.next();
+        for (final VirtualFile vFile : myVFiles) {
           VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
             @NotNull
             @Override
@@ -252,10 +251,6 @@ public class AnalysisScope {
               return ignored ? SKIP_CHILDREN : CONTINUE;
             }
           });
-
-          if (vFile.isDirectory()) {
-            iterator.remove();
-          }
         }
         myFilesSet.freeze();
         break;
