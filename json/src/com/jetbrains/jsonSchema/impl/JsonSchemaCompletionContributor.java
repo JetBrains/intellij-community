@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -73,7 +74,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       }
     }
 
-    updateStat(service.getSchemaProvider(rootSchema.getSchemaFile()));
+    final VirtualFile schemaFile = rootSchema.getSchemaFile();
+    updateStat(service.getSchemaProvider(schemaFile), schemaFile);
     doCompletion(parameters, result, rootSchema);
   }
 
@@ -104,8 +106,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     return result;
   }
 
-  private static void updateStat(@Nullable JsonSchemaFileProvider provider) {
-    if (provider == null) return;
+  private static void updateStat(@Nullable JsonSchemaFileProvider provider, VirtualFile schemaFile) {
+    if (provider == null) {
+      if (schemaFile instanceof HttpVirtualFile) {
+        // auto-detected and auto-downloaded JSON schemas
+        FUSApplicationUsageTrigger usageTrigger = FUSApplicationUsageTrigger.getInstance();
+        usageTrigger.trigger(JsonSchemaUsageTriggerCollector.class, REMOTE_USAGE_KEY);
+      }
+      return;
+    }
     final SchemaType schemaType = provider.getSchemaType();
     FUSApplicationUsageTrigger usageTrigger = FUSApplicationUsageTrigger.getInstance();
     switch (schemaType) {
@@ -119,6 +128,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         usageTrigger.trigger(JsonSchemaUsageTriggerCollector.class, BUILTIN_USAGE_KEY);
         break;
       case remoteSchema:
+        // this works only for user-specified remote schemas in our settings, but not for auto-detected remote schemas
         usageTrigger.trigger(JsonSchemaUsageTriggerCollector.class, REMOTE_USAGE_KEY);
         break;
     }

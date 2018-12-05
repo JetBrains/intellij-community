@@ -940,7 +940,9 @@ class JsonSchemaAnnotatorChecker {
       final JsonSchemaType type = JsonSchemaType.getType(value);
       if (type != null) {
         // also check maybe some currently not checked properties like format are different with schemes
-        if (!schemesDifferWithNotCheckedProperties(correct)) {
+        // todo note that JsonSchemaObject#equals is broken by design, so normally it shouldn't be used until rewritten
+        //  but for now we use it here to avoid similar schemas being marked as duplicates
+        if (ContainerUtil.newHashSet(correct).size() > 1 && !schemesDifferWithNotCheckedProperties(correct)) {
           error("Validates to more than one variant", value.getDelegate(), JsonErrorPriority.MEDIUM_PRIORITY);
         }
       }
