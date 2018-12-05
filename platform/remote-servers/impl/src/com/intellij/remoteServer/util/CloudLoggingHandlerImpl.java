@@ -53,9 +53,14 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
 
   @Override
   public LogListener getOrCreateLogListener(String pipeName) {
-    return myPipeName2LogListener.computeIfAbsent(
-      pipeName, pipe -> new LogListenerImpl(myLogManager.addAdditionalLog(pipeName), true)
-    );
+    LogListenerImpl cached = myPipeName2LogListener.get(pipeName);
+    if (cached != null && !cached.isClosed()) {
+      return cached;
+    }
+
+    LogListenerImpl result = new LogListenerImpl(myLogManager.addAdditionalLog(pipeName), true);
+    myPipeName2LogListener.put(pipeName, result);
+    return result;
   }
 
   @Override
@@ -101,7 +106,10 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
-  public TerminalListener createTerminal(final String pipeName, OutputStream terminalInput, InputStream terminalOutput, InputStream stderr) {
+  public TerminalListener createTerminal(final String pipeName,
+                                         OutputStream terminalInput,
+                                         InputStream terminalOutput,
+                                         InputStream stderr) {
     final TerminalHandler terminalHandler = myLogManager.addTerminal(pipeName, terminalOutput, terminalInput);
     return new TerminalListener() {
 
@@ -132,6 +140,10 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       if (myLoggingHandler instanceof LoggingHandlerBase) {
         ((LoggingHandlerBase)myLoggingHandler).close();
       }
+    }
+
+    public boolean isClosed() {
+      return myLoggingHandler instanceof LoggingHandlerBase && ((LoggingHandlerBase)myLoggingHandler).isClosed();
     }
 
     public void clear() {
