@@ -60,6 +60,13 @@ public class Splash extends JDialog implements StartupProgress {
     setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(info.getSplashImageUrl());
+
+    // Temporary Studio code for motivational purposes only.
+    String splashUrl = System.getProperty("studio.splash");
+    if (splashUrl != null) {
+      originalImage = new ImageIcon(splashUrl, "splash");
+    }
+
     myImage = new SplashImage(IconLoader.getIconSnapshot(originalImage), info.getSplashTextColor());
     myLabel = new JLabel(myImage) {
       @Override
