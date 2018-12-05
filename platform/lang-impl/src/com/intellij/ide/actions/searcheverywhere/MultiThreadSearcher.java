@@ -66,7 +66,12 @@ class MultiThreadSearcher implements SESearcher {
 
     Collection<? extends SearchEverywhereContributor<?>> contributors = contributorsAndLimits.keySet();
     if (pattern.isEmpty()) {
-      contributors = ContainerUtil.filter(contributors, contributor -> contributor.isEmptyPatternSupported());
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        contributors = Collections.emptySet(); //empty search string is not allowed for tests
+      }
+      else {
+        contributors = ContainerUtil.filter(contributors, contributor -> contributor.isEmptyPatternSupported());
+      }
     }
 
     ProgressIndicator indicator;
