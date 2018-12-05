@@ -77,10 +77,22 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
+
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
                                                     Function<? super T, String> nameFunction,
                                                     String packageName,
                                                     boolean createTempFile, JavaParameters javaParameters) throws CantRunException {
+    JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    addClassesListToJavaParameters(elements, nameFunction, packageName, createTempFile, javaParameters,
+                                   JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "");
+  }
+
+  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
+                                                    Function<? super T, String> nameFunction,
+                                                    String packageName,
+                                                    boolean createTempFile,
+                                                    JavaParameters javaParameters,
+                                                    String filters) throws CantRunException {
     try {
       if (createTempFile) {
         createTempFiles(javaParameters);
@@ -145,7 +157,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT)
                               ? data.getCategory()
                               : JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) ? data.getTags().replaceAll(" ", "") : "";
-      final String filters = JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "";
       JUnitStarter.printClassesList(testNames, packageName, category, filters, myTempFile);
 
       writeClassesPerModule(packageName, javaParameters, perModule);

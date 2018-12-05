@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,12 +68,19 @@ public class TestsPattern extends TestPackage {
       }
       else {
         classNames.clear();
-        Set<PsiClass> classes = new THashSet<>();
-        ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
-        classes.forEach(aClass -> ReadAction.compute(() -> classNames.add(JavaExecutionUtil.getRuntimeQualifiedName(aClass))));
+        if (!JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {//junit 5 process tests automatically
+          Set<PsiClass> classes = new THashSet<>();
+          ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+          classes.forEach(aClass -> ReadAction.compute(() -> classNames.add(JavaExecutionUtil.getRuntimeQualifiedName(aClass))));
+        }
         return;
       }
     }
+  }
+
+  @Override
+  protected String getFilters(boolean hasClassPatterns, String packageName) {
+    return hasClassPatterns ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 
   private PsiClass getTestClass(Project project, String className) {

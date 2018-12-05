@@ -26,7 +26,6 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -76,19 +75,12 @@ public class TestPackage extends TestObject {
         final SourceScope sourceScope = getSourceScope();
         final Module module = getConfiguration().getConfigurationModule().getModule();
         if (sourceScope != null) {
-          DumbService instance = DumbService.getInstance(myProject);
           try {
-            instance.setAlternativeResolveEnabled(true);
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            if (!JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) { //junit 5 process tests automatically
-              searchTests(module, classFilter, myClassNames);
-            }
+            searchTests(module, classFilter, myClassNames);
           }
           catch (CantRunException ignored) {}
-          finally {
-            instance.setAlternativeResolveEnabled(false);
-          }
         }
       }
 
@@ -102,10 +94,10 @@ public class TestPackage extends TestObject {
             VirtualFile[] rootPaths = getRootPaths();
             LOG.assertTrue(rootPaths != null);
             JUnitStarter.printClassesList(
-              Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "", packageName.isEmpty() ? ".*" : packageName + "\\..*", myTempFile);
+              Arrays.stream(rootPaths).map(root -> "\u002B" + root.getPath()).collect(Collectors.toList()), packageName, "", getFilters(myClassNames.isEmpty(), packageName), myTempFile);
           }
           else {
-            addClassesListToJavaParameters(myClassNames, Function.ID, packageName, createTempFiles(), getJavaParameters());
+            addClassesListToJavaParameters(myClassNames, Function.ID, packageName, createTempFiles(), getJavaParameters(), getFilters(myClassNames.isEmpty(), packageName));
           }
         }
         catch (Exception ignored) {}
@@ -113,8 +105,13 @@ public class TestPackage extends TestObject {
     };
   }
 
+  protected String getFilters(boolean empty, String packageName) {
+    return empty ? packageName.isEmpty() ? ".*" : packageName + "\\..*" 
+                 : "";
+  }
 
   protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> names) throws CantRunException {
+    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) return; //junit 5 process tests automatically
     Set<PsiClass> classes = new THashSet<>();
     if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
       Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
