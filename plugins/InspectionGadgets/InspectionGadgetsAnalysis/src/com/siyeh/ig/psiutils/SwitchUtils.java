@@ -272,17 +272,16 @@ public class SwitchUtils {
   }
 
   /**
-   * @param element a switch label element
+   * @param label a switch label statement
    * @return list of enum constants which are targets of the specified label; empty list if the supplied element is not a switch label,
    * or it is not an enum switch.
    */
   @NotNull
-  public static List<PsiEnumConstant> findEnumConstants(PsiElement element) {
-    if (!(element instanceof PsiSwitchLabelStatementBase)) {
+  public static List<PsiEnumConstant> findEnumConstants(PsiSwitchLabelStatementBase label) {
+    if (label == null) {
       return Collections.emptyList();
     }
-    final PsiSwitchLabelStatementBase switchLabelStatement = (PsiSwitchLabelStatementBase)element;
-    final PsiExpressionList list = switchLabelStatement.getCaseValues();
+    final PsiExpressionList list = label.getCaseValues();
     if (list == null) {
       return Collections.emptyList();
     }

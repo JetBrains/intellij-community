@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SwitchUtils;
@@ -83,7 +84,7 @@ public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     PsiEnumConstant nextEnumConstant = getNextEnumConstant(nextEnumConstants, missingEnumElements);
     PsiElement bodyElement = body.getFirstBodyElement();
     while (bodyElement != null) {
-      List<PsiEnumConstant> constants = SwitchUtils.findEnumConstants(bodyElement);
+      List<PsiEnumConstant> constants = SwitchUtils.findEnumConstants(ObjectUtils.tryCast(bodyElement, PsiSwitchLabelStatementBase.class));
       while (nextEnumConstant != null && constants.contains(nextEnumConstant)) {
         addSwitchLabelStatementBefore(missingEnumElements.get(0), bodyElement, switchBlock, isRuleBasedFormat);
         missingEnumElements.remove(0);
