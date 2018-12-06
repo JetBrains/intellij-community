@@ -227,7 +227,7 @@ public class VcsLogUtil {
    * @param disposable disposable to register.
    */
   public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
-    Disposer.register(parent, () -> Disposer.dispose(disposable));
+    Disposer.register(parent, disposable);
     Disposer.register(project, disposable);
   }
 
