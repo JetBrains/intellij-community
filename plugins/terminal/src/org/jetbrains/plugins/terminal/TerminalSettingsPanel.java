@@ -13,8 +13,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -106,8 +107,16 @@ public class TerminalSettingsPanel {
         }
       }
     }
-    if (!customComponents.isEmpty()) {
-      myConfigurablesPanel.add(SwingHelper.newLeftAlignedVerticalPanel(customComponents), BorderLayout.CENTER);
+    myConfigurablesPanel.setLayout(new GridLayoutManager(customComponents.size(), 1));
+    int i = 0;
+    for (Component component : customComponents) {
+      myConfigurablesPanel.add(component, new GridConstraints(
+        i++, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 0, 0,
+        new Dimension(-1, -1),
+        new Dimension(-1, -1),
+        new Dimension(-1, -1),
+        0, false
+      ));
     }
 
     return myWholePanel;
