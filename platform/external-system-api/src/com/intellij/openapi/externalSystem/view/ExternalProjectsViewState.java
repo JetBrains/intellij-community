@@ -24,7 +24,7 @@ import org.jdom.Element;
 @Tag("projects_view")
 public class ExternalProjectsViewState {
   public boolean groupTasks = true;
-  public boolean groupModules = false;
+  public boolean groupModules = true;
   public boolean showInheritedTasks = true;
   public boolean showIgnored = true;
   @Tag("tree_state")
