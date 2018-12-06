@@ -85,7 +85,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myHelper = helper;
     EditorFactory editorFactory = EditorFactory.getInstance();
     myConsoleExecutionEditor = new ConsoleExecutionEditor(helper);
-
+    Disposer.register(this, myConsoleExecutionEditor);
     Document historyDocument = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(historyDocument);
     myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject(), EditorKind.CONSOLE);
@@ -151,7 +151,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myHistoryViewer.setCaretEnabled(false);
 
     myConsoleExecutionEditor.initComponent();
-    Disposer.register(this, myConsoleExecutionEditor);
 
     setHistoryScrollBarVisible(false);
 
