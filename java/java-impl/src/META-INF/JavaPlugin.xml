@@ -940,6 +940,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids12" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.EnhancedSwitchMigrationInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantLabeledSwitchRuleCodeBlock"
+                     key="inspection.labeled.switch.rule.redundant.code.block.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCodeBlockInspection" />
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="EnhancedSwitchBackwardMigration"
                      key="inspection.switch.expression.backward.migration.inspection.name" bundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids12" groupBundle="messages.InspectionsBundle"
