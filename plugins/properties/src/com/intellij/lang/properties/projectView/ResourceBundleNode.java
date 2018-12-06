@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements ValidateableNode, DropTargetNode, ResourceBundleAwareNode {
   @NotNull
@@ -61,7 +61,8 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     if (!file.isValid()) return false;
-    PsiFile psiFile = PsiManager.getInstance(Objects.requireNonNull(getProject())).findFile(file);
+    assert myProject != null;
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     return propertiesFile != null && ArrayUtil.contains(psiFile, ObjectUtils.notNull(getValue()));
   }
@@ -122,12 +123,12 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
     if (!Comparing.equal(newBundle, currentBundle)) {
       return false;
     }
-    return ObjectUtils.notNull(currentBundle).isValid();
+    return currentBundle.isValid();
   }
 
   @Override
   public boolean isValid() {
-    return Stream.of(ObjectUtils.notNull(getValue())).allMatch(PsiElement::isValid);
+    return getResourceBundle().isValid();
   }
 
   @Override
@@ -170,8 +171,8 @@ public class ResourceBundleNode extends ProjectViewNode<PsiFile[]> implements Va
     fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(myBundle));
     resourceBundleManager.dissociateResourceBundle(myBundle);
     final ResourceBundle updatedBundle = resourceBundleManager.combineToResourceBundleAndGet(toAddInResourceBundle, baseName);
-    FileEditorManager.getInstance(getProject()).openFile(new ResourceBundleAsVirtualFile(updatedBundle), true);
-    ProjectView.getInstance(getProject()).refresh();
+    FileEditorManager.getInstance(myProject).openFile(new ResourceBundleAsVirtualFile(updatedBundle), true);
+    ProjectView.getInstance(myProject).refresh();
   }
 
   @Override
