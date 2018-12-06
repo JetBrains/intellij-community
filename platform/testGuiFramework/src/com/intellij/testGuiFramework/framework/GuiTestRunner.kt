@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.framework
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam
@@ -45,6 +46,8 @@ import org.junit.runner.notification.RunListener
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.model.FrameworkMethod
 import java.net.SocketException
+import java.nio.file.Files
+import java.nio.file.Paths
 
 
 open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInterface) {
@@ -93,15 +96,26 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
       Assert.fail(e.message)
     }
     var testIsRunning = true
+    var restartIdeAfterTest = false
     while (testIsRunning) {
       try {
         val message = myServer.receive()
         if (message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)) {
+          if (restartIdeAfterTest && message.content.type == Type.FINISHED) {
+            restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
+            //we're removing config/options/recentProjects.xml to avoid auto-opening of the previous project
+            Files.delete(Paths.get(PathManager.getConfigPath(), "options", "recentProjects.xml"))
+            SERVER_LOG.info("Restarting IDE...")
+          }
           testIsRunning = processJUnitEvent(message.content, eachNotifier)
         }
         if (message.type == MessageType.RESTART_IDE) {
           restartIde(ide = getIdeFromMethod(method), runIde = ::runIde)
           sendRunTestCommand(method, testName)
+        }
+        if (message.type == MessageType.RESTART_IDE_AFTER_TEST) {
+          SERVER_LOG.warn("IDE should be restarted after test")
+          restartIdeAfterTest = true
         }
         if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
           if (message.content !is RestartIdeAndResumeContainer) throw Exception(

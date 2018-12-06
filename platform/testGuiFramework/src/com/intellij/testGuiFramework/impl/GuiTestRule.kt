@@ -3,9 +3,11 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtil
@@ -23,11 +25,14 @@ import com.intellij.testGuiFramework.framework.GuiTestPaths.failedTestVideoDirPa
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.ignoreComponentLookupException
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.screenRecorderJarDirPath
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.testsToRecord
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
+import com.intellij.testGuiFramework.remote.transport.MessageType
+import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.Splash
 import com.intellij.ui.components.labels.ActionLink
@@ -63,6 +68,8 @@ class GuiTestRule : TestRule {
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
   val projectsFolder: TemporaryFolder = TemporaryFolder(File(FileUtil.getTempDirectory()))
+
+  val LOG: Logger = Logger.getInstance(GuiTestRule::class.java.name)
 
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
@@ -116,10 +123,10 @@ class GuiTestRule : TestRule {
     if (jarDir == null) return null
 
     return File(jarDir)
-        .listFiles { f -> f.name.startsWith("ui-screenrecorder") && f.name.endsWith("jar") }
-        .firstOrNull()
-        ?.toURI()
-        ?.toURL()
+      .listFiles { f -> f.name.startsWith("ui-screenrecorder") && f.name.endsWith("jar") }
+      .firstOrNull()
+      ?.toURI()
+      ?.toURL()
   }
 
   inner class IdeHandling : TestRule {
@@ -161,19 +168,33 @@ class GuiTestRule : TestRule {
 
     fun tearDown(): List<Throwable> {
       val errors = mutableListOf<Throwable>()
+      LOG.info("tearDown: waiting for background tasks to finish...")
       errors.addAll(thrownFromRunning(Runnable { GuiTestUtilKt.waitForBackgroundTasks(robot()) }))
+      LOG.info("tearDown: check opened modal dialogs...")
       errors.addAll(checkForModalDialogs())
-      errors.addAll(thrownFromRunning(Runnable { this.tearDownProject() }))
+      LOG.info("tearDown: tearDown project")
+      errors.addAll(thrownFromRunning(Runnable { this.closeIdeProject() }))
+      LOG.info("tearDown: waiting for welcome frame (return if necessary)...")
       errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
+      LOG.info("tearDown: collecting fatal errors from IDE...")
       errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
+      LOG.info("tearDown: double checking return to the first step on a welcome frame")
+      if (!isWelcomeFrameFirstStep()) {
+        GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AFTER_TEST,
+                                                    "IDE cannot return to the Welcome frame")
+        )
+        //set last project creation path to null; avoid opening project of the failed test
+        RecentProjectsManager.getInstance().lastProjectCreationLocation = null
+        LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
+      }
       return errors.toList()
     }
 
-    private fun tearDownProject() {
+    private fun closeIdeProject() {
       try {
         val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, Timeouts.seconds02)
         if (ideFrameFixture.target().isShowing)
-            ideFrameFixture.closeProject()
+          ideFrameFixture.closeProject()
       }
       catch (e: ComponentLookupException) {
         // do nothing because ideFixture is already closed
@@ -181,14 +202,14 @@ class GuiTestRule : TestRule {
     }
 
     private fun returnToTheFirstStepOfWelcomeFrame() {
-      val welcomeFrameFixture = WelcomeFrameFixture.find(robot())
+      val welcomeFrameFixture = WelcomeFrameFixture.find(robot(), Timeouts.seconds10)
 
       fun isFirstStep(): Boolean {
         return try {
           val actionLink = with(welcomeFrameFixture) {
             robot().finder().find(this@with.target() as Container) { it is ActionLink && it.text.contains("New Project") }
           }
-          actionLink?.isShowing ?: false
+          actionLink.isShowing ?: false
         }
         catch (componentLookupException: ComponentLookupException) {
           false
@@ -197,6 +218,14 @@ class GuiTestRule : TestRule {
       for (i in 0..3) {
         if (!isFirstStep()) GuiTestUtil.invokeActionViaShortcut(Key.ESCAPE.name)
       }
+    }
+
+    //find first page with such actions like "Create New Project" without timeout
+    private fun isWelcomeFrameFirstStep(timeout: org.fest.swing.timing.Timeout = Timeouts.seconds01): Boolean {
+      val createNewProjectAction = GuiTestUtilKt.ignoreComponentLookupException {
+        WelcomeFrameFixture.find(robot(), timeout).apply { findActionLinkByActionId("WelcomeScreen.CreateNewProject") }
+      }
+      return createNewProjectAction?.target()?.isShowing ?: false
     }
 
 
@@ -265,9 +294,14 @@ class GuiTestRule : TestRule {
 
 
     private fun assumeOnlyWelcomeFrameShowing() {
+      var attemptsToReturnToWelcomeFrame = 0
       try {
-        WelcomeFrameFixture.find(robot())
-
+        //if IDE started with a previous project we need to close it firstly; let's give few attempts for it
+        while (!isWelcomeFrameFirstStep(Timeouts.seconds10) && attemptsToReturnToWelcomeFrame++ <= 3 ) {
+          anyIdeFrame()?.apply { invokeMainMenu("CloseProject") }
+          ignoreComponentLookupException { returnToTheFirstStepOfWelcomeFrame() }
+        }
+        WelcomeFrameFixture.find(robot(), Timeouts.seconds30)
       }
       catch (e: WaitTimedOutError) {
         throw AssumptionViolatedException("didn't find welcome frame", e)
@@ -471,6 +505,15 @@ class GuiTestRule : TestRule {
   fun findIdeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
     return IdeFrameFixture.find(robot(), null, null, timeout)
   }
+
+  fun anyIdeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture? {
+    return try {
+      IdeFrameFixture.find(robot(), null, null, timeout)
+    } catch (e: ComponentLookupException) {
+      null
+    }
+  }
+
 
   fun getTestName(): String {
     return myTestName
