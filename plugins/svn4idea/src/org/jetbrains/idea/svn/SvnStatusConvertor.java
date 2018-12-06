@@ -15,8 +15,8 @@ public class SvnStatusConvertor {
   public static FileStatus convertStatus(@Nullable StatusType itemStatus, @Nullable StatusType propertiesStatus) {
     Status status = new Status();
 
-    status.setContentsStatus(itemStatus);
-    status.setPropertiesStatus(propertiesStatus);
+    status.setItemStatus(itemStatus);
+    status.setPropertyStatus(propertiesStatus);
 
     return convertStatus(status);
   }

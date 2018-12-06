@@ -59,7 +59,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
-        handlerArr[0].getPending().getKind();
+        handlerArr[0].getPending().getNodeKind();
       }
 
       @Override
@@ -115,15 +115,15 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     Ref<SvnStatusHandler> handler = Ref.create();
     final File baseFile = new File(basePath);
     final SvnStatusHandler.ExternalDataCallback callback = CmdStatusClient.createStatusCallback(status1 -> {
-      System.out.println(status1.getURL());
+      System.out.println(status1.getUrl());
       if (new File(
         "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java")
         .equals(status1.getFile())) {
-        assertEquals("http://external/src/com/slave/MacMessagesParser.java", status1.getURL().toString());
+        assertEquals("http://external/src/com/slave/MacMessagesParser.java", status1.getUrl().toString());
       }
       if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\SomeOtherClass.java")
         .equals(status1.getFile())) {
-        assertEquals("http://external/src/com/slave/SomeOtherClass.java", status1.getURL().toString());
+        assertEquals("http://external/src/com/slave/SomeOtherClass.java", status1.getUrl().toString());
       }
     }, baseFile, createStubInfo("http://mainurl/"), () -> handler.get().getPending());
     handler.set(new SvnStatusHandler(callback, baseFile, o -> {
@@ -153,7 +153,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       @Override
       public void switchPath() {
         statuses.add(handlerArr[0].getPending());
-        handlerArr[0].getPending().getKind();
+        handlerArr[0].getPending().getNodeKind();
       }
 
       @Override
@@ -219,9 +219,9 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       @Override
       public void switchPath() {
         final Status pending = handlerArr[0].getPending();
-        pending.setChangelistName(clName[0]);
+        pending.setChangeListName(clName[0]);
         statuses.add(pending);
-        pending.getKind();
+        pending.getNodeKind();
       }
 
       @Override
@@ -261,6 +261,6 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     assertEquals(1, statuses.size());
     final Status next = statuses.iterator().next();
     assertEquals("a.txt", getRelativePath(new File(basePath), next.getFile()));
-    assertEquals("target", next.getChangelistName());
+    assertEquals("target", next.getChangeListName());
   }
 }

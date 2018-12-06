@@ -249,8 +249,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       // get really latest revision
       // TODO: Algorithm seems not to be correct in all cases - for instance, when some subtree was deleted and replaced by other
       // TODO: with same names. pegRevision should be used somehow but this complicates the algorithm
-      if (svnStatus.getRepositoryRootURL() != null) {
-        revision = new LatestExistentSearcher(myVcs, svnStatus.getURL(), svnStatus.getRepositoryRootURL()).getDeletionRevision();
+      if (svnStatus.getRepositoryRootUrl() != null) {
+        revision = new LatestExistentSearcher(myVcs, svnStatus.getUrl(), svnStatus.getRepositoryRootUrl()).getDeletionRevision();
       }
       else {
         LOG.info("Could not find repository url for file " + file);
@@ -261,6 +261,6 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   private static boolean itemExists(@NotNull Status svnStatus) {
-    return !StatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus());
+    return !StatusType.STATUS_DELETED.equals(svnStatus.getRemoteItemStatus());
   }
 }

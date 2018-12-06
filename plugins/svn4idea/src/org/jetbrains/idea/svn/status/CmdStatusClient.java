@@ -81,8 +81,8 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
           Status status = new Status();
           status.setFile(path);
-          status.setContentsStatus(StatusType.STATUS_NORMAL);
-          status.setInfoGetter(() -> createInfoGetter().convert(path));
+          status.setItemStatus(StatusType.STATUS_NORMAL);
+          status.setInfoProvider(() -> createInfoGetter().convert(path));
           handler.consume(status);
         }
       }
@@ -149,7 +149,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
       @Override
       public void switchPath() {
         Status pending = statusSupplier.get();
-        pending.setChangelistName(changelistName.get());
+        pending.setChangeListName(changelistName.get());
         try {
           File pendingFile = pending.getFile();
           File externalsBase = find(externalsMap.keySet(), file -> isAncestor(file, pendingFile, false));
@@ -157,7 +157,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           Info baseInfo = externalsBase != null ? externalsMap.get(externalsBase) : infoBase;
 
           if (baseInfo != null) {
-            pending.setURL(append(baseInfo.getUrl(), toSystemIndependentName(getRelativePath(baseFile, pendingFile))));
+            pending.setUrl(append(baseInfo.getUrl(), toSystemIndependentName(getRelativePath(baseFile, pendingFile))));
           }
           if (pending.is(StatusType.STATUS_EXTERNAL)) {
             externalsMap.put(pending.getFile(), pending.getInfo());

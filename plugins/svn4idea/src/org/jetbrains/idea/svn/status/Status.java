@@ -15,37 +15,37 @@ import org.jetbrains.idea.svn.lock.Lock;
 import java.io.File;
 
 /**
- * TODO: Could also inherit BaseNodeDescription when myKind becomes final.
+ * TODO: Could also inherit BaseNodeDescription when myNodeKind becomes final.
  */
 public class Status {
-  private Url myURL;
+  private Url myUrl;
   private File myFile;
   private boolean myFileExists;
-  private @NotNull NodeKind myKind;
+  private @NotNull NodeKind myNodeKind;
   @NotNull private Revision myRevision;
   @NotNull private Revision myCommittedRevision;
-  private StatusType myContentsStatus;
-  private StatusType myPropertiesStatus;
-  private StatusType myRemoteContentsStatus;
-  private StatusType myRemotePropertiesStatus;
-  private boolean myIsLocked;
+  private StatusType myItemStatus;
+  private StatusType myPropertyStatus;
+  private StatusType myRemoteItemStatus;
+  private StatusType myRemotePropertyStatus;
+  private boolean myIsWorkingCopyLocked;
   private boolean myIsCopied;
   private boolean myIsSwitched;
   @Nullable private Lock myRemoteLock;
   @Nullable private Lock myLocalLock;
-  private String myChangelistName;
-  private boolean myIsConflicted;
+  private String myChangeListName;
+  private boolean myIsTreeConflicted;
   private Info myInfo;
-  private Getter<Info> myInfoGetter;
+  private Getter<Info> myInfoProvider;
 
   public Status() {
     setRevision(Revision.UNDEFINED);
-    myInfoGetter = () -> null;
+    myInfoProvider = () -> null;
     setCommittedRevision(Revision.UNDEFINED);
   }
 
-  public Url getURL() {
-    Url url = myURL;
+  public Url getUrl() {
+    Url url = myUrl;
 
     if (url == null) {
       Info info = initInfo();
@@ -66,17 +66,17 @@ public class Status {
     return file;
   }
 
-  public void setInfoGetter(Getter<Info> infoGetter) {
-    myInfoGetter = infoGetter;
+  public void setInfoProvider(Getter<Info> infoProvider) {
+    myInfoProvider = infoProvider;
   }
 
   private Info initInfo() {
     if (myInfo == null) {
-      final StatusType contentsStatus = getContentsStatus();
-      if (contentsStatus == null || StatusType.UNKNOWN.equals(contentsStatus)) {
+      final StatusType itemStatus = getItemStatus();
+      if (itemStatus == null || StatusType.UNKNOWN.equals(itemStatus)) {
         return null;
       }
-      myInfo = myInfoGetter.get();
+      myInfo = myInfoProvider.get();
     }
     return myInfo;
   }
@@ -86,10 +86,10 @@ public class Status {
   }
 
   @NotNull
-  public NodeKind getKind() {
-    if (myFileExists) return myKind;
+  public NodeKind getNodeKind() {
+    if (myFileExists) return myNodeKind;
     Info info = initInfo();
-    return info != null ? info.getNodeKind() : myKind;
+    return info != null ? info.getNodeKind() : myNodeKind;
   }
 
   @NotNull
@@ -110,24 +110,24 @@ public class Status {
     return myCommittedRevision;
   }
 
-  public StatusType getContentsStatus() {
-    return myContentsStatus;
+  public StatusType getItemStatus() {
+    return myItemStatus;
   }
 
-  public StatusType getPropertiesStatus() {
-    return myPropertiesStatus;
+  public StatusType getPropertyStatus() {
+    return myPropertyStatus;
   }
 
-  public StatusType getRemoteContentsStatus() {
-    return myRemoteContentsStatus;
+  public StatusType getRemoteItemStatus() {
+    return myRemoteItemStatus;
   }
 
-  public StatusType getRemotePropertiesStatus() {
-    return myRemotePropertiesStatus;
+  public StatusType getRemotePropertyStatus() {
+    return myRemotePropertyStatus;
   }
 
   public boolean is(@NotNull StatusType type) {
-    return type.equals(getContentsStatus());
+    return type.equals(getItemStatus());
   }
 
   public boolean is(@NotNull StatusType... types) {
@@ -135,15 +135,15 @@ public class Status {
   }
 
   public boolean isProperty(@NotNull StatusType type) {
-    return type.equals(getPropertiesStatus());
+    return type.equals(getPropertyStatus());
   }
 
   public boolean isProperty(@NotNull StatusType... types) {
     return ContainerUtil.or(types, type -> isProperty(type));
   }
 
-  public boolean isLocked() {
-    return myIsLocked;
+  public boolean isWorkingCopyLocked() {
+    return myIsWorkingCopyLocked;
   }
 
   public boolean isCopied() {
@@ -155,7 +155,7 @@ public class Status {
   }
 
   @Nullable
-  public Url getCopyFromURL() {
+  public Url getCopyFromUrl() {
     if (!isCopied()) return null;
     Info info = initInfo();
     return info != null ? info.getCopyFromUrl() : null;
@@ -171,42 +171,42 @@ public class Status {
     return myLocalLock;
   }
 
-  public String getChangelistName() {
-    return myChangelistName;
+  public String getChangeListName() {
+    return myChangeListName;
   }
 
   @Nullable
   public TreeConflictDescription getTreeConflict() {
-    if (!isConflicted()) return null;
+    if (!isTreeConflicted()) return null;
     Info info = initInfo();
     return info != null ? info.getTreeConflict() : null;
   }
 
-  public boolean isConflicted() {
-    return myIsConflicted;
+  public boolean isTreeConflicted() {
+    return myIsTreeConflicted;
   }
 
   @Nullable
-  public Url getRepositoryRootURL() {
+  public Url getRepositoryRootUrl() {
     Info info = initInfo();
     return info != null ? info.getRepositoryRootUrl() : null;
   }
 
-  public void setURL(Url uRL) {
-    myURL = uRL;
+  public void setUrl(Url url) {
+    myUrl = url;
   }
 
   public void setFile(File file) {
     myFile = file;
   }
 
-  public void setKind(boolean exists, @NotNull NodeKind kind) {
+  public void setNodeKind(boolean exists, @NotNull NodeKind nodeKind) {
     myFileExists = exists;
-    setKind(kind);
+    setNodeKind(nodeKind);
   }
 
-  public void setKind(@NotNull NodeKind kind) {
-    myKind = kind;
+  public void setNodeKind(@NotNull NodeKind nodeKind) {
+    myNodeKind = nodeKind;
   }
 
   public void setRevision(@NotNull Revision revision) {
@@ -217,31 +217,31 @@ public class Status {
     myCommittedRevision = committedRevision;
   }
 
-  public void setContentsStatus(StatusType statusType) {
-    myContentsStatus = statusType;
+  public void setItemStatus(StatusType statusType) {
+    myItemStatus = statusType;
   }
 
-  public void setPropertiesStatus(StatusType propertiesStatus) {
-    myPropertiesStatus = propertiesStatus;
+  public void setPropertyStatus(StatusType propertyStatus) {
+    myPropertyStatus = propertyStatus;
   }
 
-  public void setRemoteContentsStatus(StatusType remoteContentsStatus) {
-    myRemoteContentsStatus = remoteContentsStatus;
+  public void setRemoteItemStatus(StatusType remoteItemStatus) {
+    myRemoteItemStatus = remoteItemStatus;
   }
 
-  public void setRemotePropertiesStatus(StatusType remotePropertiesStatus) {
-    myRemotePropertiesStatus = remotePropertiesStatus;
+  public void setRemotePropertyStatus(StatusType remotePropertyStatus) {
+    myRemotePropertyStatus = remotePropertyStatus;
   }
 
-  public void setIsLocked(boolean isLocked) {
-    myIsLocked = isLocked;
+  public void setWorkingCopyLocked(boolean isWorkingCopyLocked) {
+    myIsWorkingCopyLocked = isWorkingCopyLocked;
   }
 
-  public void setIsCopied(boolean isCopied) {
+  public void setCopied(boolean isCopied) {
     myIsCopied = isCopied;
   }
 
-  public void setIsSwitched(boolean isSwitched) {
+  public void setSwitched(boolean isSwitched) {
     myIsSwitched = isSwitched;
   }
 
@@ -253,11 +253,11 @@ public class Status {
     myLocalLock = localLock;
   }
 
-  public void setChangelistName(String changelistName) {
-    myChangelistName = changelistName;
+  public void setChangeListName(String changeListName) {
+    myChangeListName = changeListName;
   }
 
-  public void setIsConflicted(boolean isConflicted) {
-    myIsConflicted = isConflicted;
+  public void setTreeConflicted(boolean isTreeConflicted) {
+    myIsTreeConflicted = isTreeConflicted;
   }
 }

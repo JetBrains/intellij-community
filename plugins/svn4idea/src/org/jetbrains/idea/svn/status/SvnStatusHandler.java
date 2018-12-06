@@ -156,7 +156,7 @@ public class SvnStatusHandler extends DefaultHandler {
   private void newPending(final Convertor<File, Info> infoGetter) {
     final org.jetbrains.idea.svn.status.Status status = new org.jetbrains.idea.svn.status.Status();
     myPending = status;
-    status.setInfoGetter(() -> infoGetter.convert(status.getFile()));
+    status.setInfoProvider(() -> infoGetter.convert(status.getFile()));
   }
 
   public org.jetbrains.idea.svn.status.Status getPending() {
@@ -511,10 +511,10 @@ public class SvnStatusHandler extends DefaultHandler {
     @Override
     protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) throws SAXException {
       final StatusType propertiesStatus = parsePropertiesStatus(attributes);
-      status.setRemotePropertiesStatus(propertiesStatus);
+      status.setRemotePropertyStatus(propertiesStatus);
 
       final StatusType contentsStatus = parseContentsStatus(attributes);
-      status.setRemoteContentsStatus(contentsStatus);
+      status.setRemoteItemStatus(contentsStatus);
     }
 
     @Override
@@ -556,27 +556,27 @@ public class SvnStatusHandler extends DefaultHandler {
     @Override
     protected void updateStatus(Attributes attributes, org.jetbrains.idea.svn.status.Status status, Lock.Builder lock) throws SAXException {
       final StatusType propertiesStatus = parsePropertiesStatus(attributes);
-      status.setPropertiesStatus(propertiesStatus);
+      status.setPropertyStatus(propertiesStatus);
       final StatusType contentsStatus = parseContentsStatus(attributes);
-      status.setContentsStatus(contentsStatus);
+      status.setItemStatus(contentsStatus);
 
       // optional
       final String locked = attributes.getValue("wc-locked");
       if (locked != null && Boolean.parseBoolean(locked)) {
-        status.setIsLocked(true);
+        status.setWorkingCopyLocked(true);
       }
       final String copied = attributes.getValue("copied");
       if (copied != null && Boolean.parseBoolean(copied)) {
-        status.setIsCopied(true);
+        status.setCopied(true);
       }
       final String treeConflicted = attributes.getValue("tree-conflicted");
       if (treeConflicted != null && Boolean.parseBoolean(treeConflicted)) {
-        status.setIsConflicted(true);
+        status.setTreeConflicted(true);
       }
 
       final String switched = attributes.getValue("switched");
       if (switched != null && Boolean.parseBoolean(switched)) {
-        status.setIsSwitched(true);
+        status.setSwitched(true);
       }
 
       final String revision = attributes.getValue("revision");
@@ -620,7 +620,7 @@ public class SvnStatusHandler extends DefaultHandler {
       status.setFile(file);
       final boolean exists = file.exists();
       if (exists) {
-        status.setKind(exists, NodeKind.from(file.isDirectory()));
+        status.setNodeKind(exists, NodeKind.from(file.isDirectory()));
       }
       else {
         // this is a hack. This is done so because of strange svn native client output:
@@ -657,11 +657,11 @@ and no "mod4" under
 
         */
         if (myBase.getName().equals(path) && !status.is(StatusType.MISSING, StatusType.STATUS_DELETED)) {
-          status.setKind(true, NodeKind.DIR);
+          status.setNodeKind(true, NodeKind.DIR);
           status.setFile(myBase);
           return;
         }
-        status.setKind(exists, NodeKind.UNKNOWN);
+        status.setNodeKind(exists, NodeKind.UNKNOWN);
       }
     }
 

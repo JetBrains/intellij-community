@@ -263,10 +263,10 @@ public class SvnRecursiveStatusWalker {
         }
         else if (!status.is(StatusType.OBSTRUCTED, StatusType.STATUS_NONE)) {
           if (myCurrentItem.isIsInnerCopyRoot()) {
-            myReceiver.processCopyRoot(vf, status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), status.getRepositoryRootURL());
+            myReceiver.processCopyRoot(vf, status.getUrl(), myVcs.getWorkingCopyFormat(path.getIOFile()), status.getRepositoryRootUrl());
           }
           else {
-            myReceiver.bewareRoot(vf, status.getURL());
+            myReceiver.bewareRoot(vf, status.getUrl());
           }
         }
       }
@@ -293,7 +293,7 @@ public class SvnRecursiveStatusWalker {
         }
       }
       else {
-        myReceiver.process(VcsUtil.getFilePath(ioFile, status.getKind().isDirectory()), status);
+        myReceiver.process(VcsUtil.getFilePath(ioFile, status.getNodeKind().isDirectory()), status);
       }
     }
   }

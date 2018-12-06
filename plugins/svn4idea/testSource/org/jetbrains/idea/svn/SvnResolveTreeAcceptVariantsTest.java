@@ -190,7 +190,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
         }
         if (file.myCopyFrom != null) {
           assertTrue(createTestFailedComment(exFile.getPath()) + " (copied status)",
-                     status != null && file.myCopyFrom.equals(getRelativeUrl(myRepositoryUrl, status.getCopyFromURL())));
+                     status != null && file.myCopyFrom.equals(getRelativeUrl(myRepositoryUrl, status.getCopyFromUrl())));
         }
         else {
           assertTrue(createTestFailedComment(exFile.getPath()) + " (modified text status)",

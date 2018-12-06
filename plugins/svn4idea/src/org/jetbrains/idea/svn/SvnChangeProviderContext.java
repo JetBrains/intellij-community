@@ -149,7 +149,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   public void addCopiedFile(@NotNull FilePath filePath, @NotNull Status status, @NotNull Url copyFromURL) {
     myCopiedFiles.add(new SvnChangedFile(filePath, status, copyFromURL));
-    ContainerUtil.putIfNotNull(filePath, status.getCopyFromURL(), myCopyFromURLs);
+    ContainerUtil.putIfNotNull(filePath, status.getCopyFromUrl(), myCopyFromURLs);
   }
 
   void processStatusFirstPass(@NotNull FilePath filePath, @NotNull Status status) throws SvnBindException {
@@ -159,11 +159,11 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (status.getLocalLock() != null) {
       myChangelistBuilder.processLogicallyLockedFolder(filePath.getVirtualFile(), status.getLocalLock().toLogicalLock(true));
     }
-    if (filePath.isDirectory() && status.isLocked()) {
+    if (filePath.isDirectory() && status.isWorkingCopyLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED) && status.getCopyFromURL() != null) {
-      addCopiedFile(filePath, status, status.getCopyFromURL());
+    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED) && status.getCopyFromUrl() != null) {
+      addCopiedFile(filePath, status, status.getCopyFromUrl());
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
       myDeletedFiles.add(new SvnChangedFile(filePath, status));
@@ -242,7 +242,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (svnInfo != null) {
       final Status svnStatus = new Status();
       svnStatus.setRevision(svnInfo.getRevision());
-      svnStatus.setKind(NodeKind.from(filePath.isDirectory()));
+      svnStatus.setNodeKind(NodeKind.from(filePath.isDirectory()));
       processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus);
     }
@@ -261,7 +261,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (status.isSwitched() || (convertedStatus == FileStatus.SWITCHED)) {
       final VirtualFile virtualFile = filePath.getVirtualFile();
       if (virtualFile == null) return;
-      Url switchUrl = status.getURL();
+      Url switchUrl = status.getUrl();
       final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
       if (vcsRoot != null) {  // it will be null if we walked into an excluded directory
         String baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
@@ -351,7 +351,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       !svnStatus.isProperty(StatusType.STATUS_ADDED) || deletedStatus != null ? createPropertyRevision(change, beforeFile, true) : null;
     ContentRevision afterRevision = !svnStatus.isProperty(StatusType.STATUS_DELETED) ? createPropertyRevision(change, ioFile, false) : null;
     FileStatus status =
-      deletedStatus != null ? FileStatus.MODIFIED : SvnStatusConvertor.convertPropertyStatus(svnStatus.getPropertiesStatus());
+      deletedStatus != null ? FileStatus.MODIFIED : SvnStatusConvertor.convertPropertyStatus(svnStatus.getPropertyStatus());
 
     return new Change(beforeRevision, afterRevision, status);
   }
