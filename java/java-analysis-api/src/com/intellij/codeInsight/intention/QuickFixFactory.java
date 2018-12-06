@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -29,12 +30,24 @@ public abstract class QuickFixFactory {
     return ServiceManager.getService(QuickFixFactory.class);
   }
 
+  /**
+   * Consider to use
+   * {@link QuickFixFactory#createModifierListFix(PsiModifierListOwner, String, boolean, boolean)} for java only fix or
+   * {@link JvmElementActionsFactory#createChangeModifierActions(com.intellij.lang.jvm.JvmModifiersOwner, com.intellij.lang.jvm.actions.ChangeModifierRequest)}
+   * for jvm languages transparent fix
+   *
+   * Usage of this method might be unsafe in case of fixing java multi variable declaration modifier list
+   */
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierList modifierList,
                                                                                     @PsiModifier.ModifierConstant @NotNull String modifier,
                                                                                     boolean shouldHave,
                                                                                     final boolean showContainingClass);
 
+  /**
+   * @see JvmElementActionsFactory#createChangeModifierActions(com.intellij.lang.jvm.JvmModifiersOwner, com.intellij.lang.jvm.actions.ChangeModifierRequest
+   * for jvm language transparent fix
+   */
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierListOwner owner,
                                                                                     @PsiModifier.ModifierConstant @NotNull String modifier,
