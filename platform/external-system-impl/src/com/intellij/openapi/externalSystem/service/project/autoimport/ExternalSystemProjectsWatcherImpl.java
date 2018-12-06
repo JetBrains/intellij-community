@@ -189,6 +189,8 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
             ExternalSystemUtil.invokeLater(myProject, () -> WriteAction.run(
               () -> copy.forEach((document, pair) -> {
+                if (!pair.second.isValid()) return;
+
                 PsiDocumentManager.getInstance(myProject).commitDocument(document);
                 FileDocumentManagerImpl fileDocumentManager = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
                 fileDocumentManager.saveDocumentAsIs(document);
