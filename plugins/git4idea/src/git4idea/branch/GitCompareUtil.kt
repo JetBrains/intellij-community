@@ -5,7 +5,7 @@ import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.util.TroveUtil
 import gnu.trove.TIntHashSet
 
-fun IndexDataGetter.match(sourceBranchCommits: TIntHashSet, targetBranchCommits: TIntHashSet): TIntHashSet {
+fun IndexDataGetter.match(sourceBranchCommits: TIntHashSet, targetBranchCommits: TIntHashSet, reliable: Boolean = true): TIntHashSet {
   val timeToSourceCommit = TroveUtil.group(sourceBranchCommits) { getAuthorTime(it) }
   val authorToSourceCommit = TroveUtil.group(sourceBranchCommits) { getAuthor(it) }
 
@@ -17,7 +17,7 @@ fun IndexDataGetter.match(sourceBranchCommits: TIntHashSet, targetBranchCommits:
     val sourceCandidates = TroveUtil.intersect(timeToSourceCommit[time] ?: TIntHashSet(),
                                                authorToSourceCommit[author] ?: TIntHashSet())
     if (sourceCandidates.isNotEmpty()) {
-      selectSourceCommit(targetCommit, sourceCandidates)?.let { sourceCommit ->
+      selectSourceCommit(targetCommit, sourceCandidates, reliable)?.let { sourceCommit ->
         result.add(sourceCommit)
       }
     }
@@ -26,7 +26,7 @@ fun IndexDataGetter.match(sourceBranchCommits: TIntHashSet, targetBranchCommits:
   return result
 }
 
-private fun IndexDataGetter.selectSourceCommit(targetCommit: Int, sourceCandidates: Set<Int>): Int? {
+private fun IndexDataGetter.selectSourceCommit(targetCommit: Int, sourceCandidates: Set<Int>, reliable: Boolean): Int? {
   val targetMessage = getFullMessage(targetCommit) ?: return null
   for (sourceCandidate in sourceCandidates) {
     val sourceHash = logStorage.getCommitId(sourceCandidate)?.hash ?: continue
@@ -34,6 +34,24 @@ private fun IndexDataGetter.selectSourceCommit(targetCommit: Int, sourceCandidat
         targetMessage.contains("cherry picked from commit ${sourceHash.toShortString()}")) {
       return sourceCandidate
     }
+  }
+
+  if (!reliable) {
+    val inexactMatches = mutableSetOf<Int>()
+    val exactMatches = mutableSetOf<Int>()
+    for (sourceCandidate in sourceCandidates) {
+      val sourceMessage = getFullMessage(sourceCandidate) ?: return null
+      if (targetMessage.contains(sourceMessage)) {
+        if (targetMessage.length == sourceMessage.length) {
+          exactMatches.add(sourceCandidate)
+        }
+        else {
+          inexactMatches.add(sourceCandidate)
+        }
+      }
+    }
+    if (exactMatches.isNotEmpty()) return exactMatches.singleOrNull()
+    return inexactMatches.singleOrNull()
   }
 
   return null

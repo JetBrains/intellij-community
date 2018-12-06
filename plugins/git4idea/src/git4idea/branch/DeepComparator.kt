@@ -178,23 +178,18 @@ class DeepComparator(private val project: Project,
     override fun run(indicator: ProgressIndicator) {
       try {
         repositoriesWithCurrentBranches.forEach { repo, currentBranch ->
-          val startTimeWithGit = System.currentTimeMillis()
-          val nonPickedCommitsFromGit = getNonPickedCommitsFromGit(repo.root, currentBranch.name, comparedBranch)
-          LOG.debug("Getting non picked commits with git took " +
-                    "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithGit)} for ${repo.root.name}")
-
-          if (Registry.`is`("git.log.use.index.for.picked.commits.highlighting")) {
-            val startTimeWithIndex = System.currentTimeMillis()
-            val nonPickedCommitsFromIndex = getNonPickedCommitsFromIndex(dataPack, repo.root, comparedBranch, nonPickedCommitsFromGit)
-            if (nonPickedCommitsFromIndex != null) {
-              TroveUtil.addAll(collectedNonPickedCommits, nonPickedCommitsFromIndex)
-              LOG.debug("Getting non picked commits with index took " +
-                        "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithIndex)} for ${repo.root.name}")
-              return@forEach
+          val commits = if (Registry.`is`("git.log.use.index.for.picked.commits.highlighting")) {
+            if (Registry.`is`("git.log.fast.picked.commits.highlighting")) {
+              getCommitsByIndexFast(repo.root, comparedBranch) ?: getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch.name)
+            }
+            else {
+              getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch.name)
             }
           }
-
-          TroveUtil.addAll(collectedNonPickedCommits, nonPickedCommitsFromGit)
+          else {
+            getCommitsByPatch(repo.root, comparedBranch, currentBranch.name)
+          }
+          TroveUtil.addAll(collectedNonPickedCommits, commits)
         }
       }
       catch (e: VcsException) {
@@ -216,10 +211,51 @@ class DeepComparator(private val project: Project,
       nonPickedCommits = collectedNonPickedCommits
     }
 
+    private fun getCommitsByPatch(root: VirtualFile,
+                                  targetBranch: String,
+                                  sourceBranch: String): TIntHashSet {
+      val startTimeWithGit = System.currentTimeMillis()
+      val resultFromGit = getCommitsFromGit(root, targetBranch, sourceBranch)
+      LOG.debug("Getting non picked commits with git took " +
+                "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithGit)} for ${root.name}")
+      return resultFromGit
+    }
+
+    private fun getCommitsByIndexReliable(root: VirtualFile, sourceBranch: String, targetBranch: String): TIntHashSet {
+      val resultFromGit = getCommitsByPatch(root, targetBranch, sourceBranch)
+
+      val startTimeWithIndex = System.currentTimeMillis()
+      val sourceBranchRef = dataPack?.refsModel?.findBranch(sourceBranch, root) ?: return resultFromGit
+      val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return resultFromGit
+      val resultFromIndex = getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, resultFromGit, true)
+      if (resultFromIndex != null) {
+        LOG.debug("Getting non picked commits with index took " +
+                  "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithIndex)} for ${root.name}")
+        return resultFromIndex
+      }
+
+      return resultFromGit
+    }
+
+    private fun getCommitsByIndexFast(root: VirtualFile, sourceBranch: String): TIntHashSet? {
+      if (!vcsLogData.index.isIndexed(root)) return null
+
+      val startTimeWithIndex = System.currentTimeMillis()
+      val sourceBranchRef = dataPack?.refsModel?.findBranch(sourceBranch, root) ?: return null
+      val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
+      val sourceBranchCommits = dataPack.subgraphDifference(sourceBranchRef, targetBranchRef, storage) ?: return null
+      val result = getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, sourceBranchCommits, false)
+      if (result != null) {
+        LOG.debug("Getting non picked commits with index took " +
+                  "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithIndex)} for ${root.name}")
+      }
+      return result
+    }
+
     @Throws(VcsException::class)
-    private fun getNonPickedCommitsFromGit(root: VirtualFile,
-                                           currentBranch: String,
-                                           comparedBranch: String): TIntHashSet {
+    private fun getCommitsFromGit(root: VirtualFile,
+                                  currentBranch: String,
+                                  comparedBranch: String): TIntHashSet {
       val handler = GitLineHandler(project, root, GitCommand.CHERRY)
       handler.addParameters(currentBranch, comparedBranch) // upstream - current branch; head - compared branch
 
@@ -246,27 +282,25 @@ class DeepComparator(private val project: Project,
       return pickedCommits
     }
 
-    private fun getNonPickedCommitsFromIndex(dataPack: DataPack?,
-                                             root: VirtualFile,
-                                             sourceBranch: String,
-                                             sourceBranchCommits: TIntHashSet): TIntHashSet? {
+    private fun getCommitsFromIndex(dataPack: DataPack?, root: VirtualFile,
+                                    sourceBranchRef: VcsRef, targetBranchRef: VcsRef,
+                                    sourceBranchCommits: TIntHashSet, reliable: Boolean): TIntHashSet? {
       if (dataPack == null) return null
       if (sourceBranchCommits.isEmpty) return sourceBranchCommits
       if (!vcsLogData.index.isIndexed(root)) return null
 
       val dataGetter = vcsLogData.index.dataGetter ?: return null
 
-      val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
-      val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return null
-
       val targetBranchCommits = dataPack.subgraphDifference(targetBranchRef, sourceBranchRef, storage) ?: return null
       if (targetBranchCommits.isEmpty) return sourceBranchCommits
 
-      val match = dataGetter.match(sourceBranchCommits, targetBranchCommits)
+      val match = dataGetter.match(sourceBranchCommits, targetBranchCommits, reliable)
       TroveUtil.removeAll(sourceBranchCommits, match)
       if (!match.isEmpty) {
-        LOG.debug("Using index, detected ${match.size()} commits in ${sourceBranch}#${root.name}" +
-                  " that were picked to the current branch")
+        LOG.debug("Using index, detected ${match.size()} commits in ${sourceBranchRef.name}#${root.name}" +
+                  " that were picked to the current branch" +
+                  (if (reliable) " with different patch id but matching cherry-picked suffix"
+                  else " with matching author, author time and message"))
       }
 
       return sourceBranchCommits
