@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.ResourcesGenerator
 
 /**
@@ -25,6 +26,7 @@ import org.jetbrains.intellij.build.ResourcesGenerator
  *
  * @author nik
  */
+@CompileStatic
 abstract class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   final MultiValuesMap<String, String> moduleJars = new MultiValuesMap<>(true)

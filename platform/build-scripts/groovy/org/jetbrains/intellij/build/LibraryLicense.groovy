@@ -16,11 +16,13 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.containers.ContainerUtil
+import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 
 /**
  * @author nik
  */
+@CompileStatic
 @Immutable
 class LibraryLicense {
   private static final Map<String, String> PREDEFINED_LICENSE_URLS = ["Apache 2.0": "http://www.apache.org/licenses/LICENSE-2.0"]
@@ -77,7 +79,7 @@ class LibraryLicense {
   }
 
   public List<String> getLibraryNames() {
-    return ContainerUtil.createMaybeSingletonList(libraryName ?: name) + (additionalLibraryNames ?: [])
+    return ContainerUtil.createMaybeSingletonList(libraryName ?: name) + (additionalLibraryNames ?: [] as List<String>)
   }
 
   public String getLibraryLicenseUrl() {

@@ -425,6 +425,7 @@ class CompilationContextImpl implements CompilationContext {
   }
 }
 
+@CompileStatic
 class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
     this.communityHome = communityHome
