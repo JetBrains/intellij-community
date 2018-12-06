@@ -19,6 +19,6 @@ final class MyClass {
   }
   
   @NotNull Object testReturn2(boolean b, @Nullable Object o1, @Nullable Object o2) {
-    return b ? o1 : o2;
+    return <warning descr="Expression 'b ? o1 : o2' might evaluate to null but is returned by the method declared as @NotNull">b ? o1 : o2</warning>;
   }
 }
