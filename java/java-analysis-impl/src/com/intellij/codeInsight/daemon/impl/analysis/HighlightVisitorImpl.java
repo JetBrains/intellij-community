@@ -10,6 +10,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmModifiersOwner;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
+import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
@@ -1390,8 +1394,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               !((PsiMethod)method).isConstructor() &&
               !((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
             boolean shouldHave = !((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC);
-            QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createModifierListFix(
-              (PsiModifierListOwner)method, PsiModifier.STATIC, shouldHave, false));
+            QuickFixAction.registerQuickFixActions(info, JvmElementActionFactories.createModifierActions(
+              (JvmModifiersOwner)method, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, shouldHave)));
           }
           myHolder.add(info);
         }

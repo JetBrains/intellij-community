@@ -51,7 +51,15 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
            startElement.isValid() &&
            (endElement == startElement || endElement.isValid()) &&
            file != null &&
-           isAvailable(project, file, startElement, endElement);
+           isAvailable(project, file, editor, startElement, endElement);
+  }
+
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @Nullable Editor editor,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return isAvailable(project, file, startElement, endElement);
   }
 
   public abstract void invoke(@NotNull Project project,

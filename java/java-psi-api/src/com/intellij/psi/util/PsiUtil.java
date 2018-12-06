@@ -397,6 +397,9 @@ public final class PsiUtil extends PsiUtilCore {
     return ACCESS_LEVEL_PUBLIC;
   }
 
+  /**
+   * @see com.intellij.lang.jvm.util.JvmUtil#getAccessModifier(int) for JVM language analogue.
+   */
   @PsiModifier.ModifierConstant
   @NotNull
   public static String getAccessModifier(@AccessLevel int accessLevel) {

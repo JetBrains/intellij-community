@@ -7,6 +7,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
+import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -400,8 +403,8 @@ public class HighlightControlFlowUtil {
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddVariableInitializerFix(variable));
       if (variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
+        QuickFixAction.registerQuickFixActions(highlightInfo,
+                                               JvmElementActionFactories.createModifierActions(variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
       }
       return highlightInfo;
     }
@@ -531,8 +534,8 @@ public class HighlightControlFlowUtil {
       String description = JavaErrorMessages.message("variable.already.assigned", variable.getName());
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo,
-                                            QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
+      QuickFixAction.registerQuickFixActions(highlightInfo,
+                                             JvmElementActionFactories.createModifierActions(variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
       return highlightInfo;
     }
@@ -564,8 +567,8 @@ public class HighlightControlFlowUtil {
       String description = JavaErrorMessages.message("variable.assigned.in.loop", ((PsiVariable)resolved).getName());
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo,
-                                            QUICK_FIX_FACTORY.createModifierListFix((PsiVariable)resolved, PsiModifier.FINAL, false, false));
+      QuickFixAction.registerQuickFixActions(highlightInfo,
+                                             JvmElementActionFactories.createModifierActions((PsiVariable)resolved, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
       return highlightInfo;
     }
     return null;
@@ -592,8 +595,8 @@ public class HighlightControlFlowUtil {
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
     final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
     if (innerClass == null || variable instanceof PsiField) {
-      QuickFixAction.registerQuickFixAction(highlightInfo,
-                                            QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
+      QuickFixAction.registerQuickFixActions(highlightInfo,
+                                             JvmElementActionFactories.createModifierActions(variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
     }
     else {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
