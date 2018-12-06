@@ -16,8 +16,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ObjectUtils.consumeIfCast
 import com.intellij.util.ThreeState
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
-import org.jetbrains.plugins.gradle.settings.TestRunner.*
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.settings.TestRunner.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
@@ -65,10 +65,13 @@ class GradleTaskTriggersImporter : ConfigurationHandler {
         val projectPath = taskInfo["projectPath"]
         val taskPath = taskInfo["taskPath"]
         if (projectPath is String && taskPath is String) {
-          activator.addTask(ExternalSystemTaskActivator.TaskActivationEntry(GradleConstants.SYSTEM_ID,
-                                                                            phase,
-                                                                            projectPath,
-                                                                            taskPath))
+
+          val newEntry = ExternalSystemTaskActivator.TaskActivationEntry(GradleConstants.SYSTEM_ID,
+                                                                         phase,
+                                                                         projectPath,
+                                                                         taskPath)
+          activator.removeTask(newEntry)
+          activator.addTask(newEntry)
         }
       }
     }
