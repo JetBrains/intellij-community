@@ -19,6 +19,7 @@ import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.IntPair;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Document;
@@ -236,6 +237,9 @@ public abstract class LineStatusMarkerRenderer {
 
   @NotNull
   private static TextAttributes getTextAttributes(@NotNull Range range) {
+    if (ApplicationManager.getApplication().isOnAir()) {
+      return new TextAttributes();
+    }
     return new TextAttributes() {
       @Override
       public Color getErrorStripeColor() {
