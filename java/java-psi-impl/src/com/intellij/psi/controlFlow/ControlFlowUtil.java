@@ -1263,6 +1263,18 @@ public class ControlFlowUtil {
       }
 
       @Override
+      public void visitGoToInstruction(GoToInstruction instruction, int offset, int nextOffset) {
+        if (instruction.isReturn && variable instanceof PsiLocalVariable) {
+          if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
+          boolean unassigned = !isLeaf(nextOffset) && maybeUnassigned[nextOffset];
+          maybeUnassigned[offset] |= unassigned;
+        }
+        else {
+          super.visitGoToInstruction(instruction, offset, nextOffset);
+        }
+      }
+
+      @Override
       public void visitThrowToInstruction(ThrowToInstruction instruction, int offset, int nextOffset) {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         boolean unassigned = !isLeaf(nextOffset) && maybeUnassigned[nextOffset];

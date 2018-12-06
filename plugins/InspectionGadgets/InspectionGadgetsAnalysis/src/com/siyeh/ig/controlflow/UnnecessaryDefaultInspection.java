@@ -24,8 +24,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class UnnecessaryDefaultInspection extends BaseInspection {
 
@@ -63,6 +66,9 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
         return;
       }
       while (nextStatement != null) {
+        if (isDefaultNeededForInitializationOfVariable(statement)) {
+          return;
+        }
         if (!ControlFlowUtils.statementMayCompleteNormally(nextStatement)) {
           final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
           if (method != null && !PsiType.VOID.equals(method.getReturnType()) &&
@@ -77,19 +83,17 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
             break;
           }
         }
-        if (isStatementNeededForInitializationOfVariable(statement, nextStatement)) {
-          return;
-        }
         nextStatement = PsiTreeUtil.getNextSiblingOfType(nextStatement, PsiStatement.class);
       }
       registerStatementError(defaultStatement);
     }
 
-    private static boolean isStatementNeededForInitializationOfVariable(PsiSwitchStatement switchStatement, PsiStatement statement) {
+    private static boolean isDefaultNeededForInitializationOfVariable(PsiSwitchStatement switchStatement) {
       final SmartList<PsiReferenceExpression> expressions = new SmartList<>();
       final PsiElementProcessor.CollectFilteredElements<PsiReferenceExpression> collector =
         new PsiElementProcessor.CollectFilteredElements<>(e -> e instanceof PsiReferenceExpression, expressions);
-      PsiTreeUtil.processElements(statement, collector);
+      PsiTreeUtil.processElements(switchStatement, collector);
+      final Set<PsiElement> checked = new THashSet<>();
       for (PsiReferenceExpression expression : expressions) {
         final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
         if (!(parent instanceof PsiAssignmentExpression)) {
@@ -103,23 +107,28 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
           continue;
         }
         final PsiElement target = expression.resolve();
+        if (!checked.add(target)) {
+          continue;
+        }
         if (target instanceof PsiLocalVariable || target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.FINAL)) {
           final PsiVariable variable = (PsiVariable)target;
           if (variable.getInitializer() != null) {
+            continue;
+          }
+          final PsiElement context = getContext(switchStatement);
+          if (context == null) {
             return false;
           }
-          final PsiMember member = PsiTreeUtil.getParentOfType(switchStatement, PsiMember.class, true, PsiLambdaExpression.class);
-          final PsiElement context = getMemberContext(member);
-          final LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
           try {
+            final LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
             final ControlFlow controlFlow = ControlFlowFactory.getInstance(context.getProject()).getControlFlow(context, policy);
-            final PsiCodeBlock body = switchStatement.getBody();
-            assert body != null;
-            final ControlFlowSubRange switchFlow =
-              new ControlFlowSubRange(controlFlow, controlFlow.getStartOffset(body), controlFlow.getEndOffset(body));
-            final ControlFlowSubRange beforeFlow = new ControlFlowSubRange(controlFlow, 0, controlFlow.getStartOffset(switchStatement));
+            final int switchStart = controlFlow.getStartOffset(switchStatement);
+            final int switchEnd = controlFlow.getEndOffset(switchStatement);
+            final ControlFlow beforeFlow = new ControlFlowSubRange(controlFlow, 0, switchStart);
+            final ControlFlow switchFlow = new ControlFlowSubRange(controlFlow, switchStart, switchEnd);
             if (!ControlFlowUtil.isVariableDefinitelyAssigned(variable, beforeFlow) &&
-                ControlFlowUtil.isVariableDefinitelyAssigned(variable, switchFlow)) {
+                ControlFlowUtil.isVariableDefinitelyAssigned(variable, switchFlow) &&
+                ControlFlowUtil.needVariableValueAt(variable, controlFlow, switchEnd)) {
               return true;
             }
           }
@@ -131,15 +140,19 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       return false;
     }
 
-    private static PsiElement getMemberContext(PsiMember member) {
-      if (member instanceof PsiField) {
-        return ((PsiField)member).getInitializer();
+    private static PsiElement getContext(PsiElement element) {
+      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiLambdaExpression.class);
+      if (context instanceof PsiField) {
+        return ((PsiField)context).getInitializer();
       }
-      else if (member instanceof PsiClassInitializer) {
-        return ((PsiClassInitializer)member).getBody();
+      else if (context instanceof PsiClassInitializer) {
+        return ((PsiClassInitializer)context).getBody();
       }
-      else if (member instanceof PsiMethod) {
-        return ((PsiMethod)member).getBody();
+      else if (context instanceof PsiMethod) {
+        return ((PsiMethod)context).getBody();
+      }
+      else if (context instanceof PsiLambdaExpression) {
+        return ((PsiLambdaExpression)context).getBody();
       }
       throw new AssertionError();
     }

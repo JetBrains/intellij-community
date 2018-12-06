@@ -55,8 +55,10 @@ public class UnnecessaryDefault{
 
     void z(MyEnum a) {
         String msg;
+        int i = 0;
         switch(a) {
             case foo:
+                i = 1;
                 msg = "X";
                 break;
             case bar:
@@ -88,6 +90,52 @@ public class UnnecessaryDefault{
                 System.out.println((msg) = null);
         }
         System.out.println("MSG = "+msg);
+    }
+
+    void zzz(MyEnum e, int i) {
+        String msg;
+        switch (e) {
+            case foo:
+            case bar:
+            case baz:
+                msg = "M";
+                break;
+            default:
+                return;
+        }
+        System.out.println(msg);
+    }
+
+    void zzzz(MyEnum e) {
+        String msg;
+        switch (e) {
+            case foo:
+                msg = "A";
+                break;
+            case bar:
+                msg = "B";
+                break;
+            case baz:
+            <warning descr="'default' branch is unnecessary">default</warning>:
+                msg = "M";
+        }
+        msg = "N";
+        System.out.println(msg);
+    }
+
+    void lambda(MyEnum e) {
+        Runnable r = () -> {
+            String msg;
+            switch (e) {
+                case foo:
+                case bar:
+                case baz:
+                    msg = "M";
+                    break;
+                <warning descr="'default' branch is unnecessary">default</warning>:
+                    return;
+            }
+        };
     }
 }
 enum MyEnum{
