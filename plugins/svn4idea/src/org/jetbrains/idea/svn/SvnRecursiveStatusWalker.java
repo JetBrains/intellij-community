@@ -257,11 +257,11 @@ public class SvnRecursiveStatusWalker {
         if (status.is(StatusType.STATUS_IGNORED)) {
           myReceiver.processIgnored(vf);
         }
-        else if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.UNKNOWN)) {
+        else if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_NONE)) {
           myReceiver.processUnversioned(vf);
           processRecursively(vf, myCurrentItem.getDepth());
         }
-        else if (!status.is(StatusType.OBSTRUCTED, StatusType.STATUS_NONE)) {
+        else if (!status.is(StatusType.OBSTRUCTED)) {
           if (myCurrentItem.isIsInnerCopyRoot()) {
             myReceiver.processCopyRoot(vf, status.getUrl(), myVcs.getWorkingCopyFormat(path.getIOFile()), status.getRepositoryRootUrl());
           }

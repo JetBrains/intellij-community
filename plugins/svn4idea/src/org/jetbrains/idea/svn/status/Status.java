@@ -73,7 +73,7 @@ public class Status {
   private Info initInfo() {
     if (myInfo == null) {
       final StatusType itemStatus = getItemStatus();
-      if (itemStatus == null || StatusType.UNKNOWN.equals(itemStatus)) {
+      if (itemStatus == null || StatusType.STATUS_NONE.equals(itemStatus)) {
         return null;
       }
       myInfo = myInfoProvider.get();

@@ -187,7 +187,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
     FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
 
-    if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.UNKNOWN)) {
+    if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_NONE)) {
       final VirtualFile file = filePath.getVirtualFile();
       if (file != null) {
         myChangelistBuilder.processUnversionedFile(file);
@@ -220,7 +220,7 @@ class SvnChangeProviderContext implements StatusReceiver {
         myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
       }
     }
-    else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && !status.is(StatusType.STATUS_NONE)) {
+    else if (fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) {
       VirtualFile file = filePath.getVirtualFile();
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, status), CurrentContentRevision.create(filePath),
