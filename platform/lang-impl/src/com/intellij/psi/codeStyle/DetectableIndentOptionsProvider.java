@@ -206,12 +206,12 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   @Nullable
   @Override
-  public IndentStatusUIContributor getIndentStatusUiContributor(@NotNull IndentOptions indentOptions) {
+  public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
     return new MyUIContributor(indentOptions);
   }
 
 
-  private class MyUIContributor extends IndentStatusUIContributor {
+  private class MyUIContributor extends IndentStatusBarUIContributor {
     private MyUIContributor(IndentOptions options) {
       super(options);
     }
@@ -224,7 +224,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       final VirtualFile virtualFile = file.getVirtualFile();
       final Project project = file.getProject();
       final IndentOptions projectOptions = CodeStyle.getSettings(project).getIndentOptions(file.getFileType());
-      final String projectOptionsTip = StringUtil.capitalizeWords(IndentStatusUIContributor.getTooltip(projectOptions, null), true);
+      final String projectOptionsTip = StringUtil.capitalizeWords(IndentStatusBarUIContributor.getTooltip(projectOptions), true);
       if (indentOptions instanceof TimeStampedIndentOptions) {
         if (((TimeStampedIndentOptions)indentOptions).isDetected()) {
           actions.add(
@@ -255,7 +255,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           actions.add(
             DumbAwareAction.create(
               ApplicationBundle
-                .message("code.style.indent.detector.apply", IndentStatusUIContributor.getTooltip(discardedOptions, null),
+                .message("code.style.indent.detector.apply", IndentStatusBarUIContributor.getTooltip(discardedOptions),
                          ColorUtil.toHex(JBColor.GRAY)),
               e -> {
                 myDiscardedOptions.remove(virtualFile);
@@ -300,9 +300,9 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     @Override
     public String getAdvertisementText(@NotNull PsiFile psiFile) {
       if (areDetected(getIndentOptions()) && !hasBeenAdvertised) {
-        String actualOptionsHint = IndentStatusUIContributor.getTooltip(getIndentOptions(), null);
+        String actualOptionsHint = IndentStatusBarUIContributor.getTooltip(getIndentOptions());
         IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
-        String projectOptionsHint = IndentStatusUIContributor.getTooltip(projectOptions, null);
+        String projectOptionsHint = IndentStatusBarUIContributor.getTooltip(projectOptions);
         hasBeenAdvertised = true;
         return ApplicationBundle.message("code.style.different.indent.size.detected", actualOptionsHint, projectOptionsHint);
       }

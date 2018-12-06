@@ -1491,7 +1491,4 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return myModificationTracker;
   }
 
-  public boolean areTransient() {
-    return false;
-  }
 }

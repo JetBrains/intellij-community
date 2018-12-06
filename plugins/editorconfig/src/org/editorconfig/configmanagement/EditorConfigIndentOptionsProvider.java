@@ -1,29 +1,15 @@
 package org.editorconfig.configmanagement;
 
-import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
-import com.intellij.psi.codeStyle.IndentStatusUIContributor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
-import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,7 +162,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
 
   @Nullable
   @Override
-  public IndentStatusUIContributor getIndentStatusUiContributor(@NotNull IndentOptions indentOptions) {
+  public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
     return new EditorConfigStatusUIContributor(indentOptions);
   }
 

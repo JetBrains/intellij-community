@@ -53,7 +53,7 @@ public abstract class FileIndentOptionsProvider {
   }
 
   @Nullable
-  public IndentStatusUIContributor getIndentStatusUiContributor(@NotNull IndentOptions indentOptions) {
+  public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
     return null;
   }
 }

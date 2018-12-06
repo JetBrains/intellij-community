@@ -1,15 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
-import com.intellij.application.options.CodeStyleSettingsModifier;
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleStatusUIContributor;
+import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.TransientCodeStyleSettings;
+import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
@@ -24,20 +24,20 @@ import java.util.Set;
 import static org.editorconfig.core.EditorConfig.OutPair;
 
 public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
-  @NotNull
   @Override
-  public Dependencies modifySettings(@NotNull CodeStyleSettings baseSettings, @NotNull PsiFile psiFile) {
+  public boolean modifySettings(@NotNull TransientCodeStyleSettings settings, @NotNull PsiFile psiFile) {
     final VirtualFile file = psiFile.getVirtualFile();
     if (Utils.isFullSettingsSupport() && file != null) {
       final Project project = psiFile.getProject();
-      if (!project.isDisposed() && Utils.isEnabled(baseSettings)) {
+      if (!project.isDisposed() && Utils.isEnabled(settings)) {
         // Get editorconfig settings
         final List<OutPair> outPairs;
         try {
           outPairs = getEditorConfigOptions(project, psiFile, EditorConfigNavigationActionsFactory.getInstance(file));
           // Apply editorconfig settings for the current editor
-          if(applyCodeStyleSettings(outPairs, psiFile, baseSettings)) {
-            return getDependencies(EditorConfigNavigationActionsFactory.getInstance(file).getEditorConfigFiles());
+          if(applyCodeStyleSettings(outPairs, psiFile, settings)) {
+            settings.addDependencies(EditorConfigNavigationActionsFactory.getInstance(file).getEditorConfigFiles());
+            return true;
           }
         }
         catch (EditorConfigException e) {
@@ -45,12 +45,12 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
         }
       }
     }
-    return UNMODIFIED;
+    return false;
   }
 
   @Nullable
   @Override
-  public CodeStyleStatusUIContributor getStatusUIContributor(@NotNull TransientCodeStyleSettings transientSettings) {
+  public CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings) {
     return new EditorConfigStatusUIContributor(transientSettings);
   }
 
@@ -66,15 +66,6 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       return true;
     }
     return false;
-  }
-
-
-  private static DependencyList getDependencies(@NotNull List<VirtualFile> editorConfigFiles) {
-    DependencyList dependencies = new DependencyList();
-    for (VirtualFile editorConfigFile : editorConfigFiles) {
-      dependencies.add(editorConfigFile);
-    }
-    return dependencies;
   }
 
   private static List<OutPair> getEditorConfigOptions(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull ParserCallback callback)

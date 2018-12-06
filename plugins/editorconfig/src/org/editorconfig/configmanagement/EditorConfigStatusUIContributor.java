@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
@@ -25,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class EditorConfigStatusUIContributor extends IndentStatusUIContributor  {
+public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributor {
 
   private static final String PROJECT_ADVERTISEMENT_FLAG = "editor.config.ad.shown";
 
