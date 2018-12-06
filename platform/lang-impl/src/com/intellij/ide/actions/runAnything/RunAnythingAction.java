@@ -14,7 +14,6 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectPro
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.project.DumbAware;
@@ -34,7 +33,6 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware {
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
-  public static final String TOOLTIP_TEXT = IdeBundle.message("run.anything.action.tooltip.text", getShortcut());
   public static final AtomicBoolean SHIFT_IS_PRESSED = new AtomicBoolean(false);
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
   static final String RUN_ANYTHING = "RunAnything";
@@ -118,22 +116,27 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           new HelpTooltip()
             .setTitle(myPresentation.getText())
             .setShortcut(getShortcut())
-            .setDescription(TOOLTIP_TEXT)
+            .setDescription(getShortcutText())
             .setLocation(getTooltipLocation()).installOn(this);
         }
         else {
-          setToolTipText(TOOLTIP_TEXT);
+          setToolTipText(getShortcutText());
         }
       }
     };
   }
 
   @NotNull
-  private static String getShortcut() {
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts();
-    if (shortcuts.length == 0) {
-      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl");
+  private String getShortcutText() {
+    return IdeBundle.message("run.anything.action.tooltip.text") + getShortcut();
+  }
+
+  @NotNull
+  private String getShortcut() {
+    if (isDoubleCtrlRegistered) {
+      return " (Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl") + ")";
     }
-    return KeymapUtil.getShortcutsText(shortcuts);
+    //keymap shortcut is added automatically
+    return "";
   }
 }
