@@ -560,10 +560,6 @@ public class SvnStatusHandler extends DefaultHandler {
       final StatusType contentsStatus = parseContentsStatus(attributes);
       status.setContentsStatus(contentsStatus);
 
-      if (StatusType.STATUS_CONFLICTED.equals(propertiesStatus) || StatusType.STATUS_CONFLICTED.equals(contentsStatus)) {
-        status.setIsConflicted(true);
-      }
-
       // optional
       final String locked = attributes.getValue("wc-locked");
       if (locked != null && Boolean.parseBoolean(locked)) {
