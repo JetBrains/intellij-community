@@ -139,5 +139,5 @@ class BuildOptions {
    * install link for the product(s) from the current build.
    * @see #buildToolboxLiteGenLink
    */
-  String toolboxLiteGenVersion = System.getProperty("intellij.toolbox.litegen.version")
+  String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
 }
