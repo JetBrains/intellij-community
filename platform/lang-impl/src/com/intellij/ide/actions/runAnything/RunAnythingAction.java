@@ -39,6 +39,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
   static final String RUN_ANYTHING = "RunAnything";
 
+  private boolean isDoubleCtrlRegistered;
 
   private static final NotNullLazyValue<Boolean> IS_ACTION_ENABLED = new NotNullLazyValue<Boolean>() {
     @NotNull
@@ -53,8 +54,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   };
 
   static {
-    ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
-
     IdeEventQueue.getInstance().addPostprocessor(event -> {
       if (event instanceof KeyEvent) {
         final int keyCode = ((KeyEvent)event).getKeyCode();
@@ -89,6 +88,19 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts().length == 0) {
+      if (!isDoubleCtrlRegistered) {
+        ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
+        isDoubleCtrlRegistered = true;
+      }
+    }
+    else {
+      if (isDoubleCtrlRegistered) {
+        ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RUN_ANYTHING_ACTION_ID);
+        isDoubleCtrlRegistered = false;
+      }
+    }
+
     boolean isEnabled = IS_ACTION_ENABLED.getValue();
     e.getPresentation().setVisible(isEnabled);
     e.getPresentation().setEnabled(isEnabled);
