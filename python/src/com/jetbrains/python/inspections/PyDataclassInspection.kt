@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
+import one.util.streamex.StreamEx
 
 class PyDataclassInspection : PyInspection() {
 
@@ -296,6 +297,20 @@ class PyDataclassInspection : PyInspection() {
         registerProblem(dataclassParameters.unsafeHashArgument,
                         "'unsafe_hash' should be false if the class defines '${PyNames.HASH}'",
                         ProblemHighlightType.GENERIC_ERROR)
+      }
+
+      var frozenInHierarchy: Boolean? = null
+      for (current in StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext))) {
+        val currentFrozen = parseStdDataclassParameters(current, myTypeEvalContext)?.frozen ?: continue
+
+        if (frozenInHierarchy == null) {
+          frozenInHierarchy = currentFrozen
+        }
+        else if (frozenInHierarchy != currentFrozen) {
+          registerProblem(dataclassParameters.frozenArgument ?: cls.nameIdentifier,
+                          "Frozen dataclasses can not inherit non-frozen one and vice versa",
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
       }
     }
 

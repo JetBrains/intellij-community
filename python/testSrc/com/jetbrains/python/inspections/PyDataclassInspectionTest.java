@@ -21,6 +21,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28506
+  public void testFrozenInheritance() {
+    doTest();
+  }
+
   // PY-27398
   public void testOrderAndNotEq() {
     doTest();
