@@ -103,7 +103,7 @@ final class ObjectNode<T> {
     }
   }
 
-  void execute(@NotNull final ObjectTreeAction<T> action) {
+  void execute(@NotNull final ObjectTreeAction<T> action, @NotNull final List<Throwable> exceptions) {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode<T>>() {
       @Override
       public void execute(@NotNull ObjectNode<T> each) {
@@ -117,21 +117,20 @@ final class ObjectNode<T> {
         ObjectNode<T>[] childrenArray;
         synchronized (myTree.treeLock) {
           childrenArray = getChildrenArray();
+          myChildren = null;
         }
-
-        List<Throwable> exceptions = new SmartList<Throwable>();
 
         for (int i = childrenArray.length - 1; i >= 0; i--) {
           try {
-            childrenArray[i].execute(action);
+            ObjectNode<T> childNode = childrenArray[i];
+            childNode.execute(action, exceptions);
+            synchronized (myTree.treeLock) {
+              childNode.myParent = null;
+            }
           }
           catch (Throwable e) {
             exceptions.add(e);
           }
-        }
-
-        synchronized (myTree.treeLock) {
-          myChildren = null;
         }
 
         try {
@@ -141,15 +140,13 @@ final class ObjectNode<T> {
         catch (Throwable e) {
           exceptions.add(e);
         }
-
-        remove();
+        removeFromObjectTree();
 
         handleExceptions(exceptions);
       }
 
       @Override
       public void beforeTreeExecution(@NotNull ObjectNode<T> parent) {
-
       }
     });
   }
@@ -166,17 +163,15 @@ final class ObjectNode<T> {
       if (pce != null) {
         throw pce;
       }
+      exceptions.clear();
     }
   }
 
-  private void remove() {
+  private void removeFromObjectTree() {
     synchronized (myTree.treeLock) {
       myTree.putNode(myObject, null);
       if (myParent == null) {
         myTree.removeRootObject(myObject);
-      }
-      else {
-        myParent.removeChild(this);
       }
     }
   }
