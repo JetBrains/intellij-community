@@ -25,12 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.util.io.FileUtil.isAncestor;
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static org.jetbrains.idea.svn.SvnUtil.append;
-import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.SvnUtil.isSvnVersioned;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent;
 
 public class CmdStatusClient extends BaseSvnClient implements StatusClient {
@@ -82,7 +81,6 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
           Status status = new Status();
           status.setFile(path);
-          status.setPath(path.getAbsolutePath());
           status.setContentsStatus(StatusType.STATUS_NORMAL);
           status.setInfoGetter(() -> createInfoGetter().convert(path));
           handler.consume(status);
@@ -153,15 +151,13 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
         Status pending = statusSupplier.get();
         pending.setChangelistName(changelistName.get());
         try {
-          File pendingFile = new File(pending.getPath());
+          File pendingFile = pending.getFile();
           File externalsBase = find(externalsMap.keySet(), file -> isAncestor(file, pendingFile, false));
           File baseFile = notNull(externalsBase, base);
           Info baseInfo = externalsBase != null ? externalsMap.get(externalsBase) : infoBase;
 
           if (baseInfo != null) {
-            pending.setURL(pendingFile.isAbsolute()
-                           ? append(baseInfo.getUrl(), getRelativePath(baseFile.getPath(), pending.getPath()))
-                           : append(baseInfo.getUrl(), toSystemIndependentName(pending.getPath())));
+            pending.setURL(append(baseInfo.getUrl(), toSystemIndependentName(getRelativePath(baseFile, pendingFile))));
           }
           if (pending.is(StatusType.STATUS_EXTERNAL)) {
             externalsMap.put(pending.getFile(), pending.getInfo());

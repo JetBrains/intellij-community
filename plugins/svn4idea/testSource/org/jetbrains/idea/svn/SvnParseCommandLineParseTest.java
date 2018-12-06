@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.util.io.PathKt.inputStream;
 import static com.intellij.util.io.PathKt.readText;
 import static org.jetbrains.idea.svn.SvnTestCase.getPluginHome;
@@ -195,7 +196,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     int cntMatched = 0;
     for (Status status : statuses) {
       assertTrue(status.isSwitched());
-      final String path = FileUtil.toSystemDependentName(status.getPath());
+      final String path = getRelativePath(new File(basePath), status.getFile());
       for (String s1 : expected) {
         if (s1.equals(path)) {
           ++ cntMatched;
@@ -259,7 +260,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
 
     assertEquals(1, statuses.size());
     final Status next = statuses.iterator().next();
-    assertEquals("a.txt", next.getPath());
+    assertEquals("a.txt", getRelativePath(new File(basePath), next.getFile()));
     assertEquals("target", next.getChangelistName());
   }
 }

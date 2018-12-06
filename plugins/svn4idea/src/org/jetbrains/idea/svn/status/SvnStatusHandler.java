@@ -663,12 +663,10 @@ and no "mod4" under
         if (myBase.getName().equals(path) && !status.is(StatusType.MISSING, StatusType.STATUS_DELETED)) {
           status.setKind(true, NodeKind.DIR);
           status.setFile(myBase);
-          status.setPath("");
           return;
         }
         status.setKind(exists, NodeKind.UNKNOWN);
       }
-      status.setPath(path);
     }
 
     @Override

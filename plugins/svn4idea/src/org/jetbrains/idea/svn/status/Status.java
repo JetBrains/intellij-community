@@ -20,7 +20,6 @@ import java.io.File;
 public class Status {
   private Url myURL;
   private File myFile;
-  private String myPath;
   private boolean myFileExists;
   private @NotNull NodeKind myKind;
   @NotNull private Revision myRevision;
@@ -65,10 +64,6 @@ public class Status {
     }
 
     return file;
-  }
-
-  public String getPath() {
-    return myPath;
   }
 
   public void setInfoGetter(Getter<Info> infoGetter) {
@@ -203,10 +198,6 @@ public class Status {
 
   public void setFile(File file) {
     myFile = file;
-  }
-
-  public void setPath(String path) {
-    myPath = path;
   }
 
   public void setKind(boolean exists, @NotNull NodeKind kind) {
