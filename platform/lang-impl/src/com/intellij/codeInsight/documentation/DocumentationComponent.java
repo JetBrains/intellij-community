@@ -56,6 +56,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
@@ -94,6 +95,8 @@ import java.awt.image.renderable.RenderableImage;
 import java.awt.image.renderable.RenderableImageProducer;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -133,6 +136,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private boolean myIgnoreFontSizeSliderChange;
   private String myExternalUrl;
   private DocumentationProvider myProvider;
+  private Reference<Component> myReferenceComponent;
 
   private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
     @Override
@@ -839,8 +843,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     setHintSize();
 
-    Component focusOwner = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
-    DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
+    DataContext dataContext = getDataContext();
     PopupPositionManager.positionPopupInBestPosition(myHint, myManager.getEditor(), dataContext,
                                                      PopupPositionManager.Position.RIGHT, PopupPositionManager.Position.LEFT);
 
@@ -850,6 +853,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (myHint.getDimensionServiceKey() == null) {
       registerSizeTracker();
     }
+  }
+
+  private DataContext getDataContext() {
+    Component referenceComponent = SoftReference.dereference(myReferenceComponent);
+    if (referenceComponent == null) referenceComponent = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
+    if (myReferenceComponent == null) myReferenceComponent = new WeakReference<>(referenceComponent);
+    return DataManager.getInstance().getDataContext(referenceComponent);
   }
 
   private void setHintSize() {
