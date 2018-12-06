@@ -94,6 +94,16 @@ public class DisposerTest extends TestCase {
     assertEquals(Arrays.asList(myFolder2, myLeaf1, myFolder1, myRoot), myDisposedObjects);
   }
 
+  public void testDisposalOrderNestedDispose() {
+    Disposer.register(myRoot, myFolder2);
+    //noinspection SSBasedInspection
+    Disposer.register(myRoot, () -> Disposer.dispose(myFolder2));
+
+    Disposer.dispose(myRoot);
+
+    assertEquals(Arrays.asList(myFolder2, myRoot), myDisposedObjects);
+  }
+
   public void testDirectCallOfDisposable() {
     SelDisposable selfDisposable = new SelDisposable("selfDisposable");
     Disposer.register(myRoot, selfDisposable);

@@ -107,6 +107,7 @@ final class ObjectNode<T> {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode<T>>() {
       @Override
       public void execute(@NotNull ObjectNode<T> each) {
+        if (myTree.getDisposalInfo(myObject) != null) return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
         try {
           action.beforeTreeExecution(myObject);
         }
@@ -167,7 +168,7 @@ final class ObjectNode<T> {
     }
   }
 
-  private void removeFromObjectTree() {
+  void removeFromObjectTree() {
     synchronized (myTree.treeLock) {
       myTree.putNode(myObject, null);
       if (myParent == null) {
