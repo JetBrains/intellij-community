@@ -1,263 +1,139 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.status;
+package org.jetbrains.idea.svn.status
 
-import com.intellij.openapi.util.Getter;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.NodeKind;
-import org.jetbrains.idea.svn.api.Revision;
-import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
-import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.lock.Lock;
+import com.intellij.openapi.util.Getter
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.idea.svn.api.NodeKind
+import org.jetbrains.idea.svn.api.Revision
+import org.jetbrains.idea.svn.api.Url
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription
+import org.jetbrains.idea.svn.info.Info
+import org.jetbrains.idea.svn.lock.Lock
 
-import java.io.File;
+import java.io.File
 
 /**
  * TODO: Could also inherit BaseNodeDescription when myNodeKind becomes final.
  */
-public class Status {
-  private Url myUrl;
-  private File myFile;
-  private boolean myFileExists;
-  private @NotNull NodeKind myNodeKind;
-  @NotNull private Revision myRevision;
-  @NotNull private Revision myCommittedRevision;
-  private StatusType myItemStatus;
-  private StatusType myPropertyStatus;
-  private StatusType myRemoteItemStatus;
-  private StatusType myRemotePropertyStatus;
-  private boolean myIsWorkingCopyLocked;
-  private boolean myIsCopied;
-  private boolean myIsSwitched;
-  @Nullable private Lock myRemoteLock;
-  @Nullable private Lock myLocalLock;
-  private String myChangeListName;
-  private boolean myIsTreeConflicted;
-  private Info myInfo;
-  private Getter<Info> myInfoProvider;
+class Status {
+  var url: Url? = null
+    get() {
+      var url = field
 
-  public Status() {
-    setRevision(Revision.UNDEFINED);
-    myInfoProvider = () -> null;
-    setCommittedRevision(Revision.UNDEFINED);
-  }
-
-  public Url getUrl() {
-    Url url = myUrl;
-
-    if (url == null) {
-      Info info = initInfo();
-      url = info != null ? info.getUrl() : url;
-    }
-
-    return url;
-  }
-
-  public File getFile() {
-    File file = myFile;
-
-    if (file == null) {
-      Info info = initInfo();
-      file = info != null ? info.getFile() : file;
-    }
-
-    return file;
-  }
-
-  public void setInfoProvider(Getter<Info> infoProvider) {
-    myInfoProvider = infoProvider;
-  }
-
-  private Info initInfo() {
-    if (myInfo == null) {
-      final StatusType itemStatus = getItemStatus();
-      if (itemStatus == null || StatusType.STATUS_NONE.equals(itemStatus)) {
-        return null;
+      if (url == null) {
+        val info = initInfo()
+        url = if (info != null) info.url else url
       }
-      myInfo = myInfoProvider.get();
+
+      return url
     }
-    return myInfo;
-  }
+  var file: File? = null
+    get() {
+      var file = field
 
-  public Info getInfo() {
-    return initInfo();
-  }
+      if (file == null) {
+        val info = initInfo()
+        file = if (info != null) info.file else file
+      }
 
-  @NotNull
-  public NodeKind getNodeKind() {
-    if (myFileExists) return myNodeKind;
-    Info info = initInfo();
-    return info != null ? info.getNodeKind() : myNodeKind;
-  }
+      return file
+    }
+  private var myFileExists: Boolean = false
+  var nodeKind = NodeKind.UNKNOWN
+    get() {
+      if (myFileExists) return field
+      val info = initInfo()
+      return info?.nodeKind ?: field
+    }
+  var revision: Revision
+    get() {
+      val revision = field
+      if (revision.isValid) return revision
 
-  @NotNull
-  public Revision getRevision() {
-    final Revision revision = myRevision;
-    if (revision.isValid()) return revision;
+      if (`is`(StatusType.STATUS_NONE, StatusType.STATUS_UNVERSIONED, StatusType.STATUS_ADDED)) {
+        return revision
+      }
 
-    if (is(StatusType.STATUS_NONE, StatusType.STATUS_UNVERSIONED, StatusType.STATUS_ADDED)) {
-      return revision;
+      val info = initInfo()
+      return info?.revision ?: revision
+    }
+  var committedRevision: Revision
+  var itemStatus = StatusType.STATUS_NONE
+  var propertyStatus = StatusType.STATUS_NONE
+  var remoteItemStatus: StatusType? = null
+  var remotePropertyStatus: StatusType? = null
+  var isWorkingCopyLocked: Boolean = false
+  var isCopied: Boolean = false
+  var isSwitched: Boolean = false
+  var remoteLock: Lock? = null
+  var localLock: Lock? = null
+  var changeListName: String? = null
+  var isTreeConflicted: Boolean = false
+  private var myInfo: Info? = null
+  private var myInfoProvider: Getter<Info?>? = null
+
+  val info: Info?
+    get() = initInfo()
+
+  val copyFromUrl: Url?
+    get() {
+      if (!isCopied) return null
+      val info = initInfo()
+      return info?.copyFromUrl
     }
 
-    final Info info = initInfo();
-    return info == null ? revision : info.getRevision();
+  val treeConflict: TreeConflictDescription?
+    get() {
+      if (!isTreeConflicted) return null
+      val info = initInfo()
+      return info?.treeConflict
+    }
+
+  val repositoryRootUrl: Url?
+    get() {
+      val info = initInfo()
+      return info?.repositoryRootUrl
+    }
+
+  init {
+    revision = Revision.UNDEFINED
+    myInfoProvider = Getter { null }
+    committedRevision = Revision.UNDEFINED
   }
 
-  @NotNull
-  public Revision getCommittedRevision() {
-    return myCommittedRevision;
+  fun setInfoProvider(infoProvider: Getter<Info?>) {
+    myInfoProvider = infoProvider
   }
 
-  public StatusType getItemStatus() {
-    return myItemStatus;
+  private fun initInfo(): Info? {
+    if (myInfo == null) {
+      val itemStatus = itemStatus
+      if (itemStatus == null || StatusType.STATUS_NONE == itemStatus) {
+        return null
+      }
+      myInfo = myInfoProvider!!.get()
+    }
+    return myInfo
   }
 
-  public StatusType getPropertyStatus() {
-    return myPropertyStatus;
+  fun `is`(type: StatusType): Boolean {
+    return type == itemStatus
   }
 
-  public StatusType getRemoteItemStatus() {
-    return myRemoteItemStatus;
+  fun `is`(vararg types: StatusType): Boolean {
+    return ContainerUtil.or(types) { type -> `is`(type) }
   }
 
-  public StatusType getRemotePropertyStatus() {
-    return myRemotePropertyStatus;
+  fun isProperty(type: StatusType): Boolean {
+    return type == propertyStatus
   }
 
-  public boolean is(@NotNull StatusType type) {
-    return type.equals(getItemStatus());
+  fun isProperty(vararg types: StatusType): Boolean {
+    return ContainerUtil.or(types) { type -> isProperty(type) }
   }
 
-  public boolean is(@NotNull StatusType... types) {
-    return ContainerUtil.or(types, type -> is(type));
-  }
-
-  public boolean isProperty(@NotNull StatusType type) {
-    return type.equals(getPropertyStatus());
-  }
-
-  public boolean isProperty(@NotNull StatusType... types) {
-    return ContainerUtil.or(types, type -> isProperty(type));
-  }
-
-  public boolean isWorkingCopyLocked() {
-    return myIsWorkingCopyLocked;
-  }
-
-  public boolean isCopied() {
-    return myIsCopied;
-  }
-
-  public boolean isSwitched() {
-    return myIsSwitched;
-  }
-
-  @Nullable
-  public Url getCopyFromUrl() {
-    if (!isCopied()) return null;
-    Info info = initInfo();
-    return info != null ? info.getCopyFromUrl() : null;
-  }
-
-  @Nullable
-  public Lock getRemoteLock() {
-    return myRemoteLock;
-  }
-
-  @Nullable
-  public Lock getLocalLock() {
-    return myLocalLock;
-  }
-
-  public String getChangeListName() {
-    return myChangeListName;
-  }
-
-  @Nullable
-  public TreeConflictDescription getTreeConflict() {
-    if (!isTreeConflicted()) return null;
-    Info info = initInfo();
-    return info != null ? info.getTreeConflict() : null;
-  }
-
-  public boolean isTreeConflicted() {
-    return myIsTreeConflicted;
-  }
-
-  @Nullable
-  public Url getRepositoryRootUrl() {
-    Info info = initInfo();
-    return info != null ? info.getRepositoryRootUrl() : null;
-  }
-
-  public void setUrl(Url url) {
-    myUrl = url;
-  }
-
-  public void setFile(File file) {
-    myFile = file;
-  }
-
-  public void setNodeKind(boolean exists, @NotNull NodeKind nodeKind) {
-    myFileExists = exists;
-    setNodeKind(nodeKind);
-  }
-
-  public void setNodeKind(@NotNull NodeKind nodeKind) {
-    myNodeKind = nodeKind;
-  }
-
-  public void setRevision(@NotNull Revision revision) {
-    myRevision = revision;
-  }
-
-  public void setCommittedRevision(@NotNull Revision committedRevision) {
-    myCommittedRevision = committedRevision;
-  }
-
-  public void setItemStatus(StatusType statusType) {
-    myItemStatus = statusType;
-  }
-
-  public void setPropertyStatus(StatusType propertyStatus) {
-    myPropertyStatus = propertyStatus;
-  }
-
-  public void setRemoteItemStatus(StatusType remoteItemStatus) {
-    myRemoteItemStatus = remoteItemStatus;
-  }
-
-  public void setRemotePropertyStatus(StatusType remotePropertyStatus) {
-    myRemotePropertyStatus = remotePropertyStatus;
-  }
-
-  public void setWorkingCopyLocked(boolean isWorkingCopyLocked) {
-    myIsWorkingCopyLocked = isWorkingCopyLocked;
-  }
-
-  public void setCopied(boolean isCopied) {
-    myIsCopied = isCopied;
-  }
-
-  public void setSwitched(boolean isSwitched) {
-    myIsSwitched = isSwitched;
-  }
-
-  public void setRemoteLock(@Nullable Lock remoteLock) {
-    myRemoteLock = remoteLock;
-  }
-
-  public void setLocalLock(@Nullable Lock localLock) {
-    myLocalLock = localLock;
-  }
-
-  public void setChangeListName(String changeListName) {
-    myChangeListName = changeListName;
-  }
-
-  public void setTreeConflicted(boolean isTreeConflicted) {
-    myIsTreeConflicted = isTreeConflicted;
+  fun setNodeKind(exists: Boolean, nodeKind: NodeKind) {
+    myFileExists = exists
+    this.nodeKind = nodeKind
   }
 }

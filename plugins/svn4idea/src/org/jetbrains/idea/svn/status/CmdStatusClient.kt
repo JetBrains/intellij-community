@@ -1,77 +1,73 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.status;
+package org.jetbrains.idea.svn.status
 
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ErrorCode;
-import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.commandLine.*;
-import org.jetbrains.idea.svn.info.Info;
-import org.xml.sax.SAXException;
+import com.intellij.openapi.util.Getter
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.util.ObjectUtils.notNull
+import com.intellij.util.containers.ContainerUtil.*
+import com.intellij.util.containers.Convertor
+import org.jetbrains.idea.svn.SvnUtil.append
+import org.jetbrains.idea.svn.SvnUtil.isSvnVersioned
+import org.jetbrains.idea.svn.api.BaseSvnClient
+import org.jetbrains.idea.svn.api.Depth
+import org.jetbrains.idea.svn.api.ErrorCode
+import org.jetbrains.idea.svn.api.Target
+import org.jetbrains.idea.svn.commandLine.*
+import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
+import org.jetbrains.idea.svn.info.Info
+import org.xml.sax.SAXException
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.IOException
+import java.util.function.Supplier
+import javax.xml.parsers.ParserConfigurationException
+import javax.xml.parsers.SAXParserFactory
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
+class CmdStatusClient : BaseSvnClient(), StatusClient {
 
-import static com.intellij.openapi.util.io.FileUtil.*;
-import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.*;
-import static org.jetbrains.idea.svn.SvnUtil.append;
-import static org.jetbrains.idea.svn.SvnUtil.isSvnVersioned;
-import static org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent;
+  @Throws(SvnBindException::class)
+  override fun doStatus(path: File,
+                        depth: Depth,
+                        remote: Boolean,
+                        reportAll: Boolean,
+                        includeIgnored: Boolean,
+                        collectParentExternals: Boolean,
+                        handler: StatusConsumer) {
+    val base = requireExistingParent(path)
+    val infoBase = myFactory.createInfoClient().doInfo(base, null)
+    val parameters = newArrayList<String>()
 
-public class CmdStatusClient extends BaseSvnClient implements StatusClient {
+    putParameters(parameters, path, depth, remote, reportAll, includeIgnored)
 
-  @Override
-  public void doStatus(@NotNull File path,
-                       @NotNull Depth depth,
-                       boolean remote,
-                       boolean reportAll,
-                       boolean includeIgnored,
-                       boolean collectParentExternals,
-                       @NotNull StatusConsumer handler) throws SvnBindException {
-    File base = requireExistingParent(path);
-    Info infoBase = myFactory.createInfoClient().doInfo(base, null);
-    List<String> parameters = newArrayList();
-
-    putParameters(parameters, path, depth, remote, reportAll, includeIgnored);
-
-    CommandExecutor command = execute(myVcs, Target.on(path), SvnCommandName.st, parameters, null);
-    parseResult(path, handler, base, infoBase, command);
+    val command = execute(myVcs, Target.on(path), SvnCommandName.st, parameters, null)
+    parseResult(path, handler, base, infoBase, command)
   }
 
-  private void parseResult(@NotNull File path,
-                           @NotNull StatusConsumer handler,
-                           @NotNull File base,
-                           @Nullable Info infoBase,
-                           @NotNull CommandExecutor command) throws SvnBindException {
-    String result = command.getOutput();
+  @Throws(SvnBindException::class)
+  private fun parseResult(path: File,
+                          handler: StatusConsumer,
+                          base: File,
+                          infoBase: Info?,
+                          command: CommandExecutor) {
+    val result = command.output
 
     if (StringUtil.isEmptyOrSpaces(result)) {
-      throw new SvnBindException("Status request returned nothing for command: " + command.getCommandText());
+      throw SvnBindException("Status request returned nothing for command: " + command.commandText)
     }
 
     try {
-      Ref<SvnStatusHandler> parsingHandler = Ref.create();
-      parsingHandler.set(createStatusHandler(handler, base, infoBase, () -> parsingHandler.get().getPending()));
-      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), parsingHandler.get());
-      if (!parsingHandler.get().isAnythingReported()) {
+      val parsingHandler = Ref.create<SvnStatusHandler>()
+      parsingHandler.set(createStatusHandler(handler, base, infoBase, Supplier { parsingHandler.get().pending }))
+      val parser = SAXParserFactory.newInstance().newSAXParser()
+      parser.parse(ByteArrayInputStream(result.trim { it <= ' ' }.toByteArray(CharsetToolkit.UTF8_CHARSET)), parsingHandler.get())
+      if (!parsingHandler.get().isAnythingReported) {
         if (!isSvnVersioned(myVcs, path)) {
-          throw new SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, "Command - " + command.getCommandText() + ". Result - " + result);
-        } else {
+          throw SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, "Command - " + command.commandText + ". Result - " + result)
+        }
+        else {
           // return status indicating "NORMAL" state
           // typical output would be like
           // <status>
@@ -79,107 +75,112 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           // </status>
           // so it does not contain any <entry> element and current parsing logic returns null
 
-          Status status = new Status();
-          status.setFile(path);
-          status.setItemStatus(StatusType.STATUS_NORMAL);
-          status.setInfoProvider(() -> createInfoGetter().convert(path));
-          handler.consume(status);
+          val status = Status()
+          status.file = path
+          status.itemStatus = StatusType.STATUS_NORMAL
+          status.setInfoProvider(Getter { createInfoGetter().convert(path) })
+          handler.consume(status)
         }
       }
     }
-    catch (SvnExceptionWrapper e) {
-      throw new SvnBindException(e.getCause());
-    } catch (IOException | ParserConfigurationException e) {
-      throw new SvnBindException(e);
+    catch (e: SvnExceptionWrapper) {
+      throw SvnBindException(e.cause)
     }
-    catch (SAXException e) {
+    catch (e: IOException) {
+      throw SvnBindException(e)
+    }
+    catch (e: ParserConfigurationException) {
+      throw SvnBindException(e)
+    }
+    catch (e: SAXException) {
       // status parsing errors are logged separately as sometimes there are parsing errors connected to terminal output handling.
       // these errors primarily occur when status output is rather large.
       // and status output could be large, for instance, when working copy is locked (seems that each file is listed in status output).
-      command.logCommand();
-      throw new SvnBindException(e);
+      command.logCommand()
+      throw SvnBindException(e)
+    }
+
+  }
+
+  fun createStatusHandler(handler: StatusConsumer,
+                          base: File,
+                          infoBase: Info?,
+                          statusSupplier: Supplier<Status>): SvnStatusHandler {
+    val callback = createStatusCallback(handler, base, infoBase, statusSupplier)
+
+    return SvnStatusHandler(callback, base, createInfoGetter())
+  }
+
+  private fun createInfoGetter(): Convertor<File, Info> {
+    return Convertor { file ->
+      try {
+        myFactory.createInfoClient().doInfo(file, null)
+      }
+      catch (e: SvnBindException) {
+        throw SvnExceptionWrapper(e)
+      }
     }
   }
 
-  private static void putParameters(@NotNull List<String> parameters,
-                                    @NotNull File path,
-                                    @Nullable Depth depth,
-                                    boolean remote,
-                                    boolean reportAll,
-                                    boolean includeIgnored) {
-    CommandUtil.put(parameters, path);
-    CommandUtil.put(parameters, depth);
-    CommandUtil.put(parameters, remote, "-u");
-    CommandUtil.put(parameters, reportAll, "--verbose");
-    CommandUtil.put(parameters, includeIgnored, "--no-ignore");
-    parameters.add("--xml");
+  @Throws(SvnBindException::class)
+  override fun doStatus(path: File, remote: Boolean): Status? {
+    val status = Ref.create<Status>()
+    doStatus(path, Depth.EMPTY, remote, false, false, false) { status.set(it) }
+    return status.get()
   }
 
-  @NotNull
-  public SvnStatusHandler createStatusHandler(@NotNull StatusConsumer handler,
-                                              @NotNull File base,
-                                              @Nullable Info infoBase,
-                                              @NotNull Supplier<Status> statusSupplier) {
-    SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, statusSupplier);
+  companion object {
 
-    return new SvnStatusHandler(callback, base, createInfoGetter());
-  }
+    private fun putParameters(parameters: MutableList<String>,
+                              path: File,
+                              depth: Depth?,
+                              remote: Boolean,
+                              reportAll: Boolean,
+                              includeIgnored: Boolean) {
+      CommandUtil.put(parameters, path)
+      CommandUtil.put(parameters, depth)
+      CommandUtil.put(parameters, remote, "-u")
+      CommandUtil.put(parameters, reportAll, "--verbose")
+      CommandUtil.put(parameters, includeIgnored, "--no-ignore")
+      parameters.add("--xml")
+    }
 
-  @NotNull
-  private Convertor<File, Info> createInfoGetter() {
-    return file -> {
-      try {
-        return myFactory.createInfoClient().doInfo(file, null);
-      }
-      catch (SvnBindException e) {
-        throw new SvnExceptionWrapper(e);
-      }
-    };
-  }
+    @JvmStatic
+    fun createStatusCallback(handler: StatusConsumer,
+                             base: File,
+                             infoBase: Info?,
+                             statusSupplier: Supplier<out Status>): SvnStatusHandler.ExternalDataCallback {
+      val externalsMap = newHashMap<File, Info?>()
+      val changelistName = Ref.create<String>()
 
-  @NotNull
-  public static SvnStatusHandler.ExternalDataCallback createStatusCallback(@NotNull StatusConsumer handler,
-                                                                           @NotNull File base,
-                                                                           @Nullable Info infoBase,
-                                                                           @NotNull Supplier<? extends Status> statusSupplier) {
-    Map<File, Info> externalsMap = newHashMap();
-    Ref<String> changelistName = Ref.create();
+      return object : SvnStatusHandler.ExternalDataCallback {
+        override fun switchPath() {
+          val pending = statusSupplier.get()
+          pending.changeListName = changelistName.get()
+          try {
+            val pendingFile = pending.file
+            val externalsBase = find(externalsMap.keys) { file -> isAncestor(file, pendingFile!!, false) }
+            val baseFile = notNull(externalsBase, base)
+            val baseInfo = if (externalsBase != null) externalsMap[externalsBase] else infoBase
 
-    return new SvnStatusHandler.ExternalDataCallback() {
-      @Override
-      public void switchPath() {
-        Status pending = statusSupplier.get();
-        pending.setChangeListName(changelistName.get());
-        try {
-          File pendingFile = pending.getFile();
-          File externalsBase = find(externalsMap.keySet(), file -> isAncestor(file, pendingFile, false));
-          File baseFile = notNull(externalsBase, base);
-          Info baseInfo = externalsBase != null ? externalsMap.get(externalsBase) : infoBase;
-
-          if (baseInfo != null) {
-            pending.setUrl(append(baseInfo.getUrl(), toSystemIndependentName(getRelativePath(baseFile, pendingFile))));
+            if (baseInfo != null) {
+              pending.url = append(baseInfo.url!!, toSystemIndependentName(getRelativePath(baseFile, pendingFile)!!))
+            }
+            if (pending.`is`(StatusType.STATUS_EXTERNAL)) {
+              externalsMap[pending.file] = pending.info
+            }
+            handler.consume(pending)
           }
-          if (pending.is(StatusType.STATUS_EXTERNAL)) {
-            externalsMap.put(pending.getFile(), pending.getInfo());
+          catch (e: SvnBindException) {
+            throw SvnExceptionWrapper(e)
           }
-          handler.consume(pending);
+
         }
-        catch (SvnBindException e) {
-          throw new SvnExceptionWrapper(e);
+
+        override fun switchChangeList(newList: String) {
+          changelistName.set(newList)
         }
       }
-
-      @Override
-      public void switchChangeList(String newList) {
-        changelistName.set(newList);
-      }
-    };
-  }
-
-  @Override
-  public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
-    Ref<Status> status = Ref.create();
-    doStatus(path, Depth.EMPTY, remote, false, false, false, status::set);
-    return status.get();
+    }
   }
 }
