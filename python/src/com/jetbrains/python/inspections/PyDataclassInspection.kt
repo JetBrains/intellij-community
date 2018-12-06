@@ -214,8 +214,14 @@ class PyDataclassInspection : PyInspection() {
 
     private fun checkMutatingFrozenAttribute(expression: PyQualifiedExpression) {
       val cls = getInstancePyClass(expression.qualifier) ?: return
-      if (parseDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
-        registerProblem(expression, "'${cls.name}' object attribute '${expression.name}' is read-only", ProblemHighlightType.GENERIC_ERROR)
+
+      if (StreamEx
+          .of(cls).append(cls.getAncestorClasses(myTypeEvalContext))
+          .mapNotNull { parseDataclassParameters(it, myTypeEvalContext) }
+          .any { it.frozen }) {
+        registerProblem(expression,
+                        "'${cls.name}' object attribute '${expression.name}' is read-only",
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
