@@ -13,7 +13,6 @@ import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilationException;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -45,7 +44,6 @@ import java.util.function.Function;
 
 // todo: consider batching compilations in order not to start a separate process for every class that needs to be compiled
 public class CompilingEvaluatorImpl extends CompilingEvaluator {
-  private static final Logger LOG = Logger.getInstance(CompilingEvaluatorImpl.class);
   private Collection<ClassObject> myCompiledClasses;
   private final Module myModule;
 
@@ -105,18 +103,10 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       }
       catch (CompilationException e) {
         StringBuilder res = new StringBuilder("Compilation failed:\n");
-        boolean errorsFound = false;
         for (CompilationException.Message m : e.getMessages()) {
           if (m.getCategory() == CompilerMessageCategory.ERROR) {
             res.append(m.getText()).append("\n");
-            errorsFound = true;
           }
-        }
-
-        if (!errorsFound) {
-          Collection<CompilationException.Message> messages = e.getMessages();
-          LOG.warn("Compilation failed without error messages. All message are listed below. Count: " + messages.size());
-          messages.forEach(x -> LOG.warn(x.getText()));
         }
         throw new EvaluateException(res.toString());
       }
