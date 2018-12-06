@@ -849,12 +849,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     boolean expressionSwitch = myExpressionBlockContext != null && myExpressionBlockContext.myCodeBlock == switchBody;
     if (expressionSwitch && body instanceof PsiExpressionStatement) {
       myExpressionBlockContext.generateReturn(((PsiExpressionStatement)body).getExpression(), this);
-    }
-    if (body != null) {
-      body.accept(this);
-    }
-    if (!(body instanceof PsiThrowStatement)) {
-      jumpOut(expressionSwitch ? switchBody : switchBlock);
+    } else {
+      if (body != null) {
+        body.accept(this);
+      }
+      if (ControlFlowUtils.statementMayCompleteNormally(body)) {
+        jumpOut(expressionSwitch ? switchBody : switchBlock);
+      }
     }
     finishElement(statement);
   }
