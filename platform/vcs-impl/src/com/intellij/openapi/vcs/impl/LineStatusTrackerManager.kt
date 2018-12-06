@@ -224,8 +224,16 @@ class LineStatusTrackerManager(
 
       if (data.tracker is ChangelistsLocalLineStatusTracker) {
         val hasPartialChanges = data.tracker.hasPartialState()
+        if (hasPartialChanges) {
+          log("checkIfTrackerCanBeReleased - hasPartialChanges", data.tracker.virtualFile)
+          return
+        }
+
         val isLoading = loader.hasRequest(RefreshRequest(document))
-        if (hasPartialChanges || isLoading) return
+        if (isLoading) {
+          log("checkIfTrackerCanBeReleased - isLoading", data.tracker.virtualFile)
+          return
+        }
       }
 
       releaseTracker(document)
