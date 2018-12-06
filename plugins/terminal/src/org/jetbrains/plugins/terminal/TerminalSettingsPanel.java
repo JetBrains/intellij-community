@@ -13,12 +13,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author traff
@@ -92,15 +95,19 @@ public class TerminalSettingsPanel {
       }
     });
 
+    List<Component> customComponents = ContainerUtil.newArrayList();
     for (LocalTerminalCustomizer c : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       UnnamedConfigurable configurable = c.getConfigurable(projectOptionsProvider.getProject());
       if (configurable != null) {
         myConfigurables.add(configurable);
         JComponent component = configurable.createComponent();
         if (component != null) {
-          myConfigurablesPanel.add(component, BorderLayout.CENTER);
+          customComponents.add(component);
         }
       }
+    }
+    if (!customComponents.isEmpty()) {
+      myConfigurablesPanel.add(SwingHelper.newLeftAlignedVerticalPanel(customComponents), BorderLayout.CENTER);
     }
 
     return myWholePanel;
