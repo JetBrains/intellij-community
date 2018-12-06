@@ -59,11 +59,13 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
                                                 @NotNull CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
     if (provider != null) {
+      boolean isModified = false;
       AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(settings);
       for (OutPair option : editorConfigOptions) {
         mapper.setProperty(option.getKey(), option.getVal());
+        isModified = true;
       }
-      return true;
+      return isModified;
     }
     return false;
   }
