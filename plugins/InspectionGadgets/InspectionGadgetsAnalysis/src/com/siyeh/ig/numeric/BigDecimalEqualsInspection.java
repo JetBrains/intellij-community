@@ -19,9 +19,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -93,8 +91,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
       PsiExpression right = check.getRight();
       if (!ExpressionUtils.hasType(left, "java.math.BigDecimal")) return;
       if (!ExpressionUtils.hasType(right, "java.math.BigDecimal")) return;
-      final PsiElement context = expression.getParent();
-      if (context instanceof PsiExpressionStatement) {
+      if (ExpressionUtils.isVoidContext(expression)) {
         //cheesy, but necessary, because otherwise the quickfix will
         // produce uncompilable code (out of merely incorrect code).
         return;
