@@ -393,16 +393,23 @@ idea.fatal.error.notification=disabled
             boolean isEAP = buildContext.applicationInfo.isEAP
             String productCode = buildContext.productProperties.productCode
             String tempDirectory = "${buildContext.paths.buildOutputRoot}/toolbox-lite-gen"
+            String liteGenVersion = buildContext.options.toolboxLiteGenVersion
 
-            String[] liteGenArgs = [
-              'runToolboxLiteGen',
-              "-Pintellij.build.artifacts=$distDir",
-              "-Pintellij.build.productCode=$productCode",
-              "-Pintellij.build.isEAP=$isEAP",
-              "-Pintellij.build.output=$tempDirectory",
-            ]
+            if (liteGenVersion == null) {
+              buildContext.messages.error("Toolbox Lite-Gen version is not specified!")
+            }
+            else {
+              String[] liteGenArgs = [
+                'runToolboxLiteGen',
+                "-Pintellij.litegen.build=$liteGenVersion",
+                "-Pintellij.build.artifacts=$distDir",
+                "-Pintellij.build.productCode=$productCode",
+                "-Pintellij.build.isEAP=$isEAP",
+                "-Pintellij.build.output=$tempDirectory",
+              ]
 
-            buildContext.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+              buildContext.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+            }
           }
         }
       }
