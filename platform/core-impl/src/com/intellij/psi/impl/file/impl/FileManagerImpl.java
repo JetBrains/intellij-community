@@ -622,9 +622,11 @@ public class FileManagerImpl implements FileManager {
       LOG.assertTrue(getRawCachedViewProvider(file) == viewProvider);
 
       for (PsiFile psiFile : viewProvider.getCachedPsiFiles()) {
-        // update "myPossiblyInvalidated" fields in files
+        // update "myPossiblyInvalidated" fields in files by calling "isValid"
         // that will call us recursively again, but since we're not IN_COMA now, we'll exit earlier and avoid SOE
-        LOG.assertTrue(psiFile.isValid());
+        if (!psiFile.isValid()) {
+          LOG.error(new PsiInvalidElementAccessException(psiFile));
+        }
       }
       return true;
     }
