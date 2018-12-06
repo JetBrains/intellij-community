@@ -83,7 +83,7 @@
     <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
 
-  <target name="uitest">
+  <target name="uitest" depends="init">
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
