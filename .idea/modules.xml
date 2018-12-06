@@ -772,8 +772,6 @@
       <module fileurl="file://$PROJECT_DIR$/../base/perf-logger/perf-logger.iml" filepath="$PROJECT_DIR$/../base/perf-logger/perf-logger.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/testing/test-recorder/test-recorder.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/testing/test-recorder/test-recorder.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/testutils/testutils-tests.iml" filepath="$PROJECT_DIR$/../base/testutils/testutils-tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework-bazel/uitest-framework-bazel.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework-bazel/uitest-framework-bazel.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework-gradle/uitest-framework-gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework-gradle/uitest-framework-gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/url-assistant/url-assistant.iml" filepath="$PROJECT_DIR$/../vendor/google/url-assistant/url-assistant.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/usb-devices/usb-devices.iml" filepath="$PROJECT_DIR$/../base/usb-devices/usb-devices.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/whats-new-assistant/whats-new-assistant.iml" filepath="$PROJECT_DIR$/../adt/idea/whats-new-assistant/whats-new-assistant.iml" />

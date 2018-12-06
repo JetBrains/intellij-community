@@ -103,11 +103,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       CommunityRepositoryModules.groovyPlugin([])
     ]
     if (buildOptions.includeUiTests) {
-      modulesToCompileTests += ["intellij.android.guiTests", "intellij.android.guiTestFramework", "uitest-framework-gradle", "uitest-framework-bazel", "intellij.android.testFramework"]
+      modulesToCompileTests += ["intellij.android.guiTests", "intellij.android.guiTestFramework", "intellij.android.testFramework"]
       productLayout.allNonTrivialPlugins.add(uitestPlugin())
-      productLayout.allNonTrivialPlugins.add(plugin("uitest-framework-bazel") { withTestModule("uitest-framework-bazel") })
-      productLayout.allNonTrivialPlugins.add(plugin("uitest-framework-gradle") { withTestModule("uitest-framework-gradle") })
-      productLayout.bundledPluginModules += ["intellij.android.guiTestFramework", "uitest-framework-gradle", "uitest-framework-bazel"]
+      productLayout.bundledPluginModules += ["intellij.android.guiTestFramework"]
     }
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
   }
