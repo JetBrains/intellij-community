@@ -107,16 +107,18 @@ public class TerminalSettingsPanel {
         }
       }
     }
-    myConfigurablesPanel.setLayout(new GridLayoutManager(customComponents.size(), 1));
-    int i = 0;
-    for (Component component : customComponents) {
-      myConfigurablesPanel.add(component, new GridConstraints(
-        i++, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 0, 0,
-        new Dimension(-1, -1),
-        new Dimension(-1, -1),
-        new Dimension(-1, -1),
-        0, false
-      ));
+    if (!customComponents.isEmpty()) {
+      myConfigurablesPanel.setLayout(new GridLayoutManager(customComponents.size(), 1));
+      int i = 0;
+      for (Component component : customComponents) {
+        myConfigurablesPanel.add(component, new GridConstraints(
+          i++, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 0, 0,
+          new Dimension(-1, -1),
+          new Dimension(-1, -1),
+          new Dimension(-1, -1),
+          0, false
+        ));
+      }
     }
 
     return myWholePanel;
