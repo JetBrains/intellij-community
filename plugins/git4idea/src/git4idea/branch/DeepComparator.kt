@@ -294,7 +294,7 @@ class DeepComparator(private val project: Project,
       val targetBranchCommits = dataPack.subgraphDifference(targetBranchRef, sourceBranchRef, storage) ?: return null
       if (targetBranchCommits.isEmpty) return sourceBranchCommits
 
-      val match = dataGetter.match(sourceBranchCommits, targetBranchCommits, reliable)
+      val match = dataGetter.match(root, sourceBranchCommits, targetBranchCommits, reliable)
       TroveUtil.removeAll(sourceBranchCommits, match)
       if (!match.isEmpty) {
         LOG.debug("Using index, detected ${match.size()} commits in ${sourceBranchRef.name}#${root.name}" +

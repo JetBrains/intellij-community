@@ -37,7 +37,7 @@ public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = 8;
-  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,}");
+  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
@@ -241,7 +241,12 @@ public class VcsLogUtil {
 
   @NotNull
   public static String getShortHash(@NotNull String hashString) {
-    return hashString.substring(0, Math.min(SHORT_HASH_LENGTH, hashString.length()));
+    return getShortHash(hashString, SHORT_HASH_LENGTH);
+  }
+
+  @NotNull
+  public static String getShortHash(@NotNull String hashString, int shortHashLength) {
+    return hashString.substring(0, Math.min(shortHashLength, hashString.length()));
   }
 
   @Nullable
