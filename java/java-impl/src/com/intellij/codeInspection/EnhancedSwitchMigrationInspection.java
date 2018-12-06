@@ -446,7 +446,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       PsiSwitchBlock switchBlock =
         generateEnhancedSwitch(switchStatement, myExpressionBeingSwitched, myExpressionBranches, commentTracker, false);
       if (switchBlock == null) return;
-      commentTracker.replace(switchStatement, switchBlock);
+      commentTracker.replaceAndRestoreComments(switchStatement, switchBlock);
     }
 
     @Override
