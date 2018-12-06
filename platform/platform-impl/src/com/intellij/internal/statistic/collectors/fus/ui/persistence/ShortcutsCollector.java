@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.components.*;
@@ -65,6 +66,9 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
    if (event != null) {
      final InputEvent inputEvent = event.getInputEvent();
      if (inputEvent instanceof KeyEvent) {
+       if (ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) // touchbar uses KeyEvent to perform an action
+         return "Touchbar";
+
        final KeyStroke keystroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)inputEvent);
        return keystroke != null ? getShortcutText(new KeyboardShortcut(keystroke, null)) : "Unknown";
       }
