@@ -92,9 +92,9 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static String jdkDir(String projectHome) {
-    (System.getProperty('jdk.dir')?.with {
+    System.getProperty('jdk.dir')?.with {
       new File(it).exists() ? it : null
-    } ?: "$projectHome/build/jdk")
+    } ?: "$projectHome/build/jdk"
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
