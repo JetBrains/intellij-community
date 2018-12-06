@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
@@ -951,5 +952,21 @@ class W {
 
   void 'test spread asImmutable()'() {
     doExprTest('List<List<String>> a; a*.asImmutable()', 'java.util.ArrayList<java.util.List<java.lang.String>>')
+  }
+
+  void "test don't start inference for method parameter type"() {
+    TypeInferenceHelper.disallowNestedContext(testRootDisposable)
+    doTest 'def bar(String ss) { <caret>ss }', 'java.lang.String'
+  }
+
+  void 'test closure param'() {
+    TypeInferenceHelper.disallowNestedContext(testRootDisposable)
+    doTest '''\
+interface I { def foo(String s) }
+def bar(I i) {}
+bar { var ->
+  <caret>var
+}
+''', 'java.lang.String'
   }
 }
