@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +39,11 @@ public final class ObjectTree<T> {
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<T> myRootObjects = ContainerUtil.newIdentityTroveSet(); // guarded by treeLock
   private final Map<T, ObjectNode<T>> myObject2NodeMap = ContainerUtil.newIdentityTroveMap(); // guarded by treeLock
-  private final Map<Object, Object> myDisposedObjects = ContainerUtil.createWeakMap(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
+  // Disposable to trace or boolean marker (if trace unavailable)
+  private final Map<T, Object> myDisposedObjects = ContainerUtil.createWeakMap(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>(); // guarded by myExecutedNodes
-  private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>(); // guarded by myExecutedUnregisteredNodes
+  private final List<T> myExecutedUnregisteredObjects = new ArrayList<T>(); // guarded by myExecutedUnregisteredObjects
 
   final Object treeLock = new Object();
 
@@ -103,9 +105,9 @@ public final class ObjectTree<T> {
     }
   }
 
-  public Object getDisposalInfo(@NotNull T parent) {
+  public Object getDisposalInfo(@NotNull T object) {
     synchronized (treeLock) {
-      return myDisposedObjects.get(parent);
+      return myDisposedObjects.get(object);
     }
   }
 
@@ -148,7 +150,16 @@ public final class ObjectTree<T> {
         }
       }
       else {
-        node.execute(action);
+        ObjectNode<T> parent;
+        synchronized (treeLock) {
+          parent = node.getParent();
+        }
+        node.execute(action, new SmartList<Throwable>());
+        if (parent != null) {
+          synchronized (treeLock) {
+            parent.removeChild(node);
+          }
+        }
       }
     }
     finally {
@@ -169,10 +180,10 @@ public final class ObjectTree<T> {
     return false;
   }
 
-  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   static <T> void executeActionWithRecursiveGuard(@NotNull T object,
                                                   @NotNull List<T> recursiveGuard,
                                                   @NotNull final ObjectTreeAction<? super T> action) {
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (recursiveGuard) {
       if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy()) != -1) return;
       recursiveGuard.add(object);
@@ -182,6 +193,7 @@ public final class ObjectTree<T> {
       action.execute(object);
     }
     finally {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (recursiveGuard) {
         int i = ArrayUtil.lastIndexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy());
         assert i != -1;
@@ -191,39 +203,16 @@ public final class ObjectTree<T> {
   }
 
   private void executeUnregistered(@NotNull final T object, @NotNull final ObjectTreeAction<? super T> action) {
-    executeActionWithRecursiveGuard(object, myExecutedUnregisteredNodes, action);
-  }
-
-  public final void executeChildAndReplace(@NotNull T toExecute,
-                                           @NotNull T toReplace,
-                                           @NotNull ObjectTreeAction<T> action) {
-    final ObjectNode<T> toExecuteNode;
-    T parentObject;
-    synchronized (treeLock) {
-      toExecuteNode = getNode(toExecute);
-      if (toExecuteNode == null) throw new IllegalArgumentException("Object " + toExecute + " wasn't registered or already disposed");
-
-      final ObjectNode<T> parent = toExecuteNode.getParent();
-      if (parent == null) throw new IllegalArgumentException("Object " + toExecute + " is not connected to the tree - doesn't have parent");
-      parentObject = parent.getObject();
-    }
-
-    toExecuteNode.execute(action);
-    register(parentObject, toReplace);
-  }
-
-  public boolean containsKey(@NotNull T object) {
-    synchronized (treeLock) {
-      return getNode(object) != null;
-    }
+    executeActionWithRecursiveGuard(object, myExecutedUnregisteredObjects, action);
   }
 
   @TestOnly
-  // public for Upsource
-  public void assertNoReferenceKeptInTree(@NotNull T disposable) {
+  void assertNoReferenceKeptInTree(@NotNull T disposable) {
     synchronized (treeLock) {
-      Collection<ObjectNode<T>> nodes = myObject2NodeMap.values();
-      for (ObjectNode<T> node : nodes) {
+      for (Map.Entry<T, ObjectNode<T>> entry : myObject2NodeMap.entrySet()) {
+        T key = entry.getKey();
+        assert key != disposable;
+        ObjectNode<T> node = entry.getValue();
         node.assertNoReferencesKept(disposable);
       }
     }
@@ -233,7 +222,6 @@ public final class ObjectTree<T> {
     myRootObjects.remove(object);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void assertIsEmpty(boolean throwError) {
     synchronized (treeLock) {
       for (T object : myRootObjects) {
@@ -277,20 +265,20 @@ public final class ObjectTree<T> {
     myListeners.remove(listener);
   }
 
-  private void fireRegistered(@NotNull Object object) {
+  private void fireRegistered(@NotNull T object) {
     for (ObjectTreeListener each : myListeners) {
       each.objectRegistered(object);
     }
   }
 
-  void fireExecuted(@NotNull Object object) {
+  void fireExecuted(@NotNull T object) {
     for (ObjectTreeListener each : myListeners) {
       each.objectExecuted(object);
     }
     rememberDisposedTrace(object);
   }
 
-  private void rememberDisposedTrace(@NotNull Object object) {
+  private void rememberDisposedTrace(@NotNull T object) {
     synchronized (treeLock) {
       Throwable trace = ourTopmostDisposeTrace.get();
       myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
