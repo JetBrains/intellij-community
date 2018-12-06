@@ -622,11 +622,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void beforeTreeDispose() {
+    if (myDisposed) return;
     myUI.beforeDispose();
   }
 
   @Override
   public void dispose() {
+    if (myDisposed) return;
     myDisposed = true;
 
     myContents.clear();
