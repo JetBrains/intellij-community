@@ -4,6 +4,7 @@ package com.intellij.platform.onair.tree.functional;
 import com.intellij.platform.onair.storage.api.Address;
 import com.intellij.platform.onair.storage.api.KeyValueConsumer;
 import com.intellij.platform.onair.storage.api.Novelty;
+import com.intellij.platform.onair.tree.BTree;
 import com.intellij.platform.onair.tree.BTreeCommon;
 import com.intellij.platform.onair.tree.IInternalPage;
 import com.intellij.platform.onair.tree.IPage;
@@ -12,9 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class InternalTransientPage extends BaseTransientPage implements IInternalPage {
 
-  protected final IPage[] children; // Address | IPage
+  protected final Object[] children; // Address | IPage
 
-  public InternalTransientPage(byte[] backingArray, TransientBTreePrototype tree, int size, long epoch, IPage[] children) {
+  public InternalTransientPage(byte[] backingArray, TransientBTreePrototype tree, int size, long epoch, Object[] children) {
     super(backingArray, tree, size, epoch);
     this.children = children;
   }
@@ -65,7 +66,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
       if (pos < 0) pos = 0;
     }
 
-    final BaseTransientPage child = getChild(novelty, pos).getTransientCopy(epoch);
+    final BaseTransientPage child = getChild(novelty, pos).getTransientCopy(novelty, tree, epoch);
     final IPage newChild = child.put(novelty, epoch, key, value, overwrite, result);
     // change min key for child
     if (result[0]) {
@@ -84,7 +85,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   @Override
   public boolean delete(@NotNull Novelty.Accessor novelty, long epoch, @NotNull byte[] key, @Nullable byte[] value) {
     int pos = BTreeCommon.binarySearchGuess(backingArray, size, tree.keySize, 0, key);
-    final BaseTransientPage child = getChild(novelty, pos).getTransientCopy(epoch);
+    final BaseTransientPage child = getChild(novelty, pos).getTransientCopy(novelty, tree, epoch);
     if (!child.delete(novelty, epoch, key, value)) {
       return false;
     }
@@ -98,7 +99,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
       if (BTreeCommon.needMerge(left, child, tree.base)) {
         // merge child into left sibling
         // re-get mutable left
-        getChild(novelty, pos - 1).getTransientCopy(epoch).mergeWith(child);
+        getChild(novelty, pos - 1).getTransientCopy(novelty, tree, epoch).mergeWith(child);
         removeChild(pos);
       }
     }
@@ -106,9 +107,9 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
       final IPage right = getChild(novelty, pos + 1);
       if (BTreeCommon.needMerge(child, right, tree.base)) {
         // merge child with right sibling
-        final BaseTransientPage mutableChild = child.getTransientCopy(epoch);
+        final BaseTransientPage mutableChild = child.getTransientCopy(novelty, tree, epoch);
         IPage sibling = getChild(novelty, pos + 1);
-        mutableChild.mergeWith(sibling.getTransientCopy(epoch));
+        mutableChild.mergeWith(sibling.getTransientCopy(novelty, tree, epoch));
         removeChild(pos);
         // change key for link to right
         setTransient(pos, mutableChild.getMinKey(), mutableChild);
@@ -121,11 +122,14 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
   }
 
   @Override
-  public InternalTransientPage getTransientCopy(long epoch) {
+  public InternalTransientPage getTransientCopy(@NotNull Novelty.Accessor novelty,
+                                                @NotNull TransientBTreePrototype tree,
+                                                long epoch) {
     if (this.epoch >= epoch) {
       return this;
     }
     else {
+      // TODO: pass the 'tree'
       return copyOf(this, epoch, 0, size);
     }
   }
@@ -144,7 +148,11 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
     if (child instanceof BaseTransientPage) {
       return (BaseTransientPage)child;
     }
-    return tree.storedTree.loadPage(novelty, (Address)child);
+    final BTree tree = this.tree.storedTree;
+    if (tree == null) {
+      throw new IllegalStateException("tree is not persisted");
+    }
+    return tree.loadPage(novelty, (Address)child);
   }
 
   @Override
@@ -231,7 +239,7 @@ public class InternalTransientPage extends BaseTransientPage implements IInterna
       length * bytesPerKey
     );
 
-    IPage[] children = new IPage[page.children.length];
+    Object[] children = new IPage[page.children.length];
 
     // copy children
     System.arraycopy(
