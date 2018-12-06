@@ -25,7 +25,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 
 
-internal object CodeAnalysisBeforeCheckinShowOnlyNew {
+object CodeAnalysisBeforeCheckinShowOnlyNew {
   val LOG = Logger.getInstance(CodeAnalysisBeforeCheckinShowOnlyNew.javaClass)
 
   @JvmStatic

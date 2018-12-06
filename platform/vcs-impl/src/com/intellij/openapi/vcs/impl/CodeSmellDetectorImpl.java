@@ -143,13 +143,15 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   @NotNull
   private List<CodeSmellInfo> findCodeSmells(@NotNull final VirtualFile file, @NotNull final ProgressIndicator progress) {
     final ProgressIndicator daemonIndicator = new DaemonProgressIndicator();
-    ((ProgressIndicatorEx)progress).addStateDelegate(new AbstractProgressIndicatorExBase() {
-      @Override
-      public void cancel() {
-        super.cancel();
-        daemonIndicator.cancel();
-      }
-    });
+    if (progress instanceof ProgressIndicatorEx) {
+      ((ProgressIndicatorEx)progress).addStateDelegate(new AbstractProgressIndicatorExBase() {
+        @Override
+        public void cancel() {
+          super.cancel();
+          daemonIndicator.cancel();
+        }
+      });
+    }
     final PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
     final Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
     if (psiFile == null || document == null) {
