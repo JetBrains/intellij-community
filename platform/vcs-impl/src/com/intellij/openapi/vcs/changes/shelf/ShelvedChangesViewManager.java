@@ -136,6 +136,7 @@ public class ShelvedChangesViewManager implements Disposable {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setEditable(true);
+    myTree.setDragEnabled(true);
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
     DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
       @Override
