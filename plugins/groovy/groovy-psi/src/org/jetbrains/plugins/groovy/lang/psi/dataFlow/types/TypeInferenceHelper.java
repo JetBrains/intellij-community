@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,7 +48,7 @@ public class TypeInferenceHelper {
 
   private static <T> T doInference(@NotNull Map<String, PsiType> bindings, @NotNull Computable<? extends T> computation) {
     InferenceContext old = ourInferenceContext.get();
-    ourInferenceContext.set(new InferenceContext.PartialContext(bindings, getCurrentContext()));
+    ourInferenceContext.set(new PartialContext(bindings));
     try {
       return computation.compute();
     }
