@@ -62,8 +62,9 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       boolean isModified = false;
       AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(settings);
       for (OutPair option : editorConfigOptions) {
-        mapper.setProperty(option.getKey(), option.getVal());
-        isModified = true;
+        if (mapper.setProperty(option.getKey(), option.getVal())) {
+          isModified = true;
+        }
       }
       return isModified;
     }

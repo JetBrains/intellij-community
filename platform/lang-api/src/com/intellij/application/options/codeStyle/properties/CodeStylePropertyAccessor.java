@@ -17,16 +17,18 @@ public abstract class CodeStylePropertyAccessor<T> {
     myField = field;
   }
 
-  public void set(@NotNull String str) {
+  public boolean set(@NotNull String str) {
     try {
       T value = parseString(str);
       if (value != null) {
         myField.set(myObject, value);
+        return true;
       }
     }
     catch (IllegalAccessException e) {
       // Ignore and skip
     }
+    return false;
   }
 
   @Nullable

@@ -24,10 +24,11 @@ public abstract class AbstractCodeStylePropertyMapper {
     myAccessorMap = AtomicNotNullLazyValue.createValue(() -> createMap());
   }
 
-  public void setProperty(@NotNull String name, @NotNull String value) {
+  public boolean setProperty(@NotNull String name, @NotNull String value) {
     if (getAccessorMap().containsKey(name)) {
-      myAccessorMap.getValue().get(name).set(value);
+      return myAccessorMap.getValue().get(name).set(value);
     }
+    return false;
   }
 
   @Nullable
