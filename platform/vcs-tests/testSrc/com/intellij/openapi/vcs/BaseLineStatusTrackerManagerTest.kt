@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.ui.UIUtil
 import org.mockito.Mockito
 
 abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
@@ -34,6 +35,8 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { clm.waitUntilRefreshed() })
+      .append(ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() })
       .append(ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() })
       .append(ThrowableRunnable { lstm.releaseAllTrackers() })
       .append(ThrowableRunnable { super.tearDown() })
