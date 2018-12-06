@@ -363,7 +363,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     @Override
     public final void update(@NotNull final AnActionEvent event) {
-      event.getPresentation().setEnabled(myToolWindow.isVisible());
+      event.getPresentation().setEnabled(myToolWindow != null && myToolWindow.isVisible());
     }
   }
 }
