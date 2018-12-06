@@ -88,7 +88,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   private fun createMockFileEditor(document: Document): FileEditor {
     val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
     val references = listOf(DocumentReferenceManager.getInstance().create(document))
-    Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references);
+    Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references)
     return editor
   }
 
@@ -107,6 +107,21 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   protected fun Range.assertChangeList(listName: String) {
     val localRange = this as LocalRange
     assertEquals(listName, localRange.changelistId.asListIdToName())
+  }
+
+  protected fun VirtualFile.assertNullTracker() {
+    val tracker = this.tracker
+    if (tracker != null) {
+      var message = "$tracker" +
+                    ": operational - ${tracker.isOperational()}" +
+                    ", valid - ${tracker.isValid()}, " +
+                    ", file - ${tracker.virtualFile}"
+      if (tracker is PartialLocalLineStatusTracker) {
+        message += ", hasPartialChanges - ${tracker.hasPartialChangesToCommit()}" +
+          ", lists - ${tracker.getAffectedChangeListsIds().asListIdsToNames()}"
+      }
+      assertNull(message, tracker)
+    }
   }
 
   protected fun PartialLocalLineStatusTracker.assertExcludedState(expected: ExclusionState, listName: String) {
