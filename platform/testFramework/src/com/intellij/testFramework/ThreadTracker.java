@@ -147,7 +147,7 @@ public class ThreadTracker {
 
         if (stackTrace.length == 0
             // give thread a chance to run up to the completion
-            || thread.getState() == Thread.State.RUNNABLE) {
+            || thread.getState() == Thread.State.RUNNABLE || thread.getState() == Thread.State.BLOCKED) {
           thread.interrupt();
           long start = System.currentTimeMillis();
           //if (thread.isAlive()) {
