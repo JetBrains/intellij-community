@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiType
@@ -37,8 +37,10 @@ fun GroovyMethodCallReference.resolveImpl(incomplete: Boolean): Collection<Groov
 
 fun GroovyMethodCallReference.resolveImpl2(incomplete: Boolean): Collection<GroovyResolveResult> {
   val place = element
+  val receiver = receiver ?: TypesUtil.getJavaLangObject(place)
+  val methodName = methodName
+  val arguments = if (incomplete) null else arguments
 
-  val receiver = receiver ?: return emptyList()
   val state = ResolveState.initial()
 
   val methodProcessor = MethodProcessor(methodName, place, arguments, PsiType.EMPTY_ARRAY)

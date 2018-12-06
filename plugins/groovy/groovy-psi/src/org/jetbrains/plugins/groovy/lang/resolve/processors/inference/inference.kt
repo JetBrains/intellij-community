@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.*
@@ -43,8 +43,8 @@ fun getTopLevelTypeCached(expression: GrExpression): PsiType? {
   return GroovyPsiManager.getInstance(expression.project).getTopLevelType(expression)
 }
 
-fun buildQualifier(ref: GrReferenceExpression, state: ResolveState): Argument {
-  val qualifierExpression = ref.qualifierExpression
+fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
+  val qualifierExpression = ref?.qualifierExpression
   val spreadState = state[SpreadState.SPREAD_STATE]
   if (qualifierExpression != null && spreadState == null) {
     return ExpressionArgument(qualifierExpression)
@@ -55,7 +55,7 @@ fun buildQualifier(ref: GrReferenceExpression, state: ResolveState): Argument {
     return JustTypeArgument(resolvedThis)
   }
 
-  val type = getQualifierType(ref)
+  val type = ref?.let(::getQualifierType)
   when {
     spreadState == null -> return JustTypeArgument(type)
     type == null -> return UnknownArgument
