@@ -81,7 +81,12 @@ public class TestPackage extends TestObject {
           try {
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            searchTests(module, classFilter, myClasses);
+            if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+              searchTests5(module, classFilter, myClasses);
+            }
+            else {
+              searchTests(module, classFilter, myClasses);
+            }
           }
           catch (CantRunException ignored) {}
         }
@@ -92,13 +97,14 @@ public class TestPackage extends TestObject {
 
         try {
           String packageName = getPackageName(data);
-          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && intersectWithDirectory(myClasses) && module != null && inSingleModule()) {
+          String filters = getFilters(myClasses, packageName);
+          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && filterOutputByDirectoryForJunit5(myClasses) && module != null) {
             VirtualFile[] rootPaths = OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules().classes().getRoots();
             JUnitStarter.printClassesList(
-              ContainerUtil.map(rootPaths, root -> "\u002B" + root.getPath()), packageName, "", getFilters(myClasses, packageName), myTempFile);
+              ContainerUtil.map(rootPaths, root -> "\u002B" + root.getPath()), packageName, "", filters, myTempFile);
           }
           else {
-            addClassesListToJavaParameters(myClasses, CLASS_NAME_FUNCTION, packageName, createTempFiles(), getJavaParameters(), getFilters(myClasses, packageName));
+            addClassesListToJavaParameters(myClasses, CLASS_NAME_FUNCTION, packageName, createTempFiles(), getJavaParameters(), filters);
           }
         }
         catch (Exception ignored) {}
@@ -106,22 +112,19 @@ public class TestPackage extends TestObject {
     };
   }
 
-  protected boolean intersectWithDirectory(final Set<PsiClass> classNames) {
-    return classNames.isEmpty();
-  }
-
-  protected boolean inSingleModule() {
+  protected boolean filterOutputByDirectoryForJunit5(final Set<PsiClass> classNames) {
     return getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
   }
 
-  protected String getFilters(Set<PsiClass> foundClassNames, String packageName) {
-    return foundClassNames.isEmpty()
+  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+    return foundClasses.isEmpty()
            ? packageName.isEmpty() ? ".*" : packageName + "\\..*"
            : "";
   }
 
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException { }
+  
   protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
-    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) return; //junit 5 process tests automatically
     if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
       Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
       collectClassesRecursively(classFilter, acceptClassCondition, classes);

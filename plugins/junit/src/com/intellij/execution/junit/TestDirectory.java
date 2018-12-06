@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -110,38 +109,28 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
-    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
-      PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
-      PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
-      if (aPackage != null && module != null) {
-        PsiDirectory[] directories =
-          aPackage.getDirectories(module.getModuleScope(true).intersectWith(GlobalSearchScopesCore.projectTestScope(getConfiguration().getProject())));
-        if (directories.length > 1) {//need to enumerate classes in one of multiple test source roots
-          collectClassesRecursively(directory, Condition.TRUE, classes);
-        }
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
+    PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+    PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
+    if (aPackage != null && module != null) {
+      PsiDirectory[] directories =
+        aPackage.getDirectories(module.getModuleScope(true).intersectWith(GlobalSearchScopesCore.projectTestScope(getConfiguration().getProject())));
+      if (directories.length > 1) {//need to enumerate classes in one of multiple test source roots
+        collectClassesRecursively(directory, Condition.TRUE, classes);
       }
     }
-    else {
-      super.searchTests(module, classFilter, classes);
-    }
   }
 
   @Override
-  protected boolean intersectWithDirectory(Set<PsiClass> classNames) {
+  protected boolean filterOutputByDirectoryForJunit5(Set<PsiClass> classNames) {
     return true;
   }
 
   @Override
-  protected boolean inSingleModule() {
-    return true;
-  }
-
-  @Override
-  protected String getFilters(Set<PsiClass> foundClassNames, String packageName) {
-    return foundClassNames.isEmpty()
-           ? (packageName.isEmpty() ? ".*" : packageName + "\\..*")
-           : StringUtil.join(foundClassNames, CLASS_NAME_FUNCTION, "||");
+  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+    return foundClasses.isEmpty()
+           ? super.getFilters(foundClasses, packageName)
+           : StringUtil.join(foundClasses, CLASS_NAME_FUNCTION, "||");
   }
 
   @Override

@@ -33,7 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +56,21 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
+  protected boolean filterOutputByDirectoryForJunit5(Set<PsiClass> classNames) {
+    return super.filterOutputByDirectoryForJunit5(classNames) && classNames.isEmpty();
+  }
+
+  @Override
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+    searchTests(module, classFilter, classes, true);
+  }
+
+  @Override
   protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+    searchTests(module, classFilter, classes, false);
+  }
+
+  private void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes, boolean junit5) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
@@ -69,7 +82,7 @@ public class TestsPattern extends TestPackage {
       }
       else {
         classes.clear();
-        if (!JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {//junit 5 process tests automatically
+        if (!junit5) {//junit 5 process tests automatically
           ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
         }
         return;
@@ -78,8 +91,8 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<PsiClass> foundClassNames, String packageName) {
-    return foundClassNames.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
+  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+    return foundClasses.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 
   private PsiClass getTestClass(Project project, String className) {
