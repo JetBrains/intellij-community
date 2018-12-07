@@ -67,7 +67,7 @@ import static com.intellij.openapi.externalSystem.service.project.settings.Confi
  */
 public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
-  public static final String IDEA_EXT_PLUGIN_VERSION = "0.4.1";
+  public static final String IDEA_EXT_PLUGIN_VERSION = "0.5";
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
@@ -460,13 +460,12 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertTrue(sourceFolderManager.isDisposed());
   }
 
-  @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testPostponedImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
       new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .withJavaPlugin()
         .withKotlinPlugin("1.3.0")
         .addPostfix("idea {")
@@ -488,14 +487,13 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertSourceNotExists("project.test", "src/test/java");
   }
 
-  @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testPartialImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
     importProject(
       new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .withJavaPlugin()
         .withKotlinPlugin("1.3.0")
         .addPostfix("idea {")
@@ -510,14 +508,13 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertSourcePackagePrefix("project.main", "src/main/kotlin", "");
   }
 
-  @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testImportPackagePrefixWithRemoteSourceRoot() throws IOException {
     createProjectSubFile("src/test/java/Main.java", "");
     createProjectSubFile("../subproject/src/test/java/Main.java", "");
     importProject(
       new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .withJavaPlugin()
         .addPostfix("sourceSets {")
         .addPostfix("  test.java.srcDirs += '../subproject/src/test/java'")
@@ -536,13 +533,12 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertSourcePackagePrefix("project.test", "../subproject/src/test/java", "prefix.package.other");
   }
 
-  @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
       new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .withJavaPlugin()
         .addPostfix("idea {")
         .addPostfix("  module {")
@@ -555,13 +551,12 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
   }
 
-  @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testChangeImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
       new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .withJavaPlugin()
         .addPostfix("idea {")
         .addPostfix("  module {")
@@ -574,7 +569,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     importProject(
       new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .withJavaPlugin()
         .addPostfix("idea {")
         .addPostfix("  module {")
