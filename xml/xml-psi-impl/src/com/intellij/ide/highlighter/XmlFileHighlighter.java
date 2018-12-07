@@ -53,7 +53,8 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     for (IElementType type : ContainerUtil.ar(XML_TAG_NAME, XML_CONDITIONAL_IGNORE, XML_CONDITIONAL_INCLUDE)) {
       ourMap.putValues(type, Arrays.asList(XmlHighlighterColors.XML_TAG, XmlHighlighterColors.XML_TAG_NAME));
     }
-    for (IElementType type : ContainerUtil.ar(XML_NAME, XML_EQ, XML_TAG_CHARACTERS,
+    ourMap.putValues(XML_NAME, Arrays.asList(XmlHighlighterColors.XML_TAG, XmlHighlighterColors.XML_ATTRIBUTE_NAME));
+    for (IElementType type : ContainerUtil.ar(XML_EQ, XML_TAG_CHARACTERS,
                                               XML_ATTRIBUTE_VALUE_TOKEN, XML_ATTRIBUTE_VALUE_START_DELIMITER, XML_ATTRIBUTE_VALUE_END_DELIMITER)) {
       ourMap.putValues(type, Arrays.asList(XmlHighlighterColors.XML_TAG, XmlHighlighterColors.XML_ATTRIBUTE_VALUE));
     }

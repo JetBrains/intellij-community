@@ -50,7 +50,8 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     }
 
     ourMap.putValues(XML_TAG_NAME, Arrays.asList(XmlHighlighterColors.HTML_TAG, XmlHighlighterColors.HTML_TAG_NAME));
-    for (IElementType type : ContainerUtil.ar(XML_NAME, XML_EQ,
+    ourMap.putValues(XML_NAME, Arrays.asList(XmlHighlighterColors.HTML_TAG, XmlHighlighterColors.HTML_ATTRIBUTE_NAME));
+    for (IElementType type : ContainerUtil.ar(XML_EQ,
                                               XML_ATTRIBUTE_VALUE_TOKEN, XML_ATTRIBUTE_VALUE_START_DELIMITER, XML_ATTRIBUTE_VALUE_END_DELIMITER)) {
       ourMap.putValues(type, Arrays.asList(XmlHighlighterColors.HTML_TAG, XmlHighlighterColors.HTML_ATTRIBUTE_VALUE));
     }
