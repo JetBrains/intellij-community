@@ -246,7 +246,7 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+effecttype=\"([A-Z]+)\")?" +
                                 "(?:\\s+fonttype=\"([0-9]+)\")?" +
                                 "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                                "(?:\\s+bundleKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
+                                "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                                 "(/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
@@ -341,17 +341,7 @@ public class ExpectedHighlightingData {
       if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
       if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
       if (bundleMessage != null) {
-        assertTrue("messageBundles must be provided for bundleKey tags in test data", myMessageBundles.length > 0);
-        List<String> split = StringUtil.split(bundleMessage, "|");
-        String key = split.get(0);
-        Object[] params = split.stream().skip(1).toArray();
-        for (ResourceBundle bundle : myMessageBundles) {
-          String message = CommonBundle.messageOrDefault(bundle, key, null, params);
-          if (message != null) {
-            if (descr != null) fail("Key " + key + " is not unique in bundles for expected highlighting data");
-            descr = message;
-          }
-        }
+        descr = extractDescrFromBundleMessage(bundleMessage);
       }
       if (descr != null) {
         builder.description(descr);
@@ -363,6 +353,34 @@ public class ExpectedHighlightingData {
     }
 
     return toContinueFrom;
+  }
+
+  @NotNull
+  private String extractDescrFromBundleMessage(String bundleMessage) {
+    String descr = null;
+    List<String> split = StringUtil.split(bundleMessage, "|");
+    String key = split.get(0);
+    List<String> keySplit = StringUtil.split(key, "#");
+    ResourceBundle[] bundles = myMessageBundles;
+    if (keySplit.size() == 2) {
+      key = keySplit.get(1);
+      bundles = new ResourceBundle[]{ResourceBundle.getBundle(keySplit.get(0))};
+    }
+    else {
+      assertEquals("Format for bundleMsg attribute is: [bundleName#] bundleKey [|argument]... ", 1, keySplit.size());
+    }
+
+    assertTrue("messageBundles must be provided for bundleMsg tags in test data", bundles.length > 0);
+    Object[] params = split.stream().skip(1).toArray();
+    for (ResourceBundle bundle : bundles) {
+      String message = CommonBundle.messageOrDefault(bundle, key, null, params);
+      if (message != null) {
+        if (descr != null) fail("Key " + key + " is not unique in bundles for expected highlighting data");
+        descr = message;
+      }
+    }
+    if (descr == null) fail("Can't find bundle message " + bundleMessage);
+    return descr;
   }
 
   protected HighlightInfoType getTypeByName(String typeString) throws Exception {
@@ -570,29 +588,9 @@ public class ExpectedHighlightingData {
       sb.insert(0, text.substring(info.startOffset, endPos));
 
       String str = '<' + severity + " ";
-      String bundleKey = null;
-      Object[] bundleMsgParams = null;
-      for (ResourceBundle bundle : messageBundles) {
-        Enumeration<String> keys = bundle.getKeys();
-        while (keys.hasMoreElements()) {
-          String key = keys.nextElement();
-          ParsePosition position = new ParsePosition(0);
-          Object[] parse = new MessageFormat(bundle.getString(key)).parse(info.getDescription(), position);
-          if (parse != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1) {
-            if (bundleKey != null) {
-              bundleKey = null;
-              break; // several keys matched, don't suggest bundle key
-            }
-            bundleKey = key;
-            bundleMsgParams = parse;
-          }
-        }
-      }
-      if (bundleKey != null) {
-        String bundleMsg = bundleKey;
-        if (bundleMsgParams.length > 0) {
-          bundleMsg += '|' + StringUtil.join(ContainerUtil.map(bundleMsgParams, Objects::toString), "|");
-        }
+
+      String bundleMsg = composeBundleMsg(info, messageBundles);
+      if (bundleMsg != null) {
         str += "bundleMsg=\"" + StringUtil.escapeQuotes(bundleMsg) + '"';
       }
       else {
@@ -609,6 +607,34 @@ public class ExpectedHighlightingData {
     }
 
     return new int[]{i, endPos};
+  }
+
+  private static String composeBundleMsg(HighlightInfo info, ResourceBundle... messageBundles) {
+    String bundleKey = null;
+    Object[] bundleMsgParams = null;
+    for (ResourceBundle bundle : messageBundles) {
+      Enumeration<String> keys = bundle.getKeys();
+      while (keys.hasMoreElements()) {
+        String key = keys.nextElement();
+        ParsePosition position = new ParsePosition(0);
+        Object[] parse = new MessageFormat(bundle.getString(key)).parse(info.getDescription(), position);
+        if (parse != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1) {
+          if (bundleKey != null) {
+            bundleKey = null;
+            break; // several keys matched, don't suggest bundle key
+          }
+          bundleKey = key;
+          bundleMsgParams = parse;
+        }
+      }
+    }
+    if (bundleKey == null) return null;
+
+    String bundleMsg = bundleKey;
+    if (bundleMsgParams.length > 0) {
+      bundleMsg += '|' + StringUtil.join(ContainerUtil.map(bundleMsgParams, Objects::toString), "|");
+    }
+    return bundleMsg;
   }
 
   private static boolean infosContainsExpectedInfo(Collection<? extends HighlightInfo> infos, HighlightInfo expectedInfo) {
