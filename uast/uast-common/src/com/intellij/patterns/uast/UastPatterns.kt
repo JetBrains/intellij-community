@@ -5,13 +5,11 @@
 
 package com.intellij.patterns.uast
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.*
 import com.intellij.patterns.StandardPatterns.string
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.uast.*
@@ -20,13 +18,33 @@ fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 
 fun stringLiteralExpression(): ULiteralExpressionPattern = literalExpression().filter(ULiteralExpression::isStringLiteral)
 
+@JvmOverloads
+fun injectionHostUExpression(strict: Boolean = true): UExpressionPattern<UExpression, *> =
+  uExpression().filterWithContext { _, processingContext ->
+    val requestedPsi = processingContext?.get(REQUESTED_PSI_ELEMENT)
+    if (requestedPsi == null) {
+      if (strict && ApplicationManager.getApplication().isUnitTestMode) {
+        throw AssertionError("no ProcessingContext with `REQUESTED_PSI_ELEMENT` passed for `injectionHostUExpression`," +
+                             " please consider creating one using `UastPatterns.withRequestedPsi`, providing a source psi for which " +
+                             " this pattern was originally created, or make this `injectionHostUExpression` non-strict.")
+      }
+      else return@filterWithContext !strict
+    }
+    return@filterWithContext requestedPsi is PsiLanguageInjectionHost
+  }
+
+
 fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
-fun uExpression(): UExpressionPattern<UExpression, *> = expressionCapture(UExpression::class.java)
+fun uExpression(): UExpressionPattern.Capture<UExpression> = expressionCapture(UExpression::class.java)
 
 fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UElementPattern.Capture(clazz)
 
 fun <T : UExpression> expressionCapture(clazz: Class<T>): UExpressionPattern.Capture<T> = UExpressionPattern.Capture(clazz)
+
+fun ProcessingContext.withRequestedPsi(psiElement: PsiElement) = this.apply { put(REQUESTED_PSI_ELEMENT, psiElement) }
+
+fun withRequestedPsi(psiElement: PsiElement) = ProcessingContext().withRequestedPsi(psiElement)
 
 open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz: Class<T>) : ObjectPattern<T, Self>(clazz) {
   fun withSourcePsiCondition(pattern: PatternCondition<PsiElement>): Self =
