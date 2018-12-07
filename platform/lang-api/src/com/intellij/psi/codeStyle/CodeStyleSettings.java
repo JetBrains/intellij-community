@@ -1028,7 +1028,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
-    return file.getTextRange().equals(formatRange);
+    return formatRange != null && formatRange.equals(file.getTextRange());
   }
 
   private static void logIndentOptions(@NotNull PsiFile file,
