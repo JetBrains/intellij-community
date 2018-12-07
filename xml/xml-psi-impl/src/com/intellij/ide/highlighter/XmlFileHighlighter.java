@@ -110,7 +110,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     return ourMap.get(tokenType).toArray(EMPTY);
   }
 
-  public static void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
+  public static synchronized void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
                                                            Map<IElementType, TextAttributesKey> _keys2) {
     HashSet<IElementType> existingKeys = new HashSet<>(ourMap.keySet());
     addMissing(_keys1, existingKeys, ourMap);

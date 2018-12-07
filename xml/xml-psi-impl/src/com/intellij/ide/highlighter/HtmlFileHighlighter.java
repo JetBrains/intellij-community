@@ -79,7 +79,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     return SyntaxHighlighterBase.pack(XmlHighlighterColors.HTML_CODE, ourMap.get(tokenType).toArray(EMPTY));
   }
 
-  public static void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
+  public static synchronized void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
                                                            Map<IElementType, TextAttributesKey> _keys2) {
     HashSet<IElementType> existingKeys = new HashSet<>(ourMap.keySet());
     XmlFileHighlighter.addMissing(_keys1, existingKeys, ourMap);
