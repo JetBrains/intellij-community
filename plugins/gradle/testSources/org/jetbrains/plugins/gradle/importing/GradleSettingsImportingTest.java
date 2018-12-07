@@ -34,6 +34,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -363,7 +364,11 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
                  activation.projectPath);
     final List<String> beforeSyncTasks = activation.state.getTasks(ExternalSystemTaskActivator.Phase.BEFORE_SYNC);
 
-    assertContain(beforeSyncTasks, ":projects", ":tasks");
+    if (extPluginVersionIsAtLeast("0.5")) {
+      assertContain(beforeSyncTasks, "projects", "tasks");
+    } else {
+      assertContain(beforeSyncTasks, ":projects", ":tasks");
+    }
   }
 
   @Test
@@ -608,6 +613,10 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         }
       }
     }
+  }
+
+  protected boolean extPluginVersionIsAtLeast(@NotNull final String version) {
+    return Version.parseVersion(IDEA_EXT_PLUGIN_VERSION).compareTo(Version.parseVersion(version)) >= 0;
   }
 
   @NotNull
