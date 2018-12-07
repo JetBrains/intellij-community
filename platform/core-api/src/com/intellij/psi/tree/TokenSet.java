@@ -164,7 +164,14 @@ public class TokenSet {
     IElementType.Predicate disjunction =
       orConditions.isEmpty() ? null :
       orConditions.size() == 1 ? orConditions.get(0) :
-      t -> orConditions.stream().anyMatch(p -> p.matches(t));
+      t -> {
+        for (int i = 0; i < orConditions.size(); i++) {
+          if (orConditions.get(i).matches(t)) {
+            return true;
+          }
+        }
+        return false;
+      };
     TokenSet newSet = new TokenSet(shift, max, disjunction);
     for (TokenSet set : sets) {
       final int shiftDiff = set.myShift - newSet.myShift;
@@ -191,7 +198,7 @@ public class TokenSet {
     IElementType.Predicate conjunction =
       orConditions.isEmpty() ? null :
       orConditions.size() == 1 ? orConditions.get(0) :
-      t -> orConditions.stream().allMatch(p -> p.matches(t));
+      t -> a.myOrCondition.matches(t) && b.myOrCondition.matches(t);
     TokenSet newSet = new TokenSet((short)Math.min(a.myShift, b.myShift), (short)Math.max(a.myMax, b.myMax), conjunction);
     for (int i = 0; i < newSet.myWords.length; i++) {
       final int ai = newSet.myShift - a.myShift + i;
